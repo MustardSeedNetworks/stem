@@ -11,7 +11,7 @@ package dataplane
 import (
 	"fmt"
 
-	"github.com/krisarmstrong/stem/pkg/reflector/config"
+	"github.com/krisarmstrong/stem/internal/reflector/config"
 )
 
 type Stats struct {

@@ -17,8 +17,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/krisarmstrong/stem/pkg/interfaces"
-	"github.com/krisarmstrong/stem/pkg/license"
+	"github.com/krisarmstrong/stem/internal/interfaces"
+	"github.com/krisarmstrong/stem/internal/license"
 )
 
 //go:embed dist/*

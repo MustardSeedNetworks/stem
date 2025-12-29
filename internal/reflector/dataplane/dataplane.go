@@ -48,7 +48,7 @@ import (
 	"sync"
 	"unsafe"
 
-	"github.com/krisarmstrong/stem/pkg/reflector/config"
+	"github.com/krisarmstrong/stem/internal/reflector/config"
 )
 
 // Stats holds dataplane statistics

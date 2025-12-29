@@ -16,7 +16,7 @@ BUILD_TIME ?= $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
 
 # Go settings
 GO := go
-VERSION_PKG := github.com/krisarmstrong/stem/pkg/version
+VERSION_PKG := github.com/krisarmstrong/stem/internal/version
 LDFLAGS := -s -w \
 	-X $(VERSION_PKG).Version=$(VERSION) \
 	-X $(VERSION_PKG).Commit=$(COMMIT) \
@@ -58,8 +58,8 @@ ui: ui-deps
 	@echo "Building React WebUI..."
 	cd ui && npm run build
 	@echo "Copying dist to pkg/web for embedding..."
-	mkdir -p pkg/web/dist
-	cp -r ui/dist/* pkg/web/dist/
+	mkdir -p internal/web/dist
+	cp -r ui/dist/* internal/web/dist/
 
 # Build Go binary
 go:
@@ -80,7 +80,7 @@ clean:
 	rm -rf bin/
 	rm -rf ui/dist/
 	rm -rf ui/node_modules/
-	rm -rf pkg/web/dist/
+	rm -rf internal/web/dist/
 	rm -f coverage.out coverage.html
 	@echo "Clean complete"
 
@@ -113,12 +113,12 @@ dev:
 # Run Go tests
 test:
 	@echo "Running Go tests..."
-	$(GO) test -v -race ./pkg/...
+	$(GO) test -v -race ./internal/...
 
 # Run tests with coverage
 test-coverage:
 	@echo "Running Go tests with coverage..."
-	$(GO) test -v -race -coverprofile=coverage.out -covermode=atomic ./pkg/...
+	$(GO) test -v -race -coverprofile=coverage.out -covermode=atomic ./internal/...
 	$(GO) tool cover -func=coverage.out
 
 # Generate HTML coverage report

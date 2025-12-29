@@ -25,15 +25,15 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/krisarmstrong/stem/pkg/help"
-	"github.com/krisarmstrong/stem/pkg/license"
-	"github.com/krisarmstrong/stem/pkg/version"
-	reflectorConfig "github.com/krisarmstrong/stem/pkg/reflector/config"
-	reflectorDP "github.com/krisarmstrong/stem/pkg/reflector/dataplane"
-	reflectorTUI "github.com/krisarmstrong/stem/pkg/reflector/tui"
-	testmasterDP "github.com/krisarmstrong/stem/pkg/testmaster/dataplane"
-	testmasterTUI "github.com/krisarmstrong/stem/pkg/testmaster/tui"
-	"github.com/krisarmstrong/stem/pkg/web"
+	"github.com/krisarmstrong/stem/internal/help"
+	"github.com/krisarmstrong/stem/internal/license"
+	"github.com/krisarmstrong/stem/internal/version"
+	reflectorConfig "github.com/krisarmstrong/stem/internal/reflector/config"
+	reflectorDP "github.com/krisarmstrong/stem/internal/reflector/dataplane"
+	reflectorTUI "github.com/krisarmstrong/stem/internal/reflector/tui"
+	testmasterDP "github.com/krisarmstrong/stem/internal/testmaster/dataplane"
+	testmasterTUI "github.com/krisarmstrong/stem/internal/testmaster/tui"
+	"github.com/krisarmstrong/stem/internal/web"
 )
 
 const (

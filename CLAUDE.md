@@ -161,7 +161,7 @@ node --version  # Must show v25.x
 ```
 stem/
 ├── cmd/stem/              # Main CLI entry point
-├── pkg/                   # Go packages
+├── internal/              # Private Go packages
 │   ├── reflector/         # Packet reflector mode (Tier 1)
 │   ├── testmaster/        # Test execution mode (Tier 2)
 │   ├── license/           # License management

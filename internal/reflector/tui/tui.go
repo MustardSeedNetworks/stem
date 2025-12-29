@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/krisarmstrong/stem/pkg/reflector/dataplane"
+	"github.com/krisarmstrong/stem/internal/reflector/dataplane"
 	"github.com/rivo/tview"
 )
 
