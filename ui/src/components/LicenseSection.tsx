@@ -7,6 +7,7 @@
  */
 
 import { AlertTriangle, CheckCircle, Clock, Key, Loader2, Shield } from 'lucide-react';
+import type { ReactElement } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { CollapsibleSection } from './CollapsibleSection';
 
@@ -38,7 +39,7 @@ interface LicenseStatusProps {
   licenseInfo: LicenseInfo;
 }
 
-function LicenseStatusBadge({ licenseInfo }: LicenseStatusProps): JSX.Element {
+function LicenseStatusBadge({ licenseInfo }: LicenseStatusProps): ReactElement {
   return (
     <div className="flex items-center gap-2">
       {licenseInfo.activated ? (
@@ -61,7 +62,7 @@ function LicenseStatusBadge({ licenseInfo }: LicenseStatusProps): JSX.Element {
   );
 }
 
-function LicenseDetails({ licenseInfo }: LicenseStatusProps): JSX.Element | null {
+function LicenseDetails({ licenseInfo }: LicenseStatusProps): ReactElement | null {
   if (!licenseInfo.activated) return null;
 
   return (
@@ -92,7 +93,7 @@ function LicenseDetails({ licenseInfo }: LicenseStatusProps): JSX.Element | null
   );
 }
 
-function LicenseFeatures({ licenseInfo }: LicenseStatusProps): JSX.Element | null {
+function LicenseFeatures({ licenseInfo }: LicenseStatusProps): ReactElement | null {
   if (!licenseInfo.features || licenseInfo.features.length === 0) return null;
 
   return (
@@ -128,7 +129,7 @@ function ActivationForm({
   onKeyChange,
   onActivate,
   onStartTrial,
-}: ActivationFormProps): JSX.Element {
+}: ActivationFormProps): ReactElement {
   return (
     <div className="border-t border-[var(--color-surface-border)] pt-4 space-y-3">
       <div className="text-sm font-medium">Activate License</div>
@@ -181,7 +182,7 @@ interface MessageDisplayProps {
   success: string | null;
 }
 
-function MessageDisplay({ error, success }: MessageDisplayProps): JSX.Element | null {
+function MessageDisplay({ error, success }: MessageDisplayProps): ReactElement | null {
   if (!error && !success) return null;
 
   return (
@@ -200,7 +201,7 @@ function MessageDisplay({ error, success }: MessageDisplayProps): JSX.Element | 
   );
 }
 
-export function LicenseSection(): JSX.Element {
+export function LicenseSection(): ReactElement {
   const [licenseInfo, setLicenseInfo] = useState<LicenseInfo | null>(null);
   const [licenseKey, setLicenseKey] = useState('');
   const [loading, setLoading] = useState(false);

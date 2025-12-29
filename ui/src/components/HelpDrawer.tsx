@@ -22,6 +22,7 @@ import {
   X,
   Zap,
 } from 'lucide-react';
+import type { ReactElement } from 'react';
 import { useState } from 'react';
 import {
   categories,
@@ -243,7 +244,7 @@ function TestsTab({
   filteredTests: TestHelp[] | null;
   simpleMode: boolean;
   onSelectTest: (test: TestHelp) => void;
-  getCategoryIcon: (id: string) => JSX.Element;
+  getCategoryIcon: (id: string) => ReactElement;
 }) {
   const categoryOrder = ['rfc2544', 'y1564', 'rfc2889', 'rfc6349', 'y1731', 'mef', 'tsn'];
 
@@ -314,7 +315,7 @@ function TestCard({
   test: TestHelp;
   simpleMode: boolean;
   onClick: () => void;
-}): JSX.Element {
+}): ReactElement {
   return (
     <button
       type="button"
@@ -595,7 +596,7 @@ function TutorialDetailView({
   onBack: () => void;
   onCopy: (cmd: string) => void;
   copiedCommand: string | null;
-}): JSX.Element {
+}): ReactElement {
   return (
     <div className="space-y-4">
       {/* Back Button */}

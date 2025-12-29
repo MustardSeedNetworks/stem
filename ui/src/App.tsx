@@ -21,6 +21,7 @@ import {
   Wifi,
   WifiOff,
 } from 'lucide-react';
+import type { ReactElement } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { HelpDrawer } from './components/HelpDrawer';
 import { SettingsDrawer } from './components/SettingsDrawer';
@@ -96,7 +97,7 @@ interface StatsCardProps {
   subvalue: string;
 }
 
-function StatsCard({ icon, title, value, subvalue }: StatsCardProps): JSX.Element {
+function StatsCard({ icon, title, value, subvalue }: StatsCardProps): ReactElement {
   return (
     <div className="card">
       <div className="card-header">
@@ -113,7 +114,7 @@ interface InterfaceDetailsProps {
   iface: InterfaceInfo;
 }
 
-function InterfaceDetails({ iface }: InterfaceDetailsProps): JSX.Element {
+function InterfaceDetails({ iface }: InterfaceDetailsProps): ReactElement {
   const stateClassName =
     iface.state === 'up'
       ? 'text-[var(--color-status-success)]'
@@ -169,7 +170,7 @@ interface TestResultsProps {
   testStatus: Stats['testStatus'];
 }
 
-function TestResults({ testStatus }: TestResultsProps): JSX.Element {
+function TestResults({ testStatus }: TestResultsProps): ReactElement {
   let message: string;
   switch (testStatus) {
     case 'idle':
@@ -198,7 +199,7 @@ function TestResults({ testStatus }: TestResultsProps): JSX.Element {
   );
 }
 
-function App(): JSX.Element {
+function App(): ReactElement {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {

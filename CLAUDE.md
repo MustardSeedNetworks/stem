@@ -160,18 +160,28 @@ node --version  # Must show v25.x
 
 ```
 stem/
-├── cmd/stem/         # Main entry point
-├── pkg/              # Go packages
-├── src/              # C source files
-├── include/          # C headers
-├── tests/            # Test files
-├── bin/              # Built binaries
-├── docs/             # Local docs
-├── .clang-format     # C formatting config
-├── .clang-tidy       # C static analysis config
-├── .golangci.yml     # Go linting config
-├── go.mod            # Go modules
-└── Makefile          # Build commands
+├── cmd/stem/              # Main CLI entry point
+├── pkg/                   # Go packages
+│   ├── reflector/         # Packet reflector mode (Tier 1)
+│   ├── testmaster/        # Test execution mode (Tier 2)
+│   ├── license/           # License management
+│   ├── help/              # Built-in help system
+│   ├── version/           # Version info
+│   └── web/               # Shared web server
+├── src/                   # C source files (C23)
+│   └── dataplane/         # DPDK/AF_PACKET/AF_XDP backends
+├── include/               # C headers
+├── ui/                    # React frontend (TypeScript)
+│   └── src/components/    # React components
+├── tests/                 # Test files
+├── bin/                   # Built binaries
+├── docs/                  # Local docs
+├── .clang-format          # C formatting config
+├── .clang-tidy            # C static analysis config
+├── .golangci.yml          # Go linting config
+├── biome.json             # TypeScript linting config
+├── go.mod                 # Go modules
+└── Makefile               # Build commands
 ```
 
 ---
