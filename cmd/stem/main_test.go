@@ -293,7 +293,7 @@ func TestListTestsCmd(t *testing.T) {
 	r, w, _ := os.Pipe()
 	os.Stdout = w
 
-	listTestsCmd()
+	listTestsCmd([]string{})
 
 	w.Close()
 	os.Stdout = old
@@ -315,6 +315,43 @@ func TestListTestsCmd(t *testing.T) {
 		if !strings.Contains(output, test) {
 			t.Errorf("listTestsCmd should list test '%s'", test)
 		}
+	}
+}
+
+func TestListTestsCmdByModule(t *testing.T) {
+	// Capture stdout
+	old := os.Stdout
+	r, w, _ := os.Pipe()
+	os.Stdout = w
+
+	listTestsCmd([]string{"--by-module"})
+
+	w.Close()
+	os.Stdout = old
+
+	var buf bytes.Buffer
+	buf.ReadFrom(r)
+	output := buf.String()
+
+	// Should list module names (including Reflector)
+	modules := []string{"Reflector", "Benchmark", "ServiceTest", "TrafficGen", "Measure", "Certify"}
+	for _, mod := range modules {
+		if !strings.Contains(output, mod) {
+			t.Errorf("listTestsCmd --by-module should list module '%s'", mod)
+		}
+	}
+
+	// Should list module colors (including Reflector cyan)
+	colors := []string{"#0891b2", "#dc2626", "#ea580c", "#ca8a04", "#2563eb", "#16a34a"}
+	for _, color := range colors {
+		if !strings.Contains(output, color) {
+			t.Errorf("listTestsCmd --by-module should show color '%s'", color)
+		}
+	}
+
+	// Should show "across 6 modules" not "categories"
+	if !strings.Contains(output, "6 modules") {
+		t.Error("listTestsCmd --by-module should show 'across X modules'")
 	}
 }
 

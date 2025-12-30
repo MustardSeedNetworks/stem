@@ -9,10 +9,23 @@
  * @license Proprietary
  */
 
-import { Activity, Cpu, Monitor, Network, Radio, Settings2, X, Zap } from 'lucide-react';
+import {
+  Activity,
+  Cpu,
+  Grid,
+  List,
+  Monitor,
+  Network,
+  Radio,
+  Settings2,
+  X,
+  Zap,
+} from 'lucide-react';
+import { useState } from 'react';
 import { CollapsibleSection } from './CollapsibleSection';
 import { HelpIcon } from './HelpIcon';
 import { LicenseSection } from './LicenseSection';
+import { ModuleSelector } from './ModuleSelector';
 
 interface InterfaceInfo {
   name: string;
@@ -52,6 +65,8 @@ export function SettingsDrawer({
   reflectorProfile,
   setReflectorProfile,
 }: SettingsDrawerProps) {
+  const [viewMode, setViewMode] = useState<'standard' | 'module'>('standard');
+
   if (!isOpen) return null;
 
   const toggleTest = (test: string) => {
@@ -179,422 +194,482 @@ export function SettingsDrawer({
           {/* Test Master Tests */}
           {mode === 'test_master' && (
             <>
-              {/* RFC 2544 Tests */}
-              <CollapsibleSection
-                title={
-                  <div className="flex items-center gap-2">
-                    <Zap className="w-4 h-4" />
-                    <span>RFC 2544 Tests</span>
-                    <span className="text-xs text-[var(--color-text-muted)]">
-                      ({selectedTests.filter((t) => t.startsWith('rfc2544')).length}/6)
-                    </span>
-                  </div>
-                }
-              >
-                <div className="space-y-2">
-                  {[
-                    {
-                      id: 'rfc2544_throughput',
-                      name: 'Throughput',
-                      desc: 'Max rate with 0% loss',
-                      tooltip:
-                        'Find the maximum rate at which the DUT can forward frames with zero packet loss using binary search.',
-                    },
-                    {
-                      id: 'rfc2544_latency',
-                      name: 'Latency',
-                      desc: 'Round-trip time',
-                      tooltip: 'Measure round-trip packet delay at various loads and frame sizes.',
-                    },
-                    {
-                      id: 'rfc2544_frame_loss',
-                      name: 'Frame Loss',
-                      desc: 'Loss vs offered load',
-                      tooltip:
-                        'Measure packet loss percentage across different offered load levels.',
-                    },
-                    {
-                      id: 'rfc2544_back_to_back',
-                      name: 'Back-to-Back',
-                      desc: 'Burst capacity',
-                      tooltip:
-                        'Test maximum burst capacity - how many frames at line rate before drops occur.',
-                    },
-                    {
-                      id: 'rfc2544_system_recovery',
-                      name: 'System Recovery',
-                      desc: 'Recovery after overload',
-                      tooltip:
-                        'Measure time to recover normal forwarding after sustained overload condition.',
-                    },
-                    {
-                      id: 'rfc2544_reset',
-                      name: 'Reset',
-                      desc: 'Device reset recovery',
-                      tooltip:
-                        'Measure time from device restart to when it resumes forwarding traffic.',
-                    },
-                  ].map((test) => (
-                    <label
-                      key={test.id}
-                      className="flex items-start gap-3 p-2 rounded-lg cursor-pointer hover:bg-[var(--color-surface-hover)]"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedTests.includes(test.id)}
-                        onChange={() => toggleTest(test.id)}
-                        className="mt-0.5 w-4 h-4 accent-[var(--color-stem-green)]"
-                      />
-                      <div className="flex-1">
-                        <div className="font-medium text-sm flex items-center gap-1">
-                          {test.name}
-                          <HelpIcon tooltip={test.tooltip} />
-                        </div>
-                        <div className="text-xs text-[var(--color-text-muted)]">{test.desc}</div>
-                      </div>
-                    </label>
-                  ))}
+              {/* View Toggle */}
+              <div className="flex items-center justify-between p-2 bg-[var(--color-surface-base)] rounded-lg mb-2">
+                <span className="text-sm text-[var(--color-text-muted)]">View by:</span>
+                <div className="flex rounded-lg overflow-hidden border border-[var(--color-surface-border)]">
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('standard')}
+                    className={`flex items-center gap-1 px-3 py-1.5 text-xs ${
+                      viewMode === 'standard'
+                        ? 'bg-[var(--color-stem-green)] text-white'
+                        : 'bg-[var(--color-surface-raised)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)]'
+                    }`}
+                  >
+                    <List className="w-3 h-3" />
+                    Standard
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('module')}
+                    className={`flex items-center gap-1 px-3 py-1.5 text-xs ${
+                      viewMode === 'module'
+                        ? 'bg-[var(--color-stem-green)] text-white'
+                        : 'bg-[var(--color-surface-raised)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-hover)]'
+                    }`}
+                  >
+                    <Grid className="w-3 h-3" />
+                    Module
+                  </button>
                 </div>
-              </CollapsibleSection>
+              </div>
 
-              {/* Y.1564 Tests */}
-              <CollapsibleSection
-                title={
-                  <div className="flex items-center gap-2">
-                    <Activity className="w-4 h-4" />
-                    <span>Y.1564 / EtherSAM</span>
-                  </div>
-                }
-              >
-                <div className="space-y-2">
-                  {[
-                    {
-                      id: 'y1564_config',
-                      name: 'Configuration Test',
-                      desc: 'Service config validation',
-                      tooltip:
-                        'Validate service at step loads (25%, 50%, 75%, 100% of CIR) with quick pass/fail.',
-                    },
-                    {
-                      id: 'y1564_perf',
-                      name: 'Performance Test',
-                      desc: 'Sustained 15+ min test',
-                      tooltip:
-                        'Extended duration test at full CIR to verify SLA compliance over time.',
-                    },
-                    {
-                      id: 'y1564_full',
-                      name: 'Full Test',
-                      desc: 'Both config and perf',
-                      tooltip:
-                        'Complete Service Activation Test combining both configuration and performance phases.',
-                    },
-                  ].map((test) => (
-                    <label
-                      key={test.id}
-                      className="flex items-start gap-3 p-2 rounded-lg cursor-pointer hover:bg-[var(--color-surface-hover)]"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedTests.includes(test.id)}
-                        onChange={() => toggleTest(test.id)}
-                        className="mt-0.5 w-4 h-4 accent-[var(--color-stem-green)]"
-                      />
-                      <div className="flex-1">
-                        <div className="font-medium text-sm flex items-center gap-1">
-                          {test.name}
-                          <HelpIcon tooltip={test.tooltip} />
-                        </div>
-                        <div className="text-xs text-[var(--color-text-muted)]">{test.desc}</div>
-                      </div>
-                    </label>
-                  ))}
-                </div>
-              </CollapsibleSection>
+              {/* Module View */}
+              {viewMode === 'module' && (
+                <ModuleSelector selectedTests={selectedTests} setSelectedTests={setSelectedTests} />
+              )}
 
-              {/* RFC 2889 Tests */}
-              <CollapsibleSection
-                title={
-                  <div className="flex items-center gap-2">
-                    <Cpu className="w-4 h-4" />
-                    <span>RFC 2889 LAN Switch</span>
-                  </div>
-                }
-              >
-                <div className="space-y-2">
-                  {[
-                    {
-                      id: 'rfc2889_forwarding',
-                      name: 'Forwarding Rate',
-                      desc: 'Switch forwarding capacity',
-                      tooltip:
-                        'Measure aggregate forwarding rate across all ports of a LAN switch.',
-                    },
-                    {
-                      id: 'rfc2889_caching',
-                      name: 'Address Caching',
-                      desc: 'MAC table capacity',
-                      tooltip:
-                        'Determine maximum number of MAC addresses the switch can learn and forward.',
-                    },
-                    {
-                      id: 'rfc2889_learning',
-                      name: 'Address Learning',
-                      desc: 'Learning rate',
-                      tooltip: 'Measure how quickly the switch learns new MAC addresses.',
-                    },
-                    {
-                      id: 'rfc2889_broadcast',
-                      name: 'Broadcast',
-                      desc: 'Broadcast forwarding',
-                      tooltip: 'Test how the switch handles broadcast traffic flooding.',
-                    },
-                    {
-                      id: 'rfc2889_congestion',
-                      name: 'Congestion Control',
-                      desc: 'Backpressure handling',
-                      tooltip: 'Verify backpressure and flow control under congestion.',
-                    },
-                  ].map((test) => (
-                    <label
-                      key={test.id}
-                      className="flex items-start gap-3 p-2 rounded-lg cursor-pointer hover:bg-[var(--color-surface-hover)]"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedTests.includes(test.id)}
-                        onChange={() => toggleTest(test.id)}
-                        className="mt-0.5 w-4 h-4 accent-[var(--color-stem-green)]"
-                      />
-                      <div className="flex-1">
-                        <div className="font-medium text-sm flex items-center gap-1">
-                          {test.name}
-                          <HelpIcon tooltip={test.tooltip} />
-                        </div>
-                        <div className="text-xs text-[var(--color-text-muted)]">{test.desc}</div>
+              {/* Standard View */}
+              {viewMode === 'standard' && (
+                <>
+                  {/* RFC 2544 Tests */}
+                  <CollapsibleSection
+                    title={
+                      <div className="flex items-center gap-2">
+                        <Zap className="w-4 h-4" />
+                        <span>RFC 2544 Tests</span>
+                        <span className="text-xs text-[var(--color-text-muted)]">
+                          ({selectedTests.filter((t) => t.startsWith('rfc2544')).length}/6)
+                        </span>
                       </div>
-                    </label>
-                  ))}
-                </div>
-              </CollapsibleSection>
+                    }
+                  >
+                    <div className="space-y-2">
+                      {[
+                        {
+                          id: 'rfc2544_throughput',
+                          name: 'Throughput',
+                          desc: 'Max rate with 0% loss',
+                          tooltip:
+                            'Find the maximum rate at which the DUT can forward frames with zero packet loss using binary search.',
+                        },
+                        {
+                          id: 'rfc2544_latency',
+                          name: 'Latency',
+                          desc: 'Round-trip time',
+                          tooltip:
+                            'Measure round-trip packet delay at various loads and frame sizes.',
+                        },
+                        {
+                          id: 'rfc2544_frame_loss',
+                          name: 'Frame Loss',
+                          desc: 'Loss vs offered load',
+                          tooltip:
+                            'Measure packet loss percentage across different offered load levels.',
+                        },
+                        {
+                          id: 'rfc2544_back_to_back',
+                          name: 'Back-to-Back',
+                          desc: 'Burst capacity',
+                          tooltip:
+                            'Test maximum burst capacity - how many frames at line rate before drops occur.',
+                        },
+                        {
+                          id: 'rfc2544_system_recovery',
+                          name: 'System Recovery',
+                          desc: 'Recovery after overload',
+                          tooltip:
+                            'Measure time to recover normal forwarding after sustained overload condition.',
+                        },
+                        {
+                          id: 'rfc2544_reset',
+                          name: 'Reset',
+                          desc: 'Device reset recovery',
+                          tooltip:
+                            'Measure time from device restart to when it resumes forwarding traffic.',
+                        },
+                      ].map((test) => (
+                        <label
+                          key={test.id}
+                          className="flex items-start gap-3 p-2 rounded-lg cursor-pointer hover:bg-[var(--color-surface-hover)]"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedTests.includes(test.id)}
+                            onChange={() => toggleTest(test.id)}
+                            className="mt-0.5 w-4 h-4 accent-[var(--color-stem-green)]"
+                          />
+                          <div className="flex-1">
+                            <div className="font-medium text-sm flex items-center gap-1">
+                              {test.name}
+                              <HelpIcon tooltip={test.tooltip} />
+                            </div>
+                            <div className="text-xs text-[var(--color-text-muted)]">
+                              {test.desc}
+                            </div>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  </CollapsibleSection>
 
-              {/* RFC 6349 Tests */}
-              <CollapsibleSection
-                title={
-                  <div className="flex items-center gap-2">
-                    <Activity className="w-4 h-4" />
-                    <span>RFC 6349 TCP</span>
-                  </div>
-                }
-              >
-                <div className="space-y-2">
-                  {[
-                    {
-                      id: 'rfc6349_throughput',
-                      name: 'TCP Throughput',
-                      desc: 'BDP analysis',
-                      tooltip:
-                        'Measure real TCP performance with Bandwidth-Delay Product optimization.',
-                    },
-                    {
-                      id: 'rfc6349_path',
-                      name: 'Path Analysis',
-                      desc: 'RTT/Bandwidth',
-                      tooltip:
-                        'Characterize network path properties including RTT, loss, and capacity.',
-                    },
-                  ].map((test) => (
-                    <label
-                      key={test.id}
-                      className="flex items-start gap-3 p-2 rounded-lg cursor-pointer hover:bg-[var(--color-surface-hover)]"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedTests.includes(test.id)}
-                        onChange={() => toggleTest(test.id)}
-                        className="mt-0.5 w-4 h-4 accent-[var(--color-stem-green)]"
-                      />
-                      <div className="flex-1">
-                        <div className="font-medium text-sm flex items-center gap-1">
-                          {test.name}
-                          <HelpIcon tooltip={test.tooltip} />
-                        </div>
-                        <div className="text-xs text-[var(--color-text-muted)]">{test.desc}</div>
+                  {/* Y.1564 Tests */}
+                  <CollapsibleSection
+                    title={
+                      <div className="flex items-center gap-2">
+                        <Activity className="w-4 h-4" />
+                        <span>Y.1564 / EtherSAM</span>
                       </div>
-                    </label>
-                  ))}
-                </div>
-              </CollapsibleSection>
+                    }
+                  >
+                    <div className="space-y-2">
+                      {[
+                        {
+                          id: 'y1564_config',
+                          name: 'Configuration Test',
+                          desc: 'Service config validation',
+                          tooltip:
+                            'Validate service at step loads (25%, 50%, 75%, 100% of CIR) with quick pass/fail.',
+                        },
+                        {
+                          id: 'y1564_perf',
+                          name: 'Performance Test',
+                          desc: 'Sustained 15+ min test',
+                          tooltip:
+                            'Extended duration test at full CIR to verify SLA compliance over time.',
+                        },
+                        {
+                          id: 'y1564_full',
+                          name: 'Full Test',
+                          desc: 'Both config and perf',
+                          tooltip:
+                            'Complete Service Activation Test combining both configuration and performance phases.',
+                        },
+                      ].map((test) => (
+                        <label
+                          key={test.id}
+                          className="flex items-start gap-3 p-2 rounded-lg cursor-pointer hover:bg-[var(--color-surface-hover)]"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedTests.includes(test.id)}
+                            onChange={() => toggleTest(test.id)}
+                            className="mt-0.5 w-4 h-4 accent-[var(--color-stem-green)]"
+                          />
+                          <div className="flex-1">
+                            <div className="font-medium text-sm flex items-center gap-1">
+                              {test.name}
+                              <HelpIcon tooltip={test.tooltip} />
+                            </div>
+                            <div className="text-xs text-[var(--color-text-muted)]">
+                              {test.desc}
+                            </div>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  </CollapsibleSection>
 
-              {/* Y.1731 Tests */}
-              <CollapsibleSection
-                title={
-                  <div className="flex items-center gap-2">
-                    <Radio className="w-4 h-4" />
-                    <span>Y.1731 OAM</span>
-                  </div>
-                }
-              >
-                <div className="space-y-2">
-                  {[
-                    {
-                      id: 'y1731_delay',
-                      name: 'Delay (DMM/DMR)',
-                      desc: 'Frame delay measurement',
-                      tooltip:
-                        'Measure one-way and two-way frame delay using DMM/DMR OAM messages.',
-                    },
-                    {
-                      id: 'y1731_loss',
-                      name: 'Loss (LMM/LMR)',
-                      desc: 'Frame loss measurement',
-                      tooltip: 'Measure frame loss ratio using LMM/LMR OAM messages.',
-                    },
-                    {
-                      id: 'y1731_slm',
-                      name: 'Synthetic Loss',
-                      desc: 'SLM measurement',
-                      tooltip: 'Synthetic loss measurement using SLM/SLR frames.',
-                    },
-                    {
-                      id: 'y1731_loopback',
-                      name: 'Loopback',
-                      desc: 'LBM/LBR test',
-                      tooltip: 'Verify connectivity using OAM loopback messages (LBM/LBR).',
-                    },
-                  ].map((test) => (
-                    <label
-                      key={test.id}
-                      className="flex items-start gap-3 p-2 rounded-lg cursor-pointer hover:bg-[var(--color-surface-hover)]"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedTests.includes(test.id)}
-                        onChange={() => toggleTest(test.id)}
-                        className="mt-0.5 w-4 h-4 accent-[var(--color-stem-green)]"
-                      />
-                      <div className="flex-1">
-                        <div className="font-medium text-sm flex items-center gap-1">
-                          {test.name}
-                          <HelpIcon tooltip={test.tooltip} />
-                        </div>
-                        <div className="text-xs text-[var(--color-text-muted)]">{test.desc}</div>
+                  {/* RFC 2889 Tests */}
+                  <CollapsibleSection
+                    title={
+                      <div className="flex items-center gap-2">
+                        <Cpu className="w-4 h-4" />
+                        <span>RFC 2889 LAN Switch</span>
                       </div>
-                    </label>
-                  ))}
-                </div>
-              </CollapsibleSection>
+                    }
+                  >
+                    <div className="space-y-2">
+                      {[
+                        {
+                          id: 'rfc2889_forwarding',
+                          name: 'Forwarding Rate',
+                          desc: 'Switch forwarding capacity',
+                          tooltip:
+                            'Measure aggregate forwarding rate across all ports of a LAN switch.',
+                        },
+                        {
+                          id: 'rfc2889_caching',
+                          name: 'Address Caching',
+                          desc: 'MAC table capacity',
+                          tooltip:
+                            'Determine maximum number of MAC addresses the switch can learn and forward.',
+                        },
+                        {
+                          id: 'rfc2889_learning',
+                          name: 'Address Learning',
+                          desc: 'Learning rate',
+                          tooltip: 'Measure how quickly the switch learns new MAC addresses.',
+                        },
+                        {
+                          id: 'rfc2889_broadcast',
+                          name: 'Broadcast',
+                          desc: 'Broadcast forwarding',
+                          tooltip: 'Test how the switch handles broadcast traffic flooding.',
+                        },
+                        {
+                          id: 'rfc2889_congestion',
+                          name: 'Congestion Control',
+                          desc: 'Backpressure handling',
+                          tooltip: 'Verify backpressure and flow control under congestion.',
+                        },
+                      ].map((test) => (
+                        <label
+                          key={test.id}
+                          className="flex items-start gap-3 p-2 rounded-lg cursor-pointer hover:bg-[var(--color-surface-hover)]"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedTests.includes(test.id)}
+                            onChange={() => toggleTest(test.id)}
+                            className="mt-0.5 w-4 h-4 accent-[var(--color-stem-green)]"
+                          />
+                          <div className="flex-1">
+                            <div className="font-medium text-sm flex items-center gap-1">
+                              {test.name}
+                              <HelpIcon tooltip={test.tooltip} />
+                            </div>
+                            <div className="text-xs text-[var(--color-text-muted)]">
+                              {test.desc}
+                            </div>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  </CollapsibleSection>
 
-              {/* MEF Tests */}
-              <CollapsibleSection
-                title={
-                  <div className="flex items-center gap-2">
-                    <Settings2 className="w-4 h-4" />
-                    <span>MEF Service</span>
-                  </div>
-                }
-              >
-                <div className="space-y-2">
-                  {[
-                    {
-                      id: 'mef_config',
-                      name: 'Configuration',
-                      desc: 'Service step test',
-                      tooltip: 'MEF service configuration test - validates service at step loads.',
-                    },
-                    {
-                      id: 'mef_perf',
-                      name: 'Performance',
-                      desc: 'Sustained test',
-                      tooltip: 'MEF service performance test - verifies SLA compliance over time.',
-                    },
-                    {
-                      id: 'mef_full',
-                      name: 'Full Test',
-                      desc: 'Both phases',
-                      tooltip:
-                        'Complete MEF validation including both configuration and performance.',
-                    },
-                  ].map((test) => (
-                    <label
-                      key={test.id}
-                      className="flex items-start gap-3 p-2 rounded-lg cursor-pointer hover:bg-[var(--color-surface-hover)]"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedTests.includes(test.id)}
-                        onChange={() => toggleTest(test.id)}
-                        className="mt-0.5 w-4 h-4 accent-[var(--color-stem-green)]"
-                      />
-                      <div className="flex-1">
-                        <div className="font-medium text-sm flex items-center gap-1">
-                          {test.name}
-                          <HelpIcon tooltip={test.tooltip} />
-                        </div>
-                        <div className="text-xs text-[var(--color-text-muted)]">{test.desc}</div>
+                  {/* RFC 6349 Tests */}
+                  <CollapsibleSection
+                    title={
+                      <div className="flex items-center gap-2">
+                        <Activity className="w-4 h-4" />
+                        <span>RFC 6349 TCP</span>
                       </div>
-                    </label>
-                  ))}
-                </div>
-              </CollapsibleSection>
+                    }
+                  >
+                    <div className="space-y-2">
+                      {[
+                        {
+                          id: 'rfc6349_throughput',
+                          name: 'TCP Throughput',
+                          desc: 'BDP analysis',
+                          tooltip:
+                            'Measure real TCP performance with Bandwidth-Delay Product optimization.',
+                        },
+                        {
+                          id: 'rfc6349_path',
+                          name: 'Path Analysis',
+                          desc: 'RTT/Bandwidth',
+                          tooltip:
+                            'Characterize network path properties including RTT, loss, and capacity.',
+                        },
+                      ].map((test) => (
+                        <label
+                          key={test.id}
+                          className="flex items-start gap-3 p-2 rounded-lg cursor-pointer hover:bg-[var(--color-surface-hover)]"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedTests.includes(test.id)}
+                            onChange={() => toggleTest(test.id)}
+                            className="mt-0.5 w-4 h-4 accent-[var(--color-stem-green)]"
+                          />
+                          <div className="flex-1">
+                            <div className="font-medium text-sm flex items-center gap-1">
+                              {test.name}
+                              <HelpIcon tooltip={test.tooltip} />
+                            </div>
+                            <div className="text-xs text-[var(--color-text-muted)]">
+                              {test.desc}
+                            </div>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  </CollapsibleSection>
 
-              {/* TSN Tests */}
-              <CollapsibleSection
-                title={
-                  <div className="flex items-center gap-2">
-                    <Cpu className="w-4 h-4" />
-                    <span>TSN 802.1Qbv</span>
-                  </div>
-                }
-              >
-                <div className="space-y-2">
-                  {[
-                    {
-                      id: 'tsn_timing',
-                      name: 'Gate Timing',
-                      desc: 'GCL accuracy',
-                      tooltip: 'Verify Time-Aware Shaper (TAS) gate control list timing accuracy.',
-                    },
-                    {
-                      id: 'tsn_isolation',
-                      name: 'Traffic Isolation',
-                      desc: 'Class isolation',
-                      tooltip: 'Verify traffic class separation and priority enforcement.',
-                    },
-                    {
-                      id: 'tsn_latency',
-                      name: 'Scheduled Latency',
-                      desc: 'Deterministic delay',
-                      tooltip: 'Measure deterministic latency for scheduled traffic flows.',
-                    },
-                    {
-                      id: 'tsn_full',
-                      name: 'Full Suite',
-                      desc: 'All TSN tests',
-                      tooltip: 'Complete TSN validation including timing, isolation, and latency.',
-                    },
-                  ].map((test) => (
-                    <label
-                      key={test.id}
-                      className="flex items-start gap-3 p-2 rounded-lg cursor-pointer hover:bg-[var(--color-surface-hover)]"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedTests.includes(test.id)}
-                        onChange={() => toggleTest(test.id)}
-                        className="mt-0.5 w-4 h-4 accent-[var(--color-stem-green)]"
-                      />
-                      <div className="flex-1">
-                        <div className="font-medium text-sm flex items-center gap-1">
-                          {test.name}
-                          <HelpIcon tooltip={test.tooltip} />
-                        </div>
-                        <div className="text-xs text-[var(--color-text-muted)]">{test.desc}</div>
+                  {/* Y.1731 Tests */}
+                  <CollapsibleSection
+                    title={
+                      <div className="flex items-center gap-2">
+                        <Radio className="w-4 h-4" />
+                        <span>Y.1731 OAM</span>
                       </div>
-                    </label>
-                  ))}
-                </div>
-              </CollapsibleSection>
+                    }
+                  >
+                    <div className="space-y-2">
+                      {[
+                        {
+                          id: 'y1731_delay',
+                          name: 'Delay (DMM/DMR)',
+                          desc: 'Frame delay measurement',
+                          tooltip:
+                            'Measure one-way and two-way frame delay using DMM/DMR OAM messages.',
+                        },
+                        {
+                          id: 'y1731_loss',
+                          name: 'Loss (LMM/LMR)',
+                          desc: 'Frame loss measurement',
+                          tooltip: 'Measure frame loss ratio using LMM/LMR OAM messages.',
+                        },
+                        {
+                          id: 'y1731_slm',
+                          name: 'Synthetic Loss',
+                          desc: 'SLM measurement',
+                          tooltip: 'Synthetic loss measurement using SLM/SLR frames.',
+                        },
+                        {
+                          id: 'y1731_loopback',
+                          name: 'Loopback',
+                          desc: 'LBM/LBR test',
+                          tooltip: 'Verify connectivity using OAM loopback messages (LBM/LBR).',
+                        },
+                      ].map((test) => (
+                        <label
+                          key={test.id}
+                          className="flex items-start gap-3 p-2 rounded-lg cursor-pointer hover:bg-[var(--color-surface-hover)]"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedTests.includes(test.id)}
+                            onChange={() => toggleTest(test.id)}
+                            className="mt-0.5 w-4 h-4 accent-[var(--color-stem-green)]"
+                          />
+                          <div className="flex-1">
+                            <div className="font-medium text-sm flex items-center gap-1">
+                              {test.name}
+                              <HelpIcon tooltip={test.tooltip} />
+                            </div>
+                            <div className="text-xs text-[var(--color-text-muted)]">
+                              {test.desc}
+                            </div>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  </CollapsibleSection>
+
+                  {/* MEF Tests */}
+                  <CollapsibleSection
+                    title={
+                      <div className="flex items-center gap-2">
+                        <Settings2 className="w-4 h-4" />
+                        <span>MEF Service</span>
+                      </div>
+                    }
+                  >
+                    <div className="space-y-2">
+                      {[
+                        {
+                          id: 'mef_config',
+                          name: 'Configuration',
+                          desc: 'Service step test',
+                          tooltip:
+                            'MEF service configuration test - validates service at step loads.',
+                        },
+                        {
+                          id: 'mef_perf',
+                          name: 'Performance',
+                          desc: 'Sustained test',
+                          tooltip:
+                            'MEF service performance test - verifies SLA compliance over time.',
+                        },
+                        {
+                          id: 'mef_full',
+                          name: 'Full Test',
+                          desc: 'Both phases',
+                          tooltip:
+                            'Complete MEF validation including both configuration and performance.',
+                        },
+                      ].map((test) => (
+                        <label
+                          key={test.id}
+                          className="flex items-start gap-3 p-2 rounded-lg cursor-pointer hover:bg-[var(--color-surface-hover)]"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedTests.includes(test.id)}
+                            onChange={() => toggleTest(test.id)}
+                            className="mt-0.5 w-4 h-4 accent-[var(--color-stem-green)]"
+                          />
+                          <div className="flex-1">
+                            <div className="font-medium text-sm flex items-center gap-1">
+                              {test.name}
+                              <HelpIcon tooltip={test.tooltip} />
+                            </div>
+                            <div className="text-xs text-[var(--color-text-muted)]">
+                              {test.desc}
+                            </div>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  </CollapsibleSection>
+
+                  {/* TSN Tests */}
+                  <CollapsibleSection
+                    title={
+                      <div className="flex items-center gap-2">
+                        <Cpu className="w-4 h-4" />
+                        <span>TSN 802.1Qbv</span>
+                      </div>
+                    }
+                  >
+                    <div className="space-y-2">
+                      {[
+                        {
+                          id: 'tsn_timing',
+                          name: 'Gate Timing',
+                          desc: 'GCL accuracy',
+                          tooltip:
+                            'Verify Time-Aware Shaper (TAS) gate control list timing accuracy.',
+                        },
+                        {
+                          id: 'tsn_isolation',
+                          name: 'Traffic Isolation',
+                          desc: 'Class isolation',
+                          tooltip: 'Verify traffic class separation and priority enforcement.',
+                        },
+                        {
+                          id: 'tsn_latency',
+                          name: 'Scheduled Latency',
+                          desc: 'Deterministic delay',
+                          tooltip: 'Measure deterministic latency for scheduled traffic flows.',
+                        },
+                        {
+                          id: 'tsn_full',
+                          name: 'Full Suite',
+                          desc: 'All TSN tests',
+                          tooltip:
+                            'Complete TSN validation including timing, isolation, and latency.',
+                        },
+                      ].map((test) => (
+                        <label
+                          key={test.id}
+                          className="flex items-start gap-3 p-2 rounded-lg cursor-pointer hover:bg-[var(--color-surface-hover)]"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedTests.includes(test.id)}
+                            onChange={() => toggleTest(test.id)}
+                            className="mt-0.5 w-4 h-4 accent-[var(--color-stem-green)]"
+                          />
+                          <div className="flex-1">
+                            <div className="font-medium text-sm flex items-center gap-1">
+                              {test.name}
+                              <HelpIcon tooltip={test.tooltip} />
+                            </div>
+                            <div className="text-xs text-[var(--color-text-muted)]">
+                              {test.desc}
+                            </div>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  </CollapsibleSection>
+                </>
+              )}
             </>
           )}
 

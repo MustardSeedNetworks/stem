@@ -3,7 +3,7 @@
 **Product:** The Stem - Network Performance Testing
 **Version:** v0.1.0
 **Repo:** stem
-**Last Updated:** 2025-12-28
+**Last Updated:** 2025-12-30
 
 ---
 
@@ -162,17 +162,27 @@ node --version  # Must show v25.x
 stem/
 ├── cmd/stem/              # Main CLI entry point
 ├── internal/              # Private Go packages
-│   ├── reflector/         # Packet reflector mode (Tier 1)
-│   ├── testmaster/        # Test execution mode (Tier 2)
+│   ├── modules/           # Module layer (NEW)
+│   │   ├── module.go      # Module interface
+│   │   ├── registry.go    # Module registry
+│   │   ├── init.go        # Module initialization
+│   │   ├── benchmark/     # RFC 2544 module
+│   │   ├── servicetest/   # Y.1564/MEF module
+│   │   ├── trafficgen/    # Traffic generation module
+│   │   ├── measure/       # Y.1731 OAM module
+│   │   └── certify/       # RFC 2889/6349/TSN module
+│   ├── reflector/         # Packet reflector subsystem
+│   ├── testmaster/        # Test execution subsystem
 │   ├── license/           # License management
 │   ├── help/              # Built-in help system
 │   ├── version/           # Version info
-│   └── web/               # Shared web server
+│   └── web/               # Web server with module API
 ├── src/                   # C source files (C23)
 │   └── dataplane/         # DPDK/AF_PACKET/AF_XDP backends
 ├── include/               # C headers
 ├── ui/                    # React frontend (TypeScript)
 │   └── src/components/    # React components
+│       └── ModuleSelector.tsx  # Module-aware test selector
 ├── tests/                 # Test files
 ├── bin/                   # Built binaries
 ├── docs/                  # Local docs
@@ -207,15 +217,68 @@ make format          # Format all code
 
 ---
 
-## Module Colors (UI Reference)
+## Module Architecture
 
-| Module | Purpose | Color |
-|--------|---------|-------|
-| **Benchmark** | RFC 2544 testing | Red #dc2626 |
-| **ServiceTest** | Y.1564 service activation | Orange #ea580c |
-| **TrafficGen** | Custom traffic generation | Yellow #ca8a04 |
-| **Measure** | Y.1731 performance monitoring | Blue #2563eb |
-| **Certify** | Compliance certification | Green #16a34a |
+The Stem uses a module-oriented architecture where modules own workflows and delegate to subsystems.
+
+### Module Layer
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         MODULE LAYER                                     │
+│  ┌───────────┐ ┌───────────┐ ┌───────────┐ ┌───────────┐ ┌───────────┐ │
+│  │ Benchmark │ │ServiceTest│ │ TrafficGen│ │  Measure  │ │  Certify  │ │
+│  │  (Red)    │ │ (Orange)  │ │ (Yellow)  │ │  (Blue)   │ │  (Green)  │ │
+│  └─────┬─────┘ └─────┬─────┘ └─────┬─────┘ └─────┬─────┘ └─────┬─────┘ │
+└────────┼─────────────┼─────────────┼─────────────┼─────────────┼───────┘
+         │             │             │             │             │
+┌────────┴─────────────┴─────────────┴─────────────┴─────────────┴───────┐
+│                     SUBSYSTEM LAYER                                     │
+│           testmaster  │  reflector  │  web  │  license                  │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### Modules
+
+| Module | Color | Standard | Test Types |
+|--------|-------|----------|------------|
+| **Reflector** | #0891b2 (Cyan) | Loopback/Echo | reflect (Tier 1 operational mode) |
+| **Benchmark** | #dc2626 (Red) | RFC 2544 | throughput, latency, frame_loss, back_to_back, system_recovery, reset |
+| **ServiceTest** | #ea580c (Orange) | ITU-T Y.1564 / MEF | y1564_config, y1564_perf, y1564, mef_config, mef_perf, mef |
+| **TrafficGen** | #ca8a04 (Yellow) | Custom Traffic | custom_stream |
+| **Measure** | #2563eb (Blue) | ITU-T Y.1731 | y1731_delay, y1731_loss, y1731_slm, y1731_loopback |
+| **Certify** | #16a34a (Green) | RFC 2889/6349/TSN | rfc2889_*, rfc6349_*, tsn_* |
+
+### Module Interface
+
+```go
+type Module interface {
+    Name() string           // "benchmark"
+    DisplayName() string    // "Benchmark"
+    Description() string    // Human-readable description
+    Color() string          // "#dc2626"
+    Standard() string       // "RFC 2544"
+    TestTypes() []string    // ["throughput", "latency", ...]
+    CanRun(testType string) bool
+}
+```
+
+### Module API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/modules` | GET | List all modules with metadata |
+| `/api/modules/:name` | GET | Get specific module info |
+| `/api/modules/:name/tests` | GET | List test types for module |
+
+### CLI Module Commands
+
+```bash
+stem list-tests              # List tests by standard
+stem list-tests --by-module  # List tests grouped by module
+stem list-tests --json       # JSON output
+stem help modules            # Show tests by module in help
+```
 
 ---
 

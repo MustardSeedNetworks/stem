@@ -28,12 +28,13 @@ import (
 	"github.com/krisarmstrong/stem/internal/help"
 	"github.com/krisarmstrong/stem/internal/license"
 	"github.com/krisarmstrong/stem/internal/logging"
-	"github.com/krisarmstrong/stem/internal/version"
+	"github.com/krisarmstrong/stem/internal/modules"
 	reflectorConfig "github.com/krisarmstrong/stem/internal/reflector/config"
 	reflectorDP "github.com/krisarmstrong/stem/internal/reflector/dataplane"
 	reflectorTUI "github.com/krisarmstrong/stem/internal/reflector/tui"
 	testmasterDP "github.com/krisarmstrong/stem/internal/testmaster/dataplane"
 	testmasterTUI "github.com/krisarmstrong/stem/internal/testmaster/tui"
+	"github.com/krisarmstrong/stem/internal/version"
 	"github.com/krisarmstrong/stem/internal/web"
 )
 
@@ -135,7 +136,7 @@ func main() {
 	case "license":
 		licenseCmd(os.Args[2:])
 	case "list-tests":
-		listTestsCmd()
+		listTestsCmd(os.Args[2:])
 	case "help", "--help", "-h":
 		helpCmd(os.Args[2:])
 	case "tutorial":
@@ -176,7 +177,7 @@ COMMANDS:
     help         Get help on commands, tests, and concepts
     tutorial     Step-by-step learning guides
     glossary     Network terminology definitions
-    list-tests   Show all available test types
+    list-tests   Show all available test types (--by-module for module view)
     version      Show version information
 
 REFLECT OPTIONS:
@@ -239,19 +240,59 @@ For more information: https://mustardseednetworks.com
 `)
 }
 
-func listTestsCmd() {
+func listTestsCmd(args []string) {
+	fs := flag.NewFlagSet("list-tests", flag.ExitOnError)
+	byModule := fs.Bool("by-module", false, "Group tests by module")
+	fs.BoolVar(byModule, "m", false, "Group tests by module (shorthand)")
+	jsonOutput := fs.Bool("json", false, "Output in JSON format")
+
+	if err := fs.Parse(args); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	if *jsonOutput {
+		// JSON output using modules
+		moduleInfos := modules.GetAllModuleInfos()
+		data, _ := json.MarshalIndent(map[string]interface{}{
+			"modules": moduleInfos,
+			"count":   len(moduleInfos),
+		}, "", "  ")
+		fmt.Println(string(data))
+		return
+	}
+
 	fmt.Printf("%s - Available Test Types\n", ProductName)
 	fmt.Println(strings.Repeat("=", 60))
 
-	for _, cat := range testCategories {
-		fmt.Printf("\n%s:\n", cat.name)
-		for _, t := range cat.tests {
-			desc := allTestTypes[t]
-			fmt.Printf("  %-20s %s\n", t, desc)
-		}
-	}
+	if *byModule {
+		// Group by module (new module-oriented view)
+		allMods := modules.GetAllModules()
+		totalTests := 0
 
-	fmt.Printf("\nTotal: %d test types across %d categories\n", len(allTestTypes), len(testCategories))
+		for _, mod := range allMods {
+			fmt.Printf("\n%s [%s] (%s):\n", mod.DisplayName(), mod.Color(), mod.Standard())
+			fmt.Printf("  %s\n", mod.Description())
+			fmt.Println()
+			for _, t := range mod.TestTypes() {
+				desc := allTestTypes[t]
+				fmt.Printf("    %-20s %s\n", t, desc)
+				totalTests++
+			}
+		}
+		fmt.Printf("\nTotal: %d test types across %d modules\n", totalTests, len(allMods))
+	} else {
+		// Legacy category-based view (preserved for backward compatibility)
+		for _, cat := range testCategories {
+			fmt.Printf("\n%s:\n", cat.name)
+			for _, t := range cat.tests {
+				desc := allTestTypes[t]
+				fmt.Printf("  %-20s %s\n", t, desc)
+			}
+		}
+		fmt.Printf("\nTotal: %d test types across %d categories\n", len(allTestTypes), len(testCategories))
+		fmt.Println("\nTip: Use --by-module to see tests grouped by module")
+	}
 }
 
 func reflectCmd(args []string) {
@@ -425,14 +466,18 @@ func testCmd(args []string) {
 		os.Exit(1)
 	}
 
-	// Validate test types
+	// Validate test types (check both legacy map and module registry)
 	tests := strings.Split(*testTypes, ",")
 	for i, t := range tests {
 		tests[i] = strings.TrimSpace(t)
+		// Check legacy map first for backward compatibility
 		if _, ok := allTestTypes[tests[i]]; !ok {
-			fmt.Printf("Error: Unknown test type '%s'\n", tests[i])
-			fmt.Println("Run 'stem list-tests' to see available tests")
-			os.Exit(1)
+			// Also check module registry
+			if mod := modules.GetModuleForTest(tests[i]); mod == nil {
+				fmt.Printf("Error: Unknown test type '%s'\n", tests[i])
+				fmt.Println("Run 'stem list-tests' to see available tests")
+				os.Exit(1)
+			}
 		}
 	}
 

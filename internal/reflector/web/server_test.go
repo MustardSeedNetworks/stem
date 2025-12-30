@@ -86,6 +86,7 @@ func TestHandleConfigOptions(t *testing.T) {
 	s := New(nil, 8080)
 	// Test CORS preflight request (doesn't require dataplane)
 	req := httptest.NewRequest(http.MethodOptions, "/api/config", nil)
+	req.Header.Set("Origin", "http://localhost:3000")
 	w := httptest.NewRecorder()
 
 	s.handleConfig(w, req)
@@ -94,9 +95,10 @@ func TestHandleConfigOptions(t *testing.T) {
 		t.Errorf("Expected status 200 for OPTIONS, got %d", w.Code)
 	}
 
-	// Check CORS headers
-	if w.Header().Get("Access-Control-Allow-Origin") != "*" {
-		t.Error("Expected Access-Control-Allow-Origin header")
+	// Check CORS headers - should echo the localhost origin
+	cors := w.Header().Get("Access-Control-Allow-Origin")
+	if cors != "http://localhost:3000" {
+		t.Errorf("Expected Access-Control-Allow-Origin 'http://localhost:3000', got '%s'", cors)
 	}
 }
 
@@ -344,28 +346,30 @@ func TestServerStartTime(t *testing.T) {
 func TestHandleHealthCORS(t *testing.T) {
 	s := New(nil, 8080)
 	req := httptest.NewRequest(http.MethodGet, "/api/health", nil)
+	req.Header.Set("Origin", "http://localhost:5173")
 	w := httptest.NewRecorder()
 
 	s.handleHealth(w, req)
 
-	// Check CORS header
+	// Check CORS header - should echo the localhost origin
 	cors := w.Header().Get("Access-Control-Allow-Origin")
-	if cors != "*" {
-		t.Errorf("Expected Access-Control-Allow-Origin '*', got '%s'", cors)
+	if cors != "http://localhost:5173" {
+		t.Errorf("Expected Access-Control-Allow-Origin 'http://localhost:5173', got '%s'", cors)
 	}
 }
 
 func TestHandleStatsCORS(t *testing.T) {
 	s := New(nil, 8080)
 	req := httptest.NewRequest(http.MethodGet, "/api/stats", nil)
+	req.Header.Set("Origin", "http://127.0.0.1:8080")
 	w := httptest.NewRecorder()
 
 	s.handleStats(w, req)
 
-	// Check CORS header
+	// Check CORS header - should echo the localhost origin
 	cors := w.Header().Get("Access-Control-Allow-Origin")
-	if cors != "*" {
-		t.Errorf("Expected Access-Control-Allow-Origin '*', got '%s'", cors)
+	if cors != "http://127.0.0.1:8080" {
+		t.Errorf("Expected Access-Control-Allow-Origin 'http://127.0.0.1:8080', got '%s'", cors)
 	}
 }
 
@@ -457,15 +461,48 @@ func TestResetStatsResetsUptime(t *testing.T) {
 func TestConfigOptionsMethodCORS(t *testing.T) {
 	s := New(nil, 8080)
 	req := httptest.NewRequest(http.MethodOptions, "/api/config", nil)
+	req.Header.Set("Origin", "https://localhost:8443")
 	w := httptest.NewRecorder()
 
 	s.handleConfig(w, req)
 
-	// Check CORS headers for preflight
-	if w.Header().Get("Access-Control-Allow-Origin") != "*" {
-		t.Error("Expected CORS Allow-Origin header")
+	// Check CORS headers for preflight - should echo the localhost origin
+	cors := w.Header().Get("Access-Control-Allow-Origin")
+	if cors != "https://localhost:8443" {
+		t.Errorf("Expected CORS Allow-Origin 'https://localhost:8443', got '%s'", cors)
 	}
 	if w.Header().Get("Access-Control-Allow-Methods") == "" {
 		t.Error("Expected CORS Allow-Methods header")
+	}
+}
+
+// TestCORSBlocksNonLocalhost verifies that non-localhost origins are blocked
+func TestCORSBlocksNonLocalhost(t *testing.T) {
+	s := New(nil, 8080)
+	req := httptest.NewRequest(http.MethodGet, "/api/health", nil)
+	req.Header.Set("Origin", "http://evil.com")
+	w := httptest.NewRecorder()
+
+	s.handleHealth(w, req)
+
+	// Non-localhost origins should NOT get CORS header
+	cors := w.Header().Get("Access-Control-Allow-Origin")
+	if cors != "" {
+		t.Errorf("Expected no CORS header for non-localhost origin, got '%s'", cors)
+	}
+}
+
+// TestCORSSameOrigin verifies that same-origin requests work (no Origin header)
+func TestCORSSameOrigin(t *testing.T) {
+	s := New(nil, 8080)
+	req := httptest.NewRequest(http.MethodGet, "/api/health", nil)
+	// No Origin header = same-origin request
+	w := httptest.NewRecorder()
+
+	s.handleHealth(w, req)
+
+	// Same-origin requests don't need CORS header
+	if w.Code != http.StatusOK {
+		t.Errorf("Expected status 200, got %d", w.Code)
 	}
 }

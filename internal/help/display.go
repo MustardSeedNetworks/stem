@@ -12,6 +12,8 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+
+	"github.com/krisarmstrong/stem/internal/modules"
 )
 
 const (
@@ -23,6 +25,8 @@ const (
 	colorGreen  = "\033[32m"
 	colorYellow = "\033[33m"
 	colorBlue   = "\033[34m"
+	colorRed    = "\033[31m"
+	colorOrange = "\033[38;5;208m" // Extended color for orange
 )
 
 // DisplayTest shows detailed help for a test
@@ -368,6 +372,79 @@ func DisplayTestList() {
 	fmt.Println()
 }
 
+// DisplayTestListByModule shows all available tests grouped by module
+func DisplayTestListByModule() {
+	fmt.Println()
+	printHeader("Available Tests by Module")
+	fmt.Println()
+
+	allModules := modules.GetAllModules()
+	totalTests := 0
+	for _, m := range allModules {
+		totalTests += len(m.TestTypes())
+	}
+
+	fmt.Printf("Stem supports %d test types across %d modules.\n", totalTests, len(allModules))
+	fmt.Printf("Usage: %sstem test -i <interface> -t <test-type>%s\n", colorGreen, colorReset)
+	fmt.Println()
+
+	// Define module display order (Tier 1 first, then Tier 2 by color) - use lowercase module names
+	moduleOrder := []string{"reflector", "benchmark", "servicetest", "trafficgen", "measure", "certify"}
+
+	hs := NewHelpSystem()
+
+	for _, modName := range moduleOrder {
+		mod := modules.GetModule(modName)
+		if mod == nil {
+			continue
+		}
+
+		modColor := moduleColorToANSI(mod.Color())
+		fmt.Printf("%s%s%s%s - %s\n", modColor, colorBold, mod.DisplayName(), colorReset, mod.Description())
+		fmt.Printf("%sStandard: %s%s\n", colorDim, mod.Standard(), colorReset)
+		fmt.Println(strings.Repeat("─", 70))
+
+		testTypes := mod.TestTypes()
+		// Sort test types for consistent display
+		sort.Strings(testTypes)
+
+		for _, testType := range testTypes {
+			if test, ok := hs.Tests[testType]; ok {
+				fmt.Printf("  %s%-20s%s %s\n", modColor, testType, colorReset, test.Summary)
+			} else {
+				// Fallback if test not in help system
+				fmt.Printf("  %s%-20s%s\n", modColor, testType, colorReset)
+			}
+		}
+		fmt.Println()
+	}
+
+	fmt.Printf("For details: %sstem help <test-name>%s\n", colorGreen, colorReset)
+	fmt.Printf("For module view: %sstem list-tests --by-module%s\n", colorGreen, colorReset)
+	fmt.Println()
+}
+
+// moduleColorToANSI converts a hex color code to ANSI escape code
+func moduleColorToANSI(hexColor string) string {
+	// Map module colors to ANSI codes
+	switch hexColor {
+	case "#0891b2": // Reflector - Cyan
+		return colorCyan
+	case "#dc2626": // Benchmark - Red
+		return colorRed
+	case "#ea580c": // ServiceTest - Orange
+		return colorOrange
+	case "#ca8a04": // TrafficGen - Yellow
+		return colorYellow
+	case "#2563eb": // Measure - Blue
+		return colorBlue
+	case "#16a34a": // Certify - Green
+		return colorGreen
+	default:
+		return colorCyan
+	}
+}
+
 // Helper functions
 
 func printHeader(text string) {
@@ -410,6 +487,12 @@ func ShowHelp(topic string, simple bool) bool {
 	// Check if topic is "tests"
 	if topic == "tests" || topic == "list" {
 		DisplayTestList()
+		return true
+	}
+
+	// Check if topic is module-related
+	if topic == "modules" || topic == "by-module" || topic == "tests-by-module" {
+		DisplayTestListByModule()
 		return true
 	}
 

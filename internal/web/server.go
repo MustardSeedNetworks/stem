@@ -13,12 +13,14 @@ import (
 	"fmt"
 	"io/fs"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/krisarmstrong/stem/internal/interfaces"
 	"github.com/krisarmstrong/stem/internal/license"
 	"github.com/krisarmstrong/stem/internal/logging"
+	"github.com/krisarmstrong/stem/internal/modules"
 	"github.com/krisarmstrong/stem/internal/version"
 )
 
@@ -171,6 +173,10 @@ func (s *Server) setupRoutes() {
 	s.mux.HandleFunc("/api/license", s.handleLicense)
 	s.mux.HandleFunc("/api/license/activate", s.handleLicenseActivate)
 	s.mux.HandleFunc("/api/license/trial", s.handleLicenseTrial)
+
+	// Module routes (new module-oriented API)
+	s.mux.HandleFunc("/api/modules", s.handleModules)
+	s.mux.HandleFunc("/api/modules/", s.handleModuleByName)
 
 	// Static files (embedded UI)
 	staticFS, err := fs.Sub(staticFiles, "dist")
@@ -597,6 +603,60 @@ func (s *Server) handleLicenseTrial(w http.ResponseWriter, r *http.Request) {
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
+}
+
+// handleModules returns the list of all modules
+func (s *Server) handleModules(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	moduleInfos := modules.GetAllModuleInfos()
+	writeJSON(w, map[string]interface{}{
+		"modules": moduleInfos,
+		"count":   len(moduleInfos),
+	})
+}
+
+// handleModuleByName handles requests for specific modules
+// Supports: GET /api/modules/{name} and GET /api/modules/{name}/tests
+func (s *Server) handleModuleByName(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Parse path: /api/modules/{name} or /api/modules/{name}/tests
+	path := strings.TrimPrefix(r.URL.Path, "/api/modules/")
+	parts := strings.Split(path, "/")
+
+	if len(parts) == 0 || parts[0] == "" {
+		http.Error(w, "Module name required", http.StatusBadRequest)
+		return
+	}
+
+	moduleName := parts[0]
+	module := modules.GetModule(moduleName)
+
+	if module == nil {
+		http.Error(w, fmt.Sprintf("Module not found: %s", moduleName), http.StatusNotFound)
+		return
+	}
+
+	// Check for /tests subpath
+	if len(parts) > 1 && parts[1] == "tests" {
+		// Return just the test types for this module
+		writeJSON(w, map[string]interface{}{
+			"module": moduleName,
+			"tests":  module.TestTypes(),
+			"count":  len(module.TestTypes()),
+		})
+		return
+	}
+
+	// Return full module info
+	writeJSON(w, modules.ToInfo(module))
 }
 
 // Run starts the web server

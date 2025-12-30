@@ -127,9 +127,9 @@ func TestGetTutorial(t *testing.T) {
 	hs := NewHelpSystem()
 
 	tests := []struct {
-		id       string
-		wantOK   bool
-		wantID   string
+		id     string
+		wantOK bool
+		wantID string
 	}{
 		{"quickstart", true, "quickstart"},
 		{"rfc2544", true, "rfc2544"},
@@ -233,10 +233,10 @@ func TestSearchTests(t *testing.T) {
 		minCount int
 	}{
 		{"throughput", 1},
-		{"latency", 2},  // latency and possibly others mentioning latency
-		{"packet", 1},   // Various tests mention packet
-		{"service", 3},  // Y.1564 tests
-		{"xyz123", 0},   // No matches
+		{"latency", 2}, // latency and possibly others mentioning latency
+		{"packet", 1},  // Various tests mention packet
+		{"service", 3}, // Y.1564 tests
+		{"xyz123", 0},  // No matches
 	}
 
 	for _, tt := range tests {
@@ -258,9 +258,9 @@ func TestSearchGlossary(t *testing.T) {
 		minCount int
 	}{
 		{"bandwidth", 1},
-		{"rate", 3},     // CIR, EIR, line_rate, etc.
+		{"rate", 3}, // CIR, EIR, line_rate, etc.
 		{"ethernet", 1},
-		{"xyz123", 0},   // No matches
+		{"xyz123", 0}, // No matches
 	}
 
 	for _, tt := range tests {
@@ -905,11 +905,11 @@ func TestShowGlossary(t *testing.T) {
 		simple bool
 		want   bool
 	}{
-		{"", false, true},                  // Empty shows list
+		{"", false, true}, // Empty shows list
 		{"cir", false, true},
 		{"cir", true, true},
 		{"throughput", false, true},
-		{"band", false, true},              // Partial match should find results
+		{"band", false, true}, // Partial match should find results
 		{"xyz123nonexistent", false, false},
 	}
 
@@ -938,7 +938,7 @@ func TestShowTutorial(t *testing.T) {
 		id   string
 		want bool
 	}{
-		{"", true},           // Empty shows list
+		{"", true}, // Empty shows list
 		{"quickstart", true},
 		{"rfc2544", true},
 		{"nonexistent", false},
@@ -1166,6 +1166,117 @@ func TestSpecialCharactersInSearch(t *testing.T) {
 				}
 			}()
 			hs.SearchGlossary(search)
+		})
+	}
+}
+
+// ============================================================================
+// Module Display Tests
+// ============================================================================
+
+func TestDisplayTestListByModuleDoesNotPanic(t *testing.T) {
+	old := os.Stdout
+	r, w, _ := os.Pipe()
+	os.Stdout = w
+
+	defer func() {
+		if rec := recover(); rec != nil {
+			t.Errorf("DisplayTestListByModule panicked: %v", rec)
+		}
+		w.Close()
+		os.Stdout = old
+		io.Copy(io.Discard, r)
+	}()
+
+	DisplayTestListByModule()
+}
+
+func TestDisplayTestListByModuleOutputContainsModules(t *testing.T) {
+	old := os.Stdout
+	r, w, _ := os.Pipe()
+	os.Stdout = w
+
+	DisplayTestListByModule()
+
+	w.Close()
+	os.Stdout = old
+
+	var buf bytes.Buffer
+	io.Copy(&buf, r)
+	output := buf.String()
+
+	// Should contain all 5 module names
+	expectedModules := []string{"Benchmark", "ServiceTest", "TrafficGen", "Measure", "Certify"}
+	for _, mod := range expectedModules {
+		if !strings.Contains(output, mod) {
+			t.Errorf("DisplayTestListByModule output does not contain module %q", mod)
+		}
+	}
+
+	// Should contain the header
+	if !strings.Contains(output, "Available Tests by Module") {
+		t.Error("DisplayTestListByModule output does not contain header")
+	}
+
+	// Should show test count message
+	if !strings.Contains(output, "modules") {
+		t.Error("DisplayTestListByModule output does not mention modules count")
+	}
+}
+
+func TestShowHelpModuleTopics(t *testing.T) {
+	tests := []struct {
+		topic string
+		want  bool
+	}{
+		{"modules", true},
+		{"by-module", true},
+		{"tests-by-module", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.topic, func(t *testing.T) {
+			old := os.Stdout
+			r, w, _ := os.Pipe()
+			os.Stdout = w
+
+			defer func() {
+				w.Close()
+				os.Stdout = old
+				io.Copy(io.Discard, r)
+			}()
+
+			got := ShowHelp(tt.topic, false)
+			if got != tt.want {
+				t.Errorf("ShowHelp(%q, false) = %v, want %v", tt.topic, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestModuleColorToANSI(t *testing.T) {
+	tests := []struct {
+		hexColor     string
+		expectNotNil bool
+	}{
+		{"#dc2626", true},  // Benchmark - Red
+		{"#ea580c", true},  // ServiceTest - Orange
+		{"#ca8a04", true},  // TrafficGen - Yellow
+		{"#2563eb", true},  // Measure - Blue
+		{"#16a34a", true},  // Certify - Green
+		{"#unknown", true}, // Unknown - defaults to cyan
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.hexColor, func(t *testing.T) {
+			result := moduleColorToANSI(tt.hexColor)
+			if tt.expectNotNil && result == "" {
+				t.Errorf("moduleColorToANSI(%q) returned empty string", tt.hexColor)
+			}
+			// Verify it contains ANSI escape sequence
+			if !strings.HasPrefix(result, "\033[") {
+				t.Errorf("moduleColorToANSI(%q) = %q, expected ANSI escape sequence", tt.hexColor, result)
+			}
 		})
 	}
 }

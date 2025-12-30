@@ -747,3 +747,236 @@ func TestJSONFieldTags(t *testing.T) {
 		t.Error("Expected 'currentPps' in JSON output")
 	}
 }
+
+// Module API tests
+func TestHandleModules(t *testing.T) {
+	s := NewServer(8080)
+	req := httptest.NewRequest(http.MethodGet, "/api/modules", nil)
+	w := httptest.NewRecorder()
+
+	s.handleModules(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("Expected status 200, got %d", w.Code)
+	}
+
+	var resp map[string]interface{}
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("Failed to parse response: %v", err)
+	}
+
+	// Should have modules array
+	modules, ok := resp["modules"].([]interface{})
+	if !ok {
+		t.Fatal("Expected 'modules' array in response")
+	}
+
+	// Should have all 6 modules (including reflector)
+	if len(modules) != 6 {
+		t.Errorf("Expected 6 modules, got %d", len(modules))
+	}
+
+	// Should have count field
+	count, ok := resp["count"].(float64)
+	if !ok {
+		t.Fatal("Expected 'count' field in response")
+	}
+	if int(count) != 6 {
+		t.Errorf("Expected count 6, got %d", int(count))
+	}
+}
+
+func TestHandleModulesMethodNotAllowed(t *testing.T) {
+	s := NewServer(8080)
+	req := httptest.NewRequest(http.MethodPost, "/api/modules", nil)
+	w := httptest.NewRecorder()
+
+	s.handleModules(w, req)
+
+	if w.Code != http.StatusMethodNotAllowed {
+		t.Errorf("Expected status 405, got %d", w.Code)
+	}
+}
+
+func TestHandleModuleByName(t *testing.T) {
+	s := NewServer(8080)
+	req := httptest.NewRequest(http.MethodGet, "/api/modules/benchmark", nil)
+	w := httptest.NewRecorder()
+
+	s.handleModuleByName(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("Expected status 200, got %d", w.Code)
+	}
+
+	var resp map[string]interface{}
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("Failed to parse response: %v", err)
+	}
+
+	// Check module fields
+	if resp["name"] != "benchmark" {
+		t.Errorf("Expected name 'benchmark', got '%v'", resp["name"])
+	}
+	if resp["displayName"] != "Benchmark" {
+		t.Errorf("Expected displayName 'Benchmark', got '%v'", resp["displayName"])
+	}
+	if resp["color"] != "#dc2626" {
+		t.Errorf("Expected color '#dc2626', got '%v'", resp["color"])
+	}
+	if resp["standard"] != "RFC 2544" {
+		t.Errorf("Expected standard 'RFC 2544', got '%v'", resp["standard"])
+	}
+
+	// Should have tests array
+	tests, ok := resp["tests"].([]interface{})
+	if !ok {
+		t.Fatal("Expected 'tests' array in response")
+	}
+	if len(tests) == 0 {
+		t.Error("Expected at least one test type")
+	}
+}
+
+func TestHandleModuleByNameNotFound(t *testing.T) {
+	s := NewServer(8080)
+	req := httptest.NewRequest(http.MethodGet, "/api/modules/nonexistent", nil)
+	w := httptest.NewRecorder()
+
+	s.handleModuleByName(w, req)
+
+	if w.Code != http.StatusNotFound {
+		t.Errorf("Expected status 404, got %d", w.Code)
+	}
+}
+
+func TestHandleModuleByNameTests(t *testing.T) {
+	s := NewServer(8080)
+	req := httptest.NewRequest(http.MethodGet, "/api/modules/benchmark/tests", nil)
+	w := httptest.NewRecorder()
+
+	s.handleModuleByName(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("Expected status 200, got %d", w.Code)
+	}
+
+	var resp map[string]interface{}
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("Failed to parse response: %v", err)
+	}
+
+	// Should have module name
+	if resp["module"] != "benchmark" {
+		t.Errorf("Expected module 'benchmark', got '%v'", resp["module"])
+	}
+
+	// Should have tests array
+	tests, ok := resp["tests"].([]interface{})
+	if !ok {
+		t.Fatal("Expected 'tests' array in response")
+	}
+
+	// Benchmark should have RFC 2544 tests
+	expectedTests := []string{"throughput", "latency", "frame_loss", "back_to_back", "system_recovery", "reset"}
+	if len(tests) != len(expectedTests) {
+		t.Errorf("Expected %d tests, got %d", len(expectedTests), len(tests))
+	}
+
+	// Should have count
+	count, ok := resp["count"].(float64)
+	if !ok {
+		t.Fatal("Expected 'count' field in response")
+	}
+	if int(count) != len(expectedTests) {
+		t.Errorf("Expected count %d, got %d", len(expectedTests), int(count))
+	}
+}
+
+func TestHandleModuleByNameMethodNotAllowed(t *testing.T) {
+	s := NewServer(8080)
+	req := httptest.NewRequest(http.MethodPost, "/api/modules/benchmark", nil)
+	w := httptest.NewRecorder()
+
+	s.handleModuleByName(w, req)
+
+	if w.Code != http.StatusMethodNotAllowed {
+		t.Errorf("Expected status 405, got %d", w.Code)
+	}
+}
+
+func TestHandleModuleByNameAllModules(t *testing.T) {
+	s := NewServer(8080)
+
+	modules := []struct {
+		name        string
+		displayName string
+		color       string
+		standard    string
+	}{
+		{"reflector", "Reflector", "#0891b2", "Loopback/Echo"},
+		{"benchmark", "Benchmark", "#dc2626", "RFC 2544"},
+		{"servicetest", "ServiceTest", "#ea580c", "ITU-T Y.1564"},
+		{"trafficgen", "TrafficGen", "#ca8a04", "Custom Traffic"},
+		{"measure", "Measure", "#2563eb", "ITU-T Y.1731"},
+		{"certify", "Certify", "#16a34a", "RFC 2889/6349/TSN"},
+	}
+
+	for _, mod := range modules {
+		t.Run(mod.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "/api/modules/"+mod.name, nil)
+			w := httptest.NewRecorder()
+
+			s.handleModuleByName(w, req)
+
+			if w.Code != http.StatusOK {
+				t.Errorf("Expected status 200, got %d", w.Code)
+			}
+
+			var resp map[string]interface{}
+			if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+				t.Fatalf("Failed to parse response: %v", err)
+			}
+
+			if resp["name"] != mod.name {
+				t.Errorf("Expected name '%s', got '%v'", mod.name, resp["name"])
+			}
+			if resp["displayName"] != mod.displayName {
+				t.Errorf("Expected displayName '%s', got '%v'", mod.displayName, resp["displayName"])
+			}
+			if resp["color"] != mod.color {
+				t.Errorf("Expected color '%s', got '%v'", mod.color, resp["color"])
+			}
+			if resp["standard"] != mod.standard {
+				t.Errorf("Expected standard '%s', got '%v'", mod.standard, resp["standard"])
+			}
+		})
+	}
+}
+
+func TestModuleRoutesRegistered(t *testing.T) {
+	s := NewServer(8080)
+
+	routes := []struct {
+		path   string
+		method string
+	}{
+		{"/api/modules", http.MethodGet},
+		{"/api/modules/benchmark", http.MethodGet},
+		{"/api/modules/benchmark/tests", http.MethodGet},
+	}
+
+	for _, route := range routes {
+		t.Run(route.path, func(t *testing.T) {
+			req := httptest.NewRequest(route.method, route.path, nil)
+			w := httptest.NewRecorder()
+
+			s.mux.ServeHTTP(w, req)
+
+			// Should not be 404
+			if w.Code == http.StatusNotFound {
+				t.Errorf("Route %s %s returned 404", route.method, route.path)
+			}
+		})
+	}
+}
