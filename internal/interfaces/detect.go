@@ -5,6 +5,64 @@
 // This package detects available network interfaces, gathers detailed
 // information about each (speed, driver, XDP/DPDK support), and calculates
 // a suitability score for network testing purposes.
+//
+// # Platform Dependencies
+//
+// This package relies on the Linux sysfs virtual filesystem for interface
+// metadata. On non-Linux platforms, most detection functions return
+// fallback values. The specific sysfs paths used are:
+//
+//   - /sys/class/net/<iface>/speed       - Link speed in Mbps
+//   - /sys/class/net/<iface>/duplex      - Duplex mode (full/half)
+//   - /sys/class/net/<iface>/device      - Physical device presence
+//   - /sys/class/net/<iface>/device/driver - Driver symlink
+//
+// These paths require the interface to be up and linked for speed/duplex.
+// Virtual interfaces (bridges, bonds, vlans) lack the device directory.
+//
+// # Capability Detection
+//
+// XDP and DPDK support are detected using driver name heuristics. This is
+// because there is no reliable runtime API to query these capabilities.
+// The detection uses known lists of drivers that support each technology:
+//
+// XDP-capable drivers:
+//
+//	ixgbe, i40e, ice, mlx5_core, mlx4_en, bnxt_en, nfp, virtio_net, igb, igc
+//
+// DPDK-capable drivers:
+//
+//	ixgbe, i40e, ice, mlx5_core, mlx4_en, bnxt_en, nfp, virtio_net, igb, e1000, e1000e, fm10k
+//
+// Limitations of driver heuristics:
+//   - May report false positives if driver is present but XDP/DPDK unavailable
+//   - May report false negatives for newer drivers not in the list
+//   - Does not verify kernel XDP support or DPDK library availability
+//   - Operators should verify capabilities before relying on them
+//
+// # Interface Scoring
+//
+// The [GetBestInterface] function selects interfaces using a scoring system:
+//
+//	+100 points: Physical interface that is UP
+//	+100 points: 10 Gbps or higher speed
+//	+10 points:  1 Gbps speed
+//	+50 points:  XDP support (driver-based detection)
+//	+30 points:  DPDK support (driver-based detection)
+//	+10 points:  Has IPv4 address assigned
+//	+5 points:   Full duplex mode
+//
+// The highest-scoring interface is selected. In case of ties, the first
+// interface (as returned by the OS) wins. Operators can override the
+// automatic selection by specifying an interface explicitly.
+//
+// # Usage Notes
+//
+// For best results:
+//   - Ensure target interface is UP before detection
+//   - On non-Linux systems, expect reduced functionality
+//   - Use explicit interface selection for production deployments
+//   - Verify XDP/DPDK capabilities independently if critical
 package interfaces
 
 import (

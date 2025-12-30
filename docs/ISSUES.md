@@ -5,8 +5,7 @@ Issues are now tracked via GitHub Issues: https://github.com/krisarmstrong/stem/
 ## Open Issues
 
 ### P1 (High)
-- [#10 Interface capability detection relies on driver heuristics](https://github.com/krisarmstrong/stem/issues/10)
-- [#12 Interface selection depends on sysfs without operator guidance](https://github.com/krisarmstrong/stem/issues/12)
+(No open P1 issues)
 
 ### P2 (Medium)
 - [#2 Replace interface{} with concrete types](https://github.com/krisarmstrong/stem/issues/2)
@@ -61,6 +60,18 @@ Issues are now tracked via GitHub Issues: https://github.com/krisarmstrong/stem/
 **Status**: FIXED in v0.1.5
 - Added comprehensive package documentation to internal/web
 - Documents API endpoints, security features, and architecture
+
+### ~~Issue #10: Document interface capability detection~~
+**Status**: FIXED in v0.1.5
+- Added comprehensive package documentation to internal/interfaces
+- Documents driver heuristic approach and its limitations
+- Lists XDP-capable and DPDK-capable drivers
+
+### ~~Issue #12: Document sysfs dependency~~
+**Status**: FIXED in v0.1.5
+- Documented sysfs paths used for interface metadata
+- Noted platform limitations (Linux-only for full functionality)
+- Added usage notes for operators
 
 ---
 
