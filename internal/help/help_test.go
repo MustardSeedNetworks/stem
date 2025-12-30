@@ -614,7 +614,7 @@ func TestPrintErrorDoesNotPanic(t *testing.T) {
 		if rec := recover(); rec != nil {
 			t.Errorf("PrintError panicked: %v", rec)
 		}
-		w.Close()
+		_ = w.Close()
 		os.Stderr = old
 	}()
 
@@ -624,8 +624,8 @@ func TestPrintErrorDoesNotPanic(t *testing.T) {
 	// Test with invalid error code
 	PrintError("ERR_NONEXISTENT")
 
-	w.Close()
-	io.Copy(io.Discard, r)
+	_ = w.Close()
+	_, _ = io.Copy(io.Discard, r)
 }
 
 func TestPrintErrorWithDetailsDoesNotPanic(t *testing.T) {
@@ -638,7 +638,7 @@ func TestPrintErrorWithDetailsDoesNotPanic(t *testing.T) {
 		if rec := recover(); rec != nil {
 			t.Errorf("PrintErrorWithDetails panicked: %v", rec)
 		}
-		w.Close()
+		_ = w.Close()
 		os.Stderr = old
 	}()
 
@@ -648,8 +648,8 @@ func TestPrintErrorWithDetailsDoesNotPanic(t *testing.T) {
 	// Test with invalid error code
 	PrintErrorWithDetails("ERR_NONEXISTENT", "some details")
 
-	w.Close()
-	io.Copy(io.Discard, r)
+	_ = w.Close()
+	_, _ = io.Copy(io.Discard, r)
 }
 
 // ============================================================================
@@ -677,9 +677,9 @@ func TestDisplayTestDoesNotPanic(t *testing.T) {
 				if rec := recover(); rec != nil {
 					t.Errorf("DisplayTest panicked: %v", rec)
 				}
-				w.Close()
+				_ = w.Close()
 				os.Stdout = old
-				io.Copy(io.Discard, r)
+				_, _ = io.Copy(io.Discard, r)
 			}()
 
 			DisplayTest(test, false)
@@ -708,9 +708,9 @@ func TestDisplayCommandDoesNotPanic(t *testing.T) {
 				if rec := recover(); rec != nil {
 					t.Errorf("DisplayCommand panicked: %v", rec)
 				}
-				w.Close()
+				_ = w.Close()
 				os.Stdout = old
-				io.Copy(io.Discard, r)
+				_, _ = io.Copy(io.Discard, r)
 			}()
 
 			DisplayCommand(cmd)
@@ -738,9 +738,9 @@ func TestDisplayCategoryDoesNotPanic(t *testing.T) {
 				if rec := recover(); rec != nil {
 					t.Errorf("DisplayCategory panicked: %v", rec)
 				}
-				w.Close()
+				_ = w.Close()
 				os.Stdout = old
-				io.Copy(io.Discard, r)
+				_, _ = io.Copy(io.Discard, r)
 			}()
 
 			DisplayCategory(cat)
@@ -768,9 +768,9 @@ func TestDisplayGlossaryTermDoesNotPanic(t *testing.T) {
 				if rec := recover(); rec != nil {
 					t.Errorf("DisplayGlossaryTerm panicked: %v", rec)
 				}
-				w.Close()
+				_ = w.Close()
 				os.Stdout = old
-				io.Copy(io.Discard, r)
+				_, _ = io.Copy(io.Discard, r)
 			}()
 
 			DisplayGlossaryTerm(entry, false)
@@ -788,9 +788,9 @@ func TestDisplayGlossaryListDoesNotPanic(t *testing.T) {
 		if rec := recover(); rec != nil {
 			t.Errorf("DisplayGlossaryList panicked: %v", rec)
 		}
-		w.Close()
+		_ = w.Close()
 		os.Stdout = old
-		io.Copy(io.Discard, r)
+		_, _ = io.Copy(io.Discard, r)
 	}()
 
 	DisplayGlossaryList()
@@ -816,9 +816,9 @@ func TestDisplayTutorialDoesNotPanic(t *testing.T) {
 				if rec := recover(); rec != nil {
 					t.Errorf("DisplayTutorial panicked: %v", rec)
 				}
-				w.Close()
+				_ = w.Close()
 				os.Stdout = old
-				io.Copy(io.Discard, r)
+				_, _ = io.Copy(io.Discard, r)
 			}()
 
 			DisplayTutorial(tutorial)
@@ -835,9 +835,9 @@ func TestDisplayTutorialListDoesNotPanic(t *testing.T) {
 		if rec := recover(); rec != nil {
 			t.Errorf("DisplayTutorialList panicked: %v", rec)
 		}
-		w.Close()
+		_ = w.Close()
 		os.Stdout = old
-		io.Copy(io.Discard, r)
+		_, _ = io.Copy(io.Discard, r)
 	}()
 
 	DisplayTutorialList()
@@ -852,9 +852,9 @@ func TestDisplayTestListDoesNotPanic(t *testing.T) {
 		if rec := recover(); rec != nil {
 			t.Errorf("DisplayTestList panicked: %v", rec)
 		}
-		w.Close()
+		_ = w.Close()
 		os.Stdout = old
-		io.Copy(io.Discard, r)
+		_, _ = io.Copy(io.Discard, r)
 	}()
 
 	DisplayTestList()
@@ -886,9 +886,9 @@ func TestShowHelp(t *testing.T) {
 			os.Stdout = w
 
 			defer func() {
-				w.Close()
+				_ = w.Close()
 				os.Stdout = old
-				io.Copy(io.Discard, r)
+				_, _ = io.Copy(io.Discard, r)
 			}()
 
 			got := ShowHelp(tt.topic, tt.simple)
@@ -920,9 +920,9 @@ func TestShowGlossary(t *testing.T) {
 			os.Stdout = w
 
 			defer func() {
-				w.Close()
+				_ = w.Close()
 				os.Stdout = old
-				io.Copy(io.Discard, r)
+				_, _ = io.Copy(io.Discard, r)
 			}()
 
 			got := ShowGlossary(tt.term, tt.simple)
@@ -951,9 +951,9 @@ func TestShowTutorial(t *testing.T) {
 			os.Stdout = w
 
 			defer func() {
-				w.Close()
+				_ = w.Close()
 				os.Stdout = old
-				io.Copy(io.Discard, r)
+				_, _ = io.Copy(io.Discard, r)
 			}()
 
 			got := ShowTutorial(tt.id)
@@ -1081,11 +1081,11 @@ func TestDisplayTestOutputContainsName(t *testing.T) {
 
 	DisplayTest(test, false)
 
-	w.Close()
+	_ = w.Close()
 	os.Stdout = old
 
 	var buf bytes.Buffer
-	io.Copy(&buf, r)
+	_, _ = io.Copy(&buf, r)
 	output := buf.String()
 
 	if !strings.Contains(output, test.Name) {
@@ -1103,11 +1103,11 @@ func TestDisplayCommandOutputContainsUsage(t *testing.T) {
 
 	DisplayCommand(cmd)
 
-	w.Close()
+	_ = w.Close()
 	os.Stdout = old
 
 	var buf bytes.Buffer
-	io.Copy(&buf, r)
+	_, _ = io.Copy(&buf, r)
 	output := buf.String()
 
 	if !strings.Contains(output, cmd.Usage) {
@@ -1183,9 +1183,9 @@ func TestDisplayTestListByModuleDoesNotPanic(t *testing.T) {
 		if rec := recover(); rec != nil {
 			t.Errorf("DisplayTestListByModule panicked: %v", rec)
 		}
-		w.Close()
+		_ = w.Close()
 		os.Stdout = old
-		io.Copy(io.Discard, r)
+		_, _ = io.Copy(io.Discard, r)
 	}()
 
 	DisplayTestListByModule()
@@ -1198,11 +1198,11 @@ func TestDisplayTestListByModuleOutputContainsModules(t *testing.T) {
 
 	DisplayTestListByModule()
 
-	w.Close()
+	_ = w.Close()
 	os.Stdout = old
 
 	var buf bytes.Buffer
-	io.Copy(&buf, r)
+	_, _ = io.Copy(&buf, r)
 	output := buf.String()
 
 	// Should contain all 5 module names
@@ -1241,9 +1241,9 @@ func TestShowHelpModuleTopics(t *testing.T) {
 			os.Stdout = w
 
 			defer func() {
-				w.Close()
+				_ = w.Close()
 				os.Stdout = old
-				io.Copy(io.Discard, r)
+				_, _ = io.Copy(io.Discard, r)
 			}()
 
 			got := ShowHelp(tt.topic, false)

@@ -395,7 +395,7 @@ func BenchmarkValidate(b *testing.B) {
 	}
 
 	for i := 0; i < b.N; i++ {
-		cfg.Validate()
+		_ = cfg.Validate()
 	}
 }
 
@@ -403,7 +403,7 @@ func BenchmarkParseOUI(b *testing.B) {
 	cfg := &Config{Filtering: FilterConfig{OUI: "00:c0:17"}}
 
 	for i := 0; i < b.N; i++ {
-		cfg.ParseOUI()
+		_, _ = cfg.ParseOUI()
 	}
 }
 

@@ -267,6 +267,6 @@ func BenchmarkCalculateScore(b *testing.B) {
 
 func BenchmarkDetectInterfaces(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		DetectInterfaces()
+		_, _ = DetectInterfaces()
 	}
 }

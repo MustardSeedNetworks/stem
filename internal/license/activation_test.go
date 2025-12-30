@@ -12,9 +12,7 @@ import (
 func TestNewManager(t *testing.T) {
 	// Use temp directory for test
 	tmpDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tmpDir)
-	defer os.Setenv("HOME", origHome)
+	t.Setenv("HOME", tmpDir)
 
 	// Create .config/seed-test-suite directory
 	configDir := filepath.Join(tmpDir, ".config", "seed-test-suite")
@@ -33,12 +31,13 @@ func TestNewManager(t *testing.T) {
 
 func TestManagerGetFingerprint(t *testing.T) {
 	tmpDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tmpDir)
-	defer os.Setenv("HOME", origHome)
+
+	t.Setenv("HOME", tmpDir)
 
 	configDir := filepath.Join(tmpDir, ".config", "seed-test-suite")
-	os.MkdirAll(configDir, 0755)
+	if err := os.MkdirAll(configDir, 0755); err != nil {
+		t.Fatalf("Failed to create config dir: %v", err)
+	}
 
 	mgr, err := NewManager()
 	if err != nil {
@@ -57,12 +56,13 @@ func TestManagerGetFingerprint(t *testing.T) {
 
 func TestManagerIsActivated(t *testing.T) {
 	tmpDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tmpDir)
-	defer os.Setenv("HOME", origHome)
+
+	t.Setenv("HOME", tmpDir)
 
 	configDir := filepath.Join(tmpDir, ".config", "seed-test-suite")
-	os.MkdirAll(configDir, 0755)
+	if err := os.MkdirAll(configDir, 0755); err != nil {
+		t.Fatalf("Failed to create config dir: %v", err)
+	}
 
 	mgr, err := NewManager()
 	if err != nil {
@@ -77,12 +77,13 @@ func TestManagerIsActivated(t *testing.T) {
 
 func TestManagerStartTrial(t *testing.T) {
 	tmpDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tmpDir)
-	defer os.Setenv("HOME", origHome)
+
+	t.Setenv("HOME", tmpDir)
 
 	configDir := filepath.Join(tmpDir, ".config", "seed-test-suite")
-	os.MkdirAll(configDir, 0755)
+	if err := os.MkdirAll(configDir, 0755); err != nil {
+		t.Fatalf("Failed to create config dir: %v", err)
+	}
 
 	mgr, err := NewManager()
 	if err != nil {
@@ -111,12 +112,13 @@ func TestManagerStartTrial(t *testing.T) {
 
 func TestManagerTrialExpiry(t *testing.T) {
 	tmpDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tmpDir)
-	defer os.Setenv("HOME", origHome)
+
+	t.Setenv("HOME", tmpDir)
 
 	configDir := filepath.Join(tmpDir, ".config", "seed-test-suite")
-	os.MkdirAll(configDir, 0755)
+	if err := os.MkdirAll(configDir, 0755); err != nil {
+		t.Fatalf("Failed to create config dir: %v", err)
+	}
 
 	mgr, err := NewManager()
 	if err != nil {
@@ -143,12 +145,13 @@ func TestManagerTrialExpiry(t *testing.T) {
 
 func TestManagerActivate(t *testing.T) {
 	tmpDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tmpDir)
-	defer os.Setenv("HOME", origHome)
+
+	t.Setenv("HOME", tmpDir)
 
 	configDir := filepath.Join(tmpDir, ".config", "seed-test-suite")
-	os.MkdirAll(configDir, 0755)
+	if err := os.MkdirAll(configDir, 0755); err != nil {
+		t.Fatalf("Failed to create config dir: %v", err)
+	}
 
 	mgr, err := NewManager()
 	if err != nil {
@@ -178,12 +181,13 @@ func TestManagerActivate(t *testing.T) {
 
 func TestManagerActivateInvalidKey(t *testing.T) {
 	tmpDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tmpDir)
-	defer os.Setenv("HOME", origHome)
+
+	t.Setenv("HOME", tmpDir)
 
 	configDir := filepath.Join(tmpDir, ".config", "seed-test-suite")
-	os.MkdirAll(configDir, 0755)
+	if err := os.MkdirAll(configDir, 0755); err != nil {
+		t.Fatalf("Failed to create config dir: %v", err)
+	}
 
 	mgr, err := NewManager()
 	if err != nil {
@@ -198,12 +202,13 @@ func TestManagerActivateInvalidKey(t *testing.T) {
 
 func TestManagerDeactivate(t *testing.T) {
 	tmpDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tmpDir)
-	defer os.Setenv("HOME", origHome)
+
+	t.Setenv("HOME", tmpDir)
 
 	configDir := filepath.Join(tmpDir, ".config", "seed-test-suite")
-	os.MkdirAll(configDir, 0755)
+	if err := os.MkdirAll(configDir, 0755); err != nil {
+		t.Fatalf("Failed to create config dir: %v", err)
+	}
 
 	mgr, err := NewManager()
 	if err != nil {
@@ -229,12 +234,13 @@ func TestManagerDeactivate(t *testing.T) {
 
 func TestManagerGetState(t *testing.T) {
 	tmpDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tmpDir)
-	defer os.Setenv("HOME", origHome)
+
+	t.Setenv("HOME", tmpDir)
 
 	configDir := filepath.Join(tmpDir, ".config", "seed-test-suite")
-	os.MkdirAll(configDir, 0755)
+	if err := os.MkdirAll(configDir, 0755); err != nil {
+		t.Fatalf("Failed to create config dir: %v", err)
+	}
 
 	mgr, err := NewManager()
 	if err != nil {
@@ -257,12 +263,13 @@ func TestManagerGetState(t *testing.T) {
 
 func TestManagerNeedsCheckIn(t *testing.T) {
 	tmpDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tmpDir)
-	defer os.Setenv("HOME", origHome)
+
+	t.Setenv("HOME", tmpDir)
 
 	configDir := filepath.Join(tmpDir, ".config", "seed-test-suite")
-	os.MkdirAll(configDir, 0755)
+	if err := os.MkdirAll(configDir, 0755); err != nil {
+		t.Fatalf("Failed to create config dir: %v", err)
+	}
 
 	mgr, err := NewManager()
 	if err != nil {
@@ -283,12 +290,13 @@ func TestManagerNeedsCheckIn(t *testing.T) {
 
 func TestManagerCheckIn(t *testing.T) {
 	tmpDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tmpDir)
-	defer os.Setenv("HOME", origHome)
+
+	t.Setenv("HOME", tmpDir)
 
 	configDir := filepath.Join(tmpDir, ".config", "seed-test-suite")
-	os.MkdirAll(configDir, 0755)
+	if err := os.MkdirAll(configDir, 0755); err != nil {
+		t.Fatalf("Failed to create config dir: %v", err)
+	}
 
 	mgr, err := NewManager()
 	if err != nil {
@@ -311,12 +319,13 @@ func TestManagerCheckIn(t *testing.T) {
 
 func TestEncryptDecrypt(t *testing.T) {
 	tmpDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tmpDir)
-	defer os.Setenv("HOME", origHome)
+
+	t.Setenv("HOME", tmpDir)
 
 	configDir := filepath.Join(tmpDir, ".config", "seed-test-suite")
-	os.MkdirAll(configDir, 0755)
+	if err := os.MkdirAll(configDir, 0755); err != nil {
+		t.Fatalf("Failed to create config dir: %v", err)
+	}
 
 	mgr, err := NewManager()
 	if err != nil {
@@ -466,12 +475,13 @@ func TestValidateChecksumRoundtrip(t *testing.T) {
 
 func TestManagerStartTrialTwice(t *testing.T) {
 	tmpDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tmpDir)
-	defer os.Setenv("HOME", origHome)
+
+	t.Setenv("HOME", tmpDir)
 
 	configDir := filepath.Join(tmpDir, ".config", "seed-test-suite")
-	os.MkdirAll(configDir, 0755)
+	if err := os.MkdirAll(configDir, 0755); err != nil {
+		t.Fatalf("Failed to create config dir: %v", err)
+	}
 
 	mgr, err := NewManager()
 	if err != nil {
@@ -496,12 +506,13 @@ func TestManagerStartTrialTwice(t *testing.T) {
 
 func TestManagerActivateExpiredLicense(t *testing.T) {
 	tmpDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tmpDir)
-	defer os.Setenv("HOME", origHome)
+
+	t.Setenv("HOME", tmpDir)
 
 	configDir := filepath.Join(tmpDir, ".config", "seed-test-suite")
-	os.MkdirAll(configDir, 0755)
+	if err := os.MkdirAll(configDir, 0755); err != nil {
+		t.Fatalf("Failed to create config dir: %v", err)
+	}
 
 	mgr, err := NewManager()
 	if err != nil {
@@ -525,12 +536,13 @@ func TestManagerActivateExpiredLicense(t *testing.T) {
 
 func TestManagerDeviceBindingCheck(t *testing.T) {
 	tmpDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tmpDir)
-	defer os.Setenv("HOME", origHome)
+
+	t.Setenv("HOME", tmpDir)
 
 	configDir := filepath.Join(tmpDir, ".config", "seed-test-suite")
-	os.MkdirAll(configDir, 0755)
+	if err := os.MkdirAll(configDir, 0755); err != nil {
+		t.Fatalf("Failed to create config dir: %v", err)
+	}
 
 	mgr, err := NewManager()
 	if err != nil {
@@ -554,12 +566,13 @@ func TestManagerDeviceBindingCheck(t *testing.T) {
 
 func TestTrialDaysRemainingNoState(t *testing.T) {
 	tmpDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tmpDir)
-	defer os.Setenv("HOME", origHome)
+
+	t.Setenv("HOME", tmpDir)
 
 	configDir := filepath.Join(tmpDir, ".config", "seed-test-suite")
-	os.MkdirAll(configDir, 0755)
+	if err := os.MkdirAll(configDir, 0755); err != nil {
+		t.Fatalf("Failed to create config dir: %v", err)
+	}
 
 	mgr, err := NewManager()
 	if err != nil {
@@ -575,12 +588,13 @@ func TestTrialDaysRemainingNoState(t *testing.T) {
 
 func TestTrialDaysRemainingNotTrial(t *testing.T) {
 	tmpDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tmpDir)
-	defer os.Setenv("HOME", origHome)
+
+	t.Setenv("HOME", tmpDir)
 
 	configDir := filepath.Join(tmpDir, ".config", "seed-test-suite")
-	os.MkdirAll(configDir, 0755)
+	if err := os.MkdirAll(configDir, 0755); err != nil {
+		t.Fatalf("Failed to create config dir: %v", err)
+	}
 
 	mgr, err := NewManager()
 	if err != nil {
@@ -601,12 +615,13 @@ func TestTrialDaysRemainingNotTrial(t *testing.T) {
 
 func TestIsTrialValidNoState(t *testing.T) {
 	tmpDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tmpDir)
-	defer os.Setenv("HOME", origHome)
+
+	t.Setenv("HOME", tmpDir)
 
 	configDir := filepath.Join(tmpDir, ".config", "seed-test-suite")
-	os.MkdirAll(configDir, 0755)
+	if err := os.MkdirAll(configDir, 0755); err != nil {
+		t.Fatalf("Failed to create config dir: %v", err)
+	}
 
 	mgr, err := NewManager()
 	if err != nil {
@@ -621,12 +636,13 @@ func TestIsTrialValidNoState(t *testing.T) {
 
 func TestIsTrialValidZeroTrialStart(t *testing.T) {
 	tmpDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tmpDir)
-	defer os.Setenv("HOME", origHome)
+
+	t.Setenv("HOME", tmpDir)
 
 	configDir := filepath.Join(tmpDir, ".config", "seed-test-suite")
-	os.MkdirAll(configDir, 0755)
+	if err := os.MkdirAll(configDir, 0755); err != nil {
+		t.Fatalf("Failed to create config dir: %v", err)
+	}
 
 	mgr, err := NewManager()
 	if err != nil {
@@ -646,12 +662,13 @@ func TestIsTrialValidZeroTrialStart(t *testing.T) {
 
 func TestStartTrialAlreadyActivated(t *testing.T) {
 	tmpDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tmpDir)
-	defer os.Setenv("HOME", origHome)
+
+	t.Setenv("HOME", tmpDir)
 
 	configDir := filepath.Join(tmpDir, ".config", "seed-test-suite")
-	os.MkdirAll(configDir, 0755)
+	if err := os.MkdirAll(configDir, 0755); err != nil {
+		t.Fatalf("Failed to create config dir: %v", err)
+	}
 
 	mgr, err := NewManager()
 	if err != nil {
@@ -671,12 +688,13 @@ func TestStartTrialAlreadyActivated(t *testing.T) {
 
 func TestStartTrialExpired(t *testing.T) {
 	tmpDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tmpDir)
-	defer os.Setenv("HOME", origHome)
+
+	t.Setenv("HOME", tmpDir)
 
 	configDir := filepath.Join(tmpDir, ".config", "seed-test-suite")
-	os.MkdirAll(configDir, 0755)
+	if err := os.MkdirAll(configDir, 0755); err != nil {
+		t.Fatalf("Failed to create config dir: %v", err)
+	}
 
 	mgr, err := NewManager()
 	if err != nil {
@@ -721,12 +739,13 @@ func TestGenerateLicenseKeyAllTiers(t *testing.T) {
 
 func TestNeedsCheckInWithOldValidation(t *testing.T) {
 	tmpDir := t.TempDir()
-	origHome := os.Getenv("HOME")
-	os.Setenv("HOME", tmpDir)
-	defer os.Setenv("HOME", origHome)
+
+	t.Setenv("HOME", tmpDir)
 
 	configDir := filepath.Join(tmpDir, ".config", "seed-test-suite")
-	os.MkdirAll(configDir, 0755)
+	if err := os.MkdirAll(configDir, 0755); err != nil {
+		t.Fatalf("Failed to create config dir: %v", err)
+	}
 
 	mgr, err := NewManager()
 	if err != nil {
