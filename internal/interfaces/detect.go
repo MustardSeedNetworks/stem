@@ -44,13 +44,12 @@
 //
 // The [GetBestInterface] function selects interfaces using a scoring system:
 //
-//	+100 points: Physical interface that is UP
-//	+100 points: 10 Gbps or higher speed
-//	+10 points:  1 Gbps speed
-//	+50 points:  XDP support (driver-based detection)
-//	+30 points:  DPDK support (driver-based detection)
-//	+10 points:  Has IPv4 address assigned
-//	+5 points:   Full duplex mode
+//	+100 points:     Physical interface that is UP
+//	+speed/100:      Speed bonus (10G = +100, 1G = +10, 100G = +1000)
+//	+50 points:      XDP support (driver-based detection)
+//	+30 points:      DPDK support (driver-based detection)
+//	+10 points:      Has IPv4 address assigned
+//	+5 points:       Full duplex mode
 //
 // The highest-scoring interface is selected. In case of ties, the first
 // interface (as returned by the OS) wins. Operators can override the

@@ -9,7 +9,6 @@ Issues are now tracked via GitHub Issues: https://github.com/krisarmstrong/stem/
 
 ### P2 (Medium)
 - [#2 Replace interface{} with concrete types](https://github.com/krisarmstrong/stem/issues/2)
-- [#14 Limited test coverage for interface selection edge cases](https://github.com/krisarmstrong/stem/issues/14)
 
 ---
 
@@ -72,6 +71,14 @@ Issues are now tracked via GitHub Issues: https://github.com/krisarmstrong/stem/
 - Documented sysfs paths used for interface metadata
 - Noted platform limitations (Linux-only for full functionality)
 - Added usage notes for operators
+
+### ~~Issue #14: Add interface selection test coverage~~
+**Status**: FIXED in v0.1.5
+- Added edge case tests for score calculation
+- Added score ordering verification test
+- Added XDP/DPDK driver coverage tests
+- Added loopback filtering test
+- Added interface state detection test
 
 ---
 

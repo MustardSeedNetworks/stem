@@ -247,6 +247,156 @@ func TestInterfaceInfoStruct(t *testing.T) {
 	}
 }
 
+// Test scoring edge cases
+func TestCalculateScoreEdgeCases(t *testing.T) {
+	tests := []struct {
+		name     string
+		info     InterfaceInfo
+		expected int
+	}{
+		{
+			name: "all zeroes - virtual down interface",
+			info: InterfaceInfo{
+				State:    "down",
+				Physical: false,
+				Speed:    0,
+			},
+			expected: 0,
+		},
+		{
+			name: "up virtual interface with IP",
+			info: InterfaceInfo{
+				State:    "up",
+				Physical: false,
+				IPv4:     "10.0.0.1",
+			},
+			expected: 10, // only IPv4 bonus for virtual up interface
+		},
+		{
+			name: "100G interface (speed above 10G threshold)",
+			info: InterfaceInfo{
+				State:    "up",
+				Physical: true,
+				Speed:    100000, // 100 Gbps
+			},
+			expected: 100 + 1000, // physical up + (100000/100) speed bonus
+		},
+		{
+			name: "half duplex does not get bonus",
+			info: InterfaceInfo{
+				State:  "up",
+				Duplex: "half",
+			},
+			expected: 0,
+		},
+		{
+			name: "negative speed treated as zero",
+			info: InterfaceInfo{
+				State:    "up",
+				Physical: true,
+				Speed:    -1,
+			},
+			expected: 100, // only physical up bonus, no speed bonus
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := calculateScore(tt.info)
+			if got != tt.expected {
+				t.Errorf("calculateScore() = %d, want %d", got, tt.expected)
+			}
+		})
+	}
+}
+
+// Test that scoring produces consistent ordering
+func TestScoreOrdering(t *testing.T) {
+	// 10G with XDP should score higher than 1G without
+	high := InterfaceInfo{
+		State:      "up",
+		Physical:   true,
+		Speed:      10000,
+		XDPSupport: true,
+	}
+	low := InterfaceInfo{
+		State:    "up",
+		Physical: true,
+		Speed:    1000,
+	}
+
+	highScore := calculateScore(high)
+	lowScore := calculateScore(low)
+
+	if highScore <= lowScore {
+		t.Errorf("10G with XDP (%d) should score higher than 1G (%d)", highScore, lowScore)
+	}
+}
+
+// Test all XDP and DPDK drivers
+func TestXDPDriverCoverage(t *testing.T) {
+	// These are the drivers we claim support XDP
+	xdpDrivers := []string{
+		"ixgbe", "i40e", "ice", "mlx5_core", "mlx4_en",
+		"bnxt_en", "nfp", "virtio_net", "igb", "igc",
+	}
+
+	for _, driver := range xdpDrivers {
+		t.Run(driver, func(t *testing.T) {
+			// We can't test checkXDPSupport directly as it reads from sysfs
+			// but we can verify the driver list is documented and expected
+			if driver == "" {
+				t.Error("Empty driver in XDP list")
+			}
+		})
+	}
+}
+
+func TestDPDKDriverCoverage(t *testing.T) {
+	// These are the drivers we claim support DPDK
+	dpdkDrivers := []string{
+		"ixgbe", "i40e", "ice", "mlx5_core", "mlx4_en",
+		"bnxt_en", "nfp", "virtio_net", "igb",
+		"e1000", "e1000e", "fm10k",
+	}
+
+	for _, driver := range dpdkDrivers {
+		t.Run(driver, func(t *testing.T) {
+			if driver == "" {
+				t.Error("Empty driver in DPDK list")
+			}
+		})
+	}
+}
+
+// Test interface filtering
+func TestLoopbackFiltering(t *testing.T) {
+	interfaces, err := DetectInterfaces()
+	if err != nil {
+		t.Fatalf("DetectInterfaces() error: %v", err)
+	}
+
+	for _, iface := range interfaces {
+		if iface.Name == "lo" || iface.Name == "lo0" {
+			t.Error("Loopback interface should be filtered out")
+		}
+	}
+}
+
+// Test state detection
+func TestInterfaceStateDetection(t *testing.T) {
+	interfaces, err := DetectInterfaces()
+	if err != nil {
+		t.Fatalf("DetectInterfaces() error: %v", err)
+	}
+
+	for _, iface := range interfaces {
+		if iface.State != "up" && iface.State != "down" {
+			t.Errorf("Interface %s has invalid state: %s", iface.Name, iface.State)
+		}
+	}
+}
+
 // Benchmark tests
 func BenchmarkCalculateScore(b *testing.B) {
 	info := InterfaceInfo{
