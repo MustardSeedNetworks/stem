@@ -71,6 +71,17 @@ type Stats struct {
 	LatencyCount     uint64
 }
 
+// ConfigUpdate holds optional configuration updates.
+// Only non-nil fields are applied when passed to UpdateConfig.
+type ConfigUpdate struct {
+	Port            *uint16 // UDP port filter
+	FilterOUI       *bool   // Enable OUI filtering
+	OUI             *string // OUI value (e.g., "00:c0:17")
+	FilterMAC       *bool   // Enable MAC filtering
+	Mode            *string // Reflection mode: "mac", "mac-ip", "all"
+	SignatureFilter *string // Signature filter: "all", "ito", "rfc2544", etc.
+}
+
 // Dataplane wraps the C reflector context
 type Dataplane struct {
 	ctx      C.reflector_ctx_t
@@ -216,62 +227,62 @@ func (dp *Dataplane) Config() *config.Config {
 	return dp.cfg
 }
 
-// UpdateConfig updates runtime configuration
-// Some settings take effect immediately, others require restart
-func (dp *Dataplane) UpdateConfig(updates map[string]interface{}) error {
+// UpdateConfig updates runtime configuration using typed ConfigUpdate struct.
+// Only non-nil fields in the update are applied.
+// Some settings take effect immediately, others require restart.
+func (dp *Dataplane) UpdateConfig(update *ConfigUpdate) error {
+	if update == nil {
+		return nil
+	}
+
 	dp.mu.Lock()
 	defer dp.mu.Unlock()
 
-	// Update Go config and C context where applicable
-	for key, value := range updates {
-		switch key {
-		case "port":
-			if port, ok := value.(float64); ok {
-				dp.cfg.Filtering.Port = uint16(port)
-				dp.ctx.config.ito_port = C.uint16_t(port)
-			}
-		case "filter_oui":
-			if enabled, ok := value.(bool); ok {
-				dp.cfg.Filtering.FilterOUI = enabled
-				dp.ctx.config.filter_oui = C.bool(enabled)
-			}
-		case "oui":
-			if oui, ok := value.(string); ok {
-				// Validate OUI format before updating
-				oldOUI := dp.cfg.Filtering.OUI
-				dp.cfg.Filtering.OUI = oui
-				parsed, err := dp.cfg.ParseOUI()
-				if err != nil {
-					// Restore old value and return error
-					dp.cfg.Filtering.OUI = oldOUI
-					return fmt.Errorf("invalid OUI format '%s': %w", oui, err)
-				}
-				dp.ctx.config.oui[0] = C.uint8_t(parsed[0])
-				dp.ctx.config.oui[1] = C.uint8_t(parsed[1])
-				dp.ctx.config.oui[2] = C.uint8_t(parsed[2])
-			}
-		case "filter_mac":
-			if enabled, ok := value.(bool); ok {
-				dp.cfg.Filtering.FilterMAC = enabled
-				dp.ctx.config.filter_dst_mac = C.bool(enabled)
-			}
-		case "mode":
-			if mode, ok := value.(string); ok {
-				dp.cfg.Reflection.Mode = mode
-				dp.ctx.config.reflect_mode = C.reflect_mode_t(dp.cfg.ReflectModeInt())
-			}
-		case "signature_filter":
-			if sig, ok := value.(string); ok {
-				dp.cfg.SignatureFilter = sig
-				// Map string to enum
-				sigMap := map[string]int{
-					"all": 0, "ito": 1, "rfc2544": 2,
-					"y1564": 3, "custom": 4, "msn": 5,
-				}
-				if val, exists := sigMap[sig]; exists {
-					dp.ctx.config.sig_filter = C.sig_filter_t(val)
-				}
-			}
+	// Apply each non-nil field
+	if update.Port != nil {
+		dp.cfg.Filtering.Port = *update.Port
+		dp.ctx.config.ito_port = C.uint16_t(*update.Port)
+	}
+
+	if update.FilterOUI != nil {
+		dp.cfg.Filtering.FilterOUI = *update.FilterOUI
+		dp.ctx.config.filter_oui = C.bool(*update.FilterOUI)
+	}
+
+	if update.OUI != nil {
+		// Validate OUI format before updating
+		oldOUI := dp.cfg.Filtering.OUI
+		dp.cfg.Filtering.OUI = *update.OUI
+		parsed, err := dp.cfg.ParseOUI()
+		if err != nil {
+			// Restore old value and return error
+			dp.cfg.Filtering.OUI = oldOUI
+			return fmt.Errorf("invalid OUI format '%s': %w", *update.OUI, err)
+		}
+		dp.ctx.config.oui[0] = C.uint8_t(parsed[0])
+		dp.ctx.config.oui[1] = C.uint8_t(parsed[1])
+		dp.ctx.config.oui[2] = C.uint8_t(parsed[2])
+	}
+
+	if update.FilterMAC != nil {
+		dp.cfg.Filtering.FilterMAC = *update.FilterMAC
+		dp.ctx.config.filter_dst_mac = C.bool(*update.FilterMAC)
+	}
+
+	if update.Mode != nil {
+		dp.cfg.Reflection.Mode = *update.Mode
+		dp.ctx.config.reflect_mode = C.reflect_mode_t(dp.cfg.ReflectModeInt())
+	}
+
+	if update.SignatureFilter != nil {
+		dp.cfg.SignatureFilter = *update.SignatureFilter
+		// Map string to enum
+		sigMap := map[string]int{
+			"all": 0, "ito": 1, "rfc2544": 2,
+			"y1564": 3, "custom": 4, "msn": 5,
+		}
+		if val, exists := sigMap[*update.SignatureFilter]; exists {
+			dp.ctx.config.sig_filter = C.sig_filter_t(val)
 		}
 	}
 

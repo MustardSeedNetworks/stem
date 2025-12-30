@@ -33,6 +33,17 @@ type Stats struct {
 	LatencyCount     uint64
 }
 
+// ConfigUpdate holds optional configuration updates.
+// Only non-nil fields are applied when passed to UpdateConfig.
+type ConfigUpdate struct {
+	Port            *uint16 // UDP port filter
+	FilterOUI       *bool   // Enable OUI filtering
+	OUI             *string // OUI value (e.g., "00:c0:17")
+	FilterMAC       *bool   // Enable MAC filtering
+	Mode            *string // Reflection mode: "mac", "mac-ip", "all"
+	SignatureFilter *string // Signature filter: "all", "ito", "rfc2544", etc.
+}
+
 type Dataplane struct {
 	cfg     *config.Config
 	running bool //nolint:unused // placeholder for CGO implementation
@@ -74,7 +85,7 @@ func (dp *Dataplane) Config() *config.Config {
 	return nil
 }
 
-func (dp *Dataplane) UpdateConfig(updates map[string]interface{}) error {
+func (dp *Dataplane) UpdateConfig(_ *ConfigUpdate) error {
 	return ErrNotSupported
 }
 
