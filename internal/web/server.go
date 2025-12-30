@@ -609,5 +609,13 @@ func (s *Server) Run() error {
 
 	// Wrap with logging middleware
 	handler := logging.RequestIDMiddleware(logging.LoggingMiddleware(s.mux))
-	return http.ListenAndServe(addr, handler)
+	server := &http.Server{
+		Addr:              addr,
+		Handler:           handler,
+		ReadHeaderTimeout: 10 * time.Second,
+		ReadTimeout:       30 * time.Second,
+		WriteTimeout:      30 * time.Second,
+		IdleTimeout:       120 * time.Second,
+	}
+	return server.ListenAndServe()
 }

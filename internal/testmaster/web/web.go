@@ -12,10 +12,35 @@ import (
 	"fmt"
 	"io/fs"
 	"log"
+	"log/slog"
 	"net/http"
 	"sync"
 	"time"
 )
+
+// Response types for type safety
+type (
+	// StatusResponse for simple status messages
+	StatusResponse struct {
+		Status string `json:"status"`
+	}
+
+	// HealthResponse for health checks
+	HealthResponse struct {
+		Status    string `json:"status"`
+		Timestamp int64  `json:"timestamp"`
+		Version   string `json:"version"`
+	}
+)
+
+// writeJSON encodes v as JSON and writes it to w.
+// If encoding fails, it logs the error.
+func writeJSON(w http.ResponseWriter, v interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(v); err != nil {
+		slog.Error("failed to encode JSON response", "error", err)
+	}
+}
 
 //go:embed dist/*
 var WebUI embed.FS
@@ -401,11 +426,10 @@ func (s *Server) handleRoot(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"status":    "ok",
-		"timestamp": time.Now().Unix(),
-		"version":   "2.0.0",
+	writeJSON(w, HealthResponse{
+		Status:    "ok",
+		Timestamp: time.Now().Unix(),
+		Version:   "2.0.0",
 	})
 }
 
@@ -419,8 +443,7 @@ func (s *Server) handleStats(w http.ResponseWriter, r *http.Request) {
 	stats := s.stats
 	s.mu.RUnlock()
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(stats)
+	writeJSON(w, stats)
 }
 
 func (s *Server) handleResults(w http.ResponseWriter, r *http.Request) {
@@ -434,8 +457,7 @@ func (s *Server) handleResults(w http.ResponseWriter, r *http.Request) {
 	copy(results, s.results)
 	s.mu.RUnlock()
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(results)
+	writeJSON(w, results)
 }
 
 func (s *Server) handleConfig(w http.ResponseWriter, r *http.Request) {
@@ -443,8 +465,7 @@ func (s *Server) handleConfig(w http.ResponseWriter, r *http.Request) {
 	config := s.config
 	s.mu.RUnlock()
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(config)
+	writeJSON(w, config)
 }
 
 func (s *Server) handleStart(w http.ResponseWriter, r *http.Request) {
@@ -471,8 +492,7 @@ func (s *Server) handleStart(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"status": "started"})
+	writeJSON(w, StatusResponse{Status: "started"})
 }
 
 func (s *Server) handleStop(w http.ResponseWriter, r *http.Request) {
@@ -488,8 +508,7 @@ func (s *Server) handleStop(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"status": "stopped"})
+	writeJSON(w, StatusResponse{Status: "stopped"})
 }
 
 func (s *Server) handleCancel(w http.ResponseWriter, r *http.Request) {
@@ -502,8 +521,7 @@ func (s *Server) handleCancel(w http.ResponseWriter, r *http.Request) {
 		s.OnCancel()
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"status": "cancelled"})
+	writeJSON(w, StatusResponse{Status: "cancelled"})
 }
 
 // UpdateStats updates the current statistics

@@ -151,8 +151,15 @@ func New(dp *dataplane.Dataplane, port int) *Server {
 
 // Start begins serving HTTP requests
 func (s *Server) Start() error {
-	addr := fmt.Sprintf(":%d", s.port)
-	return http.ListenAndServe(addr, s.mux)
+	server := &http.Server{
+		Addr:              fmt.Sprintf(":%d", s.port),
+		Handler:           s.mux,
+		ReadHeaderTimeout: 10 * time.Second,
+		ReadTimeout:       30 * time.Second,
+		WriteTimeout:      30 * time.Second,
+		IdleTimeout:       120 * time.Second,
+	}
+	return server.ListenAndServe()
 }
 
 // handleStats returns current statistics as JSON
