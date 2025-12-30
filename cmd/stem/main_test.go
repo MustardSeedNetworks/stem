@@ -4,12 +4,39 @@ package main
 
 import (
 	"bytes"
+	"io"
 	"os"
 	"strings"
 	"testing"
 
 	"github.com/krisarmstrong/stem/internal/version"
 )
+
+// captureStdout captures stdout during function execution and returns the output.
+func captureStdout(t *testing.T, fn func()) string {
+	t.Helper()
+
+	old := os.Stdout
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatalf("Failed to create pipe: %v", err)
+	}
+	os.Stdout = w
+
+	fn()
+
+	if err := w.Close(); err != nil {
+		t.Errorf("Failed to close pipe writer: %v", err)
+	}
+	os.Stdout = old
+
+	var buf bytes.Buffer
+	if _, err := io.Copy(&buf, r); err != nil {
+		t.Errorf("Failed to read from pipe: %v", err)
+	}
+
+	return buf.String()
+}
 
 func TestVersion(t *testing.T) {
 	if version.Version == "" {
@@ -228,19 +255,7 @@ func TestBoolToPassFail(t *testing.T) {
 }
 
 func TestPrintVersion(t *testing.T) {
-	// Capture stdout
-	old := os.Stdout
-	r, w, _ := os.Pipe()
-	os.Stdout = w
-
-	printVersion()
-
-	w.Close()
-	os.Stdout = old
-
-	var buf bytes.Buffer
-	buf.ReadFrom(r)
-	output := buf.String()
+	output := captureStdout(t, printVersion)
 
 	if !strings.Contains(output, ProductName) {
 		t.Error("printVersion should contain ProductName")
@@ -254,19 +269,7 @@ func TestPrintVersion(t *testing.T) {
 }
 
 func TestPrintUsage(t *testing.T) {
-	// Capture stdout
-	old := os.Stdout
-	r, w, _ := os.Pipe()
-	os.Stdout = w
-
-	printUsage()
-
-	w.Close()
-	os.Stdout = old
-
-	var buf bytes.Buffer
-	buf.ReadFrom(r)
-	output := buf.String()
+	output := captureStdout(t, printUsage)
 
 	// Should contain key sections
 	expectedSections := []string{
@@ -288,19 +291,9 @@ func TestPrintUsage(t *testing.T) {
 }
 
 func TestListTestsCmd(t *testing.T) {
-	// Capture stdout
-	old := os.Stdout
-	r, w, _ := os.Pipe()
-	os.Stdout = w
-
-	listTestsCmd([]string{})
-
-	w.Close()
-	os.Stdout = old
-
-	var buf bytes.Buffer
-	buf.ReadFrom(r)
-	output := buf.String()
+	output := captureStdout(t, func() {
+		listTestsCmd([]string{})
+	})
 
 	// Should list test categories
 	for _, cat := range testCategories {
@@ -319,19 +312,9 @@ func TestListTestsCmd(t *testing.T) {
 }
 
 func TestListTestsCmdByModule(t *testing.T) {
-	// Capture stdout
-	old := os.Stdout
-	r, w, _ := os.Pipe()
-	os.Stdout = w
-
-	listTestsCmd([]string{"--by-module"})
-
-	w.Close()
-	os.Stdout = old
-
-	var buf bytes.Buffer
-	buf.ReadFrom(r)
-	output := buf.String()
+	output := captureStdout(t, func() {
+		listTestsCmd([]string{"--by-module"})
+	})
 
 	// Should list module names (including Reflector)
 	modules := []string{"Reflector", "Benchmark", "ServiceTest", "TrafficGen", "Measure", "Certify"}
