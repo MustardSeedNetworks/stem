@@ -10,10 +10,6 @@ Issues are now tracked via GitHub Issues: https://github.com/krisarmstrong/stem/
 
 ### P2 (Medium)
 - [#2 Replace interface{} with concrete types](https://github.com/krisarmstrong/stem/issues/2)
-- [#5 Add observability for config update failures](https://github.com/krisarmstrong/stem/issues/5)
-- [#6 Document web server architecture](https://github.com/krisarmstrong/stem/issues/6)
-- [#7 Fix errcheck warnings in test files](https://github.com/krisarmstrong/stem/issues/7)
-- [#8 Fix all golangci-lint warnings (332 issues)](https://github.com/krisarmstrong/stem/issues/8)
 - [#14 Limited test coverage for interface selection edge cases](https://github.com/krisarmstrong/stem/issues/14)
 
 ---
@@ -42,6 +38,29 @@ Issues are now tracked via GitHub Issues: https://github.com/krisarmstrong/stem/
 ### ~~Issue #3: Extract hardcoded values to constants~~
 **Status**: FIXED in v0.1.5
 - Added HTTP timeout constants (HTTPReadHeaderTimeout, etc.)
+
+### ~~Issue #5: Add observability for config update failures~~
+**Status**: FIXED in v0.1.5
+- Added logging to handleReflectorConfig for failures and updates
+- Added logging to handleMode for mode changes
+
+### ~~Issue #7: Fix errcheck warnings in test files~~
+**Status**: FIXED in v0.1.5
+- Fixed all unchecked error returns in test files
+- Used t.Setenv() instead of os.Setenv for proper cleanup
+
+### ~~Issue #8: Fix golangci-lint warnings~~
+**Status**: PARTIALLY FIXED in v0.1.5
+- Fixed all errcheck warnings in production and test code
+- Fixed exitAfterDefer warnings with explicit cleanup
+- Fixed exhaustive switch warnings
+- Extracted repeated strings as constants (goconst)
+- Remaining: gocognit (high complexity), gosec (security), revive (style)
+
+### ~~Issue #6: Document web server architecture~~
+**Status**: FIXED in v0.1.5
+- Added comprehensive package documentation to internal/web
+- Documents API endpoints, security features, and architecture
 
 ---
 

@@ -1,10 +1,63 @@
 // Copyright (c) 2025 Mustard Seed Networks. All rights reserved.
 
-// Package web provides the HTTP server for The Stem WebUI.
+// Package web provides the unified HTTP server for The Stem WebUI.
 //
-// The server embeds the React frontend build and provides REST API endpoints
-// for interface detection, license management, test execution, and real-time
-// statistics monitoring via polling.
+// # Architecture Overview
+//
+// This is the single web server for The Stem, serving both the embedded React
+// frontend and the REST API. There are no separate web servers for reflector
+// or testmaster modes - all functionality is consolidated here.
+//
+// The server supports two operating modes:
+//   - "reflector" - Packet reflection mode (Tier 1 license)
+//   - "test_master" - Test execution mode (Tier 2 license)
+//
+// Mode is selected via the API (/api/mode) and determines which features
+// are active. Both modes share the same server instance and API surface.
+//
+// # API Endpoints
+//
+// Health and Status:
+//   - GET /api/health       - Server health check
+//   - GET /api/version      - Version information
+//
+// Mode Management:
+//   - GET  /api/mode        - Get current operating mode
+//   - POST /api/mode        - Set operating mode (reflector/test_master)
+//
+// Interface Management:
+//   - GET  /api/interfaces  - List available network interfaces
+//   - GET  /api/settings    - Get current settings (interface, mode)
+//   - POST /api/settings    - Update settings (validates interface exists)
+//
+// Reflector Mode:
+//   - GET  /api/reflector/config - Get reflector configuration
+//   - POST /api/reflector/config - Update reflector configuration
+//   - GET  /api/reflector/stats  - Get reflector statistics
+//
+// Test Execution:
+//   - POST /api/test/start  - Start a test (requires test_type parameter)
+//   - POST /api/test/stop   - Stop running test
+//   - GET  /api/test/status - Get test execution status
+//
+// Module Information:
+//   - GET /api/modules      - List all test modules
+//   - GET /api/modules/{n}  - Get specific module details
+//
+// License Management:
+//   - GET  /api/license     - Get license status
+//   - POST /api/license/activate - Activate a license key
+//
+// # Security
+//
+// CORS is restricted to localhost origins only (127.0.0.1, localhost, ::1).
+// HTTP timeouts are configured to prevent slowloris and similar attacks.
+// Interface names are validated before acceptance.
+//
+// # Static Files
+//
+// The React frontend is embedded via go:embed and served from the root path.
+// If the embedded UI is not built, a simple HTML fallback is served.
 package web
 
 import (
