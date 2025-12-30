@@ -1,74 +1,69 @@
 # The Stem - Issue Tracker
 
-## CRITICAL
+## FIXED (v0.1.3)
 
-### Issue #1: JSON encode errors silently ignored in web handlers
-**Severity**: CRITICAL
-**Files**: `internal/web/server.go`
-**Lines**: 147, 167, 188, 209, 223, 238, 262, 283, 300, 313, 343, 409, 474, 511, 543
+### ~~Issue #1: JSON encode errors silently ignored in web handlers~~
+**Status**: FIXED in v0.1.1, v0.1.2, v0.1.3
+- Added `writeJSON()` helper with error logging to all web servers
+- `internal/web/server.go` - 16 instances fixed
+- `internal/reflector/web/server.go` - 6 instances fixed
+- `internal/testmaster/web/web.go` - 7 instances fixed
 
-16 instances of `json.NewEncoder().Encode()` calls ignore the returned error.
+### ~~Issue #2: Missing port validation allows invalid values~~
+**Status**: FIXED in v0.1.1
+- Added port range validation (1-65535) in `cmd/stem/main.go`
 
----
+### ~~Issue #3: Nil license manager not handled consistently~~
+**Status**: FIXED in v0.1.1
+- Added proper nil checks with logging warnings
 
-## HIGH
+### ~~Issue #4: Frame size validation silently drops invalid values~~
+**Status**: FIXED in v0.1.1
+- Added logging.Warn() for invalid frame sizes
 
-### Issue #2: Missing port validation allows invalid values
-**Severity**: HIGH
-**File**: `cmd/stem/main.go:717-719`
+### ~~Issue #5: Wildcard CORS headers allow any origin~~
+**Status**: FIXED in v0.1.1, v0.1.2
+- Added `setCORSHeaders()` function restricting to localhost origins
 
-The `--port` flag accepts any integer without validation (1-65535).
+### ~~Issue #6: Signal handler makes blocking call in select~~
+**Status**: FIXED in v0.1.1
+- Changed to `go dp.Stop()` for non-blocking shutdown
 
-### Issue #3: Nil license manager not handled consistently
-**Severity**: HIGH
-**File**: `cmd/stem/main.go:758, 798`
+### ~~Issue #9: Logging initialization error ignored~~
+**Status**: FIXED in v0.1.1
+- Added proper error handling with stderr warning
 
-Errors from `license.NewManager()` ignored, nil case not handled.
-
----
-
-## MEDIUM
-
-### Issue #4: Frame size validation silently drops invalid values
-**Severity**: MEDIUM
-**File**: `cmd/stem/main.go:547`
-
-Invalid frame sizes dropped without warning user.
-
-### Issue #5: Wildcard CORS headers allow any origin
-**Severity**: MEDIUM
-**File**: `internal/reflector/web/server.go:160, 175`
-
-`Access-Control-Allow-Origin: *` is a security risk.
+### ~~Issue #10: HTTP servers without timeouts~~
+**Status**: FIXED in v0.1.3
+- Added ReadHeaderTimeout, ReadTimeout, WriteTimeout, IdleTimeout
+- Fixes gosec G114 security vulnerability
 
 ---
 
-## LOW
-
-### Issue #6: Signal handler makes blocking call in select
-**Severity**: LOW
-**File**: `cmd/stem/main.go:352-378`
-
-`dp.Stop()` could block other select cases.
+## REMAINING - LOW PRIORITY
 
 ### Issue #7: Replace interface{} with concrete types
 **Severity**: LOW
-**Files**: `internal/web/server.go:217, 227, 252`, `cmd/stem/main.go:512`
-
-Use struct types for type safety.
+**Files**: `internal/web/server.go`, `cmd/stem/main.go`
+**Status**: Partially addressed - most critical spots use concrete types now
 
 ### Issue #8: Extract hardcoded values to constants
 **Severity**: LOW
-**Files**: `cmd/stem/main.go:307`, `internal/web/server.go:81`, `internal/reflector/tui/tui.go:73`
-
-Magic values should be constants.
-
-### Issue #9: Logging initialization error ignored
-**Severity**: LOW
-**File**: `cmd/stem/main.go:113-116`
-
-Error from `logging.Init()` ignored with `_`.
+**Files**: Various
+**Status**: OPEN - cosmetic improvement only
 
 ---
 
-*Generated: 2025-12-29*
+## KNOWN ISSUES (Test Files Only)
+
+The following are test file issues flagged by golangci-lint. These are not production code issues:
+
+- `cmd/stem/main_test.go` - Unchecked `w.Close()` and `buf.ReadFrom()` in test helpers
+- `internal/help/help_test.go` - Unchecked `w.Close()` and `io.Copy()` in test helpers
+
+These are acceptable in test code and do not affect production.
+
+---
+
+*Last Updated: 2025-12-29*
+*Latest Release: v0.1.3*
