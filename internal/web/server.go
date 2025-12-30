@@ -77,6 +77,21 @@ type (
 		Success bool   `json:"success"`
 		Message string `json:"message"`
 	}
+
+	// TestStartRequest for starting a test
+	TestStartRequest struct {
+		TestType  string `json:"testType"`
+		Interface string `json:"interface,omitempty"`
+		FrameSize uint32 `json:"frameSize,omitempty"`
+		Duration  int    `json:"duration,omitempty"`
+	}
+
+	// TestStartResponse for test start confirmation
+	TestStartResponse struct {
+		Status   string `json:"status"`
+		TestType string `json:"testType"`
+		Module   string `json:"module"`
+	}
 )
 
 // writeJSON encodes v as JSON and writes it to w.
@@ -236,13 +251,49 @@ func (s *Server) handleStats(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, stats)
 }
 
-// handleTestStart starts a test run
+// handleTestStart starts a test run via the module system
 func (s *Server) handleTestStart(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
+	// Parse request body
+	var req TestStartRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid JSON request body", http.StatusBadRequest)
+		return
+	}
+
+	// Default to throughput if no test type specified
+	if req.TestType == "" {
+		req.TestType = "throughput"
+	}
+
+	// Look up the module for this test type
+	mod := modules.GetModuleForTest(req.TestType)
+	if mod == nil {
+		http.Error(w, fmt.Sprintf("Unknown test type: %s", req.TestType), http.StatusBadRequest)
+		return
+	}
+
+	// Verify the module can run this test
+	if !mod.CanRun(req.TestType) {
+		http.Error(w, fmt.Sprintf("Module %s cannot run test type: %s", mod.Name(), req.TestType), http.StatusBadRequest)
+		return
+	}
+
+	// Use provided interface or fall back to selected interface
+	iface := req.Interface
+	if iface == "" {
+		iface = s.selectedIface
+	}
+	if iface == "" {
+		http.Error(w, "No interface specified", http.StatusBadRequest)
+		return
+	}
+
+	// Check if test is already running
 	s.statsMu.Lock()
 	if s.testStatus == "running" {
 		s.statsMu.Unlock()
@@ -250,10 +301,24 @@ func (s *Server) handleTestStart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.testStatus = "running"
-	s.currentTest = "throughput" // Default test
+	s.currentTest = req.TestType
 	s.statsMu.Unlock()
 
-	writeJSON(w, StatusResponse{Status: "started"})
+	logging.Info("Starting test via module system",
+		"testType", req.TestType,
+		"module", mod.Name(),
+		"interface", iface,
+	)
+
+	// TODO: Actually execute the test via module executor
+	// This requires dataplane integration which depends on CGO/hardware
+	// For now, the test is "started" but execution is simulated
+
+	writeJSON(w, TestStartResponse{
+		Status:   "started",
+		TestType: req.TestType,
+		Module:   mod.Name(),
+	})
 }
 
 // handleTestStop stops the current test

@@ -125,40 +125,146 @@ func TestHandleStats(t *testing.T) {
 
 func TestHandleTestStart(t *testing.T) {
 	s := NewServer(8080)
-	req := httptest.NewRequest(http.MethodPost, "/api/test/start", nil)
+	s.selectedIface = "eth0" // Pre-set interface
+
+	body := strings.NewReader(`{"testType": "throughput"}`)
+	req := httptest.NewRequest(http.MethodPost, "/api/test/start", body)
 	w := httptest.NewRecorder()
 
 	s.handleTestStart(w, req)
 
 	if w.Code != http.StatusOK {
-		t.Errorf("Expected status 200, got %d", w.Code)
+		t.Errorf("Expected status 200, got %d: %s", w.Code, w.Body.String())
 	}
 
 	if s.testStatus != "running" {
 		t.Errorf("Expected testStatus 'running', got '%s'", s.testStatus)
 	}
 
-	var resp map[string]string
+	var resp TestStartResponse
 	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
 		t.Fatalf("Failed to parse response: %v", err)
 	}
 
-	if resp["status"] != "started" {
-		t.Errorf("Expected status 'started', got '%s'", resp["status"])
+	if resp.Status != "started" {
+		t.Errorf("Expected status 'started', got '%s'", resp.Status)
+	}
+	if resp.TestType != "throughput" {
+		t.Errorf("Expected testType 'throughput', got '%s'", resp.TestType)
+	}
+	if resp.Module != "benchmark" {
+		t.Errorf("Expected module 'benchmark', got '%s'", resp.Module)
+	}
+}
+
+func TestHandleTestStartWithInterface(t *testing.T) {
+	s := NewServer(8080)
+
+	body := strings.NewReader(`{"testType": "latency", "interface": "en0"}`)
+	req := httptest.NewRequest(http.MethodPost, "/api/test/start", body)
+	w := httptest.NewRecorder()
+
+	s.handleTestStart(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("Expected status 200, got %d: %s", w.Code, w.Body.String())
+	}
+
+	var resp TestStartResponse
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("Failed to parse response: %v", err)
+	}
+
+	if resp.Module != "benchmark" {
+		t.Errorf("Expected module 'benchmark' for latency test, got '%s'", resp.Module)
+	}
+}
+
+func TestHandleTestStartUnknownType(t *testing.T) {
+	s := NewServer(8080)
+	s.selectedIface = "eth0"
+
+	body := strings.NewReader(`{"testType": "nonexistent_test"}`)
+	req := httptest.NewRequest(http.MethodPost, "/api/test/start", body)
+	w := httptest.NewRecorder()
+
+	s.handleTestStart(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("Expected status 400, got %d", w.Code)
+	}
+}
+
+func TestHandleTestStartNoInterface(t *testing.T) {
+	s := NewServer(8080)
+	// No interface set
+
+	body := strings.NewReader(`{"testType": "throughput"}`)
+	req := httptest.NewRequest(http.MethodPost, "/api/test/start", body)
+	w := httptest.NewRecorder()
+
+	s.handleTestStart(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("Expected status 400 for missing interface, got %d", w.Code)
 	}
 }
 
 func TestHandleTestStartConflict(t *testing.T) {
 	s := NewServer(8080)
 	s.testStatus = "running"
+	s.selectedIface = "eth0"
 
-	req := httptest.NewRequest(http.MethodPost, "/api/test/start", nil)
+	body := strings.NewReader(`{"testType": "throughput"}`)
+	req := httptest.NewRequest(http.MethodPost, "/api/test/start", body)
 	w := httptest.NewRecorder()
 
 	s.handleTestStart(w, req)
 
 	if w.Code != http.StatusConflict {
 		t.Errorf("Expected status 409 (conflict), got %d", w.Code)
+	}
+}
+
+func TestHandleTestStartModuleRouting(t *testing.T) {
+	testCases := []struct {
+		testType       string
+		expectedModule string
+	}{
+		{"throughput", "benchmark"},
+		{"latency", "benchmark"},
+		{"y1564_config", "servicetest"},
+		{"y1731_delay", "measure"},
+		{"rfc2889_forwarding", "certify"},
+		{"reflect", "reflector"},
+		{"custom_stream", "trafficgen"},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.testType, func(t *testing.T) {
+			s := NewServer(8080)
+			s.selectedIface = "eth0"
+
+			body := strings.NewReader(`{"testType": "` + tc.testType + `"}`)
+			req := httptest.NewRequest(http.MethodPost, "/api/test/start", body)
+			w := httptest.NewRecorder()
+
+			s.handleTestStart(w, req)
+
+			if w.Code != http.StatusOK {
+				t.Errorf("Expected status 200, got %d: %s", w.Code, w.Body.String())
+				return
+			}
+
+			var resp TestStartResponse
+			if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+				t.Fatalf("Failed to parse response: %v", err)
+			}
+
+			if resp.Module != tc.expectedModule {
+				t.Errorf("Expected module '%s', got '%s'", tc.expectedModule, resp.Module)
+			}
+		})
 	}
 }
 
