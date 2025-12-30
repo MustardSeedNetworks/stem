@@ -132,3 +132,9 @@ func (e *Executor) IsRunning() bool {
 	}
 	return false
 }
+
+// Dataplane returns the underlying dataplane for direct access.
+// Returns nil if no dataplane is configured.
+func (e *Executor) Dataplane() *reflectorDP.Dataplane {
+	return e.dp
+}

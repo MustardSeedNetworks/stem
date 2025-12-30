@@ -76,7 +76,9 @@ import (
 	"github.com/krisarmstrong/stem/internal/logging"
 	"github.com/krisarmstrong/stem/internal/modules"
 	"github.com/krisarmstrong/stem/internal/modules/benchmark"
+	"github.com/krisarmstrong/stem/internal/modules/reflector"
 	"github.com/krisarmstrong/stem/internal/modules/servicetest"
+	reflectorDP "github.com/krisarmstrong/stem/internal/reflector/dataplane"
 	"github.com/krisarmstrong/stem/internal/testmaster/dataplane"
 	"github.com/krisarmstrong/stem/internal/version"
 )
@@ -197,6 +199,7 @@ type Server struct {
 	selectedIface   string
 	mode            string // "reflector" or "test_master"
 	reflectorConfig ReflectorConfig
+	reflectorExec   *reflector.Executor // Active reflector executor (nil when not in reflector mode)
 	licenseManager  *license.Manager
 }
 
@@ -443,9 +446,70 @@ func (s *Server) executeTest(moduleName, testType, iface string, frameSize uint3
 		return s.executeBenchmarkTest(testType, iface, frameSize, duration)
 	case "servicetest":
 		return s.executeServiceTest(testType, iface, frameSize, duration)
+	case "reflector":
+		return s.executeReflector(iface)
 	default:
 		return fmt.Errorf("executor not implemented for module: %s", moduleName)
 	}
+}
+
+// executeReflector starts the reflector mode
+func (s *Server) executeReflector(iface string) error {
+	// Check if already running
+	s.statsMu.Lock()
+	if s.reflectorExec != nil && s.reflectorExec.IsRunning() {
+		s.statsMu.Unlock()
+		return fmt.Errorf("reflector already running")
+	}
+
+	// Create new executor if needed
+	if s.reflectorExec == nil {
+		exec, err := reflector.NewExecutor(iface)
+		if err != nil {
+			s.statsMu.Unlock()
+			return fmt.Errorf("create reflector executor: %w", err)
+		}
+		s.reflectorExec = exec
+	}
+	s.statsMu.Unlock()
+
+	// Run reflector in goroutine
+	go func() {
+		s.statsMu.Lock()
+		exec := s.reflectorExec
+		s.testStatus = "running"
+		s.currentTest = "reflect"
+		s.statsMu.Unlock()
+
+		result, err := exec.Execute("reflect", nil)
+
+		s.statsMu.Lock()
+		defer s.statsMu.Unlock()
+
+		if err != nil {
+			s.testStatus = "error"
+			s.testResult = &TestResultResponse{
+				Status:   "error",
+				TestType: "reflect",
+				Module:   "reflector",
+				Success:  false,
+				Error:    err.Error(),
+			}
+			logging.Error("Reflector start failed", "error", err)
+			return
+		}
+
+		s.testResult = &TestResultResponse{
+			Status:   "running",
+			TestType: "reflect",
+			Module:   "reflector",
+			Success:  result.Success,
+			Data:     result.Data,
+		}
+		logging.Info("Reflector started", "success", result.Success)
+	}()
+
+	return nil
 }
 
 // executeBenchmarkTest runs RFC 2544 tests via the benchmark executor
@@ -560,7 +624,7 @@ func (s *Server) executeServiceTest(testType, iface string, frameSize uint32, du
 	return nil
 }
 
-// handleTestStop stops the current test
+// handleTestStop stops the current test or reflector
 func (s *Server) handleTestStop(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -568,13 +632,28 @@ func (s *Server) handleTestStop(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.statsMu.Lock()
+	testType := s.currentTest
+	exec := s.reflectorExec
+
+	// Check if reflector is running
+	if exec != nil && exec.IsRunning() {
+		exec.Stop()
+		s.testStatus = "stopped"
+		s.currentTest = ""
+		s.statsMu.Unlock()
+		logging.Info("Reflector stopped via API")
+		writeJSON(w, StatusResponse{Status: "stopped"})
+		return
+	}
+
+	// Check if a test is running
 	if s.testStatus != "running" && s.testStatus != "starting" {
 		s.statsMu.Unlock()
 		http.Error(w, "No test running", http.StatusBadRequest)
 		return
 	}
+
 	s.testStatus = "cancelled"
-	testType := s.currentTest
 	s.currentTest = ""
 	s.statsMu.Unlock()
 
@@ -752,22 +831,65 @@ func (s *Server) handleReflectorConfig(w http.ResponseWriter, r *http.Request) {
 		// Track what changed for logging
 		var changes []string
 
-		// Update config
+		// Build dataplane config update if we have an active executor
+		s.statsMu.RLock()
+		exec := s.reflectorExec
+		s.statsMu.RUnlock()
+
+		var dpUpdate *reflectorDP.ConfigUpdate
+		if exec != nil {
+			dpUpdate = &reflectorDP.ConfigUpdate{}
+		}
+
+		// Update config and prepare dataplane update
 		if cfg.Profile != "" {
 			s.reflectorConfig.Profile = cfg.Profile
 			changes = append(changes, "profile="+cfg.Profile)
+			if dpUpdate != nil {
+				mode := cfg.Profile
+				if mode == "netally" || mode == "msn" {
+					mode = "all" // These profiles use all-mode reflection
+				}
+				dpUpdate.Mode = &mode
+			}
 		}
 		if cfg.OUIFilter != "" {
 			s.reflectorConfig.OUIFilter = cfg.OUIFilter
 			changes = append(changes, "ouiFilter="+cfg.OUIFilter)
+			if dpUpdate != nil {
+				dpUpdate.OUI = &cfg.OUIFilter
+				filterOUI := true
+				dpUpdate.FilterOUI = &filterOUI
+			}
 		}
 		if cfg.PortFilter > 0 {
 			s.reflectorConfig.PortFilter = cfg.PortFilter
 			changes = append(changes, fmt.Sprintf("portFilter=%d", cfg.PortFilter))
+			if dpUpdate != nil {
+				port := uint16(cfg.PortFilter)
+				dpUpdate.Port = &port
+			}
 		}
 		if cfg.SignatureFilter != nil {
 			s.reflectorConfig.SignatureFilter = cfg.SignatureFilter
 			changes = append(changes, "signatureFilter updated")
+			if dpUpdate != nil && len(cfg.SignatureFilter) > 0 {
+				sigFilter := cfg.SignatureFilter[0] // Use first filter
+				dpUpdate.SignatureFilter = &sigFilter
+			}
+		}
+
+		// Apply updates to dataplane if available
+		if exec != nil && dpUpdate != nil {
+			// Get the underlying dataplane from executor
+			if dp := exec.Dataplane(); dp != nil {
+				if err := dp.UpdateConfig(dpUpdate); err != nil {
+					logging.Error("failed to update reflector dataplane config", "error", err)
+					http.Error(w, fmt.Sprintf("Failed to update dataplane: %v", err), http.StatusInternalServerError)
+					return
+				}
+				logging.Info("reflector dataplane config updated", "changes", changes)
+			}
 		}
 
 		if len(changes) > 0 {
@@ -817,9 +939,50 @@ func (s *Server) handleReflectorStats(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.statsMu.RLock()
+	exec := s.reflectorExec
 	elapsed := time.Since(s.startTime).Seconds()
+	s.statsMu.RUnlock()
 
-	// Calculate rates
+	// If we have an active reflector executor, get stats from it
+	if exec != nil {
+		dpStats := exec.GetStats()
+		reflectorStats := ReflectorStats{
+			Running:          exec.IsRunning(),
+			PacketsReceived:  dpStats.PacketsReceived,
+			PacketsReflected: dpStats.PacketsReflected,
+			BytesReceived:    dpStats.BytesReceived,
+			BytesReflected:   dpStats.BytesReflected,
+			TxErrors:         dpStats.TxErrors,
+			RxInvalid:        dpStats.RxInvalid,
+			Uptime:           elapsed,
+		}
+
+		// Calculate rates based on uptime
+		if elapsed > 0 {
+			reflectorStats.RatePPS = float64(dpStats.PacketsReflected) / elapsed
+			reflectorStats.RateMbps = float64(dpStats.BytesReflected) * 8.0 / (elapsed * 1000000.0)
+		}
+
+		// Populate signature counts
+		reflectorStats.Signatures.ProbeOT = dpStats.SigProbeOT
+		reflectorStats.Signatures.DataOT = dpStats.SigDataOT
+		reflectorStats.Signatures.Latency = dpStats.SigLatency
+		reflectorStats.Signatures.RFC2544 = dpStats.SigRFC2544
+		reflectorStats.Signatures.Y1564 = dpStats.SigY1564
+		reflectorStats.Signatures.MSN = dpStats.SigMSN
+
+		// Populate latency stats
+		reflectorStats.Latency.MinUs = dpStats.LatencyMin
+		reflectorStats.Latency.AvgUs = dpStats.LatencyAvg
+		reflectorStats.Latency.MaxUs = dpStats.LatencyMax
+		reflectorStats.Latency.Count = dpStats.LatencyCount
+
+		writeJSON(w, reflectorStats)
+		return
+	}
+
+	// Fallback: return stats from internal counters (for non-CGO builds or when reflector not active)
+	s.statsMu.RLock()
 	pps := float64(0)
 	mbps := float64(0)
 	if elapsed > 0 && s.stats.PacketsSent > 0 {

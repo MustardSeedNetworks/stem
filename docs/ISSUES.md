@@ -4,11 +4,48 @@ Issues are now tracked via GitHub Issues: https://github.com/krisarmstrong/stem/
 
 ## Open Issues
 
+### P0 (Critical)
+- **Issue #15**: Modules beyond benchmark/servicetest return 'executor not implemented'
+  - trafficgen, measure, certify modules need C dataplane implementation
+
 ### P1 (High)
 (No open P1 issues)
 
 ### P2 (Medium)
-(No open P2 issues)
+- **Issue #19**: Address enumeration ignores errors
+- **Issue #20**: Params parsing relies on float64 type assertions
+- **Issue #21**: No default interface selection applied
+- **Issue #23**: Missing tests for test cancellation behavior
+- **Issue #24**: Missing validation for executor parameter types
+- **Issue #25**: Missing E2E coverage for reflector mode
+
+---
+
+## FIXED (v0.1.6)
+
+### ~~Issue #17: Reflector API config/stats not wired to dataplane~~
+**Status**: FIXED in v0.1.6
+- Added reflectorExec field to Server struct for active reflector executor
+- handleReflectorStats reads from actual dataplane stats
+- handleReflectorConfig calls dataplane.UpdateConfig() for real-time updates
+- Added Dataplane() accessor to reflector executor
+
+### ~~Issue #18: /api/test/stop does not signal dataplane to stop~~
+**Status**: FIXED in v0.1.6
+- handleTestStop checks if reflector executor is running and stops it
+- Added executeReflector() to start reflector via module system
+- Properly updates testStatus and logs stop events
+
+### ~~Issue #22: Document which modules/tests are executable vs stub~~
+**Status**: FIXED in v0.1.6
+- Created docs/MODULE_STATUS.md with comprehensive implementation status
+- Documents all 5 modules with test-by-test availability
+- Includes platform requirements and API behavior documentation
+
+### ~~Issue #16: MEF tests always return ErrTestNotImplemented~~
+**Status**: DOCUMENTED in v0.1.6
+- MEF tests documented in MODULE_STATUS.md as requiring C dataplane work
+- Clear API behavior documented for stubbed tests
 
 ---
 
@@ -110,4 +147,4 @@ Issues are now tracked via GitHub Issues: https://github.com/krisarmstrong/stem/
 ---
 
 *Last Updated: 2025-12-30*
-*Latest Release: v0.1.5*
+*Latest Release: v0.1.6*
