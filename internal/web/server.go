@@ -35,6 +35,14 @@ const (
 	DefaultProfile    = "all"
 )
 
+// HTTP server timeout constants
+const (
+	HTTPReadHeaderTimeout = 10 * time.Second
+	HTTPReadTimeout       = 30 * time.Second
+	HTTPWriteTimeout      = 30 * time.Second
+	HTTPIdleTimeout       = 120 * time.Second
+)
+
 // Response types for type safety
 type (
 	// StatusResponse for simple status messages
@@ -964,10 +972,10 @@ func (s *Server) Run() error {
 	server := &http.Server{
 		Addr:              addr,
 		Handler:           handler,
-		ReadHeaderTimeout: 10 * time.Second,
-		ReadTimeout:       30 * time.Second,
-		WriteTimeout:      30 * time.Second,
-		IdleTimeout:       120 * time.Second,
+		ReadHeaderTimeout: HTTPReadHeaderTimeout,
+		ReadTimeout:       HTTPReadTimeout,
+		WriteTimeout:      HTTPWriteTimeout,
+		IdleTimeout:       HTTPIdleTimeout,
 	}
 	return server.ListenAndServe()
 }
