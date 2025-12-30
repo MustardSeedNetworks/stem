@@ -104,10 +104,7 @@ func (e *Executor) Execute(testType string, cfg *TestConfig) (*Result, error) {
 
 	case "y1564_perf":
 		service := e.buildY1564Service(cfg)
-		duration := uint32(cfg.Duration)
-		if duration == 0 {
-			duration = 900 // 15 minutes default
-		}
+		duration := e.safeDuration(cfg.Duration, 900) // 15 minutes default
 		data, err = e.ctx.RunY1564PerfTest(service, duration)
 
 	case "y1564":
@@ -118,18 +115,15 @@ func (e *Executor) Execute(testType string, cfg *TestConfig) (*Result, error) {
 		configResult, configErr := e.ctx.RunY1564ConfigTest(service)
 		if configErr != nil {
 			result.Error = fmt.Sprintf("config test failed: %v", configErr)
-			return result, configErr
+			return result, fmt.Errorf("y1564 config test: %w", configErr)
 		}
 
 		// Run performance test
-		duration := uint32(cfg.Duration)
-		if duration == 0 {
-			duration = 900 // 15 minutes default
-		}
+		duration := e.safeDuration(cfg.Duration, 900) // 15 minutes default
 		perfResult, perfErr := e.ctx.RunY1564PerfTest(service, duration)
 		if perfErr != nil {
 			result.Error = fmt.Sprintf("perf test failed: %v", perfErr)
-			return result, perfErr
+			return result, fmt.Errorf("y1564 perf test: %w", perfErr)
 		}
 
 		// Combine results
@@ -148,7 +142,7 @@ func (e *Executor) Execute(testType string, cfg *TestConfig) (*Result, error) {
 
 	if err != nil {
 		result.Error = err.Error()
-		return result, err
+		return result, fmt.Errorf("servicetest %s failed: %w", testType, err)
 	}
 
 	result.Success = true
@@ -167,7 +161,10 @@ func (e *Executor) configureContext(cfg *TestConfig) error {
 		dpCfg.TrialDuration = time.Duration(cfg.Duration) * time.Second
 	}
 
-	return e.ctx.Configure(dpCfg)
+	if err := e.ctx.Configure(dpCfg); err != nil {
+		return fmt.Errorf("configure dataplane: %w", err)
+	}
+	return nil
 }
 
 // buildY1564Service creates a Y1564Service from the test config.
@@ -190,30 +187,50 @@ func (e *Executor) buildY1564Service(cfg *TestConfig) *dataplane.Y1564Service {
 		service.FrameSize = cfg.FrameSize
 	}
 
-	// Extract SLA parameters from config
-	if cfg.Params != nil {
-		if cir, ok := cfg.Params["cir"].(float64); ok {
-			service.SLA.CIRMbps = cir
-		}
-		if eir, ok := cfg.Params["eir"].(float64); ok {
-			service.SLA.EIRMbps = eir
-		}
-		if fd, ok := cfg.Params["fd_threshold"].(float64); ok {
-			service.SLA.FDThresholdMs = fd
-		}
-		if fdv, ok := cfg.Params["fdv_threshold"].(float64); ok {
-			service.SLA.FDVThresholdMs = fdv
-		}
-		if flr, ok := cfg.Params["flr_threshold"].(float64); ok {
-			service.SLA.FLRThresholdPct = flr
-		}
-		if name, ok := cfg.Params["service_name"].(string); ok {
-			service.ServiceName = name
-		}
-		if id, ok := cfg.Params["service_id"].(uint32); ok {
-			service.ServiceID = id
-		}
-	}
+	// Extract SLA and service parameters from config
+	e.extractY1564Params(cfg, service)
 
 	return service
+}
+
+// extractY1564Params extracts SLA and service parameters from config.
+func (e *Executor) extractY1564Params(cfg *TestConfig, service *dataplane.Y1564Service) {
+	if cfg.Params == nil {
+		return
+	}
+
+	// Extract SLA parameters
+	if cir, ok := cfg.Params["cir"].(float64); ok {
+		service.SLA.CIRMbps = cir
+	}
+	if eir, ok := cfg.Params["eir"].(float64); ok {
+		service.SLA.EIRMbps = eir
+	}
+	if fd, ok := cfg.Params["fd_threshold"].(float64); ok {
+		service.SLA.FDThresholdMs = fd
+	}
+	if fdv, ok := cfg.Params["fdv_threshold"].(float64); ok {
+		service.SLA.FDVThresholdMs = fdv
+	}
+	if flr, ok := cfg.Params["flr_threshold"].(float64); ok {
+		service.SLA.FLRThresholdPct = flr
+	}
+
+	// Extract service identification
+	if name, ok := cfg.Params["service_name"].(string); ok {
+		service.ServiceName = name
+	}
+	if id, ok := cfg.Params["service_id"].(uint32); ok {
+		service.ServiceID = id
+	}
+}
+
+// safeDuration converts an int duration to uint32 safely.
+// Returns defaultVal if duration is <= 0 or would overflow uint32.
+func (e *Executor) safeDuration(duration int, defaultVal uint32) uint32 {
+	const maxUint32 = 4294967295 // math.MaxUint32
+	if duration <= 0 || duration > maxUint32 {
+		return defaultVal
+	}
+	return uint32(duration)
 }

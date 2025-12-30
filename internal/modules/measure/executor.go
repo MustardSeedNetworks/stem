@@ -54,7 +54,7 @@ func (e *Executor) Close() {
 
 // Execute runs a Y.1731 OAM test.
 // Currently returns ErrTestNotImplemented as Y.1731 is not yet in the dataplane.
-func (e *Executor) Execute(testType string, cfg *TestConfig) (*Result, error) {
+func (e *Executor) Execute(testType string, _ *TestConfig) (*Result, error) {
 	if !e.CanRun(testType) {
 		return nil, fmt.Errorf("measure module cannot run test type: %s", testType)
 	}

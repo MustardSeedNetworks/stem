@@ -54,7 +54,7 @@ func (e *Executor) Close() {
 
 // Execute runs a traffic generation operation.
 // Currently returns ErrTestNotImplemented as custom streams are not yet in the dataplane.
-func (e *Executor) Execute(testType string, cfg *TestConfig) (*Result, error) {
+func (e *Executor) Execute(testType string, _ *TestConfig) (*Result, error) {
 	if !e.CanRun(testType) {
 		return nil, fmt.Errorf("trafficgen module cannot run test type: %s", testType)
 	}

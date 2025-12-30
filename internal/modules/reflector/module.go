@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Mustard Seed Networks. All rights reserved.
-//
+
 // Package reflector implements the Reflector module for packet reflection/loopback.
 // This module owns the reflector operational mode (Tier 1) for remote testing support.
 package reflector

@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Mustard Seed Networks. All rights reserved.
-//
+
 // Package benchmark implements the Benchmark module for RFC 2544 device testing.
 // This module owns throughput, latency, frame loss, back-to-back, and recovery tests.
 package benchmark

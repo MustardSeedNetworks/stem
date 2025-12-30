@@ -125,7 +125,7 @@ func (e *Executor) Execute(testType string, cfg *TestConfig) (*Result, error) {
 
 	if err != nil {
 		result.Error = err.Error()
-		return result, err
+		return result, fmt.Errorf("benchmark test %s failed: %w", testType, err)
 	}
 
 	result.Success = true
@@ -157,7 +157,10 @@ func (e *Executor) configureContext(cfg *TestConfig) error {
 		}
 	}
 
-	return e.ctx.Configure(dpCfg)
+	if err := e.ctx.Configure(dpCfg); err != nil {
+		return fmt.Errorf("configure dataplane: %w", err)
+	}
+	return nil
 }
 
 // getLoadLevels extracts load levels from config or returns defaults.

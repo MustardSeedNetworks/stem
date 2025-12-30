@@ -13,6 +13,16 @@ import (
 	"github.com/krisarmstrong/stem/internal/modules/trafficgen"
 )
 
+// Module name constants for tests.
+const (
+	testModuleBenchmark   = "benchmark"
+	testModuleCertify     = "certify"
+	testModuleMeasure     = "measure"
+	testModuleReflector   = "reflector"
+	testModuleServiceTest = "servicetest"
+	testModuleTrafficGen  = "trafficgen"
+)
+
 func TestRegistry(t *testing.T) {
 	reg := NewRegistry()
 
@@ -21,7 +31,7 @@ func TestRegistry(t *testing.T) {
 	reg.Register(bm)
 
 	// Test Get
-	if got := reg.Get("benchmark"); got == nil {
+	if got := reg.Get(testModuleBenchmark); got == nil {
 		t.Error("Get('benchmark') returned nil")
 	}
 	if got := reg.Get("nonexistent"); got != nil {
@@ -53,7 +63,7 @@ func TestDefaultRegistry(t *testing.T) {
 	}
 
 	// Test module lookup
-	names := []string{"reflector", "benchmark", "servicetest", "trafficgen", "measure", "certify"}
+	names := []string{testModuleReflector, testModuleBenchmark, testModuleServiceTest, testModuleTrafficGen, testModuleMeasure, testModuleCertify}
 	for _, name := range names {
 		if m := DefaultRegistry.Get(name); m == nil {
 			t.Errorf("DefaultRegistry.Get(%q) returned nil", name)
@@ -64,7 +74,7 @@ func TestDefaultRegistry(t *testing.T) {
 func TestBenchmarkModule(t *testing.T) {
 	m := benchmark.New()
 
-	if m.Name() != "benchmark" {
+	if m.Name() != testModuleBenchmark {
 		t.Errorf("Name() = %q, want 'benchmark'", m.Name())
 	}
 	if m.DisplayName() != "Benchmark" {
@@ -95,7 +105,7 @@ func TestBenchmarkModule(t *testing.T) {
 func TestServiceTestModule(t *testing.T) {
 	m := servicetest.New()
 
-	if m.Name() != "servicetest" {
+	if m.Name() != testModuleServiceTest {
 		t.Errorf("Name() = %q, want 'servicetest'", m.Name())
 	}
 	if m.Color() != "#ea580c" {
@@ -114,7 +124,7 @@ func TestServiceTestModule(t *testing.T) {
 func TestTrafficGenModule(t *testing.T) {
 	m := trafficgen.New()
 
-	if m.Name() != "trafficgen" {
+	if m.Name() != testModuleTrafficGen {
 		t.Errorf("Name() = %q, want 'trafficgen'", m.Name())
 	}
 	if m.Color() != "#ca8a04" {
@@ -131,7 +141,7 @@ func TestTrafficGenModule(t *testing.T) {
 func TestReflectorModule(t *testing.T) {
 	m := reflector.New()
 
-	if m.Name() != "reflector" {
+	if m.Name() != testModuleReflector {
 		t.Errorf("Name() = %q, want 'reflector'", m.Name())
 	}
 	if m.DisplayName() != "Reflector" {
@@ -151,7 +161,7 @@ func TestReflectorModule(t *testing.T) {
 func TestMeasureModule(t *testing.T) {
 	m := measure.New()
 
-	if m.Name() != "measure" {
+	if m.Name() != testModuleMeasure {
 		t.Errorf("Name() = %q, want 'measure'", m.Name())
 	}
 	if m.Color() != "#2563eb" {
@@ -165,7 +175,7 @@ func TestMeasureModule(t *testing.T) {
 func TestCertifyModule(t *testing.T) {
 	m := certify.New()
 
-	if m.Name() != "certify" {
+	if m.Name() != testModuleCertify {
 		t.Errorf("Name() = %q, want 'certify'", m.Name())
 	}
 	if m.Color() != "#16a34a" {
@@ -188,7 +198,7 @@ func TestToInfo(t *testing.T) {
 	m := benchmark.New()
 	info := ToInfo(m)
 
-	if info.Name != "benchmark" {
+	if info.Name != testModuleBenchmark {
 		t.Errorf("info.Name = %q, want 'benchmark'", info.Name)
 	}
 	if info.DisplayName != "Benchmark" {
@@ -204,25 +214,25 @@ func TestToInfo(t *testing.T) {
 
 func TestGetModuleForTest(t *testing.T) {
 	// RFC 2544 tests -> benchmark
-	if m := GetModuleForTest("throughput"); m == nil || m.Name() != "benchmark" {
+	if m := GetModuleForTest("throughput"); m == nil || m.Name() != testModuleBenchmark {
 		t.Error("throughput should map to benchmark module")
 	}
 
 	// Y.1564 tests -> servicetest
-	if m := GetModuleForTest("y1564_config"); m == nil || m.Name() != "servicetest" {
+	if m := GetModuleForTest("y1564_config"); m == nil || m.Name() != testModuleServiceTest {
 		t.Error("y1564_config should map to servicetest module")
 	}
 
 	// Y.1731 tests -> measure
-	if m := GetModuleForTest("y1731_delay"); m == nil || m.Name() != "measure" {
+	if m := GetModuleForTest("y1731_delay"); m == nil || m.Name() != testModuleMeasure {
 		t.Error("y1731_delay should map to measure module")
 	}
 
 	// RFC 2889/6349/TSN tests -> certify
-	if m := GetModuleForTest("rfc2889_forwarding"); m == nil || m.Name() != "certify" {
+	if m := GetModuleForTest("rfc2889_forwarding"); m == nil || m.Name() != testModuleCertify {
 		t.Error("rfc2889_forwarding should map to certify module")
 	}
-	if m := GetModuleForTest("rfc6349_throughput"); m == nil || m.Name() != "certify" {
+	if m := GetModuleForTest("rfc6349_throughput"); m == nil || m.Name() != testModuleCertify {
 		t.Error("rfc6349_throughput should map to certify module")
 	}
 }
@@ -236,12 +246,12 @@ func TestAllModuleInfos(t *testing.T) {
 
 func TestGetModuleForReflect(t *testing.T) {
 	// reflect -> reflector module (not trafficgen)
-	if m := GetModuleForTest("reflect"); m == nil || m.Name() != "reflector" {
+	if m := GetModuleForTest("reflect"); m == nil || m.Name() != testModuleReflector {
 		t.Error("reflect should map to reflector module")
 	}
 
 	// custom_stream -> trafficgen module
-	if m := GetModuleForTest("custom_stream"); m == nil || m.Name() != "trafficgen" {
+	if m := GetModuleForTest("custom_stream"); m == nil || m.Name() != testModuleTrafficGen {
 		t.Error("custom_stream should map to trafficgen module")
 	}
 }
@@ -280,7 +290,7 @@ func TestAllModulesOrdering(t *testing.T) {
 		found[m.Name()] = true
 	}
 
-	expected := []string{"reflector", "benchmark", "servicetest", "trafficgen", "measure", "certify"}
+	expected := []string{testModuleReflector, testModuleBenchmark, testModuleServiceTest, testModuleTrafficGen, testModuleMeasure, testModuleCertify}
 	for _, name := range expected {
 		if !found[name] {
 			t.Errorf("Missing module: %s", name)
@@ -306,12 +316,12 @@ func TestModuleColors(t *testing.T) {
 
 	// Verify expected colors
 	expectedColors := map[string]string{
-		"reflector":   "#0891b2",
-		"benchmark":   "#dc2626",
-		"servicetest": "#ea580c",
-		"trafficgen":  "#ca8a04",
-		"measure":     "#2563eb",
-		"certify":     "#16a34a",
+		testModuleReflector:   "#0891b2",
+		testModuleBenchmark:   "#dc2626",
+		testModuleServiceTest: "#ea580c",
+		testModuleTrafficGen:  "#ca8a04",
+		testModuleMeasure:     "#2563eb",
+		testModuleCertify:     "#16a34a",
 	}
 
 	for name, expectedColor := range expectedColors {
@@ -331,16 +341,16 @@ func TestModuleCanRunNegativeCases(t *testing.T) {
 		moduleName string
 		testType   string
 	}{
-		{"benchmark", "y1564_config"},
-		{"benchmark", "reflect"},
-		{"servicetest", "throughput"},
-		{"servicetest", "rfc2889_forwarding"},
-		{"trafficgen", "throughput"},
-		{"trafficgen", "reflect"}, // reflect moved to reflector module
-		{"measure", "throughput"},
-		{"certify", "throughput"},
-		{"reflector", "throughput"},
-		{"reflector", "custom_stream"},
+		{testModuleBenchmark, "y1564_config"},
+		{testModuleBenchmark, "reflect"},
+		{testModuleServiceTest, "throughput"},
+		{testModuleServiceTest, "rfc2889_forwarding"},
+		{testModuleTrafficGen, "throughput"},
+		{testModuleTrafficGen, "reflect"}, // reflect moved to reflector module
+		{testModuleMeasure, "throughput"},
+		{testModuleCertify, "throughput"},
+		{testModuleReflector, "throughput"},
+		{testModuleReflector, "custom_stream"},
 	}
 
 	for _, tc := range testCases {

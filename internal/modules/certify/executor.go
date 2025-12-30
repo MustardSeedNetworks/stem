@@ -54,7 +54,7 @@ func (e *Executor) Close() {
 
 // Execute runs an RFC 2889, RFC 6349, or TSN test.
 // Currently returns ErrTestNotImplemented for unimplemented tests.
-func (e *Executor) Execute(testType string, cfg *TestConfig) (*Result, error) {
+func (e *Executor) Execute(testType string, _ *TestConfig) (*Result, error) {
 	if !e.CanRun(testType) {
 		return nil, fmt.Errorf("certify module cannot run test type: %s", testType)
 	}

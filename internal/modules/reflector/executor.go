@@ -75,7 +75,7 @@ func (e *Executor) Close() {
 }
 
 // Execute runs the reflector operation.
-func (e *Executor) Execute(testType string, cfg *Config) (*Result, error) {
+func (e *Executor) Execute(testType string, _ *Config) (*Result, error) {
 	if !e.CanRun(testType) {
 		return nil, fmt.Errorf("reflector module cannot run operation type: %s", testType)
 	}
@@ -91,7 +91,7 @@ func (e *Executor) Execute(testType string, cfg *Config) (*Result, error) {
 		// Start reflector mode
 		if err := e.dp.Start(); err != nil {
 			result.Error = err.Error()
-			return result, err
+			return result, fmt.Errorf("start reflector: %w", err)
 		}
 
 		// Get initial stats

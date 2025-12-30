@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Mustard Seed Networks. All rights reserved.
-//
+
 // Package trafficgen implements the TrafficGen module for custom traffic generation.
 // This module owns custom traffic stream generation capabilities.
 package trafficgen
