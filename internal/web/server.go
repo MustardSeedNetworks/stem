@@ -653,16 +653,20 @@ func (s *Server) handleMode(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPost:
 		var req ModeRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			logging.Warn("mode update failed: invalid JSON", "error", err)
 			http.Error(w, "Invalid JSON", http.StatusBadRequest)
 			return
 		}
 
 		if req.Mode != "reflector" && req.Mode != "test_master" {
+			logging.Warn("mode update failed: invalid mode", "mode", req.Mode)
 			http.Error(w, "Invalid mode (must be 'reflector' or 'test_master')", http.StatusBadRequest)
 			return
 		}
 
+		oldMode := s.mode
 		s.mode = req.Mode
+		logging.Info("mode changed", "from", oldMode, "to", s.mode)
 		writeJSON(w, ModeUpdateResponse{Status: "updated", Mode: s.mode})
 
 	default:
@@ -679,6 +683,7 @@ func (s *Server) handleReflectorConfig(w http.ResponseWriter, r *http.Request) {
 	case http.MethodPost:
 		var cfg ReflectorConfig
 		if err := json.NewDecoder(r.Body).Decode(&cfg); err != nil {
+			logging.Warn("reflector config update failed: invalid JSON", "error", err)
 			http.Error(w, "Invalid JSON", http.StatusBadRequest)
 			return
 		}
@@ -686,22 +691,34 @@ func (s *Server) handleReflectorConfig(w http.ResponseWriter, r *http.Request) {
 		// Validate profile
 		validProfiles := map[string]bool{"netally": true, "msn": true, "all": true, "custom": true}
 		if cfg.Profile != "" && !validProfiles[cfg.Profile] {
+			logging.Warn("reflector config update failed: invalid profile", "profile", cfg.Profile)
 			http.Error(w, "Invalid profile", http.StatusBadRequest)
 			return
 		}
 
+		// Track what changed for logging
+		var changes []string
+
 		// Update config
 		if cfg.Profile != "" {
 			s.reflectorConfig.Profile = cfg.Profile
+			changes = append(changes, "profile="+cfg.Profile)
 		}
 		if cfg.OUIFilter != "" {
 			s.reflectorConfig.OUIFilter = cfg.OUIFilter
+			changes = append(changes, "ouiFilter="+cfg.OUIFilter)
 		}
 		if cfg.PortFilter > 0 {
 			s.reflectorConfig.PortFilter = cfg.PortFilter
+			changes = append(changes, fmt.Sprintf("portFilter=%d", cfg.PortFilter))
 		}
 		if cfg.SignatureFilter != nil {
 			s.reflectorConfig.SignatureFilter = cfg.SignatureFilter
+			changes = append(changes, "signatureFilter updated")
+		}
+
+		if len(changes) > 0 {
+			logging.Info("reflector config updated", "changes", changes)
 		}
 
 		writeJSON(w, StatusResponse{Status: "updated"})
