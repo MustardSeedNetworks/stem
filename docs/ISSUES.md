@@ -9,6 +9,9 @@ Issues are now tracked via GitHub Issues: https://github.com/krisarmstrong/stem/
 
 ### P2 (Medium)
 - [#2 Replace interface{} with concrete types](https://github.com/krisarmstrong/stem/issues/2)
+  - Web server uses typed response structs (ReflectorConfig, StatusResponse, etc.)
+  - Remaining: UpdateConfig map[string]interface{}, test file JSON unmarshalling, executor Params
+  - Note: Logging `...interface{}` is standard Go pattern and acceptable
 
 ---
 
