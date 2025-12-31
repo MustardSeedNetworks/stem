@@ -2,15 +2,11 @@
 
 package modules
 
-import (
-	"fmt"
+import "github.com/krisarmstrong/stem/internal/modules/common"
+
+// Re-export error types from common package.
+var (
+	ErrTestNotImplemented = common.ErrTestNotImplemented
+	ErrModuleNotExecutor  = common.ErrModuleNotExecutor
+	ErrInvalidConfig      = common.ErrInvalidConfig
 )
-
-// ErrTestNotImplemented is returned when a test type is not yet implemented.
-var ErrTestNotImplemented = fmt.Errorf("test type not implemented")
-
-// ErrModuleNotExecutor is returned when trying to execute on a non-executor module.
-var ErrModuleNotExecutor = fmt.Errorf("module does not support execution")
-
-// ErrInvalidConfig is returned when test configuration is invalid.
-var ErrInvalidConfig = fmt.Errorf("invalid test configuration")

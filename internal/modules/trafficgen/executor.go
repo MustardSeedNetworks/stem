@@ -3,29 +3,10 @@
 package trafficgen
 
 import (
-	"errors"
 	"fmt"
+
+	"github.com/krisarmstrong/stem/internal/modules/common"
 )
-
-// Result is a generic test result.
-type Result struct {
-	TestType   string      `json:"testType"`
-	ModuleName string      `json:"module"`
-	Success    bool        `json:"success"`
-	Error      string      `json:"error,omitempty"`
-	Data       interface{} `json:"data,omitempty"`
-}
-
-// TestConfig holds configuration for test execution.
-type TestConfig struct {
-	Interface string
-	FrameSize uint32
-	Duration  int
-	Params    map[string]interface{}
-}
-
-// ErrTestNotImplemented is returned for unimplemented tests.
-var ErrTestNotImplemented = errors.New("test type not implemented")
 
 // Executor wraps the TrafficGen module with execution capability.
 // Custom traffic generation is not yet implemented in the dataplane.
@@ -54,12 +35,12 @@ func (e *Executor) Close() {
 
 // Execute runs a traffic generation operation.
 // Currently returns ErrTestNotImplemented as custom streams are not yet in the dataplane.
-func (e *Executor) Execute(testType string, _ *TestConfig) (*Result, error) {
+func (e *Executor) Execute(testType string, _ *common.TestConfig) (*common.Result, error) {
 	if !e.CanRun(testType) {
 		return nil, fmt.Errorf("trafficgen module cannot run test type: %s", testType)
 	}
 
-	result := &Result{
+	result := &common.Result{
 		TestType:   testType,
 		ModuleName: ModuleName,
 		Success:    false,
@@ -68,9 +49,9 @@ func (e *Executor) Execute(testType string, _ *TestConfig) (*Result, error) {
 	switch testType {
 	case "custom_stream":
 		result.Error = "Custom traffic stream generation requires additional dataplane implementation"
-		return result, ErrTestNotImplemented
+		return result, common.ErrTestNotImplemented
 
 	default:
-		return nil, ErrTestNotImplemented
+		return nil, common.ErrTestNotImplemented
 	}
 }

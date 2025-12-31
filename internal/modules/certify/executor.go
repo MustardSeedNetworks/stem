@@ -3,29 +3,10 @@
 package certify
 
 import (
-	"errors"
 	"fmt"
+
+	"github.com/krisarmstrong/stem/internal/modules/common"
 )
-
-// Result is a generic test result.
-type Result struct {
-	TestType   string      `json:"testType"`
-	ModuleName string      `json:"module"`
-	Success    bool        `json:"success"`
-	Error      string      `json:"error,omitempty"`
-	Data       interface{} `json:"data,omitempty"`
-}
-
-// TestConfig holds configuration for test execution.
-type TestConfig struct {
-	Interface string
-	FrameSize uint32
-	Duration  int
-	Params    map[string]interface{}
-}
-
-// ErrTestNotImplemented is returned for unimplemented tests.
-var ErrTestNotImplemented = errors.New("test type not implemented")
 
 // Executor wraps the Certify module with test execution capability.
 // RFC 2889, RFC 6349, and TSN tests are not yet implemented in the dataplane.
@@ -54,12 +35,12 @@ func (e *Executor) Close() {
 
 // Execute runs an RFC 2889, RFC 6349, or TSN test.
 // Currently returns ErrTestNotImplemented for unimplemented tests.
-func (e *Executor) Execute(testType string, _ *TestConfig) (*Result, error) {
+func (e *Executor) Execute(testType string, _ *common.TestConfig) (*common.Result, error) {
 	if !e.CanRun(testType) {
 		return nil, fmt.Errorf("certify module cannot run test type: %s", testType)
 	}
 
-	result := &Result{
+	result := &common.Result{
 		TestType:   testType,
 		ModuleName: ModuleName,
 		Success:    false,
@@ -70,17 +51,17 @@ func (e *Executor) Execute(testType string, _ *TestConfig) (*Result, error) {
 	case "rfc2889_forwarding", "rfc2889_caching", "rfc2889_learning",
 		"rfc2889_broadcast", "rfc2889_congestion":
 		result.Error = "RFC 2889 switch tests require additional dataplane implementation"
-		return result, ErrTestNotImplemented
+		return result, common.ErrTestNotImplemented
 
 	case "rfc6349_throughput", "rfc6349_path":
 		result.Error = "RFC 6349 TCP tests require additional dataplane implementation"
-		return result, ErrTestNotImplemented
+		return result, common.ErrTestNotImplemented
 
 	case "tsn_timing", "tsn_isolation", "tsn_latency", "tsn":
 		result.Error = "IEEE 802.1Qbv TSN tests require additional dataplane implementation"
-		return result, ErrTestNotImplemented
+		return result, common.ErrTestNotImplemented
 
 	default:
-		return nil, ErrTestNotImplemented
+		return nil, common.ErrTestNotImplemented
 	}
 }

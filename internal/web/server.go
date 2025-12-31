@@ -588,7 +588,7 @@ func (s *Server) executeBenchmarkTest(testType, iface string, frameSize uint32, 
 		s.testStatus = statusRunning
 		s.statsMu.Unlock()
 
-		cfg := &benchmark.TestConfig{
+		cfg := &modules.TestConfig{
 			Interface: iface,
 			FrameSize: frameSize,
 			Duration:  duration,
@@ -644,7 +644,7 @@ func (s *Server) executeServiceTest(testType, iface string, frameSize uint32, du
 		s.testStatus = statusRunning
 		s.statsMu.Unlock()
 
-		cfg := &servicetest.TestConfig{
+		cfg := &modules.TestConfig{
 			Interface: iface,
 			FrameSize: frameSize,
 			Duration:  duration,
@@ -700,7 +700,7 @@ func (s *Server) executeTrafficGenTest(testType, iface string, frameSize uint32,
 		s.testStatus = statusRunning
 		s.statsMu.Unlock()
 
-		cfg := &trafficgen.TestConfig{
+		cfg := &modules.TestConfig{
 			Interface: iface,
 			FrameSize: frameSize,
 			Duration:  duration,
@@ -756,7 +756,7 @@ func (s *Server) executeMeasureTest(testType, iface string, frameSize uint32, du
 		s.testStatus = statusRunning
 		s.statsMu.Unlock()
 
-		cfg := &measure.TestConfig{
+		cfg := &modules.TestConfig{
 			Interface: iface,
 			FrameSize: frameSize,
 			Duration:  duration,
@@ -812,7 +812,7 @@ func (s *Server) executeCertifyTest(testType, iface string, frameSize uint32, du
 		s.testStatus = statusRunning
 		s.statsMu.Unlock()
 
-		cfg := &certify.TestConfig{
+		cfg := &modules.TestConfig{
 			Interface: iface,
 			FrameSize: frameSize,
 			Duration:  duration,

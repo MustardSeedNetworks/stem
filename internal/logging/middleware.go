@@ -54,12 +54,14 @@ func RequestIDMiddleware(next http.Handler) http.Handler {
 
 // generateRequestID creates a unique request ID using random bytes.
 // Format: 16 hex characters (8 bytes of randomness).
+// Falls back to time-based ID if crypto/rand fails (extremely rare).
 func generateRequestID() string {
 	b := make([]byte, 8)
 	if _, err := rand.Read(b); err != nil {
-		// Crypto failure is unrecoverable - log critical and let service restart
-		slog.Error("crypto/rand failed - system is in insecure state", "error", err)
-		panic("crypto/rand failed: " + err.Error())
+		// Crypto/rand failure is extremely rare but shouldn't crash the server.
+		// Fall back to time-based ID (sufficient for request correlation).
+		slog.Error("crypto/rand failed, using time-based fallback", "error", err)
+		return fmt.Sprintf("%016x", time.Now().UnixNano())
 	}
 	return hex.EncodeToString(b)
 }

@@ -4,6 +4,8 @@ package benchmark
 
 import (
 	"testing"
+
+	"github.com/krisarmstrong/stem/internal/modules/common"
 )
 
 // Test parameter extraction helpers (issue #24)
@@ -61,9 +63,9 @@ func TestGetFloat64Param(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := getFloat64Param(tt.params, tt.key, tt.defVal)
+			result := common.GetFloat64Param(tt.params, tt.key, tt.defVal)
 			if result != tt.expected {
-				t.Errorf("getFloat64Param() = %v, want %v", result, tt.expected)
+				t.Errorf("GetFloat64Param() = %v, want %v", result, tt.expected)
 			}
 		})
 	}
@@ -130,9 +132,9 @@ func TestGetUint64Param(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := getUint64Param(tt.params, tt.key, tt.defVal)
+			result := common.GetUint64Param(tt.params, tt.key, tt.defVal)
 			if result != tt.expected {
-				t.Errorf("getUint64Param() = %v, want %v", result, tt.expected)
+				t.Errorf("GetUint64Param() = %v, want %v", result, tt.expected)
 			}
 		})
 	}
@@ -185,9 +187,9 @@ func TestGetUint32Param(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := getUint32Param(tt.params, tt.key, tt.defVal)
+			result := common.GetUint32Param(tt.params, tt.key, tt.defVal)
 			if result != tt.expected {
-				t.Errorf("getUint32Param() = %v, want %v", result, tt.expected)
+				t.Errorf("GetUint32Param() = %v, want %v", result, tt.expected)
 			}
 		})
 	}
@@ -240,9 +242,9 @@ func TestGetIntParam(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := getIntParam(tt.params, tt.key, tt.defVal)
+			result := common.GetIntParam(tt.params, tt.key, tt.defVal)
 			if result != tt.expected {
-				t.Errorf("getIntParam() = %v, want %v", result, tt.expected)
+				t.Errorf("GetIntParam() = %v, want %v", result, tt.expected)
 			}
 		})
 	}
@@ -260,27 +262,27 @@ func TestJSONDecodedParams(t *testing.T) {
 	}
 
 	// All these should work with our type-safe helpers
-	resolution := getFloat64Param(jsonParams, "resolution", 1.0)
+	resolution := common.GetFloat64Param(jsonParams, "resolution", 1.0)
 	if resolution != 0.1 {
 		t.Errorf("resolution = %v, want 0.1", resolution)
 	}
 
-	maxLoss := getFloat64Param(jsonParams, "max_loss", 0.0)
+	maxLoss := common.GetFloat64Param(jsonParams, "max_loss", 0.0)
 	if maxLoss != 0.001 {
 		t.Errorf("max_loss = %v, want 0.001", maxLoss)
 	}
 
-	warmup := getIntParam(jsonParams, "warmup", 0)
+	warmup := common.GetIntParam(jsonParams, "warmup", 0)
 	if warmup != 30 {
 		t.Errorf("warmup = %v, want 30", warmup)
 	}
 
-	initialBurst := getUint64Param(jsonParams, "initial_burst", 1000)
+	initialBurst := common.GetUint64Param(jsonParams, "initial_burst", 1000)
 	if initialBurst != 10000 {
 		t.Errorf("initial_burst = %v, want 10000", initialBurst)
 	}
 
-	trials := getUint32Param(jsonParams, "trials", 3)
+	trials := common.GetUint32Param(jsonParams, "trials", 3)
 	if trials != 5 {
 		t.Errorf("trials = %v, want 5", trials)
 	}

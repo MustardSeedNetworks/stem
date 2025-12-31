@@ -9,6 +9,7 @@ rfc2544-linux
 # Build artifacts
 build/
 bin/
+include/version_generated.h
 
 # Claude Code
 .claude/

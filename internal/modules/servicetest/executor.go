@@ -3,64 +3,12 @@
 package servicetest
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
+	"github.com/krisarmstrong/stem/internal/modules/common"
 	"github.com/krisarmstrong/stem/internal/testmaster/dataplane"
 )
-
-// Result is a generic test result.
-type Result struct {
-	TestType   string      `json:"testType"`
-	ModuleName string      `json:"module"`
-	Success    bool        `json:"success"`
-	Error      string      `json:"error,omitempty"`
-	Data       interface{} `json:"data,omitempty"`
-}
-
-// TestConfig holds configuration for test execution.
-type TestConfig struct {
-	Interface string
-	FrameSize uint32
-	Duration  int
-	Params    map[string]interface{}
-}
-
-// Parameter extraction helpers for safe type conversion.
-// JSON decoding converts all numbers to float64, so we need to handle both
-// native types and float64 conversions.
-
-// getFloat64Param extracts a float64 parameter from a map, handling both float64 and int types.
-func getFloat64Param(params map[string]interface{}, key string, defaultVal float64) float64 {
-	if params == nil {
-		return defaultVal
-	}
-	v, ok := params[key]
-	if !ok {
-		return defaultVal
-	}
-	switch val := v.(type) {
-	case float64:
-		return val
-	case float32:
-		return float64(val)
-	case int:
-		return float64(val)
-	case int64:
-		return float64(val)
-	case int32:
-		return float64(val)
-	default:
-		return defaultVal
-	}
-}
-
-// ErrTestNotImplemented is returned for unimplemented tests.
-var ErrTestNotImplemented = errors.New("test type not implemented")
-
-// ErrInvalidConfig is returned for invalid configuration.
-var ErrInvalidConfig = errors.New("invalid test configuration")
 
 // Executor wraps the ServiceTest module with test execution capability.
 type Executor struct {
@@ -102,13 +50,13 @@ func (e *Executor) Close() {
 }
 
 // Execute runs a Y.1564 or MEF test and returns the result.
-func (e *Executor) Execute(testType string, cfg *TestConfig) (*Result, error) {
+func (e *Executor) Execute(testType string, cfg *common.TestConfig) (*common.Result, error) {
 	if !e.CanRun(testType) {
 		return nil, fmt.Errorf("servicetest module cannot run test type: %s", testType)
 	}
 
 	if cfg == nil {
-		return nil, ErrInvalidConfig
+		return nil, common.ErrInvalidConfig
 	}
 
 	// Configure the context
@@ -117,7 +65,7 @@ func (e *Executor) Execute(testType string, cfg *TestConfig) (*Result, error) {
 	}
 
 	// Execute the test
-	result := &Result{
+	result := &common.Result{
 		TestType:   testType,
 		ModuleName: ModuleName,
 		Success:    false,
@@ -163,10 +111,10 @@ func (e *Executor) Execute(testType string, cfg *TestConfig) (*Result, error) {
 
 	case "mef_config", "mef_perf", "mef":
 		// MEF tests are similar to Y.1564, but not yet implemented in dataplane
-		return nil, ErrTestNotImplemented
+		return nil, common.ErrTestNotImplemented
 
 	default:
-		return nil, ErrTestNotImplemented
+		return nil, common.ErrTestNotImplemented
 	}
 
 	if err != nil {
@@ -180,7 +128,7 @@ func (e *Executor) Execute(testType string, cfg *TestConfig) (*Result, error) {
 }
 
 // configureContext sets up the dataplane context from test config.
-func (e *Executor) configureContext(cfg *TestConfig) error {
+func (e *Executor) configureContext(cfg *common.TestConfig) error {
 	dpCfg := &dataplane.Config{
 		Interface:  cfg.Interface,
 		AutoDetect: true,
@@ -197,7 +145,7 @@ func (e *Executor) configureContext(cfg *TestConfig) error {
 }
 
 // buildY1564Service creates a Y1564Service from the test config.
-func (e *Executor) buildY1564Service(cfg *TestConfig) *dataplane.Y1564Service {
+func (e *Executor) buildY1564Service(cfg *common.TestConfig) *dataplane.Y1564Service {
 	service := &dataplane.Y1564Service{
 		ServiceID:   1,
 		ServiceName: "Service-1",
@@ -223,7 +171,7 @@ func (e *Executor) buildY1564Service(cfg *TestConfig) *dataplane.Y1564Service {
 }
 
 // extractY1564Params extracts SLA and service parameters from config using type-safe helpers.
-func (e *Executor) extractY1564Params(cfg *TestConfig, service *dataplane.Y1564Service) {
+func (e *Executor) extractY1564Params(cfg *common.TestConfig, service *dataplane.Y1564Service) {
 	if cfg.Params == nil {
 		return
 	}
@@ -231,19 +179,19 @@ func (e *Executor) extractY1564Params(cfg *TestConfig, service *dataplane.Y1564S
 	// Extract SLA parameters using type-safe helper
 	// Only update if parameter is explicitly set (check existence first)
 	if _, ok := cfg.Params["cir"]; ok {
-		service.SLA.CIRMbps = getFloat64Param(cfg.Params, "cir", service.SLA.CIRMbps)
+		service.SLA.CIRMbps = common.GetFloat64Param(cfg.Params, "cir", service.SLA.CIRMbps)
 	}
 	if _, ok := cfg.Params["eir"]; ok {
-		service.SLA.EIRMbps = getFloat64Param(cfg.Params, "eir", service.SLA.EIRMbps)
+		service.SLA.EIRMbps = common.GetFloat64Param(cfg.Params, "eir", service.SLA.EIRMbps)
 	}
 	if _, ok := cfg.Params["fd_threshold"]; ok {
-		service.SLA.FDThresholdMs = getFloat64Param(cfg.Params, "fd_threshold", service.SLA.FDThresholdMs)
+		service.SLA.FDThresholdMs = common.GetFloat64Param(cfg.Params, "fd_threshold", service.SLA.FDThresholdMs)
 	}
 	if _, ok := cfg.Params["fdv_threshold"]; ok {
-		service.SLA.FDVThresholdMs = getFloat64Param(cfg.Params, "fdv_threshold", service.SLA.FDVThresholdMs)
+		service.SLA.FDVThresholdMs = common.GetFloat64Param(cfg.Params, "fdv_threshold", service.SLA.FDVThresholdMs)
 	}
 	if _, ok := cfg.Params["flr_threshold"]; ok {
-		service.SLA.FLRThresholdPct = getFloat64Param(cfg.Params, "flr_threshold", service.SLA.FLRThresholdPct)
+		service.SLA.FLRThresholdPct = common.GetFloat64Param(cfg.Params, "flr_threshold", service.SLA.FLRThresholdPct)
 	}
 
 	// Extract service identification

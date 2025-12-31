@@ -257,6 +257,7 @@ extern int y1564_multi_service_test(rfc2544_ctx_t *ctx, const y1564_service_t *s
                                     y1564_perf_result_t *perf_results);
 */
 import "C"
+
 import (
 	"fmt"
 	"sync"
