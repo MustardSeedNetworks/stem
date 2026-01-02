@@ -281,7 +281,7 @@ jobs:
           ./bin/stem-${{ matrix.os }}-${{ matrix.arch }} version || true
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: stem-${{ matrix.os }}-${{ matrix.arch }}
           path: bin/stem-${{ matrix.os }}-${{ matrix.arch }}
