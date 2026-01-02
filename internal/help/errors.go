@@ -10,13 +10,39 @@ package help
 
 import (
 	"fmt"
+	"io"
+	"maps"
 	"os"
 )
 
-// GetAllErrors returns all error help entries
+// GetAllErrors returns all error help entries.
 func GetAllErrors() map[string]ErrorHelp {
+	errors := make(map[string]ErrorHelp)
+
+	// Add interface errors.
+	maps.Copy(errors, getInterfaceErrors())
+
+	// Add permission errors.
+	maps.Copy(errors, getPermissionErrors())
+
+	// Add license errors.
+	maps.Copy(errors, getLicenseErrors())
+
+	// Add test errors.
+	maps.Copy(errors, getTestErrors())
+
+	// Add configuration errors.
+	maps.Copy(errors, getConfigErrors())
+
+	// Add system errors.
+	maps.Copy(errors, getSystemErrors())
+
+	return errors
+}
+
+// getInterfaceErrors returns interface-related error help.
+func getInterfaceErrors() map[string]ErrorHelp {
 	return map[string]ErrorHelp{
-		// Interface errors
 		"ERR_INTERFACE_REQUIRED": {
 			Code:    "ERR_INTERFACE_REQUIRED",
 			Message: "Network interface is required",
@@ -28,8 +54,8 @@ To see available interfaces:
 
 Look for interfaces that are UP and have a carrier (connected).`,
 			Examples: []Example{
-				{Desc: "Reflector example", Command: "stem reflect -i eth0"},
-				{Desc: "Test example", Command: "stem test -i enp3s0 -t throughput"},
+				{Desc: "Reflector example", Command: "stem reflect -i eth0", Output: ""},
+				{Desc: "Test example", Command: "stem test -i enp3s0 -t throughput", Output: ""},
 			},
 			RelatedCmd: "stem help reflect",
 		},
@@ -47,7 +73,7 @@ Common interface names:
   - enp3s0, ens1  (predictable naming)
   - eno1          (onboard)`,
 			Examples: []Example{
-				{Desc: "List interfaces", Command: "ip link show"},
+				{Desc: "List interfaces", Command: "ip link show", Output: ""},
 			},
 			RelatedCmd: "stem help reflect",
 		},
@@ -61,13 +87,17 @@ Common interface names:
 Check if cable is connected:
   ethtool eth0 | grep "Link detected"`,
 			Examples: []Example{
-				{Desc: "Bring interface up", Command: "sudo ip link set eth0 up"},
-				{Desc: "Check link status", Command: "ethtool eth0"},
+				{Desc: "Bring interface up", Command: "sudo ip link set eth0 up", Output: ""},
+				{Desc: "Check link status", Command: "ethtool eth0", Output: ""},
 			},
 			RelatedCmd: "",
 		},
+	}
+}
 
-		// Permission errors
+// getPermissionErrors returns permission-related error help.
+func getPermissionErrors() map[string]ErrorHelp {
+	return map[string]ErrorHelp{
 		"ERR_PERMISSION_DENIED": {
 			Code:    "ERR_PERMISSION_DENIED",
 			Message: "Permission denied - root privileges required",
@@ -78,12 +108,16 @@ Check if cable is connected:
 Or configure capabilities (advanced):
   sudo setcap cap_net_raw,cap_net_admin+ep /usr/local/bin/stem`,
 			Examples: []Example{
-				{Desc: "Run with sudo", Command: "sudo stem reflect -i eth0"},
+				{Desc: "Run with sudo", Command: "sudo stem reflect -i eth0", Output: ""},
 			},
 			RelatedCmd: "",
 		},
+	}
+}
 
-		// License errors
+// getLicenseErrors returns license-related error help.
+func getLicenseErrors() map[string]ErrorHelp {
+	return map[string]ErrorHelp{
 		"ERR_LICENSE_REQUIRED": {
 			Code:    "ERR_LICENSE_REQUIRED",
 			Message: "Valid license required",
@@ -96,8 +130,8 @@ Purchase a license at: https://mustardseednetworks.com
 Check current status:
   stem license --status`,
 			Examples: []Example{
-				{Desc: "Activate license", Command: "stem license -k ABCD-1234-EFGH-5678"},
-				{Desc: "Check status", Command: "stem license --status"},
+				{Desc: "Activate license", Command: "stem license -k ABCD-1234-EFGH-5678", Output: ""},
+				{Desc: "Check status", Command: "stem license --status", Output: ""},
 			},
 			RelatedCmd: "stem help license",
 		},
@@ -111,7 +145,7 @@ Ensure no typos or extra characters.
 
 If you believe this is an error, contact support.`,
 			Examples: []Example{
-				{Desc: "Correct format", Command: "stem license -k ABCD-1234-EFGH-5678"},
+				{Desc: "Correct format", Command: "stem license -k ABCD-1234-EFGH-5678", Output: ""},
 			},
 			RelatedCmd: "stem help license",
 		},
@@ -139,12 +173,16 @@ Upgrade at: https://mustardseednetworks.com
 Check your current features:
   stem license --status`,
 			Examples: []Example{
-				{Desc: "Check features", Command: "stem license --status"},
+				{Desc: "Check features", Command: "stem license --status", Output: ""},
 			},
 			RelatedCmd: "stem help license",
 		},
+	}
+}
 
-		// Test errors
+// getTestErrors returns test-related error help.
+func getTestErrors() map[string]ErrorHelp {
+	return map[string]ErrorHelp{
 		"ERR_TEST_TYPE_INVALID": {
 			Code:    "ERR_TEST_TYPE_INVALID",
 			Message: "Unknown test type",
@@ -155,8 +193,8 @@ Check your current features:
 Or get help on a specific test:
   stem help throughput`,
 			Examples: []Example{
-				{Desc: "List tests", Command: "stem help tests"},
-				{Desc: "Throughput test", Command: "stem test -i eth0 -t throughput"},
+				{Desc: "List tests", Command: "stem help tests", Output: ""},
+				{Desc: "Throughput test", Command: "stem test -i eth0 -t throughput", Output: ""},
 			},
 			RelatedCmd: "stem help tests",
 		},
@@ -177,8 +215,8 @@ Or get help on a specific test:
 4. Correct target IP specified:
    stem test -i eth0 -t throughput --target <correct-ip>`,
 			Examples: []Example{
-				{Desc: "Start remote reflector", Command: "ssh user@target 'stem reflect -i eth0'"},
-				{Desc: "Check connectivity", Command: "ping <target-ip>"},
+				{Desc: "Start remote reflector", Command: "ssh user@target 'stem reflect -i eth0'", Output: ""},
+				{Desc: "Check connectivity", Command: "ping <target-ip>", Output: ""},
 			},
 			RelatedCmd: "stem help reflect",
 		},
@@ -196,12 +234,16 @@ Try:
 - Run with shorter duration
 - Check for network issues`,
 			Examples: []Example{
-				{Desc: "Shorter test", Command: "stem test -i eth0 -t throughput -d 30"},
+				{Desc: "Shorter test", Command: "stem test -i eth0 -t throughput -d 30", Output: ""},
 			},
 			RelatedCmd: "",
 		},
+	}
+}
 
-		// Configuration errors
+// getConfigErrors returns configuration-related error help.
+func getConfigErrors() map[string]ErrorHelp {
+	return map[string]ErrorHelp{
 		"ERR_CIR_REQUIRED": {
 			Code:    "ERR_CIR_REQUIRED",
 			Message: "CIR (Committed Information Rate) is required for this test",
@@ -211,7 +253,7 @@ Try:
 
 Example: For a 100 Mbps service:`,
 			Examples: []Example{
-				{Desc: "100 Mbps service", Command: "stem test -i eth0 -t y1564_config --cir 100"},
+				{Desc: "100 Mbps service", Command: "stem test -i eth0 -t y1564_config --cir 100", Output: ""},
 			},
 			RelatedCmd: "stem help y1564_config",
 		},
@@ -226,13 +268,25 @@ Example: For a 100 Mbps service:`,
 
 Standard RFC 2544 sizes: 64, 128, 256, 512, 1024, 1280, 1518`,
 			Examples: []Example{
-				{Desc: "Standard sizes", Command: "stem test -i eth0 -t throughput --frame-sizes 64,128,256,512,1024,1280,1518"},
-				{Desc: "Custom sizes", Command: "stem test -i eth0 -t throughput --frame-sizes 64,512,1518"},
+				{
+					Desc:    "Standard sizes",
+					Command: "stem test -i eth0 -t throughput --frame-sizes 64,128,256,512,1024,1280,1518",
+					Output:  "",
+				},
+				{
+					Desc:    "Custom sizes",
+					Command: "stem test -i eth0 -t throughput --frame-sizes 64,512,1518",
+					Output:  "",
+				},
 			},
 			RelatedCmd: "stem help throughput",
 		},
+	}
+}
 
-		// System errors
+// getSystemErrors returns system-related error help.
+func getSystemErrors() map[string]ErrorHelp {
+	return map[string]ErrorHelp{
 		"ERR_AF_XDP_NOT_AVAILABLE": {
 			Code:    "ERR_AF_XDP_NOT_AVAILABLE",
 			Message: "AF_XDP mode not available",
@@ -248,8 +302,8 @@ Check kernel version:
 Fall back to AF_PACKET mode:
   stem reflect -i eth0 --mode af_packet`,
 			Examples: []Example{
-				{Desc: "Check kernel", Command: "uname -r"},
-				{Desc: "Use AF_PACKET", Command: "stem reflect -i eth0 --mode af_packet"},
+				{Desc: "Check kernel", Command: "uname -r", Output: ""},
+				{Desc: "Use AF_PACKET", Command: "stem reflect -i eth0 --mode af_packet", Output: ""},
 			},
 			RelatedCmd: "stem help reflect",
 		},
@@ -268,63 +322,73 @@ Check DPDK setup:
 Fall back to AF_XDP or AF_PACKET:
   stem reflect -i eth0 --mode af_xdp`,
 			Examples: []Example{
-				{Desc: "Check DPDK", Command: "dpdk-devbind.py --status"},
-				{Desc: "Use AF_XDP", Command: "stem reflect -i eth0 --mode af_xdp"},
+				{Desc: "Check DPDK", Command: "dpdk-devbind.py --status", Output: ""},
+				{Desc: "Use AF_XDP", Command: "stem reflect -i eth0 --mode af_xdp", Output: ""},
 			},
 			RelatedCmd: "stem help reflect",
 		},
 	}
 }
 
-// PrintError prints a formatted error message with help
+// PrintError prints a formatted error message with help.
 func PrintError(code string) {
-	errors := GetAllErrors()
-	errHelp, ok := errors[code]
-	if !ok {
-		fmt.Fprintf(os.Stderr, "Error: Unknown error code %s\n", code)
-		return
-	}
-
-	fmt.Fprintf(os.Stderr, "\n❌ Error: %s\n", errHelp.Message)
-	fmt.Fprintf(os.Stderr, "\n%s\n", errHelp.Solution)
-
-	if len(errHelp.Examples) > 0 {
-		fmt.Fprintf(os.Stderr, "\nExamples:\n")
-		for _, ex := range errHelp.Examples {
-			fmt.Fprintf(os.Stderr, "  %s\n", ex.Command)
-		}
-	}
-
-	if errHelp.RelatedCmd != "" {
-		fmt.Fprintf(os.Stderr, "\nFor more information: %s\n", errHelp.RelatedCmd)
-	}
-	fmt.Fprintln(os.Stderr)
+	PrintErrorTo(os.Stderr, code)
 }
 
-// PrintErrorWithDetails prints error with custom details
-func PrintErrorWithDetails(code string, details string) {
+// PrintErrorTo prints a formatted error message with help to the specified writer.
+func PrintErrorTo(w io.Writer, code string) {
 	errors := GetAllErrors()
 	errHelp, ok := errors[code]
 	if !ok {
-		fmt.Fprintf(os.Stderr, "Error: %s\n", details)
+		_, _ = fmt.Fprintf(w, "Error: Unknown error code %s\n", code)
 		return
 	}
 
-	fmt.Fprintf(os.Stderr, "\n❌ Error: %s\n", errHelp.Message)
-	if details != "" {
-		fmt.Fprintf(os.Stderr, "   %s\n", details)
-	}
-	fmt.Fprintf(os.Stderr, "\n%s\n", errHelp.Solution)
+	_, _ = fmt.Fprintf(w, "\n❌ Error: %s\n", errHelp.Message)
+	_, _ = fmt.Fprintf(w, "\n%s\n", errHelp.Solution)
 
 	if len(errHelp.Examples) > 0 {
-		fmt.Fprintf(os.Stderr, "\nExamples:\n")
+		_, _ = fmt.Fprint(w, "\nExamples:\n")
 		for _, ex := range errHelp.Examples {
-			fmt.Fprintf(os.Stderr, "  %s\n", ex.Command)
+			_, _ = fmt.Fprintf(w, "  %s\n", ex.Command)
 		}
 	}
 
 	if errHelp.RelatedCmd != "" {
-		fmt.Fprintf(os.Stderr, "\nFor more information: %s\n", errHelp.RelatedCmd)
+		_, _ = fmt.Fprintf(w, "\nFor more information: %s\n", errHelp.RelatedCmd)
 	}
-	fmt.Fprintln(os.Stderr)
+	_, _ = fmt.Fprintln(w)
+}
+
+// PrintErrorWithDetails prints error with custom details.
+func PrintErrorWithDetails(code string, details string) {
+	PrintErrorWithDetailsTo(os.Stderr, code, details)
+}
+
+// PrintErrorWithDetailsTo prints error with custom details to the specified writer.
+func PrintErrorWithDetailsTo(w io.Writer, code, details string) {
+	errors := GetAllErrors()
+	errHelp, ok := errors[code]
+	if !ok {
+		_, _ = fmt.Fprintf(w, "Error: %s\n", details)
+		return
+	}
+
+	_, _ = fmt.Fprintf(w, "\n❌ Error: %s\n", errHelp.Message)
+	if details != "" {
+		_, _ = fmt.Fprintf(w, "   %s\n", details)
+	}
+	_, _ = fmt.Fprintf(w, "\n%s\n", errHelp.Solution)
+
+	if len(errHelp.Examples) > 0 {
+		_, _ = fmt.Fprint(w, "\nExamples:\n")
+		for _, ex := range errHelp.Examples {
+			_, _ = fmt.Fprintf(w, "  %s\n", ex.Command)
+		}
+	}
+
+	if errHelp.RelatedCmd != "" {
+		_, _ = fmt.Fprintf(w, "\nFor more information: %s\n", errHelp.RelatedCmd)
+	}
+	_, _ = fmt.Fprintln(w)
 }

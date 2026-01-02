@@ -1,12 +1,14 @@
 // Copyright (c) 2025 Mustard Seed Networks. All rights reserved.
 
-package config
+package config_test
 
 import (
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/krisarmstrong/stem/internal/testmaster/config"
 )
 
 // Test constants for repeated strings.
@@ -17,18 +19,18 @@ const testIfaceEth0 = "eth0"
 // ============================================================================
 
 func TestDefaultConfig(t *testing.T) {
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 
 	if cfg == nil {
 		t.Fatal("DefaultConfig() returned nil")
 	}
 
-	// Test default test type
-	if cfg.TestType != TestThroughput {
-		t.Errorf("Expected TestType=%s, got %s", TestThroughput, cfg.TestType)
+	// Test default test type.
+	if cfg.TestType != config.TestThroughput {
+		t.Errorf("Expected TestType=%s, got %s", config.TestThroughput, cfg.TestType)
 	}
 
-	// Test default durations
+	// Test default durations.
 	if cfg.TrialDuration != 60*time.Second {
 		t.Errorf("Expected TrialDuration=60s, got %v", cfg.TrialDuration)
 	}
@@ -39,7 +41,7 @@ func TestDefaultConfig(t *testing.T) {
 }
 
 func TestDefaultConfigThroughput(t *testing.T) {
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 
 	if cfg.Throughput.InitialRatePct != 100.0 {
 		t.Errorf("Expected InitialRatePct=100.0, got %f", cfg.Throughput.InitialRatePct)
@@ -59,7 +61,7 @@ func TestDefaultConfigThroughput(t *testing.T) {
 }
 
 func TestDefaultConfigLatency(t *testing.T) {
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 
 	if cfg.Latency.Samples != 1000 {
 		t.Errorf("Expected Samples=1000, got %d", cfg.Latency.Samples)
@@ -71,7 +73,7 @@ func TestDefaultConfigLatency(t *testing.T) {
 }
 
 func TestDefaultConfigFrameLoss(t *testing.T) {
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 
 	if cfg.FrameLoss.StartPct != 100.0 {
 		t.Errorf("Expected StartPct=100.0, got %f", cfg.FrameLoss.StartPct)
@@ -87,7 +89,7 @@ func TestDefaultConfigFrameLoss(t *testing.T) {
 }
 
 func TestDefaultConfigBackToBack(t *testing.T) {
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 
 	if cfg.BackToBack.InitialBurst != 1000 {
 		t.Errorf("Expected InitialBurst=1000, got %d", cfg.BackToBack.InitialBurst)
@@ -103,7 +105,7 @@ func TestDefaultConfigBackToBack(t *testing.T) {
 // ============================================================================
 
 func TestDefaultY1564Config(t *testing.T) {
-	cfg := DefaultY1564Config()
+	cfg := config.DefaultY1564Config()
 
 	if len(cfg.ConfigSteps) != 4 {
 		t.Errorf("Expected 4 config steps, got %d", len(cfg.ConfigSteps))
@@ -126,7 +128,7 @@ func TestDefaultY1564Config(t *testing.T) {
 }
 
 func TestDefaultY1564SLA(t *testing.T) {
-	sla := DefaultY1564SLA()
+	sla := config.DefaultY1564SLA()
 
 	if sla.CIRMbps != 100.0 {
 		t.Errorf("Expected CIRMbps=100.0, got %f", sla.CIRMbps)
@@ -146,7 +148,7 @@ func TestDefaultY1564SLA(t *testing.T) {
 }
 
 func TestDefaultRFC2889Config(t *testing.T) {
-	cfg := DefaultRFC2889Config()
+	cfg := config.DefaultRFC2889Config()
 
 	if cfg.PortCount != 2 {
 		t.Errorf("Expected PortCount=2, got %d", cfg.PortCount)
@@ -158,7 +160,7 @@ func TestDefaultRFC2889Config(t *testing.T) {
 }
 
 func TestDefaultRFC6349Config(t *testing.T) {
-	cfg := DefaultRFC6349Config()
+	cfg := config.DefaultRFC6349Config()
 
 	if cfg.MSS != 1460 {
 		t.Errorf("Expected MSS=1460, got %d", cfg.MSS)
@@ -170,7 +172,7 @@ func TestDefaultRFC6349Config(t *testing.T) {
 }
 
 func TestDefaultY1731Config(t *testing.T) {
-	cfg := DefaultY1731Config()
+	cfg := config.DefaultY1731Config()
 
 	if cfg.MEPID != 1 {
 		t.Errorf("Expected MEPID=1, got %d", cfg.MEPID)
@@ -186,7 +188,7 @@ func TestDefaultY1731Config(t *testing.T) {
 }
 
 func TestDefaultMEFConfig(t *testing.T) {
-	cfg := DefaultMEFConfig()
+	cfg := config.DefaultMEFConfig()
 
 	if cfg.CIRMbps != 100.0 {
 		t.Errorf("Expected CIRMbps=100.0, got %f", cfg.CIRMbps)
@@ -198,7 +200,7 @@ func TestDefaultMEFConfig(t *testing.T) {
 }
 
 func TestDefaultTSNConfig(t *testing.T) {
-	cfg := DefaultTSNConfig()
+	cfg := config.DefaultTSNConfig()
 
 	if cfg.NumClasses != 8 {
 		t.Errorf("Expected NumClasses=8, got %d", cfg.NumClasses)
@@ -214,7 +216,7 @@ func TestDefaultTSNConfig(t *testing.T) {
 // ============================================================================
 
 func TestValidateNoInterface(t *testing.T) {
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 	cfg.Interface = ""
 
 	err := cfg.Validate()
@@ -224,7 +226,7 @@ func TestValidateNoInterface(t *testing.T) {
 }
 
 func TestValidateValidConfig(t *testing.T) {
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 	cfg.Interface = testIfaceEth0
 
 	err := cfg.Validate()
@@ -234,7 +236,7 @@ func TestValidateValidConfig(t *testing.T) {
 }
 
 func TestValidateInvalidTestType(t *testing.T) {
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 	cfg.Interface = testIfaceEth0
 	cfg.TestType = "invalid_test"
 
@@ -245,9 +247,9 @@ func TestValidateInvalidTestType(t *testing.T) {
 }
 
 func TestValidateInvalidFrameSize(t *testing.T) {
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 	cfg.Interface = testIfaceEth0
-	cfg.FrameSize = 100 // Not a standard size
+	cfg.FrameSize = 100 // Not a standard size.
 
 	err := cfg.Validate()
 	if err == nil {
@@ -259,7 +261,7 @@ func TestValidateValidFrameSizes(t *testing.T) {
 	validSizes := []uint32{0, 64, 128, 256, 512, 1024, 1280, 1518, 9000}
 
 	for _, size := range validSizes {
-		cfg := DefaultConfig()
+		cfg := config.DefaultConfig()
 		cfg.Interface = testIfaceEth0
 		cfg.FrameSize = size
 
@@ -271,7 +273,7 @@ func TestValidateValidFrameSizes(t *testing.T) {
 }
 
 func TestValidateInvalidResolution(t *testing.T) {
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 	cfg.Interface = testIfaceEth0
 	cfg.Throughput.ResolutionPct = 0.0
 
@@ -288,10 +290,10 @@ func TestValidateInvalidResolution(t *testing.T) {
 }
 
 func TestValidateInvalidFrameLoss(t *testing.T) {
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 	cfg.Interface = testIfaceEth0
 	cfg.FrameLoss.StartPct = 10.0
-	cfg.FrameLoss.EndPct = 100.0 // Start < End is invalid
+	cfg.FrameLoss.EndPct = 100.0 // Start < End is invalid.
 
 	err := cfg.Validate()
 	if err == nil {
@@ -300,10 +302,10 @@ func TestValidateInvalidFrameLoss(t *testing.T) {
 }
 
 func TestValidateY1564NoServices(t *testing.T) {
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 	cfg.Interface = testIfaceEth0
-	cfg.TestType = TestY1564Full
-	cfg.Y1564.Services = []Y1564Service{} // No services
+	cfg.TestType = config.TestY1564Full
+	cfg.Y1564.Services = []config.Y1564Service{} // No services.
 
 	err := cfg.Validate()
 	if err == nil {
@@ -312,11 +314,26 @@ func TestValidateY1564NoServices(t *testing.T) {
 }
 
 func TestValidateY1564ZeroCIR(t *testing.T) {
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 	cfg.Interface = testIfaceEth0
-	cfg.TestType = TestY1564Full
-	cfg.Y1564.Services = []Y1564Service{
-		{ServiceID: 1, Enabled: true, SLA: Y1564SLA{CIRMbps: 0}},
+	cfg.TestType = config.TestY1564Full
+	cfg.Y1564.Services = []config.Y1564Service{
+		{
+			ServiceID:   1,
+			ServiceName: "",
+			SLA: config.Y1564SLA{
+				CIRMbps:         0,
+				EIRMbps:         0,
+				CBSBytes:        0,
+				EBSBytes:        0,
+				FDThresholdMs:   0,
+				FDVThresholdMs:  0,
+				FLRThresholdPct: 0,
+			},
+			FrameSize: 0,
+			CoS:       0,
+			Enabled:   true,
+		},
 	}
 
 	err := cfg.Validate()
@@ -326,10 +343,10 @@ func TestValidateY1564ZeroCIR(t *testing.T) {
 }
 
 func TestValidateRFC2889InsufficientPorts(t *testing.T) {
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 	cfg.Interface = testIfaceEth0
-	cfg.TestType = TestRFC2889Forwarding
-	cfg.RFC2889.PortCount = 1 // Need at least 2
+	cfg.TestType = config.TestRFC2889Forwarding
+	cfg.RFC2889.PortCount = 1 // Need at least 2.
 
 	err := cfg.Validate()
 	if err == nil {
@@ -338,9 +355,9 @@ func TestValidateRFC2889InsufficientPorts(t *testing.T) {
 }
 
 func TestValidateRFC6349ZeroMSS(t *testing.T) {
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 	cfg.Interface = testIfaceEth0
-	cfg.TestType = TestRFC6349Throughput
+	cfg.TestType = config.TestRFC6349Throughput
 	cfg.RFC6349.MSS = 0
 
 	err := cfg.Validate()
@@ -350,9 +367,9 @@ func TestValidateRFC6349ZeroMSS(t *testing.T) {
 }
 
 func TestValidateY1731ZeroMEPID(t *testing.T) {
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 	cfg.Interface = testIfaceEth0
-	cfg.TestType = TestY1731Delay
+	cfg.TestType = config.TestY1731Delay
 	cfg.Y1731.MEPID = 0
 
 	err := cfg.Validate()
@@ -362,9 +379,9 @@ func TestValidateY1731ZeroMEPID(t *testing.T) {
 }
 
 func TestValidateMEFZeroCIR(t *testing.T) {
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 	cfg.Interface = testIfaceEth0
-	cfg.TestType = TestMEFFull
+	cfg.TestType = config.TestMEFFull
 	cfg.MEF.CIRMbps = 0
 
 	err := cfg.Validate()
@@ -374,9 +391,9 @@ func TestValidateMEFZeroCIR(t *testing.T) {
 }
 
 func TestValidateTSNZeroCycleTime(t *testing.T) {
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 	cfg.Interface = testIfaceEth0
-	cfg.TestType = TestTSNFull
+	cfg.TestType = config.TestTSNFull
 	cfg.TSN.CycleTimeNs = 0
 
 	err := cfg.Validate()
@@ -390,7 +407,7 @@ func TestValidateTSNZeroCycleTime(t *testing.T) {
 // ============================================================================
 
 func TestStandardFrameSizes(t *testing.T) {
-	sizes := StandardFrameSizes(false)
+	sizes := config.StandardFrameSizes(false)
 
 	expected := []uint32{64, 128, 256, 512, 1024, 1280, 1518}
 	if len(sizes) != len(expected) {
@@ -405,14 +422,14 @@ func TestStandardFrameSizes(t *testing.T) {
 }
 
 func TestStandardFrameSizesWithJumbo(t *testing.T) {
-	sizes := StandardFrameSizes(true)
+	sizes := config.StandardFrameSizes(true)
 
 	expected := []uint32{64, 128, 256, 512, 1024, 1280, 1518, 9000}
 	if len(sizes) != len(expected) {
 		t.Errorf("Expected %d sizes, got %d", len(expected), len(sizes))
 	}
 
-	// Check last one is jumbo
+	// Check last one is jumbo.
 	if sizes[len(sizes)-1] != 9000 {
 		t.Errorf("Expected last size to be 9000, got %d", sizes[len(sizes)-1])
 	}
@@ -423,34 +440,29 @@ func TestStandardFrameSizesWithJumbo(t *testing.T) {
 // ============================================================================
 
 func TestSaveAndLoad(t *testing.T) {
-	// Create temp directory
-	tmpDir, err := os.MkdirTemp("", "rfc2544-test-*")
-	if err != nil {
-		t.Fatalf("Failed to create temp dir: %v", err)
-	}
-	defer func() { _ = os.RemoveAll(tmpDir) }()
-
+	// Use t.TempDir() for automatic cleanup.
+	tmpDir := t.TempDir()
 	configPath := filepath.Join(tmpDir, "test-config.yaml")
 
-	// Create config
-	cfg := DefaultConfig()
+	// Create config.
+	cfg := config.DefaultConfig()
 	cfg.Interface = testIfaceEth0
-	cfg.TestType = TestLatency
+	cfg.TestType = config.TestLatency
 	cfg.FrameSize = 1518
 
-	// Save
-	err = cfg.Save(configPath)
+	// Save.
+	err := cfg.Save(configPath)
 	if err != nil {
 		t.Fatalf("Failed to save config: %v", err)
 	}
 
-	// Load
-	loaded, err := Load(configPath)
+	// Load.
+	loaded, err := config.Load(configPath)
 	if err != nil {
 		t.Fatalf("Failed to load config: %v", err)
 	}
 
-	// Verify
+	// Verify.
 	if loaded.Interface != cfg.Interface {
 		t.Errorf("Interface: expected %s, got %s", cfg.Interface, loaded.Interface)
 	}
@@ -465,52 +477,49 @@ func TestSaveAndLoad(t *testing.T) {
 }
 
 func TestLoadNonexistent(t *testing.T) {
-	_, err := Load("/nonexistent/path/config.yaml")
+	_, err := config.Load("/nonexistent/path/config.yaml")
 	if err == nil {
 		t.Error("Expected error for nonexistent file")
 	}
 }
 
 func TestLoadInvalidYAML(t *testing.T) {
-	tmpDir, err := os.MkdirTemp("", "rfc2544-test-*")
-	if err != nil {
-		t.Fatalf("Failed to create temp dir: %v", err)
-	}
-	defer func() { _ = os.RemoveAll(tmpDir) }()
-
+	tmpDir := t.TempDir()
 	configPath := filepath.Join(tmpDir, "invalid.yaml")
 
-	// Write invalid YAML
-	err = os.WriteFile(configPath, []byte("{{{{invalid yaml"), 0o600)
+	// Write invalid YAML.
+	err := writeTestFile(t, configPath, "{{{{invalid yaml")
 	if err != nil {
 		t.Fatalf("Failed to write file: %v", err)
 	}
 
-	_, err = Load(configPath)
+	_, err = config.Load(configPath)
 	if err == nil {
 		t.Error("Expected error for invalid YAML")
 	}
 }
 
 func TestLoadInvalidConfig(t *testing.T) {
-	tmpDir, err := os.MkdirTemp("", "rfc2544-test-*")
-	if err != nil {
-		t.Fatalf("Failed to create temp dir: %v", err)
-	}
-	defer func() { _ = os.RemoveAll(tmpDir) }()
-
+	tmpDir := t.TempDir()
 	configPath := filepath.Join(tmpDir, "invalid-config.yaml")
 
-	// Write config missing interface
-	err = os.WriteFile(configPath, []byte("test_type: throughput\n"), 0o600)
+	// Write config missing interface.
+	err := writeTestFile(t, configPath, "test_type: throughput\n")
 	if err != nil {
 		t.Fatalf("Failed to write file: %v", err)
 	}
 
-	_, err = Load(configPath)
+	_, err = config.Load(configPath)
 	if err == nil {
 		t.Error("Expected validation error")
 	}
+}
+
+// writeTestFile is a helper to write test files.
+func writeTestFile(t *testing.T, path, content string) error {
+	t.Helper()
+	const fileMode = 0o600
+	return os.WriteFile(path, []byte(content), fileMode)
 }
 
 // ============================================================================
@@ -518,18 +527,35 @@ func TestLoadInvalidConfig(t *testing.T) {
 // ============================================================================
 
 func TestTestTypeConstants(t *testing.T) {
-	// Verify test type string values
-	testTypes := map[TestType]string{
-		TestThroughput:        "throughput",
-		TestLatency:           "latency",
-		TestFrameLoss:         "frame_loss",
-		TestBackToBack:        "back_to_back",
-		TestY1564Full:         "y1564",
-		TestRFC2889Forwarding: "rfc2889_forwarding",
-		TestRFC6349Throughput: "rfc6349_throughput",
-		TestY1731Delay:        "y1731_delay",
-		TestMEFFull:           "mef",
-		TestTSNFull:           "tsn",
+	// Verify test type string values (exhaustive map of all TestType constants).
+	testTypes := map[config.TestType]string{
+		config.TestThroughput:        "throughput",
+		config.TestLatency:           "latency",
+		config.TestFrameLoss:         "frame_loss",
+		config.TestBackToBack:        "back_to_back",
+		config.TestSystemRecovery:    "system_recovery",
+		config.TestReset:             "reset",
+		config.TestY1564Config:       "y1564_config",
+		config.TestY1564Perf:         "y1564_perf",
+		config.TestY1564Full:         "y1564",
+		config.TestRFC2889Forwarding: "rfc2889_forwarding",
+		config.TestRFC2889Caching:    "rfc2889_caching",
+		config.TestRFC2889Learning:   "rfc2889_learning",
+		config.TestRFC2889Broadcast:  "rfc2889_broadcast",
+		config.TestRFC2889Congestion: "rfc2889_congestion",
+		config.TestRFC6349Throughput: "rfc6349_throughput",
+		config.TestRFC6349Path:       "rfc6349_path",
+		config.TestY1731Delay:        "y1731_delay",
+		config.TestY1731Loss:         "y1731_loss",
+		config.TestY1731SLM:          "y1731_slm",
+		config.TestY1731Loopback:     "y1731_loopback",
+		config.TestMEFConfig:         "mef_config",
+		config.TestMEFPerf:           "mef_perf",
+		config.TestMEFFull:           "mef",
+		config.TestTSNTiming:         "tsn_timing",
+		config.TestTSNIsolation:      "tsn_isolation",
+		config.TestTSNLatency:        "tsn_latency",
+		config.TestTSNFull:           "tsn",
 	}
 
 	for tt, expected := range testTypes {
@@ -544,10 +570,10 @@ func TestTestTypeConstants(t *testing.T) {
 // ============================================================================
 
 func TestOutputFormatConstants(t *testing.T) {
-	formats := map[OutputFormat]string{
-		FormatText: "text",
-		FormatJSON: "json",
-		FormatCSV:  "csv",
+	formats := map[config.OutputFormat]string{
+		config.FormatText: "text",
+		config.FormatJSON: "json",
+		config.FormatCSV:  "csv",
 	}
 
 	for fmt, expected := range formats {
@@ -562,17 +588,17 @@ func TestOutputFormatConstants(t *testing.T) {
 // ============================================================================
 
 func BenchmarkDefaultConfig(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		_ = DefaultConfig()
+	for b.Loop() {
+		_ = config.DefaultConfig()
 	}
 }
 
 func BenchmarkValidate(b *testing.B) {
-	cfg := DefaultConfig()
+	cfg := config.DefaultConfig()
 	cfg.Interface = testIfaceEth0
 
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_ = cfg.Validate()
 	}
 }

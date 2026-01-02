@@ -1,9 +1,5 @@
 // Copyright (c) 2025 Mustard Seed Networks. All rights reserved.
 
-// Package license provides licensing functionality for Seed Test Suite.
-//
-// Implements device fingerprinting for hardware-bound licenses using
-// MAC address, CPU serial, and disk serial identifiers.
 package license
 
 import (
@@ -11,15 +7,31 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"io"
+	"iter"
 	"net"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
 )
 
-// DeviceFingerprint contains hardware identifiers for device binding
+// Fingerprint constants.
+const (
+	defaultMAC        = "00:00:00:00:00:00"
+	hashLength        = 16 // First 16 hex characters (64 bits of entropy).
+	commandTimeout    = 5  // Seconds for external command timeout.
+	splitPartsCount   = 2  // Expected parts when splitting on : or =.
+	defaultLinuxCPU   = "LINUX-DEFAULT"
+	defaultDarwinCPU  = "DARWIN-DEFAULT"
+	defaultLinuxDisk  = "LINUX-DISK"
+	defaultDarwinDisk = "DARWIN-DISK"
+	unknownSerial     = "UNKNOWN"
+)
+
+// DeviceFingerprint contains hardware identifiers for device binding.
 type DeviceFingerprint struct {
 	MACAddress string `json:"mac"`
 	CPUSerial  string `json:"cpu"`
@@ -28,31 +40,35 @@ type DeviceFingerprint struct {
 	Platform   string `json:"platform"`
 }
 
-// GenerateFingerprint creates a unique device fingerprint
+// GenerateFingerprint creates a unique device fingerprint.
 func GenerateFingerprint() (*DeviceFingerprint, error) {
 	fp := &DeviceFingerprint{
-		Platform: runtime.GOOS,
+		MACAddress: "",
+		CPUSerial:  "",
+		DiskSerial: "",
+		Hostname:   "",
+		Platform:   runtime.GOOS,
 	}
 
-	// Get hostname
+	// Get hostname.
 	hostname, err := os.Hostname()
 	if err == nil {
 		fp.Hostname = hostname
 	}
 
-	// Get primary MAC address
+	// Get primary MAC address.
 	fp.MACAddress = getPrimaryMAC()
 
-	// Get CPU serial (platform-specific)
+	// Get CPU serial (platform-specific).
 	fp.CPUSerial = getCPUSerial()
 
-	// Get disk serial (platform-specific)
+	// Get disk serial (platform-specific).
 	fp.DiskSerial = getDiskSerial()
 
 	return fp, nil
 }
 
-// Hash returns a 16-character hash of the fingerprint
+// Hash returns a 16-character hash of the fingerprint.
 func (fp *DeviceFingerprint) Hash() string {
 	data := fmt.Sprintf("%s|%s|%s|%s|%s",
 		fp.MACAddress,
@@ -65,33 +81,35 @@ func (fp *DeviceFingerprint) Hash() string {
 	hash := sha256.Sum256([]byte(data))
 	hexHash := hex.EncodeToString(hash[:])
 
-	// Return first 16 characters (64 bits of entropy)
-	return strings.ToUpper(hexHash[:16])
+	// Return first 16 characters (64 bits of entropy).
+	return strings.ToUpper(hexHash[:hashLength])
 }
 
-// String returns a human-readable representation
+// String returns a human-readable representation.
 func (fp *DeviceFingerprint) String() string {
+	const maskShowChars = 8
+	const cpuDiskMaskChars = 4
 	return fmt.Sprintf("MAC=%s CPU=%s DISK=%s HOST=%s",
-		maskString(fp.MACAddress, 8),
-		maskString(fp.CPUSerial, 4),
-		maskString(fp.DiskSerial, 4),
+		maskString(fp.MACAddress, maskShowChars),
+		maskString(fp.CPUSerial, cpuDiskMaskChars),
+		maskString(fp.DiskSerial, cpuDiskMaskChars),
 		fp.Hostname,
 	)
 }
 
-// getPrimaryMAC returns the MAC address of the first non-loopback interface
+// getPrimaryMAC returns the MAC address of the first non-loopback interface.
 func getPrimaryMAC() string {
 	interfaces, err := net.Interfaces()
 	if err != nil {
-		return "00:00:00:00:00:00"
+		return defaultMAC
 	}
 
 	for _, iface := range interfaces {
-		// Skip loopback and interfaces without MAC
+		// Skip loopback and interfaces without MAC.
 		if iface.Flags&net.FlagLoopback != 0 || len(iface.HardwareAddr) == 0 {
 			continue
 		}
-		// Skip virtual interfaces (common patterns)
+		// Skip virtual interfaces (common patterns).
 		name := strings.ToLower(iface.Name)
 		if strings.HasPrefix(name, "veth") ||
 			strings.HasPrefix(name, "docker") ||
@@ -102,10 +120,10 @@ func getPrimaryMAC() string {
 		return iface.HardwareAddr.String()
 	}
 
-	return "00:00:00:00:00:00"
+	return defaultMAC
 }
 
-// getCPUSerial returns CPU serial number (platform-specific)
+// getCPUSerial returns CPU serial number (platform-specific).
 func getCPUSerial() string {
 	switch runtime.GOOS {
 	case "linux":
@@ -113,28 +131,32 @@ func getCPUSerial() string {
 	case "darwin":
 		return getDarwinCPUSerial()
 	default:
-		return "UNKNOWN"
+		return unknownSerial
 	}
 }
 
-// getLinuxCPUSerial reads CPU serial from /proc/cpuinfo or dmidecode
+// splitLines returns an iterator over lines in a string.
+func splitLines(s string) iter.Seq[string] {
+	return strings.SplitSeq(s, "\n")
+}
+
+// getLinuxCPUSerial reads CPU serial from /proc/cpuinfo or dmidecode.
 func getLinuxCPUSerial() string {
-	// Try /proc/cpuinfo first (works on ARM)
+	// Try /proc/cpuinfo first (works on ARM).
 	data, err := os.ReadFile("/proc/cpuinfo")
 	if err == nil {
-		lines := strings.Split(string(data), "\n")
-		for _, line := range lines {
+		for line := range splitLines(string(data)) {
 			if strings.HasPrefix(line, "Serial") {
 				parts := strings.Split(line, ":")
-				if len(parts) == 2 {
+				if len(parts) == splitPartsCount {
 					return strings.TrimSpace(parts[1])
 				}
 			}
 		}
 	}
 
-	// Try dmidecode (requires root)
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	// Try dmidecode (requires root).
+	ctx, cancel := context.WithTimeout(context.Background(), commandTimeout*time.Second)
 	defer cancel()
 	out, err := exec.CommandContext(ctx, "dmidecode", "-s", "processor-id").Output()
 	if err == nil {
@@ -144,29 +166,28 @@ func getLinuxCPUSerial() string {
 		}
 	}
 
-	// Try /sys/class/dmi/id/product_serial
+	// Try /sys/class/dmi/id/product_serial.
 	data, err = os.ReadFile("/sys/class/dmi/id/product_serial")
 	if err == nil {
 		return strings.TrimSpace(string(data))
 	}
 
-	return "LINUX-DEFAULT"
+	return defaultLinuxCPU
 }
 
-// getDarwinCPUSerial reads hardware UUID on macOS
+// getDarwinCPUSerial reads hardware UUID on macOS.
 func getDarwinCPUSerial() string {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), commandTimeout*time.Second)
 	defer cancel()
 	out, err := exec.CommandContext(ctx, "ioreg", "-rd1", "-c", "IOPlatformExpertDevice").Output()
 	if err != nil {
-		return "DARWIN-DEFAULT"
+		return defaultDarwinCPU
 	}
 
-	lines := strings.Split(string(out), "\n")
-	for _, line := range lines {
+	for line := range splitLines(string(out)) {
 		if strings.Contains(line, "IOPlatformUUID") {
 			parts := strings.Split(line, "=")
-			if len(parts) == 2 {
+			if len(parts) == splitPartsCount {
 				uuid := strings.TrimSpace(parts[1])
 				uuid = strings.Trim(uuid, "\"")
 				return uuid
@@ -174,10 +195,10 @@ func getDarwinCPUSerial() string {
 		}
 	}
 
-	return "DARWIN-DEFAULT"
+	return defaultDarwinCPU
 }
 
-// getDiskSerial returns root disk serial number
+// getDiskSerial returns root disk serial number.
 func getDiskSerial() string {
 	switch runtime.GOOS {
 	case "linux":
@@ -185,13 +206,13 @@ func getDiskSerial() string {
 	case "darwin":
 		return getDarwinDiskSerial()
 	default:
-		return "UNKNOWN"
+		return unknownSerial
 	}
 }
 
-// getLinuxDiskSerial reads disk serial from /sys or udevadm
+// getLinuxDiskSerial reads disk serial from /sys or udevadm.
 func getLinuxDiskSerial() string {
-	// Try common disk paths
+	// Try common disk paths.
 	diskPaths := []string{
 		"/sys/block/sda/device/serial",
 		"/sys/block/nvme0n1/device/serial",
@@ -199,7 +220,13 @@ func getLinuxDiskSerial() string {
 	}
 
 	for _, path := range diskPaths {
-		data, err := os.ReadFile(path)
+		// Read from known system paths.
+		f, err := os.Open(filepath.Clean(path))
+		if err != nil {
+			continue
+		}
+		data, err := io.ReadAll(f)
+		_ = f.Close()
 		if err == nil {
 			serial := strings.TrimSpace(string(data))
 			if serial != "" {
@@ -208,59 +235,56 @@ func getLinuxDiskSerial() string {
 		}
 	}
 
-	// Try udevadm
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	// Try udevadm.
+	ctx, cancel := context.WithTimeout(context.Background(), commandTimeout*time.Second)
 	defer cancel()
 	out, err := exec.CommandContext(ctx, "udevadm", "info", "--query=property", "--name=/dev/sda").Output()
 	if err == nil {
-		lines := strings.Split(string(out), "\n")
-		for _, line := range lines {
-			if strings.HasPrefix(line, "ID_SERIAL=") {
-				return strings.TrimPrefix(line, "ID_SERIAL=")
+		for line := range splitLines(string(out)) {
+			if serial, found := strings.CutPrefix(line, "ID_SERIAL="); found {
+				return serial
 			}
 		}
 	}
 
-	return "LINUX-DISK"
+	return defaultLinuxDisk
 }
 
-// getDarwinDiskSerial reads disk serial on macOS
+// getDarwinDiskSerial reads disk serial on macOS.
 func getDarwinDiskSerial() string {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), commandTimeout*time.Second)
 	defer cancel()
 	out, err := exec.CommandContext(ctx, "system_profiler", "SPSerialATADataType").Output()
 	if err == nil {
-		lines := strings.Split(string(out), "\n")
-		for _, line := range lines {
+		for line := range splitLines(string(out)) {
 			if strings.Contains(line, "Serial Number") {
 				parts := strings.Split(line, ":")
-				if len(parts) == 2 {
+				if len(parts) == splitPartsCount {
 					return strings.TrimSpace(parts[1])
 				}
 			}
 		}
 	}
 
-	// Try NVMe
-	ctx2, cancel2 := context.WithTimeout(context.Background(), 5*time.Second)
+	// Try NVMe.
+	ctx2, cancel2 := context.WithTimeout(context.Background(), commandTimeout*time.Second)
 	defer cancel2()
 	out, err = exec.CommandContext(ctx2, "system_profiler", "SPNVMeDataType").Output()
 	if err == nil {
-		lines := strings.Split(string(out), "\n")
-		for _, line := range lines {
+		for line := range splitLines(string(out)) {
 			if strings.Contains(line, "Serial Number") {
 				parts := strings.Split(line, ":")
-				if len(parts) == 2 {
+				if len(parts) == splitPartsCount {
 					return strings.TrimSpace(parts[1])
 				}
 			}
 		}
 	}
 
-	return "DARWIN-DISK"
+	return defaultDarwinDisk
 }
 
-// maskString masks a string for display, showing only first N chars
+// maskString masks a string for display, showing only first N chars.
 func maskString(s string, show int) string {
 	if len(s) <= show {
 		return s

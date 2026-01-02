@@ -9,10 +9,38 @@
 
 package help
 
-// GetGlossary returns all glossary entries
+import "maps"
+
+// GetGlossary returns all glossary entries.
 func GetGlossary() map[string]GlossaryEntry {
+	glossary := make(map[string]GlossaryEntry)
+	addEntries(glossary, getBandwidthTerms())
+	addEntries(glossary, getLatencyTerms())
+	addEntries(glossary, getLossTerms())
+	addEntries(glossary, getProtocolTerms())
+	addEntries(glossary, getAddressingTerms())
+	addEntries(glossary, getQoSTerms())
+	addEntries(glossary, getEquipmentTerms())
+	addEntries(glossary, getServiceTerms())
+	addEntries(glossary, getMeasurementTerms())
+	addEntries(glossary, getFramePacketTerms())
+	addEntries(glossary, getOAMTerms())
+	addEntries(glossary, getTSNTerms())
+	addEntries(glossary, getLayerTerms())
+	addEntries(glossary, getTestingTerms())
+	addEntries(glossary, getCongestionTerms())
+	addEntries(glossary, getStandardsTerms())
+	return glossary
+}
+
+// addEntries adds all entries from src to dst.
+func addEntries(dst, src map[string]GlossaryEntry) {
+	maps.Copy(dst, src)
+}
+
+// getBandwidthTerms returns bandwidth and rate terms.
+func getBandwidthTerms() map[string]GlossaryEntry {
 	return map[string]GlossaryEntry{
-		// Bandwidth and Rate Terms
 		"bandwidth": {
 			Term:      "Bandwidth",
 			FullName:  "Network Bandwidth",
@@ -69,8 +97,12 @@ func GetGlossary() map[string]GlossaryEntry {
 			LaymanDef: "The actual useful data speed your applications see - always less than throughput due to overhead",
 			Related:   []string{"throughput"},
 		},
+	}
+}
 
-		// Latency and Timing Terms
+// getLatencyTerms returns latency and timing terms.
+func getLatencyTerms() map[string]GlossaryEntry {
+	return map[string]GlossaryEntry{
 		"latency": {
 			Term:      "Latency",
 			FullName:  "Network Latency",
@@ -106,8 +138,12 @@ func GetGlossary() map[string]GlossaryEntry {
 			LaymanDef: "How long it takes for a single data packet to arrive",
 			Related:   []string{"latency", "fdv"},
 		},
+	}
+}
 
-		// Loss Terms
+// getLossTerms returns loss-related terms.
+func getLossTerms() map[string]GlossaryEntry {
+	return map[string]GlossaryEntry{
 		"packet_loss": {
 			Term:      "Packet Loss",
 			FullName:  "Packet Loss Rate",
@@ -122,8 +158,12 @@ func GetGlossary() map[string]GlossaryEntry {
 			LaymanDef: "What percentage of data packets got lost",
 			Related:   []string{"packet_loss"},
 		},
+	}
+}
 
-		// Protocol Terms
+// getProtocolTerms returns protocol-related terms.
+func getProtocolTerms() map[string]GlossaryEntry {
+	return map[string]GlossaryEntry{
 		"ethernet": {
 			Term:      "Ethernet",
 			FullName:  "IEEE 802.3 Ethernet",
@@ -159,8 +199,12 @@ func GetGlossary() map[string]GlossaryEntry {
 			LaymanDef: "A way to divide a physical network into separate virtual networks - like having multiple neighborhoods on one street",
 			Related:   []string{"cos", "qos"},
 		},
+	}
+}
 
-		// Addressing Terms
+// getAddressingTerms returns addressing-related terms.
+func getAddressingTerms() map[string]GlossaryEntry {
+	return map[string]GlossaryEntry{
 		"mac_address": {
 			Term:      "MAC Address",
 			FullName:  "Media Access Control Address",
@@ -175,8 +219,12 @@ func GetGlossary() map[string]GlossaryEntry {
 			LaymanDef: "The first half of a MAC address tells you who made the device - like a brand name",
 			Related:   []string{"mac_address"},
 		},
+	}
+}
 
-		// Quality of Service Terms
+// getQoSTerms returns Quality of Service terms.
+func getQoSTerms() map[string]GlossaryEntry {
+	return map[string]GlossaryEntry{
 		"qos": {
 			Term:      "QoS",
 			FullName:  "Quality of Service",
@@ -198,8 +246,12 @@ func GetGlossary() map[string]GlossaryEntry {
 			LaymanDef: "Like CoS but for IP packets - a way to mark traffic priority that works across networks",
 			Related:   []string{"qos", "cos"},
 		},
+	}
+}
 
-		// Equipment Terms
+// getEquipmentTerms returns equipment-related terms.
+func getEquipmentTerms() map[string]GlossaryEntry {
+	return map[string]GlossaryEntry{
 		"dut": {
 			Term:      "DUT",
 			FullName:  "Device Under Test",
@@ -235,8 +287,12 @@ func GetGlossary() map[string]GlossaryEntry {
 			LaymanDef: "A device that bounces test packets back - like a mirror for network traffic",
 			Related:   []string{"loopback"},
 		},
+	}
+}
 
-		// Service Terms
+// getServiceTerms returns service-related terms.
+func getServiceTerms() map[string]GlossaryEntry {
+	return map[string]GlossaryEntry{
 		"sla": {
 			Term:      "SLA",
 			FullName:  "Service Level Agreement",
@@ -258,8 +314,12 @@ func GetGlossary() map[string]GlossaryEntry {
 			LaymanDef: "The group that sets standards for professional ethernet services - their certification means it meets industry standards",
 			Related:   []string{"carrier_ethernet", "y1564"},
 		},
+	}
+}
 
-		// Measurement Terms
+// getMeasurementTerms returns measurement-related terms.
+func getMeasurementTerms() map[string]GlossaryEntry {
+	return map[string]GlossaryEntry{
 		"pps": {
 			Term:      "pps",
 			FullName:  "Packets Per Second",
@@ -281,8 +341,12 @@ func GetGlossary() map[string]GlossaryEntry {
 			LaymanDef: "Same as packets per second, but specifically for Ethernet frames",
 			Related:   []string{"pps"},
 		},
+	}
+}
 
-		// Frame/Packet Terms
+// getFramePacketTerms returns frame and packet terms.
+func getFramePacketTerms() map[string]GlossaryEntry {
+	return map[string]GlossaryEntry{
 		"frame": {
 			Term:      "Frame",
 			FullName:  "Ethernet Frame",
@@ -314,12 +378,16 @@ func GetGlossary() map[string]GlossaryEntry {
 		"ifg": {
 			Term:      "IFG",
 			FullName:  "Inter-Frame Gap",
-			TechDef:   "Minimum idle time between Ethernet frames (96 bit times = 9.6µs at 10 Mbps)",
+			TechDef:   "Minimum idle time between Ethernet frames (96 bit times = 9.6us at 10 Mbps)",
 			LaymanDef: "Required pause between sending packets - like the space between cars on a highway",
 			Related:   []string{"frame"},
 		},
+	}
+}
 
-		// OAM Terms
+// getOAMTerms returns OAM-related terms.
+func getOAMTerms() map[string]GlossaryEntry {
+	return map[string]GlossaryEntry{
 		"oam": {
 			Term:      "OAM",
 			FullName:  "Operations, Administration, and Maintenance",
@@ -348,8 +416,12 @@ func GetGlossary() map[string]GlossaryEntry {
 			LaymanDef: "A monitoring point in the middle of a network - helps narrow down where problems are",
 			Related:   []string{"mep", "oam"},
 		},
+	}
+}
 
-		// TSN Terms
+// getTSNTerms returns TSN-related terms.
+func getTSNTerms() map[string]GlossaryEntry {
+	return map[string]GlossaryEntry{
 		"tsn": {
 			Term:      "TSN",
 			FullName:  "Time-Sensitive Networking",
@@ -378,8 +450,12 @@ func GetGlossary() map[string]GlossaryEntry {
 			LaymanDef: "A way to synchronize clocks across a network to nanosecond precision - essential for TSN",
 			Related:   []string{"tsn", "ntp"},
 		},
+	}
+}
 
-		// Protocol Stack Terms
+// getLayerTerms returns network layer terms.
+func getLayerTerms() map[string]GlossaryEntry {
+	return map[string]GlossaryEntry{
 		"layer2": {
 			Term:      "Layer 2",
 			FullName:  "Data Link Layer",
@@ -394,8 +470,12 @@ func GetGlossary() map[string]GlossaryEntry {
 			LaymanDef: "The network level that deals with IP addresses and routing between networks",
 			Related:   []string{"layer2", "ip", "routing"},
 		},
+	}
+}
 
-		// Testing Terms
+// getTestingTerms returns testing-related terms.
+func getTestingTerms() map[string]GlossaryEntry {
+	return map[string]GlossaryEntry{
 		"binary_search": {
 			Term:      "Binary Search",
 			FullName:  "Binary Search Algorithm",
@@ -417,8 +497,12 @@ func GetGlossary() map[string]GlossaryEntry {
 			LaymanDef: "Official tests for comparing how fast different equipment is",
 			Related:   []string{"baseline", "rfc2544"},
 		},
+	}
+}
 
-		// Congestion Terms
+// getCongestionTerms returns congestion-related terms.
+func getCongestionTerms() map[string]GlossaryEntry {
+	return map[string]GlossaryEntry{
 		"congestion": {
 			Term:      "Congestion",
 			FullName:  "Network Congestion",
@@ -454,8 +538,12 @@ func GetGlossary() map[string]GlossaryEntry {
 			LaymanDef: "When one slow lane backs up traffic for other lanes - like one slow checkout line blocking people who just want to pay",
 			Related:   []string{"queue", "congestion"},
 		},
+	}
+}
 
-		// Standards References
+// getStandardsTerms returns standards-related terms.
+func getStandardsTerms() map[string]GlossaryEntry {
+	return map[string]GlossaryEntry{
 		"rfc2544": {
 			Term:      "RFC 2544",
 			FullName:  "Benchmarking Methodology for Network Interconnect Devices",
@@ -494,7 +582,7 @@ func GetGlossary() map[string]GlossaryEntry {
 	}
 }
 
-// GetGlossaryTermsByCategory returns glossary terms grouped by category
+// GetGlossaryTermsByCategory returns glossary terms grouped by category.
 func GetGlossaryTermsByCategory() map[string][]string {
 	return map[string][]string{
 		"Bandwidth & Rate": {

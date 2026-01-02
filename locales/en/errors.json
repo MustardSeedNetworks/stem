@@ -1,0 +1,48 @@
+{
+  "auth": {
+    "invalidCredentials": "Invalid credentials",
+    "unauthorized": "Unauthorized",
+    "sessionExpired": "Session expired. Please log in again."
+  },
+  "network": {
+    "connectionFailed": "Connection failed",
+    "networkError": "Network error",
+    "timeout": "Request timed out",
+    "serverUnavailable": "Server unavailable",
+    "disconnected": "Disconnected from server",
+    "interfaceNotFound": "Interface not found",
+    "invalidInterface": "Invalid interface"
+  },
+  "test": {
+    "alreadyRunning": "A test is already running",
+    "failedToStart": "Failed to start test",
+    "failedToStop": "Failed to stop test",
+    "invalidConfig": "Invalid test configuration",
+    "moduleNotFound": "Test module not found",
+    "testTypeNotSupported": "Test type not supported by module"
+  },
+  "reflector": {
+    "alreadyRunning": "Reflector already running",
+    "failedToStart": "Failed to start reflector",
+    "failedToStop": "Failed to stop reflector",
+    "notRunning": "Reflector is not running"
+  },
+  "license": {
+    "invalid": "Invalid license",
+    "expired": "License expired",
+    "notActivated": "License not activated",
+    "activationFailed": "License activation failed",
+    "trialExpired": "Trial period expired"
+  },
+  "validation": {
+    "required": "{{field}} is required",
+    "invalidFormat": "Invalid {{field}} format",
+    "invalidRange": "{{field}} must be between {{min}} and {{max}}"
+  },
+  "api": {
+    "methodNotAllowed": "Method not allowed",
+    "invalidRequestBody": "Invalid request body",
+    "notFound": "Not found",
+    "internalError": "Internal server error"
+  }
+}

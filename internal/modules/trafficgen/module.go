@@ -4,6 +4,8 @@
 // This module owns custom traffic stream generation capabilities.
 package trafficgen
 
+import "slices"
+
 const (
 	// ModuleName is the unique identifier for the TrafficGen module.
 	ModuleName = "trafficgen"
@@ -19,11 +21,15 @@ const (
 )
 
 // testTypes lists all test types owned by the TrafficGen module.
+//
+//nolint:gochecknoglobals // Static module definition.
 var testTypes = []string{
 	"custom_stream",
 }
 
 // testDescriptions provides descriptions for each test type.
+//
+//nolint:gochecknoglobals // Static module definition.
 var testDescriptions = map[string]string{
 	"custom_stream": "Custom traffic stream generation with configurable patterns",
 }
@@ -68,12 +74,7 @@ func (m *Module) TestTypes() []string {
 
 // CanRun returns true if this module can execute the given test type.
 func (m *Module) CanRun(testType string) bool {
-	for _, t := range testTypes {
-		if t == testType {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(testTypes, testType)
 }
 
 // TestDescription returns the description for a given test type.

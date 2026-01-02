@@ -8,7 +8,7 @@
 
 package help
 
-// GetAllCommands returns help for all CLI commands
+// GetAllCommands returns help for all CLI commands.
 func GetAllCommands() map[string]CommandHelp {
 	return map[string]CommandHelp{
 		"reflect":  ReflectCommand,
@@ -22,7 +22,9 @@ func GetAllCommands() map[string]CommandHelp {
 	}
 }
 
-// ReflectCommand documents the reflect subcommand
+// ReflectCommand documents the reflect subcommand.
+//
+//nolint:gochecknoglobals // Static help content.
 var ReflectCommand = CommandHelp{
 	Name:    "reflect",
 	Summary: "Run packet reflection mode for remote testing",
@@ -119,7 +121,9 @@ or can be specified manually.`,
 	SeeAlso: []string{"test", "web"},
 }
 
-// TestCommand documents the test subcommand
+// TestCommand documents the test subcommand.
+//
+//nolint:gochecknoglobals // Static help content.
 var TestCommand = CommandHelp{
 	Name:    "test",
 	Summary: "Run network performance tests",
@@ -236,7 +240,9 @@ Results are displayed in real-time and can be saved to files for later analysis.
 	SeeAlso: []string{"reflect", "help"},
 }
 
-// WebCommand documents the web subcommand
+// WebCommand documents the web subcommand.
+//
+//nolint:gochecknoglobals // Static help content.
 var WebCommand = CommandHelp{
 	Name:    "web",
 	Summary: "Start the Test Master web interface",
@@ -286,7 +292,9 @@ The web interface includes:
 	SeeAlso: []string{"reflect", "test"},
 }
 
-// LicenseCommand documents the license subcommand
+// LicenseCommand documents the license subcommand.
+//
+//nolint:gochecknoglobals // Static help content.
 var LicenseCommand = CommandHelp{
 	Name:    "license",
 	Summary: "Manage license activation",
@@ -342,7 +350,9 @@ determines which features are available:
 	SeeAlso: []string{"version"},
 }
 
-// VersionCommand documents the version subcommand
+// VersionCommand documents the version subcommand.
+//
+//nolint:gochecknoglobals // Static help content.
 var VersionCommand = CommandHelp{
 	Name:    "version",
 	Summary: "Display version information",
@@ -360,7 +370,9 @@ build information, license status, and available features.`,
 	SeeAlso: []string{"license"},
 }
 
-// HelpCommand documents the help subcommand
+// HelpCommand documents the help subcommand.
+//
+//nolint:gochecknoglobals // Static help content.
 var HelpCommand = CommandHelp{
 	Name:    "help",
 	Summary: "Get help on commands, tests, and concepts",
@@ -398,7 +410,9 @@ tests, and network testing concepts. You can get help on:
 	SeeAlso: []string{"tutorial", "glossary"},
 }
 
-// TutorialCommand documents the tutorial subcommand
+// TutorialCommand documents the tutorial subcommand.
+//
+//nolint:gochecknoglobals // Static help content.
 var TutorialCommand = CommandHelp{
 	Name:    "tutorial",
 	Summary: "Interactive tutorials for learning Seed Test Suite",
@@ -425,7 +439,9 @@ name to start it.`,
 	SeeAlso: []string{"help", "glossary"},
 }
 
-// GlossaryCommand documents the glossary subcommand
+// GlossaryCommand documents the glossary subcommand.
+//
+//nolint:gochecknoglobals // Static help content.
 var GlossaryCommand = CommandHelp{
 	Name:    "glossary",
 	Summary: "Network terminology definitions",

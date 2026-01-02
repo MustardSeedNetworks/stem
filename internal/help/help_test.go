@@ -1,6 +1,8 @@
 // Copyright (c) 2025 Mustard Seed Networks. All rights reserved.
 
 // Package help tests provide comprehensive coverage for the help system.
+//
+//nolint:testpackage,reassign // Tests internal functions; reassigns os.Stdout/Stderr for output capture.
 package help
 
 import (
@@ -11,15 +13,23 @@ import (
 	"testing"
 )
 
+// assertNotEmpty is a test helper that checks a field is not empty.
+func assertNotEmpty(t *testing.T, name, value string) {
+	t.Helper()
+	if value == "" {
+		t.Errorf("%s is empty", name)
+	}
+}
+
 // ============================================================================
-// HelpSystem Tests
+// System Tests
 // ============================================================================
 
-func TestNewHelpSystem(t *testing.T) {
-	hs := NewHelpSystem()
+func TestNewSystem(t *testing.T) {
+	hs := NewSystem()
 
 	if hs == nil {
-		t.Fatal("NewHelpSystem returned nil")
+		t.Fatal("NewSystem returned nil")
 	}
 
 	if hs.Tests == nil {
@@ -43,7 +53,7 @@ func TestNewHelpSystem(t *testing.T) {
 }
 
 func TestGetTest(t *testing.T) {
-	hs := NewHelpSystem()
+	hs := NewSystem()
 
 	tests := []struct {
 		id       string
@@ -70,7 +80,7 @@ func TestGetTest(t *testing.T) {
 }
 
 func TestGetCommand(t *testing.T) {
-	hs := NewHelpSystem()
+	hs := NewSystem()
 
 	tests := []struct {
 		name     string
@@ -97,7 +107,7 @@ func TestGetCommand(t *testing.T) {
 }
 
 func TestGetGlossaryTerm(t *testing.T) {
-	hs := NewHelpSystem()
+	hs := NewSystem()
 
 	tests := []struct {
 		term     string
@@ -124,7 +134,7 @@ func TestGetGlossaryTerm(t *testing.T) {
 }
 
 func TestGetTutorial(t *testing.T) {
-	hs := NewHelpSystem()
+	hs := NewSystem()
 
 	tests := []struct {
 		id     string
@@ -150,7 +160,7 @@ func TestGetTutorial(t *testing.T) {
 }
 
 func TestGetError(t *testing.T) {
-	hs := NewHelpSystem()
+	hs := NewSystem()
 
 	tests := []struct {
 		code   string
@@ -172,7 +182,7 @@ func TestGetError(t *testing.T) {
 }
 
 func TestGetCategory(t *testing.T) {
-	hs := NewHelpSystem()
+	hs := NewSystem()
 
 	tests := []struct {
 		id     string
@@ -199,7 +209,7 @@ func TestGetCategory(t *testing.T) {
 }
 
 func TestGetTestsByCategory(t *testing.T) {
-	hs := NewHelpSystem()
+	hs := NewSystem()
 
 	tests := []struct {
 		categoryID string
@@ -226,7 +236,7 @@ func TestGetTestsByCategory(t *testing.T) {
 }
 
 func TestSearchTests(t *testing.T) {
-	hs := NewHelpSystem()
+	hs := NewSystem()
 
 	tests := []struct {
 		keyword  string
@@ -251,7 +261,7 @@ func TestSearchTests(t *testing.T) {
 }
 
 func TestSearchGlossary(t *testing.T) {
-	hs := NewHelpSystem()
+	hs := NewSystem()
 
 	tests := []struct {
 		keyword  string
@@ -292,31 +302,14 @@ func TestAllTestsHaveRequiredFields(t *testing.T) {
 
 	for id, test := range tests {
 		t.Run(id, func(t *testing.T) {
-			if test.ID == "" {
-				t.Error("ID is empty")
-			}
-			if test.Name == "" {
-				t.Error("Name is empty")
-			}
-			if test.Standard == "" {
-				t.Error("Standard is empty")
-			}
-			if test.Category == "" {
-				t.Error("Category is empty")
-			}
-			if test.Summary == "" {
-				t.Error("Summary is empty")
-			}
-			if test.TechDesc == "" {
-				t.Error("TechDesc is empty")
-			}
-			if test.LaymanDesc == "" {
-				t.Error("LaymanDesc is empty")
-			}
-			if test.WhenToUse == "" {
-				t.Error("WhenToUse is empty")
-			}
-			// Verify ID matches key
+			assertNotEmpty(t, "ID", test.ID)
+			assertNotEmpty(t, "Name", test.Name)
+			assertNotEmpty(t, "Standard", test.Standard)
+			assertNotEmpty(t, "Category", test.Category)
+			assertNotEmpty(t, "Summary", test.Summary)
+			assertNotEmpty(t, "TechDesc", test.TechDesc)
+			assertNotEmpty(t, "LaymanDesc", test.LaymanDesc)
+			assertNotEmpty(t, "WhenToUse", test.WhenToUse)
 			if test.ID != id {
 				t.Errorf("Test ID %q does not match map key %q", test.ID, id)
 			}
@@ -354,31 +347,16 @@ func TestAllCategoriesHaveRequiredFields(t *testing.T) {
 
 	for id, cat := range categories {
 		t.Run(id, func(t *testing.T) {
-			if cat.ID == "" {
-				t.Error("ID is empty")
-			}
-			if cat.Name == "" {
-				t.Error("Name is empty")
-			}
-			if cat.FullName == "" {
-				t.Error("FullName is empty")
-			}
-			if cat.Summary == "" {
-				t.Error("Summary is empty")
-			}
-			if cat.Description == "" {
-				t.Error("Description is empty")
-			}
+			assertNotEmpty(t, "ID", cat.ID)
+			assertNotEmpty(t, "Name", cat.Name)
+			assertNotEmpty(t, "FullName", cat.FullName)
+			assertNotEmpty(t, "Summary", cat.Summary)
+			assertNotEmpty(t, "Description", cat.Description)
+			assertNotEmpty(t, "WhenToUse", cat.WhenToUse)
+			assertNotEmpty(t, "Standard", cat.Standard)
 			if len(cat.Tests) == 0 {
 				t.Error("Tests list is empty")
 			}
-			if cat.WhenToUse == "" {
-				t.Error("WhenToUse is empty")
-			}
-			if cat.Standard == "" {
-				t.Error("Standard is empty")
-			}
-			// Verify ID matches key
 			if cat.ID != id {
 				t.Errorf("Category ID %q does not match map key %q", cat.ID, id)
 			}
@@ -473,25 +451,14 @@ func TestTutorialsHaveRequiredFields(t *testing.T) {
 
 	for id, tutorial := range tutorials {
 		t.Run(id, func(t *testing.T) {
-			if tutorial.ID == "" {
-				t.Error("ID is empty")
-			}
-			if tutorial.Title == "" {
-				t.Error("Title is empty")
-			}
-			if tutorial.Duration == "" {
-				t.Error("Duration is empty")
-			}
-			if tutorial.Level == "" {
-				t.Error("Level is empty")
-			}
-			if tutorial.Description == "" {
-				t.Error("Description is empty")
-			}
+			assertNotEmpty(t, "ID", tutorial.ID)
+			assertNotEmpty(t, "Title", tutorial.Title)
+			assertNotEmpty(t, "Duration", tutorial.Duration)
+			assertNotEmpty(t, "Level", tutorial.Level)
+			assertNotEmpty(t, "Description", tutorial.Description)
 			if len(tutorial.Steps) == 0 {
 				t.Error("Steps list is empty")
 			}
-			// Verify ID matches key
 			if tutorial.ID != id {
 				t.Errorf("Tutorial ID %q does not match map key %q", tutorial.ID, id)
 			}
@@ -969,7 +936,7 @@ func TestShowTutorial(t *testing.T) {
 // ============================================================================
 
 func TestSearchIsCaseInsensitive(t *testing.T) {
-	hs := NewHelpSystem()
+	hs := NewSystem()
 
 	// Test case insensitive search
 	tests := []struct {
@@ -1072,7 +1039,7 @@ func TestTestSeeAlsoReferencesExist(t *testing.T) {
 // ============================================================================
 
 func TestDisplayTestOutputContainsName(t *testing.T) {
-	test := RFC2544Throughput
+	test := rfc2544Throughput
 
 	// Capture stdout
 	old := os.Stdout
@@ -1120,7 +1087,7 @@ func TestDisplayCommandOutputContainsUsage(t *testing.T) {
 // ============================================================================
 
 func TestEmptySearchReturnsEmpty(t *testing.T) {
-	hs := NewHelpSystem()
+	hs := NewSystem()
 
 	// Empty search should not panic and return empty
 	testsResults := hs.SearchTests("")
@@ -1133,7 +1100,7 @@ func TestEmptySearchReturnsEmpty(t *testing.T) {
 }
 
 func TestSpecialCharactersInSearch(t *testing.T) {
-	hs := NewHelpSystem()
+	hs := NewSystem()
 
 	// Special characters should not panic
 	specialSearches := []string{

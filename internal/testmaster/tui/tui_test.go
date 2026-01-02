@@ -1,122 +1,72 @@
 // Copyright (c) 2025 Mustard Seed Networks. All rights reserved.
 
-package tui
+//nolint:govet // unusedwrite: Test structs set fields for completeness even if not all fields are verified.
+package tui_test
 
 import (
 	"testing"
 	"time"
+
+	"github.com/krisarmstrong/stem/internal/testmaster/tui"
 )
 
 func TestTestTypeConstants(t *testing.T) {
-	// RFC 2544 Tests
-	rfc2544Tests := []TestType{
-		TestThroughput,
-		TestLatency,
-		TestFrameLoss,
-		TestBackToBack,
-		TestSystemRecovery,
-		TestReset,
+	allTests := []tui.TestType{
+		// RFC 2544 Tests.
+		tui.TestThroughput, tui.TestLatency, tui.TestFrameLoss, tui.TestBackToBack,
+		tui.TestSystemRecovery, tui.TestReset,
+		// Y.1564 Tests.
+		tui.TestY1564Config, tui.TestY1564Perf, tui.TestY1564Full,
+		// RFC 2889 Tests.
+		tui.TestRFC2889Forwarding, tui.TestRFC2889Caching, tui.TestRFC2889Learning,
+		tui.TestRFC2889Broadcast, tui.TestRFC2889Congestion,
+		// RFC 6349 Tests.
+		tui.TestRFC6349Throughput, tui.TestRFC6349Path,
+		// Y.1731 Tests.
+		tui.TestY1731Delay, tui.TestY1731Loss, tui.TestY1731SLM, tui.TestY1731Loopback,
+		// MEF Tests.
+		tui.TestMEFConfig, tui.TestMEFPerf, tui.TestMEFFull,
+		// TSN Tests.
+		tui.TestTSNTiming, tui.TestTSNIsolation, tui.TestTSNLatency, tui.TestTSNFull,
 	}
 
-	for _, tt := range rfc2544Tests {
+	for _, tt := range allTests {
 		if tt == "" {
-			t.Error("RFC 2544 test type should not be empty")
-		}
-	}
-
-	// Y.1564 Tests
-	y1564Tests := []TestType{
-		TestY1564Config,
-		TestY1564Perf,
-		TestY1564Full,
-	}
-
-	for _, tt := range y1564Tests {
-		if tt == "" {
-			t.Error("Y.1564 test type should not be empty")
-		}
-	}
-
-	// RFC 2889 Tests
-	rfc2889Tests := []TestType{
-		TestRFC2889Forwarding,
-		TestRFC2889Caching,
-		TestRFC2889Learning,
-		TestRFC2889Broadcast,
-		TestRFC2889Congestion,
-	}
-
-	for _, tt := range rfc2889Tests {
-		if tt == "" {
-			t.Error("RFC 2889 test type should not be empty")
-		}
-	}
-
-	// RFC 6349 Tests
-	rfc6349Tests := []TestType{
-		TestRFC6349Throughput,
-		TestRFC6349Path,
-	}
-
-	for _, tt := range rfc6349Tests {
-		if tt == "" {
-			t.Error("RFC 6349 test type should not be empty")
-		}
-	}
-
-	// Y.1731 Tests
-	y1731Tests := []TestType{
-		TestY1731Delay,
-		TestY1731Loss,
-		TestY1731SLM,
-		TestY1731Loopback,
-	}
-
-	for _, tt := range y1731Tests {
-		if tt == "" {
-			t.Error("Y.1731 test type should not be empty")
-		}
-	}
-
-	// MEF Tests
-	mefTests := []TestType{
-		TestMEFConfig,
-		TestMEFPerf,
-		TestMEFFull,
-	}
-
-	for _, tt := range mefTests {
-		if tt == "" {
-			t.Error("MEF test type should not be empty")
-		}
-	}
-
-	// TSN Tests
-	tsnTests := []TestType{
-		TestTSNTiming,
-		TestTSNIsolation,
-		TestTSNLatency,
-		TestTSNFull,
-	}
-
-	for _, tt := range tsnTests {
-		if tt == "" {
-			t.Error("TSN test type should not be empty")
+			t.Errorf("test type should not be empty: %v", tt)
 		}
 	}
 }
 
 func TestTestTypeValues(t *testing.T) {
-	testValues := map[TestType]string{
-		TestThroughput:     "Throughput",
-		TestLatency:        "Latency",
-		TestFrameLoss:      "Frame Loss",
-		TestBackToBack:     "Back-to-Back",
-		TestSystemRecovery: "System Recovery",
-		TestReset:          "Reset",
-		TestY1564Config:    "Y.1564 Config",
-		TestY1564Perf:      "Y.1564 Perf",
-		TestY1564Full:      "Y.1564 Full",
+	// Exhaustive map of all TestType constants.
+	testValues := map[tui.TestType]string{
+		tui.TestThroughput:        "Throughput",
+		tui.TestLatency:           "Latency",
+		tui.TestFrameLoss:         "Frame Loss",
+		tui.TestBackToBack:        "Back-to-Back",
+		tui.TestSystemRecovery:    "System Recovery",
+		tui.TestReset:             "Reset",
+		tui.TestY1564Config:       "Y.1564 Config",
+		tui.TestY1564Perf:         "Y.1564 Perf",
+		tui.TestY1564Full:         "Y.1564 Full",
+		tui.TestRFC2889Forwarding: "RFC2889 Forwarding",
+		tui.TestRFC2889Caching:    "RFC2889 Caching",
+		tui.TestRFC2889Learning:   "RFC2889 Learning",
+		tui.TestRFC2889Broadcast:  "RFC2889 Broadcast",
+		tui.TestRFC2889Congestion: "RFC2889 Congestion",
+		tui.TestRFC6349Throughput: "RFC6349 Throughput",
+		tui.TestRFC6349Path:       "RFC6349 Path",
+		tui.TestY1731Delay:        "Y.1731 Delay",
+		tui.TestY1731Loss:         "Y.1731 Loss",
+		tui.TestY1731SLM:          "Y.1731 SLM",
+		tui.TestY1731Loopback:     "Y.1731 Loopback",
+		tui.TestMEFConfig:         "MEF Config",
+		tui.TestMEFPerf:           "MEF Perf",
+		tui.TestMEFFull:           "MEF Full",
+		tui.TestTSNTiming:         "TSN Timing",
+		tui.TestTSNIsolation:      "TSN Isolation",
+		tui.TestTSNLatency:        "TSN Latency",
+		tui.TestTSNFull:           "TSN Full",
 	}
 
 	for tt, expected := range testValues {
@@ -127,32 +77,47 @@ func TestTestTypeValues(t *testing.T) {
 }
 
 func TestStatsStruct(t *testing.T) {
-	stats := Stats{
-		TestType:    TestThroughput,
-		FrameSize:   1518,
-		Progress:    50.5,
-		State:       "running",
-		Iteration:   3,
-		MaxIter:     10,
-		TxPackets:   10000,
-		TxBytes:     15180000,
-		RxPackets:   9999,
-		RxBytes:     15178482,
-		TxRate:      1000.0,
-		RxRate:      999.5,
-		TxPPS:       100000,
-		RxPPS:       99990,
-		OfferedRate: 100.0,
-		LossPct:     0.01,
-		LatencyMin:  100.0,
-		LatencyMax:  5000.0,
-		LatencyAvg:  1500.0,
-		LatencyP99:  4500.0,
-		StartTime:   time.Now(),
-		Duration:    30 * time.Second,
+	//nolint:govet // Test data setup - intentionally initializing all fields for struct validation
+	stats := tui.Stats{
+		TestType:     tui.TestThroughput,
+		FrameSize:    1518,
+		Progress:     50.5,
+		State:        "running",
+		Iteration:    3,
+		MaxIter:      10,
+		TxPackets:    10000,
+		TxBytes:      15180000,
+		RxPackets:    9999,
+		RxBytes:      15178482,
+		TxRate:       1000.0,
+		RxRate:       999.5,
+		TxPPS:        100000,
+		RxPPS:        99990,
+		OfferedRate:  100.0,
+		LossPct:      0.01,
+		LatencyMin:   100.0,
+		LatencyMax:   5000.0,
+		LatencyAvg:   1500.0,
+		LatencyP99:   4500.0,
+		StartTime:    time.Now(),
+		Duration:     30 * time.Second,
+		ServiceID:    0,
+		ServiceName:  "",
+		CurrentStep:  0,
+		TotalSteps:   0,
+		CIRMbps:      0,
+		FDMs:         0,
+		FDVMs:        0,
+		FLRPct:       0,
+		FDThreshold:  0,
+		FDVThreshold: 0,
+		FLRThreshold: 0,
+		FDPass:       false,
+		FDVPass:      false,
+		FLRPass:      false,
 	}
 
-	if stats.TestType != TestThroughput {
+	if stats.TestType != tui.TestThroughput {
 		t.Errorf("Expected TestType Throughput, got %s", stats.TestType)
 	}
 	if stats.FrameSize != 1518 {
@@ -173,14 +138,44 @@ func TestStatsStruct(t *testing.T) {
 }
 
 func TestStatsY1564Fields(t *testing.T) {
-	stats := Stats{
-		TestType:    TestY1564Config,
-		ServiceID:   1,
-		ServiceName: "Voice Service",
-		CurrentStep: 2,
-		TotalSteps:  4,
-		CIRMbps:     100.0,
-		FDMs:        5.5,
+	//nolint:govet // Test data setup - intentionally initializing all fields for struct validation
+	stats := tui.Stats{
+		TestType:     tui.TestY1564Config,
+		FrameSize:    0,
+		Progress:     0,
+		State:        "",
+		Iteration:    0,
+		MaxIter:      0,
+		TxPackets:    0,
+		TxBytes:      0,
+		RxPackets:    0,
+		RxBytes:      0,
+		TxRate:       0,
+		RxRate:       0,
+		TxPPS:        0,
+		RxPPS:        0,
+		OfferedRate:  0,
+		LossPct:      0,
+		LatencyMin:   0,
+		LatencyMax:   0,
+		LatencyAvg:   0,
+		LatencyP99:   0,
+		StartTime:    time.Time{},
+		Duration:     0,
+		ServiceID:    1,
+		ServiceName:  "Voice Service",
+		CurrentStep:  2,
+		TotalSteps:   4,
+		CIRMbps:      100.0,
+		FDMs:         5.5,
+		FDVMs:        0,
+		FLRPct:       0,
+		FDThreshold:  0,
+		FDVThreshold: 0,
+		FLRThreshold: 0,
+		FDPass:       false,
+		FDVPass:      false,
+		FLRPass:      false,
 	}
 
 	if stats.ServiceID != 1 {
@@ -201,7 +196,7 @@ func TestStatsY1564Fields(t *testing.T) {
 }
 
 func TestResultStruct(t *testing.T) {
-	result := Result{
+	result := tui.Result{
 		FrameSize:    1518,
 		MaxRatePct:   99.5,
 		MaxRateMbps:  995.0,
@@ -228,7 +223,7 @@ func TestResultStruct(t *testing.T) {
 }
 
 func TestY1564StepResultStruct(t *testing.T) {
-	step := Y1564StepResult{
+	step := tui.Y1564StepResult{
 		Step:           1,
 		OfferedRatePct: 25.0,
 		FLRPct:         0.001,
@@ -252,22 +247,22 @@ func TestY1564StepResultStruct(t *testing.T) {
 }
 
 func TestTestTypeCount(t *testing.T) {
-	// We should have 27 test types total
-	testTypes := []TestType{
-		// RFC 2544 (6)
-		TestThroughput, TestLatency, TestFrameLoss, TestBackToBack, TestSystemRecovery, TestReset,
-		// Y.1564 (3)
-		TestY1564Config, TestY1564Perf, TestY1564Full,
-		// RFC 2889 (5)
-		TestRFC2889Forwarding, TestRFC2889Caching, TestRFC2889Learning, TestRFC2889Broadcast, TestRFC2889Congestion,
-		// RFC 6349 (2)
-		TestRFC6349Throughput, TestRFC6349Path,
-		// Y.1731 (4)
-		TestY1731Delay, TestY1731Loss, TestY1731SLM, TestY1731Loopback,
-		// MEF (3)
-		TestMEFConfig, TestMEFPerf, TestMEFFull,
-		// TSN (4)
-		TestTSNTiming, TestTSNIsolation, TestTSNLatency, TestTSNFull,
+	// We should have 27 test types total.
+	testTypes := []tui.TestType{
+		// RFC 2544 (6).
+		tui.TestThroughput, tui.TestLatency, tui.TestFrameLoss, tui.TestBackToBack, tui.TestSystemRecovery, tui.TestReset,
+		// Y.1564 (3).
+		tui.TestY1564Config, tui.TestY1564Perf, tui.TestY1564Full,
+		// RFC 2889 (5).
+		tui.TestRFC2889Forwarding, tui.TestRFC2889Caching, tui.TestRFC2889Learning, tui.TestRFC2889Broadcast, tui.TestRFC2889Congestion,
+		// RFC 6349 (2).
+		tui.TestRFC6349Throughput, tui.TestRFC6349Path,
+		// Y.1731 (4).
+		tui.TestY1731Delay, tui.TestY1731Loss, tui.TestY1731SLM, tui.TestY1731Loopback,
+		// MEF (3).
+		tui.TestMEFConfig, tui.TestMEFPerf, tui.TestMEFFull,
+		// TSN (4).
+		tui.TestTSNTiming, tui.TestTSNIsolation, tui.TestTSNLatency, tui.TestTSNFull,
 	}
 
 	if len(testTypes) != 27 {
@@ -276,7 +271,45 @@ func TestTestTypeCount(t *testing.T) {
 }
 
 func TestStatsZeroValues(t *testing.T) {
-	stats := Stats{}
+	//nolint:govet // Test data setup - intentionally initializing all fields for struct validation
+	stats := tui.Stats{
+		TestType:     "",
+		FrameSize:    0,
+		Progress:     0,
+		State:        "",
+		Iteration:    0,
+		MaxIter:      0,
+		TxPackets:    0,
+		TxBytes:      0,
+		RxPackets:    0,
+		RxBytes:      0,
+		TxRate:       0,
+		RxRate:       0,
+		TxPPS:        0,
+		RxPPS:        0,
+		OfferedRate:  0,
+		LossPct:      0,
+		LatencyMin:   0,
+		LatencyMax:   0,
+		LatencyAvg:   0,
+		LatencyP99:   0,
+		StartTime:    time.Time{},
+		Duration:     0,
+		ServiceID:    0,
+		ServiceName:  "",
+		CurrentStep:  0,
+		TotalSteps:   0,
+		CIRMbps:      0,
+		FDMs:         0,
+		FDVMs:        0,
+		FLRPct:       0,
+		FDThreshold:  0,
+		FDVThreshold: 0,
+		FLRThreshold: 0,
+		FDPass:       false,
+		FDVPass:      false,
+		FLRPass:      false,
+	}
 
 	if stats.TxPackets != 0 {
 		t.Errorf("Expected TxPackets 0, got %d", stats.TxPackets)
@@ -290,7 +323,14 @@ func TestStatsZeroValues(t *testing.T) {
 }
 
 func TestResultZeroValues(t *testing.T) {
-	result := Result{}
+	result := tui.Result{
+		FrameSize:    0,
+		MaxRatePct:   0,
+		MaxRateMbps:  0,
+		LossPct:      0,
+		LatencyAvgNs: 0,
+		Timestamp:    time.Time{},
+	}
 
 	if result.MaxRatePct != 0 {
 		t.Errorf("Expected MaxRatePct 0, got %f", result.MaxRatePct)
@@ -303,7 +343,45 @@ func TestResultZeroValues(t *testing.T) {
 func TestStatsStateValues(t *testing.T) {
 	states := []string{"idle", "running", "completed", "failed", "cancelled"}
 	for _, state := range states {
-		stats := Stats{State: state}
+		//nolint:govet // Test data setup - intentionally initializing all fields for struct validation
+		stats := tui.Stats{
+			TestType:     "",
+			FrameSize:    0,
+			Progress:     0,
+			State:        state,
+			Iteration:    0,
+			MaxIter:      0,
+			TxPackets:    0,
+			TxBytes:      0,
+			RxPackets:    0,
+			RxBytes:      0,
+			TxRate:       0,
+			RxRate:       0,
+			TxPPS:        0,
+			RxPPS:        0,
+			OfferedRate:  0,
+			LossPct:      0,
+			LatencyMin:   0,
+			LatencyMax:   0,
+			LatencyAvg:   0,
+			LatencyP99:   0,
+			StartTime:    time.Time{},
+			Duration:     0,
+			ServiceID:    0,
+			ServiceName:  "",
+			CurrentStep:  0,
+			TotalSteps:   0,
+			CIRMbps:      0,
+			FDMs:         0,
+			FDVMs:        0,
+			FLRPct:       0,
+			FDThreshold:  0,
+			FDVThreshold: 0,
+			FLRThreshold: 0,
+			FDPass:       false,
+			FDVPass:      false,
+			FLRPass:      false,
+		}
 		if stats.State != state {
 			t.Errorf("Expected State '%s', got '%s'", state, stats.State)
 		}
@@ -311,9 +389,44 @@ func TestStatsStateValues(t *testing.T) {
 }
 
 func TestStatsDuration(t *testing.T) {
-	stats := Stats{
-		StartTime: time.Now().Add(-60 * time.Second),
-		Duration:  60 * time.Second,
+	//nolint:govet // Test data setup - intentionally initializing all fields for struct validation
+	stats := tui.Stats{
+		TestType:     "",
+		FrameSize:    0,
+		Progress:     0,
+		State:        "",
+		Iteration:    0,
+		MaxIter:      0,
+		TxPackets:    0,
+		TxBytes:      0,
+		RxPackets:    0,
+		RxBytes:      0,
+		TxRate:       0,
+		RxRate:       0,
+		TxPPS:        0,
+		RxPPS:        0,
+		OfferedRate:  0,
+		LossPct:      0,
+		LatencyMin:   0,
+		LatencyMax:   0,
+		LatencyAvg:   0,
+		LatencyP99:   0,
+		StartTime:    time.Now().Add(-60 * time.Second),
+		Duration:     60 * time.Second,
+		ServiceID:    0,
+		ServiceName:  "",
+		CurrentStep:  0,
+		TotalSteps:   0,
+		CIRMbps:      0,
+		FDMs:         0,
+		FDVMs:        0,
+		FLRPct:       0,
+		FDThreshold:  0,
+		FDVThreshold: 0,
+		FLRThreshold: 0,
+		FDPass:       false,
+		FDVPass:      false,
+		FLRPass:      false,
 	}
 
 	if stats.Duration != 60*time.Second {
@@ -323,8 +436,13 @@ func TestStatsDuration(t *testing.T) {
 
 func TestResultTimestamp(t *testing.T) {
 	now := time.Now()
-	result := Result{
-		Timestamp: now,
+	result := tui.Result{
+		FrameSize:    0,
+		MaxRatePct:   0,
+		MaxRateMbps:  0,
+		LossPct:      0,
+		LatencyAvgNs: 0,
+		Timestamp:    now,
 	}
 
 	if !result.Timestamp.Equal(now) {
@@ -333,11 +451,23 @@ func TestResultTimestamp(t *testing.T) {
 }
 
 func TestY1564AllSteps(t *testing.T) {
-	steps := []Y1564StepResult{
-		{Step: 1, OfferedRatePct: 25.0, StepPass: true},
-		{Step: 2, OfferedRatePct: 50.0, StepPass: true},
-		{Step: 3, OfferedRatePct: 75.0, StepPass: true},
-		{Step: 4, OfferedRatePct: 100.0, StepPass: false},
+	steps := []tui.Y1564StepResult{
+		{
+			Step: 1, OfferedRatePct: 25.0, FLRPct: 0, FDMs: 0, FDVMs: 0,
+			FLRPass: false, FDPass: false, FDVPass: false, StepPass: true,
+		},
+		{
+			Step: 2, OfferedRatePct: 50.0, FLRPct: 0, FDMs: 0, FDVMs: 0,
+			FLRPass: false, FDPass: false, FDVPass: false, StepPass: true,
+		},
+		{
+			Step: 3, OfferedRatePct: 75.0, FLRPct: 0, FDMs: 0, FDVMs: 0,
+			FLRPass: false, FDPass: false, FDVPass: false, StepPass: true,
+		},
+		{
+			Step: 4, OfferedRatePct: 100.0, FLRPct: 0, FDMs: 0, FDVMs: 0,
+			FLRPass: false, FDPass: false, FDVPass: false, StepPass: false,
+		},
 	}
 
 	if len(steps) != 4 {
@@ -352,12 +482,14 @@ func TestY1564AllSteps(t *testing.T) {
 }
 
 func TestRFC2889TestTypes(t *testing.T) {
-	rfc2889Tests := map[TestType]bool{
-		TestRFC2889Forwarding: true,
-		TestRFC2889Caching:    true,
-		TestRFC2889Learning:   true,
-		TestRFC2889Broadcast:  true,
-		TestRFC2889Congestion: true,
+	// Intentionally testing only RFC2889 subset.
+	//nolint:exhaustive // This test specifically validates RFC2889 test types only.
+	rfc2889Tests := map[tui.TestType]bool{
+		tui.TestRFC2889Forwarding: true,
+		tui.TestRFC2889Caching:    true,
+		tui.TestRFC2889Learning:   true,
+		tui.TestRFC2889Broadcast:  true,
+		tui.TestRFC2889Congestion: true,
 	}
 
 	if len(rfc2889Tests) != 5 {
@@ -366,10 +498,10 @@ func TestRFC2889TestTypes(t *testing.T) {
 }
 
 func TestMEFTestTypes(t *testing.T) {
-	mefTests := []TestType{
-		TestMEFConfig,
-		TestMEFPerf,
-		TestMEFFull,
+	mefTests := []tui.TestType{
+		tui.TestMEFConfig,
+		tui.TestMEFPerf,
+		tui.TestMEFFull,
 	}
 
 	for _, test := range mefTests {
@@ -383,11 +515,11 @@ func TestMEFTestTypes(t *testing.T) {
 }
 
 func TestTSNTestTypes(t *testing.T) {
-	tsnTests := []TestType{
-		TestTSNTiming,
-		TestTSNIsolation,
-		TestTSNLatency,
-		TestTSNFull,
+	tsnTests := []tui.TestType{
+		tui.TestTSNTiming,
+		tui.TestTSNIsolation,
+		tui.TestTSNLatency,
+		tui.TestTSNFull,
 	}
 
 	for _, test := range tsnTests {
@@ -400,28 +532,57 @@ func TestTSNTestTypes(t *testing.T) {
 	}
 }
 
-// Benchmark tests
+// Benchmark tests.
 func BenchmarkStatsCreation(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		_ = Stats{
-			TestType:   TestThroughput,
-			FrameSize:  1518,
-			Progress:   50.5,
-			TxPackets:  10000,
-			RxPackets:  9999,
-			TxRate:     1000.0,
-			RxRate:     999.5,
-			LatencyAvg: 1500.0,
+	for b.Loop() {
+		_ = tui.Stats{
+			TestType:     tui.TestThroughput,
+			FrameSize:    1518,
+			Progress:     50.5,
+			State:        "",
+			Iteration:    0,
+			MaxIter:      0,
+			TxPackets:    10000,
+			TxBytes:      0,
+			RxPackets:    9999,
+			RxBytes:      0,
+			TxRate:       1000.0,
+			RxRate:       999.5,
+			TxPPS:        0,
+			RxPPS:        0,
+			OfferedRate:  0,
+			LossPct:      0,
+			LatencyMin:   0,
+			LatencyMax:   0,
+			LatencyAvg:   1500.0,
+			LatencyP99:   0,
+			StartTime:    time.Time{},
+			Duration:     0,
+			ServiceID:    0,
+			ServiceName:  "",
+			CurrentStep:  0,
+			TotalSteps:   0,
+			CIRMbps:      0,
+			FDMs:         0,
+			FDVMs:        0,
+			FLRPct:       0,
+			FDThreshold:  0,
+			FDVThreshold: 0,
+			FLRThreshold: 0,
+			FDPass:       false,
+			FDVPass:      false,
+			FLRPass:      false,
 		}
 	}
 }
 
 func BenchmarkResultCreation(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		_ = Result{
+	for b.Loop() {
+		_ = tui.Result{
 			FrameSize:    1518,
 			MaxRatePct:   99.5,
 			MaxRateMbps:  995.0,
+			LossPct:      0,
 			LatencyAvgNs: 1500.0,
 			Timestamp:    time.Now(),
 		}

@@ -156,6 +156,19 @@ node --version  # Must show v25.x
 
 ---
 
+## MCP Usage (Required)
+
+Before writing or modifying code, you MUST consult the `language-specs` MCP server.
+
+- Use `get_spec` for language/stdlib/formatter questions.
+- Use `get_linter_rule` for lint guidance.
+- Use `search_specs` if unsure.
+- Use `list_available` if you need to discover topics.
+
+If the task is not language-specific or no relevant spec exists, say so briefly and continue.
+
+---
+
 ## Project Structure
 
 ```
@@ -176,7 +189,7 @@ stem/
 │   ├── license/           # License management
 │   ├── help/              # Built-in help system
 │   ├── version/           # Version info
-│   └── web/               # Web server with module API
+│   └── api/               # REST API with modular handlers
 ├── src/                   # C source files (C23)
 │   └── dataplane/         # DPDK/AF_PACKET/AF_XDP backends
 ├── include/               # C headers

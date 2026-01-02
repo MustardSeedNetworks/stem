@@ -1,99 +1,85 @@
 ---
-# Clang-Format Configuration for Seed Test Suite
-# High-performance C network code formatting standards
-# Copyright (c) 2025 Mustard Seed Networks. All rights reserved.
-
 Language: Cpp
-Standard: c++11
-
-# Base style
 BasedOnStyle: LLVM
-
-# Indentation
 IndentWidth: 4
 TabWidth: 4
-UseTab: ForIndentation
-ContinuationIndentWidth: 4
-IndentCaseLabels: false
-IndentPPDirectives: None
-
-# Column limits
+UseTab: Never
 ColumnLimit: 100
-ReflowComments: true
-
-# Alignment
+AccessModifierOffset: -4
 AlignAfterOpenBracket: Align
-AlignConsecutiveAssignments: false
-AlignConsecutiveDeclarations: false
-AlignEscapedNewlines: Right
+AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: true
+AlignConsecutiveMacros: true
+AlignEscapedNewlines: Left
 AlignOperands: true
 AlignTrailingComments: true
-
-# Allow/disallow on same line
-AllowShortBlocksOnASingleLine: false
+AllowAllArgumentsOnNextLine: true
+AllowAllParametersOfDeclarationOnNextLine: true
+AllowShortBlocksOnASingleLine: Empty
 AllowShortCaseLabelsOnASingleLine: false
-AllowShortFunctionsOnASingleLine: None
+AllowShortFunctionsOnASingleLine: Inline
 AllowShortIfStatementsOnASingleLine: Never
+AllowShortLambdasOnASingleLine: All
 AllowShortLoopsOnASingleLine: false
-
-# Braces
-BreakBeforeBraces: Linux
-BraceWrapping:
-  AfterFunction: true
-  AfterControlStatement: false
-  AfterStruct: true
-  AfterEnum: true
-
-# Pointer alignment
-PointerAlignment: Right
-DerivePointerAlignment: false
-
-# Spacing
-SpaceAfterCStyleCast: false
-SpaceBeforeAssignmentOperators: true
-SpaceBeforeParens: ControlStatements
-SpaceInEmptyParentheses: false
-SpacesInCStyleCastParentheses: false
-SpacesInParentheses: false
-SpacesInSquareBrackets: false
-
-# Break rules
 AlwaysBreakAfterReturnType: None
 AlwaysBreakBeforeMultilineStrings: false
-BreakBeforeBinaryOperators: None
-BreakBeforeTernaryOperators: true
-
-# Penalties (for line breaking decisions)
-PenaltyBreakBeforeFirstCallParameter: 19
-PenaltyBreakComment: 300
-PenaltyBreakFirstLessLess: 120
-PenaltyBreakString: 1000
-PenaltyExcessCharacter: 1000000
-PenaltyReturnTypeOnItsOwnLine: 60
-
-# Include ordering
-SortIncludes: true
-IncludeBlocks: Regroup
-IncludeCategories:
-  - Regex:           '^"rfc2544\.h"'
-    Priority:        1
-  - Regex:           '^"reflector\.h"'
-    Priority:        1
-  - Regex:           '^"platform_config\.h"'
-    Priority:        2
-  - Regex:           '^<linux/'
-    Priority:        3
-  - Regex:           '^<sys/'
-    Priority:        4
-  - Regex:           '^<[a-z_]+\.h>'
-    Priority:        5
-  - Regex:           '.*'
-    Priority:        6
-
-# Keep existing style in some cases
-KeepEmptyLinesAtTheStartOfBlocks: false
-MaxEmptyLinesToKeep: 1
-
-# Bin packing
+AlwaysBreakTemplateDeclarations: Yes
 BinPackArguments: true
 BinPackParameters: true
+BreakBeforeBinaryOperators: None
+BreakBeforeBraces: Attach
+BreakBeforeTernaryOperators: true
+BreakConstructorInitializers: BeforeColon
+BreakInheritanceList: BeforeColon
+BreakStringLiterals: true
+CompactNamespaces: false
+ConstructorInitializerIndentWidth: 4
+ContinuationIndentWidth: 4
+Cpp11BracedListStyle: true
+DeriveLineEnding: true
+DerivePointerAlignment: false
+EmptyLineBeforeAccessModifier: LogicalBlock
+FixNamespaceComments: true
+IncludeBlocks: Regroup
+IncludeCategories:
+  - Regex: '^<.*\.h>'
+    Priority: 1
+  - Regex: '^<.*>'
+    Priority: 2
+  - Regex: '.*'
+    Priority: 3
+IndentCaseBlocks: false
+IndentCaseLabels: false
+IndentGotoLabels: true
+IndentPPDirectives: None
+IndentWrappedFunctionNames: false
+InsertTrailingCommas: None
+KeepEmptyLinesAtTheStartOfBlocks: false
+MaxEmptyLinesToKeep: 1
+NamespaceIndentation: None
+PointerAlignment: Left
+ReflowComments: true
+SortIncludes: CaseSensitive
+SortUsingDeclarations: true
+SpaceAfterCStyleCast: false
+SpaceAfterLogicalNot: false
+SpaceAfterTemplateKeyword: true
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeCpp11BracedList: false
+SpaceBeforeCtorInitializerColon: true
+SpaceBeforeInheritanceColon: true
+SpaceBeforeParens: ControlStatements
+SpaceBeforeRangeBasedForLoopColon: true
+SpaceBeforeSquareBrackets: false
+SpaceInEmptyBlock: false
+SpaceInEmptyParentheses: false
+SpacesBeforeTrailingComments: 2
+SpacesInAngles: false
+SpacesInCStyleCastParentheses: false
+SpacesInConditionalStatement: false
+SpacesInContainerLiterals: false
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+Standard: Latest
+UseCRLF: false
+...

@@ -4,6 +4,8 @@
 // This module owns frame delay, frame loss, and loopback measurements.
 package measure
 
+import "slices"
+
 const (
 	// ModuleName is the unique identifier for the Measure module.
 	ModuleName = "measure"
@@ -19,6 +21,8 @@ const (
 )
 
 // testTypes lists all test types owned by the Measure module.
+//
+//nolint:gochecknoglobals // Static module definition.
 var testTypes = []string{
 	"y1731_delay",
 	"y1731_loss",
@@ -27,6 +31,8 @@ var testTypes = []string{
 }
 
 // testDescriptions provides descriptions for each test type.
+//
+//nolint:gochecknoglobals // Static module definition.
 var testDescriptions = map[string]string{
 	"y1731_delay":    "ITU-T Y.1731 Frame Delay (DMM/DMR)",
 	"y1731_loss":     "ITU-T Y.1731 Frame Loss (LMM/LMR)",
@@ -74,12 +80,7 @@ func (m *Module) TestTypes() []string {
 
 // CanRun returns true if this module can execute the given test type.
 func (m *Module) CanRun(testType string) bool {
-	for _, t := range testTypes {
-		if t == testType {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(testTypes, testType)
 }
 
 // TestDescription returns the description for a given test type.

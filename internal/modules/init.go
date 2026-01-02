@@ -12,13 +12,16 @@ import (
 )
 
 // DefaultRegistry is the global module registry with all modules pre-registered.
+//
+//nolint:gochecknoglobals // Singleton registry pattern for module system.
 var DefaultRegistry *Registry
 
+//nolint:gochecknoinits // Required for module registration at package load.
 func init() {
 	DefaultRegistry = NewRegistry()
 
-	// Register all modules
-	// Order: Reflector (Tier 1), then active testing modules (Tier 2)
+	// Register all modules.
+	// Order: Reflector (Tier 1), then active testing modules (Tier 2).
 	DefaultRegistry.Register(reflector.New())
 	DefaultRegistry.Register(benchmark.New())
 	DefaultRegistry.Register(servicetest.New())
@@ -28,11 +31,15 @@ func init() {
 }
 
 // GetModule returns a module by name from the default registry.
+//
+//nolint:ireturn // Returns Module interface by design for polymorphism.
 func GetModule(name string) Module {
 	return DefaultRegistry.Get(name)
 }
 
 // GetModuleForTest returns the module that handles a given test type.
+//
+//nolint:ireturn // Returns Module interface by design for polymorphism.
 func GetModuleForTest(testType string) Module {
 	return DefaultRegistry.ModuleForTest(testType)
 }

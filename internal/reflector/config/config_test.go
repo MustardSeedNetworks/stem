@@ -1,11 +1,13 @@
 // Copyright (c) 2025 Mustard Seed Networks. All rights reserved.
 
-package config
+package config_test
 
 import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/krisarmstrong/stem/internal/reflector/config"
 )
 
 // Test constants for repeated strings.
@@ -18,10 +20,16 @@ const (
 )
 
 func TestConfigStruct(t *testing.T) {
-	cfg := Config{
+	cfg := config.Config{
 		Interface:       testIfaceEth0,
 		Verbose:         true,
 		SignatureFilter: testFilterAll,
+		WebUI:           config.WebUIConfig{Enabled: false, Port: 0},
+		TUI:             config.TUIConfig{Enabled: false},
+		Filtering:       config.FilterConfig{Port: 0, FilterOUI: false, OUI: "", FilterMAC: false},
+		Reflection:      config.ReflectConfig{Mode: ""},
+		Platform:        config.PlatformConfig{UseDPDK: false, UseAFXDP: false, DPDKArgs: ""},
+		Stats:           config.StatsConfig{Format: "", Interval: 0},
 	}
 
 	if cfg.Interface != testIfaceEth0 {
@@ -36,7 +44,7 @@ func TestConfigStruct(t *testing.T) {
 }
 
 func TestWebUIConfig(t *testing.T) {
-	cfg := WebUIConfig{
+	cfg := config.WebUIConfig{
 		Enabled: true,
 		Port:    8080,
 	}
@@ -50,7 +58,7 @@ func TestWebUIConfig(t *testing.T) {
 }
 
 func TestFilterConfig(t *testing.T) {
-	cfg := FilterConfig{
+	cfg := config.FilterConfig{
 		Port:      3842,
 		FilterOUI: true,
 		OUI:       testDefaultOUI,
@@ -66,12 +74,15 @@ func TestFilterConfig(t *testing.T) {
 	if cfg.OUI != testDefaultOUI {
 		t.Errorf("Expected OUI '%s', got '%s'", testDefaultOUI, cfg.OUI)
 	}
+	if cfg.FilterMAC {
+		t.Error("Expected FilterMAC false")
+	}
 }
 
 func TestReflectConfig(t *testing.T) {
 	modes := []string{"mac", "mac-ip", "all"}
 	for _, mode := range modes {
-		cfg := ReflectConfig{Mode: mode}
+		cfg := config.ReflectConfig{Mode: mode}
 		if cfg.Mode != mode {
 			t.Errorf("Expected Mode '%s', got '%s'", mode, cfg.Mode)
 		}
@@ -79,7 +90,7 @@ func TestReflectConfig(t *testing.T) {
 }
 
 func TestPlatformConfig(t *testing.T) {
-	cfg := PlatformConfig{
+	cfg := config.PlatformConfig{
 		UseDPDK:  true,
 		UseAFXDP: false,
 		DPDKArgs: "-l 0-3 -n 4",
@@ -99,16 +110,32 @@ func TestPlatformConfig(t *testing.T) {
 func TestStatsConfig(t *testing.T) {
 	formats := []string{"text", "json", "csv"}
 	for _, format := range formats {
-		cfg := StatsConfig{Format: format, Interval: 10}
+		cfg := config.StatsConfig{Format: format, Interval: 10}
 		if cfg.Format != format {
 			t.Errorf("Expected Format '%s', got '%s'", format, cfg.Format)
+		}
+		if cfg.Interval != 10 {
+			t.Errorf("Expected Interval 10, got %d", cfg.Interval)
 		}
 	}
 }
 
-func TestApplyDefaults(t *testing.T) {
-	cfg := &Config{Interface: testIfaceEth0}
-	cfg.applyDefaults()
+// TestApplyDefaultsViaLoadFile tests defaults applied through LoadFile.
+func TestApplyDefaultsViaLoadFile(t *testing.T) {
+	// Create a minimal YAML file with only interface set.
+	yamlContent := `interface: eth0
+`
+	tmpDir := t.TempDir()
+	tmpFile := filepath.Join(tmpDir, "minimal.yaml")
+	writeErr := os.WriteFile(tmpFile, []byte(yamlContent), 0o600)
+	if writeErr != nil {
+		t.Fatalf("Failed to create temp file: %v", writeErr)
+	}
+
+	cfg, err := config.LoadFile(tmpFile)
+	if err != nil {
+		t.Fatalf("LoadFile() error = %v", err)
+	}
 
 	if cfg.WebUI.Port != 8080 {
 		t.Errorf("Expected default WebUI.Port 8080, got %d", cfg.WebUI.Port)
@@ -133,16 +160,33 @@ func TestApplyDefaults(t *testing.T) {
 	}
 }
 
-func TestApplyDefaultsDoesNotOverride(t *testing.T) {
-	cfg := &Config{
-		Interface:       testIfaceEth0,
-		SignatureFilter: "custom",
-		WebUI:           WebUIConfig{Port: 9090},
-		Filtering:       FilterConfig{Port: 5000, OUI: "11:22:33"},
-		Reflection:      ReflectConfig{Mode: testReflectModeMAC},
-		Stats:           StatsConfig{Format: "json", Interval: 30},
+// TestApplyDefaultsDoesNotOverrideViaLoadFile tests that defaults don't override explicit values.
+func TestApplyDefaultsDoesNotOverrideViaLoadFile(t *testing.T) {
+	// Create a YAML file with explicit non-default values.
+	yamlContent := `interface: eth0
+signature_filter: custom
+web_ui:
+  port: 9090
+filtering:
+  port: 5000
+  oui: "11:22:33"
+reflection:
+  mode: mac
+stats:
+  format: json
+  interval: 30
+`
+	tmpDir := t.TempDir()
+	tmpFile := filepath.Join(tmpDir, "custom.yaml")
+	writeErr := os.WriteFile(tmpFile, []byte(yamlContent), 0o600)
+	if writeErr != nil {
+		t.Fatalf("Failed to create temp file: %v", writeErr)
 	}
-	cfg.applyDefaults()
+
+	cfg, err := config.LoadFile(tmpFile)
+	if err != nil {
+		t.Fatalf("LoadFile() error = %v", err)
+	}
 
 	if cfg.WebUI.Port != 9090 {
 		t.Errorf("WebUI.Port should not be overwritten, expected 9090, got %d", cfg.WebUI.Port)
@@ -154,7 +198,8 @@ func TestApplyDefaultsDoesNotOverride(t *testing.T) {
 		t.Errorf("Filtering.Port should not be overwritten, expected 5000, got %d", cfg.Filtering.Port)
 	}
 	if cfg.Reflection.Mode != testReflectModeMAC {
-		t.Errorf("Reflection.Mode should not be overwritten, expected '%s', got '%s'", testReflectModeMAC, cfg.Reflection.Mode)
+		t.Errorf("Reflection.Mode should not be overwritten, expected '%s', got '%s'",
+			testReflectModeMAC, cfg.Reflection.Mode)
 	}
 	if cfg.Stats.Format != "json" {
 		t.Errorf("Stats.Format should not be overwritten, expected 'json', got '%s'", cfg.Stats.Format)
@@ -164,83 +209,121 @@ func TestApplyDefaultsDoesNotOverride(t *testing.T) {
 func TestValidate(t *testing.T) {
 	tests := []struct {
 		name    string
-		cfg     Config
+		cfg     config.Config
 		wantErr bool
 		errMsg  string
 	}{
 		{
-			name:    "empty interface",
-			cfg:     Config{},
+			name: "empty interface",
+			cfg: config.Config{
+				Interface:       "",
+				Verbose:         false,
+				SignatureFilter: "",
+				WebUI:           config.WebUIConfig{Enabled: false, Port: 0},
+				TUI:             config.TUIConfig{Enabled: false},
+				Filtering:       config.FilterConfig{Port: 0, FilterOUI: false, OUI: "", FilterMAC: false},
+				Reflection:      config.ReflectConfig{Mode: ""},
+				Platform:        config.PlatformConfig{UseDPDK: false, UseAFXDP: false, DPDKArgs: ""},
+				Stats:           config.StatsConfig{Format: "", Interval: 0},
+			},
 			wantErr: true,
 			errMsg:  "interface is required",
 		},
 		{
 			name: "invalid OUI format",
-			cfg: Config{
-				Interface: "eth0",
-				Filtering: FilterConfig{FilterOUI: true, OUI: "invalid"},
+			cfg: config.Config{
+				Interface:       "eth0",
+				Verbose:         false,
+				SignatureFilter: "",
+				WebUI:           config.WebUIConfig{Enabled: false, Port: 8080},
+				TUI:             config.TUIConfig{Enabled: false},
+				Filtering:       config.FilterConfig{Port: 0, FilterOUI: true, OUI: "invalid", FilterMAC: false},
+				Reflection:      config.ReflectConfig{Mode: "all"},
+				Platform:        config.PlatformConfig{UseDPDK: false, UseAFXDP: false, DPDKArgs: ""},
+				Stats:           config.StatsConfig{Format: "text", Interval: 0},
 			},
 			wantErr: true,
 			errMsg:  "invalid OUI format",
 		},
 		{
 			name: "invalid reflection mode",
-			cfg: Config{
-				Interface:  "eth0",
-				Filtering:  FilterConfig{OUI: "00:c0:17"},
-				Reflection: ReflectConfig{Mode: "invalid"},
-				Stats:      StatsConfig{Format: "text"},
-				WebUI:      WebUIConfig{Port: 8080},
+			cfg: config.Config{
+				Interface:       "eth0",
+				Verbose:         false,
+				SignatureFilter: "",
+				WebUI:           config.WebUIConfig{Enabled: false, Port: 8080},
+				TUI:             config.TUIConfig{Enabled: false},
+				Filtering:       config.FilterConfig{Port: 0, FilterOUI: false, OUI: "00:c0:17", FilterMAC: false},
+				Reflection:      config.ReflectConfig{Mode: "invalid"},
+				Platform:        config.PlatformConfig{UseDPDK: false, UseAFXDP: false, DPDKArgs: ""},
+				Stats:           config.StatsConfig{Format: "text", Interval: 0},
 			},
 			wantErr: true,
 			errMsg:  "invalid reflection mode",
 		},
 		{
 			name: "invalid stats format",
-			cfg: Config{
-				Interface:  "eth0",
-				Filtering:  FilterConfig{OUI: "00:c0:17"},
-				Reflection: ReflectConfig{Mode: "all"},
-				Stats:      StatsConfig{Format: "invalid"},
-				WebUI:      WebUIConfig{Port: 8080},
+			cfg: config.Config{
+				Interface:       "eth0",
+				Verbose:         false,
+				SignatureFilter: "",
+				WebUI:           config.WebUIConfig{Enabled: false, Port: 8080},
+				TUI:             config.TUIConfig{Enabled: false},
+				Filtering:       config.FilterConfig{Port: 0, FilterOUI: false, OUI: "00:c0:17", FilterMAC: false},
+				Reflection:      config.ReflectConfig{Mode: "all"},
+				Platform:        config.PlatformConfig{UseDPDK: false, UseAFXDP: false, DPDKArgs: ""},
+				Stats:           config.StatsConfig{Format: "invalid", Interval: 0},
 			},
 			wantErr: true,
 			errMsg:  "invalid stats format",
 		},
 		{
 			name: "invalid web port - zero",
-			cfg: Config{
-				Interface:  "eth0",
-				Filtering:  FilterConfig{OUI: "00:c0:17"},
-				Reflection: ReflectConfig{Mode: "all"},
-				Stats:      StatsConfig{Format: "text"},
-				WebUI:      WebUIConfig{Port: 0},
+			cfg: config.Config{
+				Interface:       "eth0",
+				Verbose:         false,
+				SignatureFilter: "",
+				WebUI:           config.WebUIConfig{Enabled: false, Port: 0},
+				TUI:             config.TUIConfig{Enabled: false},
+				Filtering:       config.FilterConfig{Port: 0, FilterOUI: false, OUI: "00:c0:17", FilterMAC: false},
+				Reflection:      config.ReflectConfig{Mode: "all"},
+				Platform:        config.PlatformConfig{UseDPDK: false, UseAFXDP: false, DPDKArgs: ""},
+				Stats:           config.StatsConfig{Format: "text", Interval: 0},
 			},
 			wantErr: true,
 			errMsg:  "invalid web port",
 		},
 		{
 			name: "invalid web port - too high",
-			cfg: Config{
-				Interface:  "eth0",
-				Filtering:  FilterConfig{OUI: "00:c0:17"},
-				Reflection: ReflectConfig{Mode: "all"},
-				Stats:      StatsConfig{Format: "text"},
-				WebUI:      WebUIConfig{Port: 70000},
+			cfg: config.Config{
+				Interface:       "eth0",
+				Verbose:         false,
+				SignatureFilter: "",
+				WebUI:           config.WebUIConfig{Enabled: false, Port: 70000},
+				TUI:             config.TUIConfig{Enabled: false},
+				Filtering:       config.FilterConfig{Port: 0, FilterOUI: false, OUI: "00:c0:17", FilterMAC: false},
+				Reflection:      config.ReflectConfig{Mode: "all"},
+				Platform:        config.PlatformConfig{UseDPDK: false, UseAFXDP: false, DPDKArgs: ""},
+				Stats:           config.StatsConfig{Format: "text", Interval: 0},
 			},
 			wantErr: true,
 			errMsg:  "invalid web port",
 		},
 		{
 			name: "valid config",
-			cfg: Config{
-				Interface:  "eth0",
-				Filtering:  FilterConfig{OUI: "00:c0:17"},
-				Reflection: ReflectConfig{Mode: "all"},
-				Stats:      StatsConfig{Format: "text"},
-				WebUI:      WebUIConfig{Port: 8080},
+			cfg: config.Config{
+				Interface:       "eth0",
+				Verbose:         false,
+				SignatureFilter: "",
+				WebUI:           config.WebUIConfig{Enabled: false, Port: 8080},
+				TUI:             config.TUIConfig{Enabled: false},
+				Filtering:       config.FilterConfig{Port: 0, FilterOUI: false, OUI: "00:c0:17", FilterMAC: false},
+				Reflection:      config.ReflectConfig{Mode: "all"},
+				Platform:        config.PlatformConfig{UseDPDK: false, UseAFXDP: false, DPDKArgs: ""},
+				Stats:           config.StatsConfig{Format: "text", Interval: 0},
 			},
 			wantErr: false,
+			errMsg:  "",
 		},
 	}
 
@@ -282,13 +365,24 @@ func TestParseOUI(t *testing.T) {
 		{
 			name:    "invalid OUI format",
 			oui:     "invalid",
+			want:    [3]byte{0x00, 0x00, 0x00},
 			wantErr: true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := &Config{Filtering: FilterConfig{OUI: tt.oui}}
+			cfg := &config.Config{
+				Interface:       "",
+				Verbose:         false,
+				SignatureFilter: "",
+				WebUI:           config.WebUIConfig{Enabled: false, Port: 0},
+				TUI:             config.TUIConfig{Enabled: false},
+				Filtering:       config.FilterConfig{Port: 0, FilterOUI: false, OUI: tt.oui, FilterMAC: false},
+				Reflection:      config.ReflectConfig{Mode: ""},
+				Platform:        config.PlatformConfig{UseDPDK: false, UseAFXDP: false, DPDKArgs: ""},
+				Stats:           config.StatsConfig{Format: "", Interval: 0},
+			}
 			got, err := cfg.ParseOUI()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ParseOUI() error = %v, wantErr %v", err, tt.wantErr)
@@ -309,13 +403,23 @@ func TestReflectModeInt(t *testing.T) {
 		{"mac", 0},
 		{"mac-ip", 1},
 		{"all", 2},
-		{"unknown", 2}, // Default to 2
-		{"", 2},        // Default to 2
+		{"unknown", 2}, // Default to 2.
+		{"", 2},        // Default to 2.
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.mode, func(t *testing.T) {
-			cfg := &Config{Reflection: ReflectConfig{Mode: tt.mode}}
+			cfg := &config.Config{
+				Interface:       "",
+				Verbose:         false,
+				SignatureFilter: "",
+				WebUI:           config.WebUIConfig{Enabled: false, Port: 0},
+				TUI:             config.TUIConfig{Enabled: false},
+				Filtering:       config.FilterConfig{Port: 0, FilterOUI: false, OUI: "", FilterMAC: false},
+				Reflection:      config.ReflectConfig{Mode: tt.mode},
+				Platform:        config.PlatformConfig{UseDPDK: false, UseAFXDP: false, DPDKArgs: ""},
+				Stats:           config.StatsConfig{Format: "", Interval: 0},
+			}
 			got := cfg.ReflectModeInt()
 			if got != tt.want {
 				t.Errorf("ReflectModeInt() = %d, want %d", got, tt.want)
@@ -325,7 +429,7 @@ func TestReflectModeInt(t *testing.T) {
 }
 
 func TestLoadFile(t *testing.T) {
-	// Create a temporary YAML file
+	// Create a temporary YAML file.
 	yamlContent := `
 interface: eth0
 verbose: true
@@ -346,11 +450,12 @@ stats:
 
 	tmpDir := t.TempDir()
 	tmpFile := filepath.Join(tmpDir, "config.yaml")
-	if err := os.WriteFile(tmpFile, []byte(yamlContent), 0o600); err != nil {
-		t.Fatalf("Failed to create temp file: %v", err)
+	writeErr := os.WriteFile(tmpFile, []byte(yamlContent), 0o600)
+	if writeErr != nil {
+		t.Fatalf("Failed to create temp file: %v", writeErr)
 	}
 
-	cfg, err := LoadFile(tmpFile)
+	cfg, err := config.LoadFile(tmpFile)
 	if err != nil {
 		t.Fatalf("LoadFile() error = %v", err)
 	}
@@ -367,7 +472,7 @@ stats:
 }
 
 func TestLoadFileNotFound(t *testing.T) {
-	_, err := LoadFile("/nonexistent/path/config.yaml")
+	_, err := config.LoadFile("/nonexistent/path/config.yaml")
 	if err == nil {
 		t.Error("Expected error for nonexistent file")
 	}
@@ -376,49 +481,75 @@ func TestLoadFileNotFound(t *testing.T) {
 func TestLoadFileInvalidYAML(t *testing.T) {
 	tmpDir := t.TempDir()
 	tmpFile := filepath.Join(tmpDir, "invalid.yaml")
-	if err := os.WriteFile(tmpFile, []byte("invalid: yaml: content: [}"), 0o600); err != nil {
-		t.Fatalf("Failed to create temp file: %v", err)
+	writeErr := os.WriteFile(tmpFile, []byte("invalid: yaml: content: [}"), 0o600)
+	if writeErr != nil {
+		t.Fatalf("Failed to create temp file: %v", writeErr)
 	}
 
-	_, err := LoadFile(tmpFile)
+	_, err := config.LoadFile(tmpFile)
 	if err == nil {
 		t.Error("Expected error for invalid YAML")
 	}
 }
 
 func TestTUIConfig(t *testing.T) {
-	cfg := TUIConfig{Enabled: true}
+	cfg := config.TUIConfig{Enabled: true}
 	if !cfg.Enabled {
 		t.Error("Expected TUI Enabled true")
 	}
 }
 
-// Benchmark tests
+// Benchmark tests.
 func BenchmarkValidate(b *testing.B) {
-	cfg := Config{
-		Interface:  "eth0",
-		Filtering:  FilterConfig{OUI: "00:c0:17"},
-		Reflection: ReflectConfig{Mode: "all"},
-		Stats:      StatsConfig{Format: "text"},
-		WebUI:      WebUIConfig{Port: 8080},
+	cfg := config.Config{
+		Interface:       "eth0",
+		Verbose:         false,
+		SignatureFilter: "",
+		WebUI:           config.WebUIConfig{Enabled: false, Port: 8080},
+		TUI:             config.TUIConfig{Enabled: false},
+		Filtering:       config.FilterConfig{Port: 0, FilterOUI: false, OUI: "00:c0:17", FilterMAC: false},
+		Reflection:      config.ReflectConfig{Mode: "all"},
+		Platform:        config.PlatformConfig{UseDPDK: false, UseAFXDP: false, DPDKArgs: ""},
+		Stats:           config.StatsConfig{Format: "text", Interval: 0},
 	}
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_ = cfg.Validate()
 	}
 }
 
 func BenchmarkParseOUI(b *testing.B) {
-	cfg := &Config{Filtering: FilterConfig{OUI: "00:c0:17"}}
+	cfg := &config.Config{
+		Interface:       "",
+		Verbose:         false,
+		SignatureFilter: "",
+		WebUI:           config.WebUIConfig{Enabled: false, Port: 0},
+		TUI:             config.TUIConfig{Enabled: false},
+		Filtering:       config.FilterConfig{Port: 0, FilterOUI: false, OUI: "00:c0:17", FilterMAC: false},
+		Reflection:      config.ReflectConfig{Mode: ""},
+		Platform:        config.PlatformConfig{UseDPDK: false, UseAFXDP: false, DPDKArgs: ""},
+		Stats:           config.StatsConfig{Format: "", Interval: 0},
+	}
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = cfg.ParseOUI()
 	}
 }
 
-func BenchmarkApplyDefaults(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		cfg := &Config{Interface: "eth0"}
-		cfg.applyDefaults()
+// BenchmarkApplyDefaultsViaLoadFile benchmarks defaults via LoadFile.
+func BenchmarkApplyDefaultsViaLoadFile(b *testing.B) {
+	// Create a minimal YAML file.
+	yamlContent := `interface: eth0
+`
+	tmpDir := b.TempDir()
+	tmpFile := filepath.Join(tmpDir, "minimal.yaml")
+	writeErr := os.WriteFile(tmpFile, []byte(yamlContent), 0o600)
+	if writeErr != nil {
+		b.Fatalf("Failed to create temp file: %v", writeErr)
+	}
+
+	b.ResetTimer()
+	for b.Loop() {
+		_, _ = config.LoadFile(tmpFile)
 	}
 }

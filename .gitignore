@@ -1,40 +1,128 @@
+# =============================================================================
+# The Stem - .gitignore
+# =============================================================================
+
 # Binaries
+/stem
+/stem-*
 seedtest
-stem
 rfc2544-linux
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+/dist/
+
+# C build artifacts
 *.o
 *.a
-*.so
+*.obj
+*.lib
 
-# Build artifacts
-build/
-bin/
-include/version_generated.h
+# Test binaries
+*.test
 
-# Claude Code
-.claude/
-*.deb
-*.rpm
+# Output of go coverage
+*.out
+coverage.html
+coverage.txt
 
-# Go
-go.sum
+# Go workspace
+go.work
+go.work.sum
 
-# Node
-ui/node_modules/
-ui/dist/
+# Dependency directories
+vendor/
 
 # IDE
-.vscode/
 .idea/
+.vscode/
+.claude/settings.local.json
 *.swp
+*.swo
+*~
 
 # OS
 .DS_Store
 Thumbs.db
 
+# Environment
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.crt
+
+# Frontend
+ui/node_modules/
+ui/dist/
+ui/.vite/
+ui/coverage/
+*.log
+npm-debug.log*
+
+# Build artifacts
+*.tar.gz
+*.zip
+*.deb
+*.rpm
+/build/
+/bin/
+
+# Generated headers
+include/version_generated.h
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Config overrides (keep defaults)
+configs/*.local.yaml
+configs/*.local.json
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+.tmp_*
+
+# Certificates (generated)
+certs/
+!certs/.gitkeep
+
+# Local files
+config.yaml
+CLAUDE.md
+
+# Playwright reports
+ui/playwright-report/
+ui/test-results/
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Root dependencies
+node_modules/
+
 # Logs
+logs/
 *.log
 
-# Test coverage
-coverage.out
-coverage.html
+# Data (auto-generated)
+data/
+
+# Debug artifacts
+DebugImages/
+
+# Agent artifacts
+.gemini/
+
+# Test results
+tests/results/
+
+# DPDK artifacts
+*.cmd
+core.*

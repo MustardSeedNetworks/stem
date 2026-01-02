@@ -1,0 +1,109 @@
+# =============================================================================
+# The Stem - Default Configuration
+# =============================================================================
+# This is the default configuration shipped with The Stem.
+#
+# Configuration precedence:
+# 1. Environment variables (STEM_*)
+# 2. Config file (this file)
+# 3. Built-in defaults (see internal/config/config.go)
+#
+# For production, copy this file to stem.yaml and customize for your environment.
+# =============================================================================
+
+# Server configuration
+server:
+  port: 8443              # HTTPS port (use 443 in production with proper permissions)
+  https: true             # Always use HTTPS in production
+  cert_file: ""           # Path to TLS certificate (auto-generated if empty)
+  key_file: ""            # Path to TLS private key (auto-generated if empty)
+
+# Network interface configuration
+interface:
+  default: ""             # Auto-detect if empty
+  fallbacks:
+    - eth0
+    - enp0s1
+    - enp0s3
+    - en0
+
+# Test defaults
+testing:
+  default_frame_size: 1518    # Standard Ethernet frame
+  default_duration: 60        # Seconds
+  frame_sizes:                # Standard RFC 2544 frame sizes
+    - 64
+    - 128
+    - 256
+    - 512
+    - 1024
+    - 1280
+    - 1518
+
+# Module configuration
+modules:
+  # Reflector mode
+  reflector:
+    enabled: true
+    auto_start: false
+
+  # RFC 2544 Benchmark
+  benchmark:
+    enabled: true
+    throughput:
+      max_rate: 10000000000   # 10 Gbps max
+      step_size: 10           # Percentage steps
+    latency:
+      sample_count: 1000
+    frame_loss:
+      acceptable_loss: 0.001  # 0.001%
+
+  # ITU-T Y.1564 Service Testing
+  servicetest:
+    enabled: true
+    cir_step: 10              # Percentage steps for CIR testing
+    eir_step: 10
+
+  # Traffic Generator
+  trafficgen:
+    enabled: true
+    max_streams: 16
+
+  # ITU-T Y.1731 OAM
+  measure:
+    enabled: true
+    ccm_interval: 100ms       # Continuity Check interval
+
+  # Certification (RFC 2889/6349/TSN)
+  certify:
+    enabled: true
+
+# Data plane configuration
+dataplane:
+  backend: af_packet        # af_packet, af_xdp, or dpdk
+  dpdk:
+    pci_devices: []
+    memory_mb: 1024
+    huge_pages: 512
+
+# License configuration
+license:
+  key_file: ""              # Path to license key file
+  trial_days: 14            # Trial period in days
+
+# Logging configuration
+logging:
+  level: info               # debug, info, warn, error
+  format: text              # text or json
+  add_source: false         # Include file:line in logs
+  file: ""                  # Log file path (empty = stdout only)
+  max_size: 100             # Max MB per log file before rotation
+  max_backups: 5            # Number of old files to keep
+  max_age: 30               # Days to keep old files
+  compress: true            # Compress rotated files
+
+# Results storage
+results:
+  path: "./results"         # Directory for test results
+  format: json              # json or csv
+  auto_export: true         # Auto-export results after each test

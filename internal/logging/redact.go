@@ -1,11 +1,10 @@
 // Copyright (c) 2025 Mustard Seed Networks. All rights reserved.
 
-// Package logging provides secure logging utilities with automatic redaction of sensitive data.
 package logging
 
 import (
+	"context"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"regexp"
 	"strings"
@@ -13,6 +12,8 @@ import (
 
 // Sensitive field patterns that should always be redacted.
 // Comprehensive patterns for: passwords, tokens, API keys, secrets, SSNs, credit cards, etc.
+//
+//nolint:gochecknoglobals // Required for pattern-based redaction at package level.
 var sensitivePatterns = []*regexp.Regexp{
 	// Passwords and credentials
 	regexp.MustCompile(`(?i)(password|passwd|pwd)\s*[=:]\s*[^\s&]+`),
@@ -57,6 +58,8 @@ var sensitivePatterns = []*regexp.Regexp{
 
 // Sensitive header names (case-insensitive).
 // Extended to include authentication, credential, and privacy-sensitive headers.
+//
+//nolint:gochecknoglobals // Required for header-based redaction at package level.
 var sensitiveHeaders = map[string]bool{
 	// Authentication and credentials
 	"authorization":       true,
@@ -108,8 +111,8 @@ func RedactHeaders(headers http.Header) map[string]string {
 }
 
 // RedactMap redacts sensitive fields in a map (useful for JSON logging).
-func RedactMap(data map[string]interface{}) map[string]interface{} {
-	redacted := make(map[string]interface{})
+func RedactMap(data map[string]any) map[string]any {
+	redacted := make(map[string]any)
 	for key, value := range data {
 		lowerKey := strings.ToLower(key)
 		if strings.Contains(lowerKey, "password") ||
@@ -132,22 +135,22 @@ func RedactMap(data map[string]interface{}) map[string]interface{} {
 
 // Logf is a safe logging function that redacts sensitive data.
 // Note: Prefer using slog directly with the RedactingHandler for new code.
-func Logf(format string, args ...interface{}) {
-	// Convert args to strings and redact
-	redactedArgs := make([]interface{}, len(args))
+func Logf(format string, args ...any) {
+	// Convert args to strings and redact.
+	redactedArgs := make([]any, len(args))
 	for i, arg := range args {
 		switch v := arg.(type) {
 		case string:
 			redactedArgs[i] = RedactString(v)
 		case http.Header:
 			redactedArgs[i] = RedactHeaders(v)
-		case map[string]interface{}:
+		case map[string]any:
 			redactedArgs[i] = RedactMap(v)
 		default:
 			redactedArgs[i] = arg
 		}
 	}
-	slog.Info(fmt.Sprintf(format, redactedArgs...))
+	Get().InfoContext(context.Background(), fmt.Sprintf(format, redactedArgs...))
 }
 
 // SafeError creates a safe error message with redacted content.
@@ -160,9 +163,9 @@ func SafeError(err error, context string) error {
 }
 
 // LogRequest logs an HTTP request with sensitive data redacted.
-// Note: Prefer using LoggingMiddleware for request logging in new code.
+// Note: Prefer using Middleware for request logging in new code.
 func LogRequest(r *http.Request, message string) {
-	slog.Info(message,
+	Get().InfoContext(r.Context(), message,
 		"method", r.Method,
 		"path", r.URL.Path,
 		"client_ip", GetClientIP(r),
@@ -186,14 +189,14 @@ func LogRequest(r *http.Request, message string) {
 // - OK for display in admin dashboards
 // - NEVER use for rate limiting
 // - NEVER use for access control or security decisions
-// - NEVER use for ban lists or IP blocking
+// - NEVER use for ban lists or IP blocking.
 func GetClientIP(r *http.Request) string {
-	// Check X-Forwarded-For header (UNTRUSTED - can be spoofed by clients)
+	// Check X-Forwarded-For header (UNTRUSTED - can be spoofed by clients).
 	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
 		parts := strings.Split(xff, ",")
 		if len(parts) > 0 {
 			clientIP := strings.TrimSpace(parts[0])
-			slog.Debug("Request includes X-Forwarded-For header (UNTRUSTED)",
+			Get().DebugContext(r.Context(), "Request includes X-Forwarded-For header (UNTRUSTED)",
 				"xff_value", xff,
 				"parsed_ip", clientIP,
 				"remote_addr", r.RemoteAddr,
@@ -202,9 +205,9 @@ func GetClientIP(r *http.Request) string {
 		}
 	}
 
-	// Check X-Real-IP header (UNTRUSTED - can be spoofed by clients)
+	// Check X-Real-IP header (UNTRUSTED - can be spoofed by clients).
 	if xri := r.Header.Get("X-Real-IP"); xri != "" {
-		slog.Debug("Request includes X-Real-IP header (UNTRUSTED)",
+		Get().DebugContext(r.Context(), "Request includes X-Real-IP header (UNTRUSTED)",
 			"xri_value", xri,
 			"remote_addr", r.RemoteAddr,
 			"security_note", "X-Real-IP can be spoofed - only use for logging, not security decisions")

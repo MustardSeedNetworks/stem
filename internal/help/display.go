@@ -10,6 +10,8 @@ package help
 
 import (
 	"fmt"
+	"io"
+	"os"
 	"sort"
 	"strings"
 
@@ -17,7 +19,7 @@ import (
 )
 
 const (
-	// Colors and formatting (ANSI escape codes)
+	// Colors and formatting (ANSI escape codes).
 	colorReset  = "\033[0m"
 	colorBold   = "\033[1m"
 	colorDim    = "\033[2m"
@@ -26,237 +28,283 @@ const (
 	colorYellow = "\033[33m"
 	colorBlue   = "\033[34m"
 	colorRed    = "\033[31m"
-	colorOrange = "\033[38;5;208m" // Extended color for orange
+	colorOrange = "\033[38;5;208m" // Extended color for orange.
+
+	// separatorWidth is the width of section separators.
+	separatorWidth = 60
+
+	// wideColumnWidth is the width of wide table separators.
+	wideColumnWidth = 70
+
+	// headerPadding is the padding added to header text for separator width.
+	headerPadding = 2
 )
 
-// DisplayTest shows detailed help for a test
-func DisplayTest(test TestHelp, simple bool) {
-	fmt.Println()
-	printHeader(test.Name)
-	fmt.Printf("%s%s%s\n", colorDim, test.Standard, colorReset)
-	fmt.Println()
+// defaultWriter is the default output destination.
+//
+//nolint:gochecknoglobals // Required for default output destination
+var defaultWriter io.Writer = os.Stdout
 
-	// Summary
-	fmt.Println(test.Summary)
-	fmt.Println()
-
-	// Description (technical or layman based on mode)
-	if simple {
-		printSection("What This Test Does", test.LaymanDesc)
-	} else {
-		printSection("Technical Description", test.TechDesc)
-	}
-
-	// When to use
-	printSection("When to Use This Test", test.WhenToUse)
-
-	// When not to use
-	if test.WhenNotToUse != "" {
-		printSection("When NOT to Use", test.WhenNotToUse)
-	}
-
-	// Parameters
-	if len(test.Parameters) > 0 {
-		fmt.Printf("\n%s%sParameters%s\n", colorBold, colorCyan, colorReset)
-		fmt.Println(strings.Repeat("─", 60))
-		for _, p := range test.Parameters {
-			fmt.Printf("\n  %s%s%s", colorBold, p.Flag, colorReset)
-			if p.Required {
-				fmt.Printf(" %s(required)%s", colorYellow, colorReset)
-			}
-			fmt.Println()
-			fmt.Printf("  Type: %s, Default: %s\n", p.Type, p.Default)
-			if simple {
-				fmt.Printf("  %s\n", p.LaymanDesc)
-			} else {
-				fmt.Printf("  %s\n", p.TechDesc)
-			}
-			if p.Example != "" {
-				fmt.Printf("  Example: %s%s%s\n", colorGreen, p.Example, colorReset)
-			}
-		}
-	}
-
-	// Metrics
-	if len(test.Metrics) > 0 {
-		fmt.Printf("\n%s%sMetrics%s\n", colorBold, colorCyan, colorReset)
-		fmt.Println(strings.Repeat("─", 60))
-		for _, m := range test.Metrics {
-			fmt.Printf("\n  %s%s%s (%s)\n", colorBold, m.Name, colorReset, m.Unit)
-			fmt.Printf("  Good: %s%s%s\n", colorGreen, m.GoodRange, colorReset)
-			fmt.Printf("  Bad: %s%s%s\n", colorYellow, m.BadMeaning, colorReset)
-		}
-	}
-
-	// Examples
-	if len(test.Examples) > 0 {
-		fmt.Printf("\n%s%sExamples%s\n", colorBold, colorCyan, colorReset)
-		fmt.Println(strings.Repeat("─", 60))
-		for _, ex := range test.Examples {
-			fmt.Printf("\n  %s%s%s\n", colorDim, ex.Desc, colorReset)
-			fmt.Printf("  $ %s%s%s\n", colorGreen, ex.Command, colorReset)
-			if ex.Output != "" {
-				fmt.Printf("  %s\n", ex.Output)
-			}
-		}
-	}
-
-	// Tips
-	if len(test.Tips) > 0 {
-		fmt.Printf("\n%s%sTips%s\n", colorBold, colorCyan, colorReset)
-		fmt.Println(strings.Repeat("─", 60))
-		for _, tip := range test.Tips {
-			fmt.Printf("  • %s\n", tip)
-		}
-	}
-
-	// Common issues
-	if len(test.CommonIssues) > 0 {
-		fmt.Printf("\n%s%sCommon Issues%s\n", colorBold, colorCyan, colorReset)
-		fmt.Println(strings.Repeat("─", 60))
-		for _, issue := range test.CommonIssues {
-			fmt.Printf("\n  %sProblem:%s %s\n", colorYellow, colorReset, issue.Problem)
-			fmt.Printf("  Cause: %s\n", issue.Cause)
-			fmt.Printf("  %sSolution:%s %s\n", colorGreen, colorReset, issue.Solution)
-		}
-	}
-
-	// See also
-	if len(test.SeeAlso) > 0 {
-		fmt.Printf("\n%s%sSee Also%s\n", colorBold, colorCyan, colorReset)
-		fmt.Println(strings.Repeat("─", 60))
-		fmt.Printf("  Related tests: %s\n", strings.Join(test.SeeAlso, ", "))
-		fmt.Printf("  Run: stem help <test-name>\n")
-	}
-
-	fmt.Println()
+// SetOutput sets the output writer for all display functions.
+func SetOutput(w io.Writer) {
+	defaultWriter = w
 }
 
-// DisplayCommand shows detailed help for a command
+// DisplayTest shows detailed help for a test.
+func DisplayTest(test TestHelp, simple bool) {
+	w := defaultWriter
+	_, _ = fmt.Fprintln(w)
+	printHeader(w, test.Name)
+	_, _ = fmt.Fprintf(w, "%s%s%s\n", colorDim, test.Standard, colorReset)
+	_, _ = fmt.Fprintln(w)
+	_, _ = fmt.Fprintln(w, test.Summary)
+	_, _ = fmt.Fprintln(w)
+
+	displayTestDescription(w, test, simple)
+	printSection(w, "When to Use This Test", test.WhenToUse)
+	displayTestWhenNotToUse(w, test)
+	displayTestParameters(w, test, simple)
+	displayTestMetrics(w, test)
+	displayTestExamples(w, test)
+	displayTestTips(w, test)
+	displayTestCommonIssues(w, test)
+	displayTestSeeAlso(w, test)
+	_, _ = fmt.Fprintln(w)
+}
+
+func displayTestDescription(w io.Writer, test TestHelp, simple bool) {
+	if simple {
+		printSection(w, "What This Test Does", test.LaymanDesc)
+	} else {
+		printSection(w, "Technical Description", test.TechDesc)
+	}
+}
+
+func displayTestWhenNotToUse(w io.Writer, test TestHelp) {
+	if test.WhenNotToUse != "" {
+		printSection(w, "When NOT to Use", test.WhenNotToUse)
+	}
+}
+
+func displayTestParameters(w io.Writer, test TestHelp, simple bool) {
+	if len(test.Parameters) == 0 {
+		return
+	}
+	_, _ = fmt.Fprintf(w, "\n%s%sParameters%s\n", colorBold, colorCyan, colorReset)
+	_, _ = fmt.Fprintln(w, strings.Repeat("─", separatorWidth))
+	for _, p := range test.Parameters {
+		printParameter(w, p, simple)
+	}
+}
+
+func printParameter(w io.Writer, p Parameter, simple bool) {
+	_, _ = fmt.Fprintf(w, "\n  %s%s%s", colorBold, p.Flag, colorReset)
+	if p.Required {
+		_, _ = fmt.Fprintf(w, " %s(required)%s", colorYellow, colorReset)
+	}
+	_, _ = fmt.Fprintln(w)
+	_, _ = fmt.Fprintf(w, "  Type: %s, Default: %s\n", p.Type, p.Default)
+	if simple {
+		_, _ = fmt.Fprintf(w, "  %s\n", p.LaymanDesc)
+	} else {
+		_, _ = fmt.Fprintf(w, "  %s\n", p.TechDesc)
+	}
+	if p.Example != "" {
+		_, _ = fmt.Fprintf(w, "  Example: %s%s%s\n", colorGreen, p.Example, colorReset)
+	}
+}
+
+func displayTestMetrics(w io.Writer, test TestHelp) {
+	if len(test.Metrics) == 0 {
+		return
+	}
+	_, _ = fmt.Fprintf(w, "\n%s%sMetrics%s\n", colorBold, colorCyan, colorReset)
+	_, _ = fmt.Fprintln(w, strings.Repeat("─", separatorWidth))
+	for _, m := range test.Metrics {
+		_, _ = fmt.Fprintf(w, "\n  %s%s%s (%s)\n", colorBold, m.Name, colorReset, m.Unit)
+		_, _ = fmt.Fprintf(w, "  Good: %s%s%s\n", colorGreen, m.GoodRange, colorReset)
+		_, _ = fmt.Fprintf(w, "  Bad: %s%s%s\n", colorYellow, m.BadMeaning, colorReset)
+	}
+}
+
+func displayTestExamples(w io.Writer, test TestHelp) {
+	if len(test.Examples) == 0 {
+		return
+	}
+	_, _ = fmt.Fprintf(w, "\n%s%sExamples%s\n", colorBold, colorCyan, colorReset)
+	_, _ = fmt.Fprintln(w, strings.Repeat("─", separatorWidth))
+	for _, ex := range test.Examples {
+		_, _ = fmt.Fprintf(w, "\n  %s%s%s\n", colorDim, ex.Desc, colorReset)
+		_, _ = fmt.Fprintf(w, "  $ %s%s%s\n", colorGreen, ex.Command, colorReset)
+		if ex.Output != "" {
+			_, _ = fmt.Fprintf(w, "  %s\n", ex.Output)
+		}
+	}
+}
+
+func displayTestTips(w io.Writer, test TestHelp) {
+	if len(test.Tips) == 0 {
+		return
+	}
+	_, _ = fmt.Fprintf(w, "\n%s%sTips%s\n", colorBold, colorCyan, colorReset)
+	_, _ = fmt.Fprintln(w, strings.Repeat("─", separatorWidth))
+	for _, tip := range test.Tips {
+		_, _ = fmt.Fprintf(w, "  • %s\n", tip)
+	}
+}
+
+func displayTestCommonIssues(w io.Writer, test TestHelp) {
+	if len(test.CommonIssues) == 0 {
+		return
+	}
+	_, _ = fmt.Fprintf(w, "\n%s%sCommon Issues%s\n", colorBold, colorCyan, colorReset)
+	_, _ = fmt.Fprintln(w, strings.Repeat("─", separatorWidth))
+	for _, issue := range test.CommonIssues {
+		_, _ = fmt.Fprintf(w, "\n  %sProblem:%s %s\n", colorYellow, colorReset, issue.Problem)
+		_, _ = fmt.Fprintf(w, "  Cause: %s\n", issue.Cause)
+		_, _ = fmt.Fprintf(w, "  %sSolution:%s %s\n", colorGreen, colorReset, issue.Solution)
+	}
+}
+
+func displayTestSeeAlso(w io.Writer, test TestHelp) {
+	if len(test.SeeAlso) == 0 {
+		return
+	}
+	_, _ = fmt.Fprintf(w, "\n%s%sSee Also%s\n", colorBold, colorCyan, colorReset)
+	_, _ = fmt.Fprintln(w, strings.Repeat("─", separatorWidth))
+	_, _ = fmt.Fprintf(w, "  Related tests: %s\n", strings.Join(test.SeeAlso, ", "))
+	_, _ = fmt.Fprint(w, "  Run: stem help <test-name>\n")
+}
+
+// DisplayCommand shows detailed help for a command.
 func DisplayCommand(cmd CommandHelp) {
-	fmt.Println()
-	printHeader(fmt.Sprintf("stem %s", cmd.Name))
-	fmt.Println()
-	fmt.Println(cmd.Summary)
-	fmt.Println()
+	w := defaultWriter
+	_, _ = fmt.Fprintln(w)
+	printHeader(w, "stem "+cmd.Name)
+	_, _ = fmt.Fprintln(w)
+	_, _ = fmt.Fprintln(w, cmd.Summary)
+	_, _ = fmt.Fprintln(w)
 
-	printSection("Description", cmd.Description)
+	printSection(w, "Description", cmd.Description)
 
-	fmt.Printf("\n%s%sUsage%s\n", colorBold, colorCyan, colorReset)
-	fmt.Println(strings.Repeat("─", 60))
-	fmt.Printf("  %s\n", cmd.Usage)
+	_, _ = fmt.Fprintf(w, "\n%s%sUsage%s\n", colorBold, colorCyan, colorReset)
+	_, _ = fmt.Fprintln(w, strings.Repeat("─", separatorWidth))
+	_, _ = fmt.Fprintf(w, "  %s\n", cmd.Usage)
 
 	if len(cmd.Flags) > 0 {
-		fmt.Printf("\n%s%sFlags%s\n", colorBold, colorCyan, colorReset)
-		fmt.Println(strings.Repeat("─", 60))
+		_, _ = fmt.Fprintf(w, "\n%s%sFlags%s\n", colorBold, colorCyan, colorReset)
+		_, _ = fmt.Fprintln(w, strings.Repeat("─", separatorWidth))
 		for _, f := range cmd.Flags {
 			flag := f.Long
 			if f.Short != "" {
-				flag = fmt.Sprintf("%s, %s", f.Short, f.Long)
+				flag = f.Short + ", " + f.Long
 			}
-			fmt.Printf("\n  %s%s%s", colorBold, flag, colorReset)
+			_, _ = fmt.Fprintf(w, "\n  %s%s%s", colorBold, flag, colorReset)
 			if f.Required {
-				fmt.Printf(" %s(required)%s", colorYellow, colorReset)
+				_, _ = fmt.Fprintf(w, " %s(required)%s", colorYellow, colorReset)
 			}
-			fmt.Println()
-			fmt.Printf("  Type: %s, Default: %s\n", f.Type, f.Default)
-			fmt.Printf("  %s\n", f.LaymanDesc)
+			_, _ = fmt.Fprintln(w)
+			_, _ = fmt.Fprintf(w, "  Type: %s, Default: %s\n", f.Type, f.Default)
+			_, _ = fmt.Fprintf(w, "  %s\n", f.LaymanDesc)
 		}
 	}
 
 	if len(cmd.Examples) > 0 {
-		fmt.Printf("\n%s%sExamples%s\n", colorBold, colorCyan, colorReset)
-		fmt.Println(strings.Repeat("─", 60))
+		_, _ = fmt.Fprintf(w, "\n%s%sExamples%s\n", colorBold, colorCyan, colorReset)
+		_, _ = fmt.Fprintln(w, strings.Repeat("─", separatorWidth))
 		for _, ex := range cmd.Examples {
-			fmt.Printf("\n  %s%s%s\n", colorDim, ex.Desc, colorReset)
-			fmt.Printf("  $ %s%s%s\n", colorGreen, ex.Command, colorReset)
+			_, _ = fmt.Fprintf(w, "\n  %s%s%s\n", colorDim, ex.Desc, colorReset)
+			_, _ = fmt.Fprintf(w, "  $ %s%s%s\n", colorGreen, ex.Command, colorReset)
 		}
 	}
 
 	if len(cmd.SeeAlso) > 0 {
-		fmt.Printf("\n%s%sSee Also%s\n", colorBold, colorCyan, colorReset)
-		fmt.Println(strings.Repeat("─", 60))
+		_, _ = fmt.Fprintf(w, "\n%s%sSee Also%s\n", colorBold, colorCyan, colorReset)
+		_, _ = fmt.Fprintln(w, strings.Repeat("─", separatorWidth))
 		for _, s := range cmd.SeeAlso {
-			fmt.Printf("  • stem help %s\n", s)
+			_, _ = fmt.Fprintf(w, "  • stem help %s\n", s)
 		}
 	}
 
-	fmt.Println()
+	_, _ = fmt.Fprintln(w)
 }
 
-// DisplayCategory shows a test category overview
+// DisplayCategory shows a test category overview.
 func DisplayCategory(cat Category) {
-	fmt.Println()
-	printHeader(cat.Name)
-	fmt.Printf("%s%s%s\n", colorDim, cat.FullName, colorReset)
-	fmt.Println()
+	w := defaultWriter
+	_, _ = fmt.Fprintln(w)
+	printHeader(w, cat.Name)
+	_, _ = fmt.Fprintf(w, "%s%s%s\n", colorDim, cat.FullName, colorReset)
+	_, _ = fmt.Fprintln(w)
 
-	fmt.Println(cat.Summary)
-	fmt.Println()
+	_, _ = fmt.Fprintln(w, cat.Summary)
+	_, _ = fmt.Fprintln(w)
 
-	printSection("Description", cat.Description)
+	printSection(w, "Description", cat.Description)
 
-	fmt.Printf("\n%s%sTests in this Category%s\n", colorBold, colorCyan, colorReset)
-	fmt.Println(strings.Repeat("─", 60))
+	_, _ = fmt.Fprintf(w, "\n%s%sTests in this Category%s\n", colorBold, colorCyan, colorReset)
+	_, _ = fmt.Fprintln(w, strings.Repeat("─", separatorWidth))
 
-	hs := NewHelpSystem()
+	hs := NewSystem()
 	for _, testID := range cat.Tests {
 		if test, ok := hs.Tests[testID]; ok {
-			fmt.Printf("  %s%-20s%s %s\n", colorBold, testID, colorReset, test.Summary)
+			_, _ = fmt.Fprintf(w, "  %s%-20s%s %s\n", colorBold, testID, colorReset, test.Summary)
 		}
 	}
 
-	printSection("When to Use", cat.WhenToUse)
+	printSection(w, "When to Use", cat.WhenToUse)
 
 	if len(cat.SeeAlso) > 0 {
-		fmt.Printf("\n%s%sSee Also%s\n", colorBold, colorCyan, colorReset)
-		fmt.Println(strings.Repeat("─", 60))
+		_, _ = fmt.Fprintf(w, "\n%s%sSee Also%s\n", colorBold, colorCyan, colorReset)
+		_, _ = fmt.Fprintln(w, strings.Repeat("─", separatorWidth))
 		for _, s := range cat.SeeAlso {
-			fmt.Printf("  • stem help %s\n", s)
+			_, _ = fmt.Fprintf(w, "  • stem help %s\n", s)
 		}
 	}
 
-	fmt.Println()
+	_, _ = fmt.Fprintln(w)
 }
 
-// DisplayGlossaryTerm shows a glossary entry
+// DisplayGlossaryTerm shows a glossary entry.
 func DisplayGlossaryTerm(entry GlossaryEntry, simple bool) {
-	fmt.Println()
-	printHeader(entry.Term)
-	fmt.Printf("%s%s%s\n", colorDim, entry.FullName, colorReset)
-	fmt.Println()
+	w := defaultWriter
+	_, _ = fmt.Fprintln(w)
+	printHeader(w, entry.Term)
+	_, _ = fmt.Fprintf(w, "%s%s%s\n", colorDim, entry.FullName, colorReset)
+	_, _ = fmt.Fprintln(w)
 
 	if simple {
-		fmt.Printf("%s%sSimple Definition%s\n", colorBold, colorCyan, colorReset)
-		fmt.Println(strings.Repeat("─", 60))
-		fmt.Printf("  %s\n", entry.LaymanDef)
+		_, _ = fmt.Fprintf(w, "%s%sSimple Definition%s\n", colorBold, colorCyan, colorReset)
+		_, _ = fmt.Fprintln(w, strings.Repeat("─", separatorWidth))
+		_, _ = fmt.Fprintf(w, "  %s\n", entry.LaymanDef)
 	} else {
-		fmt.Printf("%s%sTechnical Definition%s\n", colorBold, colorCyan, colorReset)
-		fmt.Println(strings.Repeat("─", 60))
-		fmt.Printf("  %s\n", entry.TechDef)
-		fmt.Println()
-		fmt.Printf("%s%sSimple Definition%s\n", colorBold, colorCyan, colorReset)
-		fmt.Println(strings.Repeat("─", 60))
-		fmt.Printf("  %s\n", entry.LaymanDef)
+		_, _ = fmt.Fprintf(w, "%s%sTechnical Definition%s\n", colorBold, colorCyan, colorReset)
+		_, _ = fmt.Fprintln(w, strings.Repeat("─", separatorWidth))
+		_, _ = fmt.Fprintf(w, "  %s\n", entry.TechDef)
+		_, _ = fmt.Fprintln(w)
+		_, _ = fmt.Fprintf(w, "%s%sSimple Definition%s\n", colorBold, colorCyan, colorReset)
+		_, _ = fmt.Fprintln(w, strings.Repeat("─", separatorWidth))
+		_, _ = fmt.Fprintf(w, "  %s\n", entry.LaymanDef)
 	}
 
 	if len(entry.Related) > 0 {
-		fmt.Printf("\n%s%sRelated Terms%s\n", colorBold, colorCyan, colorReset)
-		fmt.Println(strings.Repeat("─", 60))
-		fmt.Printf("  %s\n", strings.Join(entry.Related, ", "))
+		_, _ = fmt.Fprintf(w, "\n%s%sRelated Terms%s\n", colorBold, colorCyan, colorReset)
+		_, _ = fmt.Fprintln(w, strings.Repeat("─", separatorWidth))
+		_, _ = fmt.Fprintf(w, "  %s\n", strings.Join(entry.Related, ", "))
 	}
 
-	fmt.Println()
+	_, _ = fmt.Fprintln(w)
 }
 
-// DisplayGlossaryList shows all glossary terms by category
+// DisplayGlossaryList shows all glossary terms by category.
 func DisplayGlossaryList() {
-	fmt.Println()
-	printHeader("Network Glossary")
-	fmt.Println()
-	fmt.Println("Look up network testing terminology.")
-	fmt.Printf("Usage: %sstem glossary <term>%s\n", colorGreen, colorReset)
-	fmt.Println()
+	w := defaultWriter
+	_, _ = fmt.Fprintln(w)
+	printHeader(w, "Network Glossary")
+	_, _ = fmt.Fprintln(w)
+	_, _ = fmt.Fprintln(w, "Look up network testing terminology.")
+	_, _ = fmt.Fprintf(w, "Usage: %sstem glossary <term>%s\n", colorGreen, colorReset)
+	_, _ = fmt.Fprintln(w)
 
 	categories := GetGlossaryTermsByCategory()
 
@@ -269,52 +317,57 @@ func DisplayGlossaryList() {
 
 	for _, catName := range catNames {
 		terms := categories[catName]
-		fmt.Printf("%s%s%s\n", colorBold, catName, colorReset)
-		fmt.Printf("  %s\n\n", strings.Join(terms, ", "))
+		_, _ = fmt.Fprintf(w, "%s%s%s\n", colorBold, catName, colorReset)
+		_, _ = fmt.Fprintf(w, "  %s\n\n", strings.Join(terms, ", "))
 	}
 
-	fmt.Println("Use 'stem glossary <term>' for definition.")
-	fmt.Println()
+	_, _ = fmt.Fprintln(w, "Use 'stem glossary <term>' for definition.")
+	_, _ = fmt.Fprintln(w)
 }
 
-// DisplayTutorial shows a tutorial
+// DisplayTutorial shows a tutorial.
 func DisplayTutorial(tutorial Tutorial) {
-	fmt.Println()
-	printHeader(tutorial.Title)
-	fmt.Printf("%s%s | %s | %s%s\n", colorDim, tutorial.Duration, tutorial.Level, tutorial.Description, colorReset)
-	fmt.Println()
+	w := defaultWriter
+	_, _ = fmt.Fprintln(w)
+	printHeader(w, tutorial.Title)
+	_, _ = fmt.Fprintf(
+		w, "%s%s | %s | %s%s\n",
+		colorDim, tutorial.Duration, tutorial.Level, tutorial.Description, colorReset,
+	)
+	_, _ = fmt.Fprintln(w)
 
 	for i, step := range tutorial.Steps {
-		fmt.Printf("%s%sStep %d: %s%s\n", colorBold, colorCyan, i+1, step.Title, colorReset)
-		fmt.Println(strings.Repeat("─", 60))
-		fmt.Println()
-		fmt.Println(step.Content)
+		_, _ = fmt.Fprintf(w, "%s%sStep %d: %s%s\n", colorBold, colorCyan, i+1, step.Title, colorReset)
+		_, _ = fmt.Fprintln(w, strings.Repeat("─", separatorWidth))
+		_, _ = fmt.Fprintln(w)
+		_, _ = fmt.Fprintln(w, step.Content)
 
 		if step.Command != "" {
-			fmt.Println()
-			fmt.Printf("  $ %s%s%s\n", colorGreen, step.Command, colorReset)
+			_, _ = fmt.Fprintln(w)
+			_, _ = fmt.Fprintf(w, "  $ %s%s%s\n", colorGreen, step.Command, colorReset)
 			if step.Expected != "" {
-				fmt.Printf("  %s%s%s\n", colorDim, step.Expected, colorReset)
+				_, _ = fmt.Fprintf(w, "  %s%s%s\n", colorDim, step.Expected, colorReset)
 			}
 		}
 
 		if step.Tip != "" {
-			fmt.Println()
-			fmt.Printf("  💡 %s%sTip:%s %s\n", colorYellow, colorBold, colorReset, step.Tip)
+			_, _ = fmt.Fprintln(w)
+			_, _ = fmt.Fprintf(w, "  💡 %s%sTip:%s %s\n", colorYellow, colorBold, colorReset, step.Tip)
 		}
 
-		fmt.Println()
+		_, _ = fmt.Fprintln(w)
 	}
 }
 
-// DisplayTutorialList shows available tutorials
+// DisplayTutorialList shows available tutorials.
 func DisplayTutorialList() {
-	fmt.Println()
-	printHeader("Available Tutorials")
-	fmt.Println()
-	fmt.Println("Step-by-step guides to help you learn Seed Test Suite.")
-	fmt.Printf("Usage: %sstem tutorial <name>%s\n", colorGreen, colorReset)
-	fmt.Println()
+	w := defaultWriter
+	_, _ = fmt.Fprintln(w)
+	printHeader(w, "Available Tutorials")
+	_, _ = fmt.Fprintln(w)
+	_, _ = fmt.Fprintln(w, "Step-by-step guides to help you learn Seed Test Suite.")
+	_, _ = fmt.Fprintf(w, "Usage: %sstem tutorial <name>%s\n", colorGreen, colorReset)
+	_, _ = fmt.Fprintln(w)
 
 	tutorials := GetAllTutorials()
 
@@ -325,58 +378,60 @@ func DisplayTutorialList() {
 	}
 	sort.Strings(ids)
 
-	fmt.Printf("%s%-15s %-30s %-10s %s%s\n", colorBold, "ID", "Title", "Duration", "Level", colorReset)
-	fmt.Println(strings.Repeat("─", 70))
+	_, _ = fmt.Fprintf(w, "%s%-15s %-30s %-10s %s%s\n", colorBold, "ID", "Title", "Duration", "Level", colorReset)
+	_, _ = fmt.Fprintln(w, strings.Repeat("─", wideColumnWidth))
 
 	for _, id := range ids {
 		t := tutorials[id]
-		fmt.Printf("%-15s %-30s %-10s %s\n", id, t.Title, t.Duration, t.Level)
+		_, _ = fmt.Fprintf(w, "%-15s %-30s %-10s %s\n", id, t.Title, t.Duration, t.Level)
 	}
 
-	fmt.Println()
-	fmt.Printf("Run a tutorial: %sstem tutorial quickstart%s\n", colorGreen, colorReset)
-	fmt.Println()
+	_, _ = fmt.Fprintln(w)
+	_, _ = fmt.Fprintf(w, "Run a tutorial: %sstem tutorial quickstart%s\n", colorGreen, colorReset)
+	_, _ = fmt.Fprintln(w)
 }
 
-// DisplayTestList shows all available tests
+// DisplayTestList shows all available tests.
 func DisplayTestList() {
-	fmt.Println()
-	printHeader("Available Tests")
-	fmt.Println()
-	fmt.Println("Seed Test Suite supports 27 test types across 7 categories.")
-	fmt.Printf("Usage: %sstem test -i <interface> -t <test-type>%s\n", colorGreen, colorReset)
-	fmt.Println()
+	w := defaultWriter
+	_, _ = fmt.Fprintln(w)
+	printHeader(w, "Available Tests")
+	_, _ = fmt.Fprintln(w)
+	_, _ = fmt.Fprintln(w, "Seed Test Suite supports 27 test types across 7 categories.")
+	_, _ = fmt.Fprintf(w, "Usage: %sstem test -i <interface> -t <test-type>%s\n", colorGreen, colorReset)
+	_, _ = fmt.Fprintln(w)
 
 	categories := GetAllCategories()
 
 	// Define category order
 	catOrder := []string{"rfc2544", "y1564", "rfc2889", "rfc6349", "y1731", "mef", "tsn"}
 
-	hs := NewHelpSystem()
+	hs := NewSystem()
 
 	for _, catID := range catOrder {
 		cat := categories[catID]
-		fmt.Printf("%s%s%s - %s\n", colorBold, cat.Name, colorReset, cat.Summary)
-		fmt.Println(strings.Repeat("─", 70))
+		_, _ = fmt.Fprintf(w, "%s%s%s - %s\n", colorBold, cat.Name, colorReset, cat.Summary)
+		_, _ = fmt.Fprintln(w, strings.Repeat("─", wideColumnWidth))
 
 		for _, testID := range cat.Tests {
 			if test, ok := hs.Tests[testID]; ok {
-				fmt.Printf("  %s%-20s%s %s\n", colorCyan, testID, colorReset, test.Summary)
+				_, _ = fmt.Fprintf(w, "  %s%-20s%s %s\n", colorCyan, testID, colorReset, test.Summary)
 			}
 		}
-		fmt.Println()
+		_, _ = fmt.Fprintln(w)
 	}
 
-	fmt.Printf("For details: %sstem help <test-name>%s\n", colorGreen, colorReset)
-	fmt.Printf("For category: %sstem help rfc2544%s\n", colorGreen, colorReset)
-	fmt.Println()
+	_, _ = fmt.Fprintf(w, "For details: %sstem help <test-name>%s\n", colorGreen, colorReset)
+	_, _ = fmt.Fprintf(w, "For category: %sstem help rfc2544%s\n", colorGreen, colorReset)
+	_, _ = fmt.Fprintln(w)
 }
 
-// DisplayTestListByModule shows all available tests grouped by module
+// DisplayTestListByModule shows all available tests grouped by module.
 func DisplayTestListByModule() {
-	fmt.Println()
-	printHeader("Available Tests by Module")
-	fmt.Println()
+	w := defaultWriter
+	_, _ = fmt.Fprintln(w)
+	printHeader(w, "Available Tests by Module")
+	_, _ = fmt.Fprintln(w)
 
 	allModules := modules.GetAllModules()
 	totalTests := 0
@@ -384,14 +439,14 @@ func DisplayTestListByModule() {
 		totalTests += len(m.TestTypes())
 	}
 
-	fmt.Printf("Stem supports %d test types across %d modules.\n", totalTests, len(allModules))
-	fmt.Printf("Usage: %sstem test -i <interface> -t <test-type>%s\n", colorGreen, colorReset)
-	fmt.Println()
+	_, _ = fmt.Fprintf(w, "Stem supports %d test types across %d modules.\n", totalTests, len(allModules))
+	_, _ = fmt.Fprintf(w, "Usage: %sstem test -i <interface> -t <test-type>%s\n", colorGreen, colorReset)
+	_, _ = fmt.Fprintln(w)
 
 	// Define module display order (Tier 1 first, then Tier 2 by color) - use lowercase module names
 	moduleOrder := []string{"reflector", "benchmark", "servicetest", "trafficgen", "measure", "certify"}
 
-	hs := NewHelpSystem()
+	hs := NewSystem()
 
 	for _, modName := range moduleOrder {
 		mod := modules.GetModule(modName)
@@ -400,9 +455,9 @@ func DisplayTestListByModule() {
 		}
 
 		modColor := moduleColorToANSI(mod.Color())
-		fmt.Printf("%s%s%s%s - %s\n", modColor, colorBold, mod.DisplayName(), colorReset, mod.Description())
-		fmt.Printf("%sStandard: %s%s\n", colorDim, mod.Standard(), colorReset)
-		fmt.Println(strings.Repeat("─", 70))
+		_, _ = fmt.Fprintf(w, "%s%s%s%s - %s\n", modColor, colorBold, mod.DisplayName(), colorReset, mod.Description())
+		_, _ = fmt.Fprintf(w, "%sStandard: %s%s\n", colorDim, mod.Standard(), colorReset)
+		_, _ = fmt.Fprintln(w, strings.Repeat("─", wideColumnWidth))
 
 		testTypes := mod.TestTypes()
 		// Sort test types for consistent display
@@ -410,21 +465,21 @@ func DisplayTestListByModule() {
 
 		for _, testType := range testTypes {
 			if test, ok := hs.Tests[testType]; ok {
-				fmt.Printf("  %s%-20s%s %s\n", modColor, testType, colorReset, test.Summary)
+				_, _ = fmt.Fprintf(w, "  %s%-20s%s %s\n", modColor, testType, colorReset, test.Summary)
 			} else {
 				// Fallback if test not in help system
-				fmt.Printf("  %s%-20s%s\n", modColor, testType, colorReset)
+				_, _ = fmt.Fprintf(w, "  %s%-20s%s\n", modColor, testType, colorReset)
 			}
 		}
-		fmt.Println()
+		_, _ = fmt.Fprintln(w)
 	}
 
-	fmt.Printf("For details: %sstem help <test-name>%s\n", colorGreen, colorReset)
-	fmt.Printf("For module view: %sstem list-tests --by-module%s\n", colorGreen, colorReset)
-	fmt.Println()
+	_, _ = fmt.Fprintf(w, "For details: %sstem help <test-name>%s\n", colorGreen, colorReset)
+	_, _ = fmt.Fprintf(w, "For module view: %sstem list-tests --by-module%s\n", colorGreen, colorReset)
+	_, _ = fmt.Fprintln(w)
 }
 
-// moduleColorToANSI converts a hex color code to ANSI escape code
+// moduleColorToANSI converts a hex color code to ANSI escape code.
 func moduleColorToANSI(hexColor string) string {
 	// Map module colors to ANSI codes
 	switch hexColor {
@@ -447,24 +502,24 @@ func moduleColorToANSI(hexColor string) string {
 
 // Helper functions
 
-func printHeader(text string) {
-	fmt.Printf("%s%s%s\n", colorBold, text, colorReset)
-	fmt.Println(strings.Repeat("═", len(text)+2))
+func printHeader(w io.Writer, text string) {
+	_, _ = fmt.Fprintf(w, "%s%s%s\n", colorBold, text, colorReset)
+	_, _ = fmt.Fprintln(w, strings.Repeat("═", len(text)+headerPadding))
 }
 
-func printSection(title, content string) {
-	fmt.Printf("\n%s%s%s%s\n", colorBold, colorCyan, title, colorReset)
-	fmt.Println(strings.Repeat("─", 60))
-	// Indent content
-	lines := strings.Split(content, "\n")
-	for _, line := range lines {
-		fmt.Printf("  %s\n", line)
+func printSection(w io.Writer, title, content string) {
+	_, _ = fmt.Fprintf(w, "\n%s%s%s%s\n", colorBold, colorCyan, title, colorReset)
+	_, _ = fmt.Fprintln(w, strings.Repeat("─", separatorWidth))
+	// Indent content.
+	for line := range strings.SplitSeq(content, "\n") {
+		_, _ = fmt.Fprintf(w, "  %s\n", line)
 	}
 }
 
-// ShowHelp is the main entry point for the help system
+// ShowHelp is the main entry point for the help system.
 func ShowHelp(topic string, simple bool) bool {
-	hs := NewHelpSystem()
+	w := defaultWriter
+	hs := NewSystem()
 
 	// Check if topic is a test
 	if test, ok := hs.GetTest(topic); ok {
@@ -497,12 +552,14 @@ func ShowHelp(topic string, simple bool) bool {
 	}
 
 	// Not found
+	_ = w // Silence unused variable warning
 	return false
 }
 
-// ShowGlossary handles glossary lookups
+// ShowGlossary handles glossary lookups.
 func ShowGlossary(term string, simple bool) bool {
-	hs := NewHelpSystem()
+	w := defaultWriter
+	hs := NewSystem()
 
 	if term == "" {
 		DisplayGlossaryList()
@@ -520,20 +577,20 @@ func ShowGlossary(term string, simple bool) bool {
 	// Search for partial matches
 	results := hs.SearchGlossary(term)
 	if len(results) > 0 {
-		fmt.Printf("\nNo exact match for '%s'. Did you mean:\n", term)
+		_, _ = fmt.Fprintf(w, "\nNo exact match for '%s'. Did you mean:\n", term)
 		for _, r := range results {
-			fmt.Printf("  • %s - %s\n", r.Term, r.FullName)
+			_, _ = fmt.Fprintf(w, "  • %s - %s\n", r.Term, r.FullName)
 		}
-		fmt.Println()
+		_, _ = fmt.Fprintln(w)
 		return true
 	}
 
 	return false
 }
 
-// ShowTutorial handles tutorial display
+// ShowTutorial handles tutorial display.
 func ShowTutorial(id string) bool {
-	hs := NewHelpSystem()
+	hs := NewSystem()
 
 	if id == "" {
 		DisplayTutorialList()

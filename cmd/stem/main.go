@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"math"
 	"os"
 	"os/signal"
@@ -33,12 +34,13 @@ import (
 	reflectorConfig "github.com/krisarmstrong/stem/internal/reflector/config"
 	reflectorDP "github.com/krisarmstrong/stem/internal/reflector/dataplane"
 	reflectorTUI "github.com/krisarmstrong/stem/internal/reflector/tui"
+	"github.com/krisarmstrong/stem/internal/server"
 	testmasterDP "github.com/krisarmstrong/stem/internal/testmaster/dataplane"
 	testmasterTUI "github.com/krisarmstrong/stem/internal/testmaster/tui"
 	"github.com/krisarmstrong/stem/internal/version"
-	"github.com/krisarmstrong/stem/internal/web"
 )
 
+// CLI constants.
 const (
 	ProductName            = "The Stem"
 	Company                = "Mustard Seed Networks"
@@ -47,15 +49,47 @@ const (
 	DefaultSignatureFilter = "all"
 )
 
-// Test result display constants
+// Test result display constants.
 const (
 	resultPass = "PASS"
 	resultFail = "FAIL"
 )
 
-// All supported test types
+// Default values for test configuration.
+const (
+	defaultTestDuration     = 60
+	defaultResolution       = 0.1
+	defaultMaxLoss          = 0.0
+	defaultWarmup           = 2
+	defaultTrials           = 3
+	defaultFDThreshold      = 10.0
+	defaultFDVThreshold     = 5.0
+	defaultFLRThreshold     = 0.01
+	defaultFrameSize        = 1518
+	defaultWebPort          = 8080
+	defaultLoadLevelStep    = 10.0
+	defaultLoadLevelMax     = 100.0
+	defaultBackToBackBurst  = 10000
+	defaultOverloadRate     = 100.0
+	defaultOverloadDuration = 60
+	nsToUsConversion        = 1000.0
+	trialWarningDays        = 3
+)
+
+// CLI formatting constants.
+const (
+	minArgsCount         = 2
+	bannerWidth          = 60
+	licenseBannerWidth   = 50
+	statsIntervalSeconds = 5
+	shutdownDelayMs      = 100
+)
+
+// All supported test types.
+//
+//nolint:gochecknoglobals // Package-level registry of test types is intentional.
 var allTestTypes = map[string]string{
-	// RFC 2544 (6 tests)
+	// RFC 2544 (6 tests).
 	"throughput":      "RFC 2544 Section 26.1 - Maximum throughput with zero loss",
 	"latency":         "RFC 2544 Section 26.2 - Round-trip latency at various loads",
 	"frame_loss":      "RFC 2544 Section 26.3 - Frame loss rate vs offered load",
@@ -63,48 +97,53 @@ var allTestTypes = map[string]string{
 	"system_recovery": "RFC 2544 Section 26.5 - Recovery time after overload",
 	"reset":           "RFC 2544 Section 26.6 - Device reset recovery time",
 
-	// Y.1564 / EtherSAM (3 tests)
+	// Y.1564 / EtherSAM (3 tests).
 	"y1564_config": "ITU-T Y.1564 Service Configuration Test",
 	"y1564_perf":   "ITU-T Y.1564 Service Performance Test (15+ min)",
 	"y1564":        "ITU-T Y.1564 Full Test (config + performance)",
 
-	// RFC 2889 LAN Switch (5 tests)
+	// RFC 2889 LAN Switch (5 tests).
 	"rfc2889_forwarding": "RFC 2889 Forwarding rate test",
 	"rfc2889_caching":    "RFC 2889 Address caching capacity",
 	"rfc2889_learning":   "RFC 2889 Address learning rate",
 	"rfc2889_broadcast":  "RFC 2889 Broadcast forwarding",
 	"rfc2889_congestion": "RFC 2889 Congestion control",
 
-	// RFC 6349 TCP (2 tests)
+	// RFC 6349 TCP (2 tests).
 	"rfc6349_throughput": "RFC 6349 TCP throughput (BDP analysis)",
 	"rfc6349_path":       "RFC 6349 Path analysis (RTT/bandwidth)",
 
-	// Y.1731 OAM (4 tests)
+	// Y.1731 OAM (4 tests).
 	"y1731_delay":    "ITU-T Y.1731 Frame Delay (DMM/DMR)",
 	"y1731_loss":     "ITU-T Y.1731 Frame Loss (LMM/LMR)",
 	"y1731_slm":      "ITU-T Y.1731 Synthetic Loss Measurement",
 	"y1731_loopback": "ITU-T Y.1731 Loopback (LBM/LBR)",
 
-	// MEF Service (3 tests)
+	// MEF Service (3 tests).
 	"mef_config": "MEF 48/49 Service Configuration Test",
 	"mef_perf":   "MEF 48/49 Service Performance Test",
 	"mef":        "MEF 48/49 Full Test Suite",
 
-	// TSN 802.1Qbv (4 tests)
+	// TSN 802.1Qbv (4 tests).
 	"tsn_timing":    "IEEE 802.1Qbv Gate timing accuracy",
 	"tsn_isolation": "IEEE 802.1Qbv Traffic class isolation",
 	"tsn_latency":   "IEEE 802.1Qbv Scheduled latency",
 	"tsn":           "IEEE 802.1Qbv Full TSN test suite",
 }
 
-// Test categories for help display
+// Test categories for help display.
+//
+//nolint:gochecknoglobals // Package-level registry of test categories is intentional.
 var testCategories = []struct {
 	name  string
 	tests []string
 }{
 	{"RFC 2544", []string{"throughput", "latency", "frame_loss", "back_to_back", "system_recovery", "reset"}},
 	{"Y.1564 EtherSAM", []string{"y1564_config", "y1564_perf", "y1564"}},
-	{"RFC 2889 LAN Switch", []string{"rfc2889_forwarding", "rfc2889_caching", "rfc2889_learning", "rfc2889_broadcast", "rfc2889_congestion"}},
+	{"RFC 2889 LAN Switch", []string{
+		"rfc2889_forwarding", "rfc2889_caching", "rfc2889_learning",
+		"rfc2889_broadcast", "rfc2889_congestion",
+	}},
 	{"RFC 6349 TCP", []string{"rfc6349_throughput", "rfc6349_path"}},
 	{"Y.1731 OAM", []string{"y1731_delay", "y1731_loss", "y1731_slm", "y1731_loopback"}},
 	{"MEF Service", []string{"mef_config", "mef_perf", "mef"}},
@@ -112,25 +151,32 @@ var testCategories = []struct {
 }
 
 func main() {
-	// Initialize structured logging
+	// Initialize structured logging.
 	logLevel := os.Getenv("STEM_LOG_LEVEL")
 	if logLevel == "" {
 		logLevel = "info"
 	}
 	logFormat := os.Getenv("STEM_LOG_FORMAT")
 	if logFormat == "" {
-		logFormat = "text" // Use text for CLI, json for production
+		logFormat = "text" // Use text for CLI, json for production.
 	}
-	if err := logging.Init(&logging.Config{
-		Level:  logLevel,
-		Format: logFormat,
-	}); err != nil {
-		fmt.Fprintf(os.Stderr, "Warning: logging initialization failed: %v\n", err)
-		// Continue with default logging
+	err := logging.Init(&logging.Config{
+		Level:      logLevel,
+		Format:     logFormat,
+		AddSource:  false,
+		File:       "",
+		MaxSize:    0,
+		MaxBackups: 0,
+		MaxAge:     0,
+		Compress:   false,
+	})
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "Warning: logging initialization failed: %v\n", err)
+		// Continue with default logging.
 	}
 
-	if len(os.Args) < 2 {
-		printUsage()
+	if len(os.Args) < minArgsCount {
+		printUsage(os.Stdout)
 		os.Exit(1)
 	}
 
@@ -154,26 +200,26 @@ func main() {
 	case "glossary":
 		glossaryCmd(os.Args[2:])
 	case "version", "--version", "-v":
-		printVersion()
+		printVersion(os.Stdout)
 	default:
-		fmt.Printf("Unknown command: %s\n", os.Args[1])
-		printUsage()
+		_, _ = fmt.Fprintf(os.Stdout, "Unknown command: %s\n", os.Args[1])
+		printUsage(os.Stdout)
 		os.Exit(1)
 	}
 }
 
-func printVersion() {
-	fmt.Printf("%s %s\n", ProductName, version.Version)
-	fmt.Printf("Commit: %s\n", version.Commit)
-	fmt.Printf("Built:  %s\n", version.BuildTime)
-	fmt.Printf("Copyright (c) 2025 %s\n", Company)
-	fmt.Println("Network Performance Testing")
+func printVersion(w io.Writer) {
+	_, _ = fmt.Fprintf(w, "%s %s\n", ProductName, version.Version)
+	_, _ = fmt.Fprintf(w, "Commit: %s\n", version.Commit)
+	_, _ = fmt.Fprintf(w, "Built:  %s\n", version.BuildTime)
+	_, _ = fmt.Fprintf(w, "Copyright (c) 2025 %s\n", Company)
+	_, _ = fmt.Fprintln(w, "Network Performance Testing")
 }
 
-func printUsage() {
-	fmt.Printf(`%s %s
+func printUsage(w io.Writer) {
+	_, _ = fmt.Fprintf(w, `%s %s
 %s - Network Performance Testing`, ProductName, version.Version, Company)
-	fmt.Print(`
+	_, _ = fmt.Fprint(w, `
 
 USAGE:
     stem <command> [options]
@@ -256,52 +302,101 @@ func listTestsCmd(args []string) {
 	fs.BoolVar(byModule, "m", false, "Group tests by module (shorthand)")
 	jsonOutput := fs.Bool("json", false, "Output in JSON format")
 
-	if err := fs.Parse(args); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+	err := fs.Parse(args)
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
 
 	if *jsonOutput {
-		// JSON output using modules
+		// JSON output using modules.
 		moduleInfos := modules.GetAllModuleInfos()
-		data, _ := json.MarshalIndent(map[string]interface{}{
+		data, _ := json.MarshalIndent(map[string]any{
 			"modules": moduleInfos,
 			"count":   len(moduleInfos),
 		}, "", "  ")
-		fmt.Println(string(data))
+		_, _ = fmt.Fprintln(os.Stdout, string(data))
 		return
 	}
 
-	fmt.Printf("%s - Available Test Types\n", ProductName)
-	fmt.Println(strings.Repeat("=", 60))
+	_, _ = fmt.Fprintf(os.Stdout, "%s - Available Test Types\n", ProductName)
+	_, _ = fmt.Fprintln(os.Stdout, strings.Repeat("=", bannerWidth))
 
 	if *byModule {
-		// Group by module (new module-oriented view)
+		// Group by module (new module-oriented view).
 		allMods := modules.GetAllModules()
 		totalTests := 0
 
 		for _, mod := range allMods {
-			fmt.Printf("\n%s [%s] (%s):\n", mod.DisplayName(), mod.Color(), mod.Standard())
-			fmt.Printf("  %s\n", mod.Description())
-			fmt.Println()
+			_, _ = fmt.Fprintf(os.Stdout, "\n%s [%s] (%s):\n", mod.DisplayName(), mod.Color(), mod.Standard())
+			_, _ = fmt.Fprintf(os.Stdout, "  %s\n", mod.Description())
+			_, _ = fmt.Fprintln(os.Stdout)
 			for _, t := range mod.TestTypes() {
 				desc := allTestTypes[t]
-				fmt.Printf("    %-20s %s\n", t, desc)
+				_, _ = fmt.Fprintf(os.Stdout, "    %-20s %s\n", t, desc)
 				totalTests++
 			}
 		}
-		fmt.Printf("\nTotal: %d test types across %d modules\n", totalTests, len(allMods))
+		_, _ = fmt.Fprintf(os.Stdout, "\nTotal: %d test types across %d modules\n", totalTests, len(allMods))
 	} else {
-		// Legacy category-based view (preserved for backward compatibility)
+		// Legacy category-based view (preserved for backward compatibility).
 		for _, cat := range testCategories {
-			fmt.Printf("\n%s:\n", cat.name)
+			_, _ = fmt.Fprintf(os.Stdout, "\n%s:\n", cat.name)
 			for _, t := range cat.tests {
 				desc := allTestTypes[t]
-				fmt.Printf("  %-20s %s\n", t, desc)
+				_, _ = fmt.Fprintf(os.Stdout, "  %-20s %s\n", t, desc)
 			}
 		}
-		fmt.Printf("\nTotal: %d test types across %d categories\n", len(allTestTypes), len(testCategories))
-		fmt.Println("\nTip: Use --by-module to see tests grouped by module")
+		_, _ = fmt.Fprintf(os.Stdout, "\nTotal: %d test types across %d categories\n", len(allTestTypes), len(testCategories))
+		_, _ = fmt.Fprintln(os.Stdout, "\nTip: Use --by-module to see tests grouped by module")
+	}
+}
+
+// getSignatureFilter maps profile name to signature filter.
+func getSignatureFilter(profile string) string {
+	switch profile {
+	case "netally", "ito":
+		return "ito"
+	case "msn":
+		return "msn"
+	case "custom":
+		return "custom"
+	default:
+		return DefaultSignatureFilter
+	}
+}
+
+// reflectorStatsLoop displays reflector stats periodically until interrupted.
+func reflectorStatsLoop(dp *reflectorDP.Dataplane) {
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+
+	ticker := time.NewTicker(statsIntervalSeconds * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-sigChan:
+			_, _ = fmt.Fprintln(os.Stdout, "\nShutting down reflector...")
+			go dp.Stop()
+			time.Sleep(shutdownDelayMs * time.Millisecond)
+			stats := dp.GetStats()
+			_, _ = fmt.Fprintf(os.Stdout, "\nFinal Statistics:\n")
+			_, _ = fmt.Fprintf(os.Stdout, "  Packets Received:  %d\n", stats.PacketsReceived)
+			_, _ = fmt.Fprintf(os.Stdout, "  Packets Reflected: %d\n", stats.PacketsReflected)
+			_, _ = fmt.Fprintf(os.Stdout, "  Bytes Received:    %d\n", stats.BytesReceived)
+			_, _ = fmt.Fprintf(os.Stdout, "  Bytes Reflected:   %d\n", stats.BytesReflected)
+			return
+		case <-ticker.C:
+			stats := dp.GetStats()
+			_, _ = fmt.Fprintf(
+				os.Stdout,
+				"\r[Stats] RX: %d pkts | TX: %d pkts | Signatures: ITO=%d RFC2544=%d Y.1564=%d MSN=%d",
+				stats.PacketsReceived, stats.PacketsReflected,
+				stats.SigProbeOT+stats.SigDataOT+stats.SigLatency,
+				stats.SigRFC2544, stats.SigY1564, stats.SigMSN,
+			)
+		}
 	}
 }
 
@@ -314,61 +409,58 @@ func reflectCmd(args []string) {
 	oui := fs.String("oui", "", "OUI filter")
 	useTUI := fs.Bool("tui", false, "Launch TUI dashboard")
 
-	if err := fs.Parse(args); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+	err := fs.Parse(args)
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
 
 	if *iface == "" {
-		fmt.Println("Error: --interface is required")
+		_, _ = fmt.Fprintln(os.Stdout, "Error: --interface is required")
 		fs.Usage()
 		os.Exit(1)
 	}
 
-	// Check license (Tier 1 minimum)
+	// Check license (Tier 1 minimum).
 	mgr, err := license.NewManager()
 	if err != nil {
-		fmt.Printf("Warning: License check failed: %v\n", err)
+		_, _ = fmt.Fprintf(os.Stdout, "Warning: License check failed: %v\n", err)
 	} else if !mgr.IsActivated() {
-		fmt.Println("No active license. Starting 14-day trial...")
+		_, _ = fmt.Fprintln(os.Stdout, "No active license. Starting 14-day trial...")
 		result := mgr.StartTrial()
 		if !result.Success {
-			fmt.Printf("Error: %s\n", result.Message)
+			_, _ = fmt.Fprintf(os.Stdout, "Error: %s\n", result.Message)
 			os.Exit(1)
 		}
-		fmt.Printf("%s\n", result.Message)
+		_, _ = fmt.Fprintf(os.Stdout, "%s\n", result.Message)
 	}
 
-	// Map profile to signature filter
-	sigFilter := DefaultSignatureFilter
-	switch *profile {
-	case "netally", "ito":
-		sigFilter = "ito"
-	case "msn":
-		sigFilter = "msn"
-	case "custom":
-		sigFilter = "custom"
-	case DefaultProfile:
-		sigFilter = DefaultSignatureFilter
-	}
+	sigFilter := getSignatureFilter(*profile)
 
-	// Validate port range before conversion
+	// Validate port range before conversion.
 	if *port < 0 || *port > math.MaxUint16 {
-		fmt.Printf("Error: port %d out of valid range (0-%d)\n", *port, math.MaxUint16)
+		_, _ = fmt.Fprintf(os.Stdout, "Error: port %d out of valid range (0-%d)\n", *port, math.MaxUint16)
 		os.Exit(1)
 	}
 
-	// Build reflector config with defaults
+	// Build reflector config with defaults.
 	cfg := &reflectorConfig.Config{
 		Interface:       *iface,
+		Verbose:         false,
 		SignatureFilter: sigFilter,
+		WebUI:           reflectorConfig.WebUIConfig{Enabled: false, Port: 0},
+		TUI:             reflectorConfig.TUIConfig{Enabled: *useTUI},
 		Filtering: reflectorConfig.FilterConfig{
-			Port: uint16(*port), // Safe: validated above
-			OUI:  "00:c0:17",    // Default NetAlly OUI
+			Port:      uint16(*port), // Safe: validated above.
+			FilterOUI: false,
+			OUI:       "00:c0:17", // Default NetAlly OUI.
+			FilterMAC: false,
 		},
 		Reflection: reflectorConfig.ReflectConfig{
 			Mode: DefaultReflectionMode,
 		},
+		Platform: reflectorConfig.PlatformConfig{UseDPDK: false, UseAFXDP: false, DPDKArgs: ""},
+		Stats:    reflectorConfig.StatsConfig{Format: "text", Interval: 0},
 	}
 
 	if *oui != "" {
@@ -376,245 +468,342 @@ func reflectCmd(args []string) {
 		cfg.Filtering.OUI = *oui
 	}
 
-	// Create reflector dataplane
+	// Create reflector dataplane.
 	dp, err := reflectorDP.New(cfg)
 	if err != nil {
-		fmt.Printf("Error: Failed to create reflector: %v\n", err)
+		_, _ = fmt.Fprintf(os.Stdout, "Error: Failed to create reflector: %v\n", err)
 		os.Exit(1)
 	}
 	defer dp.Close()
 
-	// Start reflector
-	if err := dp.Start(); err != nil {
-		dp.Close() // Cleanup before exit
-		fmt.Printf("Error: Failed to start reflector: %v\n", err)
-		os.Exit(1) //nolint:gocritic // Explicit dp.Close() above ensures cleanup
+	// Start reflector.
+	startErr := dp.Start()
+	if startErr != nil {
+		dp.Close() // Cleanup before exit.
+		_, _ = fmt.Fprintf(os.Stdout, "Error: Failed to start reflector: %v\n", startErr)
+		os.Exit(1) //nolint:gocritic // Explicit dp.Close() above ensures cleanup.
 	}
 
-	fmt.Printf("%s %s - Reflector\n", ProductName, version.Version)
-	fmt.Printf("Interface:  %s\n", *iface)
-	fmt.Printf("Profile:    %s\n", *profile)
+	_, _ = fmt.Fprintf(os.Stdout, "%s %s - Reflector\n", ProductName, version.Version)
+	_, _ = fmt.Fprintf(os.Stdout, "Interface:  %s\n", *iface)
+	_, _ = fmt.Fprintf(os.Stdout, "Profile:    %s\n", *profile)
 	if *port > 0 {
-		fmt.Printf("Port:       %d\n", *port)
+		_, _ = fmt.Fprintf(os.Stdout, "Port:       %d\n", *port)
 	}
 	if *oui != "" {
-		fmt.Printf("OUI:        %s\n", *oui)
+		_, _ = fmt.Fprintf(os.Stdout, "OUI:        %s\n", *oui)
 	}
-	fmt.Println("\nReflector started. Press Ctrl+C to stop.")
+	_, _ = fmt.Fprintln(os.Stdout, "\nReflector started. Press Ctrl+C to stop.")
 
 	if *useTUI {
-		// Launch TUI
 		tuiApp := reflectorTUI.New(dp)
-		if err := tuiApp.Run(); err != nil {
-			fmt.Printf("TUI error: %v\n", err)
+		tuiErr := tuiApp.Run()
+		if tuiErr != nil {
+			_, _ = fmt.Fprintf(os.Stdout, "TUI error: %v\n", tuiErr)
 		}
 	} else {
-		// Wait for interrupt
-		sigChan := make(chan os.Signal, 1)
-		signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
-
-		// Print stats periodically
-		ticker := time.NewTicker(5 * time.Second)
-		defer ticker.Stop()
-
-		for {
-			select {
-			case <-sigChan:
-				fmt.Println("\nShutting down reflector...")
-				// Stop in goroutine to avoid blocking select
-				go dp.Stop()
-				// Give dataplane time to clean up, then print stats
-				time.Sleep(100 * time.Millisecond)
-				stats := dp.GetStats()
-				fmt.Printf("\nFinal Statistics:\n")
-				fmt.Printf("  Packets Received:  %d\n", stats.PacketsReceived)
-				fmt.Printf("  Packets Reflected: %d\n", stats.PacketsReflected)
-				fmt.Printf("  Bytes Received:    %d\n", stats.BytesReceived)
-				fmt.Printf("  Bytes Reflected:   %d\n", stats.BytesReflected)
-				return
-			case <-ticker.C:
-				stats := dp.GetStats()
-				fmt.Printf("\r[Stats] RX: %d pkts | TX: %d pkts | Signatures: ITO=%d RFC2544=%d Y.1564=%d MSN=%d",
-					stats.PacketsReceived, stats.PacketsReflected,
-					stats.SigProbeOT+stats.SigDataOT+stats.SigLatency,
-					stats.SigRFC2544, stats.SigY1564, stats.SigMSN)
-			}
-		}
+		reflectorStatsLoop(dp)
 	}
 }
 
-func testCmd(args []string) {
-	fs := flag.NewFlagSet("test", flag.ExitOnError)
+// validateTestTypesList validates a list of test types.
+func validateTestTypesList(tests []string) bool {
+	for _, t := range tests {
+		// Check legacy map first for backward compatibility.
+		if _, ok := allTestTypes[t]; !ok {
+			// Also check module registry.
+			if mod := modules.GetModuleForTest(t); mod == nil {
+				_, _ = fmt.Fprintf(os.Stdout, "Error: Unknown test type '%s'\n", t)
+				_, _ = fmt.Fprintln(os.Stdout, "Run 'stem list-tests' to see available tests")
+				return false
+			}
+		}
+	}
+	return true
+}
 
-	// Basic options
+// checkTestLicense checks that the license is valid for running tests.
+func checkTestLicense() bool {
+	mgr, err := license.NewManager()
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stdout, "Warning: License check failed: %v\n", err)
+		return true // Allow to continue with warning.
+	}
+
+	state := mgr.GetState()
+	switch {
+	case state == nil:
+		_, _ = fmt.Fprintln(os.Stdout, "No active license. Starting 14-day trial...")
+		result := mgr.StartTrial()
+		if !result.Success {
+			_, _ = fmt.Fprintf(os.Stdout, "Error: %s\n", result.Message)
+			return false
+		}
+		_, _ = fmt.Fprintf(os.Stdout, "%s\n\n", result.Message)
+	case !mgr.IsActivated():
+		_, _ = fmt.Fprintln(os.Stdout, "Error: License expired. Please activate a valid license.")
+		_, _ = fmt.Fprintln(os.Stdout, "Run 'stem license --status' for details")
+		return false
+	case state.Tier < license.TierTestSuite && !state.IsTrialMode:
+		_, _ = fmt.Fprintln(os.Stdout, "Error: Test Suite requires Tier 2 license")
+		_, _ = fmt.Fprintln(os.Stdout, "Your license: Tier 1 (Reflector only)")
+		return false
+	}
+	return true
+}
+
+// printTestConfiguration prints the test configuration.
+func printTestConfiguration(
+	iface, testTypes, frameSizes string,
+	duration int,
+	resolution, maxLoss float64,
+	warmup int,
+) {
+	_, _ = fmt.Fprintf(os.Stdout, "%s %s - Network Testing\n", ProductName, version.Version)
+	_, _ = fmt.Fprintln(os.Stdout, strings.Repeat("=", bannerWidth))
+	_, _ = fmt.Fprintf(os.Stdout, "Interface:    %s\n", iface)
+	_, _ = fmt.Fprintf(os.Stdout, "Tests:        %s\n", testTypes)
+	_, _ = fmt.Fprintf(os.Stdout, "Duration:     %d seconds\n", duration)
+	_, _ = fmt.Fprintf(os.Stdout, "Frame sizes:  %s\n", frameSizes)
+	_, _ = fmt.Fprintf(os.Stdout, "Resolution:   %.2f%%\n", resolution)
+	_, _ = fmt.Fprintf(os.Stdout, "Max loss:     %.2f%%\n", maxLoss)
+	_, _ = fmt.Fprintf(os.Stdout, "Warmup:       %d seconds\n", warmup)
+	_, _ = fmt.Fprintln(os.Stdout, strings.Repeat("=", bannerWidth))
+}
+
+// testCmdParams holds parameters for running test suite.
+type testCmdParams struct {
+	cir          float64
+	eir          float64
+	fdThreshold  float64
+	fdvThreshold float64
+	flrThreshold float64
+	duration     int
+	jsonOutput   bool
+	csvOutput    bool
+}
+
+// testCmdFlags holds parsed command line flags for test command.
+type testCmdFlags struct {
+	iface        string
+	testTypes    string
+	duration     int
+	frameSizes   string
+	resolution   float64
+	maxLoss      float64
+	warmup       int
+	cir          float64
+	eir          float64
+	fdThreshold  float64
+	fdvThreshold float64
+	flrThreshold float64
+	jsonOutput   bool
+	csvOutput    bool
+}
+
+// parseTestFlags parses test command flags and returns the parsed values.
+func parseTestFlags(args []string) (*testCmdFlags, error) {
+	fs := flag.NewFlagSet("test", flag.ContinueOnError)
+
+	// Basic options.
 	iface := fs.String("interface", "", "Network interface")
 	fs.StringVar(iface, "i", "", "Network interface (shorthand)")
 	testTypes := fs.String("type", "throughput", "Test type(s), comma-separated")
 	fs.StringVar(testTypes, "t", "throughput", "Test type (shorthand)")
-	duration := fs.Int("duration", 60, "Test duration in seconds")
-	fs.IntVar(duration, "d", 60, "Test duration (shorthand)")
+	duration := fs.Int("duration", defaultTestDuration, "Test duration in seconds")
+	fs.IntVar(duration, "d", defaultTestDuration, "Test duration (shorthand)")
 	frameSizes := fs.String("frame-sizes", "64,128,256,512,1024,1280,1518", "Frame sizes")
 
-	// Advanced options
-	resolution := fs.Float64("resolution", 0.1, "Binary search resolution %")
-	maxLoss := fs.Float64("max-loss", 0.0, "Maximum acceptable loss %")
-	warmup := fs.Int("warmup", 2, "Warmup period in seconds")
-	_ = fs.Int("trials", 3, "Number of trials") // Used in config
+	// Advanced options.
+	resolution := fs.Float64("resolution", defaultResolution, "Binary search resolution %")
+	maxLoss := fs.Float64("max-loss", defaultMaxLoss, "Maximum acceptable loss %")
+	warmup := fs.Int("warmup", defaultWarmup, "Warmup period in seconds")
+	_ = fs.Int("trials", defaultTrials, "Number of trials") // Used in config.
 
-	// Y.1564 options
+	// Y.1564 options.
 	cir := fs.Float64("cir", 0, "Committed Information Rate (Mbps)")
 	eir := fs.Float64("eir", 0, "Excess Information Rate (Mbps)")
-	fdThreshold := fs.Float64("fd-threshold", 10, "Frame Delay threshold (ms)")
-	fdvThreshold := fs.Float64("fdv-threshold", 5, "Frame Delay Variation threshold (ms)")
-	flrThreshold := fs.Float64("flr-threshold", 0.01, "Frame Loss Rate threshold (%)")
+	fdThreshold := fs.Float64("fd-threshold", defaultFDThreshold, "Frame Delay threshold (ms)")
+	fdvThreshold := fs.Float64("fdv-threshold", defaultFDVThreshold, "Frame Delay Variation threshold (ms)")
+	flrThreshold := fs.Float64("flr-threshold", defaultFLRThreshold, "Frame Loss Rate threshold (%)")
 
-	// Output format
+	// Output format.
 	jsonOutput := fs.Bool("json", false, "Output results in JSON")
 	csvOutput := fs.Bool("csv", false, "Output results in CSV")
 
-	if err := fs.Parse(args); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-		os.Exit(1)
+	parseErr := fs.Parse(args)
+	if parseErr != nil {
+		return nil, fmt.Errorf("failed to parse test flags: %w", parseErr)
 	}
 
-	if *iface == "" {
-		fmt.Println("Error: --interface is required")
-		fs.Usage()
-		os.Exit(1)
-	}
+	return &testCmdFlags{
+		iface:        *iface,
+		testTypes:    *testTypes,
+		duration:     *duration,
+		frameSizes:   *frameSizes,
+		resolution:   *resolution,
+		maxLoss:      *maxLoss,
+		warmup:       *warmup,
+		cir:          *cir,
+		eir:          *eir,
+		fdThreshold:  *fdThreshold,
+		fdvThreshold: *fdvThreshold,
+		flrThreshold: *flrThreshold,
+		jsonOutput:   *jsonOutput,
+		csvOutput:    *csvOutput,
+	}, nil
+}
 
-	// Validate test types (check both legacy map and module registry)
-	tests := strings.Split(*testTypes, ",")
-	for i, t := range tests {
-		tests[i] = strings.TrimSpace(t)
-		// Check legacy map first for backward compatibility
-		if _, ok := allTestTypes[tests[i]]; !ok {
-			// Also check module registry
-			if mod := modules.GetModuleForTest(tests[i]); mod == nil {
-				fmt.Printf("Error: Unknown test type '%s'\n", tests[i])
-				fmt.Println("Run 'stem list-tests' to see available tests")
-				os.Exit(1)
-			}
-		}
-	}
-
-	// Check license (Tier 2 required for tests)
-	mgr, err := license.NewManager()
-	if err != nil {
-		fmt.Printf("Warning: License check failed: %v\n", err)
-	} else {
-		state := mgr.GetState()
-		switch {
-		case state == nil:
-			fmt.Println("No active license. Starting 14-day trial...")
-			result := mgr.StartTrial()
-			if !result.Success {
-				fmt.Printf("Error: %s\n", result.Message)
-				os.Exit(1)
-			}
-			fmt.Printf("%s\n\n", result.Message)
-		case !mgr.IsActivated():
-			fmt.Println("Error: License expired. Please activate a valid license.")
-			fmt.Println("Run 'stem license --status' for details")
-			os.Exit(1)
-		case state.Tier < license.TierTestSuite && !state.IsTrialMode:
-			fmt.Println("Error: Test Suite requires Tier 2 license")
-			fmt.Println("Your license: Tier 1 (Reflector only)")
-			os.Exit(1)
-		}
-	}
-
-	// Parse frame sizes
-	frameSizeList := parseFrameSizes(*frameSizes)
-	if len(frameSizeList) == 0 {
-		fmt.Println("Error: No valid frame sizes specified")
-		os.Exit(1)
-	}
-
-	// Print test configuration
-	fmt.Printf("%s %s - Network Testing\n", ProductName, version.Version)
-	fmt.Println(strings.Repeat("=", 60))
-	fmt.Printf("Interface:    %s\n", *iface)
-	fmt.Printf("Tests:        %s\n", *testTypes)
-	fmt.Printf("Duration:     %d seconds\n", *duration)
-	fmt.Printf("Frame sizes:  %s\n", *frameSizes)
-	fmt.Printf("Resolution:   %.2f%%\n", *resolution)
-	fmt.Printf("Max loss:     %.2f%%\n", *maxLoss)
-	fmt.Printf("Warmup:       %d seconds\n", *warmup)
-	fmt.Println(strings.Repeat("=", 60))
-
-	// Create dataplane context
-	ctx, err := testmasterDP.NewContext(*iface)
-	if err != nil {
-		fmt.Printf("Error: Failed to initialize dataplane: %v\n", err)
-		os.Exit(1)
-	}
-	defer ctx.Close()
-
-	// Configure the context
-	cfg := &testmasterDP.Config{
-		Interface:      *iface,
+// createTestConfig creates a dataplane config from test flags.
+func createTestConfig(flags *testCmdFlags) *testmasterDP.Config {
+	return &testmasterDP.Config{
+		Interface:      flags.iface,
+		LineRate:       0,
 		AutoDetect:     true,
-		TrialDuration:  time.Duration(*duration) * time.Second,
-		WarmupPeriod:   time.Duration(*warmup) * time.Second,
-		ResolutionPct:  *resolution,
-		AcceptableLoss: *maxLoss,
+		TestType:       testmasterDP.TestThroughput,
+		FrameSize:      0,
+		IncludeJumbo:   false,
+		TrialDuration:  time.Duration(flags.duration) * time.Second,
+		WarmupPeriod:   time.Duration(flags.warmup) * time.Second,
+		InitialRatePct: 0,
+		ResolutionPct:  flags.resolution,
+		MaxIterations:  0,
+		AcceptableLoss: flags.maxLoss,
+		HWTimestamp:    false,
 		MeasureLatency: true,
+		UsePacing:      false,
+		BatchSize:      0,
+		UseDPDK:        false,
+		DPDKArgs:       "",
 	}
+}
 
-	if err := ctx.Configure(cfg); err != nil {
-		ctx.Close() // Cleanup before exit
-		fmt.Printf("Error: Failed to configure: %v\n", err)
-		os.Exit(1) //nolint:gocritic // Explicit ctx.Close() above ensures cleanup
-	}
-
-	// Setup signal handler
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
-
-	go func() {
-		<-sigChan
-		fmt.Println("\nCancelling test...")
-		ctx.Cancel()
-	}()
-
-	// Run all requested tests
-	var allResults []interface{}
+// runTestSuite runs all tests for given frame sizes.
+func runTestSuite(
+	ctx *testmasterDP.Context,
+	tests []string,
+	frameSizes []int,
+	params testCmdParams,
+) []any {
+	var allResults []any
 
 	for _, testType := range tests {
-		for _, frameSize := range frameSizeList {
-			// frameSize is validated by parseFrameSizes to be in [64, 9216] range
+		for _, frameSize := range frameSizes {
 			if frameSize < 0 || frameSize > math.MaxUint32 {
-				fmt.Printf("Error: frame size %d out of valid range\n", frameSize)
+				_, _ = fmt.Fprintf(os.Stdout, "Error: frame size %d out of valid range\n", frameSize)
 				continue
 			}
-			ctx.SetFrameSize(uint32(frameSize)) // Safe: validated above
+			ctx.SetFrameSize(uint32(frameSize))
 
-			fmt.Printf("\n[Running %s test with frame size %d bytes]\n", testType, frameSize)
+			_, _ = fmt.Fprintf(os.Stdout, "\n[Running %s test with frame size %d bytes]\n", testType, frameSize)
 
-			result, err := runTest(ctx, testType, *cir, *eir, *fdThreshold, *fdvThreshold, *flrThreshold, *duration)
+			result, err := runTest(
+				ctx, testType,
+				params.cir, params.eir,
+				params.fdThreshold, params.fdvThreshold, params.flrThreshold,
+				params.duration,
+			)
 			if err != nil {
-				fmt.Printf("Error: %s test failed: %v\n", testType, err)
+				_, _ = fmt.Fprintf(os.Stdout, "Error: %s test failed: %v\n", testType, err)
 				continue
 			}
 
 			allResults = append(allResults, result)
-			printTestResult(testType, result, *jsonOutput)
+			printTestResult(testType, result, params.jsonOutput)
 		}
 	}
 
-	// Final output
-	if *jsonOutput && len(allResults) > 0 {
+	return allResults
+}
+
+func testCmd(args []string) {
+	flags, err := parseTestFlags(args)
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+
+	if flags.iface == "" {
+		_, _ = fmt.Fprintln(os.Stdout, "Error: --interface is required")
+		os.Exit(1)
+	}
+
+	// Validate test types.
+	tests := strings.Split(flags.testTypes, ",")
+	for i, t := range tests {
+		tests[i] = strings.TrimSpace(t)
+	}
+	if !validateTestTypesList(tests) {
+		os.Exit(1)
+	}
+
+	// Check license.
+	if !checkTestLicense() {
+		os.Exit(1)
+	}
+
+	// Parse frame sizes.
+	frameSizeList := parseFrameSizes(flags.frameSizes)
+	if len(frameSizeList) == 0 {
+		_, _ = fmt.Fprintln(os.Stdout, "Error: No valid frame sizes specified")
+		os.Exit(1)
+	}
+
+	printTestConfiguration(
+		flags.iface, flags.testTypes, flags.frameSizes,
+		flags.duration, flags.resolution, flags.maxLoss, flags.warmup,
+	)
+
+	// Create and configure dataplane context.
+	ctx, ctxErr := testmasterDP.NewContext(flags.iface)
+	if ctxErr != nil {
+		_, _ = fmt.Fprintf(os.Stdout, "Error: Failed to initialize dataplane: %v\n", ctxErr)
+		os.Exit(1)
+	}
+	defer ctx.Close()
+
+	cfg := createTestConfig(flags)
+	cfgErr := ctx.Configure(cfg)
+	if cfgErr != nil {
+		ctx.Close()
+		_, _ = fmt.Fprintf(os.Stdout, "Error: Failed to configure: %v\n", cfgErr)
+		os.Exit(1) //nolint:gocritic // Explicit ctx.Close() above ensures cleanup.
+	}
+
+	// Setup signal handler.
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		<-sigChan
+		_, _ = fmt.Fprintln(os.Stdout, "\nCancelling test...")
+		ctx.Cancel()
+	}()
+
+	// Run tests.
+	params := testCmdParams{
+		cir:          flags.cir,
+		eir:          flags.eir,
+		fdThreshold:  flags.fdThreshold,
+		fdvThreshold: flags.fdvThreshold,
+		flrThreshold: flags.flrThreshold,
+		duration:     flags.duration,
+		jsonOutput:   flags.jsonOutput,
+		csvOutput:    flags.csvOutput,
+	}
+	allResults := runTestSuite(ctx, tests, frameSizeList, params)
+
+	// Final output.
+	if flags.jsonOutput && len(allResults) > 0 {
 		data, _ := json.MarshalIndent(allResults, "", "  ")
-		fmt.Printf("\n%s\n", string(data))
-	} else if *csvOutput && len(allResults) > 0 {
+		_, _ = fmt.Fprintf(os.Stdout, "\n%s\n", string(data))
+	} else if flags.csvOutput && len(allResults) > 0 {
 		printCSVResults(allResults)
 	}
 
-	fmt.Println("\nTest suite complete.")
+	_, _ = fmt.Fprintln(os.Stdout, "\nTest suite complete.")
 }
 
-// parseFrameSizes parses comma-separated frame sizes with validation warnings
+// parseFrameSizes parses comma-separated frame sizes with validation warnings.
 func parseFrameSizes(s string) []int {
 	parts := strings.Split(s, ",")
 	sizes := make([]int, 0, len(parts))
@@ -637,66 +826,31 @@ func parseFrameSizes(s string) []int {
 	return sizes
 }
 
-// runTest executes a single test and returns the result
-func runTest(ctx *testmasterDP.Context, testType string, cir, eir, fdThreshold, fdvThreshold, flrThreshold float64, duration int) (interface{}, error) {
+// runTest executes a single test and returns the result.
+func runTest(
+	ctx *testmasterDP.Context,
+	testType string,
+	cir, eir, fdThreshold, fdvThreshold, flrThreshold float64,
+	duration int,
+) (any, error) {
 	switch testType {
 	case "throughput":
-		return ctx.RunThroughputTest()
-
+		return runThroughputTest(ctx)
 	case "latency":
-		loadLevels := []float64{10, 25, 50, 75, 90, 100}
-		return ctx.RunLatencyTest(loadLevels)
-
+		return runLatencyTest(ctx)
 	case "frame_loss":
-		return ctx.RunFrameLossTest(10, 100, 10)
-
+		return runFrameLossTest(ctx)
 	case "back_to_back":
-		return ctx.RunBackToBackTest(10000, 3)
-
+		return runBackToBackTest(ctx)
 	case "system_recovery":
-		return ctx.RunSystemRecoveryTest(100.0, 60)
-
+		return runSystemRecoveryTest(ctx)
 	case "reset":
-		return ctx.RunResetTest()
-
+		return runResetTest(ctx)
 	case "y1564_config", "y1564":
-		service := &testmasterDP.Y1564Service{
-			ServiceID:   1,
-			ServiceName: "Service-1",
-			SLA: testmasterDP.Y1564SLA{
-				CIRMbps:         cir,
-				EIRMbps:         eir,
-				FDThresholdMs:   fdThreshold,
-				FDVThresholdMs:  fdvThreshold,
-				FLRThresholdPct: flrThreshold,
-			},
-			FrameSize: 1518,
-			Enabled:   true,
-		}
-		return ctx.RunY1564ConfigTest(service)
-
+		return runY1564ConfigTest(ctx, cir, eir, fdThreshold, fdvThreshold, flrThreshold)
 	case "y1564_perf":
-		service := &testmasterDP.Y1564Service{
-			ServiceID:   1,
-			ServiceName: "Service-1",
-			SLA: testmasterDP.Y1564SLA{
-				CIRMbps:         cir,
-				EIRMbps:         eir,
-				FDThresholdMs:   fdThreshold,
-				FDVThresholdMs:  fdvThreshold,
-				FLRThresholdPct: flrThreshold,
-			},
-			FrameSize: 1518,
-			Enabled:   true,
-		}
-		// Validate duration before conversion
-		if duration < 0 || duration > math.MaxUint32 {
-			return nil, fmt.Errorf("duration %d out of valid range (0-%d)", duration, math.MaxUint32)
-		}
-		return ctx.RunY1564PerfTest(service, uint32(duration)) // Safe: validated above
-
+		return runY1564PerfTest(ctx, cir, eir, fdThreshold, fdvThreshold, flrThreshold, duration)
 	default:
-		// For tests not yet implemented in dataplane, return a placeholder
 		return map[string]string{
 			"test":   testType,
 			"status": "not_implemented",
@@ -705,58 +859,184 @@ func runTest(ctx *testmasterDP.Context, testType string, cir, eir, fdThreshold, 
 	}
 }
 
-// printTestResult prints a test result
-func printTestResult(testType string, result interface{}, jsonOutput bool) {
+// runThroughputTest executes RFC 2544 throughput test.
+func runThroughputTest(ctx *testmasterDP.Context) (any, error) {
+	result, err := ctx.RunThroughputTest()
+	if err != nil {
+		return nil, fmt.Errorf("throughput test failed: %w", err)
+	}
+	return result, nil
+}
+
+// runLatencyTest executes RFC 2544 latency test.
+func runLatencyTest(ctx *testmasterDP.Context) (any, error) {
+	loadLevels := []float64{defaultLoadLevelStep, 25, 50, 75, 90, defaultLoadLevelMax}
+	result, err := ctx.RunLatencyTest(loadLevels)
+	if err != nil {
+		return nil, fmt.Errorf("latency test failed: %w", err)
+	}
+	return result, nil
+}
+
+// runFrameLossTest executes RFC 2544 frame loss test.
+func runFrameLossTest(ctx *testmasterDP.Context) (any, error) {
+	result, err := ctx.RunFrameLossTest(defaultLoadLevelStep, defaultLoadLevelMax, defaultLoadLevelStep)
+	if err != nil {
+		return nil, fmt.Errorf("frame loss test failed: %w", err)
+	}
+	return result, nil
+}
+
+// runBackToBackTest executes RFC 2544 back-to-back test.
+func runBackToBackTest(ctx *testmasterDP.Context) (any, error) {
+	result, err := ctx.RunBackToBackTest(defaultBackToBackBurst, defaultTrials)
+	if err != nil {
+		return nil, fmt.Errorf("back-to-back test failed: %w", err)
+	}
+	return result, nil
+}
+
+// runSystemRecoveryTest executes RFC 2544 system recovery test.
+func runSystemRecoveryTest(ctx *testmasterDP.Context) (any, error) {
+	result, err := ctx.RunSystemRecoveryTest(defaultOverloadRate, defaultOverloadDuration)
+	if err != nil {
+		return nil, fmt.Errorf("system recovery test failed: %w", err)
+	}
+	return result, nil
+}
+
+// runResetTest executes RFC 2544 reset test.
+func runResetTest(ctx *testmasterDP.Context) (any, error) {
+	result, err := ctx.RunResetTest()
+	if err != nil {
+		return nil, fmt.Errorf("reset test failed: %w", err)
+	}
+	return result, nil
+}
+
+// newY1564Service creates a Y.1564 service with given SLA parameters.
+func newY1564Service(cir, eir, fdThreshold, fdvThreshold, flrThreshold float64) *testmasterDP.Y1564Service {
+	return &testmasterDP.Y1564Service{
+		ServiceID:   1,
+		ServiceName: "Service-1",
+		SLA: testmasterDP.Y1564SLA{
+			CIRMbps:         cir,
+			EIRMbps:         eir,
+			CBSBytes:        0,
+			EBSBytes:        0,
+			FDThresholdMs:   fdThreshold,
+			FDVThresholdMs:  fdvThreshold,
+			FLRThresholdPct: flrThreshold,
+		},
+		FrameSize: defaultFrameSize,
+		CoS:       0,
+		Enabled:   true,
+	}
+}
+
+// runY1564ConfigTest executes Y.1564 configuration test.
+func runY1564ConfigTest(
+	ctx *testmasterDP.Context,
+	cir, eir, fdThreshold, fdvThreshold, flrThreshold float64,
+) (any, error) {
+	service := newY1564Service(cir, eir, fdThreshold, fdvThreshold, flrThreshold)
+	result, err := ctx.RunY1564ConfigTest(service)
+	if err != nil {
+		return nil, fmt.Errorf("Y.1564 config test failed: %w", err)
+	}
+	return result, nil
+}
+
+// runY1564PerfTest executes Y.1564 performance test.
+func runY1564PerfTest(
+	ctx *testmasterDP.Context,
+	cir, eir, fdThreshold, fdvThreshold, flrThreshold float64,
+	duration int,
+) (any, error) {
+	if duration < 0 || duration > math.MaxUint32 {
+		return nil, fmt.Errorf("duration %d out of valid range (0-%d)", duration, math.MaxUint32)
+	}
+	service := newY1564Service(cir, eir, fdThreshold, fdvThreshold, flrThreshold)
+	result, err := ctx.RunY1564PerfTest(service, uint32(duration))
+	if err != nil {
+		return nil, fmt.Errorf("Y.1564 perf test failed: %w", err)
+	}
+	return result, nil
+}
+
+// printTestResult prints a test result.
+func printTestResult(_ string, result any, jsonOutput bool) {
 	if jsonOutput {
-		return // Will be printed in batch at the end
+		return // Will be printed in batch at the end.
 	}
 
 	switch r := result.(type) {
 	case *testmasterDP.ThroughputResultCLI:
-		fmt.Printf("  Max Rate:    %.2f%% (%.2f Mbps, %.0f pps)\n", r.MaxRatePct, r.MaxRateMbps, r.MaxRatePPS)
-		fmt.Printf("  Iterations:  %d\n", r.Iterations)
-		fmt.Printf("  Latency:     min=%.2fus avg=%.2fus max=%.2fus\n",
-			r.Latency.MinNs/1000, r.Latency.AvgNs/1000, r.Latency.MaxNs/1000)
+		_, _ = fmt.Fprintf(
+			os.Stdout,
+			"  Max Rate:    %.2f%% (%.2f Mbps, %.0f pps)\n",
+			r.MaxRatePct, r.MaxRateMbps, r.MaxRatePPS,
+		)
+		_, _ = fmt.Fprintf(os.Stdout, "  Iterations:  %d\n", r.Iterations)
+		_, _ = fmt.Fprintf(
+			os.Stdout,
+			"  Latency:     min=%.2fus avg=%.2fus max=%.2fus\n",
+			r.Latency.MinNs/nsToUsConversion,
+			r.Latency.AvgNs/nsToUsConversion,
+			r.Latency.MaxNs/nsToUsConversion,
+		)
 
 	case []testmasterDP.LatencyResultCLI:
 		for _, lr := range r {
-			fmt.Printf("  Load %.0f%%: min=%.2fus avg=%.2fus max=%.2fus p99=%.2fus\n",
-				lr.LoadPct, lr.Latency.MinNs/1000, lr.Latency.AvgNs/1000,
-				lr.Latency.MaxNs/1000, lr.Latency.P99Ns/1000)
+			_, _ = fmt.Fprintf(
+				os.Stdout,
+				"  Load %.0f%%: min=%.2fus avg=%.2fus max=%.2fus p99=%.2fus\n",
+				lr.LoadPct,
+				lr.Latency.MinNs/nsToUsConversion,
+				lr.Latency.AvgNs/nsToUsConversion,
+				lr.Latency.MaxNs/nsToUsConversion,
+				lr.Latency.P99Ns/nsToUsConversion,
+			)
 		}
 
 	case []testmasterDP.FrameLossResultCLI:
 		for _, fl := range r {
-			fmt.Printf("  Load %.0f%%: TX=%d RX=%d Loss=%.4f%%\n",
-				fl.OfferedPct, fl.FramesTx, fl.FramesRx, fl.LossPct)
+			_, _ = fmt.Fprintf(
+				os.Stdout,
+				"  Load %.0f%%: TX=%d RX=%d Loss=%.4f%%\n",
+				fl.OfferedPct, fl.FramesTx, fl.FramesRx, fl.LossPct,
+			)
 		}
 
 	case *testmasterDP.BackToBackResultCLI:
-		fmt.Printf("  Max Burst:   %d frames\n", r.MaxBurstFrames)
-		fmt.Printf("  Duration:    %d us\n", r.BurstDurationUs)
-		fmt.Printf("  Trials:      %d\n", r.Trials)
+		_, _ = fmt.Fprintf(os.Stdout, "  Max Burst:   %d frames\n", r.MaxBurstFrames)
+		_, _ = fmt.Fprintf(os.Stdout, "  Duration:    %d us\n", r.BurstDurationUs)
+		_, _ = fmt.Fprintf(os.Stdout, "  Trials:      %d\n", r.Trials)
 
 	case *testmasterDP.RecoveryResultCLI:
-		fmt.Printf("  Recovery Time: %.2f ms\n", r.RecoveryTimeMs)
-		fmt.Printf("  Frames Lost:   %d\n", r.FramesLost)
+		_, _ = fmt.Fprintf(os.Stdout, "  Recovery Time: %.2f ms\n", r.RecoveryTimeMs)
+		_, _ = fmt.Fprintf(os.Stdout, "  Frames Lost:   %d\n", r.FramesLost)
 
 	case *testmasterDP.ResetResultCLI:
-		fmt.Printf("  Reset Time:  %.2f ms\n", r.ResetTimeMs)
-		fmt.Printf("  Frames Lost: %d\n", r.FramesLost)
+		_, _ = fmt.Fprintf(os.Stdout, "  Reset Time:  %.2f ms\n", r.ResetTimeMs)
+		_, _ = fmt.Fprintf(os.Stdout, "  Frames Lost: %d\n", r.FramesLost)
 
 	case *testmasterDP.Y1564ConfigResult:
 		passStr := resultPass
 		if !r.ServicePass {
 			passStr = resultFail
 		}
-		fmt.Printf("  Service %d: %s\n", r.ServiceID, passStr)
+		_, _ = fmt.Fprintf(os.Stdout, "  Service %d: %s\n", r.ServiceID, passStr)
 		for i, step := range r.Steps {
 			stepPass := resultPass
 			if !step.StepPass {
 				stepPass = resultFail
 			}
-			fmt.Printf("    Step %d: %.0f%% rate, FLR=%.4f%% FD=%.2fms FDV=%.2fms [%s]\n",
-				i+1, step.OfferedRatePct, step.FLRPct, step.FDAvgMs, step.FDVMs, stepPass)
+			_, _ = fmt.Fprintf(
+				os.Stdout,
+				"    Step %d: %.0f%% rate, FLR=%.4f%% FD=%.2fms FDV=%.2fms [%s]\n",
+				i+1, step.OfferedRatePct, step.FLRPct, step.FDAvgMs, step.FDVMs, stepPass,
+			)
 		}
 
 	case *testmasterDP.Y1564PerfResult:
@@ -764,21 +1044,21 @@ func printTestResult(testType string, result interface{}, jsonOutput bool) {
 		if !r.ServicePass {
 			passStr = resultFail
 		}
-		fmt.Printf("  Service %d Performance: %s\n", r.ServiceID, passStr)
-		fmt.Printf("    Duration:  %d sec\n", r.DurationSec)
-		fmt.Printf("    Frames:    TX=%d RX=%d\n", r.FramesTx, r.FramesRx)
-		fmt.Printf("    FLR:       %.4f%% [%s]\n", r.FLRPct, boolToPassFail(r.FLRPass))
-		fmt.Printf("    FD:        %.2f ms [%s]\n", r.FDAvgMs, boolToPassFail(r.FDPass))
-		fmt.Printf("    FDV:       %.2f ms [%s]\n", r.FDVMs, boolToPassFail(r.FDVPass))
+		_, _ = fmt.Fprintf(os.Stdout, "  Service %d Performance: %s\n", r.ServiceID, passStr)
+		_, _ = fmt.Fprintf(os.Stdout, "    Duration:  %d sec\n", r.DurationSec)
+		_, _ = fmt.Fprintf(os.Stdout, "    Frames:    TX=%d RX=%d\n", r.FramesTx, r.FramesRx)
+		_, _ = fmt.Fprintf(os.Stdout, "    FLR:       %.4f%% [%s]\n", r.FLRPct, boolToPassFail(r.FLRPass))
+		_, _ = fmt.Fprintf(os.Stdout, "    FD:        %.2f ms [%s]\n", r.FDAvgMs, boolToPassFail(r.FDPass))
+		_, _ = fmt.Fprintf(os.Stdout, "    FDV:       %.2f ms [%s]\n", r.FDVMs, boolToPassFail(r.FDVPass))
 
 	case map[string]string:
-		fmt.Printf("  Status: %s\n", r["status"])
+		_, _ = fmt.Fprintf(os.Stdout, "  Status: %s\n", r["status"])
 		if note, ok := r["note"]; ok {
-			fmt.Printf("  Note: %s\n", note)
+			_, _ = fmt.Fprintf(os.Stdout, "  Note: %s\n", note)
 		}
 
 	default:
-		fmt.Printf("  Result: %+v\n", result)
+		_, _ = fmt.Fprintf(os.Stdout, "  Result: %+v\n", result)
 	}
 }
 
@@ -789,41 +1069,145 @@ func boolToPassFail(b bool) string {
 	return resultFail
 }
 
-func printCSVResults(results []interface{}) {
-	// Print CSV header
-	fmt.Println("\ntest_type,frame_size,max_rate_pct,max_rate_mbps,loss_pct,latency_avg_us")
+func printCSVResults(results []any) {
+	// Print CSV header.
+	_, _ = fmt.Fprintln(os.Stdout, "\ntest_type,frame_size,max_rate_pct,max_rate_mbps,loss_pct,latency_avg_us")
 
 	for _, r := range results {
 		if result, ok := r.(*testmasterDP.ThroughputResultCLI); ok {
-			fmt.Printf("throughput,%d,%.2f,%.2f,0,%.2f\n",
-				result.FrameSize, result.MaxRatePct, result.MaxRateMbps, result.Latency.AvgNs/1000)
+			_, _ = fmt.Fprintf(
+				os.Stdout,
+				"throughput,%d,%.2f,%.2f,0,%.2f\n",
+				result.FrameSize, result.MaxRatePct, result.MaxRateMbps, result.Latency.AvgNs/nsToUsConversion,
+			)
 		}
 	}
 }
 
 func webCmd(args []string) {
 	fs := flag.NewFlagSet("web", flag.ExitOnError)
-	port := fs.Int("port", 8080, "HTTP port (1-65535)")
-	fs.IntVar(port, "p", 8080, "HTTP port (shorthand)")
+	port := fs.Int("port", defaultWebPort, "HTTP port (1-65535)")
+	fs.IntVar(port, "p", defaultWebPort, "HTTP port (shorthand)")
 	host := fs.String("host", "0.0.0.0", "Bind address")
 
-	if err := fs.Parse(args); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+	err := fs.Parse(args)
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
 
-	// Validate port range
+	// Validate port range.
 	if *port < 1 || *port > 65535 {
-		fmt.Fprintf(os.Stderr, "Error: port must be between 1 and 65535, got %d\n", *port)
+		_, _ = fmt.Fprintf(os.Stderr, "Error: port must be between 1 and 65535, got %d\n", *port)
 		os.Exit(1)
 	}
 
-	fmt.Printf("%s %s - WebUI Server\n", ProductName, version.Version)
-	fmt.Printf("Starting on http://%s:%d\n", *host, *port)
+	_, _ = fmt.Fprintf(os.Stdout, "%s %s - WebUI Server\n", ProductName, version.Version)
+	_, _ = fmt.Fprintf(os.Stdout, "Starting on http://%s:%d\n", *host, *port)
 
-	server := web.NewServer(*port)
-	if err := server.Run(); err != nil {
-		fmt.Fprintf(os.Stderr, "Server error: %v\n", err)
+	srv := server.NewServer(*port)
+	err = srv.Run()
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "Server error: %v\n", err)
+		os.Exit(1)
+	}
+}
+
+// tuiReflectMode runs the reflector TUI mode.
+func tuiReflectMode(iface string) {
+	if iface == "" {
+		_, _ = fmt.Fprintln(os.Stdout, "Error: --interface is required for reflect mode")
+		_, _ = fmt.Fprintln(os.Stdout, "Usage: stem tui --mode reflect -i eth0")
+		os.Exit(1)
+	}
+
+	// Check license (Tier 1 minimum).
+	mgr, err := license.NewManager()
+	if err != nil {
+		logging.Warn("license manager initialization failed", "error", err)
+	}
+	if mgr != nil && !mgr.IsActivated() {
+		result := mgr.StartTrial()
+		if !result.Success {
+			_, _ = fmt.Fprintf(os.Stdout, "Error: %s\n", result.Message)
+			os.Exit(1)
+		}
+	}
+
+	// Build reflector config.
+	cfg := &reflectorConfig.Config{
+		Interface:       iface,
+		Verbose:         false,
+		SignatureFilter: DefaultSignatureFilter,
+		WebUI:           reflectorConfig.WebUIConfig{Enabled: false, Port: 0},
+		TUI:             reflectorConfig.TUIConfig{Enabled: true},
+		Filtering:       reflectorConfig.FilterConfig{Port: 0, FilterOUI: false, OUI: "", FilterMAC: false},
+		Reflection: reflectorConfig.ReflectConfig{
+			Mode: DefaultReflectionMode,
+		},
+		Platform: reflectorConfig.PlatformConfig{UseDPDK: false, UseAFXDP: false, DPDKArgs: ""},
+		Stats:    reflectorConfig.StatsConfig{Format: "text", Interval: 0},
+	}
+
+	// Create and start reflector dataplane.
+	dp, dpErr := reflectorDP.New(cfg)
+	if dpErr != nil {
+		_, _ = fmt.Fprintf(os.Stdout, "Error: Failed to create reflector: %v\n", dpErr)
+		os.Exit(1)
+	}
+	defer dp.Close()
+
+	tuiStartErr := dp.Start()
+	if tuiStartErr != nil {
+		dp.Close() // Cleanup before exit.
+		_, _ = fmt.Fprintf(os.Stdout, "Error: Failed to start reflector: %v\n", tuiStartErr)
+		os.Exit(1) //nolint:gocritic // Explicit dp.Close() above ensures cleanup.
+	}
+
+	// Launch reflector TUI.
+	tuiApp := reflectorTUI.New(dp)
+	tuiRunErr := tuiApp.Run()
+	if tuiRunErr != nil {
+		_, _ = fmt.Fprintf(os.Stdout, "TUI error: %v\n", tuiRunErr)
+		os.Exit(1)
+	}
+}
+
+// tuiTestMode runs the testmaster TUI mode.
+func tuiTestMode() {
+	// Check license (Tier 2 required).
+	mgr, mgrErr := license.NewManager()
+	if mgrErr != nil {
+		logging.Warn("license manager initialization failed", "error", mgrErr)
+	}
+	if mgr != nil {
+		state := mgr.GetState()
+		if state == nil {
+			result := mgr.StartTrial()
+			if !result.Success {
+				_, _ = fmt.Fprintf(os.Stdout, "Error: %s\n", result.Message)
+				os.Exit(1)
+			}
+		} else if state.Tier < license.TierTestSuite && !state.IsTrialMode {
+			_, _ = fmt.Fprintln(os.Stdout, "Error: Test Suite TUI requires Tier 2 license")
+			os.Exit(1)
+		}
+	}
+
+	// Launch testmaster TUI.
+	tuiApp := testmasterTUI.New()
+
+	// Set up callbacks.
+	tuiApp.OnQuit = func() {
+		tuiApp.Stop()
+	}
+
+	tuiApp.Log("The Stem TUI started")
+	tuiApp.Log("Press F1 to start test, F2 to stop, F10 to quit")
+
+	tuiRunErr := tuiApp.Run()
+	if tuiRunErr != nil {
+		_, _ = fmt.Fprintf(os.Stdout, "TUI error: %v\n", tuiRunErr)
 		os.Exit(1)
 	}
 }
@@ -834,103 +1218,22 @@ func tuiCmd(args []string) {
 	iface := fs.String("interface", "", "Network interface (required for reflect mode)")
 	fs.StringVar(iface, "i", "", "Network interface (shorthand)")
 
-	if err := fs.Parse(args); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+	err := fs.Parse(args)
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
 
-	fmt.Printf("%s %s - Terminal UI\n", ProductName, version.Version)
+	_, _ = fmt.Fprintf(os.Stdout, "%s %s - Terminal UI\n", ProductName, version.Version)
 
 	switch *mode {
 	case "reflect", "reflector":
-		if *iface == "" {
-			fmt.Println("Error: --interface is required for reflect mode")
-			fmt.Println("Usage: stem tui --mode reflect -i eth0")
-			os.Exit(1)
-		}
-
-		// Check license (Tier 1 minimum)
-		mgr, err := license.NewManager()
-		if err != nil {
-			logging.Warn("license manager initialization failed", "error", err)
-		}
-		if mgr != nil && !mgr.IsActivated() {
-			result := mgr.StartTrial()
-			if !result.Success {
-				fmt.Printf("Error: %s\n", result.Message)
-				os.Exit(1)
-			}
-		}
-
-		// Build reflector config
-		cfg := &reflectorConfig.Config{
-			Interface:       *iface,
-			SignatureFilter: DefaultSignatureFilter,
-			Reflection: reflectorConfig.ReflectConfig{
-				Mode: DefaultReflectionMode,
-			},
-		}
-
-		// Create and start reflector dataplane
-		dp, err := reflectorDP.New(cfg)
-		if err != nil {
-			fmt.Printf("Error: Failed to create reflector: %v\n", err)
-			os.Exit(1)
-		}
-		defer dp.Close()
-
-		if err := dp.Start(); err != nil {
-			dp.Close() // Cleanup before exit
-			fmt.Printf("Error: Failed to start reflector: %v\n", err)
-			os.Exit(1) //nolint:gocritic // Explicit dp.Close() above ensures cleanup
-		}
-
-		// Launch reflector TUI
-		tuiApp := reflectorTUI.New(dp)
-		if err := tuiApp.Run(); err != nil {
-			fmt.Printf("TUI error: %v\n", err)
-			os.Exit(1)
-		}
-
+		tuiReflectMode(*iface)
 	case "test", "testmaster", "":
-		// Check license (Tier 2 required)
-		mgr, err := license.NewManager()
-		if err != nil {
-			logging.Warn("license manager initialization failed", "error", err)
-		}
-		if mgr != nil {
-			state := mgr.GetState()
-			if state == nil {
-				result := mgr.StartTrial()
-				if !result.Success {
-					fmt.Printf("Error: %s\n", result.Message)
-					os.Exit(1)
-				}
-			} else if state.Tier < license.TierTestSuite && !state.IsTrialMode {
-				fmt.Println("Error: Test Suite TUI requires Tier 2 license")
-				os.Exit(1)
-			}
-		}
-
-		// Launch testmaster TUI
-		tuiApp := testmasterTUI.New()
-
-		// Set up callbacks
-		tuiApp.OnQuit = func() {
-			tuiApp.Stop()
-		}
-
-		tuiApp.Log("The Stem TUI started")
-		tuiApp.Log("Press F1 to start test, F2 to stop, F10 to quit")
-
-		if err := tuiApp.Run(); err != nil {
-			fmt.Printf("TUI error: %v\n", err)
-			os.Exit(1)
-		}
-
+		tuiTestMode()
 	default:
-		fmt.Printf("Error: Unknown TUI mode '%s'\n", *mode)
-		fmt.Println("Valid modes: test, reflect")
+		_, _ = fmt.Fprintf(os.Stdout, "Error: Unknown TUI mode '%s'\n", *mode)
+		_, _ = fmt.Fprintln(os.Stdout, "Valid modes: test, reflect")
 		os.Exit(1)
 	}
 }
@@ -940,37 +1243,38 @@ func helpCmd(args []string) {
 	simple := fs.Bool("simple", false, "Show simplified explanations for non-technical users")
 	fs.BoolVar(simple, "s", false, "Show simplified explanations (shorthand)")
 
-	if err := fs.Parse(args); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+	err := fs.Parse(args)
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
 
-	// If no topic specified, show general help
+	// If no topic specified, show general help.
 	if fs.NArg() == 0 {
-		printUsage()
+		printUsage(os.Stdout)
 		return
 	}
 
 	topic := strings.ToLower(fs.Arg(0))
 
-	// Try to find the topic in our help system
+	// Try to find the topic in our help system.
 	if help.ShowHelp(topic, *simple) {
 		return
 	}
 
-	// Not found in help system
-	fmt.Printf("No help found for '%s'\n\n", topic)
-	fmt.Println("Available help topics:")
-	fmt.Println("  Commands:   reflect, test, web, license")
-	fmt.Println("  Tests:      throughput, latency, frame_loss, y1564_config, ...")
-	fmt.Println("  Categories: rfc2544, y1564, rfc2889, rfc6349, y1731, mef, tsn")
-	fmt.Println("\nUse 'stem help tests' for a complete list of tests.")
-	fmt.Println("Use 'stem glossary' for network terminology definitions.")
-	fmt.Println("Use 'stem tutorial' for step-by-step guides.")
+	// Not found in help system.
+	_, _ = fmt.Fprintf(os.Stdout, "No help found for '%s'\n\n", topic)
+	_, _ = fmt.Fprintln(os.Stdout, "Available help topics:")
+	_, _ = fmt.Fprintln(os.Stdout, "  Commands:   reflect, test, web, license")
+	_, _ = fmt.Fprintln(os.Stdout, "  Tests:      throughput, latency, frame_loss, y1564_config, ...")
+	_, _ = fmt.Fprintln(os.Stdout, "  Categories: rfc2544, y1564, rfc2889, rfc6349, y1731, mef, tsn")
+	_, _ = fmt.Fprintln(os.Stdout, "\nUse 'stem help tests' for a complete list of tests.")
+	_, _ = fmt.Fprintln(os.Stdout, "Use 'stem glossary' for network terminology definitions.")
+	_, _ = fmt.Fprintln(os.Stdout, "Use 'stem tutorial' for step-by-step guides.")
 }
 
 func tutorialCmd(args []string) {
-	// If no tutorial specified, list available tutorials
+	// If no tutorial specified, list available tutorials.
 	if len(args) == 0 {
 		help.ShowTutorial("")
 		return
@@ -979,8 +1283,8 @@ func tutorialCmd(args []string) {
 	tutorialID := strings.ToLower(strings.TrimSpace(args[0]))
 
 	if !help.ShowTutorial(tutorialID) {
-		fmt.Printf("Tutorial '%s' not found.\n\n", tutorialID)
-		help.ShowTutorial("") // Show available tutorials
+		_, _ = fmt.Fprintf(os.Stdout, "Tutorial '%s' not found.\n\n", tutorialID)
+		help.ShowTutorial("") // Show available tutorials.
 	}
 }
 
@@ -990,28 +1294,29 @@ func glossaryCmd(args []string) {
 	fs.BoolVar(simple, "s", false, "Show only simple definitions (shorthand)")
 	search := fs.String("search", "", "Search for terms containing keyword")
 
-	if err := fs.Parse(args); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+	err := fs.Parse(args)
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
 
-	// Search mode
+	// Search mode.
 	if *search != "" {
-		hs := help.NewHelpSystem()
+		hs := help.NewSystem()
 		results := hs.SearchGlossary(*search)
 		if len(results) == 0 {
-			fmt.Printf("No terms found matching '%s'\n", *search)
+			_, _ = fmt.Fprintf(os.Stdout, "No terms found matching '%s'\n", *search)
 			return
 		}
-		fmt.Printf("Terms matching '%s':\n\n", *search)
+		_, _ = fmt.Fprintf(os.Stdout, "Terms matching '%s':\n\n", *search)
 		for _, entry := range results {
-			fmt.Printf("  %s - %s\n", entry.Term, entry.FullName)
+			_, _ = fmt.Fprintf(os.Stdout, "  %s - %s\n", entry.Term, entry.FullName)
 		}
-		fmt.Println("\nUse 'stem glossary <term>' for full definition.")
+		_, _ = fmt.Fprintln(os.Stdout, "\nUse 'stem glossary <term>' for full definition.")
 		return
 	}
 
-	// If no term specified, list all terms
+	// If no term specified, list all terms.
 	if fs.NArg() == 0 {
 		help.ShowGlossary("", *simple)
 		return
@@ -1020,9 +1325,51 @@ func glossaryCmd(args []string) {
 	term := strings.ToLower(fs.Arg(0))
 
 	if !help.ShowGlossary(term, *simple) {
-		fmt.Printf("Term '%s' not found in glossary.\n\n", term)
-		fmt.Println("Use 'stem glossary' to see all available terms.")
-		fmt.Println("Use 'stem glossary --search <keyword>' to search.")
+		_, _ = fmt.Fprintf(os.Stdout, "Term '%s' not found in glossary.\n\n", term)
+		_, _ = fmt.Fprintln(os.Stdout, "Use 'stem glossary' to see all available terms.")
+		_, _ = fmt.Fprintln(os.Stdout, "Use 'stem glossary --search <keyword>' to search.")
+	}
+}
+
+// displayLicenseStatus displays the license status.
+func displayLicenseStatus(mgr *license.Manager) {
+	state := mgr.GetState()
+	fp := mgr.GetFingerprint()
+
+	_, _ = fmt.Fprintf(os.Stdout, "%s - License Status\n", ProductName)
+	_, _ = fmt.Fprintln(os.Stdout, strings.Repeat("=", licenseBannerWidth))
+
+	switch {
+	case state == nil:
+		_, _ = fmt.Fprintln(os.Stdout, "Status:    Not Activated")
+		_, _ = fmt.Fprintln(os.Stdout, "\nTo start a 14-day trial:")
+		_, _ = fmt.Fprintln(os.Stdout, "  stem license --trial")
+		_, _ = fmt.Fprintln(os.Stdout, "\nTo activate with a license key:")
+		_, _ = fmt.Fprintln(os.Stdout, "  stem license --activate XXXX-XXXX-XXXX-XXXX")
+	case state.IsTrialMode:
+		remaining := mgr.TrialDaysRemaining()
+		_, _ = fmt.Fprintln(os.Stdout, "Status:    Trial Mode")
+		_, _ = fmt.Fprintf(os.Stdout, "Days Left: %d\n", remaining)
+		_, _ = fmt.Fprintf(os.Stdout, "Tier:      %s (full access during trial)\n", state.Tier)
+		if remaining <= trialWarningDays {
+			_, _ = fmt.Fprintln(os.Stdout, "\nWarning: Trial ending soon!")
+			_, _ = fmt.Fprintln(os.Stdout, "Activate a license to continue using The Stem")
+		}
+	default:
+		_, _ = fmt.Fprintln(os.Stdout, "Status:    Licensed")
+		_, _ = fmt.Fprintf(os.Stdout, "Tier:      %s\n", state.Tier)
+		_, _ = fmt.Fprintf(os.Stdout, "Key:       %s\n", license.FormatKey(state.LicenseKey))
+		_, _ = fmt.Fprintf(os.Stdout, "Expires:   %s\n", state.ExpiresAt.Format("2006-01-02"))
+	}
+
+	_, _ = fmt.Fprintf(os.Stdout, "\nDevice ID: %s\n", fp.Hash())
+	_, _ = fmt.Fprintf(os.Stdout, "Platform:  %s\n", fp.Platform)
+
+	if state != nil && len(state.Features) > 0 {
+		_, _ = fmt.Fprintf(os.Stdout, "\nEnabled Features:\n")
+		for _, f := range state.Features {
+			_, _ = fmt.Fprintf(os.Stdout, "  - %s\n", f)
+		}
 	}
 }
 
@@ -1033,14 +1380,15 @@ func licenseCmd(args []string) {
 	status := fs.Bool("status", false, "Show license status")
 	deactivate := fs.Bool("deactivate", false, "Remove license")
 
-	if err := fs.Parse(args); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+	err := fs.Parse(args)
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
 
 	mgr, err := license.NewManager()
 	if err != nil {
-		fmt.Printf("Error: Failed to initialize license manager: %v\n", err)
+		_, _ = fmt.Fprintf(os.Stdout, "Error: Failed to initialize license manager: %v\n", err)
 		os.Exit(1)
 	}
 
@@ -1048,73 +1396,36 @@ func licenseCmd(args []string) {
 	case *activate != "":
 		result := mgr.Activate(*activate)
 		if result.Success {
-			fmt.Printf("Success: %s\n", result.Message)
-			fmt.Printf("Tier: %s\n", result.Tier)
+			_, _ = fmt.Fprintf(os.Stdout, "Success: %s\n", result.Message)
+			_, _ = fmt.Fprintf(os.Stdout, "Tier: %s\n", result.Tier)
 		} else {
-			fmt.Printf("Error: %s\n", result.Message)
+			_, _ = fmt.Fprintf(os.Stdout, "Error: %s\n", result.Message)
 			os.Exit(1)
 		}
 
 	case *trial:
 		result := mgr.StartTrial()
 		if result.Success {
-			fmt.Printf("Success: %s\n", result.Message)
+			_, _ = fmt.Fprintf(os.Stdout, "Success: %s\n", result.Message)
 			if result.DaysRemaining > 0 {
-				fmt.Printf("Days remaining: %d\n", result.DaysRemaining)
+				_, _ = fmt.Fprintf(os.Stdout, "Days remaining: %d\n", result.DaysRemaining)
 			}
 		} else {
-			fmt.Printf("Error: %s\n", result.Message)
+			_, _ = fmt.Fprintf(os.Stdout, "Error: %s\n", result.Message)
 			os.Exit(1)
 		}
 
 	case *deactivate:
-		if err := mgr.Deactivate(); err != nil {
-			fmt.Printf("Error: Failed to deactivate: %v\n", err)
+		deactErr := mgr.Deactivate()
+		if deactErr != nil {
+			_, _ = fmt.Fprintf(os.Stdout, "Error: Failed to deactivate: %v\n", deactErr)
 			os.Exit(1)
 		}
-		fmt.Println("License deactivated successfully")
+		_, _ = fmt.Fprintln(os.Stdout, "License deactivated successfully")
 
 	case *status:
 		fallthrough
 	default:
-		state := mgr.GetState()
-		fp := mgr.GetFingerprint()
-
-		fmt.Printf("%s - License Status\n", ProductName)
-		fmt.Println(strings.Repeat("=", 50))
-
-		switch {
-		case state == nil:
-			fmt.Println("Status:    Not Activated")
-			fmt.Println("\nTo start a 14-day trial:")
-			fmt.Println("  stem license --trial")
-			fmt.Println("\nTo activate with a license key:")
-			fmt.Println("  stem license --activate XXXX-XXXX-XXXX-XXXX")
-		case state.IsTrialMode:
-			remaining := mgr.TrialDaysRemaining()
-			fmt.Println("Status:    Trial Mode")
-			fmt.Printf("Days Left: %d\n", remaining)
-			fmt.Printf("Tier:      %s (full access during trial)\n", state.Tier)
-			if remaining <= 3 {
-				fmt.Println("\nWarning: Trial ending soon!")
-				fmt.Println("Activate a license to continue using The Stem")
-			}
-		default:
-			fmt.Println("Status:    Licensed")
-			fmt.Printf("Tier:      %s\n", state.Tier)
-			fmt.Printf("Key:       %s\n", license.FormatKey(state.LicenseKey))
-			fmt.Printf("Expires:   %s\n", state.ExpiresAt.Format("2006-01-02"))
-		}
-
-		fmt.Printf("\nDevice ID: %s\n", fp.Hash())
-		fmt.Printf("Platform:  %s\n", fp.Platform)
-
-		// Show features
-		if state != nil && len(state.Features) > 0 {
-			fmt.Printf("\nEnabled Features:\n")
-			for _, f := range state.Features {
-				fmt.Printf("  - %s\n", f)
-			}
-		}
+		displayLicenseStatus(mgr)
 	}
 }

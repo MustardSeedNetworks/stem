@@ -4,6 +4,7 @@ package logging
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"net/http"
 )
@@ -29,22 +30,24 @@ func (h *RedactingHandler) Enabled(ctx context.Context, level slog.Level) bool {
 
 // Handle processes the log record, redacting sensitive data from the message
 // and all attributes before passing to the inner handler.
-//
-//nolint:gocritic // hugeParam: slog.Handler interface requires value receiver.
 func (h *RedactingHandler) Handle(ctx context.Context, r slog.Record) error {
-	// Redact the message
+	// Redact the message.
 	r.Message = RedactString(r.Message)
 
-	// Create a new record with redacted attributes
+	// Create a new record with redacted attributes.
 	newRecord := slog.NewRecord(r.Time, r.Level, r.Message, r.PC)
 
-	// Redact each attribute
+	// Redact each attribute.
 	r.Attrs(func(a slog.Attr) bool {
 		newRecord.AddAttrs(h.redactAttr(a))
 		return true
 	})
 
-	return h.inner.Handle(ctx, newRecord)
+	err := h.inner.Handle(ctx, newRecord)
+	if err != nil {
+		return fmt.Errorf("handler failed: %w", err)
+	}
+	return nil
 }
 
 // WithAttrs returns a new handler with the given attributes redacted and added.
@@ -90,14 +93,14 @@ func (h *RedactingHandler) redactAttr(a slog.Attr) slog.Attr {
 		redacted := RedactHeaders(v)
 		return slog.Any(key, redacted)
 
-	case map[string]interface{}:
-		// Use existing RedactMap for maps
+	case map[string]any:
+		// Use existing RedactMap for maps.
 		redacted := RedactMap(v)
 		return slog.Any(key, redacted)
 
 	case map[string]string:
-		// Convert and redact string maps
-		m := make(map[string]interface{}, len(v))
+		// Convert and redact string maps.
+		m := make(map[string]any, len(v))
 		for k, val := range v {
 			m[k] = val
 		}
@@ -105,8 +108,9 @@ func (h *RedactingHandler) redactAttr(a slog.Attr) slog.Attr {
 		return slog.Any(key, redacted)
 
 	case []slog.Attr:
-		// Handle nested groups
-		redactedAttrs := make([]any, 0, len(v)*2)
+		// Handle nested groups. Each attribute becomes a key-value pair, hence *2.
+		const keyValuePairSize = 2
+		redactedAttrs := make([]any, 0, len(v)*keyValuePairSize)
 		for _, nested := range v {
 			redactedNested := h.redactAttr(nested)
 			redactedAttrs = append(redactedAttrs, redactedNested.Key, redactedNested.Value.Any())

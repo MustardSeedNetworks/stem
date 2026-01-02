@@ -8,57 +8,58 @@
 
 package help
 
-// GetAllTests returns help content for all tests
+// GetAllTests returns help content for all tests.
 func GetAllTests() map[string]TestHelp {
 	return map[string]TestHelp{
 		// RFC 2544 Tests
-		"throughput":      RFC2544Throughput,
-		"latency":         RFC2544Latency,
-		"frame_loss":      RFC2544FrameLoss,
-		"back_to_back":    RFC2544BackToBack,
-		"system_recovery": RFC2544SystemRecovery,
-		"reset":           RFC2544Reset,
+		"throughput":      rfc2544Throughput,
+		"latency":         rfc2544Latency,
+		"frame_loss":      rfc2544FrameLoss,
+		"back_to_back":    rfc2544BackToBack,
+		"system_recovery": rfc2544SystemRecovery,
+		"reset":           rfc2544Reset,
 
 		// Y.1564 Tests
-		"y1564_config":      Y1564Config,
-		"y1564_performance": Y1564Performance,
-		"y1564_full":        Y1564Full,
+		"y1564_config":      y1564Config,
+		"y1564_performance": y1564Performance,
+		"y1564_full":        y1564Full,
 
 		// RFC 2889 Tests
-		"forwarding":    RFC2889Forwarding,
-		"address_cache": RFC2889AddressCache,
-		"learning_rate": RFC2889LearningRate,
-		"broadcast":     RFC2889Broadcast,
-		"congestion":    RFC2889Congestion,
+		"forwarding":    rfc2889Forwarding,
+		"address_cache": rfc2889AddressCache,
+		"learning_rate": rfc2889LearningRate,
+		"broadcast":     rfc2889Broadcast,
+		"congestion":    rfc2889Congestion,
 
 		// RFC 6349 Tests
-		"tcp_throughput": RFC6349TCPThroughput,
-		"path_analysis":  RFC6349PathAnalysis,
+		"tcp_throughput": rfc6349TCPThroughput,
+		"path_analysis":  rfc6349PathAnalysis,
 
 		// Y.1731 Tests
-		"frame_delay":      Y1731FrameDelay,
-		"y1731_frame_loss": Y1731FrameLoss,
-		"synthetic_loss":   Y1731SyntheticLoss,
-		"loopback":         Y1731Loopback,
+		"frame_delay":      y1731FrameDelay,
+		"y1731_frame_loss": y1731FrameLoss,
+		"synthetic_loss":   y1731SyntheticLoss,
+		"loopback":         y1731Loopback,
 
 		// MEF Tests
-		"mef_config":      MEFConfig,
-		"mef_performance": MEFPerformance,
-		"mef_full":        MEFFull,
+		"mef_config":      mefConfig,
+		"mef_performance": mefPerformance,
+		"mef_full":        mefFull,
 
 		// TSN Tests
-		"gate_timing":       TSNGateTiming,
-		"traffic_isolation": TSNTrafficIsolation,
-		"scheduled_latency": TSNScheduledLatency,
-		"tsn_full":          TSNFull,
+		"gate_timing":       tsnGateTiming,
+		"traffic_isolation": tsnTrafficIsolation,
+		"scheduled_latency": tsnScheduledLatency,
+		"tsn_full":          tsnFull,
 	}
 }
 
 // ============================================================================
-// RFC 2544 Tests - Benchmarking Methodology for Network Interconnect Devices
+// RFC 2544 Tests - Benchmarking Methodology for Network Interconnect Devices.
 // ============================================================================
 
-var RFC2544Throughput = TestHelp{
+//nolint:gochecknoglobals // Static help content.
+var rfc2544Throughput = TestHelp{
 	ID:       "throughput",
 	Name:     "Throughput Test",
 	Standard: "RFC 2544 Section 26.1",
@@ -217,7 +218,8 @@ paying for a 1 Gbps connection, this test tells you if you're actually getting
 	SeeAlso:    []string{"latency", "frame_loss", "y1564_config"},
 }
 
-var RFC2544Latency = TestHelp{
+//nolint:gochecknoglobals // Static help content.
+var rfc2544Latency = TestHelp{
 	ID:       "latency",
 	Name:     "Latency Test",
 	Standard: "RFC 2544 Section 26.2",
@@ -377,7 +379,8 @@ the delay keeps changing, which can cause choppy video or audio.`,
 	SeeAlso:    []string{"throughput", "frame_delay", "y1564_performance"},
 }
 
-var RFC2544FrameLoss = TestHelp{
+//nolint:gochecknoglobals // Static help content.
+var rfc2544FrameLoss = TestHelp{
 	ID:       "frame_loss",
 	Name:     "Frame Loss Rate Test",
 	Standard: "RFC 2544 Section 26.3",
@@ -514,7 +517,8 @@ This helps you understand network behavior during peak usage and plan capacity.`
 	SeeAlso:    []string{"throughput", "y1731_frame_loss"},
 }
 
-var RFC2544BackToBack = TestHelp{
+//nolint:gochecknoglobals,dupl // Static help content.
+var rfc2544BackToBack = TestHelp{
 	ID:       "back_to_back",
 	Name:     "Back-to-Back Frames Test",
 	Standard: "RFC 2544 Section 26.4",
@@ -612,11 +616,14 @@ Higher numbers are better - they mean the network can handle bigger "waves" of d
 		"Important for networks carrying video or bulk transfers",
 	},
 
+	CommonIssues: nil,
+
 	RFCSection: "Section 26.4",
 	SeeAlso:    []string{"throughput", "congestion"},
 }
 
-var RFC2544SystemRecovery = TestHelp{
+//nolint:gochecknoglobals // Static help content.
+var rfc2544SystemRecovery = TestHelp{
 	ID:       "system_recovery",
 	Name:     "System Recovery Test",
 	Standard: "RFC 2544 Section 26.5",
@@ -700,11 +707,15 @@ traffic spikes.`,
 		},
 	},
 
+	Tips:         nil,
+	CommonIssues: nil,
+
 	RFCSection: "Section 26.5",
 	SeeAlso:    []string{"throughput", "reset"},
 }
 
-var RFC2544Reset = TestHelp{
+//nolint:gochecknoglobals // Static help content.
+var rfc2544Reset = TestHelp{
 	ID:       "reset",
 	Name:     "Reset Test",
 	Standard: "RFC 2544 Section 26.6",
@@ -775,15 +786,19 @@ Lower reset times mean less disruption during maintenance or failures.`,
 		},
 	},
 
+	Tips:         nil,
+	CommonIssues: nil,
+
 	RFCSection: "Section 26.6",
 	SeeAlso:    []string{"system_recovery"},
 }
 
 // ============================================================================
-// Y.1564 Tests - Ethernet Service Activation Test Methodology
+// Y.1564 Tests - Ethernet Service Activation Test Methodology.
 // ============================================================================
 
-var Y1564Config = TestHelp{
+//nolint:gochecknoglobals // Static help content.
+var y1564Config = TestHelp{
 	ID:       "y1564_config",
 	Name:     "Y.1564 Service Configuration Test",
 	Standard: "ITU-T Y.1564",
@@ -953,10 +968,12 @@ This is the industry standard for "turning up" new carrier ethernet services.`,
 		},
 	},
 
-	SeeAlso: []string{"y1564_performance", "throughput", "mef_config"},
+	RFCSection: "",
+	SeeAlso:    []string{"y1564_performance", "throughput", "mef_config"},
 }
 
-var Y1564Performance = TestHelp{
+//nolint:gochecknoglobals // Static help content.
+var y1564Performance = TestHelp{
 	ID:       "y1564_performance",
 	Name:     "Y.1564 Service Performance Test",
 	Standard: "ITU-T Y.1564",
@@ -1050,10 +1067,15 @@ thorough validation.`,
 		},
 	},
 
-	SeeAlso: []string{"y1564_config", "y1564_full"},
+	Tips:         nil,
+	CommonIssues: nil,
+
+	RFCSection: "",
+	SeeAlso:    []string{"y1564_config", "y1564_full"},
 }
 
-var Y1564Full = TestHelp{
+//nolint:gochecknoglobals // Static help content.
+var y1564Full = TestHelp{
 	ID:       "y1564_full",
 	Name:     "Y.1564 Full SAC Test",
 	Standard: "ITU-T Y.1564",
@@ -1110,6 +1132,8 @@ Total test time is typically 30 minutes for a standard activation.`,
 		},
 	},
 
+	Metrics: nil,
+
 	PassCriteria: "Both Configuration and Performance tests pass",
 	FailMeaning:  "Service does not meet acceptance criteria",
 
@@ -1121,14 +1145,19 @@ Total test time is typically 30 minutes for a standard activation.`,
 		},
 	},
 
-	SeeAlso: []string{"y1564_config", "y1564_performance", "mef_full"},
+	Tips:         nil,
+	CommonIssues: nil,
+
+	RFCSection: "",
+	SeeAlso:    []string{"y1564_config", "y1564_performance", "mef_full"},
 }
 
 // ============================================================================
-// RFC 2889 Tests - Benchmarking Methodology for LAN Switching Devices
+// RFC 2889 Tests - Benchmarking Methodology for LAN Switching Devices.
 // ============================================================================
 
-var RFC2889Forwarding = TestHelp{
+//nolint:gochecknoglobals // Static help content.
+var rfc2889Forwarding = TestHelp{
 	ID:       "forwarding",
 	Name:     "Forwarding Rate Test",
 	Standard: "RFC 2889 Section 5.2",
@@ -1208,11 +1237,15 @@ Important for environments with many active connections simultaneously.`,
 		},
 	},
 
+	Tips:         nil,
+	CommonIssues: nil,
+
 	RFCSection: "Section 5.2",
 	SeeAlso:    []string{"address_cache", "throughput"},
 }
 
-var RFC2889AddressCache = TestHelp{
+//nolint:gochecknoglobals // Static help content.
+var rfc2889AddressCache = TestHelp{
 	ID:       "address_cache",
 	Name:     "Address Caching Capacity Test",
 	Standard: "RFC 2889 Section 5.5",
@@ -1291,11 +1324,15 @@ Think of it like a phonebook:
 		},
 	},
 
+	Tips:         nil,
+	CommonIssues: nil,
+
 	RFCSection: "Section 5.5",
 	SeeAlso:    []string{"learning_rate", "forwarding"},
 }
 
-var RFC2889LearningRate = TestHelp{
+//nolint:gochecknoglobals // Static help content.
+var rfc2889LearningRate = TestHelp{
 	ID:       "learning_rate",
 	Name:     "Address Learning Rate Test",
 	Standard: "RFC 2889 Section 5.6",
@@ -1333,6 +1370,8 @@ Faster learning = smoother experience for users joining the network.`,
 	WhenNotToUse: `• Static networks with fixed devices
 • Small offices with few devices`,
 
+	Parameters: nil,
+
 	Metrics: []Metric{
 		{
 			Name:       "Learning Rate",
@@ -1342,6 +1381,9 @@ Faster learning = smoother experience for users joining the network.`,
 		},
 	},
 
+	PassCriteria: "",
+	FailMeaning:  "",
+
 	Examples: []Example{
 		{
 			Desc:    "Test learning rate",
@@ -1350,11 +1392,15 @@ Faster learning = smoother experience for users joining the network.`,
 		},
 	},
 
+	Tips:         nil,
+	CommonIssues: nil,
+
 	RFCSection: "Section 5.6",
 	SeeAlso:    []string{"address_cache"},
 }
 
-var RFC2889Broadcast = TestHelp{
+//nolint:gochecknoglobals // Static help content.
+var rfc2889Broadcast = TestHelp{
 	ID:       "broadcast",
 	Name:     "Broadcast Frame Handling Test",
 	Standard: "RFC 2889 Section 5.7",
@@ -1390,6 +1436,8 @@ This test checks if your switch can handle normal broadcast levels without probl
 
 	WhenNotToUse: `• Isolated point-to-point testing`,
 
+	Parameters: nil,
+
 	Metrics: []Metric{
 		{
 			Name:       "Broadcast Handling Rate",
@@ -1405,6 +1453,9 @@ This test checks if your switch can handle normal broadcast levels without probl
 		},
 	},
 
+	PassCriteria: "",
+	FailMeaning:  "",
+
 	Examples: []Example{
 		{
 			Desc:    "Broadcast handling test",
@@ -1413,11 +1464,15 @@ This test checks if your switch can handle normal broadcast levels without probl
 		},
 	},
 
+	Tips:         nil,
+	CommonIssues: nil,
+
 	RFCSection: "Section 5.7",
 	SeeAlso:    []string{"forwarding", "congestion"},
 }
 
-var RFC2889Congestion = TestHelp{
+//nolint:gochecknoglobals // Static help content.
+var rfc2889Congestion = TestHelp{
 	ID:       "congestion",
 	Name:     "Congestion Control Test",
 	Standard: "RFC 2889 Section 5.8",
@@ -1458,6 +1513,8 @@ This test reveals your switch's personality under stress.`,
 	WhenNotToUse: `• Non-blocking switch architectures
 • When congestion shouldn't occur by design`,
 
+	Parameters: nil,
+
 	Metrics: []Metric{
 		{
 			Name:       "Head-of-Line Blocking",
@@ -1473,6 +1530,9 @@ This test reveals your switch's personality under stress.`,
 		},
 	},
 
+	PassCriteria: "",
+	FailMeaning:  "",
+
 	Examples: []Example{
 		{
 			Desc:    "Congestion control test",
@@ -1481,15 +1541,19 @@ This test reveals your switch's personality under stress.`,
 		},
 	},
 
+	Tips:         nil,
+	CommonIssues: nil,
+
 	RFCSection: "Section 5.8",
 	SeeAlso:    []string{"forwarding", "back_to_back"},
 }
 
 // ============================================================================
-// RFC 6349 Tests - Framework for TCP Throughput Testing
+// RFC 6349 Tests - Framework for TCP Throughput Testing.
 // ============================================================================
 
-var RFC6349TCPThroughput = TestHelp{
+//nolint:gochecknoglobals // Static help content.
+var rfc6349TCPThroughput = TestHelp{
 	ID:       "tcp_throughput",
 	Name:     "TCP Throughput Test",
 	Standard: "RFC 6349",
@@ -1586,10 +1650,15 @@ This is the difference between "theoretical maximum" and "what you'll actually g
 		},
 	},
 
-	SeeAlso: []string{"path_analysis", "throughput"},
+	Tips:         nil,
+	CommonIssues: nil,
+
+	RFCSection: "",
+	SeeAlso:    []string{"path_analysis", "throughput"},
 }
 
-var RFC6349PathAnalysis = TestHelp{
+//nolint:gochecknoglobals // Static help content.
+var rfc6349PathAnalysis = TestHelp{
 	ID:       "path_analysis",
 	Name:     "Path Analysis Test",
 	Standard: "RFC 6349",
@@ -1657,6 +1726,9 @@ Use this when downloads are slow and you want to know WHY, not just HOW slow.`,
 		},
 	},
 
+	PassCriteria: "",
+	FailMeaning:  "",
+
 	Examples: []Example{
 		{
 			Desc:    "Analyze path to server",
@@ -1665,14 +1737,19 @@ Use this when downloads are slow and you want to know WHY, not just HOW slow.`,
 		},
 	},
 
-	SeeAlso: []string{"tcp_throughput", "latency"},
+	Tips:         nil,
+	CommonIssues: nil,
+
+	RFCSection: "",
+	SeeAlso:    []string{"tcp_throughput", "latency"},
 }
 
 // ============================================================================
-// Y.1731 Tests - OAM Functions for Ethernet Networks
+// Y.1731 Tests - OAM Functions for Ethernet Networks.
 // ============================================================================
 
-var Y1731FrameDelay = TestHelp{
+//nolint:gochecknoglobals,dupl // Static help content.
+var y1731FrameDelay = TestHelp{
 	ID:       "frame_delay",
 	Name:     "Frame Delay Measurement",
 	Standard: "ITU-T Y.1731",
@@ -1747,6 +1824,9 @@ not the application level.`,
 		},
 	},
 
+	PassCriteria: "",
+	FailMeaning:  "",
+
 	Examples: []Example{
 		{
 			Desc:    "Two-way delay measurement",
@@ -1755,10 +1835,15 @@ not the application level.`,
 		},
 	},
 
-	SeeAlso: []string{"latency", "y1731_frame_loss"},
+	Tips:         nil,
+	CommonIssues: nil,
+
+	RFCSection: "",
+	SeeAlso:    []string{"latency", "y1731_frame_loss"},
 }
 
-var Y1731FrameLoss = TestHelp{
+//nolint:gochecknoglobals // Static help content.
+var y1731FrameLoss = TestHelp{
 	ID:       "y1731_frame_loss",
 	Name:     "Frame Loss Measurement",
 	Standard: "ITU-T Y.1731",
@@ -1791,6 +1876,8 @@ Benefits:
 	WhenNotToUse: `• Initial service testing (use Y.1564)
 • If carrier doesn't support Y.1731`,
 
+	Parameters: nil,
+
 	Metrics: []Metric{
 		{
 			Name:       "Frame Loss Ratio",
@@ -1800,6 +1887,9 @@ Benefits:
 		},
 	},
 
+	PassCriteria: "",
+	FailMeaning:  "",
+
 	Examples: []Example{
 		{
 			Desc:    "Frame loss monitoring",
@@ -1808,10 +1898,15 @@ Benefits:
 		},
 	},
 
-	SeeAlso: []string{"frame_loss", "frame_delay"},
+	Tips:         nil,
+	CommonIssues: nil,
+
+	RFCSection: "",
+	SeeAlso:    []string{"frame_loss", "frame_delay"},
 }
 
-var Y1731SyntheticLoss = TestHelp{
+//nolint:gochecknoglobals // Static help content.
+var y1731SyntheticLoss = TestHelp{
 	ID:       "synthetic_loss",
 	Name:     "Synthetic Loss Measurement",
 	Standard: "ITU-T Y.1731",
@@ -1838,6 +1933,8 @@ Think of it like a "network heartbeat" - always checking, always monitoring.`,
 
 	WhenNotToUse: `• High-traffic links where frame loss measurement works`,
 
+	Parameters: nil,
+
 	Metrics: []Metric{
 		{
 			Name:       "Synthetic Loss Ratio",
@@ -1847,6 +1944,9 @@ Think of it like a "network heartbeat" - always checking, always monitoring.`,
 		},
 	},
 
+	PassCriteria: "",
+	FailMeaning:  "",
+
 	Examples: []Example{
 		{
 			Desc:    "Synthetic loss monitoring",
@@ -1855,10 +1955,15 @@ Think of it like a "network heartbeat" - always checking, always monitoring.`,
 		},
 	},
 
-	SeeAlso: []string{"y1731_frame_loss", "loopback"},
+	Tips:         nil,
+	CommonIssues: nil,
+
+	RFCSection: "",
+	SeeAlso:    []string{"y1731_frame_loss", "loopback"},
 }
 
-var Y1731Loopback = TestHelp{
+//nolint:gochecknoglobals // Static help content.
+var y1731Loopback = TestHelp{
 	ID:       "loopback",
 	Name:     "Loopback Test",
 	Standard: "ITU-T Y.1731",
@@ -1888,6 +1993,8 @@ Useful for:
 
 	WhenNotToUse: `• Performance testing (use other Y.1731 tests)`,
 
+	Parameters: nil,
+
 	Metrics: []Metric{
 		{
 			Name:       "Response",
@@ -1903,6 +2010,9 @@ Useful for:
 		},
 	},
 
+	PassCriteria: "",
+	FailMeaning:  "",
+
 	Examples: []Example{
 		{
 			Desc:    "Loopback test",
@@ -1911,14 +2021,19 @@ Useful for:
 		},
 	},
 
-	SeeAlso: []string{"frame_delay", "synthetic_loss"},
+	Tips:         nil,
+	CommonIssues: nil,
+
+	RFCSection: "",
+	SeeAlso:    []string{"frame_delay", "synthetic_loss"},
 }
 
 // ============================================================================
-// MEF Tests - Carrier Ethernet Service Tests
+// MEF Tests - Carrier Ethernet Service Tests.
 // ============================================================================
 
-var MEFConfig = TestHelp{
+//nolint:gochecknoglobals,dupl // Static help content.
+var mefConfig = TestHelp{
 	ID:       "mef_config",
 	Name:     "MEF Service Configuration Test",
 	Standard: "MEF 14/48",
@@ -1987,6 +2102,9 @@ results comparable and contractually meaningful.`,
 		},
 	},
 
+	PassCriteria: "",
+	FailMeaning:  "",
+
 	Examples: []Example{
 		{
 			Desc:    "MEF configuration test",
@@ -1995,10 +2113,15 @@ results comparable and contractually meaningful.`,
 		},
 	},
 
-	SeeAlso: []string{"y1564_config", "mef_performance"},
+	Tips:         nil,
+	CommonIssues: nil,
+
+	RFCSection: "",
+	SeeAlso:    []string{"y1564_config", "mef_performance"},
 }
 
-var MEFPerformance = TestHelp{
+//nolint:gochecknoglobals // Static help content.
+var mefPerformance = TestHelp{
 	ID:       "mef_performance",
 	Name:     "MEF Performance Test",
 	Standard: "MEF 14/48",
@@ -2039,6 +2162,11 @@ This catches problems that only show up after running for a while.`,
 		},
 	},
 
+	Metrics: nil,
+
+	PassCriteria: "",
+	FailMeaning:  "",
+
 	Examples: []Example{
 		{
 			Desc:    "MEF performance test",
@@ -2047,10 +2175,15 @@ This catches problems that only show up after running for a while.`,
 		},
 	},
 
-	SeeAlso: []string{"mef_config", "y1564_performance"},
+	Tips:         nil,
+	CommonIssues: nil,
+
+	RFCSection: "",
+	SeeAlso:    []string{"mef_config", "y1564_performance"},
 }
 
-var MEFFull = TestHelp{
+//nolint:gochecknoglobals // Static help content.
+var mefFull = TestHelp{
 	ID:       "mef_full",
 	Name:     "MEF Full Test Suite",
 	Standard: "MEF 14/48",
@@ -2075,6 +2208,13 @@ Use this for official service acceptance when MEF compliance is required.`,
 
 	WhenNotToUse: `• Troubleshooting (use individual tests)`,
 
+	Parameters: nil,
+
+	Metrics: nil,
+
+	PassCriteria: "",
+	FailMeaning:  "",
+
 	Examples: []Example{
 		{
 			Desc:    "Full MEF test",
@@ -2083,14 +2223,19 @@ Use this for official service acceptance when MEF compliance is required.`,
 		},
 	},
 
-	SeeAlso: []string{"mef_config", "mef_performance", "y1564_full"},
+	Tips:         nil,
+	CommonIssues: nil,
+
+	RFCSection: "",
+	SeeAlso:    []string{"mef_config", "mef_performance", "y1564_full"},
 }
 
 // ============================================================================
-// TSN Tests - Time-Sensitive Networking Tests
+// TSN Tests - Time-Sensitive Networking Tests.
 // ============================================================================
 
-var TSNGateTiming = TestHelp{
+//nolint:gochecknoglobals,dupl // Static help content.
+var tsnGateTiming = TestHelp{
 	ID:       "gate_timing",
 	Name:     "TSN Gate Timing Test",
 	Standard: "IEEE 802.1Qbv",
@@ -2184,10 +2329,14 @@ If gates aren't perfectly timed, industrial equipment might not work correctly.`
 		"Measure during worst-case scenarios",
 	},
 
-	SeeAlso: []string{"traffic_isolation", "scheduled_latency"},
+	CommonIssues: nil,
+
+	RFCSection: "",
+	SeeAlso:    []string{"traffic_isolation", "scheduled_latency"},
 }
 
-var TSNTrafficIsolation = TestHelp{
+//nolint:gochecknoglobals,dupl // Static help content.
+var tsnTrafficIsolation = TestHelp{
 	ID:       "traffic_isolation",
 	Name:     "TSN Traffic Class Isolation Test",
 	Standard: "IEEE 802.1Qbv/Qbu",
@@ -2255,6 +2404,9 @@ of regular traffic.`,
 		},
 	},
 
+	PassCriteria: "",
+	FailMeaning:  "",
+
 	Examples: []Example{
 		{
 			Desc:    "Traffic isolation test",
@@ -2263,10 +2415,15 @@ of regular traffic.`,
 		},
 	},
 
-	SeeAlso: []string{"gate_timing", "scheduled_latency"},
+	Tips:         nil,
+	CommonIssues: nil,
+
+	RFCSection: "",
+	SeeAlso:    []string{"gate_timing", "scheduled_latency"},
 }
 
-var TSNScheduledLatency = TestHelp{
+//nolint:gochecknoglobals,dupl // Static help content.
+var tsnScheduledLatency = TestHelp{
 	ID:       "scheduled_latency",
 	Name:     "TSN Scheduled Latency Test",
 	Standard: "IEEE 802.1Qbv",
@@ -2337,6 +2494,9 @@ Critical for factory automation, robotics, and automotive applications where
 		},
 	},
 
+	PassCriteria: "",
+	FailMeaning:  "",
+
 	Examples: []Example{
 		{
 			Desc:    "Scheduled latency test",
@@ -2345,10 +2505,15 @@ Critical for factory automation, robotics, and automotive applications where
 		},
 	},
 
-	SeeAlso: []string{"gate_timing", "traffic_isolation"},
+	Tips:         nil,
+	CommonIssues: nil,
+
+	RFCSection: "",
+	SeeAlso:    []string{"gate_timing", "traffic_isolation"},
 }
 
-var TSNFull = TestHelp{
+//nolint:gochecknoglobals // Static help content.
+var tsnFull = TestHelp{
 	ID:       "tsn_full",
 	Name:     "TSN Full Validation Suite",
 	Standard: "IEEE 802.1Qbv/Qbu",
@@ -2376,6 +2541,13 @@ into production.`,
 
 	WhenNotToUse: `• Troubleshooting specific issues (use individual tests)`,
 
+	Parameters: nil,
+
+	Metrics: nil,
+
+	PassCriteria: "",
+	FailMeaning:  "",
+
 	Examples: []Example{
 		{
 			Desc:    "Full TSN validation",
@@ -2384,10 +2556,14 @@ into production.`,
 		},
 	},
 
-	SeeAlso: []string{"gate_timing", "traffic_isolation", "scheduled_latency"},
+	Tips:         nil,
+	CommonIssues: nil,
+
+	RFCSection: "",
+	SeeAlso:    []string{"gate_timing", "traffic_isolation", "scheduled_latency"},
 }
 
-// GetAllCategories returns all test categories
+// GetAllCategories returns all test categories.
 func GetAllCategories() map[string]Category {
 	return map[string]Category{
 		"rfc2544": {

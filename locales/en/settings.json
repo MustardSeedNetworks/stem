@@ -1,0 +1,41 @@
+{
+  "title": "Settings",
+  "sections": {
+    "general": "General",
+    "interface": "Interface",
+    "testing": "Testing",
+    "license": "License",
+    "advanced": "Advanced"
+  },
+  "general": {
+    "language": "Language",
+    "theme": "Theme",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeSystem": "System"
+  },
+  "interface": {
+    "defaultInterface": "Default Interface",
+    "autoSelect": "Auto-select interface"
+  },
+  "testing": {
+    "defaultFrameSize": "Default Frame Size",
+    "defaultDuration": "Default Duration",
+    "autoSaveResults": "Auto-save results",
+    "resultsPath": "Results path"
+  },
+  "license": {
+    "status": "License Status",
+    "type": "License Type",
+    "expiresAt": "Expires",
+    "activate": "Activate License",
+    "startTrial": "Start Trial",
+    "enterKey": "Enter license key"
+  },
+  "advanced": {
+    "logLevel": "Log Level",
+    "enableTelemetry": "Enable telemetry",
+    "apiPort": "API Port",
+    "dataPlane": "Data Plane"
+  }
+}

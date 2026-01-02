@@ -1,0 +1,48 @@
+{
+  "auth": {
+    "invalidCredentials": "Credenciales invalidas",
+    "unauthorized": "No autorizado",
+    "sessionExpired": "Sesion expirada. Por favor inicie sesion nuevamente."
+  },
+  "network": {
+    "connectionFailed": "Conexion fallida",
+    "networkError": "Error de red",
+    "timeout": "Tiempo de espera agotado",
+    "serverUnavailable": "Servidor no disponible",
+    "disconnected": "Desconectado del servidor",
+    "interfaceNotFound": "Interfaz no encontrada",
+    "invalidInterface": "Interfaz invalida"
+  },
+  "test": {
+    "alreadyRunning": "Ya hay una prueba en ejecucion",
+    "failedToStart": "Error al iniciar la prueba",
+    "failedToStop": "Error al detener la prueba",
+    "invalidConfig": "Configuracion de prueba invalida",
+    "moduleNotFound": "Modulo de prueba no encontrado",
+    "testTypeNotSupported": "Tipo de prueba no soportado por el modulo"
+  },
+  "reflector": {
+    "alreadyRunning": "El reflector ya esta en ejecucion",
+    "failedToStart": "Error al iniciar el reflector",
+    "failedToStop": "Error al detener el reflector",
+    "notRunning": "El reflector no esta en ejecucion"
+  },
+  "license": {
+    "invalid": "Licencia invalida",
+    "expired": "Licencia expirada",
+    "notActivated": "Licencia no activada",
+    "activationFailed": "Error en la activacion de licencia",
+    "trialExpired": "Periodo de prueba expirado"
+  },
+  "validation": {
+    "required": "{{field}} es requerido",
+    "invalidFormat": "Formato de {{field}} invalido",
+    "invalidRange": "{{field}} debe estar entre {{min}} y {{max}}"
+  },
+  "api": {
+    "methodNotAllowed": "Metodo no permitido",
+    "invalidRequestBody": "Cuerpo de solicitud invalido",
+    "notFound": "No encontrado",
+    "internalError": "Error interno del servidor"
+  }
+}

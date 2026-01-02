@@ -1,21 +1,22 @@
 // Copyright (c) 2025 Mustard Seed Networks. All rights reserved.
 
-// Package modules provides the module system for The Stem.
-// This file re-exports shared types from the common package for convenience.
 package modules
 
-import "github.com/krisarmstrong/stem/internal/modules/common"
+import "github.com/krisarmstrong/stem/internal/modules/modtypes"
 
-// Type aliases for backward compatibility - re-export from common package.
 type (
-	Result     = common.Result
-	TestConfig = common.TestConfig
+	// Result is a type alias for modtypes.Result for backward compatibility.
+	Result = modtypes.Result
+	// TestConfig is a type alias for modtypes.TestConfig for backward compatibility.
+	TestConfig = modtypes.TestConfig
 )
 
 // Re-export helper functions from common package.
+//
+//nolint:gochecknoglobals // Re-exported helper functions for convenience.
 var (
-	GetFloat64Param = common.GetFloat64Param
-	GetUint64Param  = common.GetUint64Param
-	GetUint32Param  = common.GetUint32Param
-	GetIntParam     = common.GetIntParam
+	GetFloat64Param = modtypes.GetFloat64Param
+	GetUint64Param  = modtypes.GetUint64Param
+	GetUint32Param  = modtypes.GetUint32Param
+	GetIntParam     = modtypes.GetIntParam
 )

@@ -4,6 +4,8 @@
 // This module owns service activation and performance validation tests.
 package servicetest
 
+import "slices"
+
 const (
 	// ModuleName is the unique identifier for the ServiceTest module.
 	ModuleName = "servicetest"
@@ -19,6 +21,8 @@ const (
 )
 
 // testTypes lists all test types owned by the ServiceTest module.
+//
+//nolint:gochecknoglobals // Static module definition.
 var testTypes = []string{
 	// Y.1564 EtherSAM
 	"y1564_config",
@@ -31,6 +35,8 @@ var testTypes = []string{
 }
 
 // testDescriptions provides descriptions for each test type.
+//
+//nolint:gochecknoglobals // Static module definition.
 var testDescriptions = map[string]string{
 	"y1564_config": "ITU-T Y.1564 Service Configuration Test",
 	"y1564_perf":   "ITU-T Y.1564 Service Performance Test (15+ min)",
@@ -80,12 +86,7 @@ func (m *Module) TestTypes() []string {
 
 // CanRun returns true if this module can execute the given test type.
 func (m *Module) CanRun(testType string) bool {
-	for _, t := range testTypes {
-		if t == testType {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(testTypes, testType)
 }
 
 // TestDescription returns the description for a given test type.

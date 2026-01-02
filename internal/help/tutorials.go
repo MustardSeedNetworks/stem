@@ -8,7 +8,7 @@
 
 package help
 
-// GetAllTutorials returns all available tutorials
+// GetAllTutorials returns all available tutorials.
 func GetAllTutorials() map[string]Tutorial {
 	return map[string]Tutorial{
 		"quickstart":   QuickstartTutorial,
@@ -20,7 +20,9 @@ func GetAllTutorials() map[string]Tutorial {
 	}
 }
 
-// QuickstartTutorial - Getting started guide
+// QuickstartTutorial - Getting started guide.
+//
+//nolint:gochecknoglobals // Static help content.
 var QuickstartTutorial = Tutorial{
 	ID:          "quickstart",
 	Title:       "Your First Test in 5 Minutes",
@@ -73,13 +75,16 @@ save to a file:`,
 • stem help tests     - List all available tests
 • stem help latency   - Learn about latency testing
 • stem tutorial rfc2544 - Deep dive into RFC 2544`,
-			Command: "stem help tests",
-			Tip:     "Start with RFC 2544 tests for basic network benchmarking",
+			Command:  "stem help tests",
+			Expected: "",
+			Tip:      "Start with RFC 2544 tests for basic network benchmarking",
 		},
 	},
 }
 
-// ReflectorTutorial - Setting up packet reflection
+// ReflectorTutorial - Setting up packet reflection.
+//
+//nolint:gochecknoglobals // Static help content.
 var ReflectorTutorial = Tutorial{
 	ID:          "reflector",
 	Title:       "Setting Up Packet Reflection",
@@ -101,6 +106,9 @@ You can run the reflector on:
 • A dedicated Linux device
 • A server at the remote site
 • The same machine (for loopback testing)`,
+			Command:  "",
+			Expected: "",
+			Tip:      "",
 		},
 		{
 			Title:    "Basic Reflector Setup",
@@ -164,7 +172,9 @@ Then enable and start:`,
 	},
 }
 
-// RFC2544Tutorial - RFC 2544 deep dive
+// RFC2544Tutorial - RFC 2544 deep dive.
+//
+//nolint:gochecknoglobals // Static help content.
 var RFC2544Tutorial = Tutorial{
 	ID:          "rfc2544",
 	Title:       "Understanding RFC 2544 Tests",
@@ -187,6 +197,9 @@ The standard defines 6 tests:
 6. Reset - Device restart time
 
 Let's explore each one.`,
+			Command:  "",
+			Expected: "",
+			Tip:      "",
 		},
 		{
 			Title: "Throughput Test",
@@ -276,11 +289,16 @@ Frame Loss:
 • 0%: Required for guaranteed delivery apps
 • <0.1%: OK for best-effort traffic
 • >0.1%: Indicates congestion or problems`,
+			Command:  "",
+			Expected: "",
+			Tip:      "",
 		},
 	},
 }
 
-// Y1564Tutorial - Y.1564 deep dive
+// Y1564Tutorial - Y.1564 deep dive.
+//
+//nolint:gochecknoglobals // Static help content.
 var Y1564Tutorial = Tutorial{
 	ID:          "y1564",
 	Title:       "Carrier Ethernet Testing with Y.1564",
@@ -303,6 +321,9 @@ When you buy a carrier ethernet service, Y.1564 tests verify:
 Y.1564 includes two main tests:
 1. Service Configuration Test - validates at 25%, 50%, 75%, 100%
 2. Service Performance Test - extended duration validation`,
+			Command:  "",
+			Expected: "",
+			Tip:      "",
 		},
 		{
 			Title: "Understanding Your Service",
@@ -322,6 +343,9 @@ SLA Thresholds:
   • Frame Loss Ratio: max loss (e.g., <0.001%)
 
 Get these from your service contract.`,
+			Command:  "",
+			Expected: "",
+			Tip:      "",
 		},
 		{
 			Title: "Service Configuration Test",
@@ -372,11 +396,16 @@ Frame loss at specific rates:
 Intermittent failures during Performance Test:
   Cause: Time-of-day congestion or instability
   Action: Test at different times; report pattern to carrier`,
+			Command:  "",
+			Expected: "",
+			Tip:      "",
 		},
 	},
 }
 
-// TroubleshootTutorial - Troubleshooting guide
+// TroubleshootTutorial - Troubleshooting guide.
+//
+//nolint:gochecknoglobals // Static help content.
 var TroubleshootTutorial = Tutorial{
 	ID:          "troubleshoot",
 	Title:       "Troubleshooting Test Failures",
@@ -447,7 +476,9 @@ Check interface settings:`,
 	},
 }
 
-// ResultsTutorial - Understanding results
+// ResultsTutorial - Understanding results.
+//
+//nolint:gochecknoglobals // Static help content.
 var ResultsTutorial = Tutorial{
 	ID:          "results",
 	Title:       "Understanding Test Results",
@@ -472,6 +503,9 @@ Why different frame sizes?
 • Small frames test packet processing (forwarding speed)
 • Large frames test raw bandwidth capability
 • Real traffic is a mix of sizes`,
+			Command:  "",
+			Expected: "",
+			Tip:      "",
 		},
 		{
 			Title: "Reading Latency Results",
@@ -490,6 +524,9 @@ For real-time apps (voice/video):
 • Average matters for overall quality
 • Max matters for worst-case experience
 • Jitter affects smoothness`,
+			Command:  "",
+			Expected: "",
+			Tip:      "",
 		},
 		{
 			Title: "Pass/Fail Criteria",
@@ -510,6 +547,9 @@ General guidelines:
 • Latency <1ms = Excellent for LAN
 • Jitter <100µs = Good for voice/video
 • Loss 0% = Required for guaranteed delivery`,
+			Command:  "",
+			Expected: "",
+			Tip:      "",
 		},
 		{
 			Title:    "Saving and Comparing Results",

@@ -1,0 +1,78 @@
+{
+  "reflector": {
+    "title": "Reflector",
+    "description": "Reflexion de paquetes para pruebas de bucle",
+    "standard": "Bucle/Eco",
+    "testTypes": {
+      "reflect": "Modo Reflector"
+    },
+    "status": {
+      "running": "Reflejando paquetes",
+      "stopped": "Reflector detenido",
+      "starting": "Iniciando reflector..."
+    },
+    "stats": {
+      "packetsReceived": "Paquetes Recibidos",
+      "packetsSent": "Paquetes Enviados",
+      "bytesReceived": "Bytes Recibidos",
+      "bytesSent": "Bytes Enviados"
+    }
+  },
+  "benchmark": {
+    "title": "Benchmark",
+    "description": "Evaluacion comparativa de red RFC 2544",
+    "standard": "RFC 2544",
+    "testTypes": {
+      "throughput": "Rendimiento",
+      "latency": "Latencia",
+      "frame_loss": "Perdida de Tramas",
+      "back_to_back": "Consecutivo",
+      "system_recovery": "Recuperacion del Sistema",
+      "reset": "Reinicio"
+    }
+  },
+  "servicetest": {
+    "title": "Prueba de Servicio",
+    "description": "Activacion de servicio ITU-T Y.1564 / MEF",
+    "standard": "ITU-T Y.1564 / MEF",
+    "testTypes": {
+      "y1564_config": "Configuracion Y.1564",
+      "y1564_perf": "Rendimiento Y.1564",
+      "y1564": "Prueba Completa Y.1564",
+      "mef_config": "Configuracion MEF",
+      "mef_perf": "Rendimiento MEF",
+      "mef": "Prueba Completa MEF"
+    }
+  },
+  "trafficgen": {
+    "title": "Generador de Trafico",
+    "description": "Generacion de trafico personalizado",
+    "standard": "Trafico Personalizado",
+    "testTypes": {
+      "custom_stream": "Flujo Personalizado"
+    }
+  },
+  "measure": {
+    "title": "Medicion",
+    "description": "ITU-T Y.1731 Ethernet OAM",
+    "standard": "ITU-T Y.1731",
+    "testTypes": {
+      "y1731_delay": "Medicion de Retardo",
+      "y1731_loss": "Medicion de Perdida",
+      "y1731_slm": "Perdida Sintetica",
+      "y1731_loopback": "Bucle"
+    }
+  },
+  "certify": {
+    "title": "Certificar",
+    "description": "Certificacion RFC 2889/6349/TSN",
+    "standard": "RFC 2889/6349/TSN",
+    "testTypes": {
+      "rfc2889_forwarding": "Reenvio RFC 2889",
+      "rfc2889_congestion": "Congestion RFC 2889",
+      "rfc2889_broadcast": "Difusion RFC 2889",
+      "rfc6349_tcp": "Rendimiento TCP RFC 6349",
+      "tsn_timing": "Sincronizacion TSN"
+    }
+  }
+}

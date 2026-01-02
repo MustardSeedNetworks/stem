@@ -1,0 +1,41 @@
+{
+  "title": "Configuracion",
+  "sections": {
+    "general": "General",
+    "interface": "Interfaz",
+    "testing": "Pruebas",
+    "license": "Licencia",
+    "advanced": "Avanzado"
+  },
+  "general": {
+    "language": "Idioma",
+    "theme": "Tema",
+    "themeLight": "Claro",
+    "themeDark": "Oscuro",
+    "themeSystem": "Sistema"
+  },
+  "interface": {
+    "defaultInterface": "Interfaz Predeterminada",
+    "autoSelect": "Seleccion automatica de interfaz"
+  },
+  "testing": {
+    "defaultFrameSize": "Tamano de Trama Predeterminado",
+    "defaultDuration": "Duracion Predeterminada",
+    "autoSaveResults": "Guardar resultados automaticamente",
+    "resultsPath": "Ruta de resultados"
+  },
+  "license": {
+    "status": "Estado de Licencia",
+    "type": "Tipo de Licencia",
+    "expiresAt": "Expira",
+    "activate": "Activar Licencia",
+    "startTrial": "Iniciar Prueba",
+    "enterKey": "Ingrese clave de licencia"
+  },
+  "advanced": {
+    "logLevel": "Nivel de Registro",
+    "enableTelemetry": "Habilitar telemetria",
+    "apiPort": "Puerto API",
+    "dataPlane": "Plano de Datos"
+  }
+}

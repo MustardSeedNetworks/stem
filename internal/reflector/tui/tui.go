@@ -8,15 +8,33 @@ package tui
 
 import (
 	"fmt"
+	"strconv"
 	"sync"
 	"time"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/krisarmstrong/stem/internal/reflector/dataplane"
 	"github.com/rivo/tview"
+
+	"github.com/krisarmstrong/stem/internal/reflector/dataplane"
 )
 
-// App holds the TUI application state
+// Constants for TUI configuration and formatting.
+const (
+	statsFlexWeight     = 2 // Weight for stats panel in flex layout.
+	tickerIntervalMs    = 500
+	bitsPerByte         = 8.0
+	megabitsPerSecDenom = 1000000.0
+	billion             = 1000000000
+	million             = 1000000
+	thousand            = 1000
+	terabyte            = 1099511627776
+	gigabyte            = 1073741824
+	megabyte            = 1048576
+	kilobyte            = 1024
+	secondsPerMinute    = 60
+)
+
+// App holds the TUI application state.
 type App struct {
 	dp        *dataplane.Dataplane
 	app       *tview.Application
@@ -29,53 +47,58 @@ type App struct {
 	stopOnce  sync.Once // Prevent double-close panic
 }
 
-// New creates a new TUI application
+// New creates a new TUI application.
 func New(dp *dataplane.Dataplane) *App {
 	return &App{
 		dp:        dp,
 		app:       tview.NewApplication(),
+		statsView: nil,
+		sigView:   nil,
+		latView:   nil,
+		helpView:  nil,
 		startTime: time.Now(),
 		stopChan:  make(chan struct{}),
+		stopOnce:  sync.Once{},
 	}
 }
 
-// Run starts the TUI
+// Run starts the TUI.
 func (a *App) Run() error {
-	// Create main stats panel
+	// Create main stats panel.
 	a.statsView = tview.NewTextView().
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignLeft)
 	a.statsView.SetBorder(true).SetTitle(" Statistics ")
 
-	// Create signature breakdown panel
+	// Create signature breakdown panel.
 	a.sigView = tview.NewTextView().
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignLeft)
 	a.sigView.SetBorder(true).SetTitle(" Signatures ")
 
-	// Create latency panel
+	// Create latency panel.
 	a.latView = tview.NewTextView().
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignLeft)
 	a.latView.SetBorder(true).SetTitle(" Latency ")
 
-	// Create help panel
+	// Create help panel.
 	a.helpView = tview.NewTextView().
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter).
 		SetText("[yellow]q[white] quit  [yellow]r[white] reset  [yellow]p[white] pause")
 	a.helpView.SetBorder(false)
 
-	// Create header with MSN branding
+	// Create header with MSN branding.
 	header := tview.NewTextView().
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter).
 		SetText(fmt.Sprintf("[#2d7a3e]MSN Reflector[white] | [yellow]Mustard Seed Networks[white] | Interface: [cyan]%s[white] | Status: [#2d7a3e]● RUNNING",
 			a.dp.Interface()))
 
-	// Layout
+	// Layout.
 	statsRow := tview.NewFlex().
-		AddItem(a.statsView, 0, 2, false).
+		AddItem(a.statsView, 0, statsFlexWeight, false).
 		AddItem(a.sigView, 0, 1, false).
 		AddItem(a.latView, 0, 1, false)
 
@@ -84,30 +107,34 @@ func (a *App) Run() error {
 		AddItem(statsRow, 0, 1, false).
 		AddItem(a.helpView, 1, 0, false)
 
-	// Key bindings
+	// Key bindings.
 	a.app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Rune() {
 		case 'q', 'Q':
 			a.Stop()
 			return nil
 		case 'r', 'R':
-			// Reset stats - would need to add this to dataplane
+			// Reset stats - would need to add this to dataplane.
 			return nil
 		case 'p', 'P':
-			// Pause - would toggle stats updates
+			// Pause - would toggle stats updates.
 			return nil
 		}
 		return event
 	})
 
-	// Start stats update goroutine
+	// Start stats update goroutine.
 	go a.updateLoop()
 
-	// Run the app
-	return a.app.SetRoot(mainFlex, true).EnableMouse(false).Run()
+	// Run the app.
+	err := a.app.SetRoot(mainFlex, true).EnableMouse(false).Run()
+	if err != nil {
+		return fmt.Errorf("TUI app run failed: %w", err)
+	}
+	return nil
 }
 
-// Stop signals the TUI to exit
+// Stop signals the TUI to exit.
 func (a *App) Stop() {
 	a.stopOnce.Do(func() {
 		close(a.stopChan)
@@ -115,9 +142,9 @@ func (a *App) Stop() {
 	})
 }
 
-// updateLoop periodically refreshes the display
+// updateLoop periodically refreshes the display.
 func (a *App) updateLoop() {
-	ticker := time.NewTicker(500 * time.Millisecond)
+	ticker := time.NewTicker(tickerIntervalMs * time.Millisecond)
 	defer ticker.Stop()
 
 	for {
@@ -130,20 +157,20 @@ func (a *App) updateLoop() {
 	}
 }
 
-// updateStats refreshes all stat panels
+// updateStats refreshes all stat panels.
 func (a *App) updateStats() {
 	stats := a.dp.GetStats()
 	elapsed := time.Since(a.startTime).Seconds()
 
-	// Calculate rates
+	// Calculate rates.
 	pps := float64(0)
 	mbps := float64(0)
 	if elapsed > 0 {
 		pps = float64(stats.PacketsReflected) / elapsed
-		mbps = float64(stats.BytesReflected) * 8.0 / (elapsed * 1000000.0)
+		mbps = float64(stats.BytesReflected) * bitsPerByte / (elapsed * megabitsPerSecDenom)
 	}
 
-	// Main stats with MSN branding colors
+	// Main stats with MSN branding colors.
 	statsText := fmt.Sprintf(
 		"[#d4a017]RX Packets:[white]  %s\n"+
 			"[#d4a017]TX Packets:[white]  %s\n"+
@@ -162,7 +189,7 @@ func (a *App) updateStats() {
 		formatDuration(time.Since(a.startTime)),
 	)
 
-	// Signature breakdown - ITO and Custom
+	// Signature breakdown - ITO and Custom.
 	sigText := fmt.Sprintf(
 		"[cyan]ITO Signatures:[white]\n"+
 			"  PROBEOT:  %s\n"+
@@ -181,7 +208,7 @@ func (a *App) updateStats() {
 		formatNumber(stats.SigMSN),
 	)
 
-	// Latency stats
+	// Latency stats.
 	latText := ""
 	if stats.LatencyCount > 0 {
 		latText = fmt.Sprintf(
@@ -198,7 +225,7 @@ func (a *App) updateStats() {
 		latText = "[gray]No latency data\n(use --latency)"
 	}
 
-	// Update views on main thread
+	// Update views on main thread.
 	a.app.QueueUpdateDraw(func() {
 		a.statsView.SetText(statsText)
 		a.sigView.SetText(sigText)
@@ -206,41 +233,41 @@ func (a *App) updateStats() {
 	})
 }
 
-// Helper functions
+// Helper functions for formatting.
 
 func formatNumber(n uint64) string {
-	if n >= 1000000000 {
-		return fmt.Sprintf("%.2fB", float64(n)/1000000000)
+	if n >= billion {
+		return fmt.Sprintf("%.2fB", float64(n)/billion)
 	}
-	if n >= 1000000 {
-		return fmt.Sprintf("%.2fM", float64(n)/1000000)
+	if n >= million {
+		return fmt.Sprintf("%.2fM", float64(n)/million)
 	}
-	if n >= 1000 {
-		return fmt.Sprintf("%.2fK", float64(n)/1000)
+	if n >= thousand {
+		return fmt.Sprintf("%.2fK", float64(n)/thousand)
 	}
-	return fmt.Sprintf("%d", n)
+	return strconv.FormatUint(n, 10)
 }
 
 func formatBytes(n uint64) string {
-	if n >= 1099511627776 {
-		return fmt.Sprintf("%.2f TB", float64(n)/1099511627776)
+	if n >= terabyte {
+		return fmt.Sprintf("%.2f TB", float64(n)/terabyte)
 	}
-	if n >= 1073741824 {
-		return fmt.Sprintf("%.2f GB", float64(n)/1073741824)
+	if n >= gigabyte {
+		return fmt.Sprintf("%.2f GB", float64(n)/gigabyte)
 	}
-	if n >= 1048576 {
-		return fmt.Sprintf("%.2f MB", float64(n)/1048576)
+	if n >= megabyte {
+		return fmt.Sprintf("%.2f MB", float64(n)/megabyte)
 	}
-	if n >= 1024 {
-		return fmt.Sprintf("%.2f KB", float64(n)/1024)
+	if n >= kilobyte {
+		return fmt.Sprintf("%.2f KB", float64(n)/kilobyte)
 	}
-	return fmt.Sprintf("%d B", n)
+	return strconv.FormatUint(n, 10) + " B"
 }
 
 func formatDuration(d time.Duration) string {
 	hours := int(d.Hours())
-	minutes := int(d.Minutes()) % 60
-	seconds := int(d.Seconds()) % 60
+	minutes := int(d.Minutes()) % secondsPerMinute
+	seconds := int(d.Seconds()) % secondsPerMinute
 
 	if hours > 0 {
 		return fmt.Sprintf("%dh %dm %ds", hours, minutes, seconds)
@@ -248,5 +275,5 @@ func formatDuration(d time.Duration) string {
 	if minutes > 0 {
 		return fmt.Sprintf("%dm %ds", minutes, seconds)
 	}
-	return fmt.Sprintf("%ds", seconds)
+	return strconv.Itoa(seconds) + "s"
 }

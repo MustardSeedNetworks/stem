@@ -1,0 +1,83 @@
+{
+  "app": {
+    "title": "The Stem",
+    "tagline": "Network Performance Testing by Mustard Seed Networks"
+  },
+  "buttons": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "login": "Login",
+    "logout": "Logout",
+    "loggingIn": "Logging in...",
+    "start": "Start",
+    "stop": "Stop",
+    "pause": "Pause",
+    "resume": "Resume",
+    "retry": "Try again",
+    "close": "Close",
+    "refresh": "Refresh",
+    "clear": "Clear",
+    "runTest": "Run Test",
+    "stopTest": "Stop Test",
+    "configure": "Configure",
+    "export": "Export",
+    "generate": "Generate"
+  },
+  "status": {
+    "connected": "Connected",
+    "disconnected": "Disconnected",
+    "connecting": "Connecting...",
+    "error": "Error",
+    "loading": "Loading...",
+    "complete": "Complete",
+    "pending": "Pending",
+    "running": "Running",
+    "stopped": "Stopped",
+    "paused": "Paused",
+    "passed": "Passed",
+    "failed": "Failed",
+    "idle": "Idle",
+    "ready": "Ready",
+    "unknown": "Unknown"
+  },
+  "labels": {
+    "interface": "Interface",
+    "module": "Module",
+    "testType": "Test Type",
+    "frameSize": "Frame Size",
+    "duration": "Duration",
+    "throughput": "Throughput",
+    "latency": "Latency",
+    "jitter": "Jitter",
+    "packetLoss": "Packet Loss",
+    "settings": "Settings",
+    "help": "Help",
+    "version": "Version",
+    "license": "License"
+  },
+  "time": {
+    "seconds": "{{count}}s",
+    "minutes": "{{count}}m",
+    "hours": "{{count}}h",
+    "days": "{{count}}d"
+  },
+  "accessibility": {
+    "openHelp": "Open help",
+    "openSettings": "Open settings",
+    "switchToLightMode": "Switch to light mode",
+    "switchToDarkMode": "Switch to dark mode",
+    "selectInterface": "Select network interface",
+    "selectModule": "Select test module"
+  },
+  "sections": {
+    "modules": "Test Modules",
+    "configuration": "Configuration",
+    "results": "Results",
+    "system": "System"
+  },
+  "errorBoundary": {
+    "title": "Something went wrong",
+    "defaultMessage": "An unexpected error occurred",
+    "tryAgain": "Try again"
+  }
+}

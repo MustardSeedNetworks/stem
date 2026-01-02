@@ -1,63 +1,62 @@
 ---
-# Clang-Tidy Configuration for Seed Test Suite
-# Static analysis for high-performance network code
-# Copyright (c) 2025 Mustard Seed Networks. All rights reserved.
-
 Checks: >
   -*,
   bugprone-*,
-  -bugprone-easily-swappable-parameters,
-  -bugprone-macro-parentheses,
+  cert-*,
   clang-analyzer-*,
-  -clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,
   concurrency-*,
+  cppcoreguidelines-*,
+  hicpp-*,
+  misc-*,
+  modernize-*,
   performance-*,
   portability-*,
   readability-*,
-  -readability-magic-numbers,
-  -readability-function-cognitive-complexity,
+  -modernize-use-trailing-return-type,
   -readability-identifier-length,
-  security-*,
-  cert-*,
-  -cert-dcl37-c,
-  -cert-dcl51-cpp,
-  misc-*,
-  -misc-unused-parameters
+  -cppcoreguidelines-avoid-magic-numbers,
+  -readability-magic-numbers,
+  -bugprone-easily-swappable-parameters,
+  -cppcoreguidelines-pro-bounds-pointer-arithmetic,
+  -cppcoreguidelines-pro-type-reinterpret-cast,
+  -hicpp-no-array-decay,
+  -cppcoreguidelines-pro-bounds-array-to-pointer-decay
 
-# Check options
+WarningsAsErrors: ''
+
+HeaderFilterRegex: '.*'
+
 CheckOptions:
-  - key: readability-identifier-naming.VariableCase
-    value: lower_case
+  - key: readability-identifier-naming.ClassCase
+    value: CamelCase
+  - key: readability-identifier-naming.StructCase
+    value: CamelCase
+  - key: readability-identifier-naming.EnumCase
+    value: CamelCase
   - key: readability-identifier-naming.FunctionCase
     value: lower_case
-  - key: readability-identifier-naming.StructCase
+  - key: readability-identifier-naming.VariableCase
     value: lower_case
-  - key: readability-identifier-naming.MacroCase
+  - key: readability-identifier-naming.ParameterCase
+    value: lower_case
+  - key: readability-identifier-naming.MemberCase
+    value: lower_case
+  - key: readability-identifier-naming.ConstantCase
     value: UPPER_CASE
-  - key: readability-identifier-naming.EnumCase
-    value: lower_case
-  - key: readability-identifier-naming.TypedefCase
-    value: lower_case
-  - key: readability-identifier-naming.TypedefSuffix
-    value: _t
-  - key: readability-braces-around-statements.ShortStatementLines
-    value: '1'
-  - key: performance-move-const-arg.CheckTriviallyCopyableMove
-    value: '0'
-  - key: readability-function-size.LineThreshold
-    value: '200'
-  - key: readability-function-size.StatementThreshold
-    value: '150'
-
-# Warning options
-WarningsAsErrors: ''
-HeaderFilterRegex: '(include/rfc2544\.h|include/reflector\.h|include/platform_config\.h|src/.*\.h)'
-
-# Format style
-FormatStyle: file
-
-# System headers
-SystemHeaders: false
-
-# Suppress inline
-InheritParentConfig: false
+  - key: readability-identifier-naming.MacroDefinitionCase
+    value: UPPER_CASE
+  - key: readability-identifier-naming.GlobalConstantCase
+    value: UPPER_CASE
+  - key: readability-function-cognitive-complexity.Threshold
+    value: 25
+  - key: cppcoreguidelines-avoid-non-const-global-variables.AllowInternalLinkage
+    value: true
+  - key: misc-non-private-member-variables-in-classes.IgnoreClassesWithAllMemberVariablesBeingPublic
+    value: true
+  - key: performance-unnecessary-value-param.AllowedTypes
+    value: 'string_view'
+  - key: bugprone-easily-swappable-parameters.MinimumLength
+    value: 3
+  - key: bugprone-argument-comment.StrictMode
+    value: true
+...

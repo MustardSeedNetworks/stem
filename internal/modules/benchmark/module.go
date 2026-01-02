@@ -4,6 +4,8 @@
 // This module owns throughput, latency, frame loss, back-to-back, and recovery tests.
 package benchmark
 
+import "slices"
+
 const (
 	// ModuleName is the unique identifier for the Benchmark module.
 	ModuleName = "benchmark"
@@ -19,6 +21,8 @@ const (
 )
 
 // testTypes lists all test types owned by the Benchmark module.
+//
+//nolint:gochecknoglobals // Static module definition.
 var testTypes = []string{
 	"throughput",
 	"latency",
@@ -29,6 +33,8 @@ var testTypes = []string{
 }
 
 // testDescriptions provides descriptions for each test type.
+//
+//nolint:gochecknoglobals // Static module definition.
 var testDescriptions = map[string]string{
 	"throughput":      "RFC 2544 Section 26.1 - Maximum throughput with zero loss",
 	"latency":         "RFC 2544 Section 26.2 - Round-trip latency at various loads",
@@ -78,12 +84,7 @@ func (m *Module) TestTypes() []string {
 
 // CanRun returns true if this module can execute the given test type.
 func (m *Module) CanRun(testType string) bool {
-	for _, t := range testTypes {
-		if t == testType {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(testTypes, testType)
 }
 
 // TestDescription returns the description for a given test type.

@@ -1,0 +1,83 @@
+{
+  "app": {
+    "title": "The Stem",
+    "tagline": "Pruebas de Rendimiento de Red por Mustard Seed Networks"
+  },
+  "buttons": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "login": "Iniciar Sesion",
+    "logout": "Cerrar Sesion",
+    "loggingIn": "Iniciando sesion...",
+    "start": "Iniciar",
+    "stop": "Detener",
+    "pause": "Pausar",
+    "resume": "Reanudar",
+    "retry": "Reintentar",
+    "close": "Cerrar",
+    "refresh": "Actualizar",
+    "clear": "Limpiar",
+    "runTest": "Ejecutar Prueba",
+    "stopTest": "Detener Prueba",
+    "configure": "Configurar",
+    "export": "Exportar",
+    "generate": "Generar"
+  },
+  "status": {
+    "connected": "Conectado",
+    "disconnected": "Desconectado",
+    "connecting": "Conectando...",
+    "error": "Error",
+    "loading": "Cargando...",
+    "complete": "Completado",
+    "pending": "Pendiente",
+    "running": "Ejecutando",
+    "stopped": "Detenido",
+    "paused": "Pausado",
+    "passed": "Aprobado",
+    "failed": "Fallido",
+    "idle": "Inactivo",
+    "ready": "Listo",
+    "unknown": "Desconocido"
+  },
+  "labels": {
+    "interface": "Interfaz",
+    "module": "Modulo",
+    "testType": "Tipo de Prueba",
+    "frameSize": "Tamano de Trama",
+    "duration": "Duracion",
+    "throughput": "Rendimiento",
+    "latency": "Latencia",
+    "jitter": "Variacion",
+    "packetLoss": "Perdida de Paquetes",
+    "settings": "Configuracion",
+    "help": "Ayuda",
+    "version": "Version",
+    "license": "Licencia"
+  },
+  "time": {
+    "seconds": "{{count}}s",
+    "minutes": "{{count}}m",
+    "hours": "{{count}}h",
+    "days": "{{count}}d"
+  },
+  "accessibility": {
+    "openHelp": "Abrir ayuda",
+    "openSettings": "Abrir configuracion",
+    "switchToLightMode": "Cambiar a modo claro",
+    "switchToDarkMode": "Cambiar a modo oscuro",
+    "selectInterface": "Seleccionar interfaz de red",
+    "selectModule": "Seleccionar modulo de prueba"
+  },
+  "sections": {
+    "modules": "Modulos de Prueba",
+    "configuration": "Configuracion",
+    "results": "Resultados",
+    "system": "Sistema"
+  },
+  "errorBoundary": {
+    "title": "Algo salio mal",
+    "defaultMessage": "Ocurrio un error inesperado",
+    "tryAgain": "Reintentar"
+  }
+}

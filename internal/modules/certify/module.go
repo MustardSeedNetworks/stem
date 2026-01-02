@@ -4,6 +4,8 @@
 // This module owns RFC 2889 switch tests, RFC 6349 TCP tests, and TSN 802.1Qbv tests.
 package certify
 
+import "slices"
+
 const (
 	// ModuleName is the unique identifier for the Certify module.
 	ModuleName = "certify"
@@ -19,6 +21,8 @@ const (
 )
 
 // testTypes lists all test types owned by the Certify module.
+//
+//nolint:gochecknoglobals // Static module definition.
 var testTypes = []string{
 	// RFC 2889 LAN Switch
 	"rfc2889_forwarding",
@@ -37,6 +41,8 @@ var testTypes = []string{
 }
 
 // testDescriptions provides descriptions for each test type.
+//
+//nolint:gochecknoglobals // Static module definition.
 var testDescriptions = map[string]string{
 	// RFC 2889
 	"rfc2889_forwarding": "RFC 2889 Forwarding rate test",
@@ -94,12 +100,7 @@ func (m *Module) TestTypes() []string {
 
 // CanRun returns true if this module can execute the given test type.
 func (m *Module) CanRun(testType string) bool {
-	for _, t := range testTypes {
-		if t == testType {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(testTypes, testType)
 }
 
 // TestDescription returns the description for a given test type.

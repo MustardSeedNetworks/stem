@@ -11,23 +11,24 @@ import (
 
 // Result is a generic operation result.
 type Result struct {
-	TestType   string      `json:"testType"`
-	ModuleName string      `json:"module"`
-	Success    bool        `json:"success"`
-	Error      string      `json:"error,omitempty"`
-	Data       interface{} `json:"data,omitempty"`
+	TestType   string `json:"testType"`
+	ModuleName string `json:"module"`
+	Success    bool   `json:"success"`
+	Error      string `json:"error,omitempty"`
+	Data       any    `json:"data,omitempty"`
 }
 
 // Config holds configuration for reflector operation.
 type Config struct {
 	Interface string
 	Profile   string // netally, msn, all, custom
-	Params    map[string]interface{}
+	Params    map[string]any
 }
 
 // Executor wraps the Reflector module with execution capability.
 type Executor struct {
 	*Module
+
 	dp  *reflectorDP.Dataplane
 	cfg *reflectorConfig.Config
 }
@@ -36,10 +37,16 @@ type Executor struct {
 func NewExecutor(iface string) (*Executor, error) {
 	cfg := &reflectorConfig.Config{
 		Interface:       iface,
+		Verbose:         false,
 		SignatureFilter: "all",
+		WebUI:           reflectorConfig.WebUIConfig{Enabled: false, Port: 0},
+		TUI:             reflectorConfig.TUIConfig{Enabled: false},
+		Filtering:       reflectorConfig.FilterConfig{Port: 0, FilterOUI: false, OUI: "", FilterMAC: false},
 		Reflection: reflectorConfig.ReflectConfig{
 			Mode: "all",
 		},
+		Platform: reflectorConfig.PlatformConfig{UseDPDK: false, UseAFXDP: false, DPDKArgs: ""},
+		Stats:    reflectorConfig.StatsConfig{Format: "", Interval: 0},
 	}
 
 	dp, err := reflectorDP.New(cfg)
@@ -59,6 +66,7 @@ func NewExecutorWithDataplane(dp *reflectorDP.Dataplane) *Executor {
 	return &Executor{
 		Module: New(),
 		dp:     dp,
+		cfg:    nil,
 	}
 }
 
@@ -84,21 +92,24 @@ func (e *Executor) Execute(testType string, _ *Config) (*Result, error) {
 		TestType:   testType,
 		ModuleName: ModuleName,
 		Success:    false,
+		Error:      "",
+		Data:       nil,
 	}
 
 	switch testType {
 	case "reflect":
-		// Start reflector mode
-		if err := e.dp.Start(); err != nil {
+		// Start reflector mode.
+		err := e.dp.Start()
+		if err != nil {
 			result.Error = err.Error()
 			return result, fmt.Errorf("start reflector: %w", err)
 		}
 
-		// Get initial stats
+		// Get initial stats.
 		stats := e.dp.GetStats()
 
 		result.Success = true
-		result.Data = map[string]interface{}{
+		result.Data = map[string]any{
 			"status":  "running",
 			"message": "Reflector started successfully",
 			"stats":   stats,

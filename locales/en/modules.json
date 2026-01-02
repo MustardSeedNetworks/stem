@@ -1,0 +1,78 @@
+{
+  "reflector": {
+    "title": "Reflector",
+    "description": "Packet reflection for loopback testing",
+    "standard": "Loopback/Echo",
+    "testTypes": {
+      "reflect": "Reflect Mode"
+    },
+    "status": {
+      "running": "Reflecting packets",
+      "stopped": "Reflector stopped",
+      "starting": "Starting reflector..."
+    },
+    "stats": {
+      "packetsReceived": "Packets Received",
+      "packetsSent": "Packets Sent",
+      "bytesReceived": "Bytes Received",
+      "bytesSent": "Bytes Sent"
+    }
+  },
+  "benchmark": {
+    "title": "Benchmark",
+    "description": "RFC 2544 network benchmarking",
+    "standard": "RFC 2544",
+    "testTypes": {
+      "throughput": "Throughput",
+      "latency": "Latency",
+      "frame_loss": "Frame Loss",
+      "back_to_back": "Back-to-Back",
+      "system_recovery": "System Recovery",
+      "reset": "Reset"
+    }
+  },
+  "servicetest": {
+    "title": "Service Test",
+    "description": "ITU-T Y.1564 / MEF service activation",
+    "standard": "ITU-T Y.1564 / MEF",
+    "testTypes": {
+      "y1564_config": "Y.1564 Configuration",
+      "y1564_perf": "Y.1564 Performance",
+      "y1564": "Y.1564 Full Test",
+      "mef_config": "MEF Configuration",
+      "mef_perf": "MEF Performance",
+      "mef": "MEF Full Test"
+    }
+  },
+  "trafficgen": {
+    "title": "Traffic Generator",
+    "description": "Custom traffic generation",
+    "standard": "Custom Traffic",
+    "testTypes": {
+      "custom_stream": "Custom Stream"
+    }
+  },
+  "measure": {
+    "title": "Measure",
+    "description": "ITU-T Y.1731 Ethernet OAM",
+    "standard": "ITU-T Y.1731",
+    "testTypes": {
+      "y1731_delay": "Delay Measurement",
+      "y1731_loss": "Loss Measurement",
+      "y1731_slm": "Synthetic Loss",
+      "y1731_loopback": "Loopback"
+    }
+  },
+  "certify": {
+    "title": "Certify",
+    "description": "RFC 2889/6349/TSN certification",
+    "standard": "RFC 2889/6349/TSN",
+    "testTypes": {
+      "rfc2889_forwarding": "RFC 2889 Forwarding",
+      "rfc2889_congestion": "RFC 2889 Congestion",
+      "rfc2889_broadcast": "RFC 2889 Broadcast",
+      "rfc6349_tcp": "RFC 6349 TCP Throughput",
+      "tsn_timing": "TSN Time Sync"
+    }
+  }
+}

@@ -4,6 +4,8 @@
 // This module owns the reflector operational mode (Tier 1) for remote testing support.
 package reflector
 
+import "slices"
+
 const (
 	// ModuleName is the unique identifier for the Reflector module.
 	ModuleName = "reflector"
@@ -19,11 +21,15 @@ const (
 )
 
 // testTypes lists all operation types owned by the Reflector module.
+//
+//nolint:gochecknoglobals // Static module definition.
 var testTypes = []string{
 	"reflect",
 }
 
 // testDescriptions provides descriptions for each operation type.
+//
+//nolint:gochecknoglobals // Static module definition.
 var testDescriptions = map[string]string{
 	"reflect": "Packet reflector mode - echoes received packets for remote device testing",
 }
@@ -68,12 +74,7 @@ func (m *Module) TestTypes() []string {
 
 // CanRun returns true if this module can execute the given operation type.
 func (m *Module) CanRun(testType string) bool {
-	for _, t := range testTypes {
-		if t == testType {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(testTypes, testType)
 }
 
 // TestDescription returns the description for a given operation type.

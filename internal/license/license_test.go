@@ -1,9 +1,12 @@
 // Copyright (c) 2025 Mustard Seed Networks. All rights reserved.
 
-package license
+package license_test
 
 import (
 	"testing"
+	"time"
+
+	"github.com/krisarmstrong/stem/internal/license"
 )
 
 func TestRotorCipherRoundTrip(t *testing.T) {
@@ -19,11 +22,11 @@ func TestRotorCipherRoundTrip(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		cipher := NewRotorCipher(tc.position)
+		cipher := license.NewRotorCipher(tc.position)
 		encoded := cipher.EncodeString(tc.input)
 
-		// Reset position for decoding
-		cipher = NewRotorCipher(tc.position)
+		// Reset position for decoding.
+		cipher = license.NewRotorCipher(tc.position)
 		decoded := cipher.DecodeString(encoded)
 
 		if decoded != tc.input {
@@ -35,7 +38,7 @@ func TestRotorCipherRoundTrip(t *testing.T) {
 func TestCalculateChecksum(t *testing.T) {
 	testCases := []struct {
 		input    string
-		expected int // length of checksum
+		expected int // length of checksum.
 	}{
 		{"ABC123", 2},
 		{"1001ABCDEF12", 2},
@@ -43,7 +46,7 @@ func TestCalculateChecksum(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		checksum := CalculateChecksum(tc.input)
+		checksum := license.CalculateChecksum(tc.input)
 		if len(checksum) != tc.expected {
 			t.Errorf("Checksum length wrong: input=%q, got=%d, want=%d", tc.input, len(checksum), tc.expected)
 		}
@@ -51,17 +54,17 @@ func TestCalculateChecksum(t *testing.T) {
 }
 
 func TestValidateChecksum(t *testing.T) {
-	// Test with valid checksums
+	// Test with valid checksums.
 	payload := "ABC123"
-	checksum := CalculateChecksum(payload)
-	valid := ValidateChecksum(payload + checksum)
+	checksum := license.CalculateChecksum(payload)
+	valid := license.ValidateChecksum(payload + checksum)
 
 	if !valid {
 		t.Errorf("ValidateChecksum should return true for valid checksum")
 	}
 
-	// Test with invalid checksum
-	invalid := ValidateChecksum(payload + "XX")
+	// Test with invalid checksum.
+	invalid := license.ValidateChecksum(payload + "XX")
 	if invalid {
 		t.Errorf("ValidateChecksum should return false for invalid checksum")
 	}
@@ -71,19 +74,19 @@ func TestGenerateLicenseKey(t *testing.T) {
 	testCases := []struct {
 		productCode string
 		serial      string
-		tier        Tier
+		tier        license.Tier
 		wantErr     bool
 	}{
-		{"1001", "ABCDEFG", TierReflector, false},
-		{"2001", "1234567", TierTestSuite, false},
-		{"3001", "XYZXYZX", TierEnterprise, false},
-		{"100", "ABCDEFG", TierReflector, true}, // Invalid product code length
-		{"1001", "ABCDEF", TierReflector, true}, // Invalid serial length
-		{"1001", "ABCDEFG", Tier(0), true},      // Invalid tier
+		{"1001", "ABCDEFG", license.TierReflector, false},
+		{"2001", "1234567", license.TierTestSuite, false},
+		{"3001", "XYZXYZX", license.TierEnterprise, false},
+		{"100", "ABCDEFG", license.TierReflector, true}, // Invalid product code length.
+		{"1001", "ABCDEF", license.TierReflector, true}, // Invalid serial length.
+		{"1001", "ABCDEFG", license.Tier(0), true},      // Invalid tier.
 	}
 
 	for _, tc := range testCases {
-		key, err := GenerateLicenseKey(tc.productCode, tc.serial, tc.tier)
+		key, err := license.GenerateLicenseKey(tc.productCode, tc.serial, tc.tier)
 		if tc.wantErr {
 			if err == nil {
 				t.Errorf("GenerateLicenseKey(%q, %q, %d) should return error", tc.productCode, tc.serial, tc.tier)
@@ -92,29 +95,33 @@ func TestGenerateLicenseKey(t *testing.T) {
 		}
 
 		if err != nil {
-			t.Errorf("GenerateLicenseKey(%q, %q, %d) returned unexpected error: %v", tc.productCode, tc.serial, tc.tier, err)
+			t.Errorf(
+				"GenerateLicenseKey(%q, %q, %d) returned unexpected error: %v",
+				tc.productCode, tc.serial, tc.tier, err,
+			)
 			continue
 		}
 
-		if len(key) != 16 {
+		const expectedKeyLen = 16
+		if len(key) != expectedKeyLen {
 			t.Errorf("Generated key length wrong: got=%d, want=16", len(key))
 		}
 	}
 }
 
 func TestValidateLicenseKey(t *testing.T) {
-	// Generate a valid key and test validation
-	key, err := GenerateLicenseKey("1001", "ABCDEFG", TierReflector)
+	// Generate a valid key and test validation.
+	key, err := license.GenerateLicenseKey("1001", "ABCDEFG", license.TierReflector)
 	if err != nil {
 		t.Fatalf("Failed to generate test key: %v", err)
 	}
 
-	info := ValidateLicenseKey(key)
+	info := license.ValidateLicenseKey(key)
 	if !info.Valid {
 		t.Errorf("ValidateLicenseKey should return valid for generated key: %s, error: %s", key, info.ErrorMsg)
 	}
 
-	// Test invalid keys
+	// Test invalid keys.
 	invalidKeys := []struct {
 		key     string
 		wantErr string
@@ -125,8 +132,8 @@ func TestValidateLicenseKey(t *testing.T) {
 	}
 
 	for _, tc := range invalidKeys {
-		info := ValidateLicenseKey(tc.key)
-		if info.Valid {
+		invalidInfo := license.ValidateLicenseKey(tc.key)
+		if invalidInfo.Valid {
 			t.Errorf("ValidateLicenseKey(%q) should not be valid", tc.key)
 		}
 	}
@@ -134,13 +141,13 @@ func TestValidateLicenseKey(t *testing.T) {
 
 func TestTierString(t *testing.T) {
 	testCases := []struct {
-		tier     Tier
+		tier     license.Tier
 		expected string
 	}{
-		{TierReflector, "Reflector"},
-		{TierTestSuite, "Test Suite"},
-		{TierEnterprise, "Enterprise"},
-		{TierInvalid, "Invalid"},
+		{license.TierReflector, "Reflector"},
+		{license.TierTestSuite, "Test Suite"},
+		{license.TierEnterprise, "Enterprise"},
+		{license.TierInvalid, "Invalid"},
 	}
 
 	for _, tc := range testCases {
@@ -158,38 +165,31 @@ func TestFormatKey(t *testing.T) {
 		{"ABCD1234EFGH5678", "ABCD-1234-EFGH-5678"},
 		{"abcd1234efgh5678", "ABCD-1234-EFGH-5678"},
 		{"ABCD-1234-EFGH-5678", "ABCD-1234-EFGH-5678"},
-		{"SHORT", "SHORT"}, // Invalid length, return as-is
+		{"SHORT", "SHORT"}, // Invalid length, return as-is.
 	}
 
 	for _, tc := range testCases {
-		result := FormatKey(tc.input)
+		result := license.FormatKey(tc.input)
 		if result != tc.expected {
 			t.Errorf("FormatKey(%q) = %q, want %q", tc.input, result, tc.expected)
 		}
 	}
 }
 
-func TestNormalizeKey(t *testing.T) {
-	testCases := []struct {
-		input    string
-		expected string
-	}{
-		{"abcd-1234-efgh-5678", "ABCD1234EFGH5678"},
-		{"ABCD 1234 EFGH 5678", "ABCD1234EFGH5678"},
-		{"abcd.1234.efgh.5678", "ABCD1234EFGH5678"},
-	}
-
-	for _, tc := range testCases {
-		result := normalizeKey(tc.input)
-		if result != tc.expected {
-			t.Errorf("normalizeKey(%q) = %q, want %q", tc.input, result, tc.expected)
-		}
-	}
-}
-
-func TestLicenseInfoHasFeature(t *testing.T) {
-	info := &LicenseInfo{
-		Features: []string{"reflector", "rfc2544", "y1564"},
+func TestInfoHasFeature(t *testing.T) {
+	info := &license.Info{
+		Key:         "",
+		Valid:       false,
+		Tier:        license.TierInvalid,
+		ProductCode: "",
+		Serial:      "",
+		Activated:   false,
+		ActivatedAt: time.Time{},
+		ExpiresAt:   time.Time{},
+		DeviceHash:  "",
+		MaxDevices:  0,
+		Features:    []string{"reflector", "rfc2544", "y1564"},
+		ErrorMsg:    "",
 	}
 
 	if !info.HasFeature("reflector") {
@@ -201,16 +201,96 @@ func TestLicenseInfoHasFeature(t *testing.T) {
 	}
 }
 
-func TestLicenseInfoCanRunReflector(t *testing.T) {
+func TestInfoCanRunReflector(t *testing.T) {
 	tests := []struct {
-		info *LicenseInfo
+		info *license.Info
 		want bool
 	}{
-		{&LicenseInfo{Valid: true, Tier: TierReflector}, true},
-		{&LicenseInfo{Valid: true, Tier: TierTestSuite}, true},
-		{&LicenseInfo{Valid: true, Tier: TierEnterprise}, true},
-		{&LicenseInfo{Valid: false, Tier: TierReflector}, false},
-		{&LicenseInfo{Valid: true, Tier: TierInvalid}, false},
+		{
+			&license.Info{
+				Key:         "",
+				Valid:       true,
+				Tier:        license.TierReflector,
+				ProductCode: "",
+				Serial:      "",
+				Activated:   false,
+				ActivatedAt: time.Time{},
+				ExpiresAt:   time.Time{},
+				DeviceHash:  "",
+				MaxDevices:  0,
+				Features:    nil,
+				ErrorMsg:    "",
+			},
+			true,
+		},
+		{
+			&license.Info{
+				Key:         "",
+				Valid:       true,
+				Tier:        license.TierTestSuite,
+				ProductCode: "",
+				Serial:      "",
+				Activated:   false,
+				ActivatedAt: time.Time{},
+				ExpiresAt:   time.Time{},
+				DeviceHash:  "",
+				MaxDevices:  0,
+				Features:    nil,
+				ErrorMsg:    "",
+			},
+			true,
+		},
+		{
+			&license.Info{
+				Key:         "",
+				Valid:       true,
+				Tier:        license.TierEnterprise,
+				ProductCode: "",
+				Serial:      "",
+				Activated:   false,
+				ActivatedAt: time.Time{},
+				ExpiresAt:   time.Time{},
+				DeviceHash:  "",
+				MaxDevices:  0,
+				Features:    nil,
+				ErrorMsg:    "",
+			},
+			true,
+		},
+		{
+			&license.Info{
+				Key:         "",
+				Valid:       false,
+				Tier:        license.TierReflector,
+				ProductCode: "",
+				Serial:      "",
+				Activated:   false,
+				ActivatedAt: time.Time{},
+				ExpiresAt:   time.Time{},
+				DeviceHash:  "",
+				MaxDevices:  0,
+				Features:    nil,
+				ErrorMsg:    "",
+			},
+			false,
+		},
+		{
+			&license.Info{
+				Key:         "",
+				Valid:       true,
+				Tier:        license.TierInvalid,
+				ProductCode: "",
+				Serial:      "",
+				Activated:   false,
+				ActivatedAt: time.Time{},
+				ExpiresAt:   time.Time{},
+				DeviceHash:  "",
+				MaxDevices:  0,
+				Features:    nil,
+				ErrorMsg:    "",
+			},
+			false,
+		},
 	}
 
 	for i, tc := range tests {
@@ -220,15 +300,79 @@ func TestLicenseInfoCanRunReflector(t *testing.T) {
 	}
 }
 
-func TestLicenseInfoCanRunTests(t *testing.T) {
+func TestInfoCanRunTests(t *testing.T) {
 	tests := []struct {
-		info *LicenseInfo
+		info *license.Info
 		want bool
 	}{
-		{&LicenseInfo{Valid: true, Tier: TierReflector}, false},
-		{&LicenseInfo{Valid: true, Tier: TierTestSuite}, true},
-		{&LicenseInfo{Valid: true, Tier: TierEnterprise}, true},
-		{&LicenseInfo{Valid: false, Tier: TierTestSuite}, false},
+		{
+			&license.Info{
+				Key:         "",
+				Valid:       true,
+				Tier:        license.TierReflector,
+				ProductCode: "",
+				Serial:      "",
+				Activated:   false,
+				ActivatedAt: time.Time{},
+				ExpiresAt:   time.Time{},
+				DeviceHash:  "",
+				MaxDevices:  0,
+				Features:    nil,
+				ErrorMsg:    "",
+			},
+			false,
+		},
+		{
+			&license.Info{
+				Key:         "",
+				Valid:       true,
+				Tier:        license.TierTestSuite,
+				ProductCode: "",
+				Serial:      "",
+				Activated:   false,
+				ActivatedAt: time.Time{},
+				ExpiresAt:   time.Time{},
+				DeviceHash:  "",
+				MaxDevices:  0,
+				Features:    nil,
+				ErrorMsg:    "",
+			},
+			true,
+		},
+		{
+			&license.Info{
+				Key:         "",
+				Valid:       true,
+				Tier:        license.TierEnterprise,
+				ProductCode: "",
+				Serial:      "",
+				Activated:   false,
+				ActivatedAt: time.Time{},
+				ExpiresAt:   time.Time{},
+				DeviceHash:  "",
+				MaxDevices:  0,
+				Features:    nil,
+				ErrorMsg:    "",
+			},
+			true,
+		},
+		{
+			&license.Info{
+				Key:         "",
+				Valid:       false,
+				Tier:        license.TierTestSuite,
+				ProductCode: "",
+				Serial:      "",
+				Activated:   false,
+				ActivatedAt: time.Time{},
+				ExpiresAt:   time.Time{},
+				DeviceHash:  "",
+				MaxDevices:  0,
+				Features:    nil,
+				ErrorMsg:    "",
+			},
+			false,
+		},
 	}
 
 	for i, tc := range tests {
@@ -239,24 +383,25 @@ func TestLicenseInfoCanRunTests(t *testing.T) {
 }
 
 func TestDeviceFingerprint(t *testing.T) {
-	fp, err := GenerateFingerprint()
+	fp, err := license.GenerateFingerprint()
 	if err != nil {
 		t.Fatalf("GenerateFingerprint failed: %v", err)
 	}
 
-	// Verify hash is 16 characters
+	// Verify hash is 16 characters.
 	hash := fp.Hash()
-	if len(hash) != 16 {
+	const expectedHashLen = 16
+	if len(hash) != expectedHashLen {
 		t.Errorf("Fingerprint hash length = %d, want 16", len(hash))
 	}
 
-	// Verify hash is consistent
+	// Verify hash is consistent.
 	hash2 := fp.Hash()
 	if hash != hash2 {
 		t.Error("Fingerprint hash should be consistent")
 	}
 
-	// Verify String() doesn't panic
+	// Verify String() doesn't panic.
 	str := fp.String()
 	if str == "" {
 		t.Error("Fingerprint String() should not be empty")

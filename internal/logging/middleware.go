@@ -4,10 +4,11 @@ package logging
 
 import (
 	"bufio"
+	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
 	"fmt"
-	"log/slog"
 	"net"
 	"net/http"
 	"time"
@@ -16,6 +17,12 @@ import (
 const (
 	// RequestIDHeader is the HTTP header used to pass request IDs.
 	RequestIDHeader = "X-Request-ID"
+
+	// requestIDBytes is the number of random bytes for request ID generation.
+	requestIDBytes = 8
+
+	// maxRequestIDLength is the maximum length of a client-provided request ID.
+	maxRequestIDLength = 64
 )
 
 // RequestIDMiddleware generates a unique request ID for each incoming request
@@ -56,11 +63,12 @@ func RequestIDMiddleware(next http.Handler) http.Handler {
 // Format: 16 hex characters (8 bytes of randomness).
 // Falls back to time-based ID if crypto/rand fails (extremely rare).
 func generateRequestID() string {
-	b := make([]byte, 8)
-	if _, err := rand.Read(b); err != nil {
+	b := make([]byte, requestIDBytes)
+	_, err := rand.Read(b)
+	if err != nil {
 		// Crypto/rand failure is extremely rare but shouldn't crash the server.
 		// Fall back to time-based ID (sufficient for request correlation).
-		slog.Error("crypto/rand failed, using time-based fallback", "error", err)
+		Get().ErrorContext(context.Background(), "crypto/rand failed, using time-based fallback", "error", err)
 		return fmt.Sprintf("%016x", time.Now().UnixNano())
 	}
 	return hex.EncodeToString(b)
@@ -72,7 +80,7 @@ func isValidRequestID(id string) bool {
 	if id == "" {
 		return false
 	}
-	if len(id) > 64 {
+	if len(id) > maxRequestIDLength {
 		return false
 	}
 	for _, c := range id {
@@ -87,19 +95,20 @@ func isValidRequestID(id string) bool {
 	return true
 }
 
-// LoggingMiddleware logs HTTP requests with timing information.
+// Middleware logs HTTP requests with timing information.
 // It captures the request method, path, status code, and duration.
 //
 // This middleware should be placed after RequestIDMiddleware so that
 // the request ID is available in the logs.
-func LoggingMiddleware(next http.Handler) http.Handler {
+func Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 
-		// Wrap response writer to capture status code
+		// Wrap response writer to capture status code.
 		wrapped := &responseWriter{
 			ResponseWriter: w,
 			status:         http.StatusOK,
+			wroteHeader:    false,
 		}
 
 		// Process request
@@ -128,6 +137,7 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 // responseWriter wraps http.ResponseWriter to capture the status code.
 type responseWriter struct {
 	http.ResponseWriter
+
 	status      int
 	wroteHeader bool
 }
@@ -146,7 +156,11 @@ func (w *responseWriter) Write(b []byte) (int, error) {
 	if !w.wroteHeader {
 		w.WriteHeader(http.StatusOK)
 	}
-	return w.ResponseWriter.Write(b)
+	n, err := w.ResponseWriter.Write(b)
+	if err != nil {
+		return n, fmt.Errorf("response write failed: %w", err)
+	}
+	return n, nil
 }
 
 // Unwrap returns the underlying ResponseWriter, supporting http.ResponseController.
@@ -158,7 +172,11 @@ func (w *responseWriter) Unwrap() http.ResponseWriter {
 // This allows the logging middleware to be used with WebSocket endpoints.
 func (w *responseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 	if h, ok := w.ResponseWriter.(http.Hijacker); ok {
-		return h.Hijack()
+		conn, rw, err := h.Hijack()
+		if err != nil {
+			return nil, nil, fmt.Errorf("hijack failed: %w", err)
+		}
+		return conn, rw, nil
 	}
-	return nil, nil, fmt.Errorf("underlying ResponseWriter does not implement http.Hijacker")
+	return nil, nil, errors.New("underlying ResponseWriter does not implement http.Hijacker")
 }

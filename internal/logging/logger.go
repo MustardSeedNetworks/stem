@@ -19,15 +19,22 @@ import (
 
 // Config contains logging configuration options.
 type Config struct {
-	Level      string `yaml:"level"`       // DEBUG, INFO, WARN, ERROR (default: INFO)
-	Format     string `yaml:"format"`      // text or json (default: json)
-	AddSource  bool   `yaml:"add_source"`  // Include file:line in logs
-	File       string `yaml:"file"`        // Log file path (empty = stdout only)
-	MaxSize    int    `yaml:"max_size"`    // Max MB per log file before rotation
-	MaxBackups int    `yaml:"max_backups"` // Number of old files to keep
-	MaxAge     int    `yaml:"max_age"`     // Days to keep old files
-	Compress   bool   `yaml:"compress"`    // Compress rotated files
+	Level      string `yaml:"level"`       // DEBUG, INFO, WARN, ERROR (default: INFO).
+	Format     string `yaml:"format"`      // text or json (default: json).
+	AddSource  bool   `yaml:"add_source"`  // Include file:line in logs.
+	File       string `yaml:"file"`        // Log file path (empty = stdout only).
+	MaxSize    int    `yaml:"max_size"`    // Max MB per log file before rotation.
+	MaxBackups int    `yaml:"max_backups"` // Number of old files to keep.
+	MaxAge     int    `yaml:"max_age"`     // Days to keep old files.
+	Compress   bool   `yaml:"compress"`    // Compress rotated files.
 }
+
+// Log file rotation defaults.
+const (
+	defaultMaxSizeMB  = 100 // Default max MB per log file before rotation.
+	defaultMaxBackups = 5   // Default number of old files to keep.
+	defaultMaxAgeDays = 30  // Default days to keep old files.
+)
 
 // DefaultConfig returns sensible defaults for logging.
 func DefaultConfig() *Config {
@@ -36,9 +43,9 @@ func DefaultConfig() *Config {
 		Format:     "json",
 		AddSource:  false,
 		File:       "",
-		MaxSize:    100,
-		MaxBackups: 5,
-		MaxAge:     30,
+		MaxSize:    defaultMaxSizeMB,
+		MaxBackups: defaultMaxBackups,
+		MaxAge:     defaultMaxAgeDays,
 		Compress:   true,
 	}
 }
@@ -53,10 +60,12 @@ const (
 	userIDKey contextKey = "user_id"
 )
 
+//nolint:gochecknoglobals // Required for package-level logger singleton pattern.
 var (
 	// globalLogger is the package-level logger instance.
 	globalLogger *slog.Logger
-	loggerMu     sync.RWMutex
+	// loggerMu protects globalLogger from concurrent access.
+	loggerMu sync.RWMutex
 )
 
 // parseLevel converts a string level to slog.Level.
@@ -95,10 +104,11 @@ func Init(cfg *Config) error {
 	if cfg.File != "" {
 		fileWriter := &lumberjack.Logger{
 			Filename:   cfg.File,
-			MaxSize:    cfg.MaxSize,    // MB per log file before rotation
-			MaxBackups: cfg.MaxBackups, // Number of old files to keep
-			MaxAge:     cfg.MaxAge,     // Days to keep old files
-			Compress:   cfg.Compress,   // Compress rotated files
+			MaxSize:    cfg.MaxSize,    // MB per log file before rotation.
+			MaxBackups: cfg.MaxBackups, // Number of old files to keep.
+			MaxAge:     cfg.MaxAge,     // Days to keep old files.
+			Compress:   cfg.Compress,   // Compress rotated files.
+			LocalTime:  false,          // Use UTC for log rotation timestamps.
 		}
 		writers = append(writers, fileWriter)
 	}
@@ -111,10 +121,11 @@ func Init(cfg *Config) error {
 		output = io.MultiWriter(writers...)
 	}
 
-	// Configure handler options
+	// Configure handler options.
 	opts := &slog.HandlerOptions{
-		Level:     parseLevel(cfg.Level),
-		AddSource: cfg.AddSource,
+		Level:       parseLevel(cfg.Level),
+		AddSource:   cfg.AddSource,
+		ReplaceAttr: nil, // No attribute replacement needed; redaction is handled by RedactingHandler.
 	}
 
 	// Create base handler based on format
@@ -210,20 +221,20 @@ func Error(msg string, args ...any) {
 
 // DebugContext logs a debug message with context (includes request_id if present).
 func DebugContext(ctx context.Context, msg string, args ...any) {
-	FromContext(ctx).Debug(msg, args...)
+	FromContext(ctx).DebugContext(ctx, msg, args...)
 }
 
 // InfoContext logs an info message with context (includes request_id if present).
 func InfoContext(ctx context.Context, msg string, args ...any) {
-	FromContext(ctx).Info(msg, args...)
+	FromContext(ctx).InfoContext(ctx, msg, args...)
 }
 
 // WarnContext logs a warning message with context (includes request_id if present).
 func WarnContext(ctx context.Context, msg string, args ...any) {
-	FromContext(ctx).Warn(msg, args...)
+	FromContext(ctx).WarnContext(ctx, msg, args...)
 }
 
 // ErrorContext logs an error message with context (includes request_id if present).
 func ErrorContext(ctx context.Context, msg string, args ...any) {
-	FromContext(ctx).Error(msg, args...)
+	FromContext(ctx).ErrorContext(ctx, msg, args...)
 }
