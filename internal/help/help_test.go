@@ -1041,18 +1041,13 @@ func TestTestSeeAlsoReferencesExist(t *testing.T) {
 func TestDisplayTestOutputContainsName(t *testing.T) {
 	test := rfc2544Throughput
 
-	// Capture stdout
-	old := os.Stdout
-	r, w, _ := os.Pipe()
-	os.Stdout = w
+	// Use SetOutput to properly capture display function output
+	var buf bytes.Buffer
+	SetOutput(&buf)
+	defer SetOutput(os.Stdout)
 
 	DisplayTest(test, false)
 
-	_ = w.Close()
-	os.Stdout = old
-
-	var buf bytes.Buffer
-	_, _ = io.Copy(&buf, r)
 	output := buf.String()
 
 	if !strings.Contains(output, test.Name) {
@@ -1063,18 +1058,13 @@ func TestDisplayTestOutputContainsName(t *testing.T) {
 func TestDisplayCommandOutputContainsUsage(t *testing.T) {
 	cmd := ReflectCommand
 
-	// Capture stdout
-	old := os.Stdout
-	r, w, _ := os.Pipe()
-	os.Stdout = w
+	// Use SetOutput to properly capture display function output
+	var buf bytes.Buffer
+	SetOutput(&buf)
+	defer SetOutput(os.Stdout)
 
 	DisplayCommand(cmd)
 
-	_ = w.Close()
-	os.Stdout = old
-
-	var buf bytes.Buffer
-	_, _ = io.Copy(&buf, r)
 	output := buf.String()
 
 	if !strings.Contains(output, cmd.Usage) {
@@ -1159,17 +1149,13 @@ func TestDisplayTestListByModuleDoesNotPanic(t *testing.T) {
 }
 
 func TestDisplayTestListByModuleOutputContainsModules(t *testing.T) {
-	old := os.Stdout
-	r, w, _ := os.Pipe()
-	os.Stdout = w
+	// Use SetOutput to properly capture display function output
+	var buf bytes.Buffer
+	SetOutput(&buf)
+	defer SetOutput(os.Stdout)
 
 	DisplayTestListByModule()
 
-	_ = w.Close()
-	os.Stdout = old
-
-	var buf bytes.Buffer
-	_, _ = io.Copy(&buf, r)
 	output := buf.String()
 
 	// Should contain all 5 module names
@@ -1203,15 +1189,10 @@ func TestShowHelpModuleTopics(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.topic, func(t *testing.T) {
-			old := os.Stdout
-			r, w, _ := os.Pipe()
-			os.Stdout = w
-
-			defer func() {
-				_ = w.Close()
-				os.Stdout = old
-				_, _ = io.Copy(io.Discard, r)
-			}()
+			// Redirect output using SetOutput to capture display output
+			var buf bytes.Buffer
+			SetOutput(&buf)
+			defer SetOutput(os.Stdout)
 
 			got := ShowHelp(tt.topic, false)
 			if got != tt.want {
