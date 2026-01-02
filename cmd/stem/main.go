@@ -1202,8 +1202,8 @@ func tuiTestMode() {
 		tuiApp.Stop()
 	}
 
-	tuiApp.Log("The Stem TUI started")
-	tuiApp.Log("Press F1 to start test, F2 to stop, F10 to quit")
+	tuiApp.Logf("The Stem TUI started")
+	tuiApp.Logf("Press F1 to start test, F2 to stop, F10 to quit")
 
 	tuiRunErr := tuiApp.Run()
 	if tuiRunErr != nil {
