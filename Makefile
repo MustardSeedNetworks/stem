@@ -122,18 +122,31 @@ lint-go:
 		echo "📦 Installing golangci-lint..."; \
 		go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest; \
 	fi; \
-	$$GOLANGCI_LINT run ./...
+	$$GOLANGCI_LINT run --allow-parallel-runners ./...
 	@echo "✓ Go lint passed"
 
 # Run C linter (clang-tidy) - Linux only
 lint-c:
 ifeq ($(UNAME),Linux)
 	@echo "Running C linter (clang-tidy)..."
-	@if command -v clang-tidy >/dev/null 2>&1; then \
-		find src/ include/ -name '*.c' -o -name '*.h' | xargs clang-tidy -p . 2>/dev/null || true; \
-	else \
-		echo "⚠️  clang-tidy not found, skipping"; \
+	@if ! command -v clang-format >/dev/null 2>&1; then \
+		echo "clang-format not found; install it to enforce formatting."; \
+		exit 1; \
 	fi
+	@if ! command -v clang-tidy >/dev/null 2>&1; then \
+		echo "clang-tidy not found; install it to enforce linting."; \
+		exit 1; \
+	fi
+	@if [ -f build/compile_commands.json ]; then \
+		clang_tidy_db=build; \
+	elif [ -f compile_commands.json ]; then \
+		clang_tidy_db=.; \
+	else \
+		echo "compile_commands.json not found. Generate with: bear -- make dataplane c-test"; \
+		exit 1; \
+	fi; \
+	find src include tests -type f \( -name '*.c' -o -name '*.h' \) | xargs clang-format --dry-run --Werror; \
+	find src include tests -type f -name '*.c' | xargs clang-tidy -p $$clang_tidy_db -warnings-as-errors=*
 	@echo "✓ C lint complete"
 else
 	@echo "C linting requires Linux"
@@ -153,12 +166,12 @@ format-go:
 format-c:
 ifeq ($(UNAME),Linux)
 	@echo "Formatting C code..."
-	@if command -v clang-format >/dev/null 2>&1; then \
-		find src/ include/ -name '*.c' -o -name '*.h' | xargs clang-format -i; \
-		echo "✓ C code formatted"; \
-	else \
-		echo "⚠️  clang-format not found, skipping"; \
+	@if ! command -v clang-format >/dev/null 2>&1; then \
+		echo "clang-format not found; install it to format C code."; \
+		exit 1; \
 	fi
+	find src include tests -type f \( -name '*.c' -o -name '*.h' \) | xargs clang-format -i
+	@echo "✓ C code formatted"
 else
 	@echo "C formatting requires Linux"
 endif

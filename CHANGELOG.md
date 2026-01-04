@@ -7,6 +7,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-01-04
+
+### Added
+
+- Document current API with a Target API vNext section.
+
+### Fixed
+
+- Avoid inline error handling in writeJSON to satisfy lint rules.
+
+### Changed
+
+- Allow golangci-lint parallel runners in Makefile.
+
 ## [0.1.0] - 2025-12-30
 
 ### Added

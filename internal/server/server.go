@@ -61,6 +61,7 @@
 package server
 
 import (
+	"bytes"
 	"embed"
 	"encoding/json"
 	"fmt"
@@ -252,9 +253,16 @@ func (s *Server) UpdateStats(packetsRx, packetsTx, bytesRx, bytesTx uint64, pps,
 // If encoding fails, it logs the error and sends a 500 response.
 func writeJSON(w http.ResponseWriter, v any) {
 	w.Header().Set("Content-Type", "application/json")
-	err := json.NewEncoder(w).Encode(v)
+	var buf bytes.Buffer
+	err := json.NewEncoder(&buf).Encode(v)
 	if err != nil {
 		logging.Error("failed to encode JSON response", "error", err)
+		http.Error(w, "Failed to encode JSON response", http.StatusInternalServerError)
+		return
+	}
+	_, writeErr := w.Write(buf.Bytes())
+	if writeErr != nil {
+		logging.Error("failed to write JSON response", "error", writeErr)
 	}
 }
 
