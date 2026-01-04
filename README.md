@@ -48,6 +48,10 @@ make
 | TUI | `seedtest tui` | Terminal dashboard |
 | WebUI | `seedtest web -p 8080` | http://localhost:8080 |
 
+## Realtime Updates
+
+The current WebUI uses REST requests for status and results. WebSocket streaming is planned but not implemented yet.
+
 ## Build
 
 ### Prerequisites
