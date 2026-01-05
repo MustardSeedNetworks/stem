@@ -41,7 +41,8 @@ func loginToken(t *testing.T, s *server.Server) string {
 	}
 
 	var resp map[string]any
-	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+	err := json.Unmarshal(w.Body.Bytes(), &resp)
+	if err != nil {
 		t.Fatalf("Failed to decode login response: %v", err)
 	}
 

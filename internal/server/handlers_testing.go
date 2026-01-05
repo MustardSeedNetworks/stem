@@ -13,6 +13,8 @@ import (
 	"github.com/krisarmstrong/stem/internal/testmaster/dataplane"
 )
 
+var errTestAlreadyRunning = errors.New("test already running")
+
 // handleTestStart starts a test run via the module system.
 func (s *Server) handleTestStart(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -20,55 +22,38 @@ func (s *Server) handleTestStart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Parse request body.
 	var req TestStartRequest
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
+	decodeErr := json.NewDecoder(r.Body).Decode(&req)
+	if decodeErr != nil {
 		http.Error(w, "Invalid JSON request body", http.StatusBadRequest)
 		return
 	}
 
-	// Default to throughput if no test type specified.
 	if req.TestType == "" {
 		req.TestType = testTypeThroughput
 	}
 
-	// Look up the module for this test type.
-	mod := modules.GetModuleForTest(req.TestType)
-	if mod == nil {
-		http.Error(w, fmt.Sprintf("Unknown test type: %s", req.TestType), http.StatusBadRequest)
+	mod, modErr := s.resolveTestModule(req.TestType)
+	if modErr != nil {
+		http.Error(w, modErr.Error(), http.StatusBadRequest)
 		return
 	}
 
-	// Verify the module can run this test.
-	if !mod.CanRun(req.TestType) {
-		msg := fmt.Sprintf("Module %s cannot run test type: %s", mod.Name(), req.TestType)
-		http.Error(w, msg, http.StatusBadRequest)
+	iface, ifaceErr := s.resolveTestInterface(req.Interface)
+	if ifaceErr != nil {
+		http.Error(w, ifaceErr.Error(), http.StatusBadRequest)
 		return
 	}
 
-	// Use provided interface or fall back to selected interface.
-	iface := req.Interface
-	if iface == "" {
-		iface = s.selectedIface
-	}
-	if iface == "" {
-		http.Error(w, "No interface specified", http.StatusBadRequest)
+	beginErr := s.beginTestRun(req.TestType, mod.Name())
+	if beginErr != nil {
+		if errors.Is(beginErr, errTestAlreadyRunning) {
+			http.Error(w, beginErr.Error(), http.StatusConflict)
+			return
+		}
+		http.Error(w, "Unable to start test", http.StatusInternalServerError)
 		return
 	}
-
-	// Check if test is already running.
-	s.statsMu.Lock()
-	if s.testStatus == statusRunning {
-		s.statsMu.Unlock()
-		http.Error(w, "Test already running", http.StatusConflict)
-		return
-	}
-	s.testStatus = statusStarting
-	s.currentTest = req.TestType
-	s.currentModule = mod.Name()
-	s.testResult = nil
-	s.statsMu.Unlock()
 
 	s.publishTestState(statusStarting, mod.Name(), req.TestType, nil)
 
@@ -78,43 +63,9 @@ func (s *Server) handleTestStart(w http.ResponseWriter, r *http.Request) {
 		"interface", iface,
 	)
 
-	// Try to create executor and start test.
-	err = s.executeTest(mod.Name(), req.TestType, iface, req.FrameSize, req.Duration)
-	if err != nil {
-		s.statsMu.Lock()
-		s.testStatus = statusError
-		s.testResult = &TestResultResponse{
-			Status:   statusError,
-			TestType: req.TestType,
-			Module:   mod.Name(),
-			Success:  false,
-			Error:    err.Error(),
-			Message:  "",
-			Data:     nil,
-		}
-		s.statsMu.Unlock()
-
-		// Check if this is a platform limitation.
-		if errors.Is(err, dataplane.ErrNotSupported) {
-			logging.Warn("Test execution not supported on this platform",
-				"testType", req.TestType,
-				"error", err,
-			)
-			w.WriteHeader(http.StatusServiceUnavailable)
-			writeJSON(w, TestStartResponse{
-				Status:   "unavailable",
-				TestType: req.TestType,
-				Module:   mod.Name(),
-				Message:  "Test execution requires Linux with CGO support. This platform cannot execute tests.",
-			})
-			return
-		}
-
-		logging.Error("Failed to start test",
-			"testType", req.TestType,
-			"error", err,
-		)
-		http.Error(w, fmt.Sprintf("Failed to start test: %v", err), http.StatusInternalServerError)
+	execErr := s.executeTest(mod.Name(), req.TestType, iface, req.FrameSize, req.Duration)
+	if execErr != nil {
+		s.respondTestExecutionError(w, execErr, mod.Name(), req.TestType)
 		return
 	}
 
@@ -194,4 +145,74 @@ func (s *Server) handleTestResult(w http.ResponseWriter, r *http.Request) {
 		Message:  "No test result available",
 		Data:     nil,
 	})
+}
+
+func (s *Server) resolveTestModule(testType string) (*modules.Module, error) {
+	mod := modules.GetModuleForTest(testType)
+	if mod == nil {
+		return nil, fmt.Errorf("Unknown test type: %s", testType)
+	}
+	if !mod.CanRun(testType) {
+		return nil, fmt.Errorf("Module %s cannot run test type: %s", mod.Name(), testType)
+	}
+	return mod, nil
+}
+
+func (s *Server) resolveTestInterface(requested string) (string, error) {
+	if requested != "" {
+		return requested, nil
+	}
+	if s.selectedIface == "" {
+		return "", errors.New("No interface specified")
+	}
+	return s.selectedIface, nil
+}
+
+func (s *Server) beginTestRun(testType, module string) error {
+	s.statsMu.Lock()
+	defer s.statsMu.Unlock()
+	if s.testStatus == statusRunning {
+		return errTestAlreadyRunning
+	}
+	s.testStatus = statusStarting
+	s.currentTest = testType
+	s.currentModule = module
+	s.testResult = nil
+	return nil
+}
+
+func (s *Server) respondTestExecutionError(w http.ResponseWriter, execErr error, module, testType string) {
+	s.statsMu.Lock()
+	s.testStatus = statusError
+	s.testResult = &TestResultResponse{
+		Status:   statusError,
+		TestType: testType,
+		Module:   module,
+		Success:  false,
+		Error:    execErr.Error(),
+		Message:  "",
+		Data:     nil,
+	}
+	s.statsMu.Unlock()
+
+	if errors.Is(execErr, dataplane.ErrNotSupported) {
+		logging.Warn("Test execution not supported on this platform",
+			"testType", testType,
+			"error", execErr,
+		)
+		w.WriteHeader(http.StatusServiceUnavailable)
+		writeJSON(w, TestStartResponse{
+			Status:   "unavailable",
+			TestType: testType,
+			Module:   module,
+			Message:  "Test execution requires Linux with CGO support. This platform cannot execute tests.",
+		})
+		return
+	}
+
+	logging.Error("Failed to start test",
+		"testType", testType,
+		"error", execErr,
+	)
+	http.Error(w, fmt.Sprintf("Failed to start test: %v", execErr), http.StatusInternalServerError)
 }

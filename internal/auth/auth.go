@@ -28,9 +28,12 @@ var (
 // AccessTokenDuration is the default lifetime for access tokens.
 const AccessTokenDuration = 30 * time.Minute
 
+const jwtSecretLength = 32
+
 // Claims represents the custom portion of the JWT payload.
 type Claims struct {
 	jwt.RegisteredClaims
+
 	Username  string `json:"username"`
 	TokenType string `json:"token_type"`
 }
@@ -69,6 +72,7 @@ func NewManager(jwtSecret string, sessionTimeout time.Duration, username, passwo
 	}
 
 	return &Manager{
+		mu:             sync.RWMutex{},
 		jwtSecret:      []byte(secret),
 		sessionTimeout: sessionTimeout,
 		username:       username,
@@ -78,7 +82,7 @@ func NewManager(jwtSecret string, sessionTimeout time.Duration, username, passwo
 }
 
 // Authenticate validates credentials and emits a signed JWT token.
-func (m *Manager) Authenticate(ctx context.Context, username, password string) (string, error) {
+func (m *Manager) Authenticate(_ context.Context, username, password string) (string, error) {
 	m.mu.RLock()
 	storedUsername := m.username
 	storedHash := m.passwordHash
@@ -97,8 +101,9 @@ func (m *Manager) Authenticate(ctx context.Context, username, password string) (
 }
 
 // ValidateToken parses and validates a JWT token.
-func (m *Manager) ValidateToken(ctx context.Context, tokenString string) (*Claims, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (any, error) {
+func (m *Manager) ValidateToken(_ context.Context, tokenString string) (*Claims, error) {
+	claims := new(Claims)
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, ErrInvalidToken
 		}
@@ -108,11 +113,10 @@ func (m *Manager) ValidateToken(ctx context.Context, tokenString string) (*Claim
 		if errors.Is(err, jwt.ErrTokenExpired) {
 			return nil, ErrTokenExpired
 		}
-		return nil, ErrInvalidToken
+		return nil, fmt.Errorf("parse token: %w", ErrInvalidToken)
 	}
 
-	claims, ok := token.Claims.(*Claims)
-	if !ok || !token.Valid {
+	if !token.Valid {
 		return nil, ErrInvalidToken
 	}
 
@@ -125,16 +129,22 @@ func (m *Manager) generateToken(username string) (string, error) {
 		Username:  username,
 		TokenType: "access",
 		RegisteredClaims: jwt.RegisteredClaims{
+			Audience:  jwt.ClaimStrings(nil),
 			ExpiresAt: jwt.NewNumericDate(now.Add(m.sessionTimeout)),
 			IssuedAt:  jwt.NewNumericDate(now),
 			NotBefore: jwt.NewNumericDate(now),
 			Issuer:    m.issuer,
 			Subject:   username,
+			ID:        "",
 		},
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(m.jwtSecret)
+	signed, err := token.SignedString(m.jwtSecret)
+	if err != nil {
+		return "", fmt.Errorf("sign token: %w", err)
+	}
+	return signed, nil
 }
 
 // SessionDuration returns the configured token lifetime.
@@ -146,9 +156,13 @@ func (m *Manager) SessionDuration() time.Duration {
 
 // GenerateJWTSecret returns a new 256-bit base64url JWT secret.
 func GenerateJWTSecret() string {
-	bytes := make([]byte, 32)
-	if _, err := rand.Read(bytes); err != nil {
+	bytes := make([]byte, jwtSecretLength)
+	read, err := rand.Read(bytes)
+	if err != nil {
 		panic(fmt.Sprintf("failed to generate JWT secret: %v", err))
+	}
+	if read != jwtSecretLength {
+		panic("failed to generate complete JWT secret")
 	}
 	return base64.RawURLEncoding.EncodeToString(bytes)
 }

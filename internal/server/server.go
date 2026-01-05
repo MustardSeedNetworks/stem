@@ -94,6 +94,7 @@ const (
 const (
 	defaultAuthSessionTimeout = 30 * time.Minute
 	wsWriteTimeout            = 5 * time.Second
+	defaultWSBufferSize       = 1024
 )
 
 //go:embed dist/*
@@ -182,10 +183,12 @@ func NewServer(port int) *Server {
 		licenseManager: licMgr,
 		authManager:    authMgr,
 		currentModule:  "",
+		wsMu:           sync.Mutex{},
 		wsClients:      make(map[*websocket.Conn]struct{}),
 		wsUpgrader: websocket.Upgrader{
-			ReadBufferSize:  1024,
-			WriteBufferSize: 1024,
+			ReadBufferSize:  defaultWSBufferSize,
+			WriteBufferSize: defaultWSBufferSize,
+			WriteBufferPool: nil,
 			CheckOrigin: func(r *http.Request) bool {
 				origin := r.Header.Get("Origin")
 				if origin == "" {
@@ -193,6 +196,10 @@ func NewServer(port int) *Server {
 				}
 				return strings.Contains(origin, "localhost") || strings.Contains(origin, "127.0.0.1")
 			},
+			HandshakeTimeout:  0,
+			Subprotocols:      nil,
+			Error:             nil,
+			EnableCompression: false,
 		},
 	}
 	s.setupRoutes()
@@ -267,8 +274,9 @@ func (s *Server) handleAuth(path string, handler http.HandlerFunc) {
 
 func (s *Server) authMiddleware(handler http.HandlerFunc) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if err := s.requireAuth(r); err != nil {
-			s.writeAuthError(w, err)
+		authErr := s.requireAuth(r)
+		if authErr != nil {
+			s.writeAuthError(w, authErr)
 			return
 		}
 		handler(w, r)
@@ -280,8 +288,12 @@ func (s *Server) requireAuth(r *http.Request) error {
 	if err != nil {
 		return err
 	}
-	_, err = s.authManager.ValidateToken(r.Context(), token)
-	return err
+	_, validateErr := s.authManager.ValidateToken(r.Context(), token)
+	if validateErr != nil {
+		return fmt.Errorf("validate token: %w", validateErr)
+	}
+
+	return nil
 }
 
 func extractBearerToken(header string) (string, error) {
@@ -368,6 +380,10 @@ func (s *Server) publishTestState(status, module, testType string, resp *TestRes
 		Status:   status,
 		Module:   module,
 		TestType: testType,
+		Success:  false,
+		Error:    "",
+		Message:  "",
+		Data:     nil,
 	})
 }
 
@@ -393,17 +409,20 @@ func copyTestResultResponse(resp *TestResultResponse) *TestResultResponse {
 	if resp == nil {
 		return nil
 	}
-	copy := *resp
-	return &copy
+	respCopy := *resp
+	return &respCopy
 }
 
 func (s *Server) writeTestEvent(conn *websocket.Conn, resp *TestResultResponse) {
 	if resp == nil {
 		return
 	}
-	conn.SetWriteDeadline(time.Now().Add(wsWriteTimeout))
-	if err := conn.WriteJSON(resp); err != nil {
-		logging.Warn("websocket client write failed", "error", err)
+	if deadlineErr := conn.SetWriteDeadline(time.Now().Add(wsWriteTimeout)); deadlineErr != nil {
+		logging.Warn("failed to set websocket write deadline", "error", deadlineErr)
+	}
+	writeErr := conn.WriteJSON(resp)
+	if writeErr != nil {
+		logging.Warn("websocket client write failed", "error", writeErr)
 		s.unregisterWSClient(conn)
 	}
 }
@@ -430,13 +449,17 @@ func (s *Server) snapshotCurrentTest() *TestResultResponse {
 	s.statsMu.RLock()
 	defer s.statsMu.RUnlock()
 	if s.testResult != nil {
-		copy := *s.testResult
-		return &copy
+		resultCopy := *s.testResult
+		return &resultCopy
 	}
 	return &TestResultResponse{
 		Status:   s.testStatus,
 		TestType: s.currentTest,
 		Module:   s.currentModule,
+		Success:  false,
+		Error:    "",
+		Message:  "",
+		Data:     nil,
 	}
 }
 

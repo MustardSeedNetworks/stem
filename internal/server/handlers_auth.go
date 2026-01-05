@@ -18,7 +18,8 @@ func (s *Server) handleAuthLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req AuthLoginRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
 		http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
@@ -37,8 +38,9 @@ func (s *Server) handleAuthLogin(w http.ResponseWriter, r *http.Request) {
 
 // handleTestResultsWebSocket upgrades a connection and streams test events.
 func (s *Server) handleTestResultsWebSocket(w http.ResponseWriter, r *http.Request) {
-	if err := s.requireAuth(r); err != nil {
-		s.writeAuthError(w, err)
+	authErr := s.requireAuth(r)
+	if authErr != nil {
+		s.writeAuthError(w, authErr)
 		return
 	}
 
@@ -54,7 +56,8 @@ func (s *Server) handleTestResultsWebSocket(w http.ResponseWriter, r *http.Reque
 	s.sendCurrentTestState(conn)
 
 	for {
-		if _, _, err := conn.NextReader(); err != nil {
+		_, _, nextErr := conn.NextReader()
+		if nextErr != nil {
 			return
 		}
 	}
