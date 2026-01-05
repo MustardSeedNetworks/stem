@@ -71,6 +71,8 @@ func (s *Server) runModuleTest(
 		s.testStatus = statusRunning
 		s.statsMu.Unlock()
 
+		s.publishTestState(statusRunning, moduleName, testType, nil)
+
 		cfg := &modules.TestConfig{
 			Interface: iface,
 			FrameSize: frameSize,
@@ -81,7 +83,6 @@ func (s *Server) runModuleTest(
 		result, execErr := exec.Execute(testType, cfg)
 
 		s.statsMu.Lock()
-		defer s.statsMu.Unlock()
 
 		if execErr != nil {
 			s.testStatus = statusError
@@ -94,7 +95,11 @@ func (s *Server) runModuleTest(
 				Message:  "",
 				Data:     nil,
 			}
+			s.currentTest = ""
+			s.currentModule = ""
+			s.statsMu.Unlock()
 			logging.Error("Test failed", "module", moduleName, "testType", testType, "error", execErr)
+			s.publishTestState(statusError, moduleName, testType, s.testResult)
 			return
 		}
 
@@ -108,7 +113,11 @@ func (s *Server) runModuleTest(
 			Message:  "",
 			Data:     result.Data,
 		}
+		s.currentTest = ""
+		s.currentModule = ""
+		s.statsMu.Unlock()
 		logging.Info("Test completed", "module", moduleName, "testType", testType, "success", result.Success)
+		s.publishTestState(statusCompleted, moduleName, testType, s.testResult)
 	}()
 
 	return nil
@@ -140,12 +149,14 @@ func (s *Server) executeReflector(iface string) error {
 		exec := s.reflectorExec
 		s.testStatus = statusRunning
 		s.currentTest = testTypeReflect
+		s.currentModule = moduleReflector
 		s.statsMu.Unlock()
+
+		s.publishTestState(statusRunning, moduleReflector, testTypeReflect, nil)
 
 		result, err := exec.Execute(testTypeReflect, nil)
 
 		s.statsMu.Lock()
-		defer s.statsMu.Unlock()
 
 		if err != nil {
 			s.testStatus = statusError
@@ -159,6 +170,9 @@ func (s *Server) executeReflector(iface string) error {
 				Data:     nil,
 			}
 			logging.Error("Reflector start failed", "error", err)
+			s.currentModule = ""
+			s.statsMu.Unlock()
+			s.publishTestState(statusError, moduleReflector, testTypeReflect, s.testResult)
 			return
 		}
 
@@ -172,6 +186,9 @@ func (s *Server) executeReflector(iface string) error {
 			Data:     result.Data,
 		}
 		logging.Info("Reflector started", "success", result.Success)
+		s.currentModule = ""
+		s.statsMu.Unlock()
+		s.publishTestState(statusRunning, moduleReflector, testTypeReflect, s.testResult)
 	}()
 
 	return nil

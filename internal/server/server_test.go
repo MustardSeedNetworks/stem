@@ -29,6 +29,49 @@ const (
 	testTypeThroughput  = "throughput"
 )
 
+func loginToken(t *testing.T, s *server.Server) string {
+	t.Helper()
+	body := bytes.NewBufferString(`{"username":"admin","password":"admin"}`)
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/login", body)
+	w := httptest.NewRecorder()
+
+	s.ServeHTTP(w, req)
+	if w.Code != http.StatusOK {
+		t.Fatalf("Expected login status 200, got %d", w.Code)
+	}
+
+	var resp map[string]any
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("Failed to decode login response: %v", err)
+	}
+
+	token, ok := resp["token"].(string)
+	if !ok || token == "" {
+		t.Fatalf("Login response missing token: %v", resp)
+	}
+	return token
+}
+
+func TestHandleAuthLogin(t *testing.T) {
+	s := server.NewServer(8080)
+	token := loginToken(t, s)
+	if token == "" {
+		t.Fatal("expected non-empty token")
+	}
+}
+
+func TestHandleAuthLoginFailure(t *testing.T) {
+	s := server.NewServer(8080)
+	body := bytes.NewBufferString(`{"username":"admin","password":"wrong"}`)
+	req := httptest.NewRequest(http.MethodPost, "/api/auth/login", body)
+	w := httptest.NewRecorder()
+	s.ServeHTTP(w, req)
+
+	if w.Code != http.StatusUnauthorized {
+		t.Fatalf("Expected status 401 for invalid login, got %d", w.Code)
+	}
+}
+
 func TestNewServer(t *testing.T) {
 	s := server.NewServer(8080)
 	if s == nil {
@@ -123,12 +166,28 @@ func TestHandleTestStartUnknownType(t *testing.T) {
 
 	body := strings.NewReader(`{"testType": "nonexistent_test"}`)
 	req := httptest.NewRequest(http.MethodPost, "/api/test/start", body)
+	token := loginToken(t, s)
+	req.Header.Set("Authorization", "Bearer "+token)
 	w := httptest.NewRecorder()
 
 	s.ServeHTTP(w, req)
 
 	if w.Code != http.StatusBadRequest {
 		t.Errorf("Expected status 400, got %d", w.Code)
+	}
+}
+
+func TestHandleTestStartUnauthorized(t *testing.T) {
+	s := server.NewServer(8080)
+
+	body := strings.NewReader(`{"testType": "throughput"}`)
+	req := httptest.NewRequest(http.MethodPost, "/api/test/start", body)
+	w := httptest.NewRecorder()
+
+	s.ServeHTTP(w, req)
+
+	if w.Code != http.StatusUnauthorized {
+		t.Errorf("Expected status 401 without auth, got %d", w.Code)
 	}
 }
 

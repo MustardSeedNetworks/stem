@@ -109,6 +109,18 @@ type TestStartResponse struct {
 	Message  string `json:"message,omitempty"`
 }
 
+// AuthLoginRequest captures credentials supplied to /api/auth/login.
+type AuthLoginRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+// AuthLoginResponse returns the issued JWT.
+type AuthLoginResponse struct {
+	Token     string `json:"token"`
+	ExpiresAt int64  `json:"expiresAt"`
+}
+
 // TestResultResponse for completed test results.
 type TestResultResponse struct {
 	Status   string `json:"status"`

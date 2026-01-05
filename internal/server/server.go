@@ -64,13 +64,18 @@ import (
 	"bytes"
 	"embed"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/fs"
 	"math"
 	"net/http"
+	"os"
+	"strings"
 	"sync"
 	"time"
 
+	"github.com/gorilla/websocket"
+	"github.com/krisarmstrong/stem/internal/auth"
 	"github.com/krisarmstrong/stem/internal/license"
 	"github.com/krisarmstrong/stem/internal/logging"
 	"github.com/krisarmstrong/stem/internal/modules/reflector"
@@ -84,6 +89,11 @@ const (
 	HTTPReadTimeout       = 30 * time.Second
 	HTTPWriteTimeout      = 30 * time.Second
 	HTTPIdleTimeout       = 120 * time.Second
+)
+
+const (
+	defaultAuthSessionTimeout = 30 * time.Minute
+	wsWriteTimeout            = 5 * time.Second
 )
 
 //go:embed dist/*
@@ -104,7 +114,17 @@ type Server struct {
 	reflectorConfig ReflectorConfig
 	reflectorExec   *reflector.Executor // Active reflector executor (nil when not in reflector mode)
 	licenseManager  *license.Manager
+	authManager     *auth.Manager
+	currentModule   string
+	wsMu            sync.Mutex
+	wsClients       map[*websocket.Conn]struct{}
+	wsUpgrader      websocket.Upgrader
 }
+
+var (
+	errMissingAuthToken  = errors.New("missing authorization token")
+	errInvalidAuthHeader = errors.New("invalid authorization header")
+)
 
 // NewServer creates a new web server.
 func NewServer(port int) *Server {
@@ -123,6 +143,13 @@ func NewServer(port int) *Server {
 	} else {
 		logging.Warn("No suitable interface found for auto-selection", "error", ifaceErr)
 	}
+
+	authMgr := auth.NewManager(
+		envOr("STEM_JWT_SECRET", ""),
+		defaultAuthSessionTimeout,
+		envOr("STEM_AUTH_USERNAME", "admin"),
+		envOr("STEM_AUTH_PASSWORD", "admin"),
+	)
 
 	s := &Server{
 		port:    port,
@@ -153,6 +180,20 @@ func NewServer(port int) *Server {
 		},
 		reflectorExec:  nil,
 		licenseManager: licMgr,
+		authManager:    authMgr,
+		currentModule:  "",
+		wsClients:      make(map[*websocket.Conn]struct{}),
+		wsUpgrader: websocket.Upgrader{
+			ReadBufferSize:  1024,
+			WriteBufferSize: 1024,
+			CheckOrigin: func(r *http.Request) bool {
+				origin := r.Header.Get("Origin")
+				if origin == "" {
+					return true
+				}
+				return strings.Contains(origin, "localhost") || strings.Contains(origin, "127.0.0.1")
+			},
+		},
 	}
 	s.setupRoutes()
 	return s
@@ -161,33 +202,37 @@ func NewServer(port int) *Server {
 // setupRoutes configures the HTTP routes.
 func (s *Server) setupRoutes() {
 	// API routes - Health and Status.
-	s.mux.HandleFunc("/api/health", s.handleHealth)
-	s.mux.HandleFunc("/api/stats", s.handleStats)
+	s.handle("/api/health", s.handleHealth)
+	s.handle("/api/stats", s.handleStats)
 
 	// API routes - Interfaces.
-	s.mux.HandleFunc("/api/interfaces", s.handleInterfaces)
+	s.handle("/api/interfaces", s.handleInterfaces)
 
 	// API routes - Settings and Mode.
-	s.mux.HandleFunc("/api/settings", s.handleSettings)
-	s.mux.HandleFunc("/api/mode", s.handleMode)
+	s.handle("/api/settings", s.handleSettings)
+	s.handle("/api/mode", s.handleMode)
 
 	// API routes - Test Execution.
-	s.mux.HandleFunc("/api/test/start", s.handleTestStart)
-	s.mux.HandleFunc("/api/test/stop", s.handleTestStop)
-	s.mux.HandleFunc("/api/test/result", s.handleTestResult)
+	s.handleAuth("/api/test/start", s.handleTestStart)
+	s.handleAuth("/api/test/stop", s.handleTestStop)
+	s.handleAuth("/api/test/result", s.handleTestResult)
+
+	// API routes - Authentication.
+	s.handle("/api/auth/login", s.handleAuthLogin)
+	s.mux.HandleFunc("/api/ws/test-results", s.handleTestResultsWebSocket)
 
 	// API routes - Reflector.
 	s.mux.HandleFunc("/api/reflector/config", s.handleReflectorConfig)
 	s.mux.HandleFunc("/api/reflector/stats", s.handleReflectorStats)
 
 	// API routes - License.
-	s.mux.HandleFunc("/api/license", s.handleLicense)
-	s.mux.HandleFunc("/api/license/activate", s.handleLicenseActivate)
-	s.mux.HandleFunc("/api/license/trial", s.handleLicenseTrial)
+	s.handle("/api/license", s.handleLicense)
+	s.handle("/api/license/activate", s.handleLicenseActivate)
+	s.handle("/api/license/trial", s.handleLicenseTrial)
 
 	// API routes - Modules.
-	s.mux.HandleFunc("/api/modules", s.handleModules)
-	s.mux.HandleFunc("/api/modules/", s.handleModuleByName)
+	s.handle("/api/modules", s.handleModules)
+	s.handle("/api/modules/", s.handleModuleByName)
 
 	// Static files (embedded UI).
 	staticFS, err := fs.Sub(staticFiles, "dist")
@@ -210,6 +255,54 @@ func (s *Server) setupRoutes() {
 		fileServer := http.FileServer(http.FS(staticFS))
 		s.mux.Handle("/", fileServer)
 	}
+}
+
+func (s *Server) handle(path string, handler http.HandlerFunc) {
+	s.mux.HandleFunc(path, handler)
+}
+
+func (s *Server) handleAuth(path string, handler http.HandlerFunc) {
+	s.mux.Handle(path, s.authMiddleware(handler))
+}
+
+func (s *Server) authMiddleware(handler http.HandlerFunc) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if err := s.requireAuth(r); err != nil {
+			s.writeAuthError(w, err)
+			return
+		}
+		handler(w, r)
+	})
+}
+
+func (s *Server) requireAuth(r *http.Request) error {
+	token, err := extractBearerToken(r.Header.Get("Authorization"))
+	if err != nil {
+		return err
+	}
+	_, err = s.authManager.ValidateToken(r.Context(), token)
+	return err
+}
+
+func extractBearerToken(header string) (string, error) {
+	header = strings.TrimSpace(header)
+	if header == "" {
+		return "", errMissingAuthToken
+	}
+	parts := strings.Fields(header)
+	if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
+		return "", errInvalidAuthHeader
+	}
+	return parts[1], nil
+}
+
+func (s *Server) writeAuthError(w http.ResponseWriter, err error) {
+	status := http.StatusUnauthorized
+	message := "Unauthorized"
+	if errors.Is(err, auth.ErrInvalidToken) || errors.Is(err, auth.ErrTokenExpired) {
+		message = err.Error()
+	}
+	http.Error(w, message, status)
 }
 
 // Run starts the web server.
@@ -264,6 +357,94 @@ func writeJSON(w http.ResponseWriter, v any) {
 	if writeErr != nil {
 		logging.Error("failed to write JSON response", "error", writeErr)
 	}
+}
+
+func (s *Server) publishTestState(status, module, testType string, resp *TestResultResponse) {
+	if resp != nil {
+		s.broadcastTestEvent(resp)
+		return
+	}
+	s.broadcastTestEvent(&TestResultResponse{
+		Status:   status,
+		Module:   module,
+		TestType: testType,
+	})
+}
+
+func (s *Server) broadcastTestEvent(resp *TestResultResponse) {
+	if resp == nil {
+		return
+	}
+
+	s.wsMu.Lock()
+	clients := make([]*websocket.Conn, 0, len(s.wsClients))
+	for conn := range s.wsClients {
+		clients = append(clients, conn)
+	}
+	s.wsMu.Unlock()
+
+	for _, conn := range clients {
+		event := copyTestResultResponse(resp)
+		go s.writeTestEvent(conn, event)
+	}
+}
+
+func copyTestResultResponse(resp *TestResultResponse) *TestResultResponse {
+	if resp == nil {
+		return nil
+	}
+	copy := *resp
+	return &copy
+}
+
+func (s *Server) writeTestEvent(conn *websocket.Conn, resp *TestResultResponse) {
+	if resp == nil {
+		return
+	}
+	conn.SetWriteDeadline(time.Now().Add(wsWriteTimeout))
+	if err := conn.WriteJSON(resp); err != nil {
+		logging.Warn("websocket client write failed", "error", err)
+		s.unregisterWSClient(conn)
+	}
+}
+
+func (s *Server) registerWSClient(conn *websocket.Conn) {
+	s.wsMu.Lock()
+	s.wsClients[conn] = struct{}{}
+	s.wsMu.Unlock()
+}
+
+func (s *Server) unregisterWSClient(conn *websocket.Conn) {
+	s.wsMu.Lock()
+	delete(s.wsClients, conn)
+	s.wsMu.Unlock()
+	_ = conn.Close()
+}
+
+func (s *Server) sendCurrentTestState(conn *websocket.Conn) {
+	resp := s.snapshotCurrentTest()
+	s.writeTestEvent(conn, resp)
+}
+
+func (s *Server) snapshotCurrentTest() *TestResultResponse {
+	s.statsMu.RLock()
+	defer s.statsMu.RUnlock()
+	if s.testResult != nil {
+		copy := *s.testResult
+		return &copy
+	}
+	return &TestResultResponse{
+		Status:   s.testStatus,
+		TestType: s.currentTest,
+		Module:   s.currentModule,
+	}
+}
+
+func envOr(key, fallback string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return fallback
 }
 
 // safeIntToUint16 safely converts an int to uint16.

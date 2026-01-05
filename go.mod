@@ -4,7 +4,10 @@ go 1.25.5
 
 require (
 	github.com/gdamore/tcell/v2 v2.13.5
+	github.com/golang-jwt/jwt/v5 v5.3.0
+	github.com/gorilla/websocket v1.5.3
 	github.com/rivo/tview v0.42.0
+	golang.org/x/crypto v0.46.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gopkg.in/yaml.v3 v3.0.1
 )
