@@ -23,12 +23,27 @@ var (
 	ErrInvalidToken = errors.New("invalid token")
 	// ErrTokenExpired indicates the token expired.
 	ErrTokenExpired = errors.New("token expired")
+	// ErrTokenRevoked indicates the token has been revoked/logged out.
+	ErrTokenRevoked = errors.New("token has been revoked")
+	// ErrMissingCredentials indicates required credentials were not provided.
+	ErrMissingCredentials = errors.New(
+		"missing required credentials: set STEM_AUTH_USERNAME and STEM_AUTH_PASSWORD environment variables",
+	)
+	// ErrPasswordHashFailed indicates bcrypt failed to hash the password.
+	ErrPasswordHashFailed = errors.New("failed to hash password")
+	// ErrSecretGenerationFailed indicates random bytes could not be generated.
+	ErrSecretGenerationFailed = errors.New("failed to generate JWT secret")
 )
 
-// AccessTokenDuration is the default lifetime for access tokens.
-const AccessTokenDuration = 30 * time.Minute
+const (
+	// AccessTokenDuration is the default lifetime for access tokens (15 minutes).
+	AccessTokenDuration = 15 * time.Minute
+	// RefreshTokenDuration is the lifetime for refresh tokens (7 days).
+	RefreshTokenDuration = 7 * 24 * time.Hour
 
-const jwtSecretLength = 32
+	jwtSecretLength = 32
+	tokenIDLength   = 16
+)
 
 // Claims represents the custom portion of the JWT payload.
 type Claims struct {
@@ -46,25 +61,29 @@ type Manager struct {
 	username       string
 	passwordHash   []byte
 	issuer         string
+	blacklist      *TokenBlacklist
 }
 
 // NewManager creates an auth manager that can sign tokens.
-func NewManager(jwtSecret string, sessionTimeout time.Duration, username, password string) *Manager {
-	if username == "" {
-		username = "admin"
-	}
-	if password == "" {
-		password = "admin"
+// Returns ErrMissingCredentials if username or password is empty.
+func NewManager(jwtSecret string, sessionTimeout time.Duration, username, password string) (*Manager, error) {
+	// Require explicit credentials - no defaults allowed.
+	if username == "" || password == "" {
+		return nil, ErrMissingCredentials
 	}
 
 	secret := jwtSecret
 	if secret == "" {
-		secret = GenerateJWTSecret()
+		var err error
+		secret, err = GenerateJWTSecret()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		panic(fmt.Sprintf("failed to hash auth password: %v", err))
+		return nil, fmt.Errorf("%w: %w", ErrPasswordHashFailed, err)
 	}
 
 	if sessionTimeout <= 0 {
@@ -78,7 +97,8 @@ func NewManager(jwtSecret string, sessionTimeout time.Duration, username, passwo
 		username:       username,
 		passwordHash:   hash,
 		issuer:         "The Stem",
-	}
+		blacklist:      NewTokenBlacklist(),
+	}, nil
 }
 
 // Authenticate validates credentials and emits a signed JWT token.
@@ -101,6 +121,7 @@ func (m *Manager) Authenticate(_ context.Context, username, password string) (st
 }
 
 // ValidateToken parses and validates a JWT token.
+// Returns ErrTokenRevoked if the token has been revoked via logout.
 func (m *Manager) ValidateToken(_ context.Context, tokenString string) (*Claims, error) {
 	claims := new(Claims)
 	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (any, error) {
@@ -120,22 +141,38 @@ func (m *Manager) ValidateToken(_ context.Context, tokenString string) (*Claims,
 		return nil, ErrInvalidToken
 	}
 
+	// Check if token has been revoked.
+	if claims.ID != "" && m.blacklist.IsBlacklisted(claims.ID) {
+		return nil, ErrTokenRevoked
+	}
+
 	return claims, nil
 }
 
 func (m *Manager) generateToken(username string) (string, error) {
+	return m.generateTokenWithType(username, "access", m.sessionTimeout)
+}
+
+func (m *Manager) generateTokenWithType(username, tokenType string, duration time.Duration) (string, error) {
 	now := time.Now()
+
+	// Generate unique token ID for revocation support.
+	tokenID, err := generateTokenID()
+	if err != nil {
+		return "", fmt.Errorf("generate token ID: %w", err)
+	}
+
 	claims := &Claims{
 		Username:  username,
-		TokenType: "access",
+		TokenType: tokenType,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Audience:  jwt.ClaimStrings(nil),
-			ExpiresAt: jwt.NewNumericDate(now.Add(m.sessionTimeout)),
+			ExpiresAt: jwt.NewNumericDate(now.Add(duration)),
 			IssuedAt:  jwt.NewNumericDate(now),
 			NotBefore: jwt.NewNumericDate(now),
 			Issuer:    m.issuer,
 			Subject:   username,
-			ID:        "",
+			ID:        tokenID,
 		},
 	}
 
@@ -147,6 +184,16 @@ func (m *Manager) generateToken(username string) (string, error) {
 	return signed, nil
 }
 
+// generateTokenID creates a unique identifier for tokens.
+func generateTokenID() (string, error) {
+	bytes := make([]byte, tokenIDLength)
+	_, err := rand.Read(bytes)
+	if err != nil {
+		return "", fmt.Errorf("read random bytes: %w", err)
+	}
+	return base64.RawURLEncoding.EncodeToString(bytes), nil
+}
+
 // SessionDuration returns the configured token lifetime.
 func (m *Manager) SessionDuration() time.Duration {
 	m.mu.RLock()
@@ -154,15 +201,79 @@ func (m *Manager) SessionDuration() time.Duration {
 	return m.sessionTimeout
 }
 
+// RevokeToken adds a token to the blacklist, invalidating it for future use.
+// This is used for logout functionality.
+func (m *Manager) RevokeToken(claims *Claims) {
+	if claims == nil || claims.ID == "" {
+		return
+	}
+	expiresAt := time.Now().Add(m.sessionTimeout)
+	if claims.ExpiresAt != nil {
+		expiresAt = claims.ExpiresAt.Time
+	}
+	m.blacklist.Add(claims.ID, expiresAt)
+}
+
+// GenerateRefreshToken creates a long-lived refresh token for the user.
+func (m *Manager) GenerateRefreshToken(username string) (string, error) {
+	return m.generateTokenWithType(username, "refresh", RefreshTokenDuration)
+}
+
+// RefreshAccessToken validates a refresh token and issues a new access token.
+// Returns ErrInvalidToken if the token is not a valid refresh token.
+func (m *Manager) RefreshAccessToken(ctx context.Context, refreshToken string) (string, error) {
+	claims, err := m.ValidateToken(ctx, refreshToken)
+	if err != nil {
+		return "", err
+	}
+
+	if claims.TokenType != "refresh" {
+		return "", fmt.Errorf("%w: not a refresh token", ErrInvalidToken)
+	}
+
+	return m.generateToken(claims.Username)
+}
+
+// AuthenticateWithRefresh validates credentials and returns both access and refresh tokens.
+func (m *Manager) AuthenticateWithRefresh(
+	_ context.Context, username, password string,
+) (string, string, error) {
+	m.mu.RLock()
+	storedUsername := m.username
+	storedHash := m.passwordHash
+	m.mu.RUnlock()
+
+	usernameMatch := subtle.ConstantTimeCompare(
+		[]byte(strings.ToLower(username)),
+		[]byte(strings.ToLower(storedUsername)),
+	) == 1
+
+	if !usernameMatch || bcrypt.CompareHashAndPassword(storedHash, []byte(password)) != nil {
+		return "", "", ErrInvalidCredentials
+	}
+
+	accessToken, err := m.generateToken(username)
+	if err != nil {
+		return "", "", err
+	}
+
+	refreshToken, err := m.GenerateRefreshToken(username)
+	if err != nil {
+		return "", "", err
+	}
+
+	return accessToken, refreshToken, nil
+}
+
 // GenerateJWTSecret returns a new 256-bit base64url JWT secret.
-func GenerateJWTSecret() string {
+func GenerateJWTSecret() (string, error) {
 	bytes := make([]byte, jwtSecretLength)
 	read, err := rand.Read(bytes)
 	if err != nil {
-		panic(fmt.Sprintf("failed to generate JWT secret: %v", err))
+		return "", fmt.Errorf("%w: %w", ErrSecretGenerationFailed, err)
 	}
 	if read != jwtSecretLength {
-		panic("failed to generate complete JWT secret")
+		return "", fmt.Errorf("%w: incomplete read", ErrSecretGenerationFailed)
 	}
-	return base64.RawURLEncoding.EncodeToString(bytes)
+	return base64.RawURLEncoding.EncodeToString(bytes), nil
 }

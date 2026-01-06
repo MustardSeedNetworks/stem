@@ -10,6 +10,7 @@ import (
 )
 
 // handleAuthLogin issues JWT tokens for valid credentials.
+// Returns both access and refresh tokens.
 func (s *Server) handleAuthLogin(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -21,15 +22,64 @@ func (s *Server) handleAuthLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := s.authManager.Authenticate(r.Context(), req.Username, req.Password)
+	accessToken, refreshToken, err := s.authManager.AuthenticateWithRefresh(r.Context(), req.Username, req.Password)
 	if err != nil {
 		s.writeAuthError(w, err)
 		return
 	}
 
 	writeJSON(w, AuthLoginResponse{
-		Token:     token,
-		ExpiresAt: time.Now().Add(s.authManager.SessionDuration()).Unix(),
+		Token:        accessToken,
+		RefreshToken: refreshToken,
+		ExpiresAt:    time.Now().Add(s.authManager.SessionDuration()).Unix(),
+	})
+}
+
+// handleAuthLogout revokes the current access token.
+func (s *Server) handleAuthLogout(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Get the token from the Authorization header.
+	claims, err := s.extractClaims(r)
+	if err != nil {
+		s.writeAuthError(w, err)
+		return
+	}
+
+	// Revoke the token.
+	s.authManager.RevokeToken(claims)
+
+	writeJSON(w, map[string]any{
+		"success": true,
+		"message": "Logged out successfully",
+	})
+}
+
+// handleAuthRefresh exchanges a refresh token for a new access token.
+func (s *Server) handleAuthRefresh(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req AuthRefreshRequest
+	if !decodeJSONStrict(w, r, &req, maxRequestBodySize) {
+		return
+	}
+
+	accessToken, err := s.authManager.RefreshAccessToken(r.Context(), req.RefreshToken)
+	if err != nil {
+		s.writeAuthError(w, err)
+		return
+	}
+
+	writeJSON(w, AuthLoginResponse{
+		Token:        accessToken,
+		RefreshToken: "",
+		ExpiresAt:    time.Now().Add(s.authManager.SessionDuration()).Unix(),
 	})
 }
 

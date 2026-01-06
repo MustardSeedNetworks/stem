@@ -115,10 +115,16 @@ type AuthLoginRequest struct {
 	Password string `json:"password"`
 }
 
-// AuthLoginResponse returns the issued JWT.
+// AuthLoginResponse returns the issued JWT tokens.
 type AuthLoginResponse struct {
-	Token     string `json:"token"`
-	ExpiresAt int64  `json:"expiresAt"`
+	Token        string `json:"token"`
+	RefreshToken string `json:"refreshToken,omitempty"`
+	ExpiresAt    int64  `json:"expiresAt"`
+}
+
+// AuthRefreshRequest captures the refresh token for /api/auth/refresh.
+type AuthRefreshRequest struct {
+	RefreshToken string `json:"refreshToken"`
 }
 
 // TestResultResponse for completed test results.

@@ -191,11 +191,12 @@ func validateKeyChecksum(key string) bool {
 	expected := CalculateChecksum(payload)
 
 	// Compare with key prefix (0-1) and suffix (14-15).
-	prefixMatch := key[0:2] == expected[0:1]+key[1:2] || key[0:2] == expected // Allow some flexibility.
+	// Both checksum positions must match the expected value (AND logic).
+	// This prevents bypass attacks where only one component matches.
+	prefixMatch := key[0:2] == expected
 	suffixMatch := key[14:16] == expected
 
-	// Use a more lenient check - verify suffix or use full checksum validation.
-	return prefixMatch || suffixMatch || ValidateChecksum(key[2:16])
+	return prefixMatch && suffixMatch
 }
 
 // GenerateLicenseKey creates a new license key (for admin/generator tool).

@@ -69,6 +69,7 @@ import (
 	"io/fs"
 	"math"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"sync"
@@ -130,7 +131,8 @@ var (
 )
 
 // NewServer creates a new web server.
-func NewServer(port int) *Server {
+// Returns an error if required credentials are not configured via environment variables.
+func NewServer(port int) (*Server, error) {
 	// Initialize license manager.
 	licMgr, err := license.NewManager()
 	if err != nil {
@@ -147,12 +149,16 @@ func NewServer(port int) *Server {
 		logging.Warn("No suitable interface found for auto-selection", "error", ifaceErr)
 	}
 
-	authMgr := auth.NewManager(
-		envOr("STEM_JWT_SECRET", ""),
+	// Create auth manager - credentials are required via env vars.
+	authMgr, err := auth.NewManager(
+		os.Getenv("STEM_JWT_SECRET"),
 		defaultAuthSessionTimeout,
-		envOr("STEM_AUTH_USERNAME", "admin"),
-		envOr("STEM_AUTH_PASSWORD", "admin"),
+		os.Getenv("STEM_AUTH_USERNAME"),
+		os.Getenv("STEM_AUTH_PASSWORD"),
 	)
+	if err != nil {
+		return nil, fmt.Errorf("authentication setup failed: %w", err)
+	}
 
 	s := &Server{
 		port:    port,
@@ -196,7 +202,7 @@ func NewServer(port int) *Server {
 				if origin == "" {
 					return true
 				}
-				return strings.Contains(origin, "localhost") || strings.Contains(origin, "127.0.0.1")
+				return isLocalhostOrigin(origin)
 			},
 			HandshakeTimeout:  0,
 			Subprotocols:      nil,
@@ -205,7 +211,18 @@ func NewServer(port int) *Server {
 		},
 	}
 	s.setupRoutes()
-	return s
+	return s, nil
+}
+
+// isLocalhostOrigin validates that the origin is actually localhost.
+// Prevents CORS bypass via origins like "localhost.evil.com".
+func isLocalhostOrigin(origin string) bool {
+	u, err := url.Parse(origin)
+	if err != nil {
+		return false
+	}
+	host := u.Hostname()
+	return host == "localhost" || host == "127.0.0.1" || host == "::1"
 }
 
 // setupRoutes configures the HTTP routes.
@@ -228,6 +245,8 @@ func (s *Server) setupRoutes() {
 
 	// API routes - Authentication.
 	s.handle("/api/auth/login", s.handleAuthLogin)
+	s.handle("/api/auth/logout", s.handleAuthLogout)
+	s.handle("/api/auth/refresh", s.handleAuthRefresh)
 	s.mux.HandleFunc("/api/ws/test-results", s.handleTestResultsWebSocket)
 
 	// API routes - Reflector.
@@ -298,6 +317,19 @@ func (s *Server) requireAuth(r *http.Request) error {
 	return nil
 }
 
+// extractClaims parses and validates the JWT from the request, returning claims.
+func (s *Server) extractClaims(r *http.Request) (*auth.Claims, error) {
+	token, err := extractBearerToken(r.Header.Get("Authorization"))
+	if err != nil {
+		return nil, err
+	}
+	claims, validateErr := s.authManager.ValidateToken(r.Context(), token)
+	if validateErr != nil {
+		return nil, fmt.Errorf("validate token: %w", validateErr)
+	}
+	return claims, nil
+}
+
 func extractBearerToken(header string) (string, error) {
 	header = strings.TrimSpace(header)
 	if header == "" {
@@ -313,7 +345,10 @@ func extractBearerToken(header string) (string, error) {
 func (s *Server) writeAuthError(w http.ResponseWriter, err error) {
 	status := http.StatusUnauthorized
 	message := "Unauthorized"
-	if errors.Is(err, auth.ErrInvalidToken) || errors.Is(err, auth.ErrTokenExpired) {
+	isKnownErr := errors.Is(err, auth.ErrInvalidToken) ||
+		errors.Is(err, auth.ErrTokenExpired) ||
+		errors.Is(err, auth.ErrTokenRevoked)
+	if isKnownErr {
 		message = err.Error()
 	}
 	http.Error(w, message, status)
@@ -350,13 +385,6 @@ func corsMiddleware(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r)
 	})
-}
-
-// isLocalhostOrigin checks if an origin is localhost.
-func isLocalhostOrigin(origin string) bool {
-	return strings.Contains(origin, "localhost") ||
-		strings.Contains(origin, "127.0.0.1") ||
-		strings.Contains(origin, "[::1]")
 }
 
 // Run starts the web server.
@@ -415,6 +443,8 @@ func writeJSON(w http.ResponseWriter, v any) {
 
 // decodeJSONStrict decodes JSON from the request body with size limits and strict validation.
 // Returns false if decoding fails (error response already written to w).
+//
+//nolint:unparam // maxSize allows future per-endpoint customization
 func decodeJSONStrict(w http.ResponseWriter, r *http.Request, v any, maxSize int64) bool {
 	// Limit request body size.
 	r.Body = http.MaxBytesReader(w, r.Body, maxSize)
@@ -482,7 +512,8 @@ func (s *Server) writeTestEvent(conn *websocket.Conn, resp *TestResultResponse) 
 	if resp == nil {
 		return
 	}
-	if deadlineErr := conn.SetWriteDeadline(time.Now().Add(wsWriteTimeout)); deadlineErr != nil {
+	deadlineErr := conn.SetWriteDeadline(time.Now().Add(wsWriteTimeout))
+	if deadlineErr != nil {
 		logging.Warn("failed to set websocket write deadline", "error", deadlineErr)
 	}
 	writeErr := conn.WriteJSON(resp)
@@ -526,13 +557,6 @@ func (s *Server) snapshotCurrentTest() *TestResultResponse {
 		Message:  "",
 		Data:     nil,
 	}
-}
-
-func envOr(key, fallback string) string {
-	if v := os.Getenv(key); v != "" {
-		return v
-	}
-	return fallback
 }
 
 // safeIntToUint16 safely converts an int to uint16.

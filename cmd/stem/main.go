@@ -1105,7 +1105,12 @@ func webCmd(args []string) {
 	_, _ = fmt.Fprintf(os.Stdout, "%s %s - WebUI Server\n", ProductName, version.Version)
 	_, _ = fmt.Fprintf(os.Stdout, "Starting on http://%s:%d\n", *host, *port)
 
-	srv := server.NewServer(*port)
+	srv, err := server.NewServer(*port)
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		_, _ = fmt.Fprintf(os.Stderr, "Hint: Set STEM_AUTH_USERNAME and STEM_AUTH_PASSWORD environment variables\n")
+		os.Exit(1)
+	}
 	err = srv.Run()
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "Server error: %v\n", err)

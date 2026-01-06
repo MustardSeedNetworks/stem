@@ -27,11 +27,26 @@ const (
 	testModuleBenchmark = "benchmark"
 	testProfileNetally  = "netally"
 	testTypeThroughput  = "throughput"
+	testUsername        = "testadmin"
+	testPassword        = "testpass123"
 )
+
+// setupTestServer creates a server with test credentials configured.
+func setupTestServer(t testing.TB) *server.Server {
+	t.Helper()
+	t.Setenv("STEM_AUTH_USERNAME", testUsername)
+	t.Setenv("STEM_AUTH_PASSWORD", testPassword)
+
+	s, err := server.NewServer(8080)
+	if err != nil {
+		t.Fatalf("NewServer() error: %v", err)
+	}
+	return s
+}
 
 func loginToken(t *testing.T, s *server.Server) string {
 	t.Helper()
-	body := bytes.NewBufferString(`{"username":"admin","password":"admin"}`)
+	body := bytes.NewBufferString(fmt.Sprintf(`{"username":"%s","password":"%s"}`, testUsername, testPassword))
 	req := httptest.NewRequest(http.MethodPost, "/api/auth/login", body)
 	w := httptest.NewRecorder()
 
@@ -54,7 +69,7 @@ func loginToken(t *testing.T, s *server.Server) string {
 }
 
 func TestHandleAuthLogin(t *testing.T) {
-	s := server.NewServer(8080)
+	s := setupTestServer(t)
 	token := loginToken(t, s)
 	if token == "" {
 		t.Fatal("expected non-empty token")
@@ -62,7 +77,7 @@ func TestHandleAuthLogin(t *testing.T) {
 }
 
 func TestHandleAuthLoginFailure(t *testing.T) {
-	s := server.NewServer(8080)
+	s := setupTestServer(t)
 	body := bytes.NewBufferString(`{"username":"admin","password":"wrong"}`)
 	req := httptest.NewRequest(http.MethodPost, "/api/auth/login", body)
 	w := httptest.NewRecorder()
@@ -74,14 +89,14 @@ func TestHandleAuthLoginFailure(t *testing.T) {
 }
 
 func TestNewServer(t *testing.T) {
-	s := server.NewServer(8080)
+	s := setupTestServer(t)
 	if s == nil {
 		t.Fatal("NewServer returned nil")
 	}
 }
 
 func TestHandleHealth(t *testing.T) {
-	s := server.NewServer(8080)
+	s := setupTestServer(t)
 	req := httptest.NewRequest(http.MethodGet, "/api/health", nil)
 	w := httptest.NewRecorder()
 
@@ -109,7 +124,7 @@ func TestHandleHealth(t *testing.T) {
 }
 
 func TestHandleHealthMethodNotAllowed(t *testing.T) {
-	s := server.NewServer(8080)
+	s := setupTestServer(t)
 	req := httptest.NewRequest(http.MethodPost, "/api/health", nil)
 	w := httptest.NewRecorder()
 
@@ -121,7 +136,7 @@ func TestHandleHealthMethodNotAllowed(t *testing.T) {
 }
 
 func TestHandleInterfaces(t *testing.T) {
-	s := server.NewServer(8080)
+	s := setupTestServer(t)
 	req := httptest.NewRequest(http.MethodGet, "/api/interfaces", nil)
 	w := httptest.NewRecorder()
 
@@ -145,7 +160,7 @@ func TestHandleInterfaces(t *testing.T) {
 }
 
 func TestHandleStats(t *testing.T) {
-	s := server.NewServer(8080)
+	s := setupTestServer(t)
 	req := httptest.NewRequest(http.MethodGet, "/api/stats", nil)
 	w := httptest.NewRecorder()
 
@@ -163,7 +178,7 @@ func TestHandleStats(t *testing.T) {
 }
 
 func TestHandleTestStartUnknownType(t *testing.T) {
-	s := server.NewServer(8080)
+	s := setupTestServer(t)
 
 	body := strings.NewReader(`{"testType": "nonexistent_test"}`)
 	req := httptest.NewRequest(http.MethodPost, "/api/test/start", body)
@@ -179,7 +194,7 @@ func TestHandleTestStartUnknownType(t *testing.T) {
 }
 
 func TestHandleTestStartUnauthorized(t *testing.T) {
-	s := server.NewServer(8080)
+	s := setupTestServer(t)
 
 	body := strings.NewReader(`{"testType": "throughput"}`)
 	req := httptest.NewRequest(http.MethodPost, "/api/test/start", body)
@@ -199,7 +214,7 @@ func TestHandleTestStartNoInterface(t *testing.T) {
 }
 
 func TestHandleSettingsGet(t *testing.T) {
-	s := server.NewServer(8080)
+	s := setupTestServer(t)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/settings", nil)
 	w := httptest.NewRecorder()
@@ -218,7 +233,7 @@ func TestHandleSettingsGet(t *testing.T) {
 }
 
 func TestHandleSettingsPost(t *testing.T) {
-	s := server.NewServer(8080)
+	s := setupTestServer(t)
 
 	// Get a real interface name from the system.
 	ifaces, err := netif.DetectInterfaces()
@@ -239,7 +254,7 @@ func TestHandleSettingsPost(t *testing.T) {
 }
 
 func TestHandleSettingsInvalidInterface(t *testing.T) {
-	s := server.NewServer(8080)
+	s := setupTestServer(t)
 
 	// Use an interface name that definitely doesn't exist.
 	body := bytes.NewBufferString(`{"interface": "nonexistent_interface_xyz123"}`)
@@ -254,7 +269,7 @@ func TestHandleSettingsInvalidInterface(t *testing.T) {
 }
 
 func TestHandleSettingsInvalidJSON(t *testing.T) {
-	s := server.NewServer(8080)
+	s := setupTestServer(t)
 
 	body := bytes.NewBufferString(`{invalid json}`)
 	req := httptest.NewRequest(http.MethodPost, "/api/settings", body)
@@ -268,7 +283,7 @@ func TestHandleSettingsInvalidJSON(t *testing.T) {
 }
 
 func TestHandleModeGet(t *testing.T) {
-	s := server.NewServer(8080)
+	s := setupTestServer(t)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/mode", nil)
 	w := httptest.NewRecorder()
@@ -287,7 +302,7 @@ func TestHandleModeGet(t *testing.T) {
 }
 
 func TestHandleModePost(t *testing.T) {
-	s := server.NewServer(8080)
+	s := setupTestServer(t)
 
 	body := bytes.NewBufferString(`{"mode": "` + testModeReflector + `"}`)
 	req := httptest.NewRequest(http.MethodPost, "/api/mode", body)
@@ -301,7 +316,7 @@ func TestHandleModePost(t *testing.T) {
 }
 
 func TestHandleModePostInvalid(t *testing.T) {
-	s := server.NewServer(8080)
+	s := setupTestServer(t)
 
 	body := bytes.NewBufferString(`{"mode": "invalid_mode"}`)
 	req := httptest.NewRequest(http.MethodPost, "/api/mode", body)
@@ -315,7 +330,7 @@ func TestHandleModePostInvalid(t *testing.T) {
 }
 
 func TestHandleReflectorConfigGet(t *testing.T) {
-	s := server.NewServer(8080)
+	s := setupTestServer(t)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/reflector/config", nil)
 	w := httptest.NewRecorder()
@@ -334,7 +349,7 @@ func TestHandleReflectorConfigGet(t *testing.T) {
 }
 
 func TestHandleReflectorConfigPost(t *testing.T) {
-	s := server.NewServer(8080)
+	s := setupTestServer(t)
 
 	body := bytes.NewBufferString(`{"profile": "` + testProfileNetally + `", "portFilter": 9999}`)
 	req := httptest.NewRequest(http.MethodPost, "/api/reflector/config", body)
@@ -348,7 +363,7 @@ func TestHandleReflectorConfigPost(t *testing.T) {
 }
 
 func TestHandleReflectorConfigPostInvalidProfile(t *testing.T) {
-	s := server.NewServer(8080)
+	s := setupTestServer(t)
 
 	body := bytes.NewBufferString(`{"profile": "invalid_profile"}`)
 	req := httptest.NewRequest(http.MethodPost, "/api/reflector/config", body)
@@ -362,7 +377,7 @@ func TestHandleReflectorConfigPostInvalidProfile(t *testing.T) {
 }
 
 func TestHandleReflectorStats(t *testing.T) {
-	s := server.NewServer(8080)
+	s := setupTestServer(t)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/reflector/stats", nil)
 	w := httptest.NewRecorder()
@@ -381,7 +396,7 @@ func TestHandleReflectorStats(t *testing.T) {
 }
 
 func TestHandleLicense(t *testing.T) {
-	s := server.NewServer(8080)
+	s := setupTestServer(t)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/license", nil)
 	w := httptest.NewRecorder()
@@ -400,7 +415,7 @@ func TestHandleLicense(t *testing.T) {
 }
 
 func TestHandleLicenseActivate(t *testing.T) {
-	s := server.NewServer(8080)
+	s := setupTestServer(t)
 
 	body := bytes.NewBufferString(`{"licenseKey": "1001-TEST-1234-5678"}`)
 	req := httptest.NewRequest(http.MethodPost, "/api/license/activate", body)
@@ -421,7 +436,7 @@ func TestHandleLicenseActivate(t *testing.T) {
 }
 
 func TestHandleLicenseActivateEmpty(t *testing.T) {
-	s := server.NewServer(8080)
+	s := setupTestServer(t)
 
 	body := bytes.NewBufferString(`{"licenseKey": ""}`)
 	req := httptest.NewRequest(http.MethodPost, "/api/license/activate", body)
@@ -445,7 +460,7 @@ func TestHandleLicenseActivateEmpty(t *testing.T) {
 }
 
 func TestHandleLicenseTrialGet(t *testing.T) {
-	s := server.NewServer(8080)
+	s := setupTestServer(t)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/license/trial", nil)
 	w := httptest.NewRecorder()
@@ -469,7 +484,7 @@ func TestHandleLicenseTrialGet(t *testing.T) {
 }
 
 func TestHandleLicenseTrialPost(t *testing.T) {
-	s := server.NewServer(8080)
+	s := setupTestServer(t)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/license/trial", nil)
 	w := httptest.NewRecorder()
@@ -489,7 +504,7 @@ func TestHandleLicenseTrialPost(t *testing.T) {
 
 // Integration tests.
 func TestServerRoutesRegistered(t *testing.T) {
-	s := server.NewServer(8080)
+	s := setupTestServer(t)
 
 	routes := []struct {
 		path   string
@@ -523,7 +538,7 @@ func TestServerRoutesRegistered(t *testing.T) {
 
 // Module API tests.
 func TestHandleModules(t *testing.T) {
-	s := server.NewServer(8080)
+	s := setupTestServer(t)
 	req := httptest.NewRequest(http.MethodGet, "/api/modules", nil)
 	w := httptest.NewRecorder()
 
@@ -561,7 +576,7 @@ func TestHandleModules(t *testing.T) {
 }
 
 func TestHandleModulesMethodNotAllowed(t *testing.T) {
-	s := server.NewServer(8080)
+	s := setupTestServer(t)
 	req := httptest.NewRequest(http.MethodPost, "/api/modules", nil)
 	w := httptest.NewRecorder()
 
@@ -573,7 +588,7 @@ func TestHandleModulesMethodNotAllowed(t *testing.T) {
 }
 
 func TestHandleModuleByName(t *testing.T) {
-	s := server.NewServer(8080)
+	s := setupTestServer(t)
 	req := httptest.NewRequest(http.MethodGet, "/api/modules/benchmark", nil)
 	w := httptest.NewRecorder()
 
@@ -614,7 +629,7 @@ func TestHandleModuleByName(t *testing.T) {
 }
 
 func TestHandleModuleByNameNotFound(t *testing.T) {
-	s := server.NewServer(8080)
+	s := setupTestServer(t)
 	req := httptest.NewRequest(http.MethodGet, "/api/modules/nonexistent", nil)
 	w := httptest.NewRecorder()
 
@@ -626,7 +641,7 @@ func TestHandleModuleByNameNotFound(t *testing.T) {
 }
 
 func TestHandleModuleByNameTests(t *testing.T) {
-	s := server.NewServer(8080)
+	s := setupTestServer(t)
 	req := httptest.NewRequest(http.MethodGet, "/api/modules/benchmark/tests", nil)
 	w := httptest.NewRecorder()
 
@@ -670,7 +685,7 @@ func TestHandleModuleByNameTests(t *testing.T) {
 }
 
 func TestHandleModuleByNameMethodNotAllowed(t *testing.T) {
-	s := server.NewServer(8080)
+	s := setupTestServer(t)
 	req := httptest.NewRequest(http.MethodPost, "/api/modules/benchmark", nil)
 	w := httptest.NewRecorder()
 
@@ -682,7 +697,7 @@ func TestHandleModuleByNameMethodNotAllowed(t *testing.T) {
 }
 
 func TestModuleRoutesRegistered(t *testing.T) {
-	s := server.NewServer(8080)
+	s := setupTestServer(t)
 
 	routes := []struct {
 		path   string
@@ -710,7 +725,7 @@ func TestModuleRoutesRegistered(t *testing.T) {
 
 // Benchmark tests.
 func BenchmarkHandleHealth(b *testing.B) {
-	s := server.NewServer(8080)
+	s := setupTestServer(b)
 
 	for b.Loop() {
 		req := httptest.NewRequest(http.MethodGet, "/api/health", nil)
@@ -720,7 +735,7 @@ func BenchmarkHandleHealth(b *testing.B) {
 }
 
 func BenchmarkHandleStats(b *testing.B) {
-	s := server.NewServer(8080)
+	s := setupTestServer(b)
 
 	for b.Loop() {
 		req := httptest.NewRequest(http.MethodGet, "/api/stats", nil)
