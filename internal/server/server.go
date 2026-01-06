@@ -62,6 +62,7 @@ package server
 
 import (
 	"bytes"
+	"context"
 	"embed"
 	"encoding/json"
 	"errors"
@@ -71,8 +72,10 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/signal"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -96,8 +99,11 @@ const (
 const (
 	defaultAuthSessionTimeout = 30 * time.Minute
 	wsWriteTimeout            = 5 * time.Second
+	wsPingInterval            = 30 * time.Second
+	wsPongTimeout             = 10 * time.Second
 	defaultWSBufferSize       = 1024
 	maxRequestBodySize        = 1024 * 1024 // 1 MB max request body
+	shutdownTimeout           = 30 * time.Second
 )
 
 //go:embed dist/*
@@ -107,6 +113,7 @@ var staticFiles embed.FS
 type Server struct {
 	port            int
 	mux             *http.ServeMux
+	httpServer      *http.Server
 	stats           *Stats
 	statsMu         sync.RWMutex
 	testStatus      string
@@ -120,8 +127,7 @@ type Server struct {
 	licenseManager  *license.Manager
 	authManager     *auth.Manager
 	currentModule   string
-	wsMu            sync.Mutex
-	wsClients       map[*websocket.Conn]struct{}
+	wsClients       sync.Map // map[*websocket.Conn]struct{} - concurrent-safe
 	wsUpgrader      websocket.Upgrader
 }
 
@@ -160,6 +166,7 @@ func NewServer(port int) (*Server, error) {
 		return nil, fmt.Errorf("authentication setup failed: %w", err)
 	}
 
+	//nolint:exhaustruct // httpServer is set in Run() after creating the server.
 	s := &Server{
 		port:    port,
 		mux:     http.NewServeMux(),
@@ -191,8 +198,7 @@ func NewServer(port int) (*Server, error) {
 		licenseManager: licMgr,
 		authManager:    authMgr,
 		currentModule:  "",
-		wsMu:           sync.Mutex{},
-		wsClients:      make(map[*websocket.Conn]struct{}),
+		wsClients:      sync.Map{},
 		wsUpgrader: websocket.Upgrader{
 			ReadBufferSize:  defaultWSBufferSize,
 			WriteBufferSize: defaultWSBufferSize,
@@ -387,7 +393,8 @@ func corsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-// Run starts the web server.
+// Run starts the web server with graceful shutdown support.
+// Listens for SIGTERM and SIGINT signals to initiate shutdown.
 func (s *Server) Run() error {
 	addr := fmt.Sprintf(":%d", s.port)
 	logging.Info("Starting The Stem web server",
@@ -395,9 +402,13 @@ func (s *Server) Run() error {
 		"version", version.Version,
 	)
 
+	// Set up signal handling for graceful shutdown.
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
+	defer stop()
+
 	// Wrap with middleware stack: CORS -> RequestID -> Logging -> Handler.
 	handler := corsMiddleware(logging.RequestIDMiddleware(logging.Middleware(s.mux)))
-	server := &http.Server{
+	s.httpServer = &http.Server{
 		Addr:              addr,
 		Handler:           handler,
 		ReadHeaderTimeout: HTTPReadHeaderTimeout,
@@ -405,11 +416,84 @@ func (s *Server) Run() error {
 		WriteTimeout:      HTTPWriteTimeout,
 		IdleTimeout:       HTTPIdleTimeout,
 	}
-	err := server.ListenAndServe()
-	if err != nil {
-		return fmt.Errorf("server failed: %w", err)
+
+	// Start server in goroutine.
+	errChan := make(chan error, 1)
+	go func() {
+		listenErr := s.httpServer.ListenAndServe()
+		if listenErr != nil && !errors.Is(listenErr, http.ErrServerClosed) {
+			errChan <- fmt.Errorf("server failed: %w", listenErr)
+		}
+		close(errChan)
+	}()
+
+	// Wait for shutdown signal or server error.
+	select {
+	case err := <-errChan:
+		return err
+	case <-ctx.Done():
+		logging.Info("Shutdown signal received, initiating graceful shutdown...")
+		return s.Shutdown()
 	}
+}
+
+// Shutdown gracefully shuts down the server.
+// Closes WebSocket connections, stops running tests, and drains HTTP connections.
+func (s *Server) Shutdown() error {
+	// Create shutdown context with timeout.
+	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
+	defer cancel()
+
+	// Close all WebSocket connections.
+	s.closeAllWebSockets()
+
+	// Stop any running reflector.
+	if s.reflectorExec != nil {
+		logging.Info("Stopping reflector...")
+		s.reflectorExec.Stop()
+	}
+
+	// Stop any running test by updating status.
+	s.statsMu.Lock()
+	if s.testStatus == statusRunning {
+		s.testStatus = statusStopped
+		logging.Info("Stopped running test due to shutdown")
+	}
+	s.statsMu.Unlock()
+
+	// Shutdown HTTP server with timeout for draining connections.
+	if s.httpServer != nil {
+		logging.Info("Shutting down HTTP server...")
+		shutdownErr := s.httpServer.Shutdown(ctx)
+		if shutdownErr != nil {
+			logging.Error("HTTP server shutdown error", "error", shutdownErr)
+			return fmt.Errorf("shutdown failed: %w", shutdownErr)
+		}
+	}
+
+	logging.Info("Server shutdown complete")
 	return nil
+}
+
+// closeAllWebSockets closes all active WebSocket connections.
+func (s *Server) closeAllWebSockets() {
+	var count int
+	s.wsClients.Range(func(_, _ any) bool {
+		count++
+		return true
+	})
+
+	if count > 0 {
+		logging.Info("Closing WebSocket connections", "count", count)
+	}
+
+	s.wsClients.Range(func(key, _ any) bool {
+		if conn, ok := key.(*websocket.Conn); ok {
+			_ = conn.Close()
+			s.wsClients.Delete(conn)
+		}
+		return true
+	})
 }
 
 // UpdateStats updates the runtime statistics (called by test runner).
@@ -487,17 +571,13 @@ func (s *Server) broadcastTestEvent(resp *TestResultResponse) {
 		return
 	}
 
-	s.wsMu.Lock()
-	clients := make([]*websocket.Conn, 0, len(s.wsClients))
-	for conn := range s.wsClients {
-		clients = append(clients, conn)
-	}
-	s.wsMu.Unlock()
-
-	for _, conn := range clients {
-		event := copyTestResultResponse(resp)
-		go s.writeTestEvent(conn, event)
-	}
+	s.wsClients.Range(func(key, _ any) bool {
+		if conn, ok := key.(*websocket.Conn); ok {
+			event := copyTestResultResponse(resp)
+			go s.writeTestEvent(conn, event)
+		}
+		return true
+	})
 }
 
 func copyTestResultResponse(resp *TestResultResponse) *TestResultResponse {
@@ -524,15 +604,11 @@ func (s *Server) writeTestEvent(conn *websocket.Conn, resp *TestResultResponse) 
 }
 
 func (s *Server) registerWSClient(conn *websocket.Conn) {
-	s.wsMu.Lock()
-	s.wsClients[conn] = struct{}{}
-	s.wsMu.Unlock()
+	s.wsClients.Store(conn, struct{}{})
 }
 
 func (s *Server) unregisterWSClient(conn *websocket.Conn) {
-	s.wsMu.Lock()
-	delete(s.wsClients, conn)
-	s.wsMu.Unlock()
+	s.wsClients.Delete(conn)
 	_ = conn.Close()
 }
 
