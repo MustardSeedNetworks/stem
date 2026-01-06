@@ -587,6 +587,273 @@ func TestOutputFormatConstants(t *testing.T) {
 // Benchmark Tests
 // ============================================================================
 
+// ============================================================================
+// Additional Validation Tests for Coverage
+// ============================================================================
+
+// TestSaveInvalidPath tests Save with an invalid path.
+func TestSaveInvalidPath(t *testing.T) {
+	cfg := config.DefaultConfig()
+	cfg.Interface = testIfaceEth0
+
+	// Try to save to a non-existent directory.
+	err := cfg.Save("/nonexistent/path/config.yaml")
+	if err == nil {
+		t.Error("Expected error when saving to invalid path")
+	}
+}
+
+// TestValidateAllRFC2889TestTypes tests all RFC 2889 test type validations.
+func TestValidateAllRFC2889TestTypes(t *testing.T) {
+	testTypes := []config.TestType{
+		config.TestRFC2889Forwarding,
+		config.TestRFC2889Caching,
+		config.TestRFC2889Learning,
+		config.TestRFC2889Broadcast,
+		config.TestRFC2889Congestion,
+	}
+
+	for _, tt := range testTypes {
+		// Valid config.
+		cfg := config.DefaultConfig()
+		cfg.Interface = testIfaceEth0
+		cfg.TestType = tt
+		cfg.RFC2889.PortCount = 2
+
+		err := cfg.Validate()
+		if err != nil {
+			t.Errorf("TestType %s: expected no error with valid config, got %v", tt, err)
+		}
+
+		// Invalid config (insufficient ports).
+		cfg.RFC2889.PortCount = 1
+		err = cfg.Validate()
+		if err == nil {
+			t.Errorf("TestType %s: expected error for insufficient ports", tt)
+		}
+	}
+}
+
+// TestValidateAllRFC6349TestTypes tests all RFC 6349 test type validations.
+func TestValidateAllRFC6349TestTypes(t *testing.T) {
+	testTypes := []config.TestType{
+		config.TestRFC6349Throughput,
+		config.TestRFC6349Path,
+	}
+
+	for _, tt := range testTypes {
+		// Valid config.
+		cfg := config.DefaultConfig()
+		cfg.Interface = testIfaceEth0
+		cfg.TestType = tt
+		cfg.RFC6349.MSS = 1460
+
+		err := cfg.Validate()
+		if err != nil {
+			t.Errorf("TestType %s: expected no error with valid config, got %v", tt, err)
+		}
+
+		// Invalid config (zero MSS).
+		cfg.RFC6349.MSS = 0
+		err = cfg.Validate()
+		if err == nil {
+			t.Errorf("TestType %s: expected error for zero MSS", tt)
+		}
+	}
+}
+
+// TestValidateAllY1731TestTypes tests all Y.1731 test type validations.
+func TestValidateAllY1731TestTypes(t *testing.T) {
+	testTypes := []config.TestType{
+		config.TestY1731Delay,
+		config.TestY1731Loss,
+		config.TestY1731SLM,
+		config.TestY1731Loopback,
+	}
+
+	for _, tt := range testTypes {
+		// Valid config.
+		cfg := config.DefaultConfig()
+		cfg.Interface = testIfaceEth0
+		cfg.TestType = tt
+		cfg.Y1731.MEPID = 1
+
+		err := cfg.Validate()
+		if err != nil {
+			t.Errorf("TestType %s: expected no error with valid config, got %v", tt, err)
+		}
+
+		// Invalid config (zero MEPID).
+		cfg.Y1731.MEPID = 0
+		err = cfg.Validate()
+		if err == nil {
+			t.Errorf("TestType %s: expected error for zero MEPID", tt)
+		}
+	}
+}
+
+// TestValidateAllMEFTestTypes tests all MEF test type validations.
+func TestValidateAllMEFTestTypes(t *testing.T) {
+	testTypes := []config.TestType{
+		config.TestMEFConfig,
+		config.TestMEFPerf,
+		config.TestMEFFull,
+	}
+
+	for _, tt := range testTypes {
+		// Valid config.
+		cfg := config.DefaultConfig()
+		cfg.Interface = testIfaceEth0
+		cfg.TestType = tt
+		cfg.MEF.CIRMbps = 100.0
+
+		err := cfg.Validate()
+		if err != nil {
+			t.Errorf("TestType %s: expected no error with valid config, got %v", tt, err)
+		}
+
+		// Invalid config (zero CIR).
+		cfg.MEF.CIRMbps = 0
+		err = cfg.Validate()
+		if err == nil {
+			t.Errorf("TestType %s: expected error for zero CIR", tt)
+		}
+	}
+}
+
+// TestValidateAllTSNTestTypes tests all TSN test type validations.
+func TestValidateAllTSNTestTypes(t *testing.T) {
+	testTypes := []config.TestType{
+		config.TestTSNTiming,
+		config.TestTSNIsolation,
+		config.TestTSNLatency,
+		config.TestTSNFull,
+	}
+
+	for _, tt := range testTypes {
+		// Valid config.
+		cfg := config.DefaultConfig()
+		cfg.Interface = testIfaceEth0
+		cfg.TestType = tt
+		cfg.TSN.CycleTimeNs = 1000000
+
+		err := cfg.Validate()
+		if err != nil {
+			t.Errorf("TestType %s: expected no error with valid config, got %v", tt, err)
+		}
+
+		// Invalid config (zero cycle time).
+		cfg.TSN.CycleTimeNs = 0
+		err = cfg.Validate()
+		if err == nil {
+			t.Errorf("TestType %s: expected error for zero cycle time", tt)
+		}
+	}
+}
+
+// TestValidateAllY1564TestTypes tests all Y.1564 test type validations.
+func TestValidateAllY1564TestTypes(t *testing.T) {
+	testTypes := []config.TestType{
+		config.TestY1564Config,
+		config.TestY1564Perf,
+		config.TestY1564Full,
+	}
+
+	for _, tt := range testTypes {
+		// Valid config with enabled service.
+		cfg := config.DefaultConfig()
+		cfg.Interface = testIfaceEth0
+		cfg.TestType = tt
+		cfg.Y1564.Services = []config.Y1564Service{
+			{
+				ServiceID:   1,
+				ServiceName: "test-service",
+				SLA: config.Y1564SLA{
+					CIRMbps:         100.0,
+					EIRMbps:         0,
+					CBSBytes:        0,
+					EBSBytes:        0,
+					FDThresholdMs:   0,
+					FDVThresholdMs:  0,
+					FLRThresholdPct: 0,
+				},
+				FrameSize: 1518,
+				CoS:       0,
+				Enabled:   true,
+			},
+		}
+
+		err := cfg.Validate()
+		if err != nil {
+			t.Errorf("TestType %s: expected no error with valid config, got %v", tt, err)
+		}
+
+		// Invalid config (no services).
+		cfg.Y1564.Services = []config.Y1564Service{}
+		err = cfg.Validate()
+		if err == nil {
+			t.Errorf("TestType %s: expected error for no services", tt)
+		}
+	}
+}
+
+// TestValidateY1564DisabledServiceZeroCIR tests that disabled services with zero CIR pass validation.
+func TestValidateY1564DisabledServiceZeroCIR(t *testing.T) {
+	cfg := config.DefaultConfig()
+	cfg.Interface = testIfaceEth0
+	cfg.TestType = config.TestY1564Full
+	cfg.Y1564.Services = []config.Y1564Service{
+		{
+			ServiceID:   1,
+			ServiceName: "disabled-service",
+			SLA: config.Y1564SLA{
+				CIRMbps:         0, // Zero CIR but disabled.
+				EIRMbps:         0,
+				CBSBytes:        0,
+				EBSBytes:        0,
+				FDThresholdMs:   0,
+				FDVThresholdMs:  0,
+				FLRThresholdPct: 0,
+			},
+			FrameSize: 0,
+			CoS:       0,
+			Enabled:   false,
+		},
+	}
+
+	err := cfg.Validate()
+	if err != nil {
+		t.Errorf("Expected no error for disabled service with zero CIR, got %v", err)
+	}
+}
+
+// TestValidateRFC2544TestTypes tests RFC 2544 test types pass validation.
+func TestValidateRFC2544TestTypes(t *testing.T) {
+	testTypes := []config.TestType{
+		config.TestThroughput,
+		config.TestLatency,
+		config.TestFrameLoss,
+		config.TestBackToBack,
+		config.TestSystemRecovery,
+		config.TestReset,
+	}
+
+	for _, tt := range testTypes {
+		cfg := config.DefaultConfig()
+		cfg.Interface = testIfaceEth0
+		cfg.TestType = tt
+
+		err := cfg.Validate()
+		if err != nil {
+			t.Errorf("TestType %s: expected no error, got %v", tt, err)
+		}
+	}
+}
+
+// ============================================================================
+// Benchmark Tests
+// ============================================================================
+
 func BenchmarkDefaultConfig(b *testing.B) {
 	for b.Loop() {
 		_ = config.DefaultConfig()

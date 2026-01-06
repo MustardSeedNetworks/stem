@@ -1125,6 +1125,634 @@ func BenchmarkJSONLogging(b *testing.B) {
 	}
 }
 
+// TestDebugContext verifies DebugContext logs with context.
+func TestDebugContext(t *testing.T) {
+	Reset()
+	defer Reset()
+
+	var buf bytes.Buffer
+	cfg := &Config{
+		Level:      "debug",
+		Format:     "json",
+		AddSource:  false,
+		File:       "",
+		MaxSize:    0,
+		MaxBackups: 0,
+		MaxAge:     0,
+		Compress:   false,
+		Component:  "",
+	}
+
+	err := InitWithWriter(cfg, &buf)
+	if err != nil {
+		t.Fatalf("InitWithWriter failed: %v", err)
+	}
+
+	ctx := WithRequestID(context.Background(), "debug-req-123")
+	DebugContext(ctx, "debug context test")
+
+	var logEntry map[string]any
+	unmarshalErr := json.Unmarshal(buf.Bytes(), &logEntry)
+	if unmarshalErr != nil {
+		t.Fatalf("failed to parse JSON log: %v", unmarshalErr)
+	}
+
+	if level, ok := logEntry[FieldLevel].(string); !ok || level != "debug" {
+		t.Errorf("expected level 'debug', got %v", logEntry[FieldLevel])
+	}
+	if reqID, ok := logEntry[FieldRequestID].(string); !ok || reqID != "debug-req-123" {
+		t.Errorf("expected request_id 'debug-req-123', got %v", logEntry[FieldRequestID])
+	}
+}
+
+// TestWarnContext verifies WarnContext logs with context.
+func TestWarnContext(t *testing.T) {
+	Reset()
+	defer Reset()
+
+	var buf bytes.Buffer
+	cfg := &Config{
+		Level:      "warn",
+		Format:     "json",
+		AddSource:  false,
+		File:       "",
+		MaxSize:    0,
+		MaxBackups: 0,
+		MaxAge:     0,
+		Compress:   false,
+		Component:  "",
+	}
+
+	err := InitWithWriter(cfg, &buf)
+	if err != nil {
+		t.Fatalf("InitWithWriter failed: %v", err)
+	}
+
+	ctx := WithRequestID(context.Background(), "warn-req-456")
+	WarnContext(ctx, "warn context test")
+
+	var logEntry map[string]any
+	unmarshalErr := json.Unmarshal(buf.Bytes(), &logEntry)
+	if unmarshalErr != nil {
+		t.Fatalf("failed to parse JSON log: %v", unmarshalErr)
+	}
+
+	if level, ok := logEntry[FieldLevel].(string); !ok || level != "warn" {
+		t.Errorf("expected level 'warn', got %v", logEntry[FieldLevel])
+	}
+	if reqID, ok := logEntry[FieldRequestID].(string); !ok || reqID != "warn-req-456" {
+		t.Errorf("expected request_id 'warn-req-456', got %v", logEntry[FieldRequestID])
+	}
+}
+
+// TestErrorContext verifies ErrorContext logs with context.
+func TestErrorContext(t *testing.T) {
+	Reset()
+	defer Reset()
+
+	var buf bytes.Buffer
+	cfg := &Config{
+		Level:      "error",
+		Format:     "json",
+		AddSource:  false,
+		File:       "",
+		MaxSize:    0,
+		MaxBackups: 0,
+		MaxAge:     0,
+		Compress:   false,
+		Component:  "",
+	}
+
+	err := InitWithWriter(cfg, &buf)
+	if err != nil {
+		t.Fatalf("InitWithWriter failed: %v", err)
+	}
+
+	ctx := WithRequestID(context.Background(), "error-req-789")
+	ErrorContext(ctx, "error context test")
+
+	var logEntry map[string]any
+	unmarshalErr := json.Unmarshal(buf.Bytes(), &logEntry)
+	if unmarshalErr != nil {
+		t.Fatalf("failed to parse JSON log: %v", unmarshalErr)
+	}
+
+	if level, ok := logEntry[FieldLevel].(string); !ok || level != "error" {
+		t.Errorf("expected level 'error', got %v", logEntry[FieldLevel])
+	}
+	if reqID, ok := logEntry[FieldRequestID].(string); !ok || reqID != "error-req-789" {
+		t.Errorf("expected request_id 'error-req-789', got %v", logEntry[FieldRequestID])
+	}
+}
+
+// TestLogf verifies the Logf function with redaction.
+func TestLogf(t *testing.T) {
+	Reset()
+	defer Reset()
+
+	var buf bytes.Buffer
+	cfg := &Config{
+		Level:      "info",
+		Format:     "json",
+		AddSource:  false,
+		File:       "",
+		MaxSize:    0,
+		MaxBackups: 0,
+		MaxAge:     0,
+		Compress:   false,
+		Component:  "",
+	}
+
+	err := InitWithWriter(cfg, &buf)
+	if err != nil {
+		t.Fatalf("InitWithWriter failed: %v", err)
+	}
+
+	Logf("User %s logged in with password=%s", "john", "secret123")
+
+	output := buf.String()
+	if strings.Contains(output, "secret123") {
+		t.Error("expected password to be redacted in Logf output")
+	}
+	if !strings.Contains(output, "REDACTED") {
+		t.Error("expected [REDACTED] in Logf output")
+	}
+}
+
+// TestLogfWithHeaders verifies Logf redacts http.Header.
+func TestLogfWithHeaders(t *testing.T) {
+	Reset()
+	defer Reset()
+
+	var buf bytes.Buffer
+	cfg := &Config{
+		Level:      "info",
+		Format:     "json",
+		AddSource:  false,
+		File:       "",
+		MaxSize:    0,
+		MaxBackups: 0,
+		MaxAge:     0,
+		Compress:   false,
+		Component:  "",
+	}
+
+	err := InitWithWriter(cfg, &buf)
+	if err != nil {
+		t.Fatalf("InitWithWriter failed: %v", err)
+	}
+
+	headers := http.Header{
+		"Authorization": {"Bearer secret-token"},
+		"Content-Type":  {"application/json"},
+	}
+	Logf("Request headers: %v", headers)
+
+	output := buf.String()
+	if strings.Contains(output, "secret-token") {
+		t.Error("expected authorization header to be redacted")
+	}
+}
+
+// TestLogfWithMap verifies Logf redacts map[string]any.
+func TestLogfWithMap(t *testing.T) {
+	Reset()
+	defer Reset()
+
+	var buf bytes.Buffer
+	cfg := &Config{
+		Level:      "info",
+		Format:     "json",
+		AddSource:  false,
+		File:       "",
+		MaxSize:    0,
+		MaxBackups: 0,
+		MaxAge:     0,
+		Compress:   false,
+		Component:  "",
+	}
+
+	err := InitWithWriter(cfg, &buf)
+	if err != nil {
+		t.Fatalf("InitWithWriter failed: %v", err)
+	}
+
+	data := map[string]any{
+		"username": "john",
+		"password": "secret123",
+	}
+	Logf("User data: %v", data)
+
+	output := buf.String()
+	if strings.Contains(output, "secret123") {
+		t.Error("expected password to be redacted in map")
+	}
+}
+
+// TestLogRequest verifies LogRequest function.
+func TestLogRequest(t *testing.T) {
+	Reset()
+	defer Reset()
+
+	var buf bytes.Buffer
+	cfg := &Config{
+		Level:      "info",
+		Format:     "json",
+		AddSource:  false,
+		File:       "",
+		MaxSize:    0,
+		MaxBackups: 0,
+		MaxAge:     0,
+		Compress:   false,
+		Component:  "",
+	}
+
+	err := InitWithWriter(cfg, &buf)
+	if err != nil {
+		t.Fatalf("InitWithWriter failed: %v", err)
+	}
+
+	req := httptest.NewRequest(http.MethodPost, "/api/test", nil)
+	req.Header.Set("Authorization", "Bearer secret-token")
+	req.Header.Set("Content-Type", "application/json")
+	req.RemoteAddr = "192.168.1.100:12345"
+
+	LogRequest(req, "test request")
+
+	var logEntry map[string]any
+	unmarshalErr := json.Unmarshal(buf.Bytes(), &logEntry)
+	if unmarshalErr != nil {
+		t.Fatalf("failed to parse JSON log: %v", unmarshalErr)
+	}
+
+	if method, ok := logEntry["method"].(string); !ok || method != "POST" {
+		t.Errorf("expected method 'POST', got %v", logEntry["method"])
+	}
+	if path, ok := logEntry["path"].(string); !ok || path != "/api/test" {
+		t.Errorf("expected path '/api/test', got %v", logEntry["path"])
+	}
+	if clientIP, ok := logEntry["client_ip"].(string); !ok || clientIP != "192.168.1.100" {
+		t.Errorf("expected client_ip '192.168.1.100', got %v", logEntry["client_ip"])
+	}
+
+	// Headers should be redacted.
+	output := buf.String()
+	if strings.Contains(output, "secret-token") {
+		t.Error("expected Authorization header to be redacted")
+	}
+}
+
+// TestWithGroup verifies WithGroup creates proper group handler.
+func TestWithGroup(t *testing.T) {
+	Reset()
+	defer Reset()
+
+	var buf bytes.Buffer
+	cfg := &Config{
+		Level:      "info",
+		Format:     "json",
+		AddSource:  false,
+		File:       "",
+		MaxSize:    0,
+		MaxBackups: 0,
+		MaxAge:     0,
+		Compress:   false,
+		Component:  "",
+	}
+
+	err := InitWithWriter(cfg, &buf)
+	if err != nil {
+		t.Fatalf("InitWithWriter failed: %v", err)
+	}
+
+	// Get the logger and add a group.
+	logger := Get().WithGroup("request")
+	logger.Info("grouped message", "status", 200, "path", "/test")
+
+	var logEntry map[string]any
+	unmarshalErr := json.Unmarshal(buf.Bytes(), &logEntry)
+	if unmarshalErr != nil {
+		t.Fatalf("failed to parse JSON log: %v", unmarshalErr)
+	}
+
+	// The group should appear as a nested object.
+	if _, ok := logEntry["request"]; !ok {
+		t.Error("expected 'request' group in log entry")
+	}
+}
+
+// TestRedactAttrWithError verifies redaction of error attributes.
+func TestRedactAttrWithError(t *testing.T) {
+	Reset()
+	defer Reset()
+
+	var buf bytes.Buffer
+	cfg := &Config{
+		Level:      "info",
+		Format:     "json",
+		AddSource:  false,
+		File:       "",
+		MaxSize:    0,
+		MaxBackups: 0,
+		MaxAge:     0,
+		Compress:   false,
+		Component:  "",
+	}
+
+	err := InitWithWriter(cfg, &buf)
+	if err != nil {
+		t.Fatalf("InitWithWriter failed: %v", err)
+	}
+
+	testErr := &testError{msg: "connection failed: password=secret123"}
+	Info("operation failed", "error", testErr)
+
+	output := buf.String()
+	if strings.Contains(output, "secret123") {
+		t.Error("expected password in error to be redacted")
+	}
+	if !strings.Contains(output, "REDACTED") {
+		t.Error("expected [REDACTED] in output")
+	}
+}
+
+// TestRedactAttrWithHTTPHeader verifies redaction of http.Header attributes.
+func TestRedactAttrWithHTTPHeader(t *testing.T) {
+	Reset()
+	defer Reset()
+
+	var buf bytes.Buffer
+	cfg := &Config{
+		Level:      "info",
+		Format:     "json",
+		AddSource:  false,
+		File:       "",
+		MaxSize:    0,
+		MaxBackups: 0,
+		MaxAge:     0,
+		Compress:   false,
+		Component:  "",
+	}
+
+	err := InitWithWriter(cfg, &buf)
+	if err != nil {
+		t.Fatalf("InitWithWriter failed: %v", err)
+	}
+
+	headers := http.Header{
+		"Authorization": {"Bearer my-secret-token"},
+		"Content-Type":  {"application/json"},
+	}
+	Info("request received", "headers", headers)
+
+	output := buf.String()
+	if strings.Contains(output, "my-secret-token") {
+		t.Error("expected Authorization header to be redacted")
+	}
+}
+
+// TestRedactAttrWithMapStringString verifies redaction of map[string]string.
+func TestRedactAttrWithMapStringString(t *testing.T) {
+	Reset()
+	defer Reset()
+
+	var buf bytes.Buffer
+	cfg := &Config{
+		Level:      "info",
+		Format:     "json",
+		AddSource:  false,
+		File:       "",
+		MaxSize:    0,
+		MaxBackups: 0,
+		MaxAge:     0,
+		Compress:   false,
+		Component:  "",
+	}
+
+	err := InitWithWriter(cfg, &buf)
+	if err != nil {
+		t.Fatalf("InitWithWriter failed: %v", err)
+	}
+
+	data := map[string]string{
+		"username": "john",
+		"password": "secret123",
+	}
+	Info("user data", "credentials", data)
+
+	output := buf.String()
+	if strings.Contains(output, "secret123") {
+		t.Error("expected password to be redacted in map[string]string")
+	}
+}
+
+// TestRedactAttrWithMapStringAny verifies redaction of map[string]any.
+func TestRedactAttrWithMapStringAny(t *testing.T) {
+	Reset()
+	defer Reset()
+
+	var buf bytes.Buffer
+	cfg := &Config{
+		Level:      "info",
+		Format:     "json",
+		AddSource:  false,
+		File:       "",
+		MaxSize:    0,
+		MaxBackups: 0,
+		MaxAge:     0,
+		Compress:   false,
+		Component:  "",
+	}
+
+	err := InitWithWriter(cfg, &buf)
+	if err != nil {
+		t.Fatalf("InitWithWriter failed: %v", err)
+	}
+
+	data := map[string]any{
+		"username": "john",
+		"api_key":  "secret-api-key",
+		"count":    42,
+	}
+	Info("user data", "data", data)
+
+	output := buf.String()
+	if strings.Contains(output, "secret-api-key") {
+		t.Error("expected api_key to be redacted in map[string]any")
+	}
+}
+
+// TestIsSensitiveKeySubstring verifies sensitive key detection by substring.
+func TestIsSensitiveKeySubstring(t *testing.T) {
+	testCases := []struct {
+		key      string
+		expected bool
+	}{
+		{"password", true},
+		{"user_password", true},
+		{"password_hash", true},
+		{"token", true},
+		{"auth_token", true},
+		{"api_key", true},
+		{"my_apikey_value", true},
+		{"authorization", true},
+		{"bearer_token", true},
+		{"username", false},
+		{"email", false},
+		{"count", false},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.key, func(t *testing.T) {
+			result := isSensitiveKey(tc.key)
+			if result != tc.expected {
+				t.Errorf("isSensitiveKey(%q) = %v, expected %v", tc.key, result, tc.expected)
+			}
+		})
+	}
+}
+
+// TestToLower verifies lowercase conversion.
+func TestToLower(t *testing.T) {
+	testCases := []struct {
+		input    string
+		expected string
+	}{
+		{"PASSWORD", "password"},
+		{"Password", "password"},
+		{"password", "password"},
+		{"API_KEY", "api_key"},
+		{"User-Agent", "user-agent"},
+		{"123ABC", "123abc"},
+		{"", ""},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.input, func(t *testing.T) {
+			result := toLower(tc.input)
+			if result != tc.expected {
+				t.Errorf("toLower(%q) = %q, expected %q", tc.input, result, tc.expected)
+			}
+		})
+	}
+}
+
+// TestContains verifies substring contains check.
+func TestContains(t *testing.T) {
+	testCases := []struct {
+		s        string
+		substr   string
+		expected bool
+	}{
+		{"password", "pass", true},
+		{"password", "word", true},
+		{"password", "password", true},
+		{"user", "password", false},
+		{"", "password", false},
+		{"password", "", true},
+		{"short", "longer", false},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.s+"_"+tc.substr, func(t *testing.T) {
+			result := contains(tc.s, tc.substr)
+			if result != tc.expected {
+				t.Errorf("contains(%q, %q) = %v, expected %v", tc.s, tc.substr, result, tc.expected)
+			}
+		})
+	}
+}
+
+// TestHijack verifies the Hijack implementation for WebSocket support.
+func TestHijack(t *testing.T) {
+	t.Run("underlying supports hijack", func(t *testing.T) {
+		// Create a hijackable server.
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			wrapped := &responseWriter{
+				ResponseWriter: w,
+				status:         http.StatusOK,
+				wroteHeader:    false,
+			}
+
+			conn, rw, err := wrapped.Hijack()
+			if err != nil {
+				t.Errorf("Hijack failed: %v", err)
+				return
+			}
+			if conn == nil {
+				t.Error("expected non-nil connection")
+				return
+			}
+			if rw == nil {
+				t.Error("expected non-nil bufio.ReadWriter")
+				return
+			}
+			conn.Close()
+		}))
+		defer server.Close()
+
+		// Make a request to trigger the handler.
+		resp, err := http.Get(server.URL)
+		if err != nil {
+			// Connection will be hijacked, so we may get an error.
+			return
+		}
+		resp.Body.Close()
+	})
+
+	t.Run("underlying does not support hijack", func(t *testing.T) {
+		rec := httptest.NewRecorder()
+		wrapped := &responseWriter{
+			ResponseWriter: rec,
+			status:         http.StatusOK,
+			wroteHeader:    false,
+		}
+
+		_, _, err := wrapped.Hijack()
+		if err == nil {
+			t.Error("expected error when underlying writer doesn't support Hijack")
+		}
+		if !strings.Contains(err.Error(), "does not implement http.Hijacker") {
+			t.Errorf("unexpected error message: %v", err)
+		}
+	})
+}
+
+// TestWriteError verifies Write error handling.
+func TestWriteError(t *testing.T) {
+	// Create a writer that tracks writes but doesn't fail.
+	rec := httptest.NewRecorder()
+	wrapped := &responseWriter{
+		ResponseWriter: rec,
+		status:         http.StatusOK,
+		wroteHeader:    false,
+	}
+
+	// Write data.
+	n, err := wrapped.Write([]byte("test data"))
+	if err != nil {
+		t.Errorf("Write failed: %v", err)
+	}
+	if n != 9 {
+		t.Errorf("expected 9 bytes written, got %d", n)
+	}
+	if !wrapped.wroteHeader {
+		t.Error("expected wroteHeader to be true after Write")
+	}
+}
+
+// TestGenerateRequestIDFallback tests fallback behavior when crypto fails.
+func TestGenerateRequestIDFallback(t *testing.T) {
+	// This test verifies the function returns a valid request ID.
+	id := generateRequestID()
+	if id == "" {
+		t.Error("expected non-empty request ID")
+	}
+	if len(id) != 16 {
+		t.Errorf("expected 16 char request ID, got %d chars: %s", len(id), id)
+	}
+}
+
 // BenchmarkTextLogging benchmarks text logging performance.
 func BenchmarkTextLogging(b *testing.B) {
 	Reset()

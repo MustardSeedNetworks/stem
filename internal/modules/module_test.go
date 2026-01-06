@@ -443,3 +443,214 @@ func TestTotalTestCount(t *testing.T) {
 		t.Errorf("Total test count = %d, want %d", total, expectedTestCount)
 	}
 }
+
+// TestGetModule tests the GetModule convenience function.
+func TestGetModule(t *testing.T) {
+	// Test existing modules.
+	moduleNames := []string{
+		testModuleReflector, testModuleBenchmark, testModuleServiceTest,
+		testModuleTrafficGen, testModuleMeasure, testModuleCertify,
+	}
+
+	for _, name := range moduleNames {
+		m := modules.GetModule(name)
+		if m == nil {
+			t.Errorf("GetModule(%q) returned nil", name)
+			continue
+		}
+		if m.Name() != name {
+			t.Errorf("GetModule(%q).Name() = %q, want %q", name, m.Name(), name)
+		}
+	}
+
+	// Test non-existent module.
+	if m := modules.GetModule("nonexistent"); m != nil {
+		t.Error("GetModule('nonexistent') should return nil")
+	}
+
+	// Test empty string.
+	if m := modules.GetModule(""); m != nil {
+		t.Error("GetModule('') should return nil")
+	}
+}
+
+// TestGetAllModules tests the GetAllModules convenience function.
+func TestGetAllModules(t *testing.T) {
+	mods := modules.GetAllModules()
+
+	if len(mods) != expectedModuleCount {
+		t.Errorf("GetAllModules() returned %d modules, want %d", len(mods), expectedModuleCount)
+	}
+
+	// Verify all modules are present.
+	found := make(map[string]bool)
+	for _, m := range mods {
+		found[m.Name()] = true
+	}
+
+	expectedNames := []string{
+		testModuleReflector, testModuleBenchmark, testModuleServiceTest,
+		testModuleTrafficGen, testModuleMeasure, testModuleCertify,
+	}
+	for _, name := range expectedNames {
+		if !found[name] {
+			t.Errorf("GetAllModules() missing module: %s", name)
+		}
+	}
+}
+
+// TestAllTestTypes tests the AllTestTypes method.
+func TestAllTestTypes(t *testing.T) {
+	types := modules.DefaultRegistry.AllTestTypes()
+
+	if len(types) != expectedTestCount {
+		t.Errorf("AllTestTypes() returned %d types, want %d", len(types), expectedTestCount)
+	}
+
+	// Verify each test type has required fields.
+	for _, tt := range types {
+		if tt.Name == "" {
+			t.Error("AllTestTypes() returned a TestType with empty Name")
+		}
+		if tt.ModuleName == "" {
+			t.Error("AllTestTypes() returned a TestType with empty ModuleName")
+		}
+		// Standard should be set from the module.
+		if tt.Standard == "" {
+			t.Errorf("AllTestTypes() returned TestType %q with empty Standard", tt.Name)
+		}
+	}
+
+	// Verify specific test types exist.
+	typeNames := make(map[string]bool)
+	for _, tt := range types {
+		typeNames[tt.Name] = true
+	}
+
+	expectedTypes := []string{
+		"reflect", "throughput", "latency", "y1564_config", "custom_stream",
+		"y1731_delay", "rfc2889_forwarding", "tsn_timing",
+	}
+	for _, name := range expectedTypes {
+		if !typeNames[name] {
+			t.Errorf("AllTestTypes() missing test type: %s", name)
+		}
+	}
+}
+
+// TestAllTestTypesModuleMapping tests that test types map to correct modules.
+func TestAllTestTypesModuleMapping(t *testing.T) {
+	types := modules.DefaultRegistry.AllTestTypes()
+
+	// Create a map for easier lookup.
+	typeMap := make(map[string]modules.TestType)
+	for _, tt := range types {
+		typeMap[tt.Name] = tt
+	}
+
+	// Verify module mappings.
+	expectedMappings := map[string]string{
+		"reflect":            testModuleReflector,
+		"throughput":         testModuleBenchmark,
+		"latency":            testModuleBenchmark,
+		"y1564_config":       testModuleServiceTest,
+		"custom_stream":      testModuleTrafficGen,
+		"y1731_delay":        testModuleMeasure,
+		"rfc2889_forwarding": testModuleCertify,
+		"rfc6349_throughput": testModuleCertify,
+		"tsn_timing":         testModuleCertify,
+	}
+
+	for testType, expectedModule := range expectedMappings {
+		tt, ok := typeMap[testType]
+		if !ok {
+			t.Errorf("Test type %q not found in AllTestTypes()", testType)
+			continue
+		}
+		if tt.ModuleName != expectedModule {
+			t.Errorf("Test type %q has ModuleName %q, want %q", testType, tt.ModuleName, expectedModule)
+		}
+	}
+}
+
+// TestTestTypeStruct tests TestType struct fields.
+func TestTestTypeStruct(t *testing.T) {
+	tt := modules.TestType{
+		Name:        "test_name",
+		Description: "test description",
+		Standard:    "RFC 2544",
+		ModuleName:  "benchmark",
+	}
+
+	if tt.Name != "test_name" {
+		t.Errorf("TestType.Name = %q, want 'test_name'", tt.Name)
+	}
+	if tt.Description != "test description" {
+		t.Errorf("TestType.Description = %q, want 'test description'", tt.Description)
+	}
+	if tt.Standard != "RFC 2544" {
+		t.Errorf("TestType.Standard = %q, want 'RFC 2544'", tt.Standard)
+	}
+	if tt.ModuleName != "benchmark" {
+		t.Errorf("TestType.ModuleName = %q, want 'benchmark'", tt.ModuleName)
+	}
+}
+
+// TestModuleInfoStruct tests ModuleInfo struct fields.
+func TestModuleInfoStruct(t *testing.T) {
+	info := modules.ModuleInfo{
+		Name:        "test_module",
+		DisplayName: "Test Module",
+		Description: "A test module",
+		Color:       "#ff0000",
+		Standard:    "Test Standard",
+		Tests:       []string{"test1", "test2"},
+	}
+
+	if info.Name != "test_module" {
+		t.Errorf("ModuleInfo.Name = %q, want 'test_module'", info.Name)
+	}
+	if info.DisplayName != "Test Module" {
+		t.Errorf("ModuleInfo.DisplayName = %q, want 'Test Module'", info.DisplayName)
+	}
+	if info.Description != "A test module" {
+		t.Errorf("ModuleInfo.Description = %q, want 'A test module'", info.Description)
+	}
+	if info.Color != "#ff0000" {
+		t.Errorf("ModuleInfo.Color = %q, want '#ff0000'", info.Color)
+	}
+	if info.Standard != "Test Standard" {
+		t.Errorf("ModuleInfo.Standard = %q, want 'Test Standard'", info.Standard)
+	}
+	if len(info.Tests) != 2 {
+		t.Errorf("len(ModuleInfo.Tests) = %d, want 2", len(info.Tests))
+	}
+}
+
+// TestRegistryConcurrency tests thread safety of registry operations.
+func TestRegistryConcurrency(t *testing.T) {
+	t.Parallel()
+	// This test verifies that concurrent access doesn't cause data races.
+	// Run with -race flag to detect issues.
+	const goroutines = 10
+	done := make(chan bool, goroutines)
+
+	for range goroutines {
+		go func() {
+			// Multiple concurrent reads.
+			_ = modules.GetModule(testModuleBenchmark)
+			_ = modules.GetAllModules()
+			_ = modules.DefaultRegistry.AllTestTypes()
+			_ = modules.DefaultRegistry.TestCount()
+			_ = modules.DefaultRegistry.ModuleCount()
+			_ = modules.GetModuleForTest("throughput")
+			_ = modules.GetAllModuleInfos()
+			done <- true
+		}()
+	}
+
+	// Wait for all goroutines.
+	for range goroutines {
+		<-done
+	}
+}
