@@ -28,9 +28,14 @@ import { useCallback, useEffect, useState } from 'react';
 import { HelpDrawer } from './components/HelpDrawer';
 import { ResultHistory } from './components/ResultHistory';
 import { defaultRFC2544Config, type RFC2544Config } from './components/RFC2544ConfigForm';
+import { defaultRFC2889Config, type RFC2889Config } from './components/RFC2889ConfigForm';
+import { defaultRFC6349Config, type RFC6349Config } from './components/RFC6349ConfigForm';
 import { SettingsDrawer } from './components/SettingsDrawer';
 import { TestProgressBar, useTestProgress } from './components/TestProgressBar';
+import { defaultTrafficGenConfig, type TrafficGenConfig } from './components/TrafficGenConfigForm';
+import { defaultTSNConfig, type TSNConfig } from './components/TSNConfigForm';
 import { defaultY1564Config, type Y1564Config } from './components/Y1564ConfigForm';
+import { defaultY1731Config, type Y1731Config } from './components/Y1731ConfigForm';
 
 interface Stats {
   packetsReceived: number;
@@ -394,7 +399,13 @@ function App(): ReactElement {
   ]);
   const [reflectorProfile, setReflectorProfile] = useState<string>('all');
   const [rfc2544Config, setRFC2544Config] = useState<RFC2544Config>(defaultRFC2544Config);
+  const [rfc2889Config, setRFC2889Config] = useState<RFC2889Config>(defaultRFC2889Config);
+  const [rfc6349Config, setRFC6349Config] = useState<RFC6349Config>(defaultRFC6349Config);
   const [y1564Config, setY1564Config] = useState<Y1564Config>(defaultY1564Config);
+  const [y1731Config, setY1731Config] = useState<Y1731Config>(defaultY1731Config);
+  const [tsnConfig, setTSNConfig] = useState<TSNConfig>(defaultTSNConfig);
+  const [trafficGenConfig, setTrafficGenConfig] =
+    useState<TrafficGenConfig>(defaultTrafficGenConfig);
 
   // Calculate expected test duration based on config
   const expectedDuration =
@@ -835,8 +846,18 @@ function App(): ReactElement {
         setReflectorProfile={setReflectorProfile}
         rfc2544Config={rfc2544Config}
         setRFC2544Config={setRFC2544Config}
+        rfc2889Config={rfc2889Config}
+        setRFC2889Config={setRFC2889Config}
+        rfc6349Config={rfc6349Config}
+        setRFC6349Config={setRFC6349Config}
         y1564Config={y1564Config}
         setY1564Config={setY1564Config}
+        y1731Config={y1731Config}
+        setY1731Config={setY1731Config}
+        tsnConfig={tsnConfig}
+        setTSNConfig={setTSNConfig}
+        trafficGenConfig={trafficGenConfig}
+        setTrafficGenConfig={setTrafficGenConfig}
       />
 
       {/* Help Drawer */}

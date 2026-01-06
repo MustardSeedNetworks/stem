@@ -164,3 +164,33 @@ func convertToInt(v any, defaultVal int) int {
 		return defaultVal
 	}
 }
+
+// GetBoolParam extracts a bool parameter from a map.
+func GetBoolParam(params map[string]any, key string, defaultVal bool) bool {
+	if params == nil {
+		return defaultVal
+	}
+	v, exists := params[key]
+	if !exists {
+		return defaultVal
+	}
+	if b, isBool := v.(bool); isBool {
+		return b
+	}
+	return defaultVal
+}
+
+// GetStringParam extracts a string parameter from a map.
+func GetStringParam(params map[string]any, key string, defaultVal string) string {
+	if params == nil {
+		return defaultVal
+	}
+	v, exists := params[key]
+	if !exists {
+		return defaultVal
+	}
+	if s, isString := v.(string); isString {
+		return s
+	}
+	return defaultVal
+}

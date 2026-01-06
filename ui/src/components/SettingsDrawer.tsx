@@ -27,7 +27,12 @@ import { HelpIcon } from './HelpIcon';
 import { LicenseSection } from './LicenseSection';
 import { ModuleSelector } from './ModuleSelector';
 import { type RFC2544Config, RFC2544ConfigForm } from './RFC2544ConfigForm';
+import { type RFC2889Config, RFC2889ConfigForm } from './RFC2889ConfigForm';
+import { type RFC6349Config, RFC6349ConfigForm } from './RFC6349ConfigForm';
+import { type TrafficGenConfig, TrafficGenConfigForm } from './TrafficGenConfigForm';
+import { type TSNConfig, TSNConfigForm } from './TSNConfigForm';
 import { type Y1564Config, Y1564ConfigForm } from './Y1564ConfigForm';
+import { type Y1731Config, Y1731ConfigForm } from './Y1731ConfigForm';
 
 interface InterfaceInfo {
   name: string;
@@ -54,8 +59,18 @@ interface SettingsDrawerProps {
   setReflectorProfile: (profile: string) => void;
   rfc2544Config: RFC2544Config;
   setRFC2544Config: (config: RFC2544Config) => void;
+  rfc2889Config: RFC2889Config;
+  setRFC2889Config: (config: RFC2889Config) => void;
+  rfc6349Config: RFC6349Config;
+  setRFC6349Config: (config: RFC6349Config) => void;
   y1564Config: Y1564Config;
   setY1564Config: (config: Y1564Config) => void;
+  y1731Config: Y1731Config;
+  setY1731Config: (config: Y1731Config) => void;
+  tsnConfig: TSNConfig;
+  setTSNConfig: (config: TSNConfig) => void;
+  trafficGenConfig: TrafficGenConfig;
+  setTrafficGenConfig: (config: TrafficGenConfig) => void;
 }
 
 export function SettingsDrawer({
@@ -72,8 +87,18 @@ export function SettingsDrawer({
   setReflectorProfile,
   rfc2544Config,
   setRFC2544Config,
+  rfc2889Config,
+  setRFC2889Config,
+  rfc6349Config,
+  setRFC6349Config,
   y1564Config,
   setY1564Config,
+  y1731Config,
+  setY1731Config,
+  tsnConfig,
+  setTSNConfig,
+  trafficGenConfig,
+  setTrafficGenConfig,
 }: SettingsDrawerProps) {
   const [viewMode, setViewMode] = useState<'standard' | 'module'>('standard');
 
@@ -678,6 +703,62 @@ export function SettingsDrawer({
                       ))}
                     </div>
                   </CollapsibleSection>
+
+                  {/* Traffic Generator Tests */}
+                  <CollapsibleSection
+                    title={
+                      <div className="flex items-center gap-2">
+                        <Radio className="w-4 h-4" />
+                        <span>Traffic Generator</span>
+                      </div>
+                    }
+                  >
+                    <div className="space-y-2">
+                      {[
+                        {
+                          id: 'custom_stream',
+                          name: 'Custom Stream',
+                          desc: 'Configurable traffic',
+                          tooltip:
+                            'Generate custom traffic patterns with configurable frame size, rate, and duration.',
+                        },
+                        {
+                          id: 'trafficgen_burst',
+                          name: 'Burst Mode',
+                          desc: 'Burst traffic generation',
+                          tooltip: 'Generate burst traffic with configurable burst size and gap.',
+                        },
+                        {
+                          id: 'trafficgen_multistream',
+                          name: 'Multi-Stream',
+                          desc: 'Multiple traffic streams',
+                          tooltip:
+                            'Generate multiple concurrent traffic streams with different parameters.',
+                        },
+                      ].map((test) => (
+                        <label
+                          key={test.id}
+                          className="flex items-start gap-3 p-2 rounded-lg cursor-pointer hover:bg-[var(--color-surface-hover)]"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedTests.includes(test.id)}
+                            onChange={() => toggleTest(test.id)}
+                            className="mt-0.5 w-4 h-4 accent-[var(--color-stem-green)]"
+                          />
+                          <div className="flex-1">
+                            <div className="font-medium text-sm flex items-center gap-1">
+                              {test.name}
+                              <HelpIcon tooltip={test.tooltip} />
+                            </div>
+                            <div className="text-xs text-[var(--color-text-muted)]">
+                              {test.desc}
+                            </div>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  </CollapsibleSection>
                 </>
               )}
 
@@ -692,6 +773,41 @@ export function SettingsDrawer({
               <Y1564ConfigForm
                 config={y1564Config}
                 setConfig={setY1564Config}
+                selectedTests={selectedTests}
+              />
+
+              {/* RFC 2889 LAN Switch Configuration */}
+              <RFC2889ConfigForm
+                config={rfc2889Config}
+                setConfig={setRFC2889Config}
+                selectedTests={selectedTests}
+              />
+
+              {/* RFC 6349 TCP Configuration */}
+              <RFC6349ConfigForm
+                config={rfc6349Config}
+                setConfig={setRFC6349Config}
+                selectedTests={selectedTests}
+              />
+
+              {/* Y.1731 OAM Configuration */}
+              <Y1731ConfigForm
+                config={y1731Config}
+                setConfig={setY1731Config}
+                selectedTests={selectedTests}
+              />
+
+              {/* TSN Configuration */}
+              <TSNConfigForm
+                config={tsnConfig}
+                setConfig={setTSNConfig}
+                selectedTests={selectedTests}
+              />
+
+              {/* Traffic Generator Configuration */}
+              <TrafficGenConfigForm
+                config={trafficGenConfig}
+                setConfig={setTrafficGenConfig}
                 selectedTests={selectedTests}
               />
             </>

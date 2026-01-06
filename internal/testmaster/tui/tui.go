@@ -253,7 +253,7 @@ func New() *App {
 	return a
 }
 
-func (a *App) build() {
+func (a *App) build() { //nolint:funlen // Main UI setup has many components.
 	// Stats panel (left side).
 	a.statsView = tview.NewTable().
 		SetBorders(false).
@@ -289,7 +289,7 @@ func (a *App) build() {
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter)
 	statusText := "[yellow]Stem Test Master[white] | " +
-		"[green]F1[white] Start | [red]F2[white] Stop | [cyan]F6[white] Y.1564 Config | [blue]F10[white] Quit"
+		"[green]F1[white] Start | [red]F2[white] Stop | [cyan]F3-F8[white] Config | [blue]F10[white] Quit"
 	a.statusBar.SetText(statusText)
 
 	// Layout.
@@ -318,10 +318,40 @@ func (a *App) build() {
 				go a.OnStop()
 			}
 			return nil
+		case tcell.KeyF3:
+			// Show RFC 2889 configuration editor.
+			a.ShowRFC2889Config(nil, func(_ RFC2889Config) {
+				a.LogInfof("RFC 2889 configuration saved")
+			})
+			return nil
+		case tcell.KeyF4:
+			// Show RFC 6349 configuration editor.
+			a.ShowRFC6349Config(nil, func(_ RFC6349Config) {
+				a.LogInfof("RFC 6349 configuration saved")
+			})
+			return nil
+		case tcell.KeyF5:
+			// Show Y.1731 configuration editor.
+			a.ShowY1731Config(nil, func(_ Y1731Config) {
+				a.LogInfof("Y.1731 configuration saved")
+			})
+			return nil
 		case tcell.KeyF6:
 			// Show Y.1564 configuration editor.
 			a.ShowY1564Config(nil, func(_ []Y1564ServiceConfig) {
 				a.LogInfof("Y.1564 configuration saved")
+			})
+			return nil
+		case tcell.KeyF7:
+			// Show TSN configuration editor.
+			a.ShowTSNConfig(nil, func(_ TSNConfig) {
+				a.LogInfof("TSN configuration saved")
+			})
+			return nil
+		case tcell.KeyF8:
+			// Show TrafficGen configuration editor.
+			a.ShowTrafficGenConfig(nil, func(_ TrafficGenConfig) {
+				a.LogInfof("TrafficGen configuration saved")
 			})
 			return nil
 		case tcell.KeyF10, tcell.KeyEscape:

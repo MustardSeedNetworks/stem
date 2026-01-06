@@ -11,19 +11,30 @@ import (
 )
 
 const (
-	defaultRFC6349MinRTTMs  = 0.1
-	defaultRFC6349MaxRTTMs  = 1000.0
+	// RFC 6349 defaults - aligned with TUI/WebUI.
+	defaultRFC6349TargetRate = 100.0 // Match TUI/WebUI: 100 Mbps.
+	defaultRFC6349MinRTTMs   = 1.0   // Match TUI/WebUI: 1.0 ms.
+	defaultRFC6349MaxRTTMs   = 100.0 // Match TUI/WebUI: 100 ms.
+	defaultRFC6349RWND       = 65535 // 64KB receive window.
+	defaultRFC6349MSS        = 1460  // Standard MSS.
+	defaultRFC6349Duration   = 30    // 30 seconds.
+
+	// RFC 2889 defaults - aligned with TUI/WebUI.
 	defaultRFC2889WarmupSec = 2
 	defaultRFC2889AddressCt = 8192
 	defaultRFC2889PortCt    = 2
 	defaultRFC2889Duration  = 60
-	defaultRFC6349RWND      = 65535
-	defaultRFC6349MSS       = 1460
-	defaultRFC6349Duration  = 30
-	defaultTSNWarmupSec     = 2
-	defaultTSNClassCount    = 8
-	defaultTSNDuration      = 60
-	defaultTSNFrameSize     = 128
+
+	// TSN defaults - aligned with TUI/WebUI.
+	defaultTSNWarmupSec       = 5       // Match TUI/WebUI: 5 seconds.
+	defaultTSNClassCount      = 8       // 8 traffic classes.
+	defaultTSNDuration        = 60      // 60 seconds.
+	defaultTSNFrameSize       = 64      // Match TUI/WebUI: 64 bytes.
+	defaultTSNMaxLatencyNs    = 1000000 // Match TUI/WebUI: 1ms.
+	defaultTSNMaxJitterNs     = 100000  // Match TUI/WebUI: 100µs.
+	defaultTSNMaxSyncOffsetNs = 1000    // Match TUI/WebUI: 1µs.
+	defaultTSNCycleTimeNs     = 1000000 // Match TUI/WebUI: 1ms.
+	defaultTSNTrafficClass    = 7       // Match TUI/WebUI: highest priority.
 )
 
 // Executor wraps the Certify module with test execution capability.
@@ -142,7 +153,7 @@ func buildRFC2889Config(cfg *modtypes.TestConfig) *dataplane.RFC2889Config {
 
 func buildRFC6349Config(cfg *modtypes.TestConfig) *dataplane.RFC6349Config {
 	config := &dataplane.RFC6349Config{
-		TargetRateMbps:  modtypes.GetFloat64Param(cfg.Params, "target_rate_mbps", 0.0),
+		TargetRateMbps:  modtypes.GetFloat64Param(cfg.Params, "target_rate_mbps", defaultRFC6349TargetRate),
 		MinRTTMs:        modtypes.GetFloat64Param(cfg.Params, "min_rtt_ms", defaultRFC6349MinRTTMs),
 		MaxRTTMs:        modtypes.GetFloat64Param(cfg.Params, "max_rtt_ms", defaultRFC6349MaxRTTMs),
 		RWNDSize:        modtypes.GetUint32Param(cfg.Params, "rwnd_size", defaultRFC6349RWND),
@@ -164,16 +175,16 @@ func buildTSNConfig(cfg *modtypes.TestConfig) *dataplane.TSNConfig {
 		DurationSec:       safeUint32FromInt(cfg.Duration, 0),
 		WarmupSec:         modtypes.GetUint32Param(cfg.Params, "warmup_sec", defaultTSNWarmupSec),
 		FrameSize:         cfg.FrameSize,
-		MaxLatencyNs:      modtypes.GetUint32Param(cfg.Params, "max_latency_ns", 0),
-		MaxJitterNs:       modtypes.GetUint32Param(cfg.Params, "max_jitter_ns", 0),
-		RequirePTPSync:    getBoolParam(cfg.Params, "require_ptp_sync", false),
-		MaxSyncOffsetNs:   modtypes.GetUint32Param(cfg.Params, "max_sync_offset_ns", 0),
-		PTPEnabled:        getBoolParam(cfg.Params, "ptp_enabled", false),
+		MaxLatencyNs:      modtypes.GetUint32Param(cfg.Params, "max_latency_ns", defaultTSNMaxLatencyNs),
+		MaxJitterNs:       modtypes.GetUint32Param(cfg.Params, "max_jitter_ns", defaultTSNMaxJitterNs),
+		RequirePTPSync:    getBoolParam(cfg.Params, "require_ptp_sync", true), // Match TUI/WebUI.
+		MaxSyncOffsetNs:   modtypes.GetUint32Param(cfg.Params, "max_sync_offset_ns", defaultTSNMaxSyncOffsetNs),
+		PTPEnabled:        getBoolParam(cfg.Params, "ptp_enabled", true), // Match TUI/WebUI.
 		PreemptionEnabled: getBoolParam(cfg.Params, "preemption_enabled", false),
 		NumTrafficClasses: modtypes.GetUint32Param(cfg.Params, "num_traffic_classes", defaultTSNClassCount),
 		BaseTimeNs:        modtypes.GetUint64Param(cfg.Params, "base_time_ns", 0),
-		CycleTimeNs:       modtypes.GetUint32Param(cfg.Params, "cycle_time_ns", 0),
-		TrafficClass:      modtypes.GetUint32Param(cfg.Params, "traffic_class", 0),
+		CycleTimeNs:       modtypes.GetUint32Param(cfg.Params, "cycle_time_ns", defaultTSNCycleTimeNs),
+		TrafficClass:      modtypes.GetUint32Param(cfg.Params, "traffic_class", defaultTSNTrafficClass),
 	}
 
 	if config.DurationSec == 0 {

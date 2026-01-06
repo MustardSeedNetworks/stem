@@ -1286,11 +1286,18 @@ type TSNFullResult struct {
 // Traffic generation configuration
 
 type TrafficGenConfig struct {
-	FrameSize   uint32
-	RatePct     float64
-	DurationSec uint32
-	WarmupSec   uint32
-	StreamID    uint32
+	FrameSize       uint32
+	RatePct         float64
+	DurationSec     uint32
+	WarmupSec       uint32
+	StreamID        uint32
+	BurstMode       bool
+	BurstSize       uint32
+	InterBurstGapUs uint32
+	SrcMac          string
+	DstMac          string
+	VlanID          uint16
+	VlanPriority    uint8
 }
 
 // Traffic generation result

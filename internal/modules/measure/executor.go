@@ -13,11 +13,16 @@ import (
 // Executor wraps the Measure module with test execution capability.
 // Y.1731 OAM tests execute via the dataplane on supported platforms.
 const (
+	// Y.1731 defaults - aligned with TUI/WebUI.
 	defaultMEPID       = 1
-	defaultMEGLevel    = 0
-	defaultCCMInterval = 4
-	defaultIntervalMs  = 1000
-	defaultCount       = 10
+	defaultMEGLevel    = 4            // Match TUI/WebUI: service level.
+	defaultCCMInterval = 1000         // Match TUI/WebUI: 1000ms (1s).
+	defaultPriority    = 6            // Match TUI/WebUI: priority 6.
+	defaultDuration    = 60           // Match TUI/WebUI: 60 seconds.
+	defaultIntervalMs  = 100          // Match TUI/WebUI: 100ms measurement cadence.
+	defaultCount       = 10           // 10 frames per interval.
+	defaultFrameSize   = 64           // Match TUI/WebUI: 64 bytes.
+	defaultMEGID       = "MSN-MEG-01" // Match TUI/WebUI default MEG ID.
 )
 
 type Executor struct {
@@ -101,22 +106,22 @@ func buildY1731Config(cfg *modtypes.TestConfig) *dataplane.Y1731Config {
 	config := &dataplane.Y1731Config{
 		MEPID:          modtypes.GetUint32Param(cfg.Params, "mep_id", defaultMEPID),
 		MEGLevel:       modtypes.GetUint32Param(cfg.Params, "meg_level", defaultMEGLevel),
-		MEGID:          "",
+		MEGID:          modtypes.GetStringParam(cfg.Params, "meg_id", defaultMEGID),
 		CCMInterval:    modtypes.GetUint32Param(cfg.Params, "ccm_interval", defaultCCMInterval),
-		Priority:       clampUint8(modtypes.GetUint32Param(cfg.Params, "priority", 0)),
+		Priority:       clampUint8(modtypes.GetUint32Param(cfg.Params, "priority", defaultPriority)),
 		DurationSec:    safeUint32FromInt(cfg.Duration, 0),
 		IntervalMs:     modtypes.GetUint32Param(cfg.Params, "interval_ms", defaultIntervalMs),
 		Count:          modtypes.GetUint32Param(cfg.Params, "count", defaultCount),
 		FrameSize:      cfg.FrameSize,
-		PriorityTagged: false,
+		PriorityTagged: modtypes.GetBoolParam(cfg.Params, "priority_tagged", true), // Match TUI/WebUI.
 	}
 
-	if megID, ok := cfg.Params["meg_id"].(string); ok {
-		config.MEGID = megID
+	if config.DurationSec == 0 {
+		config.DurationSec = modtypes.GetUint32Param(cfg.Params, "duration_sec", defaultDuration)
 	}
 
-	if tagged, ok := cfg.Params["priority_tagged"].(bool); ok {
-		config.PriorityTagged = tagged
+	if config.FrameSize == 0 {
+		config.FrameSize = modtypes.GetUint32Param(cfg.Params, "frame_size", defaultFrameSize)
 	}
 
 	return config
