@@ -9,8 +9,10 @@
 package dataplane
 
 import (
-	"errors"
+	"fmt"
 	"time"
+
+	"github.com/krisarmstrong/stem/internal/platform"
 )
 
 // TestType represents the type of test to execute.
@@ -564,8 +566,24 @@ type ResetResultCLI struct {
 	ManualReset bool
 }
 
+// newPlatformError creates a detailed error about platform requirements.
+func newPlatformError() error {
+	// In the stub build, platform is always unsupported.
+	// Check provides detailed requirements info.
+	err := platform.CheckDataplaneSupport()
+	if err != nil {
+		return fmt.Errorf("dataplane unavailable: %w", err)
+	}
+	// Fallback should never happen in stub build.
+	return &platform.Error{
+		Info:    platform.Detect(),
+		Message: "dataplane stub: CGO or Linux required for test execution",
+	}
+}
+
 // ErrNotSupported is returned when CGO dataplane is not available.
-var ErrNotSupported = errors.New("CGO dataplane not available on this platform")
+// It provides detailed platform requirements and suggestions.
+var ErrNotSupported = newPlatformError()
 
 // NewContext creates a new test context for the given interface (stub).
 func NewContext(_ string) (*Context, error) {
