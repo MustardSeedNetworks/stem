@@ -1,0 +1,8 @@
+stem (0.2.7-1) unstable; urgency=medium
+
+  * C23 lint compliance (clang-tidy)
+  * Fixed data race in test executor
+  * Added systemd service support
+  * Added firewall integration (ufw)
+
+ -- Kris Armstrong <kris@mustardseednetworks.com>  Wed, 08 Jan 2025 12:00:00 -0500

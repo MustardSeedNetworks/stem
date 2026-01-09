@@ -1,0 +1,25 @@
+Source: stem
+Section: net
+Priority: optional
+Maintainer: Kris Armstrong <kris@mustardseednetworks.com>
+Build-Depends: debhelper-compat (= 13), golang-go (>= 1.21), gcc, make
+Standards-Version: 4.6.0
+Homepage: https://github.com/krisarmstrong/stem
+Vcs-Browser: https://github.com/krisarmstrong/stem
+Vcs-Git: https://github.com/krisarmstrong/stem.git
+Rules-Requires-Root: no
+
+Package: stem
+Architecture: amd64 arm64
+Depends: ${shlibs:Depends}, ${misc:Depends}, systemd
+Recommends: ufw
+Description: The Stem - Network Performance Testing Tool
+ The Stem is a high-performance network testing tool supporting:
+  - RFC 2544 benchmarking (throughput, latency, frame loss)
+  - ITU-T Y.1564 service activation testing
+  - ITU-T Y.1731 Ethernet OAM
+  - Packet reflection for remote testing
+  - WebUI, TUI, and CLI interfaces
+ .
+ This package provides the stem binary, systemd service,
+ and default configuration files.

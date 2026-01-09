@@ -1,0 +1,40 @@
+#!/usr/bin/make -f
+
+export DH_VERBOSE = 1
+export VERSION = $(shell dpkg-parsechangelog -S Version | cut -d- -f1)
+
+%:
+	dh $@
+
+override_dh_auto_build:
+	make build VERSION=$(VERSION)
+
+override_dh_auto_install:
+	# Binary
+	install -D -m 0755 bin/stem-linux debian/stem/usr/bin/stem
+
+	# Systemd service
+	install -D -m 0644 packaging/systemd/stem.service debian/stem/lib/systemd/system/stem.service
+
+	# Configuration
+	install -D -m 0640 packaging/config/stem.yaml debian/stem/etc/stem/config.yaml
+
+	# Environment file
+	install -d -m 0750 debian/stem/etc/stem
+	echo '# Stem environment variables' > debian/stem/etc/stem/environment
+	echo '# STEM_AUTH_USERNAME=admin' >> debian/stem/etc/stem/environment
+	echo '# STEM_AUTH_PASSWORD=changeme' >> debian/stem/etc/stem/environment
+	echo '# STEM_JWT_SECRET=generate-a-secure-random-string' >> debian/stem/etc/stem/environment
+	echo '# STEM_LICENSE_KEY=your-license-key' >> debian/stem/etc/stem/environment
+	chmod 0600 debian/stem/etc/stem/environment
+
+	# State and log directories
+	install -d -m 0750 debian/stem/var/lib/stem
+	install -d -m 0750 debian/stem/var/log/stem
+
+override_dh_auto_test:
+	# Skip tests during package build
+	true
+
+override_dh_auto_clean:
+	make clean || true

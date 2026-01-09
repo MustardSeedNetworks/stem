@@ -271,6 +271,8 @@ linters:
         - ^golang.org/x/tools/go/analysis.Analyzer$
         - ^google.golang.org/protobuf/.+Options$
         - ^gopkg.in/yaml.v3.Node$
+        # Local types with optional fields
+        - ^github.com/krisarmstrong/stem/internal/help\.ConfigOption$
       # Allows empty structures in return statements.
       # Default: false
       allow-empty-returns: true
@@ -480,3 +482,7 @@ linters:
           - gosec
           - noctx
           - wrapcheck
+      # i18n message files have intentionally similar structure
+      - path: 'internal/i18n/messages_.*\.go'
+        linters:
+          - dupl

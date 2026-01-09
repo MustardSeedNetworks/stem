@@ -1,0 +1,97 @@
+#!/bin/bash
+set -e
+
+# Create stem user/group if they don't exist
+if ! getent group stem >/dev/null; then
+    addgroup --system stem
+fi
+
+if ! getent passwd stem >/dev/null; then
+    adduser --system --ingroup stem --home /var/lib/stem \
+        --no-create-home --gecos "The Stem Network Testing" stem
+fi
+
+# Find available port if default is in use
+find_available_port() {
+    local start_port=$1
+    local port=$start_port
+    while [ $port -lt $((start_port + 100)) ]; do
+        if ! ss -tlnp 2>/dev/null | grep -q ":${port} "; then
+            echo $port
+            return 0
+        fi
+        port=$((port + 1))
+    done
+    echo $start_port
+}
+
+# Check and update ports if needed
+CONFIG_FILE="/etc/stem/config.yaml"
+if [ -f "$CONFIG_FILE" ]; then
+    # Check HTTP port
+    if grep -qE '^\s+port:\s*8080' "$CONFIG_FILE" && ss -tlnp 2>/dev/null | grep -q ":8080 "; then
+        NEW_PORT=$(find_available_port 8080)
+        if [ "$NEW_PORT" != "8080" ]; then
+            sed -i "s/port: 8080/port: $NEW_PORT/" "$CONFIG_FILE"
+            echo "Note: Port 8080 in use, configured to use port $NEW_PORT"
+        fi
+    fi
+
+    # Check HTTPS port
+    if grep -qE '^\s+tls_port:\s*8443' "$CONFIG_FILE" && ss -tlnp 2>/dev/null | grep -q ":8443 "; then
+        NEW_PORT=$(find_available_port 8443)
+        if [ "$NEW_PORT" != "8443" ]; then
+            sed -i "s/tls_port: 8443/tls_port: $NEW_PORT/" "$CONFIG_FILE"
+            echo "Note: Port 8443 in use, configured to use port $NEW_PORT"
+        fi
+    fi
+fi
+
+# Set permissions
+chown -R stem:stem /var/lib/stem
+chown -R stem:stem /var/log/stem
+chown root:stem /etc/stem
+chown root:stem /etc/stem/config.yaml
+chown root:stem /etc/stem/environment
+chmod 0750 /etc/stem
+chmod 0640 /etc/stem/config.yaml
+chmod 0600 /etc/stem/environment
+
+# Configure firewall (ufw) if available and active
+if command -v ufw >/dev/null 2>&1; then
+    if ufw status 2>/dev/null | grep -q "Status: active"; then
+        # Get configured ports from config file
+        HTTP_PORT=$(grep -E '^\s+port:' "$CONFIG_FILE" | head -1 | awk '{print $2}')
+        HTTPS_PORT=$(grep -E '^\s+tls_port:' "$CONFIG_FILE" | head -1 | awk '{print $2}')
+
+        HTTP_PORT=${HTTP_PORT:-8080}
+        HTTPS_PORT=${HTTPS_PORT:-8443}
+
+        ufw allow ${HTTP_PORT}/tcp comment 'Stem WebUI HTTP' >/dev/null 2>&1 || true
+        if [ "$HTTPS_PORT" != "0" ]; then
+            ufw allow ${HTTPS_PORT}/tcp comment 'Stem WebUI HTTPS' >/dev/null 2>&1 || true
+        fi
+        echo "Firewall configured for Stem service (ports $HTTP_PORT, $HTTPS_PORT)"
+    fi
+fi
+
+# Enable and reload systemd
+if [ -d /run/systemd/system ]; then
+    systemctl daemon-reload
+fi
+
+echo ""
+echo "=============================================="
+echo "The Stem has been installed!"
+echo ""
+echo "Quick start:"
+echo "  1. Edit /etc/stem/environment to set credentials"
+echo "  2. sudo systemctl enable --now stem"
+echo "  3. Access WebUI at http://localhost:8080"
+echo ""
+echo "For CLI usage: stem --help"
+echo "=============================================="
+
+#DEBHELPER#
+
+exit 0

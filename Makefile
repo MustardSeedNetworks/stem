@@ -325,6 +325,54 @@ test-all: test c-test
 	@echo "All tests complete"
 
 # ============================================================================
+# Packaging
+# ============================================================================
+
+# Build RPM package (Fedora/RHEL/CentOS)
+rpm: build
+	@echo "Building RPM package..."
+	@if ! command -v rpmbuild >/dev/null 2>&1; then \
+		echo "Error: rpmbuild not found. Install rpm-build package."; \
+		exit 1; \
+	fi
+	@mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
+	@cd .. && tar czf ~/rpmbuild/SOURCES/stem-$(VERSION).tar.gz \
+		--transform 's,^stem,stem-$(VERSION),' \
+		--exclude='stem/.git' --exclude='stem/node_modules' --exclude='stem/bin' \
+		--exclude='stem/ui/node_modules' --exclude='stem/build' \
+		stem
+	@sed 's/Version:.*/Version:        $(VERSION)/' packaging/rpm/stem.spec > ~/rpmbuild/SPECS/stem.spec
+	@rpmbuild -bb ~/rpmbuild/SPECS/stem.spec
+	@echo "RPM built: ~/rpmbuild/RPMS/x86_64/stem-$(VERSION)*.rpm"
+
+# Build DEB package (Debian/Ubuntu)
+deb: build
+	@echo "Building DEB package..."
+	@if ! command -v dpkg-buildpackage >/dev/null 2>&1; then \
+		echo "Error: dpkg-buildpackage not found. Install devscripts package."; \
+		exit 1; \
+	fi
+	@mkdir -p debian
+	@cp -r packaging/debian/* debian/
+	@dpkg-buildpackage -us -uc -b
+	@echo "DEB built: ../stem_$(VERSION)*.deb"
+
+# Install systemd service (requires root)
+install-service: build
+	@echo "Installing systemd service..."
+	install -D -m 0755 bin/stem-linux /usr/bin/stem
+	install -D -m 0644 packaging/systemd/stem.service /lib/systemd/system/stem.service
+	install -D -m 0640 packaging/config/stem.yaml /etc/stem/config.yaml
+	@if ! getent group stem >/dev/null; then groupadd -r stem; fi
+	@if ! getent passwd stem >/dev/null; then \
+		useradd -r -g stem -d /var/lib/stem -s /sbin/nologin stem; \
+	fi
+	install -d -m 0750 -o stem -g stem /var/lib/stem
+	install -d -m 0750 -o stem -g stem /var/log/stem
+	systemctl daemon-reload
+	@echo "Service installed. Run: systemctl enable --now stem"
+
+# ============================================================================
 # Help
 # ============================================================================
 
@@ -367,6 +415,11 @@ help:
 	@echo "Installation:"
 	@echo "  install        Install to /usr/local/bin"
 	@echo "  uninstall      Remove from /usr/local/bin"
+	@echo "  install-service Install as systemd service (Linux, root)"
+	@echo ""
+	@echo "Packaging:"
+	@echo "  rpm            Build RPM package (Fedora/RHEL)"
+	@echo "  deb            Build DEB package (Debian/Ubuntu)"
 	@echo ""
 	@echo "C Dataplane (Linux):"
 	@echo "  dataplane      Build C dataplane library"

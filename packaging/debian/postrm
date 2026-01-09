@@ -1,0 +1,37 @@
+#!/bin/bash
+set -e
+
+case "$1" in
+    purge)
+        # Remove user and group
+        if getent passwd stem >/dev/null; then
+            deluser --system stem || true
+        fi
+        if getent group stem >/dev/null; then
+            delgroup --system stem || true
+        fi
+
+        # Remove data directories
+        rm -rf /var/lib/stem
+        rm -rf /var/log/stem
+        rm -rf /etc/stem
+
+        # Remove firewall rules if ufw is available
+        if command -v ufw >/dev/null 2>&1; then
+            ufw delete allow 8080/tcp >/dev/null 2>&1 || true
+            ufw delete allow 8443/tcp >/dev/null 2>&1 || true
+        fi
+        ;;
+
+    remove|upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
+        ;;
+
+    *)
+        echo "postrm called with unknown argument \`$1'" >&2
+        exit 1
+        ;;
+esac
+
+#DEBHELPER#
+
+exit 0

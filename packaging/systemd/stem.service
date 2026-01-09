@@ -1,0 +1,47 @@
+[Unit]
+Description=The Stem - Network Performance Testing
+Documentation=https://github.com/krisarmstrong/stem
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=stem
+Group=stem
+ExecStart=/usr/bin/stem web --config /etc/stem/config.yaml
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+RestartSec=5
+TimeoutStartSec=30
+TimeoutStopSec=30
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX AF_NETLINK AF_PACKET
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+
+# Allow binding to privileged ports if needed
+AmbientCapabilities=CAP_NET_BIND_SERVICE CAP_NET_RAW CAP_NET_ADMIN
+
+# Working directory and state
+WorkingDirectory=/var/lib/stem
+StateDirectory=stem
+LogsDirectory=stem
+ConfigurationDirectory=stem
+
+# Environment
+EnvironmentFile=-/etc/stem/environment
+
+[Install]
+WantedBy=multi-user.target

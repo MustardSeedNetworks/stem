@@ -1,0 +1,68 @@
+# The Stem - Network Performance Testing
+# Default configuration file
+# Location: /etc/stem/config.yaml
+
+# Server settings
+server:
+  # HTTP port for WebUI (will auto-increment if in use)
+  port: 8080
+  # HTTPS port (0 to disable TLS)
+  tls_port: 8443
+  # Bind address (0.0.0.0 for all interfaces)
+  bind_address: "0.0.0.0"
+  # TLS certificate paths (optional, will generate self-signed if missing)
+  tls_cert: ""
+  tls_key: ""
+
+# Default network interface (auto-detect if empty)
+interface: ""
+
+# Reflector settings (when running in reflector mode)
+reflector:
+  # Signature filter: all, ito, rfc2544, y1564, msn, custom
+  signature_filter: "all"
+  # Reflection mode: mac, mac-ip, all
+  mode: "all"
+
+  # Packet filtering
+  filtering:
+    # ITO UDP port (0 = any)
+    port: 3842
+    # Enable OUI filtering
+    filter_oui: false
+    # Source OUI to filter (XX:XX:XX format)
+    oui: "00:c0:17"
+    # Enable destination MAC filtering
+    filter_mac: false
+
+# Platform settings
+platform:
+  # Use DPDK for packet processing (requires DPDK installation)
+  use_dpdk: false
+  # Use AF_XDP (default on Linux, faster than AF_PACKET)
+  use_af_xdp: true
+  # DPDK EAL arguments
+  dpdk_args: ""
+
+# Statistics settings
+stats:
+  # Output format: text, json, csv
+  format: "json"
+  # Update interval in seconds
+  interval: 10
+
+# Logging settings
+logging:
+  # Log level: debug, info, warn, error
+  level: "info"
+  # Log format: text, json
+  format: "json"
+  # Log to file (empty for stdout/journald)
+  file: ""
+
+# License settings
+license:
+  # License key (can also be set via STEM_LICENSE_KEY env var)
+  key: ""
+  # License server URL (for online validation)
+  server: ""

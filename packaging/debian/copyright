@@ -1,0 +1,11 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: stem
+Upstream-Contact: Kris Armstrong <kris@mustardseednetworks.com>
+Source: https://github.com/krisarmstrong/stem
+
+Files: *
+Copyright: 2025 Mustard Seed Networks
+License: Proprietary
+ This software is proprietary and confidential.
+ Unauthorized copying, distribution, or use is strictly prohibited.
+ See LICENSE file for details.
