@@ -161,15 +161,15 @@ func TestModuleCanRun(t *testing.T) {
 	invalidTests := []string{
 		"rfc2544_throughput", // Benchmark module.
 		"rfc2544_latency",    // Benchmark module.
-		"y1564",         // ServiceTest module.
-		"y1731_delay",   // Measure module.
-		"custom_stream", // TrafficGen module.
-		"reflect",       // Reflector module.
-		"invalid",       // Nonexistent.
-		"",              // Empty string.
-		"rfc2889",       // Invalid (missing suffix).
-		"rfc6349",       // Invalid (missing suffix).
-		"tsn_unknown",   // Invalid TSN test.
+		"y1564",              // ServiceTest module.
+		"y1731_delay",        // Measure module.
+		"custom_stream",      // TrafficGen module.
+		"reflect",            // Reflector module.
+		"invalid",            // Nonexistent.
+		"",                   // Empty string.
+		"rfc2889",            // Invalid (missing suffix).
+		"rfc6349",            // Invalid (missing suffix).
+		"tsn_unknown",        // Invalid TSN test.
 	}
 	for _, test := range invalidTests {
 		if m.CanRun(test) {

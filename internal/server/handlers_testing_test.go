@@ -210,7 +210,7 @@ func TestHandleTestStartWithInterface(t *testing.T) {
 		token := getTestingAuthToken(t, s)
 
 		body := bytes.NewBufferString(
-			fmt.Sprintf(`{"testType":"throughput","interface":"%s"}`, testIface),
+			fmt.Sprintf(`{"testType":"rfc2544_throughput","interface":"%s"}`, testIface),
 		)
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/test/start", body)
 		req.Header.Set("Authorization", "Bearer "+token)
@@ -235,7 +235,7 @@ func TestHandleTestStartWithInterface(t *testing.T) {
 		token := getTestingAuthToken(t, s)
 
 		body := bytes.NewBufferString(
-			`{"testType":"throughput","interface":"nonexistent_iface_xyz123"}`,
+			`{"testType":"rfc2544_throughput","interface":"nonexistent_iface_xyz123"}`,
 		)
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/test/start", body)
 		req.Header.Set("Authorization", "Bearer "+token)
@@ -276,7 +276,7 @@ func TestHandleTestStartValidation(t *testing.T) {
 	t.Run("start with unknown fields in JSON", func(t *testing.T) {
 		token := getTestingAuthToken(t, s)
 
-		body := bytes.NewBufferString(`{"testType":"throughput","unknownField":"value"}`)
+		body := bytes.NewBufferString(`{"testType":"rfc2544_throughput","unknownField":"value"}`)
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/test/start", body)
 		req.Header.Set("Authorization", "Bearer "+token)
 		w := httptest.NewRecorder()
@@ -315,10 +315,10 @@ func TestHandleTestStartValidation(t *testing.T) {
 		testIface := ifaces[0].Name
 
 		testTypes := []string{
-			"throughput",
-			"latency",
-			"frame_loss",
-			"back_to_back",
+			"rfc2544_throughput",
+			"rfc2544_latency",
+			"rfc2544_frame_loss",
+			"rfc2544_back_to_back",
 		}
 
 		for _, testType := range testTypes {

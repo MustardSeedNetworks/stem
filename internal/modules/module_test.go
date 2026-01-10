@@ -551,15 +551,15 @@ func TestAllTestTypesModuleMapping(t *testing.T) {
 
 	// Verify module mappings.
 	expectedMappings := map[string]string{
-		"reflect":             testModuleReflector,
-		"rfc2544_throughput":  testModuleBenchmark,
-		"rfc2544_latency":     testModuleBenchmark,
-		"y1564_config":        testModuleServiceTest,
-		"custom_stream":       testModuleTrafficGen,
-		"y1731_delay":         testModuleMeasure,
-		"rfc2889_forwarding":  testModuleCertify,
-		"rfc6349_throughput":  testModuleCertify,
-		"tsn_timing":          testModuleCertify,
+		"reflect":            testModuleReflector,
+		"rfc2544_throughput": testModuleBenchmark,
+		"rfc2544_latency":    testModuleBenchmark,
+		"y1564_config":       testModuleServiceTest,
+		"custom_stream":      testModuleTrafficGen,
+		"y1731_delay":        testModuleMeasure,
+		"rfc2889_forwarding": testModuleCertify,
+		"rfc6349_throughput": testModuleCertify,
+		"tsn_timing":         testModuleCertify,
 	}
 
 	for testType, expectedModule := range expectedMappings {
