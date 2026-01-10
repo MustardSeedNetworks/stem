@@ -35,6 +35,7 @@ import {
   type Tutorial,
   tutorials,
 } from '../data/helpContent';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 import { cn, icon as iconTokens, layout, modal, radius, spacing } from '../styles/theme';
 import { CollapsibleSection } from './CollapsibleSection';
 
@@ -52,6 +53,10 @@ export function HelpDrawer({ isOpen, onClose }: HelpDrawerProps) {
   const [selectedTest, setSelectedTest] = useState<TestHelp | null>(null);
   const [selectedTutorial, setSelectedTutorial] = useState<Tutorial | null>(null);
   const [copiedCommand, setCopiedCommand] = useState<string | null>(null);
+  const drawerRef = useFocusTrap<HTMLDivElement>({
+    isActive: isOpen,
+    onEscape: onClose,
+  });
 
   if (!isOpen) return null;
 
@@ -93,6 +98,10 @@ export function HelpDrawer({ isOpen, onClose }: HelpDrawerProps) {
 
       {/* Drawer */}
       <div
+        ref={drawerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Help & Documentation"
         className={cn(
           'fixed right-0 top-0 h-full w-[520px] max-w-full z-50',
           layout.flex.col,

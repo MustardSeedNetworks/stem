@@ -39,6 +39,7 @@ import { defaultTSNConfig, type TSNConfig } from './components/TSNConfigForm';
 import { defaultY1564Config, type Y1564Config } from './components/Y1564ConfigForm';
 import { defaultY1731Config, type Y1731Config } from './components/Y1731ConfigForm';
 import { ModuleSettingsProvider, useModuleSettings } from './context/ModuleSettingsContext';
+import { useFocusTrap } from './hooks/useFocusTrap';
 import {
   type InterfaceInfo,
   initialStats,
@@ -377,6 +378,13 @@ function AppContent(): ReactElement {
   const [tsnConfig, setTSNConfig] = useState<TSNConfig>(defaultTSNConfig);
   const [trafficGenConfig, setTrafficGenConfig] =
     useState<TrafficGenConfig>(defaultTrafficGenConfig);
+
+  // Focus trap for login modal (no onEscape - user must authenticate)
+  const loginModalRef = useFocusTrap<HTMLDivElement>({
+    isActive: !isAuthenticated,
+    autoFocus: true,
+    restoreFocus: false, // No element to restore to after login
+  });
 
   // Module settings context
   const {
@@ -1258,11 +1266,20 @@ function AppContent(): ReactElement {
       />
       {!isAuthenticated && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-3xl border border-[var(--color-surface-border)] bg-[var(--color-surface-raised)] p-6 shadow-2xl">
-            <div className="flex items-center gap-2 text-lg font-semibold text-[var(--color-text-primary)]">
+          <div
+            ref={loginModalRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="login-dialog-title"
+            className="w-full max-w-md rounded-3xl border border-[var(--color-surface-border)] bg-[var(--color-surface-raised)] p-6 shadow-2xl"
+          >
+            <h2
+              id="login-dialog-title"
+              className="flex items-center gap-2 text-lg font-semibold text-[var(--color-text-primary)]"
+            >
               <Lock className="w-5 h-5 text-[var(--color-brand-primary)]" />
               Sign in to continue
-            </div>
+            </h2>
             <p className="text-sm text-[var(--color-text-muted)]">
               Authenticate with your Stem credentials.
             </p>

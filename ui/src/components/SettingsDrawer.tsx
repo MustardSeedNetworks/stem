@@ -22,6 +22,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { useState } from 'react';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 import { CollapsibleSection } from './CollapsibleSection';
 import { HelpIcon } from './HelpIcon';
 import { LicenseSection } from './LicenseSection';
@@ -102,6 +103,10 @@ export function SettingsDrawer({
   setTrafficGenConfig,
 }: SettingsDrawerProps) {
   const [viewMode, setViewMode] = useState<'standard' | 'module'>('standard');
+  const drawerRef = useFocusTrap<HTMLDivElement>({
+    isActive: isOpen,
+    onEscape: onClose,
+  });
 
   if (!isOpen) return null;
 
@@ -136,7 +141,13 @@ export function SettingsDrawer({
       />
 
       {/* Drawer */}
-      <div className="fixed right-0 top-0 h-full w-96 max-w-full bg-[var(--color-surface-raised)] border-l border-[var(--color-surface-border)] z-50 overflow-y-auto">
+      <div
+        ref={drawerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Settings"
+        className="fixed right-0 top-0 h-full w-96 max-w-full bg-[var(--color-surface-raised)] border-l border-[var(--color-surface-border)] z-50 overflow-y-auto"
+      >
         {/* Header */}
         <div className="sticky top-0 bg-[var(--color-surface-raised)] border-b border-[var(--color-surface-border)] px-4 py-3 flex items-center justify-between">
           <h2 className="heading-3 text-text-primary">Settings</h2>

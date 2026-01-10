@@ -8,6 +8,7 @@
 import { Activity, ChevronDown, ChevronRight, Clock, History, Trash2, X } from 'lucide-react';
 import type { ReactElement } from 'react';
 import { useCallback, useEffect, useState } from 'react';
+import { useFocusTrap } from '../hooks/useFocusTrap';
 
 /** Test result record stored in history */
 export interface HistoricalResult {
@@ -203,6 +204,10 @@ export function ResultHistory({
   const [history, setHistory] = useState<HistoricalResult[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [lastSavedResult, setLastSavedResult] = useState<string | null>(null);
+  const drawerRef = useFocusTrap<HTMLDivElement>({
+    isActive: isOpen,
+    onEscape: onClose,
+  });
 
   // Load history on mount
   useEffect(() => {
@@ -266,7 +271,13 @@ export function ResultHistory({
       />
 
       {/* Drawer */}
-      <div className="relative h-full w-full max-w-lg bg-[var(--color-surface-raised)] shadow-xl overflow-hidden flex flex-col">
+      <div
+        ref={drawerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Test History"
+        className="relative h-full w-full max-w-lg bg-[var(--color-surface-raised)] shadow-xl overflow-hidden flex flex-col"
+      >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--color-surface-border)]">
           <div className="flex items-center gap-2">
