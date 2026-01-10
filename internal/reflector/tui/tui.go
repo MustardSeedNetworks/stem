@@ -34,39 +34,65 @@ const (
 	secondsPerMinute    = 60
 )
 
+// FilterProfile defines a signature filter configuration.
+type FilterProfile struct {
+	Name        string // Profile name.
+	Description string // Profile description.
+	ITO         bool   // Enable ITO signatures (PROBEOT, DATA:OT, LATENCY).
+	RFC2544     bool   // Enable RFC 2544 signatures.
+	Y1564       bool   // Enable Y.1564 signatures.
+	MSN         bool   // Enable MSN custom signatures.
+}
+
+// PredefinedProfiles are the built-in filter profiles.
+var PredefinedProfiles = []FilterProfile{
+	{Name: "all", Description: "All signatures (no filter)", ITO: true, RFC2544: true, Y1564: true, MSN: true},
+	{Name: "ito", Description: "ITO signatures only", ITO: true, RFC2544: false, Y1564: false, MSN: false},
+	{Name: "rfc2544", Description: "RFC 2544 signatures only", ITO: false, RFC2544: true, Y1564: false, MSN: false},
+	{Name: "y1564", Description: "Y.1564 signatures only", ITO: false, RFC2544: false, Y1564: true, MSN: false},
+	{Name: "msn", Description: "MSN custom signatures only", ITO: false, RFC2544: false, Y1564: false, MSN: true},
+	{Name: "standards", Description: "RFC 2544 + Y.1564", ITO: false, RFC2544: true, Y1564: true, MSN: false},
+}
+
 // App holds the TUI application state.
 type App struct {
-	dp           *dataplane.Dataplane
-	app          *tview.Application
-	statsView    *tview.TextView
-	sigView      *tview.TextView
-	latView      *tview.TextView
-	helpView     *tview.TextView
-	headerView   *tview.TextView
-	startTime    time.Time
-	stopChan     chan struct{}
-	stopOnce     sync.Once // Prevent double-close panic
-	paused       bool
-	pauseMu      sync.Mutex
-	filterActive string // Current filter profile name
+	dp             *dataplane.Dataplane
+	app            *tview.Application
+	pages          *tview.Pages
+	statsView      *tview.TextView
+	sigView        *tview.TextView
+	latView        *tview.TextView
+	helpView       *tview.TextView
+	headerView     *tview.TextView
+	startTime      time.Time
+	stopChan       chan struct{}
+	stopOnce       sync.Once // Prevent double-close panic
+	paused         bool
+	pauseMu        sync.Mutex
+	filterActive   string        // Current filter profile name.
+	currentProfile FilterProfile // Current filter profile settings.
+	showExtHelp    bool          // Show extended help.
 }
 
 // New creates a new TUI application.
 func New(dp *dataplane.Dataplane) *App {
 	return &App{
-		dp:           dp,
-		app:          tview.NewApplication(),
-		statsView:    nil,
-		sigView:      nil,
-		latView:      nil,
-		helpView:     nil,
-		headerView:   nil,
-		startTime:    time.Now(),
-		stopChan:     make(chan struct{}),
-		stopOnce:     sync.Once{},
-		paused:       false,
-		pauseMu:      sync.Mutex{},
-		filterActive: "all",
+		dp:             dp,
+		app:            tview.NewApplication(),
+		pages:          tview.NewPages(),
+		statsView:      nil,
+		sigView:        nil,
+		latView:        nil,
+		helpView:       nil,
+		headerView:     nil,
+		startTime:      time.Now(),
+		stopChan:       make(chan struct{}),
+		stopOnce:       sync.Once{},
+		paused:         false,
+		pauseMu:        sync.Mutex{},
+		filterActive:   "all",
+		currentProfile: PredefinedProfiles[0], // Default to "all".
+		showExtHelp:    false,
 	}
 }
 
@@ -74,6 +100,13 @@ func New(dp *dataplane.Dataplane) *App {
 func NewWithFilter(dp *dataplane.Dataplane, filterProfile string) *App {
 	a := New(dp)
 	a.filterActive = filterProfile
+	// Find and set the matching profile.
+	for _, p := range PredefinedProfiles {
+		if p.Name == filterProfile {
+			a.currentProfile = p
+			break
+		}
+	}
 	return a
 }
 
@@ -100,8 +133,8 @@ func (a *App) Run() error {
 	// Create help panel.
 	a.helpView = tview.NewTextView().
 		SetDynamicColors(true).
-		SetTextAlign(tview.AlignCenter).
-		SetText("[yellow]q[white] quit  [yellow]r[white] reset  [yellow]p[white] pause")
+		SetTextAlign(tview.AlignCenter)
+	a.updateHelpText()
 	a.helpView.SetBorder(false)
 
 	// Create header with MSN branding.
@@ -121,31 +154,109 @@ func (a *App) Run() error {
 		AddItem(statsRow, 0, 1, false).
 		AddItem(a.helpView, 1, 0, false)
 
+	// Add main page.
+	a.pages.AddPage("main", mainFlex, true, true)
+
+	// Create profile selector page.
+	a.createProfileSelector()
+
 	// Key bindings.
-	a.app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		switch event.Rune() {
-		case 'q', 'Q':
-			a.Stop()
-			return nil
-		case 'r', 'R':
-			a.resetStats()
-			return nil
-		case 'p', 'P':
-			a.togglePause()
-			return nil
-		}
-		return event
-	})
+	a.app.SetInputCapture(a.handleKeyEvent)
 
 	// Start stats update goroutine.
 	go a.updateLoop()
 
 	// Run the app.
-	err := a.app.SetRoot(mainFlex, true).EnableMouse(false).Run()
+	err := a.app.SetRoot(a.pages, true).EnableMouse(false).Run()
 	if err != nil {
 		return fmt.Errorf("TUI app run failed: %w", err)
 	}
 	return nil
+}
+
+// handleKeyEvent handles keyboard input.
+func (a *App) handleKeyEvent(event *tcell.EventKey) *tcell.EventKey {
+	switch event.Rune() {
+	case 'q', 'Q':
+		a.Stop()
+		return nil
+	case 'r', 'R':
+		a.resetStats()
+		return nil
+	case 'p', 'P':
+		a.togglePause()
+		return nil
+	case 'f', 'F':
+		a.showProfileSelector()
+		return nil
+	case 'h', 'H':
+		a.toggleExtendedHelp()
+		return nil
+	case '?':
+		a.toggleExtendedHelp()
+		return nil
+	}
+
+	// Number keys 1-6 for quick profile selection.
+	if event.Rune() >= '1' && event.Rune() <= '6' {
+		idx := int(event.Rune() - '1')
+		if idx < len(PredefinedProfiles) {
+			a.setProfile(PredefinedProfiles[idx])
+		}
+		return nil
+	}
+
+	return event
+}
+
+// createProfileSelector creates the filter profile selection modal.
+func (a *App) createProfileSelector() {
+	list := tview.NewList().
+		ShowSecondaryText(true)
+
+	for i, p := range PredefinedProfiles {
+		shortcut := rune('1' + i)
+		profile := p // Capture for closure.
+		list.AddItem(p.Name, p.Description, shortcut, func() {
+			a.setProfile(profile)
+			a.pages.SwitchToPage("main")
+		})
+	}
+
+	list.SetBorder(true).SetTitle(" Select Filter Profile ")
+
+	// Center the list in a modal-like frame.
+	modal := tview.NewFlex().
+		AddItem(nil, 0, 1, false).
+		AddItem(tview.NewFlex().SetDirection(tview.FlexRow).
+			AddItem(nil, 0, 1, false).
+			AddItem(list, 12, 0, true).
+			AddItem(nil, 0, 1, false), 50, 0, true).
+		AddItem(nil, 0, 1, false)
+
+	a.pages.AddPage("profiles", modal, true, false)
+}
+
+// showProfileSelector shows the profile selection modal.
+func (a *App) showProfileSelector() {
+	a.pages.SwitchToPage("profiles")
+}
+
+// setProfile sets the active filter profile.
+func (a *App) setProfile(p FilterProfile) {
+	a.filterActive = p.Name
+	a.currentProfile = p
+	a.app.QueueUpdateDraw(func() {
+		a.updateHeaderStatus()
+	})
+}
+
+// toggleExtendedHelp toggles extended help display.
+func (a *App) toggleExtendedHelp() {
+	a.showExtHelp = !a.showExtHelp
+	a.app.QueueUpdateDraw(func() {
+		a.updateHelpText()
+	})
 }
 
 // Stop signals the TUI to exit.
@@ -211,10 +322,23 @@ func (a *App) updateHelpText() {
 	if a.isPaused() {
 		pauseAction = "resume"
 	}
-	a.helpView.SetText(fmt.Sprintf(
-		"[yellow]q[white] quit  [yellow]r[white] reset  [yellow]p[white] %s",
-		pauseAction,
-	))
+
+	if a.showExtHelp {
+		// Extended help with all keyboard shortcuts.
+		a.helpView.SetText(fmt.Sprintf(
+			"[yellow]q[white] quit | [yellow]r[white] reset | [yellow]p[white] %s | "+
+				"[yellow]f[white] filter | [yellow]1-6[white] quick filter | "+
+				"[yellow]h/?[white] toggle help",
+			pauseAction,
+		))
+	} else {
+		// Compact help.
+		a.helpView.SetText(fmt.Sprintf(
+			"[yellow]q[white] quit  [yellow]r[white] reset  [yellow]p[white] %s  "+
+				"[yellow]f[white] filter  [yellow]?[white] help",
+			pauseAction,
+		))
+	}
 }
 
 // updateLoop periodically refreshes the display.
