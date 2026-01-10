@@ -49,6 +49,7 @@ import {
   type Stats,
   type TestResult,
 } from './types/api';
+import { logError, logWarn } from './utils/logger';
 
 // Note: Tokens are now stored in httpOnly cookies set by the backend.
 // localStorage is no longer used for token storage (security improvement).
@@ -527,14 +528,20 @@ function AppContent(): ReactElement {
       if (data.status === 'completed' || data.status === 'error') {
         setTestResult(data);
       }
-    } catch {
-      // Silently ignore
+    } catch (error) {
+      // Log for debugging but don't disrupt UX for result fetching
+      logWarn('Failed to fetch test result', {
+        component: 'App',
+        action: 'fetchTestResult',
+        additionalData: { error: error instanceof Error ? error.message : String(error) },
+      });
     }
   }, [authFetch]);
 
   // Track previous test status to detect transitions
   const prevTestStatus = useRef<string>('idle');
 
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Stats fetch with validation and status transitions
   const fetchStats = useCallback(async () => {
     try {
       const response = await authFetch('/api/v1/stats');
@@ -562,7 +569,13 @@ function AppContent(): ReactElement {
       if ((error as Error).message === 'Unauthorized') {
         return;
       }
-      // Silently ignore other polling failures
+      // Log polling failures for debugging but don't spam user
+      // These are often temporary network issues
+      logWarn('Stats polling failed', {
+        component: 'App',
+        action: 'fetchStats',
+        additionalData: { error: error instanceof Error ? error.message : String(error) },
+      });
     }
   }, [authFetch, fetchTestResult]);
 
@@ -687,8 +700,13 @@ function AppContent(): ReactElement {
     try {
       await authFetch('/api/v1/test/stop', { method: 'POST' });
       // Status update will come from polling
-    } catch (_error) {
-      // Silently ignore test stop errors
+    } catch (error) {
+      // Log the error but don't disrupt UX - test may already be stopped
+      // or the stop request may have actually succeeded
+      logError(error, {
+        component: 'App',
+        action: 'handleStopTest',
+      });
     } finally {
       setIsStoppingTest(false);
     }
@@ -768,8 +786,15 @@ function AppContent(): ReactElement {
       try {
         await authFetch('/api/v1/test/stop', { method: 'POST' });
         setModuleStatus(moduleName, { status: 'cancelled', currentTest: null });
-      } catch (_error) {
-        // Silently ignore
+      } catch (error) {
+        // Log error but still update status - stop may have succeeded
+        logError(error, {
+          component: 'App',
+          action: 'handleModuleStop',
+          additionalData: { moduleName },
+        });
+        // Still mark as cancelled since user intended to stop
+        setModuleStatus(moduleName, { status: 'cancelled', currentTest: null });
       }
     },
     [authFetch, isAuthenticated, setModuleStatus],
@@ -789,8 +814,13 @@ function AppContent(): ReactElement {
         method: 'POST',
         credentials: 'include',
       });
-    } catch {
-      // Ignore logout errors - clear local state anyway
+    } catch (error) {
+      // Log but proceed with local cleanup - user is logging out regardless
+      logWarn('Logout API call failed', {
+        component: 'App',
+        action: 'handleLogout',
+        additionalData: { error: error instanceof Error ? error.message : String(error) },
+      });
     }
     // Clear auth state
     setIsAuthenticated(false);
