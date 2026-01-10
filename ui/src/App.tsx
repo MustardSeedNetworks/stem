@@ -49,8 +49,10 @@ import {
   type TestResult,
 } from './types/api';
 
-const TOKEN_STORAGE_KEY = 'stem-token';
-const REFRESH_TOKEN_KEY = 'stem-refresh-token';
+// Note: Tokens are now stored in httpOnly cookies set by the backend.
+// localStorage is no longer used for token storage (security improvement).
+// We only track if the user is authenticated via a simple boolean flag.
+const AUTH_FLAG_KEY = 'stem-authenticated';
 
 function formatNumber(num: number): string {
   if (num >= 1e9) return `${(num / 1e9).toFixed(2)}B`;
@@ -334,11 +336,12 @@ function AppContent(): ReactElement {
     }
     return false;
   });
-  const [token, setToken] = useState<string | null>(() => {
+  // Track authentication state (tokens are in httpOnly cookies, inaccessible to JS)
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
-      return window.localStorage.getItem(TOKEN_STORAGE_KEY);
+      return window.localStorage.getItem(AUTH_FLAG_KEY) === 'true';
     }
-    return null;
+    return false;
   });
   const [loginLoading, setLoginLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
@@ -349,7 +352,7 @@ function AppContent(): ReactElement {
   const [password, setPassword] = useState('');
   const [connected, setConnected] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
-      return Boolean(window.localStorage.getItem(TOKEN_STORAGE_KEY));
+      return window.localStorage.getItem(AUTH_FLAG_KEY) === 'true';
     }
     return false;
   });
@@ -404,40 +407,29 @@ function AppContent(): ReactElement {
       clearInterval(statsIntervalRef.current);
       statsIntervalRef.current = null;
     }
-    setToken(null);
+    setIsAuthenticated(false);
     setConnected(false);
     setLoginError(message);
-    // Clear refresh token from storage
-    window.localStorage.removeItem(REFRESH_TOKEN_KEY);
+    // Clear auth flag from storage (cookies cleared by server on logout)
+    window.localStorage.removeItem(AUTH_FLAG_KEY);
   }, []);
 
-  // Token refresh function - attempts to get a new access token using refresh token
+  // Token refresh function - attempts to get a new access token using refresh cookie
   const refreshAccessToken = useCallback(async (): Promise<boolean> => {
-    const refreshToken = window.localStorage.getItem(REFRESH_TOKEN_KEY);
-    if (!refreshToken) {
-      return false;
-    }
-
     try {
+      // Refresh token is in httpOnly cookie, sent automatically with credentials
       const response = await fetch('/api/v1/auth/refresh', {
         method: 'POST',
+        credentials: 'include', // Include cookies in request
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refreshToken }),
+        body: JSON.stringify({}), // Empty body, refresh token is in cookie
       });
 
       if (!response.ok) {
         return false;
       }
 
-      const data: unknown = await response.json();
-      if (!isValidAuthResponse(data)) {
-        return false;
-      }
-
-      setToken(data.token);
-      if (data.refreshToken) {
-        window.localStorage.setItem(REFRESH_TOKEN_KEY, data.refreshToken);
-      }
+      // New access token is set in httpOnly cookie by server
       return true;
     } catch {
       return false;
@@ -447,30 +439,24 @@ function AppContent(): ReactElement {
   const authFetch = useCallback(
     // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Auth logic with retry requires branching
     async (input: RequestInfo, init: RequestInit = {}) => {
-      if (!token) {
-        throw new Error('Missing authentication token');
+      if (!isAuthenticated) {
+        throw new Error('Not authenticated');
       }
       const headers = new Headers(init.headers || {});
-      if (!headers.has('Authorization')) {
-        headers.set('Authorization', `Bearer ${token}`);
-      }
       if (init.body && !(init.body instanceof FormData) && !headers.has('Content-Type')) {
         headers.set('Content-Type', 'application/json');
       }
-      let response = await fetch(input, { ...init, headers });
+      // Include cookies in request (auth token is in httpOnly cookie)
+      let response = await fetch(input, { ...init, headers, credentials: 'include' });
 
       // On 401, attempt token refresh before expiring session
       if (response.status === 401) {
         const refreshed = await refreshAccessToken();
         if (refreshed) {
-          // Retry request with new token
-          const newToken = window.localStorage.getItem(TOKEN_STORAGE_KEY);
-          if (newToken) {
-            headers.set('Authorization', `Bearer ${newToken}`);
-            response = await fetch(input, { ...init, headers });
-            if (response.ok) {
-              return response;
-            }
+          // Retry request with new cookie (set by refresh endpoint)
+          response = await fetch(input, { ...init, headers, credentials: 'include' });
+          if (response.ok) {
+            return response;
           }
         }
         expireSession();
@@ -483,13 +469,13 @@ function AppContent(): ReactElement {
       }
       return response;
     },
-    [expireSession, refreshAccessToken, token],
+    [expireSession, isAuthenticated, refreshAccessToken],
   );
 
   const fetchInterfaces = useCallback(
     // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Interface fetch with validation
     async () => {
-      if (!token) {
+      if (!isAuthenticated) {
         return;
       }
       try {
@@ -521,7 +507,7 @@ function AppContent(): ReactElement {
         setConnected(false);
       }
     },
-    [authFetch, token],
+    [authFetch, isAuthenticated],
   );
 
   // Fetch test result when test completes
@@ -580,6 +566,7 @@ function AppContent(): ReactElement {
       try {
         const response = await fetch('/api/v1/auth/login', {
           method: 'POST',
+          credentials: 'include', // Allow server to set cookies
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username, password }),
         });
@@ -595,11 +582,10 @@ function AppContent(): ReactElement {
           setConnected(false);
           return;
         }
-        setToken(data.token);
-        // Store refresh token for token refresh functionality
-        if (data.refreshToken) {
-          window.localStorage.setItem(REFRESH_TOKEN_KEY, data.refreshToken);
-        }
+        // Tokens are now in httpOnly cookies set by server
+        // Just mark as authenticated
+        setIsAuthenticated(true);
+        window.localStorage.setItem(AUTH_FLAG_KEY, 'true');
         setLoginError(null);
         setConnected(true);
       } catch (_error) {
@@ -615,7 +601,7 @@ function AppContent(): ReactElement {
   const handleStartTest = useCallback(
     // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Test config selection requires many branches
     async (): Promise<void> => {
-      if (!token) return;
+      if (!isAuthenticated) return;
       setIsStartingTest(true);
       setTestStartError(null);
 
@@ -674,12 +660,12 @@ function AppContent(): ReactElement {
       authFetch,
       mode,
       reflectorProfile,
+      isAuthenticated,
       rfc2544Config,
       rfc2889Config,
       rfc6349Config,
       selectedInterface,
       selectedTests,
-      token,
       trafficGenConfig,
       tsnConfig,
       y1564Config,
@@ -688,7 +674,7 @@ function AppContent(): ReactElement {
   );
 
   const handleStopTest = useCallback(async (): Promise<void> => {
-    if (!token) return;
+    if (!isAuthenticated) return;
     setIsStoppingTest(true);
     try {
       await authFetch('/api/v1/test/stop', { method: 'POST' });
@@ -698,12 +684,12 @@ function AppContent(): ReactElement {
     } finally {
       setIsStoppingTest(false);
     }
-  }, [authFetch, token]);
+  }, [authFetch, isAuthenticated]);
 
   // Module-specific start handler
   const handleModuleStart = useCallback(
     async (moduleName: string): Promise<void> => {
-      if (!token || !selectedInterface) return;
+      if (!isAuthenticated || !selectedInterface) return;
 
       // Get enabled tests for this module
       const moduleConfig = modules.find((m) => m.name === moduleName);
@@ -758,18 +744,18 @@ function AppContent(): ReactElement {
       authFetch,
       clearModuleResults,
       modules,
+      isAuthenticated,
       rfc2544Config.frameSizes,
       selectedInterface,
       setModuleResults,
       setModuleStatus,
-      token,
     ],
   );
 
   // Module-specific stop handler
   const handleModuleStop = useCallback(
     async (moduleName: string): Promise<void> => {
-      if (!token) return;
+      if (!isAuthenticated) return;
 
       try {
         await authFetch('/api/v1/test/stop', { method: 'POST' });
@@ -778,7 +764,7 @@ function AppContent(): ReactElement {
         // Silently ignore
       }
     },
-    [authFetch, setModuleStatus, token],
+    [authFetch, isAuthenticated, setModuleStatus],
   );
 
   // Open settings drawer for specific module
@@ -787,12 +773,22 @@ function AppContent(): ReactElement {
     setSettingsOpen(true);
   }, []);
 
-  // Logout handler - clears token and resets state
-  const handleLogout = useCallback(() => {
-    // Clear token from state and localStorage
-    setToken(null);
+  // Logout handler - clears auth state and calls server to clear cookies
+  const handleLogout = useCallback(async () => {
+    try {
+      // Call server to clear cookies and revoke token
+      await fetch('/api/v1/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } catch {
+      // Ignore logout errors - clear local state anyway
+    }
+    // Clear auth state
+    setIsAuthenticated(false);
     setConnected(false);
     setLoginError(null);
+    window.localStorage.removeItem(AUTH_FLAG_KEY);
     // Reset stats
     setStats({
       packetsReceived: 0,
@@ -807,14 +803,15 @@ function AppContent(): ReactElement {
     });
   }, []);
 
+  // Sync auth flag with localStorage
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    if (token) {
-      window.localStorage.setItem(TOKEN_STORAGE_KEY, token);
+    if (isAuthenticated) {
+      window.localStorage.setItem(AUTH_FLAG_KEY, 'true');
     } else {
-      window.localStorage.removeItem(TOKEN_STORAGE_KEY);
+      window.localStorage.removeItem(AUTH_FLAG_KEY);
     }
-  }, [token]);
+  }, [isAuthenticated]);
 
   // Toggle dark mode
   useEffect(() => {
@@ -1259,7 +1256,7 @@ function AppContent(): ReactElement {
         onClose={() => setHistoryOpen(false)}
         currentResult={testResult}
       />
-      {!token && (
+      {!isAuthenticated && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-3xl border border-[var(--color-surface-border)] bg-[var(--color-surface-raised)] p-6 shadow-2xl">
             <div className="flex items-center gap-2 text-lg font-semibold text-[var(--color-text-primary)]">
