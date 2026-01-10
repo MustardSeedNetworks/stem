@@ -119,26 +119,32 @@ var staticFiles embed.FS
 
 // Server represents the web server.
 type Server struct {
-	port            int
-	mux             *http.ServeMux
-	httpServer      *http.Server
-	stats           *Stats
-	statsMu         sync.RWMutex
-	testStatus      string
-	currentTest     string
-	testResult      *TestResultResponse
-	startTime       time.Time
-	selectedIface   string
-	mode            string // "reflector" or "test_master"
-	reflectorConfig ReflectorConfig
-	reflectorExec   *reflector.Executor // Active reflector executor (nil when not in reflector mode)
-	licenseManager  *license.Manager
-	authManager     *auth.Manager
-	currentModule   string
-	authLimiter     *RateLimiter      // Rate limiter for auth endpoints (5/min)
-	apiLimiter      *RateLimiter      // Rate limiter for standard API endpoints (100/min)
-	tlsConfig       TLSConfig         // TLS configuration for HTTPS
-	cookieConfig    auth.CookieConfig // Cookie configuration for secure auth
+	port                 int
+	mux                  *http.ServeMux
+	httpServer           *http.Server
+	stats                *Stats
+	statsMu              sync.RWMutex
+	testStatus           string
+	currentTest          string
+	testResult           *TestResultResponse
+	startTime            time.Time
+	selectedIface        string
+	mode                 string // "reflector" or "test_master"
+	reflectorConfig      ReflectorConfig
+	reflectorExec        *reflector.Executor // Active reflector executor (nil when not in reflector mode)
+	licenseManager       *license.Manager
+	authManager          *auth.Manager
+	currentModule        string
+	authLimiter          *RateLimiter               // Rate limiter for auth endpoints (5/min)
+	apiLimiter           *RateLimiter               // Rate limiter for standard API endpoints (100/min)
+	tlsConfig            TLSConfig                  // TLS configuration for HTTPS
+	cookieConfig         auth.CookieConfig          // Cookie configuration for secure auth
+	csrfManager          *auth.CSRFManager          // CSRF token manager for protection against CSRF attacks
+	setupTokenManager    *auth.SetupTokenManager    // Setup token manager for first-time setup security
+	setupComplete        bool                       // Whether initial setup has been completed
+	setupModeStartTime   time.Time                  // When setup mode was activated (for timeout)
+	recoveryTokenManager *auth.RecoveryTokenManager // Recovery token manager for password recovery
+	dataDir              string                     // Application data directory for recovery files
 }
 
 var (
@@ -148,6 +154,16 @@ var (
 
 // NewServer creates a new web server.
 // Returns an error if required credentials are not configured via environment variables.
+// getDataDir returns the application data directory.
+// Uses STEM_DATA_DIR environment variable, defaults to current directory.
+func getDataDir() string {
+	dataDir := os.Getenv("STEM_DATA_DIR")
+	if dataDir == "" {
+		dataDir = "."
+	}
+	return dataDir
+}
+
 func NewServer(port int) (*Server, error) {
 	// Initialize license manager.
 	licMgr, err := license.NewManager()
@@ -219,7 +235,13 @@ func NewServer(port int) (*Server, error) {
 			KeyFile:  os.Getenv("STEM_TLS_KEY"),
 			CertsDir: os.Getenv("STEM_TLS_CERTS_DIR"),
 		},
-		cookieConfig: auth.DefaultCookieConfig(tlsEnabled),
+		cookieConfig:         auth.DefaultCookieConfig(tlsEnabled),
+		csrfManager:          auth.NewCSRFManager(logging.Get()),
+		setupTokenManager:    auth.NewSetupTokenManager(),
+		setupComplete:        false,
+		setupModeStartTime:   time.Time{},
+		recoveryTokenManager: auth.NewRecoveryTokenManager(getDataDir()),
+		dataDir:              getDataDir(),
 	}
 	s.setupRoutes()
 	return s, nil
@@ -274,6 +296,16 @@ func (s *Server) setupRoutes() {
 	s.handleRateLimited("/api/v1/auth/login", s.handleAuthLogin, s.authLimiter)
 	s.handleRateLimited("/api/v1/auth/logout", s.handleAuthLogout, s.apiLimiter)
 	s.handleRateLimited("/api/v1/auth/refresh", s.handleAuthRefresh, s.authLimiter)
+	s.handleAuthRateLimited("/api/v1/auth/csrf", s.handleAuthCSRF, s.apiLimiter)
+
+	// API v1 routes - Setup (rate limited, no auth - for first-time setup).
+	s.handleRateLimited("/api/v1/setup/status", s.handleSetupStatus, s.apiLimiter)
+	s.handleRateLimited("/api/v1/setup/complete", s.handleSetupComplete, s.authLimiter)
+
+	// API v1 routes - Password Recovery (rate limited, no auth - for recovery).
+	s.handleRateLimited("/api/v1/recovery/status", s.handleRecoveryStatus, s.apiLimiter)
+	s.handleRateLimited("/api/v1/recovery/complete", s.handleRecoveryComplete, s.authLimiter)
+	s.handleRateLimited("/api/v1/recovery/instructions", s.handleRecoveryInstructions, s.apiLimiter)
 
 	// API v1 routes - Reflector (rate limited).
 	s.mux.Handle("/api/v1/reflector/config", s.apiLimiter.Middleware(http.HandlerFunc(s.handleReflectorConfig)))
@@ -460,11 +492,11 @@ func corsMiddleware(next http.Handler) http.Handler {
 
 		// Set CORS headers for allowed origins.
 		w.Header().Set("Access-Control-Allow-Origin", origin)
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, "+auth.CSRFHeaderName)
 		w.Header().Set("Access-Control-Allow-Credentials", "true") // Allow cookies in CORS requests
 		w.Header().Set("Access-Control-Max-Age", "3600")
-		w.Header().Set("Access-Control-Expose-Headers", APIVersionHeader)
+		w.Header().Set("Access-Control-Expose-Headers", APIVersionHeader+", "+auth.CSRFHeaderName)
 
 		// Handle preflight requests.
 		if r.Method == http.MethodOptions {
@@ -507,12 +539,13 @@ func (s *Server) Run() error {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer stop()
 
-	// Wrap with middleware stack: SecurityHeaders -> CORS -> APIVersion -> RequestID -> Logging -> Handler.
+	// Wrap with middleware stack: SecurityHeaders -> CORS -> APIVersion -> RequestID -> Logging -> CSRF -> Handler.
 	handler := securityHeadersMiddleware(
 		corsMiddleware(
 			apiVersionMiddleware(
 				logging.RequestIDMiddleware(
-					logging.Middleware(s.mux)))))
+					logging.Middleware(
+						s.csrfManager.CSRFMiddleware(s.mux))))))
 	s.httpServer = &http.Server{
 		Addr:              addr,
 		Handler:           handler,
@@ -590,6 +623,11 @@ func (s *Server) Shutdown() error {
 	}
 	if s.apiLimiter != nil {
 		s.apiLimiter.Stop()
+	}
+
+	// Stop CSRF manager cleanup goroutine.
+	if s.csrfManager != nil {
+		s.csrfManager.Stop()
 	}
 
 	// Stop any running reflector.
@@ -685,9 +723,9 @@ func safeIntToUint16(v int) (uint16, bool) {
 }
 
 // ServeHTTP implements the http.Handler interface for testing purposes.
-// Applies the same middleware stack used in production (API versioning, CORS).
+// Applies the same middleware stack used in production (API versioning, CORS, CSRF).
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Apply middleware stack for consistent behavior in tests.
-	handler := corsMiddleware(apiVersionMiddleware(s.mux))
+	handler := corsMiddleware(apiVersionMiddleware(s.csrfManager.CSRFMiddleware(s.mux)))
 	handler.ServeHTTP(w, r)
 }

@@ -32,7 +32,9 @@ import { ResultHistory } from './components/ResultHistory';
 import { defaultRFC2544Config, type RFC2544Config } from './components/RFC2544ConfigForm';
 import { defaultRFC2889Config, type RFC2889Config } from './components/RFC2889ConfigForm';
 import { defaultRFC6349Config, type RFC6349Config } from './components/RFC6349ConfigForm';
+import { RecoveryForm } from './components/recovery/RecoveryForm';
 import { SettingsDrawer } from './components/SettingsDrawer';
+import { SetupWizard } from './components/setup/SetupWizard';
 import { TestProgressBar, useTestProgress } from './components/TestProgressBar';
 import { defaultTrafficGenConfig, type TrafficGenConfig } from './components/TrafficGenConfigForm';
 import { defaultTSNConfig, type TSNConfig } from './components/TSNConfigForm';
@@ -55,6 +57,21 @@ import { logError, logWarn } from './utils/logger';
 // localStorage is no longer used for token storage (security improvement).
 // We only track if the user is authenticated via a simple boolean flag.
 const AUTH_FLAG_KEY = 'stem-authenticated';
+
+/** Setup status response from /api/v1/setup/status */
+interface SetupStatus {
+  needsSetup: boolean;
+  username?: string;
+  suggestedPassword?: string;
+  setupToken?: string;
+}
+
+/** Recovery status response from /api/v1/recovery/status */
+interface RecoveryStatus {
+  active: boolean;
+  remainingTime?: number;
+  instructions?: string;
+}
 
 function formatNumber(num: number): string {
   if (num >= 1e9) return `${(num / 1e9).toFixed(2)}B`;
@@ -347,6 +364,10 @@ function AppContent(): ReactElement {
   });
   const [loginLoading, setLoginLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [setupStatus, setSetupStatus] = useState<SetupStatus | null>(null);
+  const [setupChecked, setSetupChecked] = useState(false);
+  const [recoveryStatus, setRecoveryStatus] = useState<RecoveryStatus | null>(null);
+  const [showRecoveryForm, setShowRecoveryForm] = useState(false);
   const [isStoppingTest, setIsStoppingTest] = useState(false);
   const [testStartError, setTestStartError] = useState<string | null>(null);
   const statsIntervalRef = useRef<number | null>(null);
@@ -841,6 +862,90 @@ function AppContent(): ReactElement {
     });
   }, []);
 
+  // Check setup and recovery status on mount (before authentication check)
+  useEffect(() => {
+    const checkStatuses = async (): Promise<void> => {
+      try {
+        // Check setup status
+        const setupResponse = await fetch('/api/v1/setup/status', {
+          method: 'GET',
+          credentials: 'include',
+        });
+        if (setupResponse.ok) {
+          const data = (await setupResponse.json()) as SetupStatus;
+          setSetupStatus(data);
+        }
+
+        // Check recovery status
+        const recoveryResponse = await fetch('/api/v1/recovery/status', {
+          method: 'GET',
+          credentials: 'include',
+        });
+        if (recoveryResponse.ok) {
+          const data = (await recoveryResponse.json()) as RecoveryStatus;
+          setRecoveryStatus(data);
+        }
+      } catch (error) {
+        // Log but continue - status check failure shouldn't block the app
+        logWarn('Failed to check status', {
+          component: 'App',
+          action: 'checkStatuses',
+          additionalData: { error: error instanceof Error ? error.message : String(error) },
+        });
+      } finally {
+        setSetupChecked(true);
+      }
+    };
+    void checkStatuses();
+  }, []);
+
+  // Login helper function (shared by login form and setup wizard)
+  const performLogin = useCallback(
+    async (loginUsername: string, loginPassword: string): Promise<boolean> => {
+      try {
+        const response = await fetch('/api/v1/auth/login', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: loginUsername, password: loginPassword }),
+        });
+        if (!response.ok) {
+          return false;
+        }
+        const data: unknown = await response.json();
+        if (!isValidAuthResponse(data)) {
+          return false;
+        }
+        setIsAuthenticated(true);
+        window.localStorage.setItem(AUTH_FLAG_KEY, 'true');
+        setConnected(true);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [],
+  );
+
+  // Handle setup completion
+  const handleSetupComplete = useCallback(() => {
+    // Clear setup status so we don't show wizard again
+    setSetupStatus(null);
+  }, []);
+
+  // Handle recovery completion
+  const handleRecoveryComplete = useCallback(() => {
+    // Clear recovery status and form
+    setRecoveryStatus(null);
+    setShowRecoveryForm(false);
+    setLoginError('Password has been reset. Please sign in with your new password.');
+  }, []);
+
+  // Handle back to login from recovery
+  const handleBackToLogin = useCallback(() => {
+    setShowRecoveryForm(false);
+  }, []);
+
   // Sync auth flag with localStorage
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -1316,7 +1421,29 @@ function AppContent(): ReactElement {
         onClose={() => setHistoryOpen(false)}
         currentResult={testResult}
       />
-      {!isAuthenticated && (
+      {/* Setup Wizard - shown before login if initial setup required */}
+      {setupChecked && setupStatus?.needsSetup && (
+        <SetupWizard
+          onComplete={handleSetupComplete}
+          onLogin={performLogin}
+          suggestedPassword={setupStatus.suggestedPassword}
+          username={setupStatus.username}
+          setupToken={setupStatus.setupToken}
+        />
+      )}
+
+      {/* Recovery Form - shown when user clicks "Forgot Password" and recovery is available */}
+      {showRecoveryForm && recoveryStatus?.active && (
+        <RecoveryForm
+          onRecoveryComplete={handleRecoveryComplete}
+          onBackToLogin={handleBackToLogin}
+          remainingTime={recoveryStatus.remainingTime}
+          tokenFilePath={recoveryStatus.instructions}
+        />
+      )}
+
+      {/* Login Modal - shown after setup complete or if setup not needed */}
+      {!isAuthenticated && setupChecked && !setupStatus?.needsSetup && !showRecoveryForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div
             ref={loginModalRef}
@@ -1378,6 +1505,17 @@ function AppContent(): ReactElement {
               >
                 {loginLoading ? 'Signing in...' : 'Sign In'}
               </button>
+
+              {/* Forgot Password link - only shown when recovery is available */}
+              {recoveryStatus?.active && (
+                <button
+                  type="button"
+                  onClick={() => setShowRecoveryForm(true)}
+                  className="w-full mt-4 text-sm text-[var(--color-text-muted)] hover:text-[var(--color-brand-primary)]"
+                >
+                  Forgot password?
+                </button>
+              )}
             </form>
           </div>
         </div>

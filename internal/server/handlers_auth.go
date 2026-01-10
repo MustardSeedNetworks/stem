@@ -76,6 +76,34 @@ func (s *Server) handleAuthLogout(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// handleAuthCSRF generates or returns the current CSRF token for the session.
+// The token is required in the X-Csrf-Token header for all state-changing requests.
+func (s *Server) handleAuthCSRF(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		WriteMethodNotAllowed(w)
+		return
+	}
+
+	// Get session ID from the access token.
+	sessionID := auth.GetSessionIDFromRequest(r)
+	if sessionID == "" {
+		WriteAuthError(w, errMissingAuthToken)
+		return
+	}
+
+	// Generate a new CSRF token for this session.
+	token, err := s.csrfManager.GenerateToken(sessionID)
+	if err != nil {
+		logging.Error("Failed to generate CSRF token", "error", err)
+		WriteAPIError(w, ErrAPIInternalError)
+		return
+	}
+
+	writeJSON(w, map[string]string{
+		"token": token,
+	})
+}
+
 // handleAuthRefresh exchanges a refresh token for a new access token.
 // Supports both cookie-based and request body refresh tokens.
 func (s *Server) handleAuthRefresh(w http.ResponseWriter, r *http.Request) {
