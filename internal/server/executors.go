@@ -71,8 +71,6 @@ func (s *Server) runModuleTest(
 		s.testStatus = statusRunning
 		s.statsMu.Unlock()
 
-		s.publishTestState(statusRunning, moduleName, testType, nil)
-
 		cfg := &modules.TestConfig{
 			Interface: iface,
 			FrameSize: frameSize,
@@ -100,7 +98,6 @@ func (s *Server) runModuleTest(
 			s.currentModule = ""
 			s.statsMu.Unlock()
 			logging.Error("Test failed", "module", moduleName, "testType", testType, "error", execErr)
-			s.publishTestState(statusError, moduleName, testType, errResult)
 			return
 		}
 
@@ -119,7 +116,6 @@ func (s *Server) runModuleTest(
 		s.currentModule = ""
 		s.statsMu.Unlock()
 		logging.Info("Test completed", "module", moduleName, "testType", testType, "success", result.Success)
-		s.publishTestState(statusCompleted, moduleName, testType, completedResult)
 	}()
 
 	return nil
@@ -154,8 +150,6 @@ func (s *Server) executeReflector(iface string) error {
 		s.currentModule = moduleReflector
 		s.statsMu.Unlock()
 
-		s.publishTestState(statusRunning, moduleReflector, testTypeReflect, nil)
-
 		result, err := exec.Execute(testTypeReflect, nil)
 
 		s.statsMu.Lock()
@@ -174,7 +168,6 @@ func (s *Server) executeReflector(iface string) error {
 			logging.Error("Reflector start failed", "error", err)
 			s.currentModule = ""
 			s.statsMu.Unlock()
-			s.publishTestState(statusError, moduleReflector, testTypeReflect, s.testResult)
 			return
 		}
 
@@ -190,7 +183,6 @@ func (s *Server) executeReflector(iface string) error {
 		logging.Info("Reflector started", "success", result.Success)
 		s.currentModule = ""
 		s.statsMu.Unlock()
-		s.publishTestState(statusRunning, moduleReflector, testTypeReflect, s.testResult)
 	}()
 
 	return nil

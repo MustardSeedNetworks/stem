@@ -86,8 +86,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gorilla/websocket"
-
 	"github.com/krisarmstrong/stem/internal/auth"
 	"github.com/krisarmstrong/stem/internal/license"
 	"github.com/krisarmstrong/stem/internal/logging"
@@ -112,10 +110,6 @@ const APIVersionHeader = "X-Api-Version"
 
 const (
 	defaultAuthSessionTimeout = 30 * time.Minute
-	wsWriteTimeout            = 5 * time.Second
-	wsPingInterval            = 30 * time.Second
-	wsPongTimeout             = 10 * time.Second
-	defaultWSBufferSize       = 1024
 	maxRequestBodySize        = 1024 * 1024 // 1 MB max request body
 	shutdownTimeout           = 30 * time.Second
 )
@@ -141,8 +135,6 @@ type Server struct {
 	licenseManager  *license.Manager
 	authManager     *auth.Manager
 	currentModule   string
-	wsClients       sync.Map // map[*websocket.Conn]struct{} - concurrent-safe
-	wsUpgrader      websocket.Upgrader
 	authLimiter     *RateLimiter // Rate limiter for auth endpoints (5/min)
 	apiLimiter      *RateLimiter // Rate limiter for standard API endpoints (100/min)
 }
@@ -214,25 +206,8 @@ func NewServer(port int) (*Server, error) {
 		licenseManager: licMgr,
 		authManager:    authMgr,
 		currentModule:  "",
-		wsClients:      sync.Map{},
-		wsUpgrader: websocket.Upgrader{
-			ReadBufferSize:  defaultWSBufferSize,
-			WriteBufferSize: defaultWSBufferSize,
-			WriteBufferPool: nil,
-			CheckOrigin: func(r *http.Request) bool {
-				origin := r.Header.Get("Origin")
-				if origin == "" {
-					return true
-				}
-				return isLocalhostOrigin(origin)
-			},
-			HandshakeTimeout:  0,
-			Subprotocols:      nil,
-			Error:             nil,
-			EnableCompression: false,
-		},
-		authLimiter: NewAuthRateLimiter(),
-		apiLimiter:  NewAPIRateLimiter(),
+		authLimiter:    NewAuthRateLimiter(),
+		apiLimiter:     NewAPIRateLimiter(),
 	}
 	s.setupRoutes()
 	return s, nil
@@ -287,7 +262,6 @@ func (s *Server) setupRoutes() {
 	s.handleRateLimited("/api/v1/auth/login", s.handleAuthLogin, s.authLimiter)
 	s.handleRateLimited("/api/v1/auth/logout", s.handleAuthLogout, s.apiLimiter)
 	s.handleRateLimited("/api/v1/auth/refresh", s.handleAuthRefresh, s.authLimiter)
-	s.mux.Handle("/api/v1/ws/test-results", s.apiLimiter.Middleware(http.HandlerFunc(s.handleTestResultsWebSocket)))
 
 	// API v1 routes - Reflector (rate limited).
 	s.mux.Handle("/api/v1/reflector/config", s.apiLimiter.Middleware(http.HandlerFunc(s.handleReflectorConfig)))
@@ -385,20 +359,14 @@ func (s *Server) authMiddleware(handler http.HandlerFunc) http.Handler {
 }
 
 func (s *Server) requireAuth(r *http.Request) error {
-	// First try Authorization header (standard)
 	token, err := extractBearerToken(r.Header.Get("Authorization"))
 	if err != nil {
-		// Fall back to query parameter (for WebSocket connections)
-		token = r.URL.Query().Get("token")
-		if token == "" {
-			return errMissingAuthToken
-		}
+		return err
 	}
 	_, validateErr := s.authManager.ValidateToken(r.Context(), token)
 	if validateErr != nil {
 		return fmt.Errorf("validate token: %w", validateErr)
 	}
-
 	return nil
 }
 
@@ -541,14 +509,11 @@ func (s *Server) Run() error {
 }
 
 // Shutdown gracefully shuts down the server.
-// Closes WebSocket connections, stops running tests, and drains HTTP connections.
+// Stops running tests and drains HTTP connections.
 func (s *Server) Shutdown() error {
 	// Create shutdown context with timeout.
 	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer cancel()
-
-	// Close all WebSocket connections.
-	s.closeAllWebSockets()
 
 	// Stop rate limiter cleanup goroutines.
 	if s.authLimiter != nil {
@@ -584,27 +549,6 @@ func (s *Server) Shutdown() error {
 
 	logging.Info("Server shutdown complete")
 	return nil
-}
-
-// closeAllWebSockets closes all active WebSocket connections.
-func (s *Server) closeAllWebSockets() {
-	var count int
-	s.wsClients.Range(func(_, _ any) bool {
-		count++
-		return true
-	})
-
-	if count > 0 {
-		logging.Info("Closing WebSocket connections", "count", count)
-	}
-
-	s.wsClients.Range(func(key, _ any) bool {
-		if conn, ok := key.(*websocket.Conn); ok {
-			_ = conn.Close()
-			s.wsClients.Delete(conn)
-		}
-		return true
-	})
 }
 
 // UpdateStats updates the runtime statistics (called by test runner).
@@ -660,91 +604,6 @@ func decodeJSONStrict(w http.ResponseWriter, r *http.Request, v any, maxSize int
 		return false
 	}
 	return true
-}
-
-func (s *Server) publishTestState(status, module, testType string, resp *TestResultResponse) {
-	if resp != nil {
-		s.broadcastTestEvent(resp)
-		return
-	}
-	s.broadcastTestEvent(&TestResultResponse{
-		Status:   status,
-		Module:   module,
-		TestType: testType,
-		Success:  false,
-		Error:    "",
-		Message:  "",
-		Data:     nil,
-	})
-}
-
-func (s *Server) broadcastTestEvent(resp *TestResultResponse) {
-	if resp == nil {
-		return
-	}
-
-	s.wsClients.Range(func(key, _ any) bool {
-		if conn, ok := key.(*websocket.Conn); ok {
-			event := copyTestResultResponse(resp)
-			go s.writeTestEvent(conn, event)
-		}
-		return true
-	})
-}
-
-func copyTestResultResponse(resp *TestResultResponse) *TestResultResponse {
-	if resp == nil {
-		return nil
-	}
-	respCopy := *resp
-	return &respCopy
-}
-
-func (s *Server) writeTestEvent(conn *websocket.Conn, resp *TestResultResponse) {
-	if resp == nil {
-		return
-	}
-	deadlineErr := conn.SetWriteDeadline(time.Now().Add(wsWriteTimeout))
-	if deadlineErr != nil {
-		logging.Warn("failed to set websocket write deadline", "error", deadlineErr)
-	}
-	writeErr := conn.WriteJSON(resp)
-	if writeErr != nil {
-		logging.Warn("websocket client write failed", "error", writeErr)
-		s.unregisterWSClient(conn)
-	}
-}
-
-func (s *Server) registerWSClient(conn *websocket.Conn) {
-	s.wsClients.Store(conn, struct{}{})
-}
-
-func (s *Server) unregisterWSClient(conn *websocket.Conn) {
-	s.wsClients.Delete(conn)
-	_ = conn.Close()
-}
-
-func (s *Server) sendCurrentTestState(conn *websocket.Conn) {
-	resp := s.snapshotCurrentTest()
-	s.writeTestEvent(conn, resp)
-}
-
-func (s *Server) snapshotCurrentTest() *TestResultResponse {
-	s.statsMu.RLock()
-	defer s.statsMu.RUnlock()
-	if s.testResult != nil {
-		resultCopy := *s.testResult
-		return &resultCopy
-	}
-	return &TestResultResponse{
-		Status:   s.testStatus,
-		TestType: s.currentTest,
-		Module:   s.currentModule,
-		Success:  false,
-		Error:    "",
-		Message:  "",
-		Data:     nil,
-	}
 }
 
 // safeIntToUint16 safely converts an int to uint16.

@@ -46,13 +46,11 @@ import {
   isValidInterfaceArray,
   isValidStats,
   type Stats,
-  type TestEventPayload,
   type TestResult,
 } from './types/api';
 
 const TOKEN_STORAGE_KEY = 'stem-token';
 const REFRESH_TOKEN_KEY = 'stem-refresh-token';
-const WS_BASE_URL = import.meta.env.VITE_WS_URL || '';
 
 function formatNumber(num: number): string {
   if (num >= 1e9) return `${(num / 1e9).toFixed(2)}B`;
@@ -83,6 +81,16 @@ function getStatusClassName(status: Stats['testStatus']): string {
     default:
       return 'text-[var(--color-text-muted)]';
   }
+}
+
+// Helper: check if test just completed (status transition to completed/error)
+function isTestCompleted(prev: string, curr: string): boolean {
+  return (curr === 'completed' || curr === 'error') && prev !== 'completed' && prev !== 'error';
+}
+
+// Helper: check if new test is starting
+function isTestStarting(prev: string, curr: string): boolean {
+  return curr === 'starting' && prev !== 'starting';
 }
 
 interface StatsCardProps {
@@ -337,8 +345,8 @@ function AppContent(): ReactElement {
   const [isStoppingTest, setIsStoppingTest] = useState(false);
   const [testStartError, setTestStartError] = useState<string | null>(null);
   const statsIntervalRef = useRef<number | null>(null);
-  const [username, setUsername] = useState('admin');
-  const [password, setPassword] = useState('admin');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [connected, setConnected] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
       return Boolean(window.localStorage.getItem(TOKEN_STORAGE_KEY));
@@ -516,6 +524,23 @@ function AppContent(): ReactElement {
     [authFetch, token],
   );
 
+  // Fetch test result when test completes
+  const fetchTestResult = useCallback(async () => {
+    try {
+      const response = await authFetch('/api/v1/test/result');
+      if (!response.ok) return;
+      const data = (await response.json()) as TestResult;
+      if (data.status === 'completed' || data.status === 'error') {
+        setTestResult(data);
+      }
+    } catch {
+      // Silently ignore
+    }
+  }, [authFetch]);
+
+  // Track previous test status to detect transitions
+  const prevTestStatus = useRef<string>('idle');
+
   const fetchStats = useCallback(async () => {
     try {
       const response = await authFetch('/api/v1/stats');
@@ -526,14 +551,26 @@ function AppContent(): ReactElement {
       if (!isValidStats(data)) {
         throw new Error('Invalid stats data received from server');
       }
-      setStats(mapStatsPayload(data as Partial<Stats>));
+      const newStats = mapStatsPayload(data as Partial<Stats>);
+      setStats(newStats);
+
+      // Handle test status transitions
+      const prevStatus = prevTestStatus.current;
+      const newStatus = newStats.testStatus;
+      if (isTestCompleted(prevStatus, newStatus)) {
+        void fetchTestResult();
+      }
+      if (isTestStarting(prevStatus, newStatus)) {
+        setTestResult(null);
+      }
+      prevTestStatus.current = newStatus;
     } catch (error) {
       if ((error as Error).message === 'Unauthorized') {
         return;
       }
       // Silently ignore other polling failures
     }
-  }, [authFetch]);
+  }, [authFetch, fetchTestResult]);
 
   const handleLogin = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
@@ -625,7 +662,7 @@ function AppContent(): ReactElement {
           return;
         }
 
-        // Status updates will come from WebSocket - don't update optimistically
+        // Status updates will come from polling - don't update optimistically
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Failed to start test';
         setTestStartError(message);
@@ -655,7 +692,7 @@ function AppContent(): ReactElement {
     setIsStoppingTest(true);
     try {
       await authFetch('/api/v1/test/stop', { method: 'POST' });
-      // Status update will come from WebSocket
+      // Status update will come from polling
     } catch (_error) {
       // Silently ignore test stop errors
     } finally {
@@ -770,36 +807,6 @@ function AppContent(): ReactElement {
     });
   }, []);
 
-  const handleWsMessage = useCallback((event: MessageEvent<string>) => {
-    try {
-      const payload = JSON.parse(event.data) as TestEventPayload;
-      const normalizedStatus = normalizeTestStatus(payload.status);
-      setStats((prev) => ({
-        ...prev,
-        testStatus: normalizedStatus,
-        currentTest: payload.testType ?? prev.currentTest,
-      }));
-
-      // Capture test result data when test completes
-      if (normalizedStatus === 'completed' || normalizedStatus === 'error') {
-        const result: TestResult = {
-          testType: payload.testType ?? 'unknown',
-          module: payload.module ?? 'unknown',
-          status: normalizedStatus,
-          success: payload.success ?? normalizedStatus === 'completed',
-          error: payload.error,
-          ...(payload.data ?? {}),
-        };
-        setTestResult(result);
-      } else if (normalizedStatus === 'starting') {
-        // Clear previous results when starting a new test
-        setTestResult(null);
-      }
-    } catch (_error) {
-      // Ignore malformed websocket messages
-    }
-  }, []);
-
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (token) {
@@ -867,46 +874,6 @@ function AppContent(): ReactElement {
       }
     };
   }, [connected, fetchStats]);
-
-  useEffect(() => {
-    if (!token) return;
-
-    let ws: WebSocket | null = null;
-    let reconnectTimer: number | undefined;
-
-    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: WebSocket URL construction with fallbacks
-    const connect = () => {
-      let wsUrl: string;
-      if (WS_BASE_URL) {
-        // Use configured WebSocket URL (e.g., from VITE_WS_URL env var)
-        wsUrl = `${WS_BASE_URL}/api/v1/ws/test-results?token=${token}`;
-      } else {
-        // Auto-detect based on current page location
-        const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-        const hostname = window.location.hostname;
-        const port = window.location.port === '3000' ? '8080' : window.location.port;
-        const portSegment = port ? `:${port}` : '';
-        wsUrl = `${protocol}://${hostname}${portSegment}/api/v1/ws/test-results?token=${token}`;
-      }
-      ws = new WebSocket(wsUrl);
-      ws.onmessage = handleWsMessage;
-      ws.onclose = () => {
-        reconnectTimer = window.setTimeout(connect, 3000);
-      };
-      ws.onerror = () => {
-        ws?.close();
-      };
-    };
-
-    connect();
-
-    return () => {
-      if (reconnectTimer) {
-        window.clearTimeout(reconnectTimer);
-      }
-      ws?.close();
-    };
-  }, [handleWsMessage, token]);
 
   const toggleDarkMode = (): void => {
     setDarkMode(!darkMode);
@@ -1300,7 +1267,7 @@ function AppContent(): ReactElement {
               Sign in to continue
             </div>
             <p className="text-sm text-[var(--color-text-muted)]">
-              Authenticate with your Stem credentials. Default dev account: admin / admin.
+              Authenticate with your Stem credentials.
             </p>
             <form className="mt-6 space-y-4" onSubmit={handleLogin}>
               <div>

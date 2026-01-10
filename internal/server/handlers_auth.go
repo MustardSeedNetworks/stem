@@ -6,8 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gorilla/websocket"
-
 	"github.com/krisarmstrong/stem/internal/logging"
 )
 
@@ -96,62 +94,4 @@ func (s *Server) handleAuthRefresh(w http.ResponseWriter, r *http.Request) {
 		RefreshToken: "",
 		ExpiresAt:    time.Now().Add(s.authManager.SessionDuration()).Unix(),
 	})
-}
-
-// handleTestResultsWebSocket upgrades a connection and streams test events.
-// Implements ping/pong heartbeat to detect dead connections.
-func (s *Server) handleTestResultsWebSocket(w http.ResponseWriter, r *http.Request) {
-	authErr := s.requireAuth(r)
-	if authErr != nil {
-		s.writeAuthError(w, authErr)
-		return
-	}
-
-	conn, err := s.wsUpgrader.Upgrade(w, r, nil)
-	if err != nil {
-		logging.Error("websocket upgrade failed", "error", err)
-		WriteInternalError(w, err)
-		return
-	}
-
-	s.registerWSClient(conn)
-	defer s.unregisterWSClient(conn)
-
-	// Set up pong handler to reset read deadline on receiving pong.
-	_ = conn.SetReadDeadline(time.Now().Add(wsPongTimeout + wsPingInterval))
-	conn.SetPongHandler(func(string) error {
-		_ = conn.SetReadDeadline(time.Now().Add(wsPongTimeout + wsPingInterval))
-		return nil
-	})
-
-	// Start ping ticker in background goroutine.
-	done := make(chan struct{})
-	go func() {
-		ticker := time.NewTicker(wsPingInterval)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ticker.C:
-				_ = conn.SetWriteDeadline(time.Now().Add(wsWriteTimeout))
-				pingErr := conn.WriteMessage(websocket.PingMessage, nil)
-				if pingErr != nil {
-					logging.Debug("websocket ping failed", "error", pingErr)
-					return
-				}
-			case <-done:
-				return
-			}
-		}
-	}()
-	defer close(done)
-
-	s.sendCurrentTestState(conn)
-
-	// Read loop - exits on error (including read deadline timeout).
-	for {
-		_, _, nextErr := conn.NextReader()
-		if nextErr != nil {
-			return
-		}
-	}
 }

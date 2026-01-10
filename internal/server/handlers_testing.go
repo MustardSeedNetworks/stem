@@ -57,8 +57,6 @@ func (s *Server) handleTestStart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.publishTestState(statusStarting, mod.Name(), req.TestType, nil)
-
 	logging.Info("Starting test via module system",
 		"testType", req.TestType,
 		"module", mod.Name(),
@@ -88,7 +86,6 @@ func (s *Server) handleTestStop(w http.ResponseWriter, r *http.Request) {
 
 	s.statsMu.Lock()
 	testType := s.currentTest
-	module := s.currentModule
 	exec := s.reflectorExec
 
 	// Check if reflector is running.
@@ -115,7 +112,6 @@ func (s *Server) handleTestStop(w http.ResponseWriter, r *http.Request) {
 	s.statsMu.Unlock()
 
 	logging.Info("Test cancelled", "testType", testType)
-	s.publishTestState(statusCancelled, module, testType, nil)
 	writeJSON(w, StatusResponse{Status: statusStopped})
 }
 

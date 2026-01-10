@@ -138,7 +138,10 @@ var testCategories = []struct {
 	name  string
 	tests []string
 }{
-	{"RFC 2544", []string{"throughput", "latency", "frame_loss", "back_to_back", "system_recovery", "reset"}},
+	{
+		"RFC 2544",
+		[]string{"throughput", "latency", "frame_loss", "back_to_back", "system_recovery", "reset"},
+	},
 	{"Y.1564 EtherSAM", []string{"y1564_config", "y1564_perf", "y1564"}},
 	{"RFC 2889 LAN Switch", []string{
 		"rfc2889_forwarding", "rfc2889_caching", "rfc2889_learning",
@@ -329,7 +332,13 @@ func listTestsCmd(args []string) {
 		totalTests := 0
 
 		for _, mod := range allMods {
-			_, _ = fmt.Fprintf(os.Stdout, "\n%s [%s] (%s):\n", mod.DisplayName(), mod.Color(), mod.Standard())
+			_, _ = fmt.Fprintf(
+				os.Stdout,
+				"\n%s [%s] (%s):\n",
+				mod.DisplayName(),
+				mod.Color(),
+				mod.Standard(),
+			)
 			_, _ = fmt.Fprintf(os.Stdout, "  %s\n", mod.Description())
 			_, _ = fmt.Fprintln(os.Stdout)
 			for _, t := range mod.TestTypes() {
@@ -338,7 +347,12 @@ func listTestsCmd(args []string) {
 				totalTests++
 			}
 		}
-		_, _ = fmt.Fprintf(os.Stdout, "\nTotal: %d test types across %d modules\n", totalTests, len(allMods))
+		_, _ = fmt.Fprintf(
+			os.Stdout,
+			"\nTotal: %d test types across %d modules\n",
+			totalTests,
+			len(allMods),
+		)
 	} else {
 		// Legacy category-based view (preserved for backward compatibility).
 		for _, cat := range testCategories {
@@ -393,9 +407,12 @@ func reflectorStatsLoop(dp *reflectorDP.Dataplane) {
 			_, _ = fmt.Fprintf(
 				os.Stdout,
 				"\r[Stats] RX: %d pkts | TX: %d pkts | Signatures: ITO=%d RFC2544=%d Y.1564=%d MSN=%d",
-				stats.PacketsReceived, stats.PacketsReflected,
+				stats.PacketsReceived,
+				stats.PacketsReflected,
 				stats.SigProbeOT+stats.SigDataOT+stats.SigLatency,
-				stats.SigRFC2544, stats.SigY1564, stats.SigMSN,
+				stats.SigRFC2544,
+				stats.SigY1564,
+				stats.SigMSN,
 			)
 		}
 	}
@@ -440,7 +457,12 @@ func reflectCmd(args []string) {
 
 	// Validate port range before conversion.
 	if *port < 0 || *port > math.MaxUint16 {
-		_, _ = fmt.Fprintf(os.Stdout, "Error: port %d out of valid range (0-%d)\n", *port, math.MaxUint16)
+		_, _ = fmt.Fprintf(
+			os.Stdout,
+			"Error: port %d out of valid range (0-%d)\n",
+			*port,
+			math.MaxUint16,
+		)
 		os.Exit(1)
 	}
 
@@ -625,8 +647,16 @@ func parseTestFlags(args []string) (*testCmdFlags, error) {
 	cir := fs.Float64("cir", 0, "Committed Information Rate (Mbps)")
 	eir := fs.Float64("eir", 0, "Excess Information Rate (Mbps)")
 	fdThreshold := fs.Float64("fd-threshold", defaultFDThreshold, "Frame Delay threshold (ms)")
-	fdvThreshold := fs.Float64("fdv-threshold", defaultFDVThreshold, "Frame Delay Variation threshold (ms)")
-	flrThreshold := fs.Float64("flr-threshold", defaultFLRThreshold, "Frame Loss Rate threshold (%)")
+	fdvThreshold := fs.Float64(
+		"fdv-threshold",
+		defaultFDVThreshold,
+		"Frame Delay Variation threshold (ms)",
+	)
+	flrThreshold := fs.Float64(
+		"flr-threshold",
+		defaultFLRThreshold,
+		"Frame Loss Rate threshold (%)",
+	)
 
 	// Output format.
 	jsonOutput := fs.Bool("json", false, "Output results in JSON")
@@ -691,12 +721,21 @@ func runTestSuite(
 	for _, testType := range tests {
 		for _, frameSize := range frameSizes {
 			if frameSize < 0 || frameSize > math.MaxUint32 {
-				_, _ = fmt.Fprintf(os.Stdout, "Error: frame size %d out of valid range\n", frameSize)
+				_, _ = fmt.Fprintf(
+					os.Stdout,
+					"Error: frame size %d out of valid range\n",
+					frameSize,
+				)
 				continue
 			}
 			ctx.SetFrameSize(uint32(frameSize))
 
-			_, _ = fmt.Fprintf(os.Stdout, "\n[Running %s test with frame size %d bytes]\n", testType, frameSize)
+			_, _ = fmt.Fprintf(
+				os.Stdout,
+				"\n[Running %s test with frame size %d bytes]\n",
+				testType,
+				frameSize,
+			)
 
 			result, err := runTest(
 				ctx, testType,
@@ -881,7 +920,11 @@ func runLatencyTest(ctx *testmasterDP.Context) (any, error) {
 
 // runFrameLossTest executes RFC 2544 frame loss test.
 func runFrameLossTest(ctx *testmasterDP.Context) (any, error) {
-	result, err := ctx.RunFrameLossTest(defaultLoadLevelStep, defaultLoadLevelMax, defaultLoadLevelStep)
+	result, err := ctx.RunFrameLossTest(
+		defaultLoadLevelStep,
+		defaultLoadLevelMax,
+		defaultLoadLevelStep,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("frame loss test failed: %w", err)
 	}
@@ -916,7 +959,9 @@ func runResetTest(ctx *testmasterDP.Context) (any, error) {
 }
 
 // newY1564Service creates a Y.1564 service with given SLA parameters.
-func newY1564Service(cir, eir, fdThreshold, fdvThreshold, flrThreshold float64) *testmasterDP.Y1564Service {
+func newY1564Service(
+	cir, eir, fdThreshold, fdvThreshold, flrThreshold float64,
+) *testmasterDP.Y1564Service {
 	return &testmasterDP.Y1564Service{
 		ServiceID:   1,
 		ServiceName: "Service-1",
@@ -1072,14 +1117,20 @@ func boolToPassFail(b bool) string {
 
 func printCSVResults(results []any) {
 	// Print CSV header.
-	_, _ = fmt.Fprintln(os.Stdout, "\ntest_type,frame_size,max_rate_pct,max_rate_mbps,loss_pct,latency_avg_us")
+	_, _ = fmt.Fprintln(
+		os.Stdout,
+		"\ntest_type,frame_size,max_rate_pct,max_rate_mbps,loss_pct,latency_avg_us",
+	)
 
 	for _, r := range results {
 		if result, ok := r.(*testmasterDP.ThroughputResultCLI); ok {
 			_, _ = fmt.Fprintf(
 				os.Stdout,
 				"throughput,%d,%.2f,%.2f,0,%.2f\n",
-				result.FrameSize, result.MaxRatePct, result.MaxRateMbps, result.Latency.AvgNs/nsToUsConversion,
+				result.FrameSize,
+				result.MaxRatePct,
+				result.MaxRateMbps,
+				result.Latency.AvgNs/nsToUsConversion,
 			)
 		}
 	}
@@ -1109,7 +1160,10 @@ func webCmd(args []string) {
 	srv, err := server.NewServer(*port)
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-		_, _ = fmt.Fprintf(os.Stderr, "Hint: Set STEM_AUTH_USERNAME and STEM_AUTH_PASSWORD environment variables\n")
+		_, _ = fmt.Fprintf(
+			os.Stderr,
+			"Hint: Set STEM_AUTH_USERNAME and STEM_AUTH_PASSWORD environment variables\n",
+		)
 		os.Exit(1)
 	}
 	err = srv.Run()
@@ -1147,7 +1201,12 @@ func tuiReflectMode(iface string) {
 		SignatureFilter: DefaultSignatureFilter,
 		WebUI:           reflectorConfig.WebUIConfig{Enabled: false, Port: 0},
 		TUI:             reflectorConfig.TUIConfig{Enabled: true},
-		Filtering:       reflectorConfig.FilterConfig{Port: 0, FilterOUI: false, OUI: "", FilterMAC: false},
+		Filtering: reflectorConfig.FilterConfig{
+			Port:      0,
+			FilterOUI: false,
+			OUI:       "",
+			FilterMAC: false,
+		},
 		Reflection: reflectorConfig.ReflectConfig{
 			Mode: DefaultReflectionMode,
 		},
@@ -1272,8 +1331,14 @@ func helpCmd(args []string) {
 	_, _ = fmt.Fprintf(os.Stdout, "No help found for '%s'\n\n", topic)
 	_, _ = fmt.Fprintln(os.Stdout, "Available help topics:")
 	_, _ = fmt.Fprintln(os.Stdout, "  Commands:   reflect, test, web, license")
-	_, _ = fmt.Fprintln(os.Stdout, "  Tests:      throughput, latency, frame_loss, y1564_config, ...")
-	_, _ = fmt.Fprintln(os.Stdout, "  Categories: rfc2544, y1564, rfc2889, rfc6349, y1731, mef, tsn")
+	_, _ = fmt.Fprintln(
+		os.Stdout,
+		"  Tests:      throughput, latency, frame_loss, y1564_config, ...",
+	)
+	_, _ = fmt.Fprintln(
+		os.Stdout,
+		"  Categories: rfc2544, y1564, rfc2889, rfc6349, y1731, mef, tsn",
+	)
 	_, _ = fmt.Fprintln(os.Stdout, "\nUse 'stem help tests' for a complete list of tests.")
 	_, _ = fmt.Fprintln(os.Stdout, "Use 'stem glossary' for network terminology definitions.")
 	_, _ = fmt.Fprintln(os.Stdout, "Use 'stem tutorial' for step-by-step guides.")
