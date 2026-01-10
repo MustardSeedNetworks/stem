@@ -1,12 +1,14 @@
 // Copyright (c) 2025 Mustard Seed Networks. All rights reserved.
 
-package auth
+package auth_test
 
 import (
 	"context"
 	"testing"
 
 	"golang.org/x/crypto/bcrypt"
+
+	"github.com/krisarmstrong/stem/internal/auth"
 )
 
 func TestIsDefaultPasswordHash(t *testing.T) {
@@ -42,7 +44,7 @@ func TestIsDefaultPasswordHash(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			result := IsDefaultPasswordHash(tt.hash)
+			result := auth.IsDefaultPasswordHash(tt.hash)
 			if result != tt.expected {
 				t.Errorf("IsDefaultPasswordHash(%q) = %v, want %v", tt.hash, result, tt.expected)
 			}
@@ -61,7 +63,7 @@ func TestGenerateSecurePassword(t *testing.T) {
 		{
 			name:           "default length",
 			length:         0,
-			expectedLength: GeneratedPasswordLength,
+			expectedLength: auth.GeneratedPasswordLength,
 		},
 		{
 			name:           "custom length",
@@ -71,14 +73,14 @@ func TestGenerateSecurePassword(t *testing.T) {
 		{
 			name:           "negative length uses default",
 			length:         -1,
-			expectedLength: GeneratedPasswordLength,
+			expectedLength: auth.GeneratedPasswordLength,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			password, err := GenerateSecurePassword(tt.length)
+			password, err := auth.GenerateSecurePassword(tt.length)
 			if err != nil {
 				t.Fatalf("GenerateSecurePassword(%d) error = %v", tt.length, err)
 			}
@@ -93,8 +95,8 @@ func TestGenerateSecurePassword_Unique(t *testing.T) {
 	t.Parallel()
 
 	passwords := make(map[string]bool)
-	for i := 0; i < 100; i++ {
-		password, err := GenerateSecurePassword(24)
+	for range 100 {
+		password, err := auth.GenerateSecurePassword(24)
 		if err != nil {
 			t.Fatalf("GenerateSecurePassword failed: %v", err)
 		}
@@ -138,7 +140,7 @@ func TestValidatePasswordStrength(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			err := ValidatePasswordStrength(tt.password)
+			err := auth.ValidatePasswordStrength(tt.password)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ValidatePasswordStrength(%q) error = %v, wantErr %v", tt.password, err, tt.wantErr)
 			}
@@ -150,7 +152,7 @@ func TestHashPassword(t *testing.T) {
 	t.Parallel()
 
 	password := "testPassword123!"
-	hash, err := HashPassword(password)
+	hash, err := auth.HashPassword(password)
 	if err != nil {
 		t.Fatalf("HashPassword failed: %v", err)
 	}
@@ -176,12 +178,12 @@ func TestHashPassword_Unique(t *testing.T) {
 	t.Parallel()
 
 	password := "samePassword123!"
-	hash1, err := HashPassword(password)
+	hash1, err := auth.HashPassword(password)
 	if err != nil {
 		t.Fatalf("HashPassword failed: %v", err)
 	}
 
-	hash2, err := HashPassword(password)
+	hash2, err := auth.HashPassword(password)
 	if err != nil {
 		t.Fatalf("HashPassword failed: %v", err)
 	}
@@ -195,7 +197,7 @@ func TestHashPassword_Unique(t *testing.T) {
 func TestUpdatePasswordHash(t *testing.T) {
 	t.Parallel()
 
-	manager, err := NewManager(
+	manager, err := auth.NewManager(
 		"test-secret-key-minimum-32chars!",
 		0,
 		"admin",
@@ -216,7 +218,7 @@ func TestUpdatePasswordHash(t *testing.T) {
 func TestGetUsername(t *testing.T) {
 	t.Parallel()
 
-	manager, err := NewManager(
+	manager, err := auth.NewManager(
 		"test-secret-key-minimum-32chars!",
 		0,
 		"testadmin",

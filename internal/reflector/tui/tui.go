@@ -20,18 +20,20 @@ import (
 
 // Constants for TUI configuration and formatting.
 const (
-	statsFlexWeight     = 2 // Weight for stats panel in flex layout.
-	tickerIntervalMs    = 500
-	bitsPerByte         = 8.0
-	megabitsPerSecDenom = 1000000.0
-	billion             = 1000000000
-	million             = 1000000
-	thousand            = 1000
-	terabyte            = 1099511627776
-	gigabyte            = 1073741824
-	megabyte            = 1048576
-	kilobyte            = 1024
-	secondsPerMinute    = 60
+	statsFlexWeight      = 2 // Weight for stats panel in flex layout.
+	tickerIntervalMs     = 500
+	bitsPerByte          = 8.0
+	megabitsPerSecDenom  = 1000000.0
+	billion              = 1000000000
+	million              = 1000000
+	thousand             = 1000
+	terabyte             = 1099511627776
+	gigabyte             = 1073741824
+	megabyte             = 1048576
+	kilobyte             = 1024
+	secondsPerMinute     = 60
+	profileListHeight    = 12 // Height for profile selector list.
+	profileSelectorWidth = 50 // Width for profile selector modal.
 )
 
 // FilterProfile defines a signature filter configuration.
@@ -44,14 +46,16 @@ type FilterProfile struct {
 	MSN         bool   // Enable MSN custom signatures.
 }
 
-// PredefinedProfiles are the built-in filter profiles.
-var PredefinedProfiles = []FilterProfile{
-	{Name: "all", Description: "All signatures (no filter)", ITO: true, RFC2544: true, Y1564: true, MSN: true},
-	{Name: "ito", Description: "ITO signatures only", ITO: true, RFC2544: false, Y1564: false, MSN: false},
-	{Name: "rfc2544", Description: "RFC 2544 signatures only", ITO: false, RFC2544: true, Y1564: false, MSN: false},
-	{Name: "y1564", Description: "Y.1564 signatures only", ITO: false, RFC2544: false, Y1564: true, MSN: false},
-	{Name: "msn", Description: "MSN custom signatures only", ITO: false, RFC2544: false, Y1564: false, MSN: true},
-	{Name: "standards", Description: "RFC 2544 + Y.1564", ITO: false, RFC2544: true, Y1564: true, MSN: false},
+// GetPredefinedProfiles returns the built-in filter profiles.
+func GetPredefinedProfiles() []FilterProfile {
+	return []FilterProfile{
+		{Name: "all", Description: "All signatures (no filter)", ITO: true, RFC2544: true, Y1564: true, MSN: true},
+		{Name: "ito", Description: "ITO signatures only", ITO: true, RFC2544: false, Y1564: false, MSN: false},
+		{Name: "rfc2544", Description: "RFC 2544 signatures only", ITO: false, RFC2544: true, Y1564: false, MSN: false},
+		{Name: "y1564", Description: "Y.1564 signatures only", ITO: false, RFC2544: false, Y1564: true, MSN: false},
+		{Name: "msn", Description: "MSN custom signatures only", ITO: false, RFC2544: false, Y1564: false, MSN: true},
+		{Name: "standards", Description: "RFC 2544 + Y.1564", ITO: false, RFC2544: true, Y1564: true, MSN: false},
+	}
 }
 
 // App holds the TUI application state.
@@ -91,7 +95,7 @@ func New(dp *dataplane.Dataplane) *App {
 		paused:         false,
 		pauseMu:        sync.Mutex{},
 		filterActive:   "all",
-		currentProfile: PredefinedProfiles[0], // Default to "all".
+		currentProfile: GetPredefinedProfiles()[0], // Default to "all".
 		showExtHelp:    false,
 	}
 }
@@ -101,7 +105,7 @@ func NewWithFilter(dp *dataplane.Dataplane, filterProfile string) *App {
 	a := New(dp)
 	a.filterActive = filterProfile
 	// Find and set the matching profile.
-	for _, p := range PredefinedProfiles {
+	for _, p := range GetPredefinedProfiles() {
 		if p.Name == filterProfile {
 			a.currentProfile = p
 			break
@@ -174,36 +178,86 @@ func (a *App) Run() error {
 	return nil
 }
 
+// KeyAction represents the action to take for a key press.
+type KeyAction int
+
+// Key action constants.
+const (
+	KeyActionNone         KeyAction = iota // No action / unhandled key
+	KeyActionQuit                          // Quit the application
+	KeyActionReset                         // Reset statistics
+	KeyActionTogglePause                   // Toggle pause state
+	KeyActionShowProfiles                  // Show profile selector
+	KeyActionToggleHelp                    // Toggle extended help
+	KeyActionSetProfile1                   // Set profile 1
+	KeyActionSetProfile2                   // Set profile 2
+	KeyActionSetProfile3                   // Set profile 3
+	KeyActionSetProfile4                   // Set profile 4
+	KeyActionSetProfile5                   // Set profile 5
+	KeyActionSetProfile6                   // Set profile 6
+)
+
+// ParseKeyAction determines what action to take for a given key rune.
+// This is a pure function that can be tested independently.
+func ParseKeyAction(r rune) KeyAction {
+	switch r {
+	case 'q', 'Q':
+		return KeyActionQuit
+	case 'r', 'R':
+		return KeyActionReset
+	case 'p', 'P':
+		return KeyActionTogglePause
+	case 'f', 'F':
+		return KeyActionShowProfiles
+	case 'h', 'H', '?':
+		return KeyActionToggleHelp
+	case '1':
+		return KeyActionSetProfile1
+	case '2':
+		return KeyActionSetProfile2
+	case '3':
+		return KeyActionSetProfile3
+	case '4':
+		return KeyActionSetProfile4
+	case '5':
+		return KeyActionSetProfile5
+	case '6':
+		return KeyActionSetProfile6
+	default:
+		return KeyActionNone
+	}
+}
+
 // handleKeyEvent handles keyboard input.
 func (a *App) handleKeyEvent(event *tcell.EventKey) *tcell.EventKey {
-	switch event.Rune() {
-	case 'q', 'Q':
+	action := ParseKeyAction(event.Rune())
+
+	switch action {
+	case KeyActionQuit:
 		a.Stop()
 		return nil
-	case 'r', 'R':
+	case KeyActionReset:
 		a.resetStats()
 		return nil
-	case 'p', 'P':
+	case KeyActionTogglePause:
 		a.togglePause()
 		return nil
-	case 'f', 'F':
+	case KeyActionShowProfiles:
 		a.showProfileSelector()
 		return nil
-	case 'h', 'H':
+	case KeyActionToggleHelp:
 		a.toggleExtendedHelp()
 		return nil
-	case '?':
-		a.toggleExtendedHelp()
-		return nil
-	}
-
-	// Number keys 1-6 for quick profile selection.
-	if event.Rune() >= '1' && event.Rune() <= '6' {
-		idx := int(event.Rune() - '1')
-		if idx < len(PredefinedProfiles) {
-			a.setProfile(PredefinedProfiles[idx])
+	case KeyActionSetProfile1, KeyActionSetProfile2, KeyActionSetProfile3,
+		KeyActionSetProfile4, KeyActionSetProfile5, KeyActionSetProfile6:
+		profiles := GetPredefinedProfiles()
+		idx := int(action - KeyActionSetProfile1)
+		if idx < len(profiles) {
+			a.setProfile(profiles[idx])
 		}
 		return nil
+	case KeyActionNone:
+		return event
 	}
 
 	return event
@@ -214,7 +268,7 @@ func (a *App) createProfileSelector() {
 	list := tview.NewList().
 		ShowSecondaryText(true)
 
-	for i, p := range PredefinedProfiles {
+	for i, p := range GetPredefinedProfiles() {
 		shortcut := rune('1' + i)
 		profile := p // Capture for closure.
 		list.AddItem(p.Name, p.Description, shortcut, func() {
@@ -230,8 +284,8 @@ func (a *App) createProfileSelector() {
 		AddItem(nil, 0, 1, false).
 		AddItem(tview.NewFlex().SetDirection(tview.FlexRow).
 			AddItem(nil, 0, 1, false).
-			AddItem(list, 12, 0, true).
-			AddItem(nil, 0, 1, false), 50, 0, true).
+			AddItem(list, profileListHeight, 0, true).
+			AddItem(nil, 0, 1, false), profileSelectorWidth, 0, true).
 		AddItem(nil, 0, 1, false)
 
 	a.pages.AddPage("profiles", modal, true, false)
@@ -242,18 +296,30 @@ func (a *App) showProfileSelector() {
 	a.pages.SwitchToPage("profiles")
 }
 
-// setProfile sets the active filter profile.
-func (a *App) setProfile(p FilterProfile) {
+// setProfileState updates the filter profile state without UI updates.
+// This is the testable core logic of setProfile.
+func (a *App) setProfileState(p FilterProfile) {
 	a.filterActive = p.Name
 	a.currentProfile = p
+}
+
+// setProfile sets the active filter profile.
+func (a *App) setProfile(p FilterProfile) {
+	a.setProfileState(p)
 	a.app.QueueUpdateDraw(func() {
 		a.updateHeaderStatus()
 	})
 }
 
+// toggleExtendedHelpState toggles the extended help state without UI updates.
+// This is the testable core logic of toggleExtendedHelp.
+func (a *App) toggleExtendedHelpState() {
+	a.showExtHelp = !a.showExtHelp
+}
+
 // toggleExtendedHelp toggles extended help display.
 func (a *App) toggleExtendedHelp() {
-	a.showExtHelp = !a.showExtHelp
+	a.toggleExtendedHelpState()
 	a.app.QueueUpdateDraw(func() {
 		a.updateHelpText()
 	})
@@ -267,11 +333,17 @@ func (a *App) Stop() {
 	})
 }
 
-// togglePause toggles the paused state.
-func (a *App) togglePause() {
+// togglePauseState toggles the paused state without UI updates.
+// This is the testable core logic of togglePause.
+func (a *App) togglePauseState() {
 	a.pauseMu.Lock()
 	a.paused = !a.paused
 	a.pauseMu.Unlock()
+}
+
+// togglePause toggles the paused state.
+func (a *App) togglePause() {
+	a.togglePauseState()
 
 	a.app.QueueUpdateDraw(func() {
 		a.updateHeaderStatus()
@@ -295,50 +367,65 @@ func (a *App) resetStats() {
 	a.updateStats()
 }
 
-// updateHeaderStatus updates the header with current status.
-func (a *App) updateHeaderStatus() {
+// GenerateHeaderText generates the header text for display.
+// This is a pure function that can be tested independently.
+func GenerateHeaderText(interfaceName string, filterActive string, paused bool) string {
 	status := "[#2d7a3e]● RUNNING"
-	if a.isPaused() {
+	if paused {
 		status = "[yellow]● PAUSED"
 	}
 
 	filterText := ""
-	if a.filterActive != "all" && a.filterActive != "" {
-		filterText = fmt.Sprintf(" | Filter: [cyan]%s[white]", a.filterActive)
+	if filterActive != "all" && filterActive != "" {
+		filterText = fmt.Sprintf(" | Filter: [cyan]%s[white]", filterActive)
 	}
 
-	a.headerView.SetText(fmt.Sprintf(
+	return fmt.Sprintf(
 		"[#2d7a3e]MSN Reflector[white] | [yellow]Mustard Seed Networks[white] | "+
 			"Interface: [cyan]%s[white]%s | Status: %s",
-		a.dp.Interface(),
+		interfaceName,
 		filterText,
 		status,
-	))
+	)
 }
 
-// updateHelpText updates the help bar based on current state.
-func (a *App) updateHelpText() {
+// updateHeaderStatus updates the header with current status.
+func (a *App) updateHeaderStatus() {
+	interfaceName := ""
+	if a.dp != nil {
+		interfaceName = a.dp.Interface()
+	}
+	a.headerView.SetText(GenerateHeaderText(interfaceName, a.filterActive, a.isPaused()))
+}
+
+// GenerateHelpText generates the help bar text for display.
+// This is a pure function that can be tested independently.
+func GenerateHelpText(paused bool, extendedHelp bool) string {
 	pauseAction := "pause"
-	if a.isPaused() {
+	if paused {
 		pauseAction = "resume"
 	}
 
-	if a.showExtHelp {
+	if extendedHelp {
 		// Extended help with all keyboard shortcuts.
-		a.helpView.SetText(fmt.Sprintf(
+		return fmt.Sprintf(
 			"[yellow]q[white] quit | [yellow]r[white] reset | [yellow]p[white] %s | "+
 				"[yellow]f[white] filter | [yellow]1-6[white] quick filter | "+
 				"[yellow]h/?[white] toggle help",
 			pauseAction,
-		))
-	} else {
-		// Compact help.
-		a.helpView.SetText(fmt.Sprintf(
-			"[yellow]q[white] quit  [yellow]r[white] reset  [yellow]p[white] %s  "+
-				"[yellow]f[white] filter  [yellow]?[white] help",
-			pauseAction,
-		))
+		)
 	}
+	// Compact help.
+	return fmt.Sprintf(
+		"[yellow]q[white] quit  [yellow]r[white] reset  [yellow]p[white] %s  "+
+			"[yellow]f[white] filter  [yellow]?[white] help",
+		pauseAction,
+	)
+}
+
+// updateHelpText updates the help bar based on current state.
+func (a *App) updateHelpText() {
+	a.helpView.SetText(GenerateHelpText(a.isPaused(), a.showExtHelp))
 }
 
 // updateLoop periodically refreshes the display.
@@ -358,21 +445,38 @@ func (a *App) updateLoop() {
 	}
 }
 
-// updateStats refreshes all stat panels.
-func (a *App) updateStats() {
-	stats := a.dp.GetStats()
-	elapsed := time.Since(a.startTime).Seconds()
+// StatsInput holds all the data needed to generate stats text.
+// This allows testing the stats text generation without dataplane dependency.
+type StatsInput struct {
+	PacketsReceived  uint64
+	PacketsReflected uint64
+	BytesReceived    uint64
+	BytesReflected   uint64
+	SigProbeOT       uint64
+	SigDataOT        uint64
+	SigLatency       uint64
+	SigRFC2544       uint64
+	SigY1564         uint64
+	SigMSN           uint64
+	LatencyMin       float64
+	LatencyAvg       float64
+	LatencyMax       float64
+	LatencyCount     uint64
+	Elapsed          float64
+	Uptime           time.Duration
+}
 
+// GenerateStatsText generates the main statistics text panel.
+func GenerateStatsText(s StatsInput) string {
 	// Calculate rates.
 	pps := float64(0)
 	mbps := float64(0)
-	if elapsed > 0 {
-		pps = float64(stats.PacketsReflected) / elapsed
-		mbps = float64(stats.BytesReflected) * bitsPerByte / (elapsed * megabitsPerSecDenom)
+	if s.Elapsed > 0 {
+		pps = float64(s.PacketsReflected) / s.Elapsed
+		mbps = float64(s.BytesReflected) * bitsPerByte / (s.Elapsed * megabitsPerSecDenom)
 	}
 
-	// Main stats with MSN branding colors.
-	statsText := fmt.Sprintf(
+	return fmt.Sprintf(
 		"[#d4a017]RX Packets:[white]  %s\n"+
 			"[#d4a017]TX Packets:[white]  %s\n"+
 			"[#d4a017]RX Bytes:[white]    %s\n"+
@@ -382,16 +486,18 @@ func (a *App) updateStats() {
 			"[#2d7a3e]Throughput:[white]  %.2f Mbps\n"+
 			"\n"+
 			"[cyan]Uptime:[white]      %s",
-		formatNumber(stats.PacketsReceived),
-		formatNumber(stats.PacketsReflected),
-		formatBytes(stats.BytesReceived),
-		formatBytes(stats.BytesReflected),
+		FormatNumber(s.PacketsReceived),
+		FormatNumber(s.PacketsReflected),
+		FormatBytes(s.BytesReceived),
+		FormatBytes(s.BytesReflected),
 		pps, mbps,
-		formatDuration(time.Since(a.startTime)),
+		FormatDuration(s.Uptime),
 	)
+}
 
-	// Signature breakdown - ITO and Custom.
-	sigText := fmt.Sprintf(
+// GenerateSignatureText generates the signature breakdown text panel.
+func GenerateSignatureText(s StatsInput) string {
+	return fmt.Sprintf(
 		"[cyan]ITO Signatures:[white]\n"+
 			"  PROBEOT:  %s\n"+
 			"  DATA:OT:  %s\n"+
@@ -401,30 +507,59 @@ func (a *App) updateStats() {
 			"  RFC2544:  %s\n"+
 			"  Y.1564:   %s\n"+
 			"  MSN:      %s",
-		formatNumber(stats.SigProbeOT),
-		formatNumber(stats.SigDataOT),
-		formatNumber(stats.SigLatency),
-		formatNumber(stats.SigRFC2544),
-		formatNumber(stats.SigY1564),
-		formatNumber(stats.SigMSN),
+		FormatNumber(s.SigProbeOT),
+		FormatNumber(s.SigDataOT),
+		FormatNumber(s.SigLatency),
+		FormatNumber(s.SigRFC2544),
+		FormatNumber(s.SigY1564),
+		FormatNumber(s.SigMSN),
 	)
+}
 
-	// Latency stats.
-	latText := ""
-	if stats.LatencyCount > 0 {
-		latText = fmt.Sprintf(
+// GenerateLatencyText generates the latency statistics text panel.
+func GenerateLatencyText(s StatsInput) string {
+	if s.LatencyCount > 0 {
+		return fmt.Sprintf(
 			"[#2d7a3e]Min:[white]   %.2f µs\n"+
 				"[#2d7a3e]Avg:[white]   %.2f µs\n"+
 				"[#2d7a3e]Max:[white]   %.2f µs\n"+
 				"[#2d7a3e]Count:[white] %s",
-			stats.LatencyMin,
-			stats.LatencyAvg,
-			stats.LatencyMax,
-			formatNumber(stats.LatencyCount),
+			s.LatencyMin,
+			s.LatencyAvg,
+			s.LatencyMax,
+			FormatNumber(s.LatencyCount),
 		)
-	} else {
-		latText = "[gray]No latency data\n(use --latency)"
 	}
+	return "[gray]No latency data\n(use --latency)"
+}
+
+// updateStats refreshes all stat panels.
+func (a *App) updateStats() {
+	stats := a.dp.GetStats()
+	elapsed := time.Since(a.startTime).Seconds()
+
+	input := StatsInput{
+		PacketsReceived:  stats.PacketsReceived,
+		PacketsReflected: stats.PacketsReflected,
+		BytesReceived:    stats.BytesReceived,
+		BytesReflected:   stats.BytesReflected,
+		SigProbeOT:       stats.SigProbeOT,
+		SigDataOT:        stats.SigDataOT,
+		SigLatency:       stats.SigLatency,
+		SigRFC2544:       stats.SigRFC2544,
+		SigY1564:         stats.SigY1564,
+		SigMSN:           stats.SigMSN,
+		LatencyMin:       stats.LatencyMin,
+		LatencyAvg:       stats.LatencyAvg,
+		LatencyMax:       stats.LatencyMax,
+		LatencyCount:     stats.LatencyCount,
+		Elapsed:          elapsed,
+		Uptime:           time.Since(a.startTime),
+	}
+
+	statsText := GenerateStatsText(input)
+	sigText := GenerateSignatureText(input)
+	latText := GenerateLatencyText(input)
 
 	// Update views on main thread.
 	a.app.QueueUpdateDraw(func() {
@@ -434,9 +569,9 @@ func (a *App) updateStats() {
 	})
 }
 
-// Helper functions for formatting.
-
-func formatNumber(n uint64) string {
+// FormatNumber formats large numbers with K/M/B suffixes for readability.
+// Used for packet counts and similar metrics.
+func FormatNumber(n uint64) string {
 	if n >= billion {
 		return fmt.Sprintf("%.2fB", float64(n)/billion)
 	}
@@ -449,7 +584,8 @@ func formatNumber(n uint64) string {
 	return strconv.FormatUint(n, 10)
 }
 
-func formatBytes(n uint64) string {
+// FormatBytes formats byte counts with KB/MB/GB/TB suffixes for readability.
+func FormatBytes(n uint64) string {
 	if n >= terabyte {
 		return fmt.Sprintf("%.2f TB", float64(n)/terabyte)
 	}
@@ -465,7 +601,8 @@ func formatBytes(n uint64) string {
 	return strconv.FormatUint(n, 10) + " B"
 }
 
-func formatDuration(d time.Duration) string {
+// FormatDuration formats a time.Duration as a human-readable string (e.g., "1h 5m 30s").
+func FormatDuration(d time.Duration) string {
 	hours := int(d.Hours())
 	minutes := int(d.Minutes()) % secondsPerMinute
 	seconds := int(d.Seconds()) % secondsPerMinute

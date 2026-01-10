@@ -1,6 +1,6 @@
 // Copyright (c) 2025 Mustard Seed Networks. All rights reserved.
 
-package auth
+package auth_test
 
 import (
 	"os"
@@ -8,12 +8,14 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/krisarmstrong/stem/internal/auth"
 )
 
 func TestNewRecoveryTokenManager(t *testing.T) {
 	t.Parallel()
 
-	manager := NewRecoveryTokenManager("/tmp/test-recovery")
+	manager := auth.NewRecoveryTokenManager("/tmp/test-recovery")
 	if manager == nil {
 		t.Fatal("NewRecoveryTokenManager returned nil")
 	}
@@ -26,7 +28,7 @@ func TestNewRecoveryTokenManager(t *testing.T) {
 func TestRecoveryTokenManager_TriggerFilePath(t *testing.T) {
 	t.Parallel()
 
-	manager := NewRecoveryTokenManager("/tmp/test-data")
+	manager := auth.NewRecoveryTokenManager("/tmp/test-data")
 	expected := filepath.Join("/tmp/test-data", ".recovery")
 
 	if got := manager.TriggerFilePath(); got != expected {
@@ -37,7 +39,7 @@ func TestRecoveryTokenManager_TriggerFilePath(t *testing.T) {
 func TestRecoveryTokenManager_TokenFilePath(t *testing.T) {
 	t.Parallel()
 
-	manager := NewRecoveryTokenManager("/tmp/test-data")
+	manager := auth.NewRecoveryTokenManager("/tmp/test-data")
 	expected := filepath.Join("/tmp/test-data", ".recovery-token")
 
 	if got := manager.TokenFilePath(); got != expected {
@@ -48,9 +50,9 @@ func TestRecoveryTokenManager_TokenFilePath(t *testing.T) {
 func TestRecoveryTokenManager_TokenExpiryDuration(t *testing.T) {
 	t.Parallel()
 
-	manager := NewRecoveryTokenManager("/tmp/test-data")
-	if got := manager.TokenExpiryDuration(); got != RecoveryTokenExpiry {
-		t.Errorf("TokenExpiryDuration() = %v, want %v", got, RecoveryTokenExpiry)
+	manager := auth.NewRecoveryTokenManager("/tmp/test-data")
+	if got := manager.TokenExpiryDuration(); got != auth.RecoveryTokenExpiry {
+		t.Errorf("TokenExpiryDuration() = %v, want %v", got, auth.RecoveryTokenExpiry)
 	}
 }
 
@@ -58,7 +60,7 @@ func TestRecoveryTokenManager_CheckRecoveryMode_NoTrigger(t *testing.T) {
 	t.Parallel()
 
 	tmpDir := t.TempDir()
-	manager := NewRecoveryTokenManager(tmpDir)
+	manager := auth.NewRecoveryTokenManager(tmpDir)
 
 	if manager.CheckRecoveryMode() {
 		t.Error("CheckRecoveryMode should return false when no trigger file exists")
@@ -69,11 +71,12 @@ func TestRecoveryTokenManager_CheckRecoveryMode_WithTrigger(t *testing.T) {
 	t.Parallel()
 
 	tmpDir := t.TempDir()
-	manager := NewRecoveryTokenManager(tmpDir)
+	manager := auth.NewRecoveryTokenManager(tmpDir)
 
 	// Create trigger file.
 	triggerPath := manager.TriggerFilePath()
-	if err := os.WriteFile(triggerPath, []byte{}, 0o600); err != nil {
+	err := os.WriteFile(triggerPath, []byte{}, 0o600)
+	if err != nil {
 		t.Fatalf("failed to create trigger file: %v", err)
 	}
 	defer os.Remove(triggerPath)
@@ -84,7 +87,8 @@ func TestRecoveryTokenManager_CheckRecoveryMode_WithTrigger(t *testing.T) {
 
 	// Token file should be created.
 	tokenPath := manager.TokenFilePath()
-	if _, err := os.Stat(tokenPath); os.IsNotExist(err) {
+	_, err = os.Stat(tokenPath)
+	if os.IsNotExist(err) {
 		t.Error("token file should be created after CheckRecoveryMode")
 	}
 
@@ -104,11 +108,12 @@ func TestRecoveryTokenManager_ValidateAndConsume(t *testing.T) {
 	t.Parallel()
 
 	tmpDir := t.TempDir()
-	manager := NewRecoveryTokenManager(tmpDir)
+	manager := auth.NewRecoveryTokenManager(tmpDir)
 
 	// Create trigger file to activate recovery mode.
 	triggerPath := manager.TriggerFilePath()
-	if err := os.WriteFile(triggerPath, []byte{}, 0o600); err != nil {
+	err := os.WriteFile(triggerPath, []byte{}, 0o600)
+	if err != nil {
 		t.Fatalf("failed to create trigger file: %v", err)
 	}
 
@@ -137,7 +142,7 @@ func TestRecoveryTokenManager_ValidateAndConsume_Empty(t *testing.T) {
 	t.Parallel()
 
 	tmpDir := t.TempDir()
-	manager := NewRecoveryTokenManager(tmpDir)
+	manager := auth.NewRecoveryTokenManager(tmpDir)
 
 	if manager.ValidateAndConsume("") {
 		t.Error("ValidateAndConsume should fail for empty token")
@@ -148,7 +153,7 @@ func TestRecoveryTokenManager_ValidateAndConsume_NoToken(t *testing.T) {
 	t.Parallel()
 
 	tmpDir := t.TempDir()
-	manager := NewRecoveryTokenManager(tmpDir)
+	manager := auth.NewRecoveryTokenManager(tmpDir)
 
 	if manager.ValidateAndConsume("sometoken") {
 		t.Error("ValidateAndConsume should fail when no token exists")
@@ -159,11 +164,12 @@ func TestRecoveryTokenManager_ValidateAndConsume_WrongToken(t *testing.T) {
 	t.Parallel()
 
 	tmpDir := t.TempDir()
-	manager := NewRecoveryTokenManager(tmpDir)
+	manager := auth.NewRecoveryTokenManager(tmpDir)
 
 	// Create trigger file to activate recovery mode.
 	triggerPath := manager.TriggerFilePath()
-	if err := os.WriteFile(triggerPath, []byte{}, 0o600); err != nil {
+	err := os.WriteFile(triggerPath, []byte{}, 0o600)
+	if err != nil {
 		t.Fatalf("failed to create trigger file: %v", err)
 	}
 
@@ -178,11 +184,12 @@ func TestRecoveryTokenManager_Cleanup(t *testing.T) {
 	t.Parallel()
 
 	tmpDir := t.TempDir()
-	manager := NewRecoveryTokenManager(tmpDir)
+	manager := auth.NewRecoveryTokenManager(tmpDir)
 
 	// Create trigger file to activate recovery mode.
 	triggerPath := manager.TriggerFilePath()
-	if err := os.WriteFile(triggerPath, []byte{}, 0o600); err != nil {
+	err := os.WriteFile(triggerPath, []byte{}, 0o600)
+	if err != nil {
 		t.Fatalf("failed to create trigger file: %v", err)
 	}
 
@@ -190,10 +197,12 @@ func TestRecoveryTokenManager_Cleanup(t *testing.T) {
 
 	// Verify files exist.
 	tokenPath := manager.TokenFilePath()
-	if _, err := os.Stat(triggerPath); os.IsNotExist(err) {
+	_, err = os.Stat(triggerPath)
+	if os.IsNotExist(err) {
 		t.Error("trigger file should exist before cleanup")
 	}
-	if _, err := os.Stat(tokenPath); os.IsNotExist(err) {
+	_, err = os.Stat(tokenPath)
+	if os.IsNotExist(err) {
 		t.Error("token file should exist before cleanup")
 	}
 
@@ -201,10 +210,12 @@ func TestRecoveryTokenManager_Cleanup(t *testing.T) {
 	manager.Cleanup()
 
 	// Verify files are removed.
-	if _, err := os.Stat(triggerPath); !os.IsNotExist(err) {
+	_, err = os.Stat(triggerPath)
+	if !os.IsNotExist(err) {
 		t.Error("trigger file should be removed after cleanup")
 	}
-	if _, err := os.Stat(tokenPath); !os.IsNotExist(err) {
+	_, err = os.Stat(tokenPath)
+	if !os.IsNotExist(err) {
 		t.Error("token file should be removed after cleanup")
 	}
 
@@ -218,7 +229,7 @@ func TestRecoveryTokenManager_IsActive(t *testing.T) {
 	t.Parallel()
 
 	tmpDir := t.TempDir()
-	manager := NewRecoveryTokenManager(tmpDir)
+	manager := auth.NewRecoveryTokenManager(tmpDir)
 
 	if manager.IsActive() {
 		t.Error("should not be active without trigger file")
@@ -226,7 +237,8 @@ func TestRecoveryTokenManager_IsActive(t *testing.T) {
 
 	// Create trigger file.
 	triggerPath := manager.TriggerFilePath()
-	if err := os.WriteFile(triggerPath, []byte{}, 0o600); err != nil {
+	err := os.WriteFile(triggerPath, []byte{}, 0o600)
+	if err != nil {
 		t.Fatalf("failed to create trigger file: %v", err)
 	}
 
@@ -246,11 +258,12 @@ func TestRecoveryTokenManager_Invalidate(t *testing.T) {
 	t.Parallel()
 
 	tmpDir := t.TempDir()
-	manager := NewRecoveryTokenManager(tmpDir)
+	manager := auth.NewRecoveryTokenManager(tmpDir)
 
 	// Create trigger file and generate token.
 	triggerPath := manager.TriggerFilePath()
-	if err := os.WriteFile(triggerPath, []byte{}, 0o600); err != nil {
+	err := os.WriteFile(triggerPath, []byte{}, 0o600)
+	if err != nil {
 		t.Fatalf("failed to create trigger file: %v", err)
 	}
 
@@ -273,7 +286,7 @@ func TestRecoveryTokenManager_RemainingTime(t *testing.T) {
 	t.Parallel()
 
 	tmpDir := t.TempDir()
-	manager := NewRecoveryTokenManager(tmpDir)
+	manager := auth.NewRecoveryTokenManager(tmpDir)
 
 	// No token - should be 0.
 	if manager.RemainingTime() != 0 {
@@ -282,7 +295,8 @@ func TestRecoveryTokenManager_RemainingTime(t *testing.T) {
 
 	// Create trigger file and generate token.
 	triggerPath := manager.TriggerFilePath()
-	if err := os.WriteFile(triggerPath, []byte{}, 0o600); err != nil {
+	err := os.WriteFile(triggerPath, []byte{}, 0o600)
+	if err != nil {
 		t.Fatalf("failed to create trigger file: %v", err)
 	}
 
@@ -292,8 +306,8 @@ func TestRecoveryTokenManager_RemainingTime(t *testing.T) {
 	if remaining <= 0 {
 		t.Error("RemainingTime should be positive after token generation")
 	}
-	if remaining > RecoveryTokenExpiry {
-		t.Errorf("RemainingTime %v should not exceed RecoveryTokenExpiry %v", remaining, RecoveryTokenExpiry)
+	if remaining > auth.RecoveryTokenExpiry {
+		t.Errorf("RemainingTime %v should not exceed RecoveryTokenExpiry %v", remaining, auth.RecoveryTokenExpiry)
 	}
 }
 
@@ -301,50 +315,43 @@ func TestRecoveryTokenManager_Concurrent(t *testing.T) {
 	t.Parallel()
 
 	tmpDir := t.TempDir()
-	manager := NewRecoveryTokenManager(tmpDir)
+	manager := auth.NewRecoveryTokenManager(tmpDir)
 
 	// Create trigger file.
 	triggerPath := manager.TriggerFilePath()
-	if err := os.WriteFile(triggerPath, []byte{}, 0o600); err != nil {
+	err := os.WriteFile(triggerPath, []byte{}, 0o600)
+	if err != nil {
 		t.Fatalf("failed to create trigger file: %v", err)
 	}
 
 	var wg sync.WaitGroup
 
 	// Check recovery mode concurrently.
-	for i := 0; i < 10; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+	for range 10 {
+		wg.Go(func() {
 			_ = manager.CheckRecoveryMode()
-		}()
+		})
 	}
 
 	// Validate tokens concurrently.
-	for i := 0; i < 10; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+	for range 10 {
+		wg.Go(func() {
 			_ = manager.ValidateAndConsume("sometoken")
-		}()
+		})
 	}
 
 	// Check IsActive concurrently.
-	for i := 0; i < 10; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+	for range 10 {
+		wg.Go(func() {
 			_ = manager.IsActive()
-		}()
+		})
 	}
 
 	// Check RemainingTime concurrently.
-	for i := 0; i < 10; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+	for range 10 {
+		wg.Go(func() {
 			_ = manager.RemainingTime()
-		}()
+		})
 	}
 
 	wg.Wait()
@@ -352,7 +359,7 @@ func TestRecoveryTokenManager_Concurrent(t *testing.T) {
 
 func TestRecoveryTokenExpiry(t *testing.T) {
 	// Verify the expiry constant is reasonable.
-	if RecoveryTokenExpiry != 15*time.Minute {
-		t.Errorf("RecoveryTokenExpiry = %v, want 15 minutes", RecoveryTokenExpiry)
+	if auth.RecoveryTokenExpiry != 15*time.Minute {
+		t.Errorf("RecoveryTokenExpiry = %v, want 15 minutes", auth.RecoveryTokenExpiry)
 	}
 }

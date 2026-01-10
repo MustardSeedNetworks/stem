@@ -57,6 +57,14 @@ func NewExecutor(iface string) (*Executor, error) {
 	}, nil
 }
 
+// NewExecutorWithContext creates an executor with an existing dataplane context.
+func NewExecutorWithContext(ctx *dataplane.Context) *Executor {
+	return &Executor{
+		Module: New(),
+		ctx:    ctx,
+	}
+}
+
 // SupportsExecution returns true as Certify can accept execution requests.
 func (e *Executor) SupportsExecution() bool {
 	return true

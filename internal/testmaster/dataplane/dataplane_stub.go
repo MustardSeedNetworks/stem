@@ -597,6 +597,14 @@ func NewContext(_ string) (*Context, error) {
 	return nil, ErrNotSupported
 }
 
+// NewTestContext creates a test context for unit testing purposes.
+// Unlike NewContext, this returns a valid (but non-functional) Context
+// that can be used to test code paths that require a non-nil context.
+// All test execution methods will still return ErrNotSupported.
+func NewTestContext() *Context {
+	return &Context{}
+}
+
 // New creates a new test context with the given configuration (stub).
 func New(_ Config) (*Context, error) {
 	return nil, ErrNotSupported

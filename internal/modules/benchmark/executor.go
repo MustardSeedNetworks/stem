@@ -78,24 +78,27 @@ func (e *Executor) Execute(testType string, cfg *modtypes.TestConfig) (*modtypes
 		return nil, modtypes.ErrInvalidConfig
 	}
 
-	// Configure the context.
-	err := e.configureContext(cfg)
-	if err != nil {
-		return nil, fmt.Errorf("failed to configure context: %w", err)
-	}
-
-	// Set frame size if provided.
-	if cfg.FrameSize > 0 {
-		e.ctx.SetFrameSize(cfg.FrameSize)
-	}
-
-	// Execute the test.
+	// Create result struct early to ensure it's populated even on error.
 	result := &modtypes.Result{
 		TestType:   testType,
 		ModuleName: ModuleName,
 		Success:    false,
 		Error:      "",
 		Data:       nil,
+	}
+
+	// Configure the context if available.
+	if e.ctx != nil {
+		err := e.configureContext(cfg)
+		if err != nil {
+			result.Error = err.Error()
+			return result, fmt.Errorf("failed to configure context: %w", err)
+		}
+
+		// Set frame size if provided.
+		if cfg.FrameSize > 0 {
+			e.ctx.SetFrameSize(cfg.FrameSize)
+		}
 	}
 
 	var data any

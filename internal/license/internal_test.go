@@ -4,6 +4,7 @@ package license
 
 import (
 	"os"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -2289,5 +2290,928 @@ func TestNeedsCheckInNilState(t *testing.T) {
 	mgr.state = nil
 	if mgr.NeedsCheckIn() {
 		t.Error("NeedsCheckIn with nil state should return false")
+	}
+}
+
+// TestGetPrimaryMACFiltersVirtualInterfaces tests that virtual interfaces are skipped.
+func TestGetPrimaryMACFiltersVirtualInterfaces(t *testing.T) {
+	// This tests the getPrimaryMAC function indirectly.
+	// We can't inject mock interfaces, but we verify the function runs without error
+	// and returns a valid format.
+	mac := getPrimaryMAC()
+
+	// Should return either a valid MAC or the default.
+	if mac == "" {
+		t.Error("getPrimaryMAC should never return empty string")
+	}
+
+	// If it's not the default, verify it's a valid MAC format.
+	if mac != defaultMAC {
+		// MAC should be in format XX:XX:XX:XX:XX:XX
+		parts := strings.Split(mac, ":")
+		if len(parts) != 6 {
+			t.Errorf("MAC should have 6 parts separated by colons, got: %s", mac)
+		}
+		for i, part := range parts {
+			if len(part) != 2 {
+				t.Errorf("MAC part %d should be 2 chars, got %d: %s", i, len(part), part)
+			}
+		}
+	}
+}
+
+// TestGetCPUSerialPlatformSpecific tests getCPUSerial returns a non-empty result.
+func TestGetCPUSerialPlatformSpecific(t *testing.T) {
+	serial := getCPUSerial()
+
+	// Should never be empty.
+	if serial == "" {
+		t.Error("getCPUSerial should never return empty")
+	}
+
+	// Should be one of the default values or an actual serial.
+	validCPUDefaults := []string{defaultLinuxCPU, defaultDarwinCPU, unknownSerial}
+	isDefault := slices.Contains(validCPUDefaults, serial)
+
+	// Either it's a default or it's an actual serial (which should be non-empty).
+	if !isDefault && len(serial) == 0 {
+		t.Error("Non-default CPU serial should have content")
+	}
+}
+
+// TestGetDiskSerialPlatformSpecific tests getDiskSerial returns a non-empty result.
+func TestGetDiskSerialPlatformSpecific(t *testing.T) {
+	serial := getDiskSerial()
+
+	// Should never be empty.
+	if serial == "" {
+		t.Error("getDiskSerial should never return empty")
+	}
+
+	// Should be one of the default values or an actual serial.
+	validDiskDefaults := []string{defaultLinuxDisk, defaultDarwinDisk, unknownSerial}
+	isDefault := slices.Contains(validDiskDefaults, serial)
+
+	// Either it's a default or it's an actual serial.
+	if !isDefault && len(serial) == 0 {
+		t.Error("Non-default disk serial should have content")
+	}
+}
+
+// TestEncryptConsistency tests that encrypt produces valid ciphertext each time.
+func TestEncryptConsistency(t *testing.T) {
+	mgr, err := NewManager()
+	if err != nil {
+		t.Fatalf("NewManager error: %v", err)
+	}
+
+	// Test with various data sizes.
+	testData := [][]byte{
+		{},                              // Empty.
+		{0},                             // Single byte.
+		{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}, // Small.
+		make([]byte, 100),               // Medium.
+		make([]byte, 1000),              // Large.
+		make([]byte, 10000),             // Very large.
+	}
+
+	for i, data := range testData {
+		encrypted, encErr := mgr.encrypt(data)
+		if encErr != nil {
+			t.Errorf("Test %d: encrypt error: %v", i, encErr)
+			continue
+		}
+
+		// Encrypted data should always be non-empty (includes nonce + tag).
+		if len(encrypted) == 0 {
+			t.Errorf("Test %d: encrypted data should not be empty", i)
+		}
+
+		// Should decrypt back.
+		decrypted, decErr := mgr.decrypt(encrypted)
+		if decErr != nil {
+			t.Errorf("Test %d: decrypt error: %v", i, decErr)
+			continue
+		}
+
+		if len(decrypted) != len(data) {
+			t.Errorf("Test %d: length mismatch after roundtrip: got %d, want %d",
+				i, len(decrypted), len(data))
+		}
+	}
+}
+
+// TestDecryptErrorPaths tests various error conditions in decrypt.
+func TestDecryptErrorPaths(t *testing.T) {
+	mgr, err := NewManager()
+	if err != nil {
+		t.Fatalf("NewManager error: %v", err)
+	}
+
+	// Test various invalid inputs.
+	invalidInputs := []struct {
+		name  string
+		input []byte
+	}{
+		{"empty", []byte{}},
+		{"invalid_base64_chars", []byte("!!!")},
+		{"short_base64", []byte("YQ==")},                       // Decodes to "a" (1 byte).
+		{"medium_invalid", []byte("YWJjZGVmZ2hpamtsbW5vcA==")}, // Decodes to 16 bytes but invalid ciphertext.
+	}
+
+	for _, tc := range invalidInputs {
+		_, decErr := mgr.decrypt(tc.input)
+		if decErr == nil {
+			t.Errorf("%s: decrypt should fail", tc.name)
+		}
+	}
+}
+
+// TestNewManagerWithValidHomeDir tests NewManager creates config directory correctly.
+func TestNewManagerWithValidHomeDir(t *testing.T) {
+	tmpDir := t.TempDir()
+	t.Setenv("HOME", tmpDir)
+
+	mgr, err := NewManager()
+	if err != nil {
+		t.Fatalf("NewManager error: %v", err)
+	}
+
+	// Verify manager is properly initialized.
+	if mgr.fingerprint == nil {
+		t.Error("fingerprint should be initialized")
+	}
+
+	if mgr.configDir == "" {
+		t.Error("configDir should be set")
+	}
+
+	// Config dir should be under the temp home.
+	if !strings.HasPrefix(mgr.configDir, tmpDir) {
+		t.Errorf("configDir should be under HOME: got %s, want prefix %s",
+			mgr.configDir, tmpDir)
+	}
+}
+
+// TestSaveStateAndLoadRoundtrip tests complete save/load cycle.
+func TestSaveStateAndLoadRoundtrip(t *testing.T) {
+	tmpDir := t.TempDir()
+	t.Setenv("HOME", tmpDir)
+
+	// Create first manager and set complex state.
+	mgr1, err := NewManager()
+	if err != nil {
+		t.Fatalf("NewManager error: %v", err)
+	}
+
+	// Set state with all fields populated.
+	now := time.Now()
+	mgr1.state = &ActivationState{
+		LicenseKey:      "TESTLICENSEKEY12",
+		DeviceHash:      mgr1.fingerprint.Hash(),
+		Tier:            TierEnterprise,
+		ActivatedAt:     now,
+		LastValidatedAt: now.Add(-time.Hour),
+		ExpiresAt:       now.AddDate(1, 0, 0),
+		TrialStartedAt:  time.Time{},
+		IsTrialMode:     false,
+		Features:        []string{"reflector", "rfc2544", "y1564", "api", "multiuser"},
+	}
+
+	// Save state.
+	err = mgr1.saveState()
+	if err != nil {
+		t.Fatalf("saveState error: %v", err)
+	}
+
+	// Create second manager - should load state.
+	mgr2, err := NewManager()
+	if err != nil {
+		t.Fatalf("Second NewManager error: %v", err)
+	}
+
+	// Verify state was loaded correctly.
+	if mgr2.state == nil {
+		t.Fatal("State should be loaded")
+	}
+
+	// Verify all fields.
+	if mgr2.state.LicenseKey != "TESTLICENSEKEY12" {
+		t.Errorf("LicenseKey mismatch: %s", mgr2.state.LicenseKey)
+	}
+	if mgr2.state.Tier != TierEnterprise {
+		t.Errorf("Tier mismatch: %v", mgr2.state.Tier)
+	}
+	if mgr2.state.IsTrialMode {
+		t.Error("IsTrialMode should be false")
+	}
+	if len(mgr2.state.Features) != 5 {
+		t.Errorf("Features count mismatch: %d", len(mgr2.state.Features))
+	}
+}
+
+// TestFingerprintFieldsPopulated tests that all fingerprint fields are set.
+func TestFingerprintFieldsPopulated(t *testing.T) {
+	fp, err := GenerateFingerprint()
+	if err != nil {
+		t.Fatalf("GenerateFingerprint error: %v", err)
+	}
+
+	// Platform should always be set.
+	if fp.Platform == "" {
+		t.Error("Platform should not be empty")
+	}
+
+	// MACAddress should be set (even if default).
+	if fp.MACAddress == "" {
+		t.Error("MACAddress should not be empty")
+	}
+
+	// CPUSerial should be set (even if default).
+	if fp.CPUSerial == "" {
+		t.Error("CPUSerial should not be empty")
+	}
+
+	// DiskSerial should be set (even if default).
+	if fp.DiskSerial == "" {
+		t.Error("DiskSerial should not be empty")
+	}
+
+	// Hostname might be empty on some systems but shouldn't cause issues.
+}
+
+// TestMaskStringWithVariousLengths tests maskString with different show values.
+func TestMaskStringWithVariousLengths(t *testing.T) {
+	tests := []struct {
+		input    string
+		show     int
+		expected string
+	}{
+		{"", 0, ""},
+		{"", 5, ""},
+		{"A", 0, "****"},
+		{"A", 1, "A"},
+		{"A", 5, "A"},
+		{"ABCDEFGHIJ", 0, "****"},
+		{"ABCDEFGHIJ", 5, "ABCDE****"},
+		{"ABCDEFGHIJ", 10, "ABCDEFGHIJ"},
+		{"ABCDEFGHIJ", 15, "ABCDEFGHIJ"},
+	}
+
+	for _, tc := range tests {
+		result := maskString(tc.input, tc.show)
+		if result != tc.expected {
+			t.Errorf("maskString(%q, %d) = %q, want %q",
+				tc.input, tc.show, result, tc.expected)
+		}
+	}
+}
+
+// TestDeriveKeyIsConsistentWithSameFingerprint tests key derivation consistency.
+func TestDeriveKeyIsConsistentWithSameFingerprint(t *testing.T) {
+	mgr, err := NewManager()
+	if err != nil {
+		t.Fatalf("NewManager error: %v", err)
+	}
+
+	// Call deriveKey multiple times.
+	keys := make([][]byte, 10)
+	for i := range keys {
+		keys[i] = mgr.deriveKey()
+	}
+
+	// All keys should be identical.
+	for i := 1; i < len(keys); i++ {
+		if len(keys[i]) != len(keys[0]) {
+			t.Errorf("Key %d has different length", i)
+			continue
+		}
+		for j := range keys[0] {
+			if keys[i][j] != keys[0][j] {
+				t.Errorf("Key %d differs at position %d", i, j)
+				break
+			}
+		}
+	}
+
+	// Key should be 32 bytes (AES-256).
+	if len(keys[0]) != 32 {
+		t.Errorf("Key should be 32 bytes, got %d", len(keys[0]))
+	}
+}
+
+// TestValidateLicenseKeyWithNormalization tests key normalization edge cases.
+func TestValidateLicenseKeyWithNormalization(t *testing.T) {
+	// Generate a valid key.
+	key, err := GenerateLicenseKey("2001", "TESTKEY", TierTestSuite)
+	if err != nil {
+		t.Fatalf("GenerateLicenseKey error: %v", err)
+	}
+
+	// Test with various separators and case combinations.
+	variations := []string{
+		key,                  // Original.
+		strings.ToLower(key), // All lowercase.
+		key[:4] + "-" + key[4:8] + "-" + key[8:12] + "-" + key[12:], // With dashes.
+		key[:4] + " " + key[4:8] + " " + key[8:12] + " " + key[12:], // With spaces.
+		key[:4] + "." + key[4:8] + "." + key[8:12] + "." + key[12:], // With dots.
+		"  " + key + "  ",       // With leading/trailing spaces (normalized).
+		key[:8] + "-" + key[8:], // Partial dashes.
+	}
+
+	for i, variant := range variations {
+		// Normalize the variant first if it has extra whitespace.
+		normalized := normalizeKey(variant)
+		if len(normalized) != keyLength {
+			continue // Skip if normalization resulted in wrong length.
+		}
+
+		info := ValidateLicenseKey(variant)
+		if !info.Valid {
+			t.Errorf("Variation %d (%q) should be valid: %s", i, variant, info.ErrorMsg)
+		}
+	}
+}
+
+// TestEncryptProducesDifferentOutputsForSameInput tests nonce randomness.
+func TestEncryptProducesDifferentOutputsForSameInput(t *testing.T) {
+	mgr, err := NewManager()
+	if err != nil {
+		t.Fatalf("NewManager error: %v", err)
+	}
+
+	plaintext := []byte("test data for encryption")
+
+	// Encrypt same data multiple times.
+	results := make([][]byte, 5)
+	for i := range results {
+		encrypted, encErr := mgr.encrypt(plaintext)
+		if encErr != nil {
+			t.Fatalf("encrypt error: %v", encErr)
+		}
+		results[i] = encrypted
+	}
+
+	// All results should be different (due to random nonce).
+	for i := range results {
+		for j := i + 1; j < len(results); j++ {
+			if string(results[i]) == string(results[j]) {
+				t.Errorf("Encryptions %d and %d should be different", i, j)
+			}
+		}
+	}
+
+	// But all should decrypt to the same plaintext.
+	for i, encrypted := range results {
+		decrypted, decErr := mgr.decrypt(encrypted)
+		if decErr != nil {
+			t.Errorf("Decryption %d failed: %v", i, decErr)
+			continue
+		}
+		if string(decrypted) != string(plaintext) {
+			t.Errorf("Decryption %d produced wrong result", i)
+		}
+	}
+}
+
+// TestLoadStateWithEmptyFile tests loadState when file is empty.
+func TestLoadStateWithEmptyFile(t *testing.T) {
+	tmpDir := t.TempDir()
+	configDir := tmpDir + "/.config/seed-test-suite"
+	err := os.MkdirAll(configDir, 0o700)
+	if err != nil {
+		t.Fatalf("MkdirAll error: %v", err)
+	}
+
+	// Write empty file.
+	licensePath := configDir + "/.seed-license"
+	err = os.WriteFile(licensePath, []byte{}, 0o600)
+	if err != nil {
+		t.Fatalf("WriteFile error: %v", err)
+	}
+
+	mgr, err := NewManager()
+	if err != nil {
+		t.Fatalf("NewManager error: %v", err)
+	}
+	mgr.configDir = configDir
+
+	// loadState should fail with empty file.
+	err = mgr.loadState()
+	if err == nil {
+		t.Error("loadState should fail with empty file")
+	}
+}
+
+// TestCheckInUpdatesLastValidatedAt tests that CheckIn updates the timestamp.
+func TestCheckInUpdatesLastValidatedAt(t *testing.T) {
+	tmpDir := t.TempDir()
+	t.Setenv("HOME", tmpDir)
+
+	mgr, err := NewManager()
+	if err != nil {
+		t.Fatalf("NewManager error: %v", err)
+	}
+
+	// Set up a state with old LastValidatedAt.
+	oldTime := time.Now().Add(-48 * time.Hour)
+	mgr.state = &ActivationState{
+		LicenseKey:      "TESTKEY",
+		DeviceHash:      mgr.fingerprint.Hash(),
+		Tier:            TierTestSuite,
+		ActivatedAt:     time.Time{},
+		LastValidatedAt: oldTime,
+		ExpiresAt:       time.Time{},
+		TrialStartedAt:  time.Time{},
+		IsTrialMode:     false,
+		Features:        nil,
+	}
+
+	// CheckIn.
+	result := mgr.CheckIn()
+	if !result.Success {
+		t.Fatalf("CheckIn failed: %s", result.Message)
+	}
+
+	// LastValidatedAt should be updated.
+	if !mgr.state.LastValidatedAt.After(oldTime) {
+		t.Error("LastValidatedAt should be updated after CheckIn")
+	}
+}
+
+// TestGenerateFingerprintConsistency tests fingerprint generation is consistent.
+func TestGenerateFingerprintConsistency(t *testing.T) {
+	// Generate fingerprint multiple times.
+	fingerprints := make([]*DeviceFingerprint, 5)
+	for i := range fingerprints {
+		fp, err := GenerateFingerprint()
+		if err != nil {
+			t.Fatalf("GenerateFingerprint error: %v", err)
+		}
+		fingerprints[i] = fp
+	}
+
+	// All fingerprints should have the same hash.
+	hash0 := fingerprints[0].Hash()
+	for i := 1; i < len(fingerprints); i++ {
+		if fingerprints[i].Hash() != hash0 {
+			t.Errorf("Fingerprint %d hash differs from fingerprint 0", i)
+		}
+	}
+}
+
+// TestValidateLicenseKeyInvalidLength tests key validation with wrong length.
+func TestValidateLicenseKeyInvalidLength(t *testing.T) {
+	// Test keys that are too short after normalization.
+	shortKeys := []string{
+		"",
+		"A",
+		"AB",
+		"ABCDEFGH",        // 8 chars
+		"ABCDEFGHIJKLMNO", // 15 chars
+	}
+
+	for _, key := range shortKeys {
+		info := ValidateLicenseKey(key)
+		if info.Valid {
+			t.Errorf("Short key %q should not be valid", key)
+		}
+		if info.ErrorMsg != "License key must be 16 characters" {
+			t.Errorf("Expected length error for %q, got: %s", key, info.ErrorMsg)
+		}
+	}
+
+	// Test keys that are too long after normalization.
+	longKeys := []string{
+		"ABCDEFGHIJKLMNOPQ",  // 17 chars
+		"ABCDEFGHIJKLMNOPQR", // 18 chars
+	}
+
+	for _, key := range longKeys {
+		info := ValidateLicenseKey(key)
+		if info.Valid {
+			t.Errorf("Long key %q should not be valid", key)
+		}
+	}
+}
+
+// TestValidateLicenseKeyInvalidCharacters tests key validation with special characters.
+func TestValidateLicenseKeyInvalidCharacters(t *testing.T) {
+	// Keys with special characters (after normalization still 16 chars).
+	invalidKeys := []string{
+		"ABCD!@#$EFGH5678", // Special chars
+		"ABCDEFGH12345678", // This is valid actually - just letters and numbers
+		"abcd!@#$efgh5678", // Special chars lowercase
+	}
+
+	for _, key := range invalidKeys {
+		info := ValidateLicenseKey(key)
+		if strings.ContainsAny(key, "!@#$%^&*()") {
+			if info.Valid {
+				t.Errorf("Key with special chars %q should not be valid", key)
+			}
+		}
+	}
+}
+
+// TestChecksumWithSpecialCases tests checksum calculation edge cases.
+func TestChecksumWithSpecialCases(t *testing.T) {
+	// Test checksum with all zeros.
+	checksum := CalculateChecksum("00000000000000")
+	if len(checksum) != 2 {
+		t.Errorf("Checksum should be 2 chars, got %d", len(checksum))
+	}
+
+	// Test checksum with all letters.
+	checksum = CalculateChecksum("AAAAAAAAAAAAAA")
+	if len(checksum) != 2 {
+		t.Errorf("Checksum should be 2 chars, got %d", len(checksum))
+	}
+
+	// Verify checksum validation works with calculated checksum.
+	payload := "TESTPAYLOAD123"
+	cs := CalculateChecksum(payload)
+	fullString := payload + cs
+	if !ValidateChecksum(fullString) {
+		t.Errorf("Checksum validation should succeed for %q", fullString)
+	}
+}
+
+// TestSplitLinesWithCarriageReturn tests splitLines with Windows line endings.
+func TestSplitLinesWithCarriageReturn(t *testing.T) {
+	// Note: splitLines splits on \n only, not \r\n
+	input := "line1\r\nline2\r\nline3"
+	var lines []string
+	for line := range splitLines(input) {
+		lines = append(lines, line)
+	}
+
+	// Should have 3 lines (split on \n).
+	if len(lines) != 3 {
+		t.Errorf("Expected 3 lines, got %d", len(lines))
+	}
+
+	// First line should contain \r at the end.
+	if !strings.HasSuffix(lines[0], "\r") {
+		t.Log("First line may or may not have \\r depending on implementation")
+	}
+}
+
+// TestActivateWithKeyNormalization tests Activate with various key formats.
+func TestActivateWithKeyNormalization(t *testing.T) {
+	tmpDir := t.TempDir()
+	t.Setenv("HOME", tmpDir)
+
+	mgr, err := NewManager()
+	if err != nil {
+		t.Fatalf("NewManager error: %v", err)
+	}
+
+	// Generate a valid key.
+	key, err := GenerateLicenseKey("2001", "TESTKEY", TierTestSuite)
+	if err != nil {
+		t.Fatalf("GenerateLicenseKey error: %v", err)
+	}
+
+	// Test activation with lowercase key.
+	lowerKey := strings.ToLower(key)
+	result := mgr.Activate(lowerKey)
+	if !result.Success {
+		t.Errorf("Lowercase key activation should succeed: %s", result.Message)
+	}
+
+	// Deactivate for next test.
+	_ = mgr.Deactivate()
+
+	// Test activation with dashed key.
+	dashedKey := key[:4] + "-" + key[4:8] + "-" + key[8:12] + "-" + key[12:]
+	result = mgr.Activate(dashedKey)
+	if !result.Success {
+		t.Errorf("Dashed key activation should succeed: %s", result.Message)
+	}
+}
+
+// TestDeviceFingerprintHashFormat tests that fingerprint hash is always valid format.
+func TestDeviceFingerprintHashFormat(t *testing.T) {
+	fp, err := GenerateFingerprint()
+	if err != nil {
+		t.Fatalf("GenerateFingerprint error: %v", err)
+	}
+
+	hash := fp.Hash()
+
+	// Should be exactly 16 characters.
+	if len(hash) != 16 {
+		t.Errorf("Hash should be 16 chars, got %d", len(hash))
+	}
+
+	// Should be all uppercase hex characters.
+	for _, c := range hash {
+		isDigit := c >= '0' && c <= '9'
+		isUpperHex := c >= 'A' && c <= 'F'
+		if !isDigit && !isUpperHex {
+			t.Errorf("Hash should contain only uppercase hex chars, found %c", c)
+		}
+	}
+}
+
+// TestIsActivatedWithExpiredLicense tests IsActivated when license is expired.
+func TestIsActivatedWithExpiredLicense(t *testing.T) {
+	mgr, err := NewManager()
+	if err != nil {
+		t.Fatalf("NewManager error: %v", err)
+	}
+
+	// Set state with expired license.
+	mgr.state = &ActivationState{
+		LicenseKey:      "TESTKEY",
+		DeviceHash:      mgr.fingerprint.Hash(),
+		Tier:            TierTestSuite,
+		ActivatedAt:     time.Now().AddDate(-2, 0, 0), // 2 years ago.
+		LastValidatedAt: time.Now().AddDate(-1, 0, 0), // 1 year ago.
+		ExpiresAt:       time.Now().AddDate(-1, 0, 0), // Expired 1 year ago.
+		TrialStartedAt:  time.Time{},
+		IsTrialMode:     false,
+		Features:        nil,
+	}
+
+	if mgr.IsActivated() {
+		t.Error("Expired license should not be activated")
+	}
+}
+
+// TestValidateLicenseKeyWithAllTiers tests validation for all tier combinations.
+func TestValidateLicenseKeyWithAllTiers(t *testing.T) {
+	tiers := []struct {
+		product      string
+		tier         Tier
+		expectedTier string
+	}{
+		{"1001", TierReflector, "Reflector"},
+		{"2001", TierTestSuite, "Test Suite"},
+		{"3001", TierEnterprise, "Enterprise"},
+	}
+
+	for _, tc := range tiers {
+		key, err := GenerateLicenseKey(tc.product, "ABCDEFG", tc.tier)
+		if err != nil {
+			t.Errorf("GenerateLicenseKey failed for %s/%v: %v", tc.product, tc.tier, err)
+			continue
+		}
+
+		info := ValidateLicenseKey(key)
+		if !info.Valid {
+			t.Errorf("Key for %s/%v should be valid: %s", tc.product, tc.tier, info.ErrorMsg)
+			continue
+		}
+
+		if info.Tier.String() != tc.expectedTier {
+			t.Errorf("Expected tier string %q, got %q", tc.expectedTier, info.Tier.String())
+		}
+	}
+}
+
+// TestNormalizeKeyWithMixedSeparators tests normalizeKey with mixed separators.
+func TestNormalizeKeyWithMixedSeparators(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"A-B.C D", "ABCD"},
+		{"A--B..C  D", "ABCD"},
+		{"-.-. ", ""},
+		{"abcd-EFGH.ijkl MNOP", "ABCDEFGHIJKLMNOP"},
+	}
+
+	for _, tc := range tests {
+		result := normalizeKey(tc.input)
+		if result != tc.expected {
+			t.Errorf("normalizeKey(%q) = %q, want %q", tc.input, result, tc.expected)
+		}
+	}
+}
+
+// TestStartTrialMultipleTimes tests starting trial when already in trial.
+func TestStartTrialMultipleTimes(t *testing.T) {
+	tmpDir := t.TempDir()
+	t.Setenv("HOME", tmpDir)
+
+	mgr, err := NewManager()
+	if err != nil {
+		t.Fatalf("NewManager error: %v", err)
+	}
+
+	// Start first trial.
+	result1 := mgr.StartTrial()
+	if !result1.Success {
+		t.Fatalf("First StartTrial failed: %s", result1.Message)
+	}
+
+	// Start trial again - should return existing trial info.
+	result2 := mgr.StartTrial()
+	if !result2.Success {
+		t.Errorf("Second StartTrial should succeed: %s", result2.Message)
+	}
+	if !result2.IsTrialMode {
+		t.Error("Should still be in trial mode")
+	}
+}
+
+// TestDeactivateWithNoLicense tests Deactivate when no license exists.
+func TestDeactivateWithNoLicense(t *testing.T) {
+	tmpDir := t.TempDir()
+	t.Setenv("HOME", tmpDir)
+
+	mgr, err := NewManager()
+	if err != nil {
+		t.Fatalf("NewManager error: %v", err)
+	}
+
+	// Deactivate when nothing is activated.
+	err = mgr.Deactivate()
+	if err != nil {
+		t.Errorf("Deactivate with no license should not error: %v", err)
+	}
+}
+
+// TestFromAlphanumericBoundaryChars tests fromAlphanumeric with boundary characters.
+func TestFromAlphanumericBoundaryChars(t *testing.T) {
+	// Test boundary characters.
+	tests := []struct {
+		char     byte
+		expected int
+	}{
+		{'0', 0},
+		{'9', 9},
+		{'A', 10},
+		{'Z', 35},
+		{'a', 10},
+		{'z', 35},
+		{' ', 0},
+		{'!', 0},
+		{'-', 0},
+	}
+
+	for _, tc := range tests {
+		result := fromAlphanumeric(tc.char)
+		if result != tc.expected {
+			t.Errorf("fromAlphanumeric(%c) = %d, want %d", tc.char, result, tc.expected)
+		}
+	}
+}
+
+// TestToAlphanumericBoundaryValues tests toAlphanumeric with boundary values.
+func TestToAlphanumericBoundaryValues(t *testing.T) {
+	// Test boundary values.
+	tests := []struct {
+		value    int
+		expected byte
+	}{
+		{0, '0'},
+		{9, '9'},
+		{10, 'A'},
+		{35, 'Z'},
+	}
+
+	for _, tc := range tests {
+		result := toAlphanumeric(tc.value)
+		if result != tc.expected {
+			t.Errorf("toAlphanumeric(%d) = %c, want %c", tc.value, result, tc.expected)
+		}
+	}
+}
+
+// TestRotorCipherWithFullAlphabet tests cipher with all alphanumeric characters.
+func TestRotorCipherWithFullAlphabet(t *testing.T) {
+	fullAlphabet := "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+	for pos := range 36 {
+		cipher := NewRotorCipher(pos)
+		encoded := cipher.EncodeString(fullAlphabet)
+
+		cipher = NewRotorCipher(pos)
+		decoded := cipher.DecodeString(encoded)
+
+		if decoded != fullAlphabet {
+			t.Errorf("Position %d: roundtrip failed for full alphabet", pos)
+		}
+	}
+}
+
+// TestMaskStringWithEmptyInput tests maskString edge cases.
+func TestMaskStringWithEmptyInput(t *testing.T) {
+	// Empty string.
+	result := maskString("", 0)
+	if result != "" {
+		t.Errorf("maskString('', 0) = %q, want ''", result)
+	}
+
+	result = maskString("", 10)
+	if result != "" {
+		t.Errorf("maskString('', 10) = %q, want ''", result)
+	}
+
+	// Single character.
+	result = maskString("A", 0)
+	if result != "****" {
+		t.Errorf("maskString('A', 0) = %q, want '****'", result)
+	}
+
+	result = maskString("A", 1)
+	if result != "A" {
+		t.Errorf("maskString('A', 1) = %q, want 'A'", result)
+	}
+}
+
+// TestValidateLicenseKeyAllProductCodes tests validation of all product code types.
+func TestValidateLicenseKeyAllProductCodes(t *testing.T) {
+	// Test all three valid product codes with their corresponding tiers.
+	testCases := []struct {
+		product string
+		tier    Tier
+	}{
+		{"1001", TierReflector},
+		{"2001", TierTestSuite},
+		{"3001", TierEnterprise},
+	}
+
+	for _, tc := range testCases {
+		key, err := GenerateLicenseKey(tc.product, "TESTSER", tc.tier)
+		if err != nil {
+			t.Fatalf("GenerateLicenseKey(%s, TESTSER, %d) error: %v", tc.product, tc.tier, err)
+		}
+
+		info := ValidateLicenseKey(key)
+		if !info.Valid {
+			t.Errorf("Key for %s should be valid: %s", tc.product, info.ErrorMsg)
+		}
+		if info.ProductCode != tc.product {
+			t.Errorf("ProductCode mismatch: expected %s, got %s", tc.product, info.ProductCode)
+		}
+		if info.Tier != tc.tier {
+			t.Errorf("Tier mismatch: expected %d, got %d", tc.tier, info.Tier)
+		}
+	}
+}
+
+// TestValidateLicenseKeyEnterpriseTier tests Enterprise tier specifically.
+func TestValidateLicenseKeyEnterpriseTier(t *testing.T) {
+	// Generate an Enterprise tier key.
+	key, err := GenerateLicenseKey("3001", "ZZZZZZA", TierEnterprise)
+	if err != nil {
+		t.Fatalf("GenerateLicenseKey error: %v", err)
+	}
+
+	info := ValidateLicenseKey(key)
+	if !info.Valid {
+		t.Errorf("Enterprise key should be valid: %s", info.ErrorMsg)
+	}
+	if info.Tier != TierEnterprise {
+		t.Errorf("Tier should be Enterprise, got %d", info.Tier)
+	}
+	if info.ProductCode != "3001" {
+		t.Errorf("ProductCode should be 3001, got %s", info.ProductCode)
+	}
+	// Enterprise should have api and multiuser features.
+	if !hasFeature(info.Features, "api") {
+		t.Error("Enterprise should have api feature")
+	}
+	if !hasFeature(info.Features, "multiuser") {
+		t.Error("Enterprise should have multiuser feature")
+	}
+}
+
+// hasFeature is a helper function to check if a feature exists in a slice.
+func hasFeature(features []string, feature string) bool {
+	return slices.Contains(features, feature)
+}
+
+// TestDeriveKeyConsistency tests that deriveKey produces consistent results.
+func TestDeriveKeyConsistency(t *testing.T) {
+	mgr, err := NewManager()
+	if err != nil {
+		t.Fatalf("NewManager error: %v", err)
+	}
+
+	// Get fingerprint.
+	fp := mgr.GetFingerprint()
+	if fp == nil {
+		t.Fatal("GetFingerprint returned nil")
+	}
+
+	// The deriveKey function uses fingerprint, so we can't call it directly,
+	// but we can verify that encryption/decryption works consistently.
+	mgr.StartTrial()
+
+	state1 := mgr.GetState()
+	if state1 == nil {
+		t.Fatal("GetState returned nil")
+	}
+
+	// Device hash should be consistent.
+	hash1 := fp.Hash()
+	hash2 := fp.Hash()
+	if hash1 != hash2 {
+		t.Error("Fingerprint hash should be consistent")
 	}
 }

@@ -1706,3 +1706,74 @@ func TestCheckInTier(t *testing.T) {
 		t.Errorf("CheckIn tier should be Enterprise, got %v", result.Tier)
 	}
 }
+
+// TestActivationStateCompleteFields verifies all fields are properly set during activation.
+func TestActivationStateCompleteFields(t *testing.T) {
+	mgr := setupTestManager(t)
+
+	key, _ := license.GenerateLicenseKey("1001", "REFLCT1", license.TierReflector)
+	result := mgr.Activate(key)
+
+	if !result.Success {
+		t.Fatalf("Activate failed: %s", result.Message)
+	}
+
+	state := mgr.GetState()
+	if state == nil {
+		t.Fatal("State should not be nil after activation")
+	}
+
+	// All required fields should be set.
+	if state.LicenseKey == "" {
+		t.Error("LicenseKey should be set")
+	}
+	if state.DeviceHash == "" {
+		t.Error("DeviceHash should be set")
+	}
+	if state.ActivatedAt.IsZero() {
+		t.Error("ActivatedAt should be set")
+	}
+	if state.LastValidatedAt.IsZero() {
+		t.Error("LastValidatedAt should be set")
+	}
+	if state.ExpiresAt.IsZero() {
+		t.Error("ExpiresAt should be set")
+	}
+	// Reflector tier activation should NOT be trial.
+	if state.IsTrialMode {
+		t.Error("Full license should not be trial mode")
+	}
+	if len(state.Features) == 0 {
+		t.Error("Features should be set")
+	}
+}
+
+// TestReflectorTierActivation tests Reflector tier activation specifically.
+func TestReflectorTierActivation(t *testing.T) {
+	mgr := setupTestManager(t)
+
+	key, _ := license.GenerateLicenseKey("1001", "RFLCTR1", license.TierReflector)
+	result := mgr.Activate(key)
+
+	if !result.Success {
+		t.Fatalf("Reflector activation failed: %s", result.Message)
+	}
+
+	if result.Tier != license.TierReflector {
+		t.Errorf("Result tier should be Reflector, got %v", result.Tier)
+	}
+
+	state := mgr.GetState()
+	if state == nil {
+		t.Fatal("State should not be nil")
+	}
+
+	if state.Tier != license.TierReflector {
+		t.Errorf("State tier should be Reflector, got %v", state.Tier)
+	}
+
+	// Reflector should only have reflector feature.
+	if len(state.Features) != 1 || state.Features[0] != "reflector" {
+		t.Errorf("Reflector should have only 'reflector' feature, got %v", state.Features)
+	}
+}

@@ -1,17 +1,19 @@
 // Copyright (c) 2025 Mustard Seed Networks. All rights reserved.
 
-package auth
+package auth_test
 
 import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/krisarmstrong/stem/internal/auth"
 )
 
 func TestNewSetupTokenManager(t *testing.T) {
 	t.Parallel()
 
-	manager := NewSetupTokenManager()
+	manager := auth.NewSetupTokenManager()
 	if manager == nil {
 		t.Fatal("NewSetupTokenManager returned nil")
 	}
@@ -24,7 +26,7 @@ func TestNewSetupTokenManager(t *testing.T) {
 func TestSetupTokenManager_GenerateToken(t *testing.T) {
 	t.Parallel()
 
-	manager := NewSetupTokenManager()
+	manager := auth.NewSetupTokenManager()
 
 	token, err := manager.GenerateToken()
 	if err != nil {
@@ -48,10 +50,10 @@ func TestSetupTokenManager_GenerateToken(t *testing.T) {
 func TestSetupTokenManager_GenerateToken_Unique(t *testing.T) {
 	t.Parallel()
 
-	manager := NewSetupTokenManager()
+	manager := auth.NewSetupTokenManager()
 	tokens := make(map[string]bool)
 
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		token, err := manager.GenerateToken()
 		if err != nil {
 			t.Fatalf("GenerateToken failed: %v", err)
@@ -66,7 +68,7 @@ func TestSetupTokenManager_GenerateToken_Unique(t *testing.T) {
 func TestSetupTokenManager_ValidateToken(t *testing.T) {
 	t.Parallel()
 
-	manager := NewSetupTokenManager()
+	manager := auth.NewSetupTokenManager()
 
 	token, err := manager.GenerateToken()
 	if err != nil {
@@ -87,7 +89,7 @@ func TestSetupTokenManager_ValidateToken(t *testing.T) {
 func TestSetupTokenManager_ValidateToken_Empty(t *testing.T) {
 	t.Parallel()
 
-	manager := NewSetupTokenManager()
+	manager := auth.NewSetupTokenManager()
 
 	if manager.ValidateToken("") {
 		t.Error("ValidateToken should fail for empty token")
@@ -97,7 +99,7 @@ func TestSetupTokenManager_ValidateToken_Empty(t *testing.T) {
 func TestSetupTokenManager_ValidateToken_NoToken(t *testing.T) {
 	t.Parallel()
 
-	manager := NewSetupTokenManager()
+	manager := auth.NewSetupTokenManager()
 
 	if manager.ValidateToken("sometoken") {
 		t.Error("ValidateToken should fail when no token exists")
@@ -107,7 +109,7 @@ func TestSetupTokenManager_ValidateToken_NoToken(t *testing.T) {
 func TestSetupTokenManager_ValidateToken_WrongToken(t *testing.T) {
 	t.Parallel()
 
-	manager := NewSetupTokenManager()
+	manager := auth.NewSetupTokenManager()
 
 	_, err := manager.GenerateToken()
 	if err != nil {
@@ -122,7 +124,7 @@ func TestSetupTokenManager_ValidateToken_WrongToken(t *testing.T) {
 func TestSetupTokenManager_ValidateToken_NewTokenInvalidatesOld(t *testing.T) {
 	t.Parallel()
 
-	manager := NewSetupTokenManager()
+	manager := auth.NewSetupTokenManager()
 
 	token1, err := manager.GenerateToken()
 	if err != nil {
@@ -148,7 +150,7 @@ func TestSetupTokenManager_ValidateToken_NewTokenInvalidatesOld(t *testing.T) {
 func TestSetupTokenManager_Invalidate(t *testing.T) {
 	t.Parallel()
 
-	manager := NewSetupTokenManager()
+	manager := auth.NewSetupTokenManager()
 
 	token, err := manager.GenerateToken()
 	if err != nil {
@@ -173,7 +175,7 @@ func TestSetupTokenManager_Invalidate(t *testing.T) {
 func TestSetupTokenManager_HasValidToken_UsedToken(t *testing.T) {
 	t.Parallel()
 
-	manager := NewSetupTokenManager()
+	manager := auth.NewSetupTokenManager()
 
 	token, err := manager.GenerateToken()
 	if err != nil {
@@ -194,34 +196,28 @@ func TestSetupTokenManager_HasValidToken_UsedToken(t *testing.T) {
 func TestSetupTokenManager_Concurrent(t *testing.T) {
 	t.Parallel()
 
-	manager := NewSetupTokenManager()
+	manager := auth.NewSetupTokenManager()
 	var wg sync.WaitGroup
 
 	// Generate tokens concurrently.
-	for i := 0; i < 10; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+	for range 10 {
+		wg.Go(func() {
 			_, _ = manager.GenerateToken()
-		}()
+		})
 	}
 
 	// Validate tokens concurrently.
-	for i := 0; i < 10; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+	for range 10 {
+		wg.Go(func() {
 			_ = manager.ValidateToken("sometoken")
-		}()
+		})
 	}
 
 	// Check HasValidToken concurrently.
-	for i := 0; i < 10; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+	for range 10 {
+		wg.Go(func() {
 			_ = manager.HasValidToken()
-		}()
+		})
 	}
 
 	wg.Wait()
@@ -229,7 +225,7 @@ func TestSetupTokenManager_Concurrent(t *testing.T) {
 
 func TestSetupTokenExpiry(t *testing.T) {
 	// Verify the expiry constant is reasonable.
-	if SetupTokenExpiry != 15*time.Minute {
-		t.Errorf("SetupTokenExpiry = %v, want 15 minutes", SetupTokenExpiry)
+	if auth.SetupTokenExpiry != 15*time.Minute {
+		t.Errorf("SetupTokenExpiry = %v, want 15 minutes", auth.SetupTokenExpiry)
 	}
 }

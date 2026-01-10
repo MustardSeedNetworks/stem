@@ -3,6 +3,7 @@
 package netif_test
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/krisarmstrong/stem/internal/netif"
@@ -203,4 +204,145 @@ func BenchmarkDetectInterfaces(b *testing.B) {
 	for b.Loop() {
 		_, _ = netif.DetectInterfaces()
 	}
+}
+
+// TestGetBestInterfaceMultipleCalls tests that GetBestInterface is consistent.
+func TestGetBestInterfaceMultipleCalls(t *testing.T) {
+	// Call GetBestInterface multiple times and ensure consistent results.
+	best1, err1 := netif.GetBestInterface()
+	best2, err2 := netif.GetBestInterface()
+
+	// Both calls should have same error state.
+	if (err1 == nil) != (err2 == nil) {
+		t.Errorf("GetBestInterface() returned inconsistent errors: %v vs %v", err1, err2)
+	}
+
+	// If no error, both should return the same interface.
+	if err1 == nil && best1.Name != best2.Name {
+		t.Errorf("GetBestInterface() returned inconsistent interfaces: %s vs %s", best1.Name, best2.Name)
+	}
+}
+
+// TestDetectInterfacesFields tests that DetectInterfaces returns expected fields.
+func TestDetectInterfacesFields(t *testing.T) {
+	interfaces, err := netif.DetectInterfaces()
+	if err != nil {
+		t.Fatalf("DetectInterfaces() error: %v", err)
+	}
+
+	for _, iface := range interfaces {
+		// Name should never be empty.
+		if iface.Name == "" {
+			t.Error("Interface name should not be empty")
+		}
+
+		// MTU should be positive for active interfaces.
+		if iface.MTU < 0 {
+			t.Errorf("Interface %s has negative MTU: %d", iface.Name, iface.MTU)
+		}
+
+		// Score should be calculated.
+		if iface.State == "up" && iface.Score == 0 {
+			// Could be a virtual interface with no bonuses.
+			t.Logf("Interface %s is up but has zero score (virtual?)", iface.Name)
+		}
+	}
+}
+
+// TestInterfaceScoringSorted tests that interfaces can be sorted by score.
+func TestInterfaceScoringSorted(t *testing.T) {
+	interfaces, err := netif.DetectInterfaces()
+	if err != nil {
+		t.Fatalf("DetectInterfaces() error: %v", err)
+	}
+
+	if len(interfaces) == 0 {
+		t.Skip("No interfaces available for testing")
+	}
+
+	// Find the highest score.
+	highestScore := 0
+	for _, iface := range interfaces {
+		t.Logf("Interface %s: state=%s, physical=%v, score=%d",
+			iface.Name, iface.State, iface.Physical, iface.Score)
+		if iface.Score > highestScore {
+			highestScore = iface.Score
+		}
+	}
+	t.Logf("Highest score: %d", highestScore)
+
+	// Get best interface and verify it matches.
+	best, err := netif.GetBestInterface()
+	if err != nil {
+		t.Logf("GetBestInterface() returned error (expected in minimal environments): %v", err)
+		return
+	}
+
+	t.Logf("Best interface: %s with score %d", best.Name, best.Score)
+	if best.Score != highestScore {
+		t.Errorf("GetBestInterface() returned interface with score %d, but highest was %d",
+			best.Score, highestScore)
+	}
+}
+
+// TestInterfaceInfoJSON tests that InterfaceInfo can be marshaled to JSON.
+func TestInterfaceInfoJSON(t *testing.T) {
+	info := netif.InterfaceInfo{
+		Name:        "eth0",
+		MAC:         "00:11:22:33:44:55",
+		Speed:       1000,
+		Duplex:      "full",
+		State:       "up",
+		Driver:      "e1000e",
+		Physical:    true,
+		XDPSupport:  false,
+		DPDKSupport: true,
+		Score:       150,
+		MTU:         1500,
+		IPv4:        "192.168.1.100",
+		IPv6:        "2001:db8::1",
+	}
+
+	// Use json package to verify struct tags work.
+	data, err := json.Marshal(info)
+	if err != nil {
+		t.Fatalf("json.Marshal() error: %v", err)
+	}
+
+	// Verify expected fields are present.
+	str := string(data)
+	expectedFields := []string{
+		`"name":"eth0"`,
+		`"mac":"00:11:22:33:44:55"`,
+		`"speed":1000`,
+		`"duplex":"full"`,
+		`"state":"up"`,
+		`"driver":"e1000e"`,
+		`"physical":true`,
+		`"xdp":false`,
+		`"dpdk":true`,
+		`"score":150`,
+		`"mtu":1500`,
+		`"ipv4":"192.168.1.100"`,
+		`"ipv6":"2001:db8::1"`,
+	}
+
+	for _, field := range expectedFields {
+		if !containsSubstring(str, field) {
+			t.Errorf("JSON output missing expected field: %s", field)
+		}
+	}
+}
+
+func containsSubstring(s, substr string) bool {
+	return len(s) >= len(substr) && findSubstr(s, substr)
+}
+
+func findSubstr(s, substr string) bool {
+	for i := 0; i <= len(s)-len(substr); i++ {
+		if s[i:i+len(substr)] == substr {
+			return true
+		}
+	}
+	return false
 }

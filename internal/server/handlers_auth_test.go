@@ -291,3 +291,181 @@ func TestAuthLoginResponse(t *testing.T) {
 		t.Error("Response missing 'expiresAt' field")
 	}
 }
+
+// TestHandleAuthCSRF tests the GET /api/v1/auth/csrf endpoint.
+func TestHandleAuthCSRF(t *testing.T) {
+	t.Run("requires authentication", func(t *testing.T) {
+		s := setupAuthTestServer(t)
+
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/csrf", nil)
+		w := httptest.NewRecorder()
+
+		s.ServeHTTP(w, req)
+
+		// CSRF endpoint requires authentication.
+		if w.Code != http.StatusUnauthorized {
+			t.Errorf("Expected status 401 without auth, got %d", w.Code)
+		}
+	})
+
+	t.Run("success with valid token", func(t *testing.T) {
+		s := setupAuthTestServer(t)
+		token, _ := getAuthToken(t, s)
+
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/csrf", nil)
+		req.Header.Set("Authorization", "Bearer "+token)
+		w := httptest.NewRecorder()
+
+		s.ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Errorf("Expected status 200, got %d: %s", w.Code, w.Body.String())
+		}
+
+		var resp map[string]any
+		err := json.Unmarshal(w.Body.Bytes(), &resp)
+		if err != nil {
+			t.Fatalf("Failed to decode response: %v", err)
+		}
+
+		// Should have token field.
+		csrfToken, ok := resp["token"].(string)
+		if !ok || csrfToken == "" {
+			t.Error("Expected 'token' field in response")
+		}
+	})
+
+	t.Run("method not allowed for POST", func(t *testing.T) {
+		s := setupAuthTestServer(t)
+		token, _ := getAuthToken(t, s)
+
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/csrf", nil)
+		req.Header.Set("Authorization", "Bearer "+token)
+		w := httptest.NewRecorder()
+
+		s.ServeHTTP(w, req)
+
+		if w.Code != http.StatusMethodNotAllowed {
+			t.Errorf("Expected status 405 for POST, got %d", w.Code)
+		}
+	})
+
+	t.Run("method not allowed for PUT", func(t *testing.T) {
+		s := setupAuthTestServer(t)
+		token, _ := getAuthToken(t, s)
+
+		req := httptest.NewRequest(http.MethodPut, "/api/v1/auth/csrf", nil)
+		req.Header.Set("Authorization", "Bearer "+token)
+		w := httptest.NewRecorder()
+
+		s.ServeHTTP(w, req)
+
+		if w.Code != http.StatusMethodNotAllowed {
+			t.Errorf("Expected status 405 for PUT, got %d", w.Code)
+		}
+	})
+
+	t.Run("method not allowed for DELETE", func(t *testing.T) {
+		s := setupAuthTestServer(t)
+		token, _ := getAuthToken(t, s)
+
+		req := httptest.NewRequest(http.MethodDelete, "/api/v1/auth/csrf", nil)
+		req.Header.Set("Authorization", "Bearer "+token)
+		w := httptest.NewRecorder()
+
+		s.ServeHTTP(w, req)
+
+		if w.Code != http.StatusMethodNotAllowed {
+			t.Errorf("Expected status 405 for DELETE, got %d", w.Code)
+		}
+	})
+
+	t.Run("invalid token", func(t *testing.T) {
+		s := setupAuthTestServer(t)
+
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/csrf", nil)
+		req.Header.Set("Authorization", "Bearer invalid-token-string")
+		w := httptest.NewRecorder()
+
+		s.ServeHTTP(w, req)
+
+		if w.Code != http.StatusUnauthorized {
+			t.Errorf("Expected status 401 for invalid token, got %d", w.Code)
+		}
+	})
+
+	t.Run("content type is JSON", func(t *testing.T) {
+		s := setupAuthTestServer(t)
+		token, _ := getAuthToken(t, s)
+
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/csrf", nil)
+		req.Header.Set("Authorization", "Bearer "+token)
+		w := httptest.NewRecorder()
+
+		s.ServeHTTP(w, req)
+
+		contentType := w.Header().Get("Content-Type")
+		if contentType != "application/json" {
+			t.Errorf("Expected Content-Type 'application/json', got '%s'", contentType)
+		}
+	})
+}
+
+// TestAuthRoutesRegistered verifies auth endpoint routes are registered.
+func TestAuthRoutesRegistered(t *testing.T) {
+	s := setupAuthTestServer(t)
+
+	routes := []struct {
+		path   string
+		method string
+	}{
+		{"/api/v1/auth/login", http.MethodPost},
+		{"/api/v1/auth/logout", http.MethodPost},
+		{"/api/v1/auth/refresh", http.MethodPost},
+		{"/api/v1/auth/csrf", http.MethodGet},
+	}
+
+	for _, route := range routes {
+		t.Run(fmt.Sprintf("%s %s", route.method, route.path), func(t *testing.T) {
+			req := httptest.NewRequest(route.method, route.path, nil)
+			w := httptest.NewRecorder()
+
+			s.ServeHTTP(w, req)
+
+			// Should not be 404.
+			if w.Code == http.StatusNotFound {
+				t.Errorf("Route %s %s returned 404", route.method, route.path)
+			}
+		})
+	}
+}
+
+// BenchmarkHandleAuthCSRF benchmarks the CSRF token endpoint.
+func BenchmarkHandleAuthCSRF(b *testing.B) {
+	b.Setenv("STEM_AUTH_USERNAME", "benchuser")
+	b.Setenv("STEM_AUTH_PASSWORD", "benchpass123")
+
+	s, err := server.NewServer(8080)
+	if err != nil {
+		b.Fatalf("NewServer() error: %v", err)
+	}
+
+	// Get token once.
+	body := bytes.NewBufferString(`{"username":"benchuser","password":"benchpass123"}`)
+	loginReq := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login", body)
+	loginW := httptest.NewRecorder()
+	s.ServeHTTP(loginW, loginReq)
+
+	var resp map[string]any
+	_ = json.Unmarshal(loginW.Body.Bytes(), &resp)
+	token, _ := resp["token"].(string)
+
+	b.ResetTimer()
+
+	for b.Loop() {
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/csrf", nil)
+		req.Header.Set("Authorization", "Bearer "+token)
+		w := httptest.NewRecorder()
+		s.ServeHTTP(w, req)
+	}
+}

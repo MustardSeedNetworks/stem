@@ -821,9 +821,8 @@ function AppContent(): ReactElement {
     [authFetch, isAuthenticated, setModuleStatus],
   );
 
-  // Open settings drawer for specific module
+  // Open settings drawer for module configuration
   const handleModuleConfigure = useCallback((_moduleName: string): void => {
-    // TODO: Pre-select module section in settings drawer
     setSettingsOpen(true);
   }, []);
 
