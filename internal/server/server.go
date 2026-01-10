@@ -324,13 +324,9 @@ func (s *Server) setupRoutes() {
 		})
 	} else {
 		fileServer := http.FileServer(http.FS(staticFS))
-		// Wrap with CORS headers for crossorigin script/css loading.
-		s.mux.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-			fileServer.ServeHTTP(w, r)
-		}))
+		// Static files don't need CORS headers - they're served from the same origin.
+		// CORS is handled by corsMiddleware for API endpoints.
+		s.mux.Handle("/", fileServer)
 	}
 }
 
@@ -389,9 +385,14 @@ func (s *Server) authMiddleware(handler http.HandlerFunc) http.Handler {
 }
 
 func (s *Server) requireAuth(r *http.Request) error {
+	// First try Authorization header (standard)
 	token, err := extractBearerToken(r.Header.Get("Authorization"))
 	if err != nil {
-		return err
+		// Fall back to query parameter (for WebSocket connections)
+		token = r.URL.Query().Get("token")
+		if token == "" {
+			return errMissingAuthToken
+		}
 	}
 	_, validateErr := s.authManager.ValidateToken(r.Context(), token)
 	if validateErr != nil {

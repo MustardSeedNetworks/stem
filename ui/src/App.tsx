@@ -25,7 +25,7 @@ import {
   WifiOff,
 } from 'lucide-react';
 import type { FormEvent, ReactElement } from 'react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { HelpDrawer } from './components/HelpDrawer';
 import { ModuleCard } from './components/ModuleCard';
 import { ResultHistory } from './components/ResultHistory';
@@ -39,43 +39,20 @@ import { defaultTSNConfig, type TSNConfig } from './components/TSNConfigForm';
 import { defaultY1564Config, type Y1564Config } from './components/Y1564ConfigForm';
 import { defaultY1731Config, type Y1731Config } from './components/Y1731ConfigForm';
 import { ModuleSettingsProvider, useModuleSettings } from './context/ModuleSettingsContext';
+import {
+  type InterfaceInfo,
+  initialStats,
+  isValidAuthResponse,
+  isValidInterfaceArray,
+  isValidStats,
+  type Stats,
+  type TestEventPayload,
+  type TestResult,
+} from './types/api';
 
-interface Stats {
-  packetsReceived: number;
-  packetsSent: number;
-  bytesReceived: number;
-  bytesSent: number;
-  currentPps: number;
-  currentMbps: number;
-  uptime: number;
-  testStatus: 'idle' | 'starting' | 'running' | 'completed' | 'cancelled' | 'error';
-  currentTest: string | null;
-}
-
-interface InterfaceInfo {
-  name: string;
-  mac: string;
-  speed: number;
-  duplex: string;
-  state: string;
-  driver: string;
-  physical: boolean;
-  xdp: boolean;
-  dpdk: boolean;
-  score: number;
-}
-
-const initialStats: Stats = {
-  packetsReceived: 0,
-  packetsSent: 0,
-  bytesReceived: 0,
-  bytesSent: 0,
-  currentPps: 0,
-  currentMbps: 0,
-  uptime: 0,
-  testStatus: 'idle',
-  currentTest: null,
-};
+const TOKEN_STORAGE_KEY = 'stem-token';
+const REFRESH_TOKEN_KEY = 'stem-refresh-token';
+const WS_BASE_URL = import.meta.env.VITE_WS_URL || '';
 
 function formatNumber(num: number): string {
   if (num >= 1e9) return `${(num / 1e9).toFixed(2)}B`;
@@ -307,31 +284,6 @@ function TestResults({ testStatus, result }: TestResultsProps): ReactElement {
   );
 }
 
-const TOKEN_STORAGE_KEY = 'stem-token';
-
-interface TestResult {
-  testType: string;
-  module: string;
-  status: string;
-  startedAt?: string;
-  completedAt?: string;
-  duration?: number;
-  success?: boolean;
-  error?: string;
-  metrics?: Record<string, number | string>;
-  data?: Record<string, unknown>;
-}
-
-interface TestEventPayload {
-  status?: string;
-  testType?: string | null;
-  module?: string;
-  success?: boolean;
-  error?: string;
-  message?: string;
-  data?: TestResult;
-}
-
 function normalizeTestStatus(status?: string): Stats['testStatus'] {
   switch (status) {
     case 'starting':
@@ -382,6 +334,9 @@ function AppContent(): ReactElement {
   });
   const [loginLoading, setLoginLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [isStoppingTest, setIsStoppingTest] = useState(false);
+  const [testStartError, setTestStartError] = useState<string | null>(null);
+  const statsIntervalRef = useRef<number | null>(null);
   const [username, setUsername] = useState('admin');
   const [password, setPassword] = useState('admin');
   const [connected, setConnected] = useState<boolean>(() => {
@@ -436,12 +391,53 @@ function AppContent(): ReactElement {
   const testProgress = useTestProgress(stats.testStatus, stats.currentTest, expectedDuration);
 
   const expireSession = useCallback((message = 'Session expired. Please sign in again.') => {
+    // Clear polling interval to prevent continued API calls
+    if (statsIntervalRef.current !== null) {
+      clearInterval(statsIntervalRef.current);
+      statsIntervalRef.current = null;
+    }
     setToken(null);
     setConnected(false);
     setLoginError(message);
+    // Clear refresh token from storage
+    window.localStorage.removeItem(REFRESH_TOKEN_KEY);
+  }, []);
+
+  // Token refresh function - attempts to get a new access token using refresh token
+  const refreshAccessToken = useCallback(async (): Promise<boolean> => {
+    const refreshToken = window.localStorage.getItem(REFRESH_TOKEN_KEY);
+    if (!refreshToken) {
+      return false;
+    }
+
+    try {
+      const response = await fetch('/api/v1/auth/refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken }),
+      });
+
+      if (!response.ok) {
+        return false;
+      }
+
+      const data: unknown = await response.json();
+      if (!isValidAuthResponse(data)) {
+        return false;
+      }
+
+      setToken(data.token);
+      if (data.refreshToken) {
+        window.localStorage.setItem(REFRESH_TOKEN_KEY, data.refreshToken);
+      }
+      return true;
+    } catch {
+      return false;
+    }
   }, []);
 
   const authFetch = useCallback(
+    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Auth logic with retry requires branching
     async (input: RequestInfo, init: RequestInit = {}) => {
       if (!token) {
         throw new Error('Missing authentication token');
@@ -453,55 +449,84 @@ function AppContent(): ReactElement {
       if (init.body && !(init.body instanceof FormData) && !headers.has('Content-Type')) {
         headers.set('Content-Type', 'application/json');
       }
-      const response = await fetch(input, { ...init, headers });
-      if (response.status === 401 || response.status === 403) {
+      let response = await fetch(input, { ...init, headers });
+
+      // On 401, attempt token refresh before expiring session
+      if (response.status === 401) {
+        const refreshed = await refreshAccessToken();
+        if (refreshed) {
+          // Retry request with new token
+          const newToken = window.localStorage.getItem(TOKEN_STORAGE_KEY);
+          if (newToken) {
+            headers.set('Authorization', `Bearer ${newToken}`);
+            response = await fetch(input, { ...init, headers });
+            if (response.ok) {
+              return response;
+            }
+          }
+        }
         expireSession();
         throw new Error('Unauthorized');
       }
+
+      if (response.status === 403) {
+        expireSession('Access forbidden. Please sign in again.');
+        throw new Error('Forbidden');
+      }
       return response;
     },
-    [expireSession, token],
+    [expireSession, refreshAccessToken, token],
   );
 
-  const fetchInterfaces = useCallback(async () => {
-    if (!token) {
-      return;
-    }
-    try {
-      const response = await authFetch('/api/interfaces');
-      if (!response.ok) {
-        throw new Error('Failed to load interfaces');
-      }
-      const data = (await response.json()) as InterfaceInfo[];
-      setInterfaces(data);
-      // Auto-select highest scored interface
-      if (data.length > 0) {
-        setSelectedInterface((prev) => {
-          if (prev) return prev;
-          const best = data.reduce((a: InterfaceInfo, b: InterfaceInfo) =>
-            a.score > b.score ? a : b,
-          );
-          return best.name;
-        });
-      }
-      setConnected(true);
-    } catch (error) {
-      const err = error instanceof Error ? error : new Error('Unknown error');
-      if (err.message === 'Unauthorized') {
+  const fetchInterfaces = useCallback(
+    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Interface fetch with validation
+    async () => {
+      if (!token) {
         return;
       }
-      setConnected(false);
-    }
-  }, [authFetch, token]);
+      try {
+        const response = await authFetch('/api/v1/interfaces');
+        if (!response.ok) {
+          throw new Error('Failed to load interfaces');
+        }
+        const data: unknown = await response.json();
+        if (!isValidInterfaceArray(data)) {
+          throw new Error('Invalid interface data received from server');
+        }
+        setInterfaces(data);
+        // Auto-select highest scored interface
+        if (data.length > 0) {
+          setSelectedInterface((prev) => {
+            if (prev) return prev;
+            const best = data.reduce((a: InterfaceInfo, b: InterfaceInfo) =>
+              a.score > b.score ? a : b,
+            );
+            return best.name;
+          });
+        }
+        setConnected(true);
+      } catch (error) {
+        const err = error instanceof Error ? error : new Error('Unknown error');
+        if (err.message === 'Unauthorized') {
+          return;
+        }
+        setConnected(false);
+      }
+    },
+    [authFetch, token],
+  );
 
   const fetchStats = useCallback(async () => {
     try {
-      const response = await authFetch('/api/stats');
+      const response = await authFetch('/api/v1/stats');
       if (!response.ok) {
         throw new Error('Failed to refresh stats');
       }
-      const data = await response.json();
-      setStats(mapStatsPayload(data));
+      const data: unknown = await response.json();
+      if (!isValidStats(data)) {
+        throw new Error('Invalid stats data received from server');
+      }
+      setStats(mapStatsPayload(data as Partial<Stats>));
     } catch (error) {
       if ((error as Error).message === 'Unauthorized') {
         return;
@@ -527,13 +552,17 @@ function AppContent(): ReactElement {
           setConnected(false);
           return;
         }
-        const data = await response.json();
-        if (!data?.token) {
+        const data: unknown = await response.json();
+        if (!isValidAuthResponse(data)) {
           setLoginError('Authentication failed');
           setConnected(false);
           return;
         }
         setToken(data.token);
+        // Store refresh token for token refresh functionality
+        if (data.refreshToken) {
+          window.localStorage.setItem(REFRESH_TOKEN_KEY, data.refreshToken);
+        }
         setLoginError(null);
         setConnected(true);
       } catch (_error) {
@@ -546,59 +575,91 @@ function AppContent(): ReactElement {
     [password, username],
   );
 
-  const handleStartTest = useCallback(async (): Promise<void> => {
-    if (!token) return;
-    setIsStartingTest(true);
-    try {
-      // Determine test type based on mode
-      const testType =
-        mode === 'reflector' ? 'reflect' : (selectedTests[0] ?? 'rfc2544_throughput');
+  const handleStartTest = useCallback(
+    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Test config selection requires many branches
+    async (): Promise<void> => {
+      if (!token) return;
+      setIsStartingTest(true);
+      setTestStartError(null);
 
-      // Optimistically update status to show immediate feedback
-      setStats((prev) => ({
-        ...prev,
-        testStatus: 'starting',
-        currentTest: testType,
-      }));
+      try {
+        // Determine test type based on mode
+        const testType =
+          mode === 'reflector' ? 'reflect' : (selectedTests[0] ?? 'rfc2544_throughput');
 
-      await authFetch('/api/test/start', {
-        method: 'POST',
-        body: JSON.stringify({
-          interface: selectedInterface,
-          testType,
-          mode,
-          profile: mode === 'reflector' ? reflectorProfile : undefined,
-        }),
-      });
+        // Build test configuration based on test type
+        let config: Record<string, unknown> | undefined;
+        if (testType.startsWith('rfc2544')) {
+          config = { rfc2544: rfc2544Config };
+        } else if (testType.startsWith('rfc2889')) {
+          config = { rfc2889: rfc2889Config };
+        } else if (testType.startsWith('rfc6349')) {
+          config = { rfc6349: rfc6349Config };
+        } else if (testType.startsWith('y1564')) {
+          config = { y1564: y1564Config };
+        } else if (testType.startsWith('y1731')) {
+          config = { y1731: y1731Config };
+        } else if (testType.startsWith('tsn')) {
+          config = { tsn: tsnConfig };
+        } else if (testType === 'custom_stream') {
+          config = { trafficGen: trafficGenConfig };
+        }
 
-      // If request succeeds, update to running (backend will confirm via WebSocket)
-      setStats((prev) => ({
-        ...prev,
-        testStatus: 'running',
-      }));
-    } catch (_error) {
-      // Reset status on error
-      setStats((prev) => ({
-        ...prev,
-        testStatus: 'error',
-        currentTest: null,
-      }));
-    } finally {
-      setIsStartingTest(false);
-    }
-  }, [authFetch, mode, reflectorProfile, selectedInterface, selectedTests, token]);
+        const response = await authFetch('/api/v1/test/start', {
+          method: 'POST',
+          body: JSON.stringify({
+            interface: selectedInterface,
+            testType,
+            mode,
+            profile: mode === 'reflector' ? reflectorProfile : undefined,
+            tests: selectedTests,
+            config,
+          }),
+        });
+
+        // Check for validation errors in response
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => null);
+          const errorMessage = (errorData as { error?: string })?.error || 'Failed to start test';
+          setTestStartError(errorMessage);
+          return;
+        }
+
+        // Status updates will come from WebSocket - don't update optimistically
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to start test';
+        setTestStartError(message);
+      } finally {
+        setIsStartingTest(false);
+      }
+    },
+    [
+      authFetch,
+      mode,
+      reflectorProfile,
+      rfc2544Config,
+      rfc2889Config,
+      rfc6349Config,
+      selectedInterface,
+      selectedTests,
+      token,
+      trafficGenConfig,
+      tsnConfig,
+      y1564Config,
+      y1731Config,
+    ],
+  );
 
   const handleStopTest = useCallback(async (): Promise<void> => {
     if (!token) return;
+    setIsStoppingTest(true);
     try {
-      await authFetch('/api/test/stop', { method: 'POST' });
-      // Optimistically update status
-      setStats((prev) => ({
-        ...prev,
-        testStatus: 'cancelled',
-      }));
+      await authFetch('/api/v1/test/stop', { method: 'POST' });
+      // Status update will come from WebSocket
     } catch (_error) {
       // Silently ignore test stop errors
+    } finally {
+      setIsStoppingTest(false);
     }
   }, [authFetch, token]);
 
@@ -636,7 +697,7 @@ function AppContent(): ReactElement {
       setModuleStatus(moduleName, { status: 'starting', currentTest: testType });
 
       try {
-        await authFetch('/api/test/start', {
+        await authFetch('/api/v1/test/start', {
           method: 'POST',
           body: JSON.stringify({
             interface: selectedInterface,
@@ -674,12 +735,8 @@ function AppContent(): ReactElement {
       if (!token) return;
 
       try {
-        await authFetch('/api/test/stop', { method: 'POST' });
+        await authFetch('/api/v1/test/stop', { method: 'POST' });
         setModuleStatus(moduleName, { status: 'cancelled', currentTest: null });
-        setStats((prev) => ({
-          ...prev,
-          testStatus: 'cancelled',
-        }));
       } catch (_error) {
         // Silently ignore
       }
@@ -787,16 +844,28 @@ function AppContent(): ReactElement {
     fetchInterfaces();
   }, [fetchInterfaces]);
 
-  // Poll stats when connected
+  // Poll stats when connected - uses ref for proper cleanup on session expire
   useEffect(() => {
-    if (!connected) return;
+    if (!connected) {
+      // Clear any existing interval when disconnected
+      if (statsIntervalRef.current !== null) {
+        clearInterval(statsIntervalRef.current);
+        statsIntervalRef.current = null;
+      }
+      return;
+    }
 
-    const interval = setInterval(() => {
+    statsIntervalRef.current = window.setInterval(() => {
       void fetchStats();
     }, 1000);
     void fetchStats();
 
-    return () => clearInterval(interval);
+    return () => {
+      if (statsIntervalRef.current !== null) {
+        clearInterval(statsIntervalRef.current);
+        statsIntervalRef.current = null;
+      }
+    };
   }, [connected, fetchStats]);
 
   useEffect(() => {
@@ -805,12 +874,20 @@ function AppContent(): ReactElement {
     let ws: WebSocket | null = null;
     let reconnectTimer: number | undefined;
 
+    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: WebSocket URL construction with fallbacks
     const connect = () => {
-      const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-      const hostname = window.location.hostname;
-      const port = window.location.port === '3000' ? '8080' : window.location.port;
-      const portSegment = port ? `:${port}` : '';
-      const wsUrl = `${protocol}://${hostname}${portSegment}/api/ws/test-results?token=${token}`;
+      let wsUrl: string;
+      if (WS_BASE_URL) {
+        // Use configured WebSocket URL (e.g., from VITE_WS_URL env var)
+        wsUrl = `${WS_BASE_URL}/api/v1/ws/test-results?token=${token}`;
+      } else {
+        // Auto-detect based on current page location
+        const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+        const hostname = window.location.hostname;
+        const port = window.location.port === '3000' ? '8080' : window.location.port;
+        const portSegment = port ? `:${port}` : '';
+        wsUrl = `${protocol}://${hostname}${portSegment}/api/v1/ws/test-results?token=${token}`;
+      }
       ws = new WebSocket(wsUrl);
       ws.onmessage = handleWsMessage;
       ws.onclose = () => {
@@ -967,9 +1044,23 @@ function AppContent(): ReactElement {
             </select>
 
             {stats.testStatus === 'running' || stats.testStatus === 'starting' ? (
-              <button type="button" onClick={handleStopTest} className="btn btn-secondary">
-                <Square className="w-4 h-4" />
-                Stop {mode === 'reflector' ? 'Reflector' : 'Test'}
+              <button
+                type="button"
+                onClick={handleStopTest}
+                className="btn btn-secondary"
+                disabled={isStoppingTest}
+              >
+                {isStoppingTest ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    Stopping...
+                  </>
+                ) : (
+                  <>
+                    <Square className="w-4 h-4" />
+                    Stop {mode === 'reflector' ? 'Reflector' : 'Test'}
+                  </>
+                )}
               </button>
             ) : (
               <button
@@ -990,6 +1081,14 @@ function AppContent(): ReactElement {
                   </>
                 )}
               </button>
+            )}
+
+            {/* Test Start Error Display */}
+            {testStartError && (
+              <div className="text-sm text-[var(--color-status-error)] flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4" />
+                {testStartError}
+              </div>
             )}
           </div>
 

@@ -432,7 +432,9 @@ export function ModuleCard({
           )}
           {status.status === 'error' && (
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--color-status-error)]/10">
-              <span className="text-xs font-medium text-[var(--color-status-error)]">Error</span>
+              <span className="text-xs font-medium text-[var(--color-status-error)]">
+                Error{status.message ? `: ${status.message}` : ''}
+              </span>
             </div>
           )}
         </div>
