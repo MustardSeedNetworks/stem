@@ -13,21 +13,21 @@
  * import { useTranslation } from 'react-i18next';
  *
  * function MyComponent() {
- *   const { t } = useTranslation();
+ *   const { t } = useTranslation('common');
  *   return <button>{t('buttons.start')}</button>;
  * }
  * ```
  */
 
-import enCli from '@locales/en/cli.json';
 // Import English translations
+import enCli from '@locales/en/cli.json';
 import enCommon from '@locales/en/common.json';
 import enErrors from '@locales/en/errors.json';
 import enModules from '@locales/en/modules.json';
 import enParams from '@locales/en/params.json';
 import enSettings from '@locales/en/settings.json';
-import esCli from '@locales/es/cli.json';
 // Import Spanish translations
+import esCli from '@locales/es/cli.json';
 import esCommon from '@locales/es/common.json';
 import esErrors from '@locales/es/errors.json';
 import esModules from '@locales/es/modules.json';
@@ -37,27 +37,47 @@ import i18n from 'i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import { initReactI18next } from 'react-i18next';
 
-// Merge all translation files into single resource objects
+/**
+ * Available languages configuration.
+ */
+export const languages = [
+  { code: 'en', label: 'English', nativeLabel: 'English' },
+  { code: 'es', label: 'Spanish', nativeLabel: 'Español' },
+] as const;
+
+export type LanguageCode = (typeof languages)[number]['code'];
+
+/**
+ * Translation namespaces.
+ */
+export const namespaces = ['common', 'errors', 'modules', 'settings', 'cli', 'params'] as const;
+
+export type Namespace = (typeof namespaces)[number];
+
+/**
+ * Default namespace used when none is specified.
+ */
+export const defaultNs: Namespace = 'common';
+
+/**
+ * Resources organized by language and namespace.
+ */
 const resources = {
   en: {
-    translation: {
-      ...enCommon,
-      errors: enErrors,
-      modules: enModules,
-      settings: enSettings,
-      cli: enCli,
-      params: enParams,
-    },
+    common: enCommon,
+    errors: enErrors,
+    modules: enModules,
+    settings: enSettings,
+    cli: enCli,
+    params: enParams,
   },
   es: {
-    translation: {
-      ...esCommon,
-      errors: esErrors,
-      modules: esModules,
-      settings: esSettings,
-      cli: esCli,
-      params: esParams,
-    },
+    common: esCommon,
+    errors: esErrors,
+    modules: esModules,
+    settings: esSettings,
+    cli: esCli,
+    params: esParams,
   },
 };
 
@@ -68,6 +88,8 @@ void i18n
     resources,
     fallbackLng: 'en',
     supportedLngs: ['en', 'es'],
+    defaultNS: defaultNs,
+    ns: namespaces,
 
     // Detection options
     detection: {

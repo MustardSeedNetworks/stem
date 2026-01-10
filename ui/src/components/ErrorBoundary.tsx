@@ -149,5 +149,5 @@ class ErrorBoundaryComponent extends Component<ErrorBoundaryProps, ErrorBoundary
   }
 }
 
-// Export with translation HOC
-export const ErrorBoundary = withTranslation()(ErrorBoundaryComponent);
+// Export with translation HOC (using 'common' namespace)
+export const ErrorBoundary = withTranslation('common')(ErrorBoundaryComponent);

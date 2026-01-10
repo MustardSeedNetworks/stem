@@ -7,17 +7,7 @@
 
 import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
-
-interface LanguageOption {
-  code: string;
-  name: string;
-  nativeName: string;
-}
-
-const languages: LanguageOption[] = [
-  { code: 'en', name: 'English', nativeName: 'English' },
-  { code: 'es', name: 'Spanish', nativeName: 'Español' },
-];
+import { languages } from '../i18n';
 
 interface LanguageSwitcherProps {
   /** Show native language names instead of English names */
@@ -45,7 +35,7 @@ export function LanguageSwitcher({
     >
       {languages.map((lang) => (
         <option key={lang.code} value={lang.code}>
-          {showNative ? lang.nativeName : lang.name}
+          {showNative ? lang.nativeLabel : lang.label}
         </option>
       ))}
     </select>
