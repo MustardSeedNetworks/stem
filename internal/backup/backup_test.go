@@ -15,21 +15,15 @@ import (
 	"github.com/krisarmstrong/stem/internal/database"
 )
 
-func setupTestDB(t *testing.T) (*database.Database, func()) {
+func setupTestDB(t *testing.T) (*database.DB, func()) {
 	t.Helper()
 
 	tmpDir := t.TempDir()
 	dbPath := filepath.Join(tmpDir, "test.db")
 
-	db, err := database.NewDatabase(dbPath)
+	db, err := database.Open(dbPath)
 	if err != nil {
 		t.Fatalf("Failed to create database: %v", err)
-	}
-
-	migrateErr := db.RunMigrations()
-	if migrateErr != nil {
-		_ = db.Close()
-		t.Fatalf("Failed to run migrations: %v", migrateErr)
 	}
 
 	cleanup := func() {
@@ -39,37 +33,44 @@ func setupTestDB(t *testing.T) (*database.Database, func()) {
 	return db, cleanup
 }
 
-func seedTestData(t *testing.T, db *database.Database) {
+func seedTestData(t *testing.T, db *database.DB) {
 	t.Helper()
 
 	ctx := context.Background()
 
+	// First create a test run to hold results
+	run := &database.TestRun{
+		Module:   "benchmark",
+		TestType: "throughput",
+		Status:   database.TestRunStatusCompleted,
+	}
+	runID, runErr := db.TestRuns().Create(ctx, run)
+	if runErr != nil {
+		t.Fatalf("Failed to create test run: %v", runErr)
+	}
+
 	// Add test results
-	for i := range 3 {
+	for i := 0; i < 3; i++ {
 		result := &database.TestResult{
-			ID:         0,
-			TestType:   "throughput",
-			Module:     "benchmark",
-			Status:     "completed",
-			ResultJSON: json.RawMessage(`{"rate": 1000}`),
-			CreatedAt:  time.Now().Add(-time.Duration(i) * time.Hour),
+			RunID:      runID,
+			MetricType: database.MetricTypeThroughput,
+			Value:      float64(1000 + i*100),
+			Unit:       "Mbps",
 		}
-		saveErr := db.SaveTestResult(ctx, result)
+		_, saveErr := db.TestResults().Create(ctx, result)
 		if saveErr != nil {
 			t.Fatalf("Failed to save test result: %v", saveErr)
 		}
 	}
 
 	// Add audit logs
-	for i := range 2 {
+	for i := 0; i < 2; i++ {
 		entry := &database.AuditLogEntry{
-			ID:        0,
-			EventType: "auth_success",
+			Action:    database.AuditActionLogin,
 			User:      "admin",
-			Details:   "Login successful",
-			CreatedAt: time.Now().Add(-time.Duration(i) * time.Hour),
+			IPAddress: "192.168.1.1",
 		}
-		saveErr := db.SaveAuditLog(ctx, entry)
+		_, saveErr := db.AuditLog().Log(ctx, entry)
 		if saveErr != nil {
 			t.Fatalf("Failed to save audit log: %v", saveErr)
 		}
@@ -78,10 +79,11 @@ func seedTestData(t *testing.T, db *database.Database) {
 	// Add session (use UTC and add significant buffer to avoid timing issues)
 	session := &database.Session{
 		TokenID:   "test-token-123",
+		Username:  "admin",
+		Reason:    database.SessionReasonLogout,
 		ExpiresAt: time.Now().UTC().Add(24 * time.Hour),
-		CreatedAt: time.Now().UTC(),
 	}
-	saveErr := db.SaveSession(ctx, session)
+	_, saveErr := db.Sessions().Blacklist(ctx, session)
 	if saveErr != nil {
 		t.Fatalf("Failed to save session: %v", saveErr)
 	}
@@ -106,8 +108,8 @@ func TestExport(t *testing.T) {
 		t.Fatalf("Export failed: %v", err)
 	}
 
-	// Should have 3 test results + 2 audit logs + 1 session = 6 records
-	expectedCount := 6
+	// Should have 1 test run + 3 test results + 2 audit logs + 1 session = 7 records
+	expectedCount := 7
 	if recordCount != expectedCount {
 		t.Errorf("Expected %d records, got %d", expectedCount, recordCount)
 	}
@@ -162,8 +164,8 @@ func TestExportNilOptions(t *testing.T) {
 		t.Fatalf("Export with nil options failed: %v", err)
 	}
 
-	if recordCount != 6 {
-		t.Errorf("Expected 6 records, got %d", recordCount)
+	if recordCount != 7 {
+		t.Errorf("Expected 7 records, got %d", recordCount)
 	}
 }
 
@@ -181,8 +183,8 @@ func TestExportToWriter(t *testing.T) {
 		t.Fatalf("ExportToWriter failed: %v", err)
 	}
 
-	if recordCount != 6 {
-		t.Errorf("Expected 6 records, got %d", recordCount)
+	if recordCount != 7 {
+		t.Errorf("Expected 7 records, got %d", recordCount)
 	}
 
 	// Verify content is valid JSON
@@ -219,8 +221,8 @@ func TestImport(t *testing.T) {
 		t.Fatalf("Import failed: %v", importErr)
 	}
 
-	if importCount != 6 {
-		t.Errorf("Expected 6 imported records, got %d", importCount)
+	if importCount != 7 {
+		t.Errorf("Expected 7 imported records, got %d", importCount)
 	}
 
 	// Verify data was imported
@@ -312,8 +314,8 @@ func TestImportFromReader(t *testing.T) {
 		t.Fatalf("ImportFromReader failed: %v", importErr)
 	}
 
-	if importCount != 6 {
-		t.Errorf("Expected 6 imported records, got %d", importCount)
+	if importCount != 7 {
+		t.Errorf("Expected 7 imported records, got %d", importCount)
 	}
 }
 
@@ -560,9 +562,11 @@ func TestImportExpiredSessions(t *testing.T) {
 		AuditLogs:   nil,
 		Sessions: []database.Session{
 			{
-				TokenID:   "expired-token",
-				ExpiresAt: time.Now().Add(-time.Hour), // Already expired
-				CreatedAt: time.Now().Add(-2 * time.Hour),
+				TokenID:       "expired-token",
+				Username:      "admin",
+				Reason:        database.SessionReasonLogout,
+				BlacklistedAt: time.Now().Add(-2 * time.Hour),
+				ExpiresAt:     time.Now().Add(-time.Hour), // Already expired
 			},
 		},
 		LicenseInfo: nil,

@@ -50,6 +50,7 @@ type Metadata struct {
 // Data contains all data that can be backed up.
 type Data struct {
 	Metadata    Metadata                 `json:"metadata"`
+	TestRuns    []database.TestRun       `json:"testRuns,omitempty"`
 	TestResults []database.TestResult    `json:"testResults,omitempty"`
 	AuditLogs   []database.AuditLogEntry `json:"auditLogs,omitempty"`
 	Sessions    []database.Session       `json:"sessions,omitempty"`
@@ -116,8 +117,16 @@ func Export(ctx context.Context, db *database.Database, outputPath string, opts 
 
 	recordCount := 0
 
-	// Export test results
+	// Export test runs and results (runs must be included for results to work)
 	if opts.IncludeTestResults {
+		runs, runsErr := db.GetTestRuns(ctx)
+		if runsErr != nil {
+			return 0, fmt.Errorf("%w: failed to get test runs: %w", ErrBackupFailed, runsErr)
+		}
+		backup.TestRuns = runs
+		recordCount += len(runs)
+		logging.Debug("Exported test runs", "count", len(runs))
+
 		results, resultsErr := db.GetTestResults(ctx, nil) // Get all results
 		if resultsErr != nil {
 			return 0, fmt.Errorf("%w: failed to get test results: %w", ErrBackupFailed, resultsErr)
@@ -198,8 +207,15 @@ func ExportToWriter(ctx context.Context, db *database.Database, w io.Writer, opt
 
 	recordCount := 0
 
-	// Export test results
+	// Export test runs and results (runs must be included for results to work)
 	if opts.IncludeTestResults {
+		runs, runsErr := db.GetTestRuns(ctx)
+		if runsErr != nil {
+			return 0, fmt.Errorf("%w: failed to get test runs: %w", ErrBackupFailed, runsErr)
+		}
+		backup.TestRuns = runs
+		recordCount += len(runs)
+
 		results, resultsErr := db.GetTestResults(ctx, nil)
 		if resultsErr != nil {
 			return 0, fmt.Errorf("%w: failed to get test results: %w", ErrBackupFailed, resultsErr)
@@ -302,6 +318,8 @@ func importFromData(ctx context.Context, db *database.Database, data []byte, opt
 	}
 
 	recordCount := 0
+	// Import test runs first (test results have foreign key to runs)
+	recordCount += importTestRuns(ctx, db, backup.TestRuns, opts.SkipTestResults)
 	recordCount += importTestResults(ctx, db, backup.TestResults, opts.SkipTestResults)
 	recordCount += importAuditLogs(ctx, db, backup.AuditLogs, opts.SkipAuditLogs)
 	recordCount += importSessions(ctx, db, backup.Sessions, opts.SkipSessions)
@@ -323,6 +341,25 @@ func parseBackup(data []byte) (*Data, error) {
 	}
 
 	return &backup, nil
+}
+
+func importTestRuns(ctx context.Context, db *database.Database, runs []database.TestRun, skip bool) int {
+	if skip || len(runs) == 0 {
+		return 0
+	}
+
+	count := 0
+	for i := range runs {
+		run := &runs[i]
+		saveErr := db.SaveTestRun(ctx, run)
+		if saveErr != nil {
+			logging.Warn("Failed to import test run", "error", saveErr)
+			continue
+		}
+		count++
+	}
+	logging.Debug("Imported test runs", "count", len(runs))
+	return count
 }
 
 func importTestResults(ctx context.Context, db *database.Database, results []database.TestResult, skip bool) int {

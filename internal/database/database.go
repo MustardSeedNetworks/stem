@@ -1,14 +1,26 @@
-// Copyright (c) 2025 Mustard Seed Networks. All rights reserved.
-
-// Package database provides SQLite database persistence for The Stem.
+// Package database provides SQLite persistence for The Stem.
 //
-// This package handles:
-//   - Database connection management
-//   - Schema migrations
-//   - CRUD operations for test results, audit logs, and sessions
+// It handles connection pooling, schema migrations, and provides a clean
+// interface for data persistence operations. Uses modernc.org/sqlite for
+// pure Go SQLite implementation (no CGO required).
 //
-// The database stores test results for historical analysis, audit logs for
-// security compliance, and session data for token blacklist persistence.
+// Features:
+// - Automatic schema migrations with versioning
+// - Connection pooling and health checks
+// - Support for test results, users, and settings storage
+// - Data retention policies with automatic cleanup
+//
+// Usage:
+//
+//	db, err := database.Open("/path/to/stem.db")
+//	if err != nil {
+//	    log.Fatal(err)
+//	}
+//	defer db.Close()
+//
+//	// Use repositories for data access
+//	tests := db.TestResults()
+//	settings := db.Settings()
 package database
 
 import (
@@ -17,136 +29,513 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
 	"sync"
+	"time"
 
-	// SQLite driver.
-	_ "github.com/mattn/go-sqlite3"
-
-	"github.com/krisarmstrong/stem/internal/logging"
+	_ "modernc.org/sqlite" // Pure Go SQLite driver
 )
 
-var (
-	// ErrDatabaseClosed indicates an operation was attempted on a closed database.
-	ErrDatabaseClosed = errors.New("database is closed")
-	// ErrMigrationFailed indicates a migration could not be applied.
-	ErrMigrationFailed = errors.New("migration failed")
-	// ErrRecordNotFound indicates the requested record does not exist.
-	ErrRecordNotFound = errors.New("record not found")
+// Connection pool configuration defaults.
+const (
+	// defaultMaxOpenConns is the maximum number of open database connections.
+	defaultMaxOpenConns = 10
+
+	// defaultMaxIdleConns is the maximum number of idle connections in the pool.
+	defaultMaxIdleConns = 5
+
+	// defaultRetentionDays is the default number of days to retain data.
+	defaultRetentionDays = 90
+
+	// defaultBusyTimeoutMs is the SQLite busy timeout in milliseconds.
+	defaultBusyTimeoutMs = 5000
+
+	// dbConnTimeoutSeconds is the timeout for database connection operations.
+	dbConnTimeoutSeconds = 30
+
+	// dbPingTimeoutSeconds is the timeout for database ping/checkpoint operations.
+	dbPingTimeoutSeconds = 5
 )
 
-// Database wraps a SQLite connection with thread-safe access.
-type Database struct {
-	db     *sql.DB
+// DB represents the database connection and provides access to repositories.
+type DB struct {
+	conn   *sql.DB
+	path   string
 	mu     sync.RWMutex
 	closed bool
-	path   string
+
+	// Repositories - lazily initialized
+	testResults *TestResultRepository
+	testRuns    *TestRunRepository
+	settings    *SettingsRepository
+	auditLog    *AuditLogRepository
+	sessions    *SessionRepository
 }
 
-// NewDatabase opens or creates a SQLite database at the given path.
-// The parent directory is created if it does not exist.
-// Returns an initialized Database ready for use.
-func NewDatabase(path string) (*Database, error) {
-	// Ensure parent directory exists.
-	dir := filepath.Dir(path)
-	if dir != "" && dir != "." {
-		mkdirErr := os.MkdirAll(dir, 0o750)
-		if mkdirErr != nil {
-			return nil, fmt.Errorf("create database directory: %w", mkdirErr)
+// Database is an alias for DB for backward compatibility.
+type Database = DB
+
+// Config holds database configuration options.
+type Config struct {
+	// Path to the SQLite database file
+	Path string
+
+	// MaxOpenConns sets the maximum number of open connections
+	MaxOpenConns int
+
+	// MaxIdleConns sets the maximum number of idle connections
+	MaxIdleConns int
+
+	// ConnMaxLifetime sets the maximum lifetime of a connection
+	ConnMaxLifetime time.Duration
+
+	// RetentionDays sets how many days of data to retain (0 = forever)
+	RetentionDays int
+
+	// EnableWAL enables Write-Ahead Logging for better concurrency
+	EnableWAL bool
+
+	// BusyTimeout sets the timeout for waiting on locked database (ms)
+	BusyTimeout int
+}
+
+// DefaultConfig returns sensible defaults for database configuration.
+func DefaultConfig(path string) Config {
+	return Config{
+		Path:            path,
+		MaxOpenConns:    defaultMaxOpenConns,
+		MaxIdleConns:    defaultMaxIdleConns,
+		ConnMaxLifetime: time.Hour,
+		RetentionDays:   defaultRetentionDays,
+		EnableWAL:       true,
+		BusyTimeout:     defaultBusyTimeoutMs,
+	}
+}
+
+// Open creates a new database connection with default configuration.
+func Open(path string) (*DB, error) {
+	return OpenWithConfig(DefaultConfig(path))
+}
+
+// OpenWithAutoRebuild opens the database, automatically recreating it if corrupted or missing.
+// If the database cannot be opened due to corruption, it backs up the corrupted file
+// and creates a fresh database.
+func OpenWithAutoRebuild(path string) (*DB, error) {
+	return OpenWithConfigAndAutoRebuild(DefaultConfig(path))
+}
+
+// OpenWithConfigAndAutoRebuild opens the database with auto-rebuild on corruption.
+func OpenWithConfigAndAutoRebuild(cfg Config) (*DB, error) {
+	// First attempt: try to open normally
+	db, err := OpenWithConfig(cfg)
+	if err == nil {
+		return db, nil
+	}
+
+	// Check if this is a recoverable error (corruption, malformed, etc.)
+	if !isDatabaseCorrupted(err) {
+		return nil, err
+	}
+
+	// Log the corruption and attempt recovery
+	fmt.Fprintf(os.Stderr, "Database corruption detected: %v\nAttempting auto-rebuild...\n", err)
+
+	// Back up corrupted file if it exists
+	if _, statErr := os.Stat(cfg.Path); statErr == nil {
+		backupPath := cfg.Path + ".corrupted." + time.Now().Format("20060102-150405")
+		if renameErr := os.Rename(cfg.Path, backupPath); renameErr != nil {
+			fmt.Fprintf(os.Stderr, "Warning: could not backup corrupted database: %v\n", renameErr)
+			// Try to remove instead
+			if removeErr := os.Remove(cfg.Path); removeErr != nil {
+				return nil, fmt.Errorf("failed to remove corrupted database: %w", removeErr)
+			}
+		} else {
+			fmt.Fprintf(os.Stderr, "Corrupted database backed up to: %s\n", backupPath)
 		}
 	}
 
-	// Open SQLite database with recommended pragmas for performance and safety.
-	dsn := fmt.Sprintf("%s?_journal_mode=WAL&_synchronous=NORMAL&_busy_timeout=5000&_foreign_keys=ON", path)
-	db, err := sql.Open("sqlite3", dsn)
+	// Remove WAL and SHM files if they exist
+	_ = os.Remove(cfg.Path + "-wal")
+	_ = os.Remove(cfg.Path + "-shm")
+
+	// Second attempt: create fresh database
+	db, err = OpenWithConfig(cfg)
 	if err != nil {
-		return nil, fmt.Errorf("open database: %w", err)
+		return nil, fmt.Errorf("failed to create fresh database after corruption: %w", err)
 	}
 
-	// Verify connection.
-	pingErr := db.PingContext(context.Background())
-	if pingErr != nil {
-		_ = db.Close()
-		return nil, fmt.Errorf("ping database: %w", pingErr)
+	fmt.Fprintf(os.Stderr, "Database successfully rebuilt at: %s\n", cfg.Path)
+	return db, nil
+}
+
+// isDatabaseCorrupted checks if an error indicates database corruption.
+func isDatabaseCorrupted(err error) bool {
+	if err == nil {
+		return false
 	}
 
-	// Configure connection pool for embedded use.
-	db.SetMaxOpenConns(1) // SQLite only supports one writer.
-	db.SetMaxIdleConns(1)
-	db.SetConnMaxLifetime(0)
-
-	logging.Info("Database opened", "path", path)
-
-	d := &Database{
-		db:     db,
-		mu:     sync.RWMutex{},
-		closed: false,
-		path:   path,
+	errStr := err.Error()
+	corruptionIndicators := []string{
+		"database disk image is malformed",
+		"file is not a database",
+		"file is encrypted or is not a database",
+		"database or disk is full",
+		"disk I/O error",
+		"corrupt",
+		"malformed",
+		"no such table",
+		"failed to run migrations",
 	}
 
-	return d, nil
+	for _, indicator := range corruptionIndicators {
+		if containsIgnoreCase(errStr, indicator) {
+			return true
+		}
+	}
+	return false
+}
+
+// containsIgnoreCase checks if s contains substr (case-insensitive).
+func containsIgnoreCase(s, substr string) bool {
+	if len(substr) == 0 {
+		return true
+	}
+	if len(s) < len(substr) {
+		return false
+	}
+	for i := 0; i <= len(s)-len(substr); i++ {
+		if matchIgnoreCase(s[i:i+len(substr)], substr) {
+			return true
+		}
+	}
+	return false
+}
+
+func matchIgnoreCase(a, b string) bool {
+	for i := range len(a) {
+		ca, cb := a[i], b[i]
+		if ca >= 'A' && ca <= 'Z' {
+			ca += 32
+		}
+		if cb >= 'A' && cb <= 'Z' {
+			cb += 32
+		}
+		if ca != cb {
+			return false
+		}
+	}
+	return true
+}
+
+// OpenWithConfig creates a new database connection with custom configuration.
+func OpenWithConfig(cfg Config) (*DB, error) {
+	if cfg.Path == "" {
+		return nil, errors.New("database path is required")
+	}
+
+	// Build connection string with pragmas
+	dsn := fmt.Sprintf("file:%s?_txlock=immediate", cfg.Path)
+	if cfg.BusyTimeout > 0 {
+		dsn += fmt.Sprintf("&_busy_timeout=%d", cfg.BusyTimeout)
+	}
+
+	conn, err := sql.Open("sqlite", dsn)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open database: %w", err)
+	}
+
+	// Configure connection pool
+	conn.SetMaxOpenConns(cfg.MaxOpenConns)
+	conn.SetMaxIdleConns(cfg.MaxIdleConns)
+	conn.SetConnMaxLifetime(cfg.ConnMaxLifetime)
+
+	// Apply pragmas for performance and safety
+	pragmas := []string{
+		"PRAGMA foreign_keys = ON",
+		"PRAGMA journal_mode = WAL",
+		"PRAGMA synchronous = NORMAL",
+		"PRAGMA cache_size = -64000", // 64MB cache
+		"PRAGMA temp_store = MEMORY",
+	}
+
+	if !cfg.EnableWAL {
+		pragmas[1] = "PRAGMA journal_mode = DELETE"
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), dbConnTimeoutSeconds*time.Second)
+	defer cancel()
+
+	for _, pragma := range pragmas {
+		if _, pragmaErr := conn.ExecContext(ctx, pragma); pragmaErr != nil {
+			_ = conn.Close()
+			return nil, fmt.Errorf("failed to set pragma %q: %w", pragma, pragmaErr)
+		}
+	}
+
+	// Verify connection
+	if pingErr := conn.PingContext(ctx); pingErr != nil {
+		_ = conn.Close()
+		return nil, fmt.Errorf("failed to ping database: %w", pingErr)
+	}
+
+	db := &DB{
+		conn: conn,
+		path: cfg.Path,
+	}
+
+	// Run migrations
+	if migrateErr := db.migrate(); migrateErr != nil {
+		_ = conn.Close()
+		return nil, fmt.Errorf("failed to run migrations: %w", migrateErr)
+	}
+
+	return db, nil
 }
 
 // Close closes the database connection.
-// After Close, all operations will return ErrDatabaseClosed.
-func (d *Database) Close() error {
-	d.mu.Lock()
-	defer d.mu.Unlock()
+func (db *DB) Close() error {
+	db.mu.Lock()
+	defer db.mu.Unlock()
 
-	if d.closed {
+	if db.closed {
 		return nil
 	}
 
-	d.closed = true
-	closeErr := d.db.Close()
-	if closeErr != nil {
-		return fmt.Errorf("close database: %w", closeErr)
+	db.closed = true
+
+	// Checkpoint WAL before closing for clean shutdown
+	ctx, cancel := context.WithTimeout(context.Background(), dbPingTimeoutSeconds*time.Second)
+	defer cancel()
+	if _, err := db.conn.ExecContext(ctx, "PRAGMA wal_checkpoint(TRUNCATE)"); err != nil {
+		// Log but don't fail - this is a cleanup operation
+		fmt.Fprintf(os.Stderr, "warning: failed to checkpoint WAL: %v\n", err)
 	}
 
-	logging.Info("Database closed", "path", d.path)
+	if err := db.conn.Close(); err != nil {
+		return fmt.Errorf("closing database connection: %w", err)
+	}
 	return nil
 }
 
-// RunMigrations applies all pending database migrations.
-// Migrations are idempotent and can be run multiple times safely.
-func (d *Database) RunMigrations() error {
-	d.mu.Lock()
-	defer d.mu.Unlock()
+// Ping checks database connectivity.
+func (db *DB) Ping(ctx context.Context) error {
+	db.mu.RLock()
+	defer db.mu.RUnlock()
 
-	if d.closed {
-		return ErrDatabaseClosed
+	if db.closed {
+		return errors.New("database is closed")
 	}
 
-	logging.Info("Running database migrations")
+	if err := db.conn.PingContext(ctx); err != nil {
+		return fmt.Errorf("pinging database: %w", err)
+	}
+	return nil
+}
 
-	for i, migration := range migrations {
-		_, execErr := d.db.ExecContext(context.Background(), migration)
-		if execErr != nil {
-			return fmt.Errorf("%w: migration %d: %w", ErrMigrationFailed, i+1, execErr)
+// Path returns the database file path.
+func (db *DB) Path() string {
+	return db.path
+}
+
+// Stats returns database connection statistics.
+func (db *DB) Stats() sql.DBStats {
+	return db.conn.Stats()
+}
+
+// TestResults returns the test results repository.
+func (db *DB) TestResults() *TestResultRepository {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	if db.testResults == nil {
+		db.testResults = &TestResultRepository{db: db}
+	}
+	return db.testResults
+}
+
+// TestRuns returns the test runs repository.
+func (db *DB) TestRuns() *TestRunRepository {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	if db.testRuns == nil {
+		db.testRuns = &TestRunRepository{db: db}
+	}
+	return db.testRuns
+}
+
+// Settings returns the settings repository.
+func (db *DB) Settings() *SettingsRepository {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	if db.settings == nil {
+		db.settings = &SettingsRepository{db: db}
+	}
+	return db.settings
+}
+
+// AuditLog returns the audit log repository.
+func (db *DB) AuditLog() *AuditLogRepository {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	if db.auditLog == nil {
+		db.auditLog = &AuditLogRepository{db: db}
+	}
+	return db.auditLog
+}
+
+// Sessions returns the sessions repository.
+func (db *DB) Sessions() *SessionRepository {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	if db.sessions == nil {
+		db.sessions = &SessionRepository{db: db}
+	}
+	return db.sessions
+}
+
+// GetTestRuns returns all test runs (convenience method for backup).
+func (db *DB) GetTestRuns(ctx context.Context) ([]TestRun, error) {
+	return db.TestRuns().List(ctx, TestRunQueryOptions{})
+}
+
+// GetTestResults returns all test results (convenience method for backup).
+func (db *DB) GetTestResults(ctx context.Context, _ any) ([]TestResult, error) {
+	return db.TestResults().List(ctx, TestResultQueryOptions{})
+}
+
+// GetAuditLogs returns audit logs (convenience method for backup).
+func (db *DB) GetAuditLogs(ctx context.Context, limit int) ([]AuditLogEntry, error) {
+	return db.AuditLog().List(ctx, AuditLogQueryOptions{Limit: limit})
+}
+
+// GetAllBlacklistedSessions returns all blacklisted sessions (convenience method for backup).
+func (db *DB) GetAllBlacklistedSessions(ctx context.Context) ([]Session, error) {
+	return db.Sessions().ListAll(ctx)
+}
+
+// SaveTestRun saves a test run (convenience method for backup restore).
+func (db *DB) SaveTestRun(ctx context.Context, run *TestRun) error {
+	_, err := db.TestRuns().Create(ctx, run)
+	return err
+}
+
+// CreateTestResult creates a test result (convenience method for backup restore).
+func (db *DB) CreateTestResult(ctx context.Context, result *TestResult) error {
+	_, err := db.TestResults().Create(ctx, result)
+	return err
+}
+
+// SaveTestResult saves a test result (alias for CreateTestResult).
+func (db *DB) SaveTestResult(ctx context.Context, result *TestResult) error {
+	return db.CreateTestResult(ctx, result)
+}
+
+// CreateAuditLog creates an audit log entry (convenience method for backup restore).
+func (db *DB) CreateAuditLog(ctx context.Context, entry *AuditLogEntry) error {
+	_, err := db.AuditLog().Log(ctx, entry)
+	return err
+}
+
+// SaveAuditLog saves an audit log entry (alias for CreateAuditLog).
+func (db *DB) SaveAuditLog(ctx context.Context, entry *AuditLogEntry) error {
+	return db.CreateAuditLog(ctx, entry)
+}
+
+// BlacklistSession adds a session to the blacklist (convenience method for backup restore).
+func (db *DB) BlacklistSession(ctx context.Context, session *Session) error {
+	_, err := db.Sessions().Blacklist(ctx, session)
+	return err
+}
+
+// SaveSession saves a session (alias for BlacklistSession).
+func (db *DB) SaveSession(ctx context.Context, session *Session) error {
+	return db.BlacklistSession(ctx, session)
+}
+
+// Exec executes a query without returning any rows.
+func (db *DB) Exec(ctx context.Context, query string, args ...any) (sql.Result, error) {
+	db.mu.RLock()
+	defer db.mu.RUnlock()
+
+	if db.closed {
+		return nil, errors.New("database is closed")
+	}
+
+	result, err := db.conn.ExecContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("executing query: %w", err)
+	}
+	return result, nil
+}
+
+// Query executes a query that returns rows.
+// Caller is responsible for closing the returned rows.
+func (db *DB) Query(ctx context.Context, query string, args ...any) (*sql.Rows, error) {
+	db.mu.RLock()
+	defer db.mu.RUnlock()
+
+	if db.closed {
+		return nil, errors.New("database is closed")
+	}
+
+	//nolint:sqlclosecheck // Caller is responsible for closing rows
+	rows, err := db.conn.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("querying database: %w", err)
+	}
+	return rows, nil
+}
+
+// QueryRow executes a query that returns at most one row.
+func (db *DB) QueryRow(ctx context.Context, query string, args ...any) *sql.Row {
+	db.mu.RLock()
+	defer db.mu.RUnlock()
+
+	return db.conn.QueryRowContext(ctx, query, args...)
+}
+
+// BeginTx starts a new transaction.
+func (db *DB) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error) {
+	db.mu.RLock()
+	defer db.mu.RUnlock()
+
+	if db.closed {
+		return nil, errors.New("database is closed")
+	}
+
+	tx, err := db.conn.BeginTx(ctx, opts)
+	if err != nil {
+		return nil, fmt.Errorf("beginning transaction: %w", err)
+	}
+	return tx, nil
+}
+
+// WithTx executes a function within a transaction.
+// If the function returns an error, the transaction is rolled back.
+// Otherwise, the transaction is committed.
+func (db *DB) WithTx(ctx context.Context, fn func(*sql.Tx) error) error {
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+
+	if fnErr := fn(tx); fnErr != nil {
+		if rbErr := tx.Rollback(); rbErr != nil {
+			return fmt.Errorf(
+				"failed to rollback transaction: %w (original error: %w)",
+				rbErr,
+				fnErr,
+			)
 		}
+		return fnErr
 	}
 
-	logging.Info("Database migrations completed", "count", len(migrations))
-	return nil
-}
-
-// Path returns the filesystem path to the database file.
-func (d *Database) Path() string {
-	return d.path
-}
-
-// DB returns the underlying sql.DB for advanced operations.
-// Use with caution; prefer the typed methods when possible.
-func (d *Database) DB() *sql.DB {
-	d.mu.RLock()
-	defer d.mu.RUnlock()
-	return d.db
-}
-
-// ensureOpen returns an error if the database is closed.
-func (d *Database) ensureOpen() error {
-	if d.closed {
-		return ErrDatabaseClosed
+	if commitErr := tx.Commit(); commitErr != nil {
+		return fmt.Errorf("failed to commit transaction: %w", commitErr)
 	}
+
 	return nil
 }

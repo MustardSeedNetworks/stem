@@ -3,418 +3,194 @@
 package database
 
 import (
-	"context"
-	"database/sql"
-	"encoding/json"
-	"errors"
-	"fmt"
 	"time"
 )
 
-// TestResult represents a completed test result stored in the database.
+// Pagination defaults.
+const (
+	// defaultPaginationLimit is the default number of items returned per page.
+	defaultPaginationLimit = 100
+)
+
+// User represents an authenticated user.
+type User struct {
+	ID             int64      `json:"id"`
+	Username       string     `json:"username"`
+	PasswordHash   string     `json:"-"` // Never expose in JSON
+	Role           string     `json:"role"`
+	IsActive       bool       `json:"isActive"`
+	LastLogin      *time.Time `json:"lastLogin,omitempty"`
+	FailedAttempts int        `json:"failedAttempts"`
+	LockedUntil    *time.Time `json:"lockedUntil,omitempty"`
+	TokenVersion   int        `json:"tokenVersion"`
+	CreatedAt      time.Time  `json:"createdAt"`
+	UpdatedAt      time.Time  `json:"updatedAt"`
+}
+
+// TestRun represents a test execution instance.
+type TestRun struct {
+	ID            string     `json:"id"`
+	Module        string     `json:"module"`        // benchmark, servicetest, trafficgen, measure, certify
+	TestType      string     `json:"testType"`      // throughput, latency, frame_loss, etc.
+	Status        string     `json:"status"`        // pending, running, completed, failed, cancelled
+	ConfigJSON    string     `json:"config"`        // JSON string of test configuration
+	InterfaceName string     `json:"interfaceName"` // e.g., eth0
+	TargetAddress string     `json:"targetAddress"` // Target IP or hostname
+	StartedAt     time.Time  `json:"startedAt"`
+	CompletedAt   *time.Time `json:"completedAt,omitempty"`
+	DurationMs    *int64     `json:"durationMs,omitempty"`
+	ErrorMessage  string     `json:"errorMessage,omitempty"`
+	Metadata      string     `json:"metadata,omitempty"` // JSON string for extra data
+}
+
+// TestRunStatus constants.
+const (
+	TestRunStatusPending   = "pending"
+	TestRunStatusRunning   = "running"
+	TestRunStatusCompleted = "completed"
+	TestRunStatusFailed    = "failed"
+	TestRunStatusCancelled = "cancelled"
+)
+
+// TestResult represents a single test metric data point.
 type TestResult struct {
-	ID         int64           `json:"id"`
-	TestType   string          `json:"testType"`
-	Module     string          `json:"module"`
-	Status     string          `json:"status"`
-	ResultJSON json.RawMessage `json:"resultJson,omitempty"`
-	CreatedAt  time.Time       `json:"createdAt"`
+	ID         int64     `json:"id"`
+	RunID      string    `json:"runId"`
+	MetricType string    `json:"metricType"` // throughput, latency, frame_loss, jitter, etc.
+	FrameSize  *int      `json:"frameSize,omitempty"`
+	Value      float64   `json:"value"`
+	Unit       string    `json:"unit,omitempty"` // Mbps, us, %, etc.
+	Timestamp  time.Time `json:"timestamp"`
+	Metadata   string    `json:"metadata,omitempty"` // JSON string for extra data
 }
 
-// AuditLogEntry represents a security audit log entry.
+// MetricType constants for common metric types.
+const (
+	MetricTypeThroughput = "throughput"
+	MetricTypeLatency    = "latency"
+	MetricTypeLatencyMin = "latency_min"
+	MetricTypeLatencyMax = "latency_max"
+	MetricTypeLatencyAvg = "latency_avg"
+	MetricTypeFrameLoss  = "frame_loss"
+	MetricTypeJitter     = "jitter"
+	MetricTypeBackToBack = "back_to_back"
+)
+
+// TestSummary represents aggregated test results.
+type TestSummary struct {
+	ID             int64     `json:"id"`
+	RunID          string    `json:"runId"`
+	Module         string    `json:"module"`
+	TestType       string    `json:"testType"`
+	Pass           bool      `json:"pass"`
+	ThroughputMbps *float64  `json:"throughputMbps,omitempty"`
+	LatencyAvgUs   *float64  `json:"latencyAvgUs,omitempty"`
+	LatencyMinUs   *float64  `json:"latencyMinUs,omitempty"`
+	LatencyMaxUs   *float64  `json:"latencyMaxUs,omitempty"`
+	JitterUs       *float64  `json:"jitterUs,omitempty"`
+	FrameLossPct   *float64  `json:"frameLossPct,omitempty"`
+	FramesSent     *int64    `json:"framesSent,omitempty"`
+	FramesReceived *int64    `json:"framesReceived,omitempty"`
+	CreatedAt      time.Time `json:"createdAt"`
+}
+
+// Profile represents a saved test configuration.
+type Profile struct {
+	ID          string    `json:"id"`
+	Name        string    `json:"name"`
+	Description string    `json:"description,omitempty"`
+	Module      string    `json:"module"`
+	ConfigJSON  string    `json:"config"` // JSON string of config
+	IsDefault   bool      `json:"isDefault"`
+	CreatedAt   time.Time `json:"createdAt"`
+	UpdatedAt   time.Time `json:"updatedAt"`
+}
+
+// Setting represents a key-value setting.
+type Setting struct {
+	Key       string    `json:"key"`
+	Value     string    `json:"value"`
+	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+// AuditLogEntry represents an audit log entry.
 type AuditLogEntry struct {
-	ID        int64     `json:"id"`
-	EventType string    `json:"eventType"`
-	User      string    `json:"user,omitempty"`
-	Details   string    `json:"details,omitempty"`
-	CreatedAt time.Time `json:"createdAt"`
+	ID           int64     `json:"id"`
+	Action       string    `json:"action"`
+	User         string    `json:"user,omitempty"`
+	ResourceType string    `json:"resourceType,omitempty"`
+	ResourceID   string    `json:"resourceId,omitempty"`
+	OldValueJSON string    `json:"oldValue,omitempty"`
+	NewValueJSON string    `json:"newValue,omitempty"`
+	IPAddress    string    `json:"ipAddress,omitempty"`
+	UserAgent    string    `json:"userAgent,omitempty"`
+	Timestamp    time.Time `json:"timestamp"`
 }
 
-// Session represents a revoked token session for blacklist persistence.
+
+// Session represents a blacklisted/invalidated token session.
 type Session struct {
-	TokenID   string    `json:"tokenId"`
-	ExpiresAt time.Time `json:"expiresAt"`
-	CreatedAt time.Time `json:"createdAt"`
+	ID           int64     `json:"id"`
+	TokenID      string    `json:"tokenId"`      // JWT ID (jti claim)
+	Username     string    `json:"username"`
+	Reason       string    `json:"reason"`       // logout, password_change, forced_logout
+	BlacklistedAt time.Time `json:"blacklistedAt"`
+	ExpiresAt    time.Time `json:"expiresAt"`    // When the token would have expired
 }
 
-// TestResultFilter defines optional filters for querying test results.
-type TestResultFilter struct {
-	Module   string
-	TestType string
-	Status   string
-	Limit    int
-	Offset   int
+// SessionReason constants.
+const (
+	SessionReasonLogout         = "logout"
+	SessionReasonPasswordChange = "password_change"
+	SessionReasonForcedLogout   = "forced_logout"
+)
+
+// AuditAction constants for common audit actions.
+const (
+	AuditActionLogin        = "login"
+	AuditActionLogout       = "logout"
+	AuditActionLoginFailed  = "login_failed"
+	AuditActionTestStarted  = "test_started"
+	AuditActionTestComplete = "test_completed"
+	AuditActionTestFailed   = "test_failed"
+	AuditActionConfigChange = "config_change"
+	AuditActionUserCreated  = "user_created"
+	AuditActionUserUpdated  = "user_updated"
+)
+
+// TimeRange represents a time range for queries.
+type TimeRange struct {
+	Start time.Time
+	End   time.Time
 }
 
-// SaveTestResult persists a test result to the database.
-func (d *Database) SaveTestResult(ctx context.Context, result *TestResult) error {
-	d.mu.Lock()
-	defer d.mu.Unlock()
-
-	openErr := d.ensureOpen()
-	if openErr != nil {
-		return openErr
-	}
-
-	query := `INSERT INTO test_results (test_type, module, status, result_json, created_at)
-	          VALUES (?, ?, ?, ?, ?)`
-
-	createdAt := result.CreatedAt
-	if createdAt.IsZero() {
-		createdAt = time.Now().UTC()
-	}
-
-	res, err := d.db.ExecContext(ctx, query,
-		result.TestType,
-		result.Module,
-		result.Status,
-		string(result.ResultJSON),
-		createdAt,
-	)
-	if err != nil {
-		return fmt.Errorf("insert test result: %w", err)
-	}
-
-	id, err := res.LastInsertId()
-	if err != nil {
-		return fmt.Errorf("get last insert id: %w", err)
-	}
-	result.ID = id
-	result.CreatedAt = createdAt
-
-	return nil
+// Pagination represents pagination parameters.
+type Pagination struct {
+	Offset int
+	Limit  int
 }
 
-// GetTestResult retrieves a single test result by ID.
-func (d *Database) GetTestResult(ctx context.Context, id int64) (*TestResult, error) {
-	d.mu.RLock()
-	defer d.mu.RUnlock()
-
-	openErr := d.ensureOpen()
-	if openErr != nil {
-		return nil, openErr
-	}
-
-	query := `SELECT id, test_type, module, status, result_json, created_at
-	          FROM test_results WHERE id = ?`
-
-	var result TestResult
-	var resultJSON sql.NullString
-
-	err := d.db.QueryRowContext(ctx, query, id).Scan(
-		&result.ID,
-		&result.TestType,
-		&result.Module,
-		&result.Status,
-		&resultJSON,
-		&result.CreatedAt,
-	)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, ErrRecordNotFound
-		}
-		return nil, fmt.Errorf("query test result: %w", err)
-	}
-
-	if resultJSON.Valid {
-		result.ResultJSON = json.RawMessage(resultJSON.String)
-	}
-
-	return &result, nil
+// DefaultPagination returns default pagination (first 100 items).
+func DefaultPagination() Pagination {
+	return Pagination{Offset: 0, Limit: defaultPaginationLimit}
 }
 
-// GetTestResults retrieves test results with optional filtering.
-func (d *Database) GetTestResults(ctx context.Context, filter *TestResultFilter) ([]TestResult, error) {
-	d.mu.RLock()
-	defer d.mu.RUnlock()
-
-	openErr := d.ensureOpen()
-	if openErr != nil {
-		return nil, openErr
-	}
-
-	query := `SELECT id, test_type, module, status, result_json, created_at
-	          FROM test_results WHERE 1=1`
-	args := []any{}
-
-	if filter != nil {
-		if filter.Module != "" {
-			query += " AND module = ?"
-			args = append(args, filter.Module)
-		}
-		if filter.TestType != "" {
-			query += " AND test_type = ?"
-			args = append(args, filter.TestType)
-		}
-		if filter.Status != "" {
-			query += " AND status = ?"
-			args = append(args, filter.Status)
-		}
-	}
-
-	query += " ORDER BY created_at DESC"
-
-	if filter != nil && filter.Limit > 0 {
-		query += " LIMIT ?"
-		args = append(args, filter.Limit)
-		if filter.Offset > 0 {
-			query += " OFFSET ?"
-			args = append(args, filter.Offset)
-		}
-	}
-
-	rows, err := d.db.QueryContext(ctx, query, args...)
-	if err != nil {
-		return nil, fmt.Errorf("query test results: %w", err)
-	}
-	defer rows.Close()
-
-	var results []TestResult
-	for rows.Next() {
-		var result TestResult
-		var resultJSON sql.NullString
-
-		scanErr := rows.Scan(
-			&result.ID,
-			&result.TestType,
-			&result.Module,
-			&result.Status,
-			&resultJSON,
-			&result.CreatedAt,
-		)
-		if scanErr != nil {
-			return nil, fmt.Errorf("scan test result: %w", scanErr)
-		}
-
-		if resultJSON.Valid {
-			result.ResultJSON = json.RawMessage(resultJSON.String)
-		}
-
-		results = append(results, result)
-	}
-
-	rowsErr := rows.Err()
-	if rowsErr != nil {
-		return nil, fmt.Errorf("iterate test results: %w", rowsErr)
-	}
-
-	return results, nil
+// TestRunQueryOptions specifies criteria for querying test runs.
+type TestRunQueryOptions struct {
+	Module    string
+	TestType  string
+	Status    string
+	TimeRange TimeRange
+	Limit     int
+	Offset    int
 }
 
-// SaveAuditLog persists an audit log entry to the database.
-func (d *Database) SaveAuditLog(ctx context.Context, entry *AuditLogEntry) error {
-	d.mu.Lock()
-	defer d.mu.Unlock()
-
-	openErr := d.ensureOpen()
-	if openErr != nil {
-		return openErr
-	}
-
-	query := `INSERT INTO audit_log (event_type, user, details, created_at)
-	          VALUES (?, ?, ?, ?)`
-
-	createdAt := entry.CreatedAt
-	if createdAt.IsZero() {
-		createdAt = time.Now().UTC()
-	}
-
-	res, err := d.db.ExecContext(ctx, query,
-		entry.EventType,
-		entry.User,
-		entry.Details,
-		createdAt,
-	)
-	if err != nil {
-		return fmt.Errorf("insert audit log: %w", err)
-	}
-
-	id, err := res.LastInsertId()
-	if err != nil {
-		return fmt.Errorf("get last insert id: %w", err)
-	}
-	entry.ID = id
-	entry.CreatedAt = createdAt
-
-	return nil
-}
-
-// GetAuditLogs retrieves audit log entries with optional limit.
-func (d *Database) GetAuditLogs(ctx context.Context, limit int) ([]AuditLogEntry, error) {
-	d.mu.RLock()
-	defer d.mu.RUnlock()
-
-	openErr := d.ensureOpen()
-	if openErr != nil {
-		return nil, openErr
-	}
-
-	query := `SELECT id, event_type, user, details, created_at
-	          FROM audit_log ORDER BY created_at DESC`
-	args := []any{}
-
-	if limit > 0 {
-		query += " LIMIT ?"
-		args = append(args, limit)
-	}
-
-	rows, err := d.db.QueryContext(ctx, query, args...)
-	if err != nil {
-		return nil, fmt.Errorf("query audit logs: %w", err)
-	}
-	defer rows.Close()
-
-	var entries []AuditLogEntry
-	for rows.Next() {
-		var entry AuditLogEntry
-		var user, details sql.NullString
-
-		scanErr := rows.Scan(
-			&entry.ID,
-			&entry.EventType,
-			&user,
-			&details,
-			&entry.CreatedAt,
-		)
-		if scanErr != nil {
-			return nil, fmt.Errorf("scan audit log: %w", scanErr)
-		}
-
-		if user.Valid {
-			entry.User = user.String
-		}
-		if details.Valid {
-			entry.Details = details.String
-		}
-
-		entries = append(entries, entry)
-	}
-
-	rowsErr := rows.Err()
-	if rowsErr != nil {
-		return nil, fmt.Errorf("iterate audit logs: %w", rowsErr)
-	}
-
-	return entries, nil
-}
-
-// SaveSession persists a revoked session token to the database.
-func (d *Database) SaveSession(ctx context.Context, session *Session) error {
-	d.mu.Lock()
-	defer d.mu.Unlock()
-
-	openErr := d.ensureOpen()
-	if openErr != nil {
-		return openErr
-	}
-
-	query := `INSERT OR REPLACE INTO sessions (token_id, expires_at, created_at)
-	          VALUES (?, ?, ?)`
-
-	createdAt := session.CreatedAt
-	if createdAt.IsZero() {
-		createdAt = time.Now().UTC()
-	}
-
-	_, err := d.db.ExecContext(ctx, query,
-		session.TokenID,
-		session.ExpiresAt,
-		createdAt,
-	)
-	if err != nil {
-		return fmt.Errorf("insert session: %w", err)
-	}
-
-	session.CreatedAt = createdAt
-	return nil
-}
-
-// IsSessionBlacklisted checks if a token ID is in the session blacklist.
-func (d *Database) IsSessionBlacklisted(ctx context.Context, tokenID string) (bool, error) {
-	d.mu.RLock()
-	defer d.mu.RUnlock()
-
-	openErr := d.ensureOpen()
-	if openErr != nil {
-		return false, openErr
-	}
-
-	query := `SELECT COUNT(*) FROM sessions WHERE token_id = ? AND expires_at > ?`
-
-	var count int
-	err := d.db.QueryRowContext(ctx, query, tokenID, time.Now().UTC()).Scan(&count)
-	if err != nil {
-		return false, fmt.Errorf("query session: %w", err)
-	}
-
-	return count > 0, nil
-}
-
-// DeleteExpiredSessions removes all expired sessions from the database.
-// This should be called periodically to clean up the sessions table.
-func (d *Database) DeleteExpiredSessions(ctx context.Context) (int64, error) {
-	d.mu.Lock()
-	defer d.mu.Unlock()
-
-	openErr := d.ensureOpen()
-	if openErr != nil {
-		return 0, openErr
-	}
-
-	query := `DELETE FROM sessions WHERE expires_at <= ?`
-
-	res, err := d.db.ExecContext(ctx, query, time.Now().UTC())
-	if err != nil {
-		return 0, fmt.Errorf("delete expired sessions: %w", err)
-	}
-
-	count, err := res.RowsAffected()
-	if err != nil {
-		return 0, fmt.Errorf("get rows affected: %w", err)
-	}
-
-	return count, nil
-}
-
-// GetAllBlacklistedSessions retrieves all non-expired blacklisted sessions.
-// Useful for loading the blacklist into memory on startup.
-func (d *Database) GetAllBlacklistedSessions(ctx context.Context) ([]Session, error) {
-	d.mu.RLock()
-	defer d.mu.RUnlock()
-
-	openErr := d.ensureOpen()
-	if openErr != nil {
-		return nil, openErr
-	}
-
-	query := `SELECT token_id, expires_at, created_at
-	          FROM sessions WHERE expires_at > ?
-	          ORDER BY expires_at ASC`
-
-	rows, err := d.db.QueryContext(ctx, query, time.Now().UTC())
-	if err != nil {
-		return nil, fmt.Errorf("query sessions: %w", err)
-	}
-	defer rows.Close()
-
-	var sessions []Session
-	for rows.Next() {
-		var session Session
-		scanErr := rows.Scan(
-			&session.TokenID,
-			&session.ExpiresAt,
-			&session.CreatedAt,
-		)
-		if scanErr != nil {
-			return nil, fmt.Errorf("scan session: %w", scanErr)
-		}
-		sessions = append(sessions, session)
-	}
-
-	rowsErr := rows.Err()
-	if rowsErr != nil {
-		return nil, fmt.Errorf("iterate sessions: %w", rowsErr)
-	}
-
-	return sessions, nil
+// TestResultQueryOptions specifies criteria for querying test results.
+type TestResultQueryOptions struct {
+	RunID      string
+	MetricType string
+	FrameSize  *int
+	TimeRange  TimeRange
+	Limit      int
+	Offset     int
 }
