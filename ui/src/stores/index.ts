@@ -7,7 +7,12 @@
  */
 
 export {
+  useDisplaySettings,
   useEffectiveSettings,
+  useGeneralSettings,
+  useInterfacesSettings,
   useProfileStore,
   useSettingsCategory,
+  useTestsSettings,
+  useThresholdsSettings,
 } from './profileStore';
