@@ -1,3 +1,5 @@
+// Copyright (c) 2025 Mustard Seed Networks. All rights reserved.
+
 import { twMerge } from 'tailwind-merge';
 
 /**
@@ -15,12 +17,25 @@ import { twMerge } from 'tailwind-merge';
  * BRAND COLORS:
  * - Primary: Stem Green (#2d7a3e / #81c784 dark) - Actions, links, focus states
  * - Accent: Lighter Stem Green (#4caf50 / #a5d6a7 dark) - Hover states
+ * - Gold: Mustard Gold (#d4a017 / #fbbf24 dark) - Special highlights
  *
- * STATUS COLORS (Industry Standard):
+ * STATUS COLORS (Industry Standard - DO NOT CHANGE):
  * - Success: Green (#28a745) - Positive states
  * - Warning: Amber (#ffc107) - Caution states
  * - Error: Red (#dc3545) - Error/danger states
  * - Info: Cyan (#17a2b8) - Informational states
+ *
+ * MODULE COLORS (The Stem specific):
+ * - Reflector: Cyan - Loopback/Echo
+ * - Benchmark: Red - RFC 2544
+ * - ServiceTest: Orange - Y.1564/MEF
+ * - TrafficGen: Yellow - Traffic Generation
+ * - Measure: Blue - Y.1731 OAM
+ * - Certify: Green - RFC 2889/6349/TSN
+ *
+ * USAGE:
+ * import { spacing, button, cn, moduleColor } from '../styles/theme';
+ * <button className={cn(button.base, button.variant.primary)}>Action</button>
  *
  * =============================================================================
  */
@@ -73,23 +88,85 @@ export const spacing = {
   // Tab button padding
   tab: 'py-2.5 px-3',
 
+  inline: {
+    xs: 'inline-gap-xs', // 4px
+    sm: 'inline-gap-sm', // 6px
+    default: 'inline-gap', // 8px
+    lg: 'inline-gap-lg', // 12px
+  },
+
   margin: {
     bottom: {
-      section: 'mb-6', // 24px
-      heading: 'mb-3', // 12px
-      content: 'mb-4', // 16px
+      section: 'mb-section', // 24px
+      sectionLg: 'mb-section-lg', // 32px
+      heading: 'mb-heading', // 12px
+      content: 'mb-content', // 16px
       inline: 'mb-2', // 8px
+      tight: 'mb-tight', // 4px
     },
     top: {
-      section: 'mt-8', // 32px
-      content: 'mt-4', // 16px
-      heading: 'mt-3', // 12px
+      section: 'mt-section', // 32px
+      content: 'mt-content', // 16px
+      heading: 'mt-heading', // 12px
+      inline: 'mt-inline', // 8px
+      tight: 'mt-tight', // 4px
     },
     left: {
-      spacious: 'ml-6', // 24px
-      comfortable: 'ml-4', // 16px
+      tight: 'ml-tight', // 4px
+      inline: 'ml-inline', // 8px
+      content: 'ml-content', // 16px
+      spacious: 'ml-spacious', // 24px
     },
   },
+
+  padding: {
+    top: {
+      heading: 'pt-heading', // 12px
+      section: 'pt-section', // 16px
+      tight: 'pt-tight', // 4px
+    },
+    bottom: {
+      inline: 'pb-inline', // 8px
+      tight: 'pb-tight', // 4px
+    },
+    right: {
+      icon: 'pr-icon', // 40px
+      tight: 'pr-tight', // 32px
+    },
+  },
+
+  centered: 'py-centered', // 48px vertical
+
+  badge: {
+    xs: 'p-badge-xs', // 2px
+    sm: 'p-badge-sm', // 4px
+    padXs: 'badge-pad-xs', // px-2 py-0.5
+  },
+
+  compact: {
+    py: 'py-compact', // 4px
+    pyMd: 'py-compact-md', // 6px
+  },
+
+  row: {
+    py: 'py-row', // 8px
+    pyLg: 'py-row-lg', // 12px
+  },
+
+  iconBtn: {
+    sm: 'p-icon-btn', // 4px
+    md: 'p-icon-btn-md', // 6px
+  },
+
+  mainPadding: {
+    y: 'main-padding-y', // py-4 sm:py-6
+    x: 'content-padding-x', // px-4 sm:px-6 lg:px-8
+  },
+
+  drawerPad: 'drawer-content-pad', // px-4 sm:px-5 pb-10 pt-4
+
+  // Indentation for nested content
+  indent: 'pl-6', // 24px left indent for collapsible content
 } as const;
 
 // ============================================================================
@@ -134,6 +211,25 @@ export const typography = {
 // ============================================================================
 // COMPONENT VARIANTS
 // ============================================================================
+
+/**
+ * Input variants - consistent form input styling
+ */
+export const input = {
+  base: 'w-full rounded border bg-surface-raised text-text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-brand-primary disabled:opacity-50 disabled:cursor-not-allowed',
+
+  state: {
+    default: 'border-surface-border',
+    error: 'border-status-error',
+    success: 'border-status-success',
+  },
+
+  size: {
+    sm: 'px-2 py-1.5 text-sm',
+    md: 'px-2.5 py-2 text-sm',
+    lg: 'px-3 py-2.5 text-base',
+  },
+} as const;
 
 /**
  * Button variants
@@ -222,6 +318,53 @@ export const modal = {
     md: 'max-w-2xl w-full',
     lg: 'max-w-4xl w-full',
     xl: 'max-w-6xl w-full',
+    full: 'max-w-7xl w-full',
+  },
+
+  padding: {
+    sm: 'pad',
+    md: 'pad-lg',
+    lg: 'pad-xl',
+  },
+} as const;
+
+/**
+ * Status indicator variants - for connection status, health, etc.
+ */
+export const status = {
+  dot: 'inline-block w-2 h-2 rounded-full',
+
+  color: {
+    success: 'bg-status-success',
+    warning: 'bg-status-warning',
+    error: 'bg-status-error',
+    info: 'bg-status-info',
+    inactive: 'bg-surface-border',
+  },
+
+  withLabel: 'inline-flex items-center gap-2',
+} as const;
+
+/**
+ * Sizing tokens - for consistent heights/widths
+ */
+export const sizing = {
+  height: {
+    modal: 'max-h-modal', // 85vh
+    drawer: 'h-full',
+    panel: 'max-h-[70vh]',
+  },
+
+  width: {
+    drawer: 'w-80', // 320px
+    drawerWide: 'w-96', // 384px
+    panel: 'w-72', // 288px
+    dropdown: 'w-64', // 256px
+  },
+
+  minHeight: {
+    card: 'min-h-[120px]',
+    section: 'min-h-[200px]',
   },
 } as const;
 
@@ -255,6 +398,29 @@ export const radius = {
   lg: 'rounded-lg',
   xl: 'rounded-xl',
   full: 'rounded-full',
+} as const;
+
+/**
+ * Border tokens - consistent border styling
+ */
+export const border = {
+  width: {
+    none: 'border-0',
+    default: 'border',
+    thick: 'border-2',
+  },
+
+  color: {
+    default: 'border-surface-border',
+    focus: 'border-brand-primary',
+    error: 'border-status-error',
+    success: 'border-status-success',
+    warning: 'border-status-warning',
+  },
+
+  card: 'border border-surface-border',
+  input: 'border border-surface-border focus:border-brand-primary',
+  divider: 'border-t border-surface-border',
 } as const;
 
 // ============================================================================
@@ -291,6 +457,61 @@ export const layout = {
     default: 'flex flex-col gap-2',
     comfortable: 'flex flex-col gap-3',
     spacious: 'flex flex-col gap-4',
+  },
+} as const;
+
+// ============================================================================
+// MODULE COLORS - The Stem specific
+// ============================================================================
+
+/**
+ * Module colors - accent colors for The Stem's test modules
+ *
+ * IMPORTANT: Use these for icons and small badges only, NOT for card backgrounds.
+ * Cards should remain consistent (surface-raised) across all modules.
+ */
+export const moduleColor = {
+  reflector: {
+    icon: 'text-module-reflector',
+    badge: 'bg-module-reflector/20 text-module-reflector',
+    border: 'border-module-reflector/30',
+  },
+  benchmark: {
+    icon: 'text-module-benchmark',
+    badge: 'bg-module-benchmark/20 text-module-benchmark',
+    border: 'border-module-benchmark/30',
+  },
+  servicetest: {
+    icon: 'text-module-servicetest',
+    badge: 'bg-module-servicetest/20 text-module-servicetest',
+    border: 'border-module-servicetest/30',
+  },
+  trafficgen: {
+    icon: 'text-module-trafficgen',
+    badge: 'bg-module-trafficgen/20 text-module-trafficgen',
+    border: 'border-module-trafficgen/30',
+  },
+  measure: {
+    icon: 'text-module-measure',
+    badge: 'bg-module-measure/20 text-module-measure',
+    border: 'border-module-measure/30',
+  },
+  certify: {
+    icon: 'text-module-certify',
+    badge: 'bg-module-certify/20 text-module-certify',
+    border: 'border-module-certify/30',
+  },
+} as const;
+
+/**
+ * Brand colors - for special brand elements
+ */
+export const brand = {
+  gold: {
+    text: 'text-brand-gold',
+    bg: 'bg-brand-gold',
+    badge: 'bg-brand-gold/20 text-brand-gold',
+    border: 'border-brand-gold/30',
   },
 } as const;
 
@@ -335,4 +556,26 @@ export function badgeClass(
   className?: string,
 ): string {
   return cn(badge.base, badge.variant[variant], className);
+}
+
+/**
+ * Build an input class string
+ */
+export function inputClass(
+  state: keyof typeof input.state = 'default',
+  size: keyof typeof input.size = 'md',
+  className?: string,
+): string {
+  return cn(input.base, input.state[state], input.size[size], className);
+}
+
+/**
+ * Build a modal class string
+ */
+export function modalClass(
+  size: keyof typeof modal.size = 'md',
+  padding: keyof typeof modal.padding = 'md',
+  className?: string,
+): string {
+  return cn(modal.content, modal.size[size], modal.padding[padding], className);
 }

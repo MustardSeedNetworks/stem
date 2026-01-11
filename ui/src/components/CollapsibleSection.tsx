@@ -1,61 +1,148 @@
+// Copyright (c) 2025 Mustard Seed Networks. All rights reserved.
+
 /**
- * @fileoverview The Stem - Collapsible Section Component
- * @description A reusable component that renders an expandable/collapsible content section.
- *              Used throughout the UI for organizing settings and test configurations.
- * @copyright 2025 Mustard Seed Networks. All rights reserved.
- * @license Proprietary
+ * CollapsibleSection Component
+ *
+ * Purpose: Collapsible/accordion section for organizing content within cards and modals.
+ * Allows hiding/showing detailed information to reduce visual clutter.
+ *
+ * Key Features:
+ * - Two variants: "default" (standalone with border) and "compact" (inside cards)
+ * - Toggle control: click header to expand/collapse with smooth animation
+ * - Status indicators: optional status badge next to title
+ * - Item count: displays "(count)" next to title
+ * - Customizable title: can be string or React node for complex headers
+ * - Default open: optional defaultOpen prop to start expanded
+ * - Semantic HTML: uses <section> and <button> for accessibility
+ * - Keyboard support: button can be activated with Enter/Space
+ *
+ * Usage:
+ * ```typescript
+ * // Default variant (with border)
+ * <CollapsibleSection title="Advanced Options" defaultOpen={false}>
+ *   <p>Hidden by default, click to expand</p>
+ * </CollapsibleSection>
+ *
+ * // Compact variant (inside card)
+ * <CollapsibleSection
+ *   title="Server Results"
+ *   count={3}
+ *   status="success"
+ *   variant="compact"
+ * >
+ *   <div>Results here</div>
+ * </CollapsibleSection>
+ * ```
+ *
+ * Dependencies: React hooks, theme utilities, StatusBadge
+ * State: Manages isOpen state with useState
  */
 
-import { ChevronDown, ChevronRight } from 'lucide-react';
 import { type ReactNode, useState } from 'react';
+import { border, cn, icon as iconTokens, layout, radius, spacing } from '../styles/theme';
+import type { Status } from './ui/Card';
+import { StatusBadge } from './ui/StatusBadge';
 
 interface CollapsibleSectionProps {
+  /** Section title - can be string or React node */
   title: ReactNode;
+  /** Section content */
   children: ReactNode;
+  /** Start expanded (default: false) */
   defaultOpen?: boolean;
+  /** Number of items to display in header, e.g., "Server Results (2)" */
+  count?: number;
+  /** Status indicator to show next to title */
+  status?: Status;
+  /** Use compact styling for inside cards (default: "default") */
   variant?: 'default' | 'compact';
+  /** Additional CSS classes */
   className?: string;
 }
 
+/**
+ * ChevronRight icon for toggle indicator.
+ * Rotates 90 degrees when expanded.
+ */
+function ChevronIcon({ isOpen }: { isOpen: boolean }) {
+  return (
+    <svg
+      className={cn(
+        iconTokens.size.xs,
+        'text-text-muted transition-transform duration-200',
+        isOpen && 'rotate-90',
+      )}
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+    </svg>
+  );
+}
+
+/**
+ * Expandable section with animated collapse/expand toggle and optional count badge.
+ */
 export function CollapsibleSection({
   title,
   children,
   defaultOpen = false,
+  count,
+  status,
   variant = 'default',
   className = '',
 }: CollapsibleSectionProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
-  const baseStyles =
-    variant === 'default'
-      ? 'border border-[var(--color-surface-border)] rounded-lg overflow-hidden'
-      : '';
-
-  const headerStyles =
-    variant === 'default' ? 'px-4 py-3 bg-[var(--color-surface-raised)]' : 'py-2';
-
-  const contentStyles =
-    variant === 'default' ? 'px-4 py-3 bg-[var(--color-surface-base)]' : 'py-2 pl-6';
+  const isCompact = variant === 'compact';
 
   return (
-    <section className={`${baseStyles} ${className}`}>
+    <section
+      className={cn(
+        !isCompact && border.card,
+        !isCompact && radius.lg,
+        !isCompact && 'overflow-hidden',
+        className,
+      )}
+    >
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full flex items-center justify-between gap-2 text-left hover:bg-[var(--color-surface-hover)] transition-colors ${headerStyles}`}
+        className={cn(
+          'w-full transition-colors',
+          layout.flex.between,
+          isCompact
+            ? cn(spacing.chip.md, 'hover:bg-surface-hover/50', radius.default)
+            : cn(spacing.pad.sm, 'bg-surface-base hover:bg-surface-hover'),
+        )}
         aria-expanded={isOpen}
       >
-        <div className="flex items-center gap-2 text-sm font-medium text-[var(--color-text-primary)]">
-          {title}
+        <div className={layout.inline.default}>
+          <ChevronIcon isOpen={isOpen} />
+          {status && <StatusBadge status={status} size="sm" />}
+          <span
+            className={cn('font-medium text-text-primary', isCompact ? 'caption' : 'body-small')}
+          >
+            {title}
+            {count !== undefined && (
+              <span className={cn('text-text-muted', spacing.margin.left.tight)}>({count})</span>
+            )}
+          </span>
         </div>
-        {isOpen ? (
-          <ChevronDown className="w-4 h-4 text-[var(--color-text-muted)]" />
-        ) : (
-          <ChevronRight className="w-4 h-4 text-[var(--color-text-muted)]" />
-        )}
       </button>
-
-      {isOpen && <div className={contentStyles}>{children}</div>}
+      {isOpen && (
+        <div
+          className={cn(
+            isCompact
+              ? cn(spacing.indent, spacing.padding.bottom.inline, 'stack-xs')
+              : cn(spacing.pad.sm, 'border-t border-surface-border bg-surface-raised stack'),
+          )}
+        >
+          {children}
+        </div>
+      )}
     </section>
   );
 }
