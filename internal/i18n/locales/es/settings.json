@@ -37,5 +37,205 @@
     "enableTelemetry": "Habilitar telemetria",
     "apiPort": "Puerto API",
     "dataPlane": "Plano de Datos"
+  },
+  "mode": {
+    "title": "Modo de Operacion",
+    "reflector": "Modo Reflector",
+    "reflectorDesc": "Reflejar trafico recibido",
+    "testMaster": "Modo Test Master",
+    "testMasterDesc": "Ejecutar pruebas de red"
+  },
+  "reflector": {
+    "title": "Perfil de Reflector",
+    "all": "Todo el Trafico",
+    "allDesc": "Reflejar todo el trafico entrante",
+    "tagged": "Solo Etiquetado",
+    "taggedDesc": "Solo reflejar trafico VLAN etiquetado",
+    "untagged": "Solo Sin Etiqueta",
+    "untaggedDesc": "Solo reflejar trafico sin etiqueta"
+  },
+  "viewBy": "Ver por",
+  "viewStandard": "Estandar",
+  "viewModule": "Modulo",
+  "tests": {
+    "rfc2544": {
+      "title": "Pruebas RFC 2544",
+      "throughput": {
+        "name": "Rendimiento",
+        "desc": "Tasa maxima con 0% perdida",
+        "tooltip": "Encontrar la tasa maxima a la que el DUT puede reenviar tramas con cero perdida de paquetes usando busqueda binaria."
+      },
+      "latency": {
+        "name": "Latencia",
+        "desc": "Tiempo de ida y vuelta",
+        "tooltip": "Medir el retardo de paquetes de ida y vuelta a varias cargas y tamanos de trama."
+      },
+      "frameLoss": {
+        "name": "Perdida de Tramas",
+        "desc": "Perdida vs carga ofrecida",
+        "tooltip": "Medir el porcentaje de perdida de paquetes en diferentes niveles de carga ofrecida."
+      },
+      "backToBack": {
+        "name": "Back-to-Back",
+        "desc": "Capacidad de rafaga",
+        "tooltip": "Probar la capacidad maxima de rafaga - cuantas tramas a velocidad de linea antes de que ocurran perdidas."
+      },
+      "systemRecovery": {
+        "name": "Recuperacion del Sistema",
+        "desc": "Recuperacion despues de sobrecarga",
+        "tooltip": "Medir el tiempo para recuperar el reenvio normal despues de una condicion de sobrecarga sostenida."
+      },
+      "reset": {
+        "name": "Reinicio",
+        "desc": "Recuperacion de reinicio del dispositivo",
+        "tooltip": "Medir el tiempo desde el reinicio del dispositivo hasta que reanuda el reenvio de trafico."
+      }
+    },
+    "y1564": {
+      "title": "Y.1564 / EtherSAM",
+      "config": {
+        "name": "Prueba de Configuracion",
+        "desc": "Validacion de configuracion de servicio",
+        "tooltip": "Validar que la configuracion del servicio cumple con los parametros SLA antes del despliegue."
+      },
+      "performance": {
+        "name": "Prueba de Rendimiento",
+        "desc": "Prueba de servicio extendida",
+        "tooltip": "Prueba de larga duracion (15-30 min) para verificar que el rendimiento sostenido cumple con el SLA."
+      },
+      "full": {
+        "name": "Prueba Completa",
+        "desc": "Config + Rendimiento",
+        "tooltip": "Secuencia completa de prueba Y.1564: validacion de configuracion seguida de prueba de rendimiento."
+      }
+    },
+    "rfc2889": {
+      "title": "Pruebas de Switch RFC 2889",
+      "forwarding": {
+        "name": "Tasa de Reenvio",
+        "desc": "Rendimiento por puerto",
+        "tooltip": "Medir la tasa maxima de reenvio de tramas por puerto del switch."
+      },
+      "caching": {
+        "name": "Cache de Direcciones",
+        "desc": "Capacidad de tabla MAC",
+        "tooltip": "Determinar el numero maximo de direcciones MAC que el switch puede almacenar en cache."
+      },
+      "learning": {
+        "name": "Aprendizaje de Direcciones",
+        "desc": "Tasa de aprendizaje MAC",
+        "tooltip": "Medir que tan rapido el switch aprende nuevas direcciones MAC."
+      },
+      "broadcast": {
+        "name": "Latencia de Broadcast",
+        "desc": "Reenvio de broadcast",
+        "tooltip": "Medir la latencia para el reenvio de tramas broadcast a todos los puertos."
+      },
+      "congestion": {
+        "name": "Control de Congestion",
+        "desc": "Comportamiento bajo sobrecarga",
+        "tooltip": "Probar el comportamiento del switch bajo condiciones de congestion de trafico."
+      }
+    },
+    "rfc6349": {
+      "title": "Pruebas TCP RFC 6349",
+      "capacity": {
+        "name": "Capacidad TCP",
+        "desc": "Rendimiento TCP maximo",
+        "tooltip": "Medir el rendimiento TCP alcanzable considerando todas las degradaciones de la red."
+      },
+      "efficiency": {
+        "name": "Eficiencia de Transferencia",
+        "desc": "Ratio de goodput",
+        "tooltip": "Calcular la relacion entre la transferencia de datos utiles y el ancho de banda total consumido."
+      },
+      "path": {
+        "name": "Analisis de Ruta",
+        "desc": "RTT y cuello de botella",
+        "tooltip": "Analizar las caracteristicas de la ruta incluyendo RTT, BDP y ubicacion del cuello de botella."
+      }
+    },
+    "y1731": {
+      "title": "Y.1731 OAM",
+      "delay": {
+        "name": "Retardo de Trama",
+        "desc": "Retardo unidireccional",
+        "tooltip": "Medir el retardo de trama unidireccional usando marcas de tiempo sincronizadas."
+      },
+      "loss": {
+        "name": "Ratio de Perdida de Tramas",
+        "desc": "Medicion de perdida",
+        "tooltip": "Calcular el ratio de perdida de tramas durante el intervalo de medicion."
+      },
+      "slm": {
+        "name": "Perdida Sintetica",
+        "desc": "Medicion de perdida sintetica",
+        "tooltip": "Medir perdida usando tramas de prueba sinteticas (SLM/SLR)."
+      },
+      "loopback": {
+        "name": "Loopback",
+        "desc": "Prueba de conectividad",
+        "tooltip": "Verificar conectividad MEP a MEP usando mensajes de loopback."
+      }
+    },
+    "mef": {
+      "title": "Pruebas MEF",
+      "config": {
+        "name": "Config MEF",
+        "desc": "Configuracion de servicio",
+        "tooltip": "Validacion de configuracion de servicio compatible con MEF."
+      },
+      "performance": {
+        "name": "Rendimiento MEF",
+        "desc": "Verificacion de SLA",
+        "tooltip": "Verificar que el servicio cumple con los objetivos de rendimiento SLA de MEF."
+      },
+      "full": {
+        "name": "Prueba Completa",
+        "desc": "Suite MEF completa",
+        "tooltip": "Prueba MEF completa incluyendo fases de configuracion y rendimiento."
+      }
+    },
+    "tsn": {
+      "title": "TSN 802.1Qbv",
+      "timing": {
+        "name": "Temporizado de Compuertas",
+        "desc": "Verificacion de programacion de compuertas",
+        "tooltip": "Verificar la precision de la programacion del Time-Aware Shaper."
+      },
+      "isolation": {
+        "name": "Aislamiento de Trafico",
+        "desc": "Separacion de prioridades",
+        "tooltip": "Verificar el aislamiento de clases de trafico entre flujos programados y de mejor esfuerzo."
+      },
+      "latency": {
+        "name": "Latencia Programada",
+        "desc": "Retardo limitado",
+        "tooltip": "Medir la latencia del peor caso para clases de trafico programadas."
+      },
+      "full": {
+        "name": "Suite Completa",
+        "desc": "Validacion TSN completa",
+        "tooltip": "Ejecutar todas las pruebas TSN para validar la configuracion de Time-Sensitive Networking."
+      }
+    },
+    "trafficgen": {
+      "title": "Generador de Trafico",
+      "stream": {
+        "name": "Flujo Personalizado",
+        "desc": "Trafico configurable",
+        "tooltip": "Generar patrones de trafico personalizados con tamano de trama, tasa y duracion configurables."
+      },
+      "burst": {
+        "name": "Modo Rafaga",
+        "desc": "Generacion de trafico en rafaga",
+        "tooltip": "Generar trafico en rafaga con tamano de rafaga e intervalo configurables."
+      },
+      "multistream": {
+        "name": "Multi-Flujo",
+        "desc": "Multiples flujos de trafico",
+        "tooltip": "Generar multiples flujos de trafico concurrentes con diferentes parametros."
+      }
+    }
   }
 }

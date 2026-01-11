@@ -37,5 +37,205 @@
     "enableTelemetry": "Enable telemetry",
     "apiPort": "API Port",
     "dataPlane": "Data Plane"
+  },
+  "mode": {
+    "title": "Operating Mode",
+    "reflector": "Reflector Mode",
+    "reflectorDesc": "Echo received traffic",
+    "testMaster": "Test Master Mode",
+    "testMasterDesc": "Run network tests"
+  },
+  "reflector": {
+    "title": "Reflector Profile",
+    "all": "All Traffic",
+    "allDesc": "Reflect all incoming traffic",
+    "tagged": "Tagged Only",
+    "taggedDesc": "Only reflect VLAN-tagged traffic",
+    "untagged": "Untagged Only",
+    "untaggedDesc": "Only reflect untagged traffic"
+  },
+  "viewBy": "View by",
+  "viewStandard": "Standard",
+  "viewModule": "Module",
+  "tests": {
+    "rfc2544": {
+      "title": "RFC 2544 Tests",
+      "throughput": {
+        "name": "Throughput",
+        "desc": "Max rate with 0% loss",
+        "tooltip": "Find the maximum rate at which the DUT can forward frames with zero packet loss using binary search."
+      },
+      "latency": {
+        "name": "Latency",
+        "desc": "Round-trip time",
+        "tooltip": "Measure round-trip packet delay at various loads and frame sizes."
+      },
+      "frameLoss": {
+        "name": "Frame Loss",
+        "desc": "Loss vs offered load",
+        "tooltip": "Measure packet loss percentage across different offered load levels."
+      },
+      "backToBack": {
+        "name": "Back-to-Back",
+        "desc": "Burst capacity",
+        "tooltip": "Test maximum burst capacity - how many frames at line rate before drops occur."
+      },
+      "systemRecovery": {
+        "name": "System Recovery",
+        "desc": "Recovery after overload",
+        "tooltip": "Measure time to recover normal forwarding after sustained overload condition."
+      },
+      "reset": {
+        "name": "Reset",
+        "desc": "Device reset recovery",
+        "tooltip": "Measure time from device restart to when it resumes forwarding traffic."
+      }
+    },
+    "y1564": {
+      "title": "Y.1564 / EtherSAM",
+      "config": {
+        "name": "Configuration Test",
+        "desc": "Service config validation",
+        "tooltip": "Validate service configuration meets SLA parameters before deployment."
+      },
+      "performance": {
+        "name": "Performance Test",
+        "desc": "Extended service test",
+        "tooltip": "Long-duration test (15-30 min) to verify sustained performance meets SLA."
+      },
+      "full": {
+        "name": "Full Test",
+        "desc": "Config + Performance",
+        "tooltip": "Complete Y.1564 test sequence: configuration validation followed by performance test."
+      }
+    },
+    "rfc2889": {
+      "title": "RFC 2889 Switch Tests",
+      "forwarding": {
+        "name": "Forwarding Rate",
+        "desc": "Per-port throughput",
+        "tooltip": "Measure maximum frame forwarding rate per switch port."
+      },
+      "caching": {
+        "name": "Address Caching",
+        "desc": "MAC table capacity",
+        "tooltip": "Determine maximum number of MAC addresses the switch can cache."
+      },
+      "learning": {
+        "name": "Address Learning",
+        "desc": "MAC learning rate",
+        "tooltip": "Measure how quickly the switch learns new MAC addresses."
+      },
+      "broadcast": {
+        "name": "Broadcast Latency",
+        "desc": "Broadcast forwarding",
+        "tooltip": "Measure latency for broadcast frame forwarding across all ports."
+      },
+      "congestion": {
+        "name": "Congestion Control",
+        "desc": "Overload behavior",
+        "tooltip": "Test switch behavior under traffic congestion conditions."
+      }
+    },
+    "rfc6349": {
+      "title": "RFC 6349 TCP Tests",
+      "capacity": {
+        "name": "TCP Capacity",
+        "desc": "Maximum TCP throughput",
+        "tooltip": "Measure achievable TCP throughput considering all network impairments."
+      },
+      "efficiency": {
+        "name": "Transfer Efficiency",
+        "desc": "Goodput ratio",
+        "tooltip": "Calculate ratio of useful data transfer to total bandwidth consumed."
+      },
+      "path": {
+        "name": "Path Analysis",
+        "desc": "RTT and bottleneck",
+        "tooltip": "Analyze path characteristics including RTT, BDP, and bottleneck location."
+      }
+    },
+    "y1731": {
+      "title": "Y.1731 OAM",
+      "delay": {
+        "name": "Frame Delay",
+        "desc": "One-way delay",
+        "tooltip": "Measure one-way frame delay using synchronized timestamps."
+      },
+      "loss": {
+        "name": "Frame Loss Ratio",
+        "desc": "Loss measurement",
+        "tooltip": "Calculate frame loss ratio over measurement interval."
+      },
+      "slm": {
+        "name": "Synthetic Loss",
+        "desc": "Synthetic loss measurement",
+        "tooltip": "Measure loss using synthetic test frames (SLM/SLR)."
+      },
+      "loopback": {
+        "name": "Loopback",
+        "desc": "Connectivity test",
+        "tooltip": "Verify MEP-to-MEP connectivity using loopback messages."
+      }
+    },
+    "mef": {
+      "title": "MEF Tests",
+      "config": {
+        "name": "MEF Config",
+        "desc": "Service configuration",
+        "tooltip": "MEF-compliant service configuration validation."
+      },
+      "performance": {
+        "name": "MEF Performance",
+        "desc": "SLA verification",
+        "tooltip": "Verify service meets MEF SLA performance objectives."
+      },
+      "full": {
+        "name": "Full Test",
+        "desc": "Complete MEF suite",
+        "tooltip": "Complete MEF test including configuration and performance phases."
+      }
+    },
+    "tsn": {
+      "title": "TSN 802.1Qbv",
+      "timing": {
+        "name": "Gate Timing",
+        "desc": "Gate scheduling verification",
+        "tooltip": "Verify Time-Aware Shaper gate scheduling accuracy."
+      },
+      "isolation": {
+        "name": "Traffic Isolation",
+        "desc": "Priority separation",
+        "tooltip": "Verify traffic class isolation between scheduled and best-effort flows."
+      },
+      "latency": {
+        "name": "Scheduled Latency",
+        "desc": "Bounded delay",
+        "tooltip": "Measure worst-case latency for scheduled traffic classes."
+      },
+      "full": {
+        "name": "Full Suite",
+        "desc": "Complete TSN validation",
+        "tooltip": "Run all TSN tests to validate Time-Sensitive Networking configuration."
+      }
+    },
+    "trafficgen": {
+      "title": "Traffic Generator",
+      "stream": {
+        "name": "Custom Stream",
+        "desc": "Configurable traffic",
+        "tooltip": "Generate custom traffic patterns with configurable frame size, rate, and duration."
+      },
+      "burst": {
+        "name": "Burst Mode",
+        "desc": "Burst traffic generation",
+        "tooltip": "Generate burst traffic with configurable burst size and gap."
+      },
+      "multistream": {
+        "name": "Multi-Stream",
+        "desc": "Multiple traffic streams",
+        "tooltip": "Generate multiple concurrent traffic streams with different parameters."
+      }
+    }
   }
 }
