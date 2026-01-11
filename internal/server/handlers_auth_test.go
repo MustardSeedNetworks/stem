@@ -22,6 +22,7 @@ const (
 // setupAuthTestServer creates a server with test credentials configured.
 func setupAuthTestServer(t testing.TB) *server.Server {
 	t.Helper()
+	t.Setenv("STEM_TEST_MODE", "1")
 	t.Setenv("STEM_AUTH_USERNAME", authTestUsername)
 	t.Setenv("STEM_AUTH_PASSWORD", authTestPassword)
 

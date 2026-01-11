@@ -17,6 +17,7 @@ import (
 // setupSettingsTestServer creates a server for settings handler tests.
 func setupSettingsTestServer(t testing.TB) *server.Server {
 	t.Helper()
+	t.Setenv("STEM_TEST_MODE", "1")
 	t.Setenv("STEM_AUTH_USERNAME", "settingstest")
 	t.Setenv("STEM_AUTH_PASSWORD", "settingspass123")
 

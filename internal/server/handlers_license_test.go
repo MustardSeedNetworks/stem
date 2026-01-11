@@ -15,6 +15,7 @@ import (
 // setupLicenseTestServer creates a server for license handler tests.
 func setupLicenseTestServer(t testing.TB) *server.Server {
 	t.Helper()
+	t.Setenv("STEM_TEST_MODE", "1")
 	t.Setenv("STEM_AUTH_USERNAME", "licensetest")
 	t.Setenv("STEM_AUTH_PASSWORD", "licensepass123")
 

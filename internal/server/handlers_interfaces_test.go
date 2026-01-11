@@ -14,6 +14,7 @@ import (
 // setupInterfacesTestServer creates a server for interface handler tests.
 func setupInterfacesTestServer(t testing.TB) *server.Server {
 	t.Helper()
+	t.Setenv("STEM_TEST_MODE", "1")
 	t.Setenv("STEM_AUTH_USERNAME", "interfacetest")
 	t.Setenv("STEM_AUTH_PASSWORD", "interfacepass123")
 

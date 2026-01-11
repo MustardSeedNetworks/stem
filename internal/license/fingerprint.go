@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -40,32 +41,43 @@ type DeviceFingerprint struct {
 	Platform   string `json:"platform"`
 }
 
+// Fingerprint cache - computing hardware IDs is expensive (shell commands).
+var (
+	cachedFingerprint     *DeviceFingerprint
+	cachedFingerprintOnce sync.Once
+)
+
 // GenerateFingerprint creates a unique device fingerprint.
+// The result is cached after the first call since hardware IDs don't change.
 func GenerateFingerprint() (*DeviceFingerprint, error) {
-	fp := &DeviceFingerprint{
-		MACAddress: "",
-		CPUSerial:  "",
-		DiskSerial: "",
-		Hostname:   "",
-		Platform:   runtime.GOOS,
-	}
+	cachedFingerprintOnce.Do(func() {
+		fp := &DeviceFingerprint{
+			MACAddress: "",
+			CPUSerial:  "",
+			DiskSerial: "",
+			Hostname:   "",
+			Platform:   runtime.GOOS,
+		}
 
-	// Get hostname.
-	hostname, err := os.Hostname()
-	if err == nil {
-		fp.Hostname = hostname
-	}
+		// Get hostname.
+		hostname, err := os.Hostname()
+		if err == nil {
+			fp.Hostname = hostname
+		}
 
-	// Get primary MAC address.
-	fp.MACAddress = getPrimaryMAC()
+		// Get primary MAC address.
+		fp.MACAddress = getPrimaryMAC()
 
-	// Get CPU serial (platform-specific).
-	fp.CPUSerial = getCPUSerial()
+		// Get CPU serial (platform-specific).
+		fp.CPUSerial = getCPUSerial()
 
-	// Get disk serial (platform-specific).
-	fp.DiskSerial = getDiskSerial()
+		// Get disk serial (platform-specific).
+		fp.DiskSerial = getDiskSerial()
 
-	return fp, nil
+		cachedFingerprint = fp
+	})
+
+	return cachedFingerprint, nil
 }
 
 // Hash returns a 16-character hash of the fingerprint.

@@ -22,6 +22,7 @@ const (
 // setupSetupTestServer creates a server for setup handler tests.
 func setupSetupTestServer(t testing.TB) *server.Server {
 	t.Helper()
+	t.Setenv("STEM_TEST_MODE", "1")
 	t.Setenv("STEM_AUTH_USERNAME", setupTestUsername)
 	t.Setenv("STEM_AUTH_PASSWORD", setupTestPassword)
 

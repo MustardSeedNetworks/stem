@@ -14,6 +14,7 @@ import (
 // setupModulesTestServer creates a server for modules handler tests.
 func setupModulesTestServer(t testing.TB) *server.Server {
 	t.Helper()
+	t.Setenv("STEM_TEST_MODE", "1")
 	t.Setenv("STEM_AUTH_USERNAME", "modulestest")
 	t.Setenv("STEM_AUTH_PASSWORD", "modulespass123")
 

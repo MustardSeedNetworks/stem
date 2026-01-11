@@ -14,6 +14,7 @@ import (
 // setupHealthTestServer creates a server for health endpoint tests.
 func setupHealthTestServer(t testing.TB) *server.Server {
 	t.Helper()
+	t.Setenv("STEM_TEST_MODE", "1")
 	t.Setenv("STEM_AUTH_USERNAME", "healthtest")
 	t.Setenv("STEM_AUTH_PASSWORD", "healthpass123")
 

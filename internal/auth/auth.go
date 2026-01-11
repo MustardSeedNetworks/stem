@@ -83,7 +83,7 @@ func NewManager(jwtSecret string, sessionTimeout time.Duration, username, passwo
 		}
 	}
 
-	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcryptCost())
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrPasswordHashFailed, err)
 	}

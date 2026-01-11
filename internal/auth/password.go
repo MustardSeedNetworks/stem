@@ -8,9 +8,19 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"os"
 
 	"golang.org/x/crypto/bcrypt"
 )
+
+// bcryptCost returns the appropriate bcrypt cost.
+// Uses MinCost in test mode for faster execution.
+func bcryptCost() int {
+	if os.Getenv("STEM_TEST_MODE") != "" {
+		return bcrypt.MinCost
+	}
+	return bcrypt.DefaultCost
+}
 
 // Password validation constants.
 const (
@@ -77,7 +87,7 @@ func ValidatePasswordStrength(password string) error {
 
 // HashPassword creates a bcrypt hash of the given password.
 func HashPassword(password string) (string, error) {
-	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcryptCost())
 	if err != nil {
 		return "", fmt.Errorf("failed to hash password: %w", err)
 	}

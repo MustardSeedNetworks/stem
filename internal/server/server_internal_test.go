@@ -21,6 +21,7 @@ import (
 // shut down to prevent goroutine leaks.
 func newTestServer(t testing.TB) *Server {
 	t.Helper()
+	t.Setenv("STEM_TEST_MODE", "1") // Use fast bcrypt for tests
 	s, err := NewServer(8080)
 	if err != nil {
 		t.Fatalf("NewServer() error: %v", err)
