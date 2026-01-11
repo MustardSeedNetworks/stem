@@ -25,6 +25,7 @@ import enCommon from '@locales/en/common.json';
 import enErrors from '@locales/en/errors.json';
 import enModules from '@locales/en/modules.json';
 import enParams from '@locales/en/params.json';
+import enRecovery from '@locales/en/recovery.json';
 import enSettings from '@locales/en/settings.json';
 import enSetup from '@locales/en/setup.json';
 // Import Spanish translations
@@ -33,6 +34,7 @@ import esCommon from '@locales/es/common.json';
 import esErrors from '@locales/es/errors.json';
 import esModules from '@locales/es/modules.json';
 import esParams from '@locales/es/params.json';
+import esRecovery from '@locales/es/recovery.json';
 import esSettings from '@locales/es/settings.json';
 import esSetup from '@locales/es/setup.json';
 import i18n from 'i18next';
@@ -56,6 +58,7 @@ export const namespaces = [
   'common',
   'errors',
   'modules',
+  'recovery',
   'settings',
   'setup',
   'cli',
@@ -77,6 +80,7 @@ const resources = {
     common: enCommon,
     errors: enErrors,
     modules: enModules,
+    recovery: enRecovery,
     settings: enSettings,
     setup: enSetup,
     cli: enCli,
@@ -86,6 +90,7 @@ const resources = {
     common: esCommon,
     errors: esErrors,
     modules: esModules,
+    recovery: esRecovery,
     settings: esSettings,
     setup: esSetup,
     cli: esCli,

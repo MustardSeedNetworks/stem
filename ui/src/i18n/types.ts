@@ -21,7 +21,9 @@ import type enCommon from '@locales/en/common.json';
 import type enErrors from '@locales/en/errors.json';
 import type enModules from '@locales/en/modules.json';
 import type enParams from '@locales/en/params.json';
+import type enRecovery from '@locales/en/recovery.json';
 import type enSettings from '@locales/en/settings.json';
+import type enSetup from '@locales/en/setup.json';
 
 /**
  * Type definitions for each namespace.
@@ -29,7 +31,9 @@ import type enSettings from '@locales/en/settings.json';
 export type CommonTranslations = typeof enCommon;
 export type ErrorsTranslations = typeof enErrors;
 export type ModulesTranslations = typeof enModules;
+export type RecoveryTranslations = typeof enRecovery;
 export type SettingsTranslations = typeof enSettings;
+export type SetupTranslations = typeof enSetup;
 export type CliTranslations = typeof enCli;
 export type ParamsTranslations = typeof enParams;
 
@@ -40,7 +44,9 @@ export interface Translations {
   common: CommonTranslations;
   errors: ErrorsTranslations;
   modules: ModulesTranslations;
+  recovery: RecoveryTranslations;
   settings: SettingsTranslations;
+  setup: SetupTranslations;
   cli: CliTranslations;
   params: ParamsTranslations;
 }
@@ -67,7 +73,9 @@ type NestedKeys<T, Prefix extends string = ''> = T extends object
 export type CommonKeys = NestedKeys<CommonTranslations>;
 export type ErrorsKeys = NestedKeys<ErrorsTranslations>;
 export type ModulesKeys = NestedKeys<ModulesTranslations>;
+export type RecoveryKeys = NestedKeys<RecoveryTranslations>;
 export type SettingsKeys = NestedKeys<SettingsTranslations>;
+export type SetupKeys = NestedKeys<SetupTranslations>;
 export type CliKeys = NestedKeys<CliTranslations>;
 export type ParamsKeys = NestedKeys<ParamsTranslations>;
 

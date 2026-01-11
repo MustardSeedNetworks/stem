@@ -1,0 +1,34 @@
+{
+  "title": "Password Recovery",
+  "subtitle": "Reset your password using filesystem access",
+  "timeRemaining": "Time remaining",
+  "securityNote": "Recovery tokens are single-use and expire after 15 minutes.",
+  "instructions": {
+    "title": "Recovery Instructions",
+    "tokenFile": "Token file"
+  },
+  "token": {
+    "label": "Recovery Token",
+    "placeholder": "Paste token from .recovery-token file"
+  },
+  "password": {
+    "label": "New Password",
+    "placeholder": "Enter new password",
+    "minLength": "Minimum {{count}} characters",
+    "confirmLabel": "Confirm Password",
+    "confirmPlaceholder": "Confirm new password"
+  },
+  "buttons": {
+    "submit": "Reset Password",
+    "submitting": "Resetting Password...",
+    "backToLogin": "Back to Login",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password"
+  },
+  "errors": {
+    "passwordTooShort": "Password must be at least {{count}} characters",
+    "passwordMismatch": "Passwords do not match",
+    "recoveryFailed": "Recovery failed",
+    "networkError": "Unable to reach server. Please try again."
+  }
+}

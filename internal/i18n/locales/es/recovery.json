@@ -1,0 +1,34 @@
+{
+  "title": "Recuperación de Contraseña",
+  "subtitle": "Restablezca su contraseña usando acceso al sistema de archivos",
+  "timeRemaining": "Tiempo restante",
+  "securityNote": "Los tokens de recuperación son de un solo uso y expiran después de 15 minutos.",
+  "instructions": {
+    "title": "Instrucciones de Recuperación",
+    "tokenFile": "Archivo de token"
+  },
+  "token": {
+    "label": "Token de Recuperación",
+    "placeholder": "Pegue el token del archivo .recovery-token"
+  },
+  "password": {
+    "label": "Nueva Contraseña",
+    "placeholder": "Ingrese nueva contraseña",
+    "minLength": "Mínimo {{count}} caracteres",
+    "confirmLabel": "Confirmar Contraseña",
+    "confirmPlaceholder": "Confirme la nueva contraseña"
+  },
+  "buttons": {
+    "submit": "Restablecer Contraseña",
+    "submitting": "Restableciendo Contraseña...",
+    "backToLogin": "Volver al Inicio de Sesión",
+    "showPassword": "Mostrar contraseña",
+    "hidePassword": "Ocultar contraseña"
+  },
+  "errors": {
+    "passwordTooShort": "La contraseña debe tener al menos {{count}} caracteres",
+    "passwordMismatch": "Las contraseñas no coinciden",
+    "recoveryFailed": "La recuperación falló",
+    "networkError": "No se puede conectar al servidor. Por favor intente de nuevo."
+  }
+}

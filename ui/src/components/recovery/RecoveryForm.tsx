@@ -8,6 +8,8 @@
 import { ArrowLeft, Eye, EyeOff, KeyRound, Lock, Timer } from 'lucide-react';
 import type { FormEvent, ReactElement } from 'react';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { alert, button, cn, icon, input, layout, radius, spacing } from '../../styles/theme';
 
 /** Minimum password length (matches backend validation) */
 const MIN_PASSWORD_LENGTH = 12;
@@ -45,6 +47,7 @@ export function RecoveryForm({
   remainingTime: initialRemainingTime = 0,
   tokenFilePath = '',
 }: RecoveryFormProps): ReactElement {
+  const { t } = useTranslation('recovery');
   const [token, setToken] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -105,12 +108,12 @@ export function RecoveryForm({
     setError(null);
 
     if (!passwordValid) {
-      setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters`);
+      setError(t('errors.passwordTooShort', { count: MIN_PASSWORD_LENGTH }));
       return;
     }
 
     if (!passwordsMatch) {
-      setError('Passwords do not match');
+      setError(t('errors.passwordMismatch'));
       return;
     }
 
@@ -137,60 +140,75 @@ export function RecoveryForm({
       if (response.ok && data.success) {
         onRecoveryComplete();
       } else {
-        setError(data.message ?? data.error ?? 'Recovery failed');
+        setError(data.message ?? data.error ?? t('errors.recoveryFailed'));
       }
     } catch {
-      setError('Unable to reach server. Please try again.');
+      setError(t('errors.networkError'));
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+    <div
+      className={cn('fixed inset-0 z-50 bg-black/60 backdrop-blur-sm', layout.flex.center, 'p-4')}
+    >
       <div className="w-full max-w-md">
         {/* Header */}
-        <div className="text-center mb-6">
-          <div className="w-16 h-16 mx-auto mb-4 flex items-center justify-center rounded-2xl bg-[var(--color-status-warning)] text-white">
-            <KeyRound className="w-8 h-8" />
+        <div className={cn('text-center', spacing.margin.bottom.section)}>
+          <div
+            className={cn(
+              'w-16 h-16 mx-auto rounded-2xl bg-status-warning text-text-inverse',
+              layout.flex.center,
+              spacing.margin.bottom.content,
+            )}
+          >
+            <KeyRound className={icon.size.xl} />
           </div>
-          <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">Password Recovery</h1>
-          <p className="text-sm text-[var(--color-text-muted)] mt-1">
-            Reset your password using filesystem access.
+          <h1 className="heading-2 text-text-primary">{t('title')}</h1>
+          <p className={cn('body-small text-text-muted', spacing.margin.top.inline)}>
+            {t('subtitle')}
           </p>
         </div>
 
         {/* Timer Warning */}
         {remainingTime > 0 && (
           <div
-            className={`mb-4 p-3 rounded-xl border flex items-center justify-center gap-2 ${
-              remainingTime < 120
-                ? 'bg-[var(--color-status-warning)]/10 border-[var(--color-status-warning)]/20 text-[var(--color-status-warning)]'
-                : 'bg-[var(--color-status-info)]/10 border-[var(--color-status-info)]/20 text-[var(--color-status-info)]'
-            }`}
+            className={cn(
+              alert.base,
+              remainingTime < 120 ? alert.variant.warning : alert.variant.info,
+              spacing.margin.bottom.content,
+              layout.flex.center,
+            )}
           >
-            <Timer className="w-4 h-4" />
-            <span className="text-sm">Time remaining: {formatTime(remainingTime)}</span>
+            <Timer className={icon.size.sm} />
+            <span className="body-small ml-2">
+              {t('timeRemaining')}: {formatTime(remainingTime)}
+            </span>
           </div>
         )}
 
         {/* Instructions Panel */}
         {instructions && (
-          <div className="mb-4 p-4 rounded-xl bg-[var(--color-surface-sunken)] border border-[var(--color-surface-border)]">
-            <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-2">
-              Recovery Instructions
+          <div
+            className={cn(
+              'bg-surface-sunken border border-surface-border',
+              radius.xl,
+              spacing.pad.default,
+              spacing.margin.bottom.content,
+            )}
+          >
+            <h3 className={cn('heading-4', spacing.margin.bottom.inline)}>
+              {t('instructions.title')}
             </h3>
-            <ol className="text-xs text-[var(--color-text-muted)] space-y-1 list-decimal list-inside">
+            <ol className="caption text-text-muted space-y-1 list-decimal list-inside">
               {instructions.steps.map((step) => (
                 <li key={step}>{step}</li>
               ))}
             </ol>
             {tokenFilePath && (
-              <p className="text-xs text-[var(--color-text-muted)] mt-2">
-                Token file:{' '}
-                <code className="font-mono bg-[var(--color-surface-base)] px-1 rounded">
-                  {tokenFilePath}
-                </code>
+              <p className={cn('caption text-text-muted', spacing.margin.top.inline)}>
+                {t('instructions.tokenFile')}: <code className="code">{tokenFilePath}</code>
               </p>
             )}
           </div>
@@ -199,25 +217,41 @@ export function RecoveryForm({
         {/* Form */}
         <form
           onSubmit={handleSubmit}
-          className="rounded-3xl border border-[var(--color-surface-border)] bg-[var(--color-surface-raised)] p-6 shadow-2xl"
+          className={cn(
+            'bg-surface-raised border border-surface-border shadow-2xl',
+            radius.xl,
+            spacing.pad.lg,
+            spacing.stack.lg,
+          )}
         >
           {/* Token Input */}
-          <div className="mb-4">
+          <div>
             <label
               htmlFor="recovery-token"
-              className="text-xs font-semibold text-[var(--color-text-muted)]"
+              className={cn('label block', spacing.margin.bottom.inline)}
             >
-              Recovery Token
+              {t('token.label')}
             </label>
-            <div className="relative mt-1">
-              <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-muted)]" />
+            <div className="relative">
+              <KeyRound
+                className={cn(
+                  icon.size.sm,
+                  'absolute left-3 top-1/2 -translate-y-1/2 text-text-muted',
+                )}
+              />
               <input
                 id="recovery-token"
                 type="text"
                 value={token}
                 onChange={(e) => setToken(e.target.value)}
-                className="w-full rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-base)] pl-10 pr-3 py-2 text-sm text-[var(--color-text-primary)] font-mono focus:border-[var(--color-brand-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-primary)]/30"
-                placeholder="Paste token from .recovery-token file"
+                className={cn(
+                  'w-full pl-10',
+                  input.size.md,
+                  radius.xl,
+                  'border border-surface-border bg-surface-base text-text-primary',
+                  'focus:outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/30 font-mono',
+                )}
+                placeholder={t('token.placeholder')}
                 autoComplete="off"
                 spellCheck={false}
                 required
@@ -226,89 +260,121 @@ export function RecoveryForm({
           </div>
 
           {/* New Password Input */}
-          <div className="mb-4">
+          <div>
             <label
               htmlFor="recovery-password"
-              className="text-xs font-semibold text-[var(--color-text-muted)]"
+              className={cn('label block', spacing.margin.bottom.inline)}
             >
-              New Password
+              {t('password.label')}
             </label>
-            <div className="relative mt-1">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-muted)]" />
+            <div className="relative">
+              <Lock
+                className={cn(
+                  icon.size.sm,
+                  'absolute left-3 top-1/2 -translate-y-1/2 text-text-muted',
+                )}
+              />
               <input
                 id="recovery-password"
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className={`w-full rounded-xl border bg-[var(--color-surface-base)] pl-10 pr-10 py-2 text-sm text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-primary)]/30 ${
+                className={cn(
+                  'w-full pl-10 pr-10',
+                  input.size.md,
+                  radius.xl,
+                  'border bg-surface-base text-text-primary',
+                  password && !passwordValid ? 'border-status-error' : 'border-surface-border',
+                  'focus:outline-none focus:ring-2 focus:ring-brand-primary/30',
                   password && !passwordValid
-                    ? 'border-[var(--color-status-error)] focus:border-[var(--color-status-error)]'
-                    : 'border-[var(--color-surface-border)] focus:border-[var(--color-brand-primary)]'
-                }`}
-                placeholder="Enter new password"
+                    ? 'focus:border-status-error'
+                    : 'focus:border-brand-primary',
+                )}
+                placeholder={t('password.placeholder')}
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
+                aria-label={showPassword ? t('buttons.hidePassword') : t('buttons.showPassword')}
               >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {showPassword ? (
+                  <EyeOff className={icon.size.sm} />
+                ) : (
+                  <Eye className={icon.size.sm} />
+                )}
               </button>
             </div>
             <p
-              className={`text-xs mt-1 ${password && !passwordValid ? 'text-[var(--color-status-error)]' : 'text-[var(--color-text-muted)]'}`}
+              className={cn(
+                'caption mt-1',
+                password && !passwordValid ? 'text-status-error' : 'text-text-muted',
+              )}
             >
-              Minimum {MIN_PASSWORD_LENGTH} characters
+              {t('password.minLength', { count: MIN_PASSWORD_LENGTH })}
             </p>
           </div>
 
           {/* Confirm Password Input */}
-          <div className="mb-6">
+          <div>
             <label
               htmlFor="recovery-confirm-password"
-              className="text-xs font-semibold text-[var(--color-text-muted)]"
+              className={cn('label block', spacing.margin.bottom.inline)}
             >
-              Confirm Password
+              {t('password.confirmLabel')}
             </label>
-            <div className="relative mt-1">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-muted)]" />
+            <div className="relative">
+              <Lock
+                className={cn(
+                  icon.size.sm,
+                  'absolute left-3 top-1/2 -translate-y-1/2 text-text-muted',
+                )}
+              />
               <input
                 id="recovery-confirm-password"
                 type={showConfirmPassword ? 'text' : 'password'}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className={`w-full rounded-xl border bg-[var(--color-surface-base)] pl-10 pr-10 py-2 text-sm text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-primary)]/30 ${
+                className={cn(
+                  'w-full pl-10 pr-10',
+                  input.size.md,
+                  radius.xl,
+                  'border bg-surface-base text-text-primary',
                   confirmPassword && !passwordsMatch
-                    ? 'border-[var(--color-status-error)] focus:border-[var(--color-status-error)]'
-                    : 'border-[var(--color-surface-border)] focus:border-[var(--color-brand-primary)]'
-                }`}
-                placeholder="Confirm new password"
+                    ? 'border-status-error'
+                    : 'border-surface-border',
+                  'focus:outline-none focus:ring-2 focus:ring-brand-primary/30',
+                  confirmPassword && !passwordsMatch
+                    ? 'focus:border-status-error'
+                    : 'focus:border-brand-primary',
+                )}
+                placeholder={t('password.confirmPlaceholder')}
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
-                aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
+                aria-label={
+                  showConfirmPassword ? t('buttons.hidePassword') : t('buttons.showPassword')
+                }
               >
-                {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {showConfirmPassword ? (
+                  <EyeOff className={icon.size.sm} />
+                ) : (
+                  <Eye className={icon.size.sm} />
+                )}
               </button>
             </div>
             {confirmPassword && !passwordsMatch && (
-              <p className="text-xs mt-1 text-[var(--color-status-error)]">
-                Passwords do not match
-              </p>
+              <p className="caption mt-1 text-status-error">{t('errors.passwordMismatch')}</p>
             )}
           </div>
 
           {/* Error display */}
           {error && (
-            <div
-              role="alert"
-              className="mb-4 p-3 rounded-xl bg-[var(--color-status-error)]/10 border border-[var(--color-status-error)]/20 text-sm text-[var(--color-status-error)]"
-            >
+            <div role="alert" aria-live="assertive" className={cn(alert.base, alert.variant.error)}>
               {error}
             </div>
           )}
@@ -317,25 +383,39 @@ export function RecoveryForm({
           <button
             type="submit"
             disabled={!canSubmit}
-            className="btn btn-primary w-full justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+            className={cn(
+              'w-full',
+              button.size.md,
+              'bg-brand-primary text-text-inverse',
+              radius.md,
+              'font-medium hover:bg-brand-accent',
+              'focus:outline-none focus:ring-2 focus:ring-brand-primary',
+              'focus:ring-offset-2 focus:ring-offset-surface-base',
+              'disabled:opacity-50 disabled:cursor-not-allowed',
+            )}
           >
-            {isSubmitting ? 'Resetting Password...' : 'Reset Password'}
+            {isSubmitting ? t('buttons.submitting') : t('buttons.submit')}
           </button>
 
           {/* Back to Login */}
           <button
             type="button"
             onClick={onBackToLogin}
-            className="w-full mt-3 py-2 text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] flex items-center justify-center gap-2"
+            className={cn(
+              'w-full',
+              button.size.sm,
+              'text-text-muted hover:text-text-primary',
+              layout.flex.center,
+            )}
           >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Login
+            <ArrowLeft className={icon.size.sm} />
+            <span className="ml-2">{t('buttons.backToLogin')}</span>
           </button>
         </form>
 
         {/* Security Note */}
-        <p className="text-xs text-[var(--color-text-muted)] text-center mt-4">
-          Recovery tokens are single-use and expire after 15 minutes.
+        <p className={cn('caption text-text-muted text-center', spacing.margin.top.content)}>
+          {t('securityNote')}
         </p>
       </div>
     </div>
