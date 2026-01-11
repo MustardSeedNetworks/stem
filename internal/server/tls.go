@@ -15,6 +15,9 @@ import (
 	"path/filepath"
 	"time"
 
+	"golang.org/x/crypto/acme"
+	"golang.org/x/crypto/acme/autocert"
+
 	"github.com/krisarmstrong/stem/internal/logging"
 )
 
@@ -23,9 +26,35 @@ const (
 	rsaKeyBits          = 4096
 	certValidYears      = 1
 	defaultCertsDir     = "certs"
+	defaultACMECacheDir = "certs/acme"
 	serialNumberBitSize = 128
 	refreshMultiplier   = 24 // Refresh token lasts 24x longer than access token
+
+	// acmeReadHeaderTimeoutSec is the timeout for reading ACME challenge request headers.
+	acmeReadHeaderTimeoutSec = 10
 )
+
+// ACMEConfig contains ACME/Let's Encrypt certificate settings.
+// Ported from Seed project for automatic certificate management.
+type ACMEConfig struct {
+	// Enabled enables automatic certificate management via Let's Encrypt.
+	Enabled bool
+
+	// Domain is the domain name for the certificate (e.g., "stem.example.com").
+	// Required when ACME is enabled.
+	Domain string
+
+	// Email is the contact email for Let's Encrypt notifications.
+	Email string
+
+	// CacheDir is the directory to cache certificates.
+	// Defaults to "certs/acme" if empty.
+	CacheDir string
+
+	// Staging uses Let's Encrypt staging server (for testing).
+	// Staging certificates are not trusted by browsers.
+	Staging bool
+}
 
 // TLSConfig holds TLS configuration options.
 type TLSConfig struct {
@@ -43,6 +72,10 @@ type TLSConfig struct {
 	// CertsDir is the directory for storing generated certificates.
 	// Defaults to "certs".
 	CertsDir string
+
+	// ACME contains Let's Encrypt/ACME configuration.
+	// When enabled, takes priority over CertFile/KeyFile and self-signed certs.
+	ACME ACMEConfig
 }
 
 // DefaultTLSConfig returns secure TLS defaults with auto-generated certificates.
@@ -174,4 +207,44 @@ func ensureSelfSignedCert(certsDir string) (string, string, error) {
 	)
 
 	return certFile, keyFile, nil
+}
+
+// createACMEManager creates an autocert.Manager for Let's Encrypt certificate management.
+// Ported from Seed project for automatic certificate management.
+func createACMEManager(config ACMEConfig) (*autocert.Manager, error) {
+	cacheDir := config.CacheDir
+	if cacheDir == "" {
+		cacheDir = defaultACMECacheDir
+	}
+
+	// Ensure cache directory exists with secure permissions
+	if err := os.MkdirAll(cacheDir, 0o700); err != nil {
+		return nil, fmt.Errorf("create ACME cache dir: %w", err)
+	}
+
+	//nolint:exhaustruct // Only set required autocert.Manager fields
+	manager := &autocert.Manager{
+		Prompt:     autocert.AcceptTOS,
+		HostPolicy: autocert.HostWhitelist(config.Domain),
+		Cache:      autocert.DirCache(cacheDir),
+		Email:      config.Email,
+	}
+
+	// Use Let's Encrypt staging server for testing (certs won't be trusted by browsers)
+	if config.Staging {
+		//nolint:exhaustruct // Only set DirectoryURL for staging override
+		manager.Client = &acme.Client{
+			DirectoryURL: "https://acme-staging-v02.api.letsencrypt.org/directory",
+		}
+		logging.Warn("ACME: Using Let's Encrypt STAGING server (certificates will not be trusted)")
+	}
+
+	return manager, nil
+}
+
+// createACMETLSConfig creates a TLS config using the ACME manager.
+func createACMETLSConfig(manager *autocert.Manager) *tls.Config {
+	tlsConfig := manager.TLSConfig()
+	tlsConfig.MinVersion = tls.VersionTLS13
+	return tlsConfig
 }

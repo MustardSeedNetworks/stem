@@ -166,6 +166,7 @@ type Server struct {
 	setupModeStartTime   time.Time                  // When setup mode was activated (for timeout)
 	recoveryTokenManager *auth.RecoveryTokenManager // Recovery token manager for password recovery
 	dataDir              string                     // Application data directory for recovery files
+	acmeChallengeServer  *http.Server               // HTTP-01 challenge server for ACME
 }
 
 var (
@@ -742,11 +743,21 @@ func (s *Server) Run() error {
 }
 
 // startTLS starts the server with TLS encryption.
+// Priority order: ACME → manual certificates → self-signed.
 func (s *Server) startTLS() error {
+	// Priority 1: ACME/Let's Encrypt automatic certificates
+	if s.tlsConfig.ACME.Enabled {
+		if s.tlsConfig.ACME.Domain == "" {
+			return errors.New("ACME enabled but no domain specified")
+		}
+		return s.startTLSWithACME()
+	}
+
+	// Priority 2: Manual certificates from config
 	certFile := s.tlsConfig.CertFile
 	keyFile := s.tlsConfig.KeyFile
 
-	// If no cert/key provided, generate self-signed certificate.
+	// Priority 3: Self-signed certificate (fallback)
 	if certFile == "" || keyFile == "" {
 		var err error
 		certFile, keyFile, err = ensureSelfSignedCert(s.tlsConfig.CertsDir)
@@ -771,6 +782,42 @@ func (s *Server) startTLS() error {
 	return nil
 }
 
+// startTLSWithACME starts the server with automatic Let's Encrypt certificates.
+// Ported from Seed project for automatic certificate management.
+func (s *Server) startTLSWithACME() error {
+	manager, err := createACMEManager(s.tlsConfig.ACME)
+	if err != nil {
+		return fmt.Errorf("create ACME manager: %w", err)
+	}
+
+	// Configure TLS with ACME
+	s.httpServer.TLSConfig = createACMETLSConfig(manager)
+
+	logging.Info("Starting HTTPS server with ACME",
+		"addr", s.httpServer.Addr,
+		"domain", s.tlsConfig.ACME.Domain)
+
+	// Start HTTP-01 challenge handler on port 80
+	// This is required for Let's Encrypt domain validation
+	//nolint:exhaustruct // Only set required http.Server fields
+	s.acmeChallengeServer = &http.Server{
+		Addr:              ":80",
+		Handler:           manager.HTTPHandler(nil),
+		ReadHeaderTimeout: acmeReadHeaderTimeoutSec * time.Second,
+	}
+	go func() {
+		if listenErr := s.acmeChallengeServer.ListenAndServe(); listenErr != nil && !errors.Is(listenErr, http.ErrServerClosed) {
+			logging.Error("ACME challenge server error", "error", listenErr)
+		}
+	}()
+
+	// ListenAndServeTLS with empty cert/key paths uses GetCertificate from TLSConfig
+	if listenErr := s.httpServer.ListenAndServeTLS("", ""); listenErr != nil {
+		return fmt.Errorf("https server with ACME: %w", listenErr)
+	}
+	return nil
+}
+
 // Shutdown gracefully shuts down the server.
 // Stops running tests and drains HTTP connections.
 func (s *Server) Shutdown() error {
@@ -784,6 +831,14 @@ func (s *Server) Shutdown() error {
 	}
 	if s.apiLimiter != nil {
 		s.apiLimiter.Stop()
+	}
+
+	// Shutdown ACME HTTP-01 challenge server if running.
+	if s.acmeChallengeServer != nil {
+		logging.Info("Shutting down ACME challenge server...")
+		if err := s.acmeChallengeServer.Shutdown(ctx); err != nil {
+			logging.Error("Error shutting down ACME challenge server", "error", err)
+		}
 	}
 
 	// Stop CSRF manager cleanup goroutine.

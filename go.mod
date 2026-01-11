@@ -10,12 +10,14 @@ require (
 	github.com/prometheus/client_model v0.6.2
 	github.com/rivo/tview v0.42.0
 	golang.org/x/crypto v0.46.0
+	golang.org/x/oauth2 v0.34.0
 	golang.org/x/time v0.14.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
+	cloud.google.com/go/compute/metadata v0.3.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/gdamore/encoding v1.0.1 // indirect
@@ -26,6 +28,7 @@ require (
 	github.com/prometheus/procfs v0.16.1 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	go.yaml.in/yaml/v2 v2.4.2 // indirect
+	golang.org/x/net v0.47.0 // indirect
 	golang.org/x/sys v0.39.0 // indirect
 	golang.org/x/term v0.38.0 // indirect
 	golang.org/x/text v0.32.0 // indirect
