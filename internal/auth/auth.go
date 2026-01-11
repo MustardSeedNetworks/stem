@@ -104,6 +104,14 @@ func NewManager(jwtSecret string, sessionTimeout time.Duration, username, passwo
 	}, nil
 }
 
+// Stop stops the manager's background goroutines.
+// Should be called when the manager is no longer needed.
+func (m *Manager) Stop() {
+	if m.blacklist != nil {
+		m.blacklist.Stop()
+	}
+}
+
 // Authenticate validates credentials and emits a signed JWT token.
 func (m *Manager) Authenticate(_ context.Context, username, password string) (string, error) {
 	m.mu.RLock()

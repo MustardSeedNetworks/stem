@@ -16,17 +16,26 @@ import (
 	"github.com/krisarmstrong/stem/internal/netif"
 )
 
+// newTestServer creates a test server with automatic cleanup.
+// This helper ensures that all servers created in tests are properly
+// shut down to prevent goroutine leaks.
+func newTestServer(t testing.TB) *Server {
+	t.Helper()
+	s, err := NewServer(8080)
+	if err != nil {
+		t.Fatalf("NewServer() error: %v", err)
+	}
+	t.Cleanup(func() { _ = s.Shutdown() })
+	return s
+}
+
 // setupClaimsTestServer creates a server for claims tests.
 func setupClaimsTestServer(t *testing.T) *Server {
 	t.Helper()
 	t.Setenv("STEM_AUTH_USERNAME", "claimstest")
 	t.Setenv("STEM_AUTH_PASSWORD", "claimspass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
-	return s
+	return newTestServer(t)
 }
 
 // TestExtractClaims_ValidToken tests extractClaims with a valid token.
@@ -117,10 +126,7 @@ func TestAuditAuthFailure(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "audituser")
 	t.Setenv("STEM_AUTH_PASSWORD", "auditpass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	// These tests verify that auditAuthFailure doesn't panic for various error types.
 	// The actual logging is verified by observing that no panic occurs.
@@ -376,10 +382,7 @@ func TestHandleAPIRedirect(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "redirectuser")
 	t.Setenv("STEM_AUTH_PASSWORD", "redirectpass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	t.Run("redirect legacy health endpoint", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/api/health", nil)
@@ -1167,10 +1170,7 @@ func TestUpdateStats(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "statsuser")
 	t.Setenv("STEM_AUTH_PASSWORD", "statspass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	// Update stats.
 	s.UpdateStats(100, 200, 1000, 2000, 10.0, 5.0)
@@ -1198,10 +1198,7 @@ func TestUpdateStatsReplaces(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "statsuser2")
 	t.Setenv("STEM_AUTH_PASSWORD", "statspass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	// Update stats multiple times - values should be replaced, not accumulated.
 	s.UpdateStats(100, 100, 1000, 1000, 10.0, 5.0)
@@ -1244,10 +1241,7 @@ func TestBuildFallbackReflectorStats(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "reflectuser")
 	t.Setenv("STEM_AUTH_PASSWORD", "reflectpass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	// Update some stats.
 	s.UpdateStats(100, 50, 10000, 5000, 5.0, 1.0)
@@ -1285,10 +1279,7 @@ func TestBuildFallbackReflectorStatsZeroElapsed(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "reflectuser2")
 	t.Setenv("STEM_AUTH_PASSWORD", "reflectpass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	// Get stats with zero elapsed time.
 	stats := s.buildFallbackReflectorStats(0)
@@ -1307,10 +1298,7 @@ func TestServerShutdown(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "shutdownuser")
 	t.Setenv("STEM_AUTH_PASSWORD", "shutdownpass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	// Test shutdown without server running (should not panic).
 	shutdownErr := s.Shutdown()
@@ -1328,10 +1316,7 @@ func TestNeedsInitialSetup(t *testing.T) {
 		t.Setenv("STEM_AUTH_PASSWORD", "setuppass123")
 		t.Setenv("STEM_SETUP_MODE", "true")
 
-		s, err := NewServer(8080)
-		if err != nil {
-			t.Fatalf("NewServer() error: %v", err)
-		}
+		s := newTestServer(t)
 
 		if !s.needsInitialSetup() {
 			t.Error("Expected needsInitialSetup to return true when STEM_SETUP_MODE=true")
@@ -1343,10 +1328,7 @@ func TestNeedsInitialSetup(t *testing.T) {
 		t.Setenv("STEM_AUTH_PASSWORD", "setuppass123")
 		t.Setenv("STEM_SETUP_MODE", "false")
 
-		s, err := NewServer(8080)
-		if err != nil {
-			t.Fatalf("NewServer() error: %v", err)
-		}
+		s := newTestServer(t)
 
 		if s.needsInitialSetup() {
 			t.Error("Expected needsInitialSetup to return false when STEM_SETUP_MODE=false")
@@ -1360,10 +1342,7 @@ func TestMarkSetupComplete(t *testing.T) {
 	t.Setenv("STEM_AUTH_PASSWORD", "marksetuppass123")
 	t.Setenv("STEM_SETUP_MODE", "true")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	// Initially setup should be needed.
 	if !s.needsInitialSetup() {
@@ -1389,10 +1368,7 @@ func TestResolveTestInterface(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "resolveifaceuser")
 	t.Setenv("STEM_AUTH_PASSWORD", "resolveifacepass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	t.Run("with explicit interface", func(t *testing.T) {
 		iface, ifaceErr := s.resolveTestInterface("eth0")
@@ -1437,10 +1413,7 @@ func TestBeginTestRun(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "begintestuser")
 	t.Setenv("STEM_AUTH_PASSWORD", "begintestpass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	t.Run("successful begin", func(t *testing.T) {
 		// Ensure idle state.
@@ -1487,10 +1460,7 @@ func TestValidateReflectorProfile(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "validateprofileuser")
 	t.Setenv("STEM_AUTH_PASSWORD", "validateprofilepass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	t.Run("valid profiles", func(t *testing.T) {
 		validProfiles := []string{"netally", "msn", "all", "custom", ""}
@@ -1528,10 +1498,7 @@ func TestBuildReflectorConfigUpdate(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "buildconfiguser")
 	t.Setenv("STEM_AUTH_PASSWORD", "buildconfigpass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	t.Run("update profile", func(t *testing.T) {
 		cfg := &ReflectorConfig{Profile: "netally", SignatureFilter: nil, OUIFilter: "", PortFilter: 0}
@@ -1584,10 +1551,7 @@ func TestApplyReflectorDataplaneUpdate(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "applydpuser")
 	t.Setenv("STEM_AUTH_PASSWORD", "applydppass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	t.Run("nil update", func(t *testing.T) {
 		applyErr := s.applyReflectorDataplaneUpdate(nil, nil)
@@ -1615,10 +1579,7 @@ func TestExecuteTest(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "exectestuser")
 	t.Setenv("STEM_AUTH_PASSWORD", "exectestpass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	t.Run("unknown module", func(t *testing.T) {
 		execErr := s.executeTest("unknown_module", "test", "eth0", nil)
@@ -1633,10 +1594,7 @@ func TestRespondTestExecutionError(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "responderruser")
 	t.Setenv("STEM_AUTH_PASSWORD", "responderrpass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	w := httptest.NewRecorder()
 	testErr := errTestAlreadyRunning
@@ -1732,10 +1690,7 @@ func TestResolveTestModule(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "resolvemoduser")
 	t.Setenv("STEM_AUTH_PASSWORD", "resolvemodpass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	t.Run("valid test type", func(t *testing.T) {
 		mod, modErr := s.resolveTestModule("rfc2544_throughput")
@@ -1773,10 +1728,7 @@ func TestHandleTestStopVariousStates(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "stopstatesuser")
 	t.Setenv("STEM_AUTH_PASSWORD", "stopstatespass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	t.Run("stop when starting", func(t *testing.T) {
 		// Set starting state.
@@ -1863,10 +1815,7 @@ func TestHandleTestResultWithResult(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "resultuser")
 	t.Setenv("STEM_AUTH_PASSWORD", "resultpass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	// Set a test result.
 	s.statsMu.Lock()
@@ -1905,10 +1854,7 @@ func TestHandleAuthCSRFCoverage(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "csrfuser")
 	t.Setenv("STEM_AUTH_PASSWORD", "csrfpass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	t.Run("method not allowed", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/csrf", nil)
@@ -1927,10 +1873,7 @@ func TestHandleHealthReadyCoverage(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "readyuser")
 	t.Setenv("STEM_AUTH_PASSWORD", "readypass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	t.Run("method not allowed", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/health/ready", nil)
@@ -1949,10 +1892,7 @@ func TestHandleStatsCoverage(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "statsuser")
 	t.Setenv("STEM_AUTH_PASSWORD", "statspass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	t.Run("method not allowed", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/stats", nil)
@@ -1994,10 +1934,7 @@ func TestHandleLicenseCoverage(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "licenseuser")
 	t.Setenv("STEM_AUTH_PASSWORD", "licensepass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	t.Run("method not allowed", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/license", nil)
@@ -2016,10 +1953,7 @@ func TestHandleInterfacesCoverage(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "ifaceuser")
 	t.Setenv("STEM_AUTH_PASSWORD", "ifacepass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	t.Run("method not allowed", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/interfaces", nil)
@@ -2052,10 +1986,7 @@ func TestHandleRecoveryStatusCoverage(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "recstatususer")
 	t.Setenv("STEM_AUTH_PASSWORD", "recstatuspass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	t.Run("method not allowed", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/recovery/status", nil)
@@ -2074,10 +2005,7 @@ func TestHandleSetupStatusCoverage(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "setupstatususer")
 	t.Setenv("STEM_AUTH_PASSWORD", "setupstatuspass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	t.Run("method not allowed", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/setup/status", nil)
@@ -2096,10 +2024,7 @@ func TestHandleRecoveryCompleteCoverage(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "recompleteuser")
 	t.Setenv("STEM_AUTH_PASSWORD", "recompletepass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	t.Run("method not allowed", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/recovery/complete", nil)
@@ -2134,10 +2059,7 @@ func TestHandleSetupCompleteCoverage(t *testing.T) {
 	t.Setenv("STEM_AUTH_PASSWORD", "setcompletepass123")
 	t.Setenv("STEM_SETUP_MODE", "false")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	t.Run("method not allowed", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/setup/complete", nil)
@@ -2174,10 +2096,7 @@ func TestHandleLicenseFullCoverage(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "licfulluser")
 	t.Setenv("STEM_AUTH_PASSWORD", "licfullpass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	t.Run("get license with manager", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/license", nil)
@@ -2225,10 +2144,7 @@ func TestHandleLicenseActivateCoverage(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "licactuser")
 	t.Setenv("STEM_AUTH_PASSWORD", "licactpass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	t.Run("method not allowed", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/license/activate", nil)
@@ -2307,10 +2223,7 @@ func TestHandleLicenseTrialCoverage(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "lictrialuser")
 	t.Setenv("STEM_AUTH_PASSWORD", "lictrialpass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	t.Run("method not allowed", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodDelete, "/api/v1/license/trial", nil)
@@ -2377,10 +2290,7 @@ func TestHandleAuthCSRFCoverageFull(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "csrffulluser")
 	t.Setenv("STEM_AUTH_PASSWORD", "csrffullpass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	t.Run("get csrf token with auth", func(t *testing.T) {
 		// Get a valid auth token first.
@@ -2427,10 +2337,7 @@ func TestHandleRecoveryStatusCoverageFull(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "recstatusfulluser")
 	t.Setenv("STEM_AUTH_PASSWORD", "recstatusfullpass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	t.Run("recovery status without manager", func(t *testing.T) {
 		// Save and clear the recovery manager.
@@ -2461,10 +2368,7 @@ func TestExecuteReflectorCoverage(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "execrefluser")
 	t.Setenv("STEM_AUTH_PASSWORD", "execreflpass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	// Note: Actually executing reflector requires a valid interface
 	// and may have platform-specific behavior. Test the error path.
@@ -2481,10 +2385,7 @@ func TestRunModuleTestCoverage(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "runmoduser")
 	t.Setenv("STEM_AUTH_PASSWORD", "runmodpass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	t.Run("with valid module", func(t *testing.T) {
 		// This tests the executeTest path for benchmark module.
@@ -2506,10 +2407,7 @@ func TestHandleReflectorStatsCoverage(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "reflstatusr")
 	t.Setenv("STEM_AUTH_PASSWORD", "reflstatspass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	t.Run("get reflector stats", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/reflector/stats", nil)
@@ -2544,10 +2442,7 @@ func TestHandleReflectorConfigCoverage(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "reflcfguser")
 	t.Setenv("STEM_AUTH_PASSWORD", "reflcfgpass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	t.Run("get reflector config", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/reflector/config", nil)
@@ -2601,10 +2496,7 @@ func TestHandleModuleByNameCoverage(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "modbyuser")
 	t.Setenv("STEM_AUTH_PASSWORD", "modbypass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	t.Run("method not allowed", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/modules/benchmark", nil)
@@ -2645,10 +2537,7 @@ func TestHandleModeCoverage(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "modeuser")
 	t.Setenv("STEM_AUTH_PASSWORD", "modepass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	t.Run("method not allowed", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodDelete, "/api/v1/mode", nil)
@@ -2726,10 +2615,7 @@ func TestHandleSettingsCoverage(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "settingsuser")
 	t.Setenv("STEM_AUTH_PASSWORD", "settingspass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	t.Run("method not allowed", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodDelete, "/api/v1/settings", nil)
@@ -2795,10 +2681,7 @@ func TestHandleHealthReadyWithDependencies(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "readydepsuser")
 	t.Setenv("STEM_AUTH_PASSWORD", "readydepspass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	t.Run("ready with auth manager", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/health/ready", nil)
@@ -2842,10 +2725,7 @@ func TestHandleRecoveryCompleteValidation(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "recvaluser")
 	t.Setenv("STEM_AUTH_PASSWORD", "recvalpass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	t.Run("empty body", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/recovery/complete", nil)
@@ -2878,10 +2758,7 @@ func TestHandleSetupCompleteValidation(t *testing.T) {
 	t.Setenv("STEM_AUTH_PASSWORD", "setvalpass123")
 	t.Setenv("STEM_SETUP_MODE", "true")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	t.Run("empty body", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/setup/complete", nil)
@@ -2912,10 +2789,7 @@ func TestHandleTestStartWithTestRunning(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "testrunuser")
 	t.Setenv("STEM_AUTH_PASSWORD", "testrunpass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	// Set test status to running.
 	s.statsMu.Lock()
@@ -2940,10 +2814,7 @@ func TestHandleInterfacesSuccess(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "ifacessuccuser")
 	t.Setenv("STEM_AUTH_PASSWORD", "ifacessuccpass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/interfaces", nil)
 	w := httptest.NewRecorder()
@@ -2966,10 +2837,7 @@ func TestHandleAuthRefreshWithCookie(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "refreshcookieuser")
 	t.Setenv("STEM_AUTH_PASSWORD", "refreshcookiepass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	// Get a valid refresh token.
 	_, refreshToken, authErr := s.authManager.AuthenticateWithRefresh(
@@ -3089,10 +2957,7 @@ func TestReflectorStatsResponse(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "reflectstatsuser2")
 	t.Setenv("STEM_AUTH_PASSWORD", "reflectstatspass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	// Set some stats.
 	s.UpdateStats(1000, 900, 100000, 90000, 100.0, 80.0)
@@ -3165,10 +3030,7 @@ func TestBuildReflectorConfigUpdateWithExecutor(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "buildcfgexecuser")
 	t.Setenv("STEM_AUTH_PASSWORD", "buildcfgexecpass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	// Without executor, dpUpdate should be nil.
 	cfg := &ReflectorConfig{
@@ -3198,10 +3060,7 @@ func TestHandleLicenseTrialGetStatus(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "trialstatususer")
 	t.Setenv("STEM_AUTH_PASSWORD", "trialstatuspass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/license/trial", nil)
 	w := httptest.NewRecorder()
@@ -3223,10 +3082,7 @@ func TestHandleLicenseTrialStartTrial(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "trialstartuser")
 	t.Setenv("STEM_AUTH_PASSWORD", "trialstartpass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/license/trial", nil)
 	w := httptest.NewRecorder()
@@ -3244,10 +3100,7 @@ func TestHandleLicenseTrialWithoutManager(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "trialnomgruser")
 	t.Setenv("STEM_AUTH_PASSWORD", "trialnomgrpass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	// Clear license manager.
 	origManager := s.licenseManager
@@ -3277,10 +3130,7 @@ func TestHandleLicenseActivateWithoutManager(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "activatenomgruser")
 	t.Setenv("STEM_AUTH_PASSWORD", "activatenomgrpass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	// Clear license manager.
 	origManager := s.licenseManager
@@ -3311,10 +3161,7 @@ func TestHandleLicenseActivateWithKey(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "activatekeyuser")
 	t.Setenv("STEM_AUTH_PASSWORD", "activatekeypass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	body := bytes.NewBufferString(`{"licenseKey":"TEST-1234-5678-90AB"}`)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/license/activate", body)
@@ -3333,10 +3180,7 @@ func TestHandleLicenseStates(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "licensestatesuser")
 	t.Setenv("STEM_AUTH_PASSWORD", "licensestatespass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	t.Run("with license manager", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/license", nil)
@@ -3361,10 +3205,7 @@ func TestHandleAuthCSRFWithValidSession(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "csrfsessionuser")
 	t.Setenv("STEM_AUTH_PASSWORD", "csrfsessionpass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	// Get a valid token first.
 	token, _, authErr := s.authManager.AuthenticateWithRefresh(
@@ -3401,10 +3242,7 @@ func TestHandleRecoveryStatusWithoutManager(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "recstatnomgruser")
 	t.Setenv("STEM_AUTH_PASSWORD", "recstatnomgrpass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	// Clear recovery manager.
 	origManager := s.recoveryTokenManager
@@ -3436,10 +3274,7 @@ func TestHandleRecoveryInstructionsWithManager(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "recinstruser")
 	t.Setenv("STEM_AUTH_PASSWORD", "recinstrpass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/recovery/instructions", nil)
 	w := httptest.NewRecorder()
@@ -3464,10 +3299,7 @@ func TestHandleTestStopWithReflector(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "stopreflectuser")
 	t.Setenv("STEM_AUTH_PASSWORD", "stopreflectpass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	// Set running reflector mode.
 	s.statsMu.Lock()
@@ -3500,10 +3332,7 @@ func TestHandleTestResultDifferentStates(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "teststatesuser")
 	t.Setenv("STEM_AUTH_PASSWORD", "teststatespass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	states := []string{
 		statusIdle,
@@ -3543,10 +3372,7 @@ func TestNeedsInitialSetupWithDefaultHash(t *testing.T) {
 	t.Setenv("STEM_AUTH_PASSWORD", "setuphashpass123")
 	t.Setenv("STEM_SETUP_MODE", "false")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	// The result depends on whether the password hash is default.
 	result := s.needsInitialSetup()
@@ -3558,10 +3384,7 @@ func TestHandleRecoveryCompleteWeakPassword(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "recweakuser")
 	t.Setenv("STEM_AUTH_PASSWORD", "recweakpass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	// This test would need a valid recovery token to fully test the weak password path,
 	// but we can at least test that the handler works.
@@ -3583,10 +3406,7 @@ func TestHandleSetupCompleteWithValidToken(t *testing.T) {
 	t.Setenv("STEM_AUTH_PASSWORD", "setupvalidpass123")
 	t.Setenv("STEM_SETUP_MODE", "true")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	// Try with a valid token if available.
 	if s.setupTokenManager != nil {
@@ -3613,10 +3433,7 @@ func TestHandleReflectorStatsWithNoExecutor(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "reflstats2user")
 	t.Setenv("STEM_AUTH_PASSWORD", "reflstats2pass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	// Clear the executor.
 	s.reflectorExec = nil
@@ -3644,10 +3461,7 @@ func TestBuildReflectorConfigUpdateVariations(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "buildcfguser")
 	t.Setenv("STEM_AUTH_PASSWORD", "buildcfgpass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	t.Run("update profile only", func(t *testing.T) {
 		cfg := &ReflectorConfig{Profile: "netally", SignatureFilter: nil, OUIFilter: "", PortFilter: 0}
@@ -3693,10 +3507,7 @@ func TestApplyReflectorDataplaneUpdateVariations(t *testing.T) {
 	t.Setenv("STEM_AUTH_PASSWORD", "applydppass123")
 
 	t.Run("apply with nil update", func(t *testing.T) {
-		s, err := NewServer(8080)
-		if err != nil {
-			t.Fatalf("NewServer() error: %v", err)
-		}
+		s := newTestServer(t)
 
 		applyErr := s.applyReflectorDataplaneUpdate(nil, []string{"test change"})
 		if applyErr != nil {
@@ -3705,10 +3516,7 @@ func TestApplyReflectorDataplaneUpdateVariations(t *testing.T) {
 	})
 
 	t.Run("apply with nil executor", func(t *testing.T) {
-		s, err := NewServer(8080)
-		if err != nil {
-			t.Fatalf("NewServer() error: %v", err)
-		}
+		s := newTestServer(t)
 
 		// Ensure executor is nil.
 		s.reflectorExec = nil
@@ -3725,10 +3533,7 @@ func TestHandleTestStartWithInterface(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "startwithifaceuser")
 	t.Setenv("STEM_AUTH_PASSWORD", "startwithifacepass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	// Get a valid interface.
 	ifaces, ifaceErr := netif.DetectInterfaces()
@@ -3788,10 +3593,7 @@ func TestHandleLicenseVariations(t *testing.T) {
 	t.Setenv("STEM_AUTH_PASSWORD", "licvarpass123")
 
 	t.Run("get license with manager", func(t *testing.T) {
-		s, err := NewServer(8080)
-		if err != nil {
-			t.Fatalf("NewServer() error: %v", err)
-		}
+		s := newTestServer(t)
 
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/license", nil)
 		w := httptest.NewRecorder()
@@ -3804,10 +3606,7 @@ func TestHandleLicenseVariations(t *testing.T) {
 	})
 
 	t.Run("get license without manager", func(t *testing.T) {
-		s, err := NewServer(8080)
-		if err != nil {
-			t.Fatalf("NewServer() error: %v", err)
-		}
+		s := newTestServer(t)
 
 		// Clear the license manager.
 		origManager := s.licenseManager
@@ -3833,10 +3632,7 @@ func TestHandleLicenseActivateVariations(t *testing.T) {
 	t.Setenv("STEM_AUTH_PASSWORD", "licactpass123")
 
 	t.Run("activate without license manager", func(t *testing.T) {
-		s, err := NewServer(8080)
-		if err != nil {
-			t.Fatalf("NewServer() error: %v", err)
-		}
+		s := newTestServer(t)
 
 		// Clear the license manager.
 		s.licenseManager = nil
@@ -3852,10 +3648,7 @@ func TestHandleLicenseActivateVariations(t *testing.T) {
 	})
 
 	t.Run("activate with empty body", func(t *testing.T) {
-		s, err := NewServer(8080)
-		if err != nil {
-			t.Fatalf("NewServer() error: %v", err)
-		}
+		s := newTestServer(t)
 
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/license/activate", nil)
 		w := httptest.NewRecorder()
@@ -3868,10 +3661,7 @@ func TestHandleLicenseActivateVariations(t *testing.T) {
 	})
 
 	t.Run("activate with invalid JSON", func(t *testing.T) {
-		s, err := NewServer(8080)
-		if err != nil {
-			t.Fatalf("NewServer() error: %v", err)
-		}
+		s := newTestServer(t)
 
 		body := bytes.NewBufferString(`{invalid}`)
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/license/activate", body)
@@ -3891,10 +3681,7 @@ func TestHandleLicenseTrialVariations(t *testing.T) {
 	t.Setenv("STEM_AUTH_PASSWORD", "lictrialvarpass123")
 
 	t.Run("trial without license manager", func(t *testing.T) {
-		s, err := NewServer(8080)
-		if err != nil {
-			t.Fatalf("NewServer() error: %v", err)
-		}
+		s := newTestServer(t)
 
 		// Clear the license manager.
 		s.licenseManager = nil
@@ -3908,10 +3695,7 @@ func TestHandleLicenseTrialVariations(t *testing.T) {
 	})
 
 	t.Run("start trial without license manager", func(t *testing.T) {
-		s, err := NewServer(8080)
-		if err != nil {
-			t.Fatalf("NewServer() error: %v", err)
-		}
+		s := newTestServer(t)
 
 		// Clear the license manager.
 		s.licenseManager = nil
@@ -3931,10 +3715,7 @@ func TestExecuteReflectorVariations(t *testing.T) {
 	t.Setenv("STEM_AUTH_PASSWORD", "execreflvarpass123")
 
 	t.Run("execute with nonexistent interface", func(t *testing.T) {
-		s, err := NewServer(8080)
-		if err != nil {
-			t.Fatalf("NewServer() error: %v", err)
-		}
+		s := newTestServer(t)
 
 		execErr := s.executeReflector("nonexistent_iface_xyz", nil)
 		if execErr == nil {
@@ -3943,10 +3724,7 @@ func TestExecuteReflectorVariations(t *testing.T) {
 	})
 
 	t.Run("execute with valid interface", func(t *testing.T) {
-		s, err := NewServer(8080)
-		if err != nil {
-			t.Fatalf("NewServer() error: %v", err)
-		}
+		s := newTestServer(t)
 
 		// Get a valid interface.
 		ifaces, ifaceErr := netif.DetectInterfaces()
@@ -3966,10 +3744,7 @@ func TestRunModuleTestVariations(t *testing.T) {
 	t.Setenv("STEM_AUTH_PASSWORD", "runmodvarpass123")
 
 	t.Run("run with nil factory", func(t *testing.T) {
-		s, err := NewServer(8080)
-		if err != nil {
-			t.Fatalf("NewServer() error: %v", err)
-		}
+		s := newTestServer(t)
 
 		// Create a factory that returns an error.
 		factory := func(_ string) (testExecutor, error) {
@@ -4017,10 +3792,7 @@ func TestValidateInterfaceForTestVariations(t *testing.T) {
 	t.Setenv("STEM_AUTH_PASSWORD", "validifacepass123")
 
 	t.Run("invalid interface", func(t *testing.T) {
-		s, err := NewServer(8080)
-		if err != nil {
-			t.Fatalf("NewServer() error: %v", err)
-		}
+		s := newTestServer(t)
 
 		w := httptest.NewRecorder()
 		result := s.validateInterfaceForTest(w, "nonexistent_test_iface_999")
@@ -4030,10 +3802,7 @@ func TestValidateInterfaceForTestVariations(t *testing.T) {
 	})
 
 	t.Run("valid interface", func(t *testing.T) {
-		s, err := NewServer(8080)
-		if err != nil {
-			t.Fatalf("NewServer() error: %v", err)
-		}
+		s := newTestServer(t)
 
 		// Get a valid interface.
 		ifaces, ifaceErr := netif.DetectInterfaces()
@@ -4054,10 +3823,7 @@ func TestResolveTestModuleVariations(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "resolvemoduser")
 	t.Setenv("STEM_AUTH_PASSWORD", "resolvemodpass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	t.Run("unknown test type", func(t *testing.T) {
 		_, resolveErr := s.resolveTestModule("unknown_test_type_xyz")
@@ -4093,10 +3859,7 @@ func TestResolveTestInterfaceVariations(t *testing.T) {
 	t.Setenv("STEM_AUTH_PASSWORD", "resolveifacepass123")
 
 	t.Run("with requested interface", func(t *testing.T) {
-		s, err := NewServer(8080)
-		if err != nil {
-			t.Fatalf("NewServer() error: %v", err)
-		}
+		s := newTestServer(t)
 
 		iface, resolveErr := s.resolveTestInterface("eth0")
 		if resolveErr != nil {
@@ -4108,10 +3871,7 @@ func TestResolveTestInterfaceVariations(t *testing.T) {
 	})
 
 	t.Run("with no requested and no selected", func(t *testing.T) {
-		s, err := NewServer(8080)
-		if err != nil {
-			t.Fatalf("NewServer() error: %v", err)
-		}
+		s := newTestServer(t)
 
 		// Clear the selected interface.
 		s.statsMu.Lock()
@@ -4125,10 +3885,7 @@ func TestResolveTestInterfaceVariations(t *testing.T) {
 	})
 
 	t.Run("with no requested but selected available", func(t *testing.T) {
-		s, err := NewServer(8080)
-		if err != nil {
-			t.Fatalf("NewServer() error: %v", err)
-		}
+		s := newTestServer(t)
 
 		// Set a selected interface.
 		s.statsMu.Lock()
@@ -4151,10 +3908,7 @@ func TestBeginTestRunVariations(t *testing.T) {
 	t.Setenv("STEM_AUTH_PASSWORD", "begintestpass123")
 
 	t.Run("already running", func(t *testing.T) {
-		s, err := NewServer(8080)
-		if err != nil {
-			t.Fatalf("NewServer() error: %v", err)
-		}
+		s := newTestServer(t)
 
 		// Set status to running.
 		s.statsMu.Lock()
@@ -4168,10 +3922,7 @@ func TestBeginTestRunVariations(t *testing.T) {
 	})
 
 	t.Run("idle state", func(t *testing.T) {
-		s, err := NewServer(8080)
-		if err != nil {
-			t.Fatalf("NewServer() error: %v", err)
-		}
+		s := newTestServer(t)
 
 		// Set status to idle.
 		s.statsMu.Lock()
@@ -4207,10 +3958,7 @@ func TestHandleLicenseVariousStates(t *testing.T) {
 	t.Setenv("STEM_AUTH_PASSWORD", "licstatespass123")
 
 	t.Run("nil license manager", func(t *testing.T) {
-		s, err := NewServer(8080)
-		if err != nil {
-			t.Fatalf("NewServer() error: %v", err)
-		}
+		s := newTestServer(t)
 
 		s.licenseManager = nil
 
@@ -4230,10 +3978,7 @@ func TestHandleLicenseVariousStates(t *testing.T) {
 	})
 
 	t.Run("method not allowed", func(t *testing.T) {
-		s, err := NewServer(8080)
-		if err != nil {
-			t.Fatalf("NewServer() error: %v", err)
-		}
+		s := newTestServer(t)
 
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/license", nil)
 		w := httptest.NewRecorder()
@@ -4251,10 +3996,7 @@ func TestHandleInterfacesMethodNotAllowed(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "ifacemethoduser")
 	t.Setenv("STEM_AUTH_PASSWORD", "ifacemethodpass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/interfaces", nil)
 	w := httptest.NewRecorder()
@@ -4271,10 +4013,7 @@ func TestHandleRecoveryStatusMethodNotAllowed(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "recstatmethoduser")
 	t.Setenv("STEM_AUTH_PASSWORD", "recstatmethodpass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/recovery/status", nil)
 	w := httptest.NewRecorder()
@@ -4291,10 +4030,7 @@ func TestHandleRecoveryCompleteMethodNotAllowed(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "reccompmethoduser")
 	t.Setenv("STEM_AUTH_PASSWORD", "reccompmethodpass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/recovery/complete", nil)
 	w := httptest.NewRecorder()
@@ -4311,10 +4047,7 @@ func TestHandleRecoveryInstructionsMethodNotAllowed(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "recinstmethoduser")
 	t.Setenv("STEM_AUTH_PASSWORD", "recinstmethodpass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/recovery/instructions", nil)
 	w := httptest.NewRecorder()
@@ -4331,10 +4064,7 @@ func TestHandleRecoveryCompleteWithoutManager(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "reccompnomgruser")
 	t.Setenv("STEM_AUTH_PASSWORD", "reccompnomgrpass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	s.recoveryTokenManager = nil
 
@@ -4354,10 +4084,7 @@ func TestExecuteTestWithUnknownModule(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "execunknownuser")
 	t.Setenv("STEM_AUTH_PASSWORD", "execunknownpass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	execErr := s.executeTest("unknown_module_xyz", "throughput", "en0", nil)
 	if execErr == nil {
@@ -4370,10 +4097,7 @@ func TestHandleSetupStatusMethodNotAllowed(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "setupstatmethoduser")
 	t.Setenv("STEM_AUTH_PASSWORD", "setupstatmethodpass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/setup/status", nil)
 	w := httptest.NewRecorder()
@@ -4390,10 +4114,7 @@ func TestHandleSetupCompleteMethodNotAllowed(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "setupcompmethoduser")
 	t.Setenv("STEM_AUTH_PASSWORD", "setupcompmethodpass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/setup/complete", nil)
 	w := httptest.NewRecorder()
@@ -4410,10 +4131,7 @@ func TestHandleAuthLoginMethodNotAllowed(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "loginmethoduser")
 	t.Setenv("STEM_AUTH_PASSWORD", "loginmethodpass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/login", nil)
 	w := httptest.NewRecorder()
@@ -4430,10 +4148,7 @@ func TestHandleAuthLogoutMethodNotAllowed(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "logoutmethoduser")
 	t.Setenv("STEM_AUTH_PASSWORD", "logoutmethodpass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/logout", nil)
 	w := httptest.NewRecorder()
@@ -4450,10 +4165,7 @@ func TestHandleAuthRefreshMethodNotAllowed(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "refreshmethoduser")
 	t.Setenv("STEM_AUTH_PASSWORD", "refreshmethodpass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/refresh", nil)
 	w := httptest.NewRecorder()
@@ -4470,10 +4182,7 @@ func TestHandleAuthCSRFMethodNotAllowed(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "csrfmethoduser")
 	t.Setenv("STEM_AUTH_PASSWORD", "csrfmethodpass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/csrf", nil)
 	w := httptest.NewRecorder()
@@ -4490,10 +4199,7 @@ func TestHandleAuthCSRFNoSession(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "csrfnosessuser")
 	t.Setenv("STEM_AUTH_PASSWORD", "csrfnosesspass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/csrf", nil)
 	w := httptest.NewRecorder()
@@ -4510,10 +4216,7 @@ func TestHandleTestStopMethodNotAllowed(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "stopmethoduser")
 	t.Setenv("STEM_AUTH_PASSWORD", "stopmethodpass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/test/stop", nil)
 	w := httptest.NewRecorder()
@@ -4530,10 +4233,7 @@ func TestHandleTestResultMethodNotAllowed(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "resultmethoduser")
 	t.Setenv("STEM_AUTH_PASSWORD", "resultmethodpass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/test/result", nil)
 	w := httptest.NewRecorder()
@@ -4550,10 +4250,7 @@ func TestHandleTestStartMethodNotAllowed(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "startmethoduser")
 	t.Setenv("STEM_AUTH_PASSWORD", "startmethodpass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/test/start", nil)
 	w := httptest.NewRecorder()
@@ -4570,10 +4267,7 @@ func TestHandleReflectorConfigUpdateSuccess(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "reflconfsucc")
 	t.Setenv("STEM_AUTH_PASSWORD", "reflconfsucc123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	t.Run("update with valid netally profile", func(t *testing.T) {
 		body := bytes.NewBufferString(`{"profile":"netally"}`)
@@ -4641,10 +4335,7 @@ func TestBuildReflectorConfigUpdateWithPortFilter(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "portfilteruser")
 	t.Setenv("STEM_AUTH_PASSWORD", "portfilterpass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	cfg := &ReflectorConfig{
 		Profile:         "",
@@ -4669,10 +4360,7 @@ func TestHandleLicenseAllBranches(t *testing.T) {
 	t.Setenv("STEM_AUTH_PASSWORD", "licbranchpass123")
 
 	t.Run("get with manager", func(t *testing.T) {
-		s, err := NewServer(8080)
-		if err != nil {
-			t.Fatalf("NewServer() error: %v", err)
-		}
+		s := newTestServer(t)
 
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/license", nil)
 		w := httptest.NewRecorder()
@@ -4685,10 +4373,7 @@ func TestHandleLicenseAllBranches(t *testing.T) {
 	})
 
 	t.Run("get without manager", func(t *testing.T) {
-		s, err := NewServer(8080)
-		if err != nil {
-			t.Fatalf("NewServer() error: %v", err)
-		}
+		s := newTestServer(t)
 
 		s.licenseManager = nil
 
@@ -4703,10 +4388,7 @@ func TestHandleLicenseAllBranches(t *testing.T) {
 	})
 
 	t.Run("method POST not allowed", func(t *testing.T) {
-		s, err := NewServer(8080)
-		if err != nil {
-			t.Fatalf("NewServer() error: %v", err)
-		}
+		s := newTestServer(t)
 
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/license", nil)
 		w := httptest.NewRecorder()
@@ -4724,10 +4406,7 @@ func TestHandleInterfacesAllBranches(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "ifacebranchuser")
 	t.Setenv("STEM_AUTH_PASSWORD", "ifacebranchpass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	t.Run("get interfaces", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/interfaces", nil)
@@ -4768,10 +4447,7 @@ func TestHandleAuthCSRFAllBranches(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "csrfbranchuser")
 	t.Setenv("STEM_AUTH_PASSWORD", "csrfbranchpass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	t.Run("method POST not allowed", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/csrf", nil)
@@ -4801,10 +4477,7 @@ func TestHandleRecoveryInstructionsAllBranches(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "recinstrbranchuser")
 	t.Setenv("STEM_AUTH_PASSWORD", "recinstrbranchpass123")
 
-	s, err := NewServer(8080)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
+	s := newTestServer(t)
 
 	t.Run("get instructions", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/recovery/instructions", nil)

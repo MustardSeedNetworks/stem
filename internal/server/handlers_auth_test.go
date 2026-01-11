@@ -29,6 +29,7 @@ func setupAuthTestServer(t testing.TB) *server.Server {
 	if err != nil {
 		t.Fatalf("NewServer() error: %v", err)
 	}
+	t.Cleanup(func() { _ = s.Shutdown() })
 	return s
 }
 
@@ -449,6 +450,7 @@ func BenchmarkHandleAuthCSRF(b *testing.B) {
 	if err != nil {
 		b.Fatalf("NewServer() error: %v", err)
 	}
+	b.Cleanup(func() { _ = s.Shutdown() })
 
 	// Get token once.
 	body := bytes.NewBufferString(`{"username":"benchuser","password":"benchpass123"}`)

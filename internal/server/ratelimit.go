@@ -67,6 +67,7 @@ type RateLimiter struct {
 	rate          rate.Limit
 	burst         int
 	done          chan struct{}
+	stopOnce      sync.Once     // Ensures Stop is called only once
 	globalLimiter *rate.Limiter // Fallback limiter when max visitors exceeded
 	maxVisitors   int           // Maximum number of IPs to track
 }
@@ -215,9 +216,11 @@ func (rl *RateLimiter) cleanup() {
 	}
 }
 
-// Stop stops the cleanup goroutine.
+// Stop stops the cleanup goroutine. Safe to call multiple times.
 func (rl *RateLimiter) Stop() {
-	close(rl.done)
+	rl.stopOnce.Do(func() {
+		close(rl.done)
+	})
 }
 
 // Middleware returns an HTTP middleware that applies rate limiting.

@@ -317,11 +317,30 @@ func TestValidateToken_TamperedToken(t *testing.T) {
 		t.Fatalf("Authenticate() failed: %v", err)
 	}
 
-	tamperedToken := token[:len(token)-1] + "X"
+	// Tamper with the middle of the signature section to ensure validation fails.
+	// Changing just the last character may not affect base64 decoded bytes.
+	parts := strings.Split(token, ".")
+	if len(parts) != 3 {
+		t.Fatalf("Expected 3 JWT parts, got %d", len(parts))
+	}
+	sig := parts[2]
+	// Flip a character in the middle of the signature
+	mid := len(sig) / 2
+	tamperedSig := sig[:mid] + string(flipChar(sig[mid])) + sig[mid+1:]
+	tamperedToken := parts[0] + "." + parts[1] + "." + tamperedSig
+
 	_, err = mgr.ValidateToken(ctx, tamperedToken)
 	if err == nil {
 		t.Error("ValidateToken() expected error for tampered token")
 	}
+}
+
+// flipChar returns a different valid base64url character.
+func flipChar(c byte) byte {
+	if c == 'A' {
+		return 'B'
+	}
+	return 'A'
 }
 
 func TestValidateToken_WrongSecret(t *testing.T) {

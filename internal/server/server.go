@@ -846,6 +846,11 @@ func (s *Server) Shutdown() error {
 		s.csrfManager.Stop()
 	}
 
+	// Stop auth manager cleanup goroutine.
+	if s.authManager != nil {
+		s.authManager.Stop()
+	}
+
 	// Stop any running reflector.
 	if s.reflectorExec != nil {
 		logging.Info("Stopping reflector...")

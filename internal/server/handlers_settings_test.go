@@ -24,6 +24,7 @@ func setupSettingsTestServer(t testing.TB) *server.Server {
 	if err != nil {
 		t.Fatalf("NewServer() error: %v", err)
 	}
+	t.Cleanup(func() { _ = s.Shutdown() })
 	return s
 }
 

@@ -21,6 +21,7 @@ func setupModulesTestServer(t testing.TB) *server.Server {
 	if err != nil {
 		t.Fatalf("NewServer() error: %v", err)
 	}
+	t.Cleanup(func() { _ = s.Shutdown() })
 	return s
 }
 
@@ -279,6 +280,7 @@ func BenchmarkHandleModules(b *testing.B) {
 	if err != nil {
 		b.Fatalf("NewServer() error: %v", err)
 	}
+	b.Cleanup(func() { _ = s.Shutdown() })
 
 	for b.Loop() {
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/modules", nil)
@@ -296,6 +298,7 @@ func BenchmarkHandleModuleByName(b *testing.B) {
 	if err != nil {
 		b.Fatalf("NewServer() error: %v", err)
 	}
+	b.Cleanup(func() { _ = s.Shutdown() })
 
 	for b.Loop() {
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/modules/benchmark", nil)

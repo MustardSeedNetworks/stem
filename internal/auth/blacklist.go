@@ -14,16 +14,28 @@ const cleanupInterval = 5 * time.Minute
 type TokenBlacklist struct {
 	// tokens maps token ID (jti) to expiration time.
 	tokens sync.Map
+	// stopCh signals the cleanup goroutine to stop.
+	stopCh chan struct{}
+	// stopOnce ensures Stop is called only once.
+	stopOnce sync.Once
 }
 
 // NewTokenBlacklist creates a new token blacklist.
 func NewTokenBlacklist() *TokenBlacklist {
 	bl := &TokenBlacklist{
 		tokens: sync.Map{},
+		stopCh: make(chan struct{}),
 	}
 	// Start cleanup goroutine to remove expired tokens.
 	go bl.cleanupLoop()
 	return bl
+}
+
+// Stop stops the cleanup goroutine. Safe to call multiple times.
+func (bl *TokenBlacklist) Stop() {
+	bl.stopOnce.Do(func() {
+		close(bl.stopCh)
+	})
 }
 
 // Add adds a token to the blacklist.
@@ -60,8 +72,13 @@ func (bl *TokenBlacklist) cleanupLoop() {
 	ticker := time.NewTicker(cleanupInterval)
 	defer ticker.Stop()
 
-	for range ticker.C {
-		bl.cleanup()
+	for {
+		select {
+		case <-bl.stopCh:
+			return
+		case <-ticker.C:
+			bl.cleanup()
+		}
 	}
 }
 
