@@ -3,7 +3,7 @@ module github.com/krisarmstrong/stem
 go 1.25.5
 
 require (
-	github.com/gdamore/tcell/v2 v2.13.5
+	github.com/gdamore/tcell/v2 v2.13.7
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/google/uuid v1.6.0
 	github.com/prometheus/client_golang v1.23.2
