@@ -37,7 +37,7 @@ endif
 # Main Targets
 # ============================================================================
 
-.PHONY: all ui ui-deps go clean test dev install help lint lint-go lint-c format format-go format-c fix verify build-linux-docker deploy smoke-test-remote logs logs-100 remote-status update update-go update-npm version-check tools tools-go tools-frontend security security-backend security-frontend security-secrets license-check license-check-go license-check-npm license-report deb rpm packages
+.PHONY: all ui ui-deps go clean test dev install help lint lint-go lint-c format format-go format-c fix verify build-linux-docker update update-go update-npm version-check tools tools-go tools-frontend security security-backend security-frontend security-secrets license-check license-check-go license-check-npm license-report deb rpm packages c-build c-build-docker dataplane
 
 # Default: build everything
 all: ui go
@@ -247,7 +247,33 @@ uninstall:
 	@echo "Uninstalled: /usr/local/bin/$(BINARY)"
 
 # ============================================================================
-# C Dataplane (Linux only)
+# C/Dataplane Build Configuration
+# ============================================================================
+# The C dataplane code has multiple build modes for different environments.
+#
+# Build Profiles:
+#   c-build           Build dataplane for current platform (Linux only)
+#   c-build-stub      Build stub for non-Linux platforms (for testing)
+#   c-test            Run C unit tests
+#
+# Platform Support:
+#   Linux:   Full support with AF_PACKET/AF_XDP backends
+#   macOS:   Stub mode only (for development/testing)
+#   Docker:  Use 'make c-build-docker' for Linux build from any platform
+#
+# DPDK Support (Optional):
+#   DPDK provides maximum performance but adds complexity.
+#   Enable with: make c-build DPDK=1
+#
+#   Requirements for DPDK:
+#   - DPDK 23.11 LTS installed
+#   - Hugepages configured
+#   - DPDK_DIR environment variable set
+#
+#   Without DPDK (default):
+#   - Uses AF_PACKET or AF_XDP
+#   - Easier to deploy
+#   - Good performance for most use cases
 # ============================================================================
 
 # C compiler settings
@@ -275,6 +301,14 @@ ifeq ($(UNAME),Linux)
 else
 	@echo "Dataplane requires Linux (uses AF_PACKET/AF_XDP)"
 endif
+
+# Build C code using Docker (cross-platform)
+c-build-docker: ## Build C code using Docker (cross-platform)
+	@echo "Building C dataplane in Docker..."
+	docker run --rm -v $(PWD):/src -w /src gcc:latest make c-build
+
+# Alias for dataplane target
+c-build: dataplane
 
 # ============================================================================
 # C Tests (Linux only)
@@ -399,17 +433,11 @@ install-service: build
 	@echo "Service installed. Run: systemctl enable --now stem"
 
 # ============================================================================
-# Remote Deployment
+# Docker Build (Cross-Platform)
 # ============================================================================
 
-# Deployment configuration (override with environment variables)
-DEPLOY_HOST ?= 192.168.64.7
-DEPLOY_USER ?= krisarmstrong
-DEPLOY_PATH ?= /home/$(DEPLOY_USER)/stem
-DEPLOY_PORT ?= 8443
-
 # Build Linux binary via Docker (for cross-compilation from macOS)
-build-linux-docker:
+build-linux-docker: ## Build Linux binary using Docker (cross-platform)
 	@printf "$(BOLD)$(CYAN)Building Linux binary via Docker...$(RESET)\n"
 	docker run --rm \
 		-v $(PWD):/workspace \
@@ -426,100 +454,6 @@ build-linux-docker:
 			-o bin/stem-linux-amd64 \
 			./cmd/stem/
 	@printf "$(GREEN)✓ Linux binary built: bin/stem-linux-amd64$(RESET)\n"
-
-# Full deployment pipeline
-deploy: ## Deploy to remote Ubuntu server
-	@printf "\n$(BOLD)$(CYAN)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(RESET)\n"
-	@printf "$(BOLD)$(CYAN)  DEPLOYING TO $(DEPLOY_HOST)$(RESET)\n"
-	@printf "$(CYAN)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(RESET)\n\n"
-	$(call timer-start,deploy)
-	@printf "$(BOLD)[1/5]$(RESET) Building Linux binary...\n"
-ifeq ($(UNAME),Darwin)
-	@$(MAKE) build-linux-docker
-else
-	@$(MAKE) go BINARY_NAME=bin/stem-linux-amd64
-endif
-	@printf "$(BOLD)[2/5]$(RESET) Syncing to remote server...\n"
-	rsync -avz --progress bin/stem-linux-amd64 $(DEPLOY_USER)@$(DEPLOY_HOST):$(DEPLOY_PATH)/stem-new
-	@printf "$(BOLD)[3/5]$(RESET) Installing on remote server...\n"
-	ssh $(DEPLOY_USER)@$(DEPLOY_HOST) "\
-		cd $(DEPLOY_PATH) && \
-		sudo systemctl stop stem 2>/dev/null || true && \
-		mv stem-new stem && \
-		sudo setcap cap_net_raw=+ep ./stem 2>/dev/null || true && \
-		sudo systemctl start stem"
-	@printf "$(BOLD)[4/5]$(RESET) Waiting for service startup...\n"
-	@sleep 3
-	@printf "$(BOLD)[5/5]$(RESET) Running smoke tests...\n"
-	@$(MAKE) smoke-test-remote
-	$(call timer-end,deploy,Deployment)
-	@printf "\n$(GREEN)✓ DEPLOYMENT SUCCESSFUL$(RESET)\n"
-	@printf "  URL: https://$(DEPLOY_HOST):$(DEPLOY_PORT)\n\n"
-
-# Remote smoke tests - verify deployment
-smoke-test-remote: ## Run smoke tests against deployed server
-	@printf "$(BOLD)$(CYAN)Running remote smoke tests...$(RESET)\n"
-	@ERRORS=0; \
-	\
-	printf "  [1/4] Checking process...\n"; \
-	if ssh $(DEPLOY_USER)@$(DEPLOY_HOST) "pgrep -f 'stem' > /dev/null"; then \
-		printf "$(GREEN)    ✓ Process running$(RESET)\n"; \
-	else \
-		printf "$(RED)    ✗ Process not running$(RESET)\n"; \
-		ERRORS=$$((ERRORS + 1)); \
-	fi; \
-	\
-	printf "  [2/4] Checking API health...\n"; \
-	if curl -sf -k "https://$(DEPLOY_HOST):$(DEPLOY_PORT)/api/health" > /dev/null 2>&1; then \
-		printf "$(GREEN)    ✓ API responding$(RESET)\n"; \
-	else \
-		printf "$(RED)    ✗ API not responding$(RESET)\n"; \
-		ERRORS=$$((ERRORS + 1)); \
-	fi; \
-	\
-	printf "  [3/4] Checking version endpoint...\n"; \
-	VERSION_RESP=$$(curl -sf -k "https://$(DEPLOY_HOST):$(DEPLOY_PORT)/api/version" 2>/dev/null); \
-	if [ -n "$$VERSION_RESP" ]; then \
-		printf "$(GREEN)    ✓ Version: $$VERSION_RESP$(RESET)\n"; \
-	else \
-		printf "$(YELLOW)    ⚠ Version endpoint not available$(RESET)\n"; \
-	fi; \
-	\
-	printf "  [4/4] Checking WebUI...\n"; \
-	if curl -sf -k "https://$(DEPLOY_HOST):$(DEPLOY_PORT)/" 2>/dev/null | grep -q "<!DOCTYPE"; then \
-		printf "$(GREEN)    ✓ WebUI loading$(RESET)\n"; \
-	else \
-		printf "$(RED)    ✗ WebUI not loading$(RESET)\n"; \
-		ERRORS=$$((ERRORS + 1)); \
-	fi; \
-	\
-	if [ $$ERRORS -gt 0 ]; then \
-		printf "\n$(RED)✗ Smoke tests failed ($$ERRORS errors)$(RESET)\n"; \
-		exit 1; \
-	fi; \
-	printf "\n$(GREEN)✓ All smoke tests passed$(RESET)\n"
-
-# Remote log access
-logs: ## Stream live logs from remote server
-	@printf "$(BOLD)$(CYAN)Streaming logs from $(DEPLOY_HOST)...$(RESET)\n"
-	@printf "$(YELLOW)Press Ctrl+C to stop$(RESET)\n\n"
-	ssh $(DEPLOY_USER)@$(DEPLOY_HOST) "sudo journalctl -u stem -f"
-
-logs-100: ## Show last 100 log lines from remote server
-	@printf "$(BOLD)$(CYAN)Last 100 log lines from $(DEPLOY_HOST):$(RESET)\n\n"
-	ssh $(DEPLOY_USER)@$(DEPLOY_HOST) "sudo journalctl -u stem -n 100 --no-pager"
-
-remote-status: ## Check service status on remote server
-	@printf "$(BOLD)$(CYAN)Service status on $(DEPLOY_HOST):$(RESET)\n\n"
-	ssh $(DEPLOY_USER)@$(DEPLOY_HOST) "\
-		echo '=== Systemd Status ===' && \
-		sudo systemctl status stem --no-pager && \
-		echo '' && \
-		echo '=== Process Info ===' && \
-		ps aux | grep -E 'PID|stem' | grep -v grep && \
-		echo '' && \
-		echo '=== Listening Ports ===' && \
-		sudo ss -tlnp | grep -E 'State|stem' || true"
 
 # ============================================================================
 # Dependency Management
@@ -757,13 +691,6 @@ help: ## Show this help
 	@printf "  update-npm       Update npm packages\n"
 	@printf "  version-check    Show version info and outdated packages\n"
 	@printf "\n"
-	@printf "$(BOLD)$(CYAN)Deployment:$(RESET)\n"
-	@printf "  deploy           Deploy to remote Ubuntu server\n"
-	@printf "  smoke-test-remote Run smoke tests against deployed server\n"
-	@printf "  logs             Stream live logs from remote server\n"
-	@printf "  logs-100         Show last 100 log lines from remote\n"
-	@printf "  remote-status    Check service status on remote\n"
-	@printf "\n"
 	@printf "$(BOLD)$(CYAN)Installation:$(RESET)\n"
 	@printf "  install          Install to /usr/local/bin\n"
 	@printf "  uninstall        Remove from /usr/local/bin\n"
@@ -773,11 +700,10 @@ help: ## Show this help
 	@printf "  rpm              Build RPM package (Fedora/RHEL)\n"
 	@printf "  deb              Build DEB package (Debian/Ubuntu)\n"
 	@printf "\n"
-	@printf "$(BOLD)$(CYAN)C Dataplane:$(RESET) (Linux only)\n"
-	@printf "  dataplane        Build C dataplane library\n"
+	@printf "$(BOLD)$(CYAN)C Dataplane:$(RESET)\n"
+	@printf "  c-build          Build C dataplane (alias for dataplane)\n"
+	@printf "  c-build-docker   Build C code using Docker (cross-platform)\n"
+	@printf "  dataplane        Build C dataplane library (Linux only)\n"
 	@printf "\n"
-	@printf "$(YELLOW)Environment Variables:$(RESET)\n"
-	@printf "  DEPLOY_HOST      Target server IP (default: 192.168.64.7)\n"
-	@printf "  DEPLOY_USER      SSH user (default: krisarmstrong)\n"
-	@printf "  DEPLOY_PATH      Remote path (default: /home/USER/stem)\n"
-	@printf "  DEPLOY_PORT      HTTPS port (default: 8443)\n"
+	@printf "$(BOLD)$(CYAN)Docker:$(RESET)\n"
+	@printf "  build-linux-docker Build Linux binary via Docker\n"
