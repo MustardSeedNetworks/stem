@@ -96,6 +96,13 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Upload frontend build
+        uses: actions/upload-artifact@v6
+        with:
+          name: frontend-dist
+          path: ui/dist/
+          retention-days: 1
+
   # ============================================================================
   # C Lint (Linux only)
   # ============================================================================
@@ -292,18 +299,11 @@ jobs:
           go-version-file: go.mod
           cache: true
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v6
+      - name: Download frontend build
+        uses: actions/download-artifact@v6
         with:
-          node-version: '25'
-          cache: 'npm'
-          cache-dependency-path: ui/package-lock.json
-
-      - name: Build UI
-        working-directory: ui
-        run: |
-          npm ci
-          npm run build
+          name: frontend-dist
+          path: ui/dist/
 
       - name: Copy UI dist
         run: |
