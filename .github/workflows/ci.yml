@@ -29,7 +29,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v6
         with:
-          go-version: '1.25'
+          go-version-file: go.mod
           cache: true
 
       - name: Download dependencies
@@ -112,20 +112,20 @@ jobs:
 
       - name: Run clang-tidy
         run: |
-          if [ -d "src" ]; then
-            find src -name '*.c' -o -name '*.h' | xargs clang-tidy -p . 2>/dev/null || true
+          if [ -d "src" ] && find src \( -name '*.c' -o -name '*.h' \) | grep -q .; then
+            find src \( -name '*.c' -o -name '*.h' \) | xargs clang-tidy -p .
           else
-            echo "No C sources found, skipping clang-tidy"
+            echo "No C source files found, skipping clang-tidy"
           fi
 
       - name: Run cppcheck
         run: |
-          if [ -d "src" ]; then
+          if [ -d "src" ] && find src \( -name '*.c' -o -name '*.h' \) | grep -q .; then
             cppcheck --error-exitcode=1 --enable=warning,style,performance \
               --suppress=missingIncludeSystem \
-              -I include src/ 2>&1 || true
+              -I include src/
           else
-            echo "No C sources found, skipping cppcheck"
+            echo "No C source files found, skipping cppcheck"
           fi
 
   # ============================================================================
@@ -141,7 +141,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v6
         with:
-          go-version: '1.25'
+          go-version-file: go.mod
           cache: true
 
       - name: Run govulncheck
@@ -262,7 +262,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v6
         with:
-          go-version: '1.25'
+          go-version-file: go.mod
           cache: true
 
       - name: Set up Node.js
