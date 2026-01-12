@@ -98,7 +98,7 @@ endif
 # Main Targets
 # ============================================================================
 
-.PHONY: all ui ui-deps go clean test dev install help lint lint-go lint-c format format-go format-c fix verify build-linux-docker deploy smoke-test-remote logs logs-100 remote-status update update-go update-npm version-check tools tools-go tools-frontend security security-backend security-frontend security-secrets
+.PHONY: all ui ui-deps go clean test dev install help lint lint-go lint-c format format-go format-c fix verify build-linux-docker deploy smoke-test-remote logs logs-100 remote-status update update-go update-npm version-check tools tools-go tools-frontend security security-backend security-frontend security-secrets license-check license-check-go license-check-npm license-report
 
 # Default: build everything
 all: ui go
@@ -249,16 +249,28 @@ fix:
 # Verification (CI/CD pipeline)
 # ============================================================================
 
-# Full verification: lint, test, build
-verify: lint test build
-	@echo ""
-	@echo "════════════════════════════════════════════════════════════════════════════"
-	@echo "  ✓ VERIFICATION COMPLETE"
-	@echo "    - Linters passed"
-	@echo "    - Tests passed"
-	@echo "    - Build successful: $(BINARY_NAME)"
-	@echo "    - Version: $(VERSION)"
-	@echo "════════════════════════════════════════════════════════════════════════════"
+# Full verification: lint, test, security, build
+verify: ## Full verification pipeline (lint, test, security, build)
+	@printf "\n$(BOLD)$(CYAN)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(RESET)\n"
+	@printf "$(BOLD)$(CYAN)  VERIFICATION PIPELINE$(RESET)\n"
+	@printf "$(CYAN)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(RESET)\n\n"
+	$(call timer-start,verify)
+	@printf "$(BOLD)[1/5]$(RESET) Running linters...\n"
+	@$(MAKE) lint
+	@printf "$(BOLD)[2/5]$(RESET) Running tests...\n"
+	@$(MAKE) test
+	@printf "$(BOLD)[3/5]$(RESET) Running security scans...\n"
+	@$(MAKE) security
+	@printf "$(BOLD)[4/5]$(RESET) Building binary...\n"
+	@$(MAKE) build
+	@printf "$(BOLD)[5/5]$(RESET) Checking licenses...\n"
+	@$(MAKE) license-check || true
+	$(call timer-end,verify,Verification pipeline)
+	@printf "\n$(BOLD)$(GREEN)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(RESET)\n"
+	@printf "$(BOLD)$(GREEN)  ✓ VERIFICATION COMPLETE$(RESET)\n"
+	@printf "$(GREEN)━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━$(RESET)\n"
+	@printf "    Binary: $(BINARY_NAME)\n"
+	@printf "    Version: $(VERSION)\n\n"
 
 # ============================================================================
 # Testing
@@ -695,53 +707,121 @@ security-secrets: ## Scan for secrets in codebase
 	$(call timer-end,security-secrets,Secret scan)
 
 # ============================================================================
+# License Compliance
+# ============================================================================
+
+# Check all licenses
+license-check: license-check-go license-check-npm ## Check dependency licenses
+	@printf "\n$(GREEN)✓ License check complete$(RESET)\n"
+
+# Check Go dependency licenses
+license-check-go: ## Check Go module licenses
+	@printf "$(BOLD)$(CYAN)Checking Go dependency licenses...$(RESET)\n"
+	@if ! command -v go-licenses >/dev/null 2>&1; then \
+		printf "$(YELLOW)Installing go-licenses...$(RESET)\n"; \
+		go install github.com/google/go-licenses@latest; \
+	fi
+	@go-licenses check ./... \
+		--disallowed_types=forbidden,restricted \
+		2>/dev/null || printf "$(YELLOW)⚠ Some license issues found$(RESET)\n"
+
+# Check npm dependency licenses
+license-check-npm: ## Check npm package licenses
+	@printf "$(BOLD)$(CYAN)Checking npm dependency licenses...$(RESET)\n"
+	@cd ui && npx license-checker --summary --onlyAllow \
+		"MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;ISC;CC0-1.0;Unlicense;0BSD" \
+		2>/dev/null || printf "$(YELLOW)⚠ Some license issues found$(RESET)\n"
+
+# Generate license report
+license-report: ## Generate full license report
+	@printf "$(BOLD)$(CYAN)Generating license report...$(RESET)\n"
+	@mkdir -p reports
+	@printf "Go Licenses:\n" > reports/licenses.txt
+	@printf "============\n" >> reports/licenses.txt
+	@go-licenses csv ./... 2>/dev/null >> reports/licenses.txt || true
+	@printf "\n\nnpm Licenses:\n" >> reports/licenses.txt
+	@printf "=============\n" >> reports/licenses.txt
+	@cd ui && npx license-checker --csv 2>/dev/null >> ../reports/licenses.txt || true
+	@printf "$(GREEN)✓ License report: reports/licenses.txt$(RESET)\n"
+
+# ============================================================================
 # Help
 # ============================================================================
 
-help:
-	@echo "The Stem - Mustard Seed Networks"
-	@echo "Copyright (c) 2025 Mustard Seed Networks"
-	@echo ""
-	@echo "Usage: make [target]"
-	@echo ""
-	@echo "Main targets:"
-	@echo "  all            Build everything (UI + Go binary)"
-	@echo "  build          Build Go binary with symlink"
-	@echo "  ui             Build React WebUI"
-	@echo "  go             Build Go binary"
-	@echo "  quick          Quick build (Go only, skip UI)"
-	@echo "  clean          Clean all build artifacts"
-	@echo "  verify         Full verification (lint + test + build)"
-	@echo ""
-	@echo "Linting & Formatting:"
-	@echo "  lint           Run all linters"
-	@echo "  lint-go        Run Go linter (golangci-lint)"
-	@echo "  lint-c         Run C linter (clang-tidy, Linux)"
-	@echo "  format         Format all code"
-	@echo "  format-go      Format Go code (gofmt)"
-	@echo "  format-c       Format C code (clang-format, Linux)"
-	@echo "  fix            Auto-fix linting issues"
-	@echo ""
-	@echo "Development:"
-	@echo "  ui-dev         Run React dev server (port 3000)"
-	@echo "  go-dev         Run Go backend (port 8080)"
-	@echo "  dev            Show dev instructions"
-	@echo ""
-	@echo "Testing:"
-	@echo "  test           Run Go unit tests"
-	@echo "  test-coverage  Run tests with coverage report"
-	@echo "  c-test         Build and run C unit tests (Linux)"
-	@echo "  smoke-test     Run smoke tests with veth (Linux, root)"
-	@echo "  test-all       Run all tests (Go + C)"
-	@echo ""
-	@echo "Installation:"
-	@echo "  install        Install to /usr/local/bin"
-	@echo "  uninstall      Remove from /usr/local/bin"
-	@echo "  install-service Install as systemd service (Linux, root)"
-	@echo ""
-	@echo "Packaging:"
-	@echo "  rpm            Build RPM package (Fedora/RHEL)"
-	@echo "  deb            Build DEB package (Debian/Ubuntu)"
-	@echo ""
-	@echo "C Dataplane (Linux):"
-	@echo "  dataplane      Build C dataplane library"
+help: ## Show this help
+	@printf "$(BOLD)The Stem$(RESET) - Mustard Seed Networks\n"
+	@printf "Network Performance Testing Tool\n"
+	@printf "\n"
+	@printf "$(BOLD)Usage:$(RESET) make [target]\n"
+	@printf "\n"
+	@printf "$(BOLD)$(CYAN)Build:$(RESET)\n"
+	@printf "  all              Build everything (UI + Go binary)\n"
+	@printf "  build            Build Go binary with symlink\n"
+	@printf "  ui               Build React WebUI\n"
+	@printf "  go               Build Go binary\n"
+	@printf "  quick            Quick build (Go only, skip UI)\n"
+	@printf "  clean            Clean all build artifacts\n"
+	@printf "\n"
+	@printf "$(BOLD)$(CYAN)Quality:$(RESET)\n"
+	@printf "  verify           Full verification (lint + test + security + build)\n"
+	@printf "  lint             Run all linters\n"
+	@printf "  lint-go          Run Go linter (golangci-lint)\n"
+	@printf "  lint-c           Run C linter (clang-tidy, Linux only)\n"
+	@printf "  format           Format all code\n"
+	@printf "  fix              Auto-fix linting issues\n"
+	@printf "\n"
+	@printf "$(BOLD)$(CYAN)Testing:$(RESET)\n"
+	@printf "  test             Run Go unit tests\n"
+	@printf "  test-coverage    Run tests with coverage report\n"
+	@printf "  test-all         Run all tests (Go + C)\n"
+	@printf "  c-test           Build and run C unit tests (Linux)\n"
+	@printf "  smoke-test       Run C smoke tests (Linux, root)\n"
+	@printf "\n"
+	@printf "$(BOLD)$(CYAN)Security:$(RESET)\n"
+	@printf "  security         Run all security scans\n"
+	@printf "  security-backend Run Go security scans\n"
+	@printf "  security-frontend Run npm audit\n"
+	@printf "  security-secrets Scan for secrets (gitleaks)\n"
+	@printf "\n"
+	@printf "$(BOLD)$(CYAN)Licenses:$(RESET)\n"
+	@printf "  license-check    Check dependency licenses\n"
+	@printf "  license-check-go Check Go module licenses\n"
+	@printf "  license-check-npm Check npm package licenses\n"
+	@printf "  license-report   Generate full license report\n"
+	@printf "\n"
+	@printf "$(BOLD)$(CYAN)Development:$(RESET)\n"
+	@printf "  dev              Show dev server instructions\n"
+	@printf "  ui-dev           Run React dev server (port 3000)\n"
+	@printf "  go-dev           Run Go backend (port 8080)\n"
+	@printf "  tools            Install all development tools\n"
+	@printf "  tools-go         Install Go development tools\n"
+	@printf "  tools-frontend   Install frontend development tools\n"
+	@printf "  update           Update all dependencies\n"
+	@printf "  update-go        Update Go modules\n"
+	@printf "  update-npm       Update npm packages\n"
+	@printf "  version-check    Show version info and outdated packages\n"
+	@printf "\n"
+	@printf "$(BOLD)$(CYAN)Deployment:$(RESET)\n"
+	@printf "  deploy           Deploy to remote Ubuntu server\n"
+	@printf "  smoke-test-remote Run smoke tests against deployed server\n"
+	@printf "  logs             Stream live logs from remote server\n"
+	@printf "  logs-100         Show last 100 log lines from remote\n"
+	@printf "  remote-status    Check service status on remote\n"
+	@printf "\n"
+	@printf "$(BOLD)$(CYAN)Installation:$(RESET)\n"
+	@printf "  install          Install to /usr/local/bin\n"
+	@printf "  uninstall        Remove from /usr/local/bin\n"
+	@printf "  install-service  Install as systemd service (Linux, root)\n"
+	@printf "\n"
+	@printf "$(BOLD)$(CYAN)Packaging:$(RESET)\n"
+	@printf "  rpm              Build RPM package (Fedora/RHEL)\n"
+	@printf "  deb              Build DEB package (Debian/Ubuntu)\n"
+	@printf "\n"
+	@printf "$(BOLD)$(CYAN)C Dataplane:$(RESET) (Linux only)\n"
+	@printf "  dataplane        Build C dataplane library\n"
+	@printf "\n"
+	@printf "$(YELLOW)Environment Variables:$(RESET)\n"
+	@printf "  DEPLOY_HOST      Target server IP (default: 192.168.64.7)\n"
+	@printf "  DEPLOY_USER      SSH user (default: krisarmstrong)\n"
+	@printf "  DEPLOY_PATH      Remote path (default: /home/USER/stem)\n"
+	@printf "  DEPLOY_PORT      HTTPS port (default: 8443)\n"
