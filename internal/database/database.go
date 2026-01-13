@@ -71,9 +71,6 @@ type DB struct {
 	sessions    *SessionRepository
 }
 
-// Database is an alias for DB for backward compatibility.
-type Database = DB
-
 // Config holds database configuration options.
 type Config struct {
 	// Path to the SQLite database file

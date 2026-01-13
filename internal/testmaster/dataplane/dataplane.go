@@ -849,7 +849,7 @@ import (
 	"unsafe"
 )
 
-// ErrNotSupported is defined for API compatibility but is never returned
+// ErrNotSupported is defined for interface parity across build targets.
 // in the CGO build since the dataplane is available.
 var ErrNotSupported = errors.New("CGO dataplane not available on this platform")
 

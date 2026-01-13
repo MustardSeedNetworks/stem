@@ -7,10 +7,10 @@ import (
 	"fmt"
 
 	"github.com/krisarmstrong/stem/internal/logging"
-	"github.com/krisarmstrong/stem/internal/modules"
 	"github.com/krisarmstrong/stem/internal/modules/benchmark"
 	"github.com/krisarmstrong/stem/internal/modules/certify"
 	"github.com/krisarmstrong/stem/internal/modules/measure"
+	"github.com/krisarmstrong/stem/internal/modules/modtypes"
 	"github.com/krisarmstrong/stem/internal/modules/reflector"
 	"github.com/krisarmstrong/stem/internal/modules/servicetest"
 	"github.com/krisarmstrong/stem/internal/modules/trafficgen"
@@ -25,7 +25,7 @@ const (
 // testExecutor is an interface for module executors that can run tests.
 type testExecutor interface {
 	Close()
-	Execute(testType string, cfg *modules.TestConfig) (*modules.Result, error)
+	Execute(testType string, cfg *modtypes.TestConfig) (*modtypes.Result, error)
 }
 
 // executorFactory creates a new executor for the given interface.
@@ -193,9 +193,9 @@ func (s *Server) executeReflector(iface string, config *TestConfig) error {
 	return nil
 }
 
-// convertToModuleConfig converts server TestConfig to modules.TestConfig with params map.
-func convertToModuleConfig(iface, testType string, cfg *TestConfig) *modules.TestConfig {
-	modCfg := &modules.TestConfig{
+// convertToModuleConfig converts server TestConfig to modtypes.TestConfig with params map.
+func convertToModuleConfig(iface, testType string, cfg *TestConfig) *modtypes.TestConfig {
+	modCfg := &modtypes.TestConfig{
 		Interface: iface,
 		FrameSize: defaultFrameSize,
 		Duration:  defaultDuration,
@@ -257,7 +257,7 @@ func isTrafficGenTest(testType string) bool {
 }
 
 // populateRFC2544Params populates the params map with RFC 2544 config.
-func populateRFC2544Params(modCfg *modules.TestConfig, c *RFC2544TestConfig) {
+func populateRFC2544Params(modCfg *modtypes.TestConfig, c *RFC2544TestConfig) {
 	modCfg.Duration = c.Duration
 	if len(c.FrameSizes) > 0 {
 		modCfg.FrameSize = c.FrameSizes[0]
@@ -273,7 +273,7 @@ func populateRFC2544Params(modCfg *modules.TestConfig, c *RFC2544TestConfig) {
 }
 
 // populateRFC2889Params populates the params map with RFC 2889 config.
-func populateRFC2889Params(modCfg *modules.TestConfig, c *RFC2889TestConfig) {
+func populateRFC2889Params(modCfg *modtypes.TestConfig, c *RFC2889TestConfig) {
 	modCfg.FrameSize = c.FrameSize
 	modCfg.Duration = int(c.Duration)
 	modCfg.Params["frameSize"] = c.FrameSize
@@ -286,7 +286,7 @@ func populateRFC2889Params(modCfg *modules.TestConfig, c *RFC2889TestConfig) {
 }
 
 // populateRFC6349Params populates the params map with RFC 6349 config.
-func populateRFC6349Params(modCfg *modules.TestConfig, c *RFC6349TestConfig) {
+func populateRFC6349Params(modCfg *modtypes.TestConfig, c *RFC6349TestConfig) {
 	modCfg.Duration = int(c.Duration)
 	modCfg.Params["targetRateMbps"] = c.TargetRateMbps
 	modCfg.Params["minRTTMs"] = c.MinRTTMs
@@ -299,7 +299,7 @@ func populateRFC6349Params(modCfg *modules.TestConfig, c *RFC6349TestConfig) {
 }
 
 // populateY1564Params populates the params map with Y.1564 config.
-func populateY1564Params(modCfg *modules.TestConfig, c *Y1564TestConfig) {
+func populateY1564Params(modCfg *modtypes.TestConfig, c *Y1564TestConfig) {
 	modCfg.Duration = int(c.PerfTestDuration)
 	if len(c.FrameSizes) > 0 {
 		modCfg.FrameSize = c.FrameSizes[0]
@@ -320,7 +320,7 @@ func populateY1564Params(modCfg *modules.TestConfig, c *Y1564TestConfig) {
 }
 
 // populateY1731Params populates the params map with Y.1731 config.
-func populateY1731Params(modCfg *modules.TestConfig, c *Y1731TestConfig) {
+func populateY1731Params(modCfg *modtypes.TestConfig, c *Y1731TestConfig) {
 	modCfg.Duration = int(c.Duration)
 	modCfg.FrameSize = c.FrameSize
 	modCfg.Params["mepId"] = c.MepID
@@ -336,7 +336,7 @@ func populateY1731Params(modCfg *modules.TestConfig, c *Y1731TestConfig) {
 }
 
 // populateTSNParams populates the params map with TSN config.
-func populateTSNParams(modCfg *modules.TestConfig, c *TSNTestConfig) {
+func populateTSNParams(modCfg *modtypes.TestConfig, c *TSNTestConfig) {
 	modCfg.Duration = int(c.Duration)
 	modCfg.FrameSize = c.FrameSize
 	modCfg.Params["duration"] = c.Duration
@@ -355,7 +355,7 @@ func populateTSNParams(modCfg *modules.TestConfig, c *TSNTestConfig) {
 }
 
 // populateTrafficGenParams populates the params map with TrafficGen config.
-func populateTrafficGenParams(modCfg *modules.TestConfig, c *TrafficGenTestConfig) {
+func populateTrafficGenParams(modCfg *modtypes.TestConfig, c *TrafficGenTestConfig) {
 	modCfg.Duration = int(c.Duration)
 	modCfg.FrameSize = c.FrameSize
 	modCfg.Params["frameSize"] = c.FrameSize

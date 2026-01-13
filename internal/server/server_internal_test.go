@@ -378,80 +378,6 @@ func TestCorsMiddleware_RFC1918BypassBlocked(t *testing.T) {
 	}
 }
 
-// TestHandleAPIRedirect tests the handleAPIRedirect function.
-func TestHandleAPIRedirect(t *testing.T) {
-	t.Setenv("STEM_AUTH_USERNAME", "redirectuser")
-	t.Setenv("STEM_AUTH_PASSWORD", "redirectpass123")
-
-	s := newTestServer(t)
-
-	t.Run("redirect legacy health endpoint", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/api/health", nil)
-		w := httptest.NewRecorder()
-
-		s.handleAPIRedirect(w, req)
-
-		if w.Code != http.StatusPermanentRedirect {
-			t.Errorf("Expected status 308, got %d", w.Code)
-		}
-
-		location := w.Header().Get("Location")
-		if location != "/api/v1/health" {
-			t.Errorf("Expected redirect to '/api/v1/health', got '%s'", location)
-		}
-	})
-
-	t.Run("redirect with query string", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/api/interfaces?filter=eth", nil)
-		w := httptest.NewRecorder()
-
-		s.handleAPIRedirect(w, req)
-
-		if w.Code != http.StatusPermanentRedirect {
-			t.Errorf("Expected status 308, got %d", w.Code)
-		}
-
-		location := w.Header().Get("Location")
-		if location != "/api/v1/interfaces?filter=eth" {
-			t.Errorf("Expected redirect with query string, got '%s'", location)
-		}
-	})
-
-	t.Run("no redirect for already versioned path", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/api/v1/health", nil)
-		w := httptest.NewRecorder()
-
-		s.handleAPIRedirect(w, req)
-
-		if w.Code != http.StatusNotFound {
-			t.Errorf("Expected status 404 for already versioned path, got %d", w.Code)
-		}
-	})
-
-	t.Run("no redirect for non-api path", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/something/else", nil)
-		w := httptest.NewRecorder()
-
-		s.handleAPIRedirect(w, req)
-
-		if w.Code != http.StatusNotFound {
-			t.Errorf("Expected status 404 for non-api path, got %d", w.Code)
-		}
-	})
-
-	t.Run("redirect preserves method", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodPost, "/api/test/start", nil)
-		w := httptest.NewRecorder()
-
-		s.handleAPIRedirect(w, req)
-
-		// 308 Permanent Redirect preserves method.
-		if w.Code != http.StatusPermanentRedirect {
-			t.Errorf("Expected status 308, got %d", w.Code)
-		}
-	})
-}
-
 // TestWriteJSON tests the writeJSON function.
 func TestWriteJSON(t *testing.T) {
 	t.Run("successful JSON encoding", func(t *testing.T) {
@@ -652,18 +578,6 @@ func TestApiVersionMiddleware(t *testing.T) {
 
 	t.Run("adds version header for API path", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/health", nil)
-		w := httptest.NewRecorder()
-
-		wrapped.ServeHTTP(w, req)
-
-		version := w.Header().Get(APIVersionHeader)
-		if version != APIVersion {
-			t.Errorf("Expected %s header '%s', got '%s'", APIVersionHeader, APIVersion, version)
-		}
-	})
-
-	t.Run("adds version header for legacy API path", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/api/health", nil)
 		w := httptest.NewRecorder()
 
 		wrapped.ServeHTTP(w, req)
@@ -1100,7 +1014,6 @@ func TestEnsureSelfSignedCert(t *testing.T) {
 
 	t.Run("generate new certificates", func(t *testing.T) {
 		certFile, keyFile, err := ensureSelfSignedCert(tempDir)
-
 		if err != nil {
 			t.Fatalf("ensureSelfSignedCert() error: %v", err)
 		}
@@ -1126,7 +1039,6 @@ func TestEnsureSelfSignedCert(t *testing.T) {
 	t.Run("use existing certificates", func(t *testing.T) {
 		// Should reuse existing certificates.
 		certFile, keyFile, err := ensureSelfSignedCert(tempDir)
-
 		if err != nil {
 			t.Fatalf("ensureSelfSignedCert() error: %v", err)
 		}

@@ -101,11 +101,6 @@ type TestStartRequest struct {
 	Profile   string      `json:"profile,omitempty"` // reflector profile
 	Tests     []string    `json:"tests,omitempty"`   // selected test types
 	Config    *TestConfig `json:"config,omitempty"`  // full test configuration
-
-	// Deprecated: Use Config.RFC2544.FrameSizes instead. Kept for backwards compatibility.
-	FrameSize uint32 `json:"frameSize,omitempty"`
-	// Deprecated: Use Config.RFC2544.Duration instead. Kept for backwards compatibility.
-	Duration int `json:"duration,omitempty"`
 }
 
 // TestConfig contains all module-specific configurations.

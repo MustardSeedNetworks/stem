@@ -85,76 +85,6 @@ const (
 	shutdownDelayMs      = 100
 )
 
-// All supported test types.
-func allTestTypes() map[string]string {
-	return map[string]string{
-	// RFC 2544 (6 tests).
-	"throughput":      "RFC 2544 Section 26.1 - Maximum throughput with zero loss",
-	"latency":         "RFC 2544 Section 26.2 - Round-trip latency at various loads",
-	"frame_loss":      "RFC 2544 Section 26.3 - Frame loss rate vs offered load",
-	"back_to_back":    "RFC 2544 Section 26.4 - Maximum burst capacity",
-	"system_recovery": "RFC 2544 Section 26.5 - Recovery time after overload",
-	"reset":           "RFC 2544 Section 26.6 - Device reset recovery time",
-
-	// Y.1564 / EtherSAM (3 tests).
-	"y1564_config": "ITU-T Y.1564 Service Configuration Test",
-	"y1564_perf":   "ITU-T Y.1564 Service Performance Test (15+ min)",
-	"y1564":        "ITU-T Y.1564 Full Test (config + performance)",
-
-	// RFC 2889 LAN Switch (5 tests).
-	"rfc2889_forwarding": "RFC 2889 Forwarding rate test",
-	"rfc2889_caching":    "RFC 2889 Address caching capacity",
-	"rfc2889_learning":   "RFC 2889 Address learning rate",
-	"rfc2889_broadcast":  "RFC 2889 Broadcast forwarding",
-	"rfc2889_congestion": "RFC 2889 Congestion control",
-
-	// RFC 6349 TCP (2 tests).
-	"rfc6349_throughput": "RFC 6349 TCP throughput (BDP analysis)",
-	"rfc6349_path":       "RFC 6349 Path analysis (RTT/bandwidth)",
-
-	// Y.1731 OAM (4 tests).
-	"y1731_delay":    "ITU-T Y.1731 Frame Delay (DMM/DMR)",
-	"y1731_loss":     "ITU-T Y.1731 Frame Loss (LMM/LMR)",
-	"y1731_slm":      "ITU-T Y.1731 Synthetic Loss Measurement",
-	"y1731_loopback": "ITU-T Y.1731 Loopback (LBM/LBR)",
-
-	// MEF Service (3 tests).
-	"mef_config": "MEF 48/49 Service Configuration Test",
-	"mef_perf":   "MEF 48/49 Service Performance Test",
-	"mef":        "MEF 48/49 Full Test Suite",
-
-	// TSN 802.1Qbv (4 tests).
-	"tsn_timing":    "IEEE 802.1Qbv Gate timing accuracy",
-	"tsn_isolation": "IEEE 802.1Qbv Traffic class isolation",
-	"tsn_latency":   "IEEE 802.1Qbv Scheduled latency",
-	"tsn":           "IEEE 802.1Qbv Full TSN test suite",
-	}
-}
-
-type testCategory struct {
-	name  string
-	tests []string
-}
-
-// Test categories for help display.
-func testCategories() []testCategory {
-	return []testCategory{
-		{
-			"RFC 2544",
-			[]string{"throughput", "latency", "frame_loss", "back_to_back", "system_recovery", "reset"},
-		},
-		{"Y.1564 EtherSAM", []string{"y1564_config", "y1564_perf", "y1564"}},
-		{"RFC 2889 LAN Switch", []string{
-			"rfc2889_forwarding", "rfc2889_caching", "rfc2889_learning",
-			"rfc2889_broadcast", "rfc2889_congestion",
-		}},
-		{"RFC 6349 TCP", []string{"rfc6349_throughput", "rfc6349_path"}},
-		{"Y.1731 OAM", []string{"y1731_delay", "y1731_loss", "y1731_slm", "y1731_loopback"}},
-		{"MEF Service", []string{"mef_config", "mef_perf", "mef"}},
-		{"TSN 802.1Qbv", []string{"tsn_timing", "tsn_isolation", "tsn_latency", "tsn"}},
-	}
-}
-
 func main() {
 	// Initialize structured logging.
 	logLevel := os.Getenv("STEM_LOG_LEVEL")
@@ -310,8 +240,6 @@ For more information: https://mustardseednetworks.com
 
 func listTestsCmd(args []string) {
 	fs := flag.NewFlagSet("list-tests", flag.ExitOnError)
-	byModule := fs.Bool("by-module", false, "Group tests by module")
-	fs.BoolVar(byModule, "m", false, "Group tests by module (shorthand)")
 	jsonOutput := fs.Bool("json", false, "Output in JSON format")
 
 	err := fs.Parse(args)
@@ -331,55 +259,41 @@ func listTestsCmd(args []string) {
 		return
 	}
 
-	_, _ = fmt.Fprintf(os.Stdout, "%s - Available Test Types\n", ProductName)
+	_, _ = fmt.Fprintf(os.Stdout, "%s - Available Test Types by Module\n", ProductName)
 	_, _ = fmt.Fprintln(os.Stdout, strings.Repeat("=", bannerWidth))
-	testTypes := allTestTypes()
+	hs := help.NewSystem()
+	allMods := modules.GetAllModules()
+	totalTests := 0
 
-	if *byModule {
-		// Group by module (new module-oriented view).
-		allMods := modules.GetAllModules()
-		totalTests := 0
-
-		for _, mod := range allMods {
-			_, _ = fmt.Fprintf(
-				os.Stdout,
-				"\n%s [%s] (%s):\n",
-				mod.DisplayName(),
-				mod.Color(),
-				mod.Standard(),
-			)
-			_, _ = fmt.Fprintf(os.Stdout, "  %s\n", mod.Description())
-			_, _ = fmt.Fprintln(os.Stdout)
-			for _, t := range mod.TestTypes() {
-				desc := testTypes[t]
+	for _, mod := range allMods {
+		_, _ = fmt.Fprintf(
+			os.Stdout,
+			"\n%s [%s] (%s):\n",
+			mod.DisplayName(),
+			mod.Color(),
+			mod.Standard(),
+		)
+		_, _ = fmt.Fprintf(os.Stdout, "  %s\n", mod.Description())
+		_, _ = fmt.Fprintln(os.Stdout)
+		for _, t := range mod.TestTypes() {
+			desc := ""
+			if test, ok := hs.Tests[t]; ok {
+				desc = test.Summary
+			}
+			if desc == "" {
+				_, _ = fmt.Fprintf(os.Stdout, "    %-20s\n", t)
+			} else {
 				_, _ = fmt.Fprintf(os.Stdout, "    %-20s %s\n", t, desc)
-				totalTests++
 			}
+			totalTests++
 		}
-		_, _ = fmt.Fprintf(
-			os.Stdout,
-			"\nTotal: %d test types across %d modules\n",
-			totalTests,
-			len(allMods),
-		)
-	} else {
-		// Legacy category-based view (preserved for backward compatibility).
-		categories := testCategories()
-		for _, cat := range categories {
-			_, _ = fmt.Fprintf(os.Stdout, "\n%s:\n", cat.name)
-			for _, t := range cat.tests {
-				desc := testTypes[t]
-				_, _ = fmt.Fprintf(os.Stdout, "  %-20s %s\n", t, desc)
-			}
-		}
-		_, _ = fmt.Fprintf(
-			os.Stdout,
-			"\nTotal: %d test types across %d categories\n",
-			len(testTypes),
-			len(categories),
-		)
-		_, _ = fmt.Fprintln(os.Stdout, "\nTip: Use --by-module to see tests grouped by module")
 	}
+	_, _ = fmt.Fprintf(
+		os.Stdout,
+		"\nTotal: %d test types across %d modules\n",
+		totalTests,
+		len(allMods),
+	)
 }
 
 // getSignatureFilter maps profile name to signature filter.
@@ -548,16 +462,11 @@ func reflectCmd(args []string) error {
 
 // validateTestTypesList validates a list of test types.
 func validateTestTypesList(tests []string) bool {
-	testTypes := allTestTypes()
 	for _, t := range tests {
-		// Check legacy map first for backward compatibility.
-		if _, ok := testTypes[t]; !ok {
-			// Also check module registry.
-			if mod := modules.GetModuleForTest(t); mod == nil {
-				_, _ = fmt.Fprintf(os.Stdout, "Error: Unknown test type '%s'\n", t)
-				_, _ = fmt.Fprintln(os.Stdout, "Run 'stem list-tests' to see available tests")
-				return false
-			}
+		if mod := modules.GetModuleForTest(t); mod == nil {
+			_, _ = fmt.Fprintf(os.Stdout, "Error: Unknown test type '%s'\n", t)
+			_, _ = fmt.Fprintln(os.Stdout, "Run 'stem list-tests' to see available tests")
+			return false
 		}
 	}
 	return true

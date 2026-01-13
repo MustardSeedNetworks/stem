@@ -12,18 +12,13 @@
 //   - "reflector" - Packet reflection mode (Tier 1 license)
 //   - "test_master" - Test execution mode (Tier 2 license)
 //
-// Mode is selected via the API (/api/mode) and determines which features
+// Mode is selected via the API (/api/v1/mode) and determines which features
 // are active. Both modes share the same server instance and API surface.
 //
 // # API Endpoints (v1)
 //
-// All API endpoints are versioned under /api/v1/. Legacy /api/* requests are
-// redirected to /api/v1/* for backward compatibility.
+// All API endpoints are versioned under /api/v1/.
 // API responses include the X-API-Version header.
-//
-// Health and Status:
-//   - GET /api/v1/health       - Server health check
-//   - GET /api/v1/version      - Version information
 //
 // Kubernetes Health Probes (not versioned):
 //   - GET /health/live      - Liveness probe (returns 200 if server is running)
@@ -481,9 +476,6 @@ func (s *Server) setupRoutes() {
 	s.handleRateLimited("/api/v1/modules", s.handleModules, s.apiLimiter)
 	s.handleRateLimited("/api/v1/modules/", s.handleModuleByName, s.apiLimiter)
 
-	// Backward compatibility: redirect /api/* to /api/v1/*.
-	s.mux.HandleFunc("/api/", s.handleAPIRedirect)
-
 	// Static files (embedded UI).
 	staticFS, err := fs.Sub(staticFiles, "dist")
 	if err != nil {
@@ -497,7 +489,7 @@ func (s *Server) setupRoutes() {
 <body>
 <h1>The Stem</h1>
 <p>WebUI not built. Run 'cd ui && npm install && npm run build' first.</p>
-<p>API available at <a href="/api/v1/health">/api/health</a></p>
+<p>API available under <code>/api/v1/</code></p>
 </body>
 </html>`))
 		})
@@ -519,35 +511,6 @@ func (s *Server) handleRateLimited(path string, handler http.HandlerFunc, rl *Ra
 
 func (s *Server) handleAuthRateLimited(path string, handler http.HandlerFunc, rl *RateLimiter) {
 	s.mux.Handle(path, rl.Middleware(s.authMiddleware(handler)))
-}
-
-// handleAPIRedirect redirects legacy /api/* requests to /api/v1/*.
-// This provides backward compatibility for clients using unversioned API paths.
-func (s *Server) handleAPIRedirect(w http.ResponseWriter, r *http.Request) {
-	// Extract path after /api/.
-	oldPath := r.URL.Path
-	if !strings.HasPrefix(oldPath, "/api/") {
-		http.NotFound(w, r)
-		return
-	}
-
-	// Don't redirect if already using versioned path.
-	if strings.HasPrefix(oldPath, "/api/v1/") {
-		http.NotFound(w, r)
-		return
-	}
-
-	// Build new versioned path.
-	suffix := strings.TrimPrefix(oldPath, "/api/")
-	newPath := "/api/v1/" + suffix
-
-	// Preserve query string.
-	if r.URL.RawQuery != "" {
-		newPath += "?" + r.URL.RawQuery
-	}
-
-	// Use 308 Permanent Redirect to preserve HTTP method.
-	http.Redirect(w, r, newPath, http.StatusPermanentRedirect)
 }
 
 func (s *Server) authMiddleware(handler http.HandlerFunc) http.Handler {
@@ -584,7 +547,7 @@ func (s *Server) requireAuth(r *http.Request) error {
 }
 
 // extractClaims parses and validates the JWT from the request, returning claims.
-// Tries cookie first, then Bearer header for API client compatibility.
+// Tries cookie first, then Bearer header to support browser and API clients.
 func (s *Server) extractClaims(r *http.Request) (*auth.Claims, error) {
 	token, _ := auth.GetTokenFromRequest(r)
 	if token == "" {
@@ -806,7 +769,8 @@ func (s *Server) startTLSWithACME() error {
 		ReadHeaderTimeout: acmeReadHeaderTimeoutSec * time.Second,
 	}
 	go func() {
-		if listenErr := s.acmeChallengeServer.ListenAndServe(); listenErr != nil && !errors.Is(listenErr, http.ErrServerClosed) {
+		if listenErr := s.acmeChallengeServer.ListenAndServe(); listenErr != nil &&
+			!errors.Is(listenErr, http.ErrServerClosed) {
 			logging.Error("ACME challenge server error", "error", listenErr)
 		}
 	}()

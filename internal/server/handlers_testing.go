@@ -63,10 +63,7 @@ func (s *Server) handleTestStart(w http.ResponseWriter, r *http.Request) {
 		"interface", iface,
 	)
 
-	// Apply legacy fields to config if needed (backwards compatibility).
-	config := applyLegacyConfigFields(&req)
-
-	execErr := s.executeTest(mod.Name(), req.TestType, iface, config)
+	execErr := s.executeTest(mod.Name(), req.TestType, iface, req.Config)
 	if execErr != nil {
 		s.respondTestExecutionError(w, execErr, mod.Name(), req.TestType)
 		return
@@ -229,43 +226,4 @@ func (s *Server) respondTestExecutionError(w http.ResponseWriter, execErr error,
 		"error", execErr,
 	)
 	WriteAPIError(w, apiErr)
-}
-
-// applyLegacyConfigFields merges deprecated FrameSize/Duration fields into config.
-// This provides backwards compatibility with older API clients.
-func applyLegacyConfigFields(req *TestStartRequest) *TestConfig {
-	// If new-style config is provided, use it.
-	if req.Config != nil {
-		return req.Config
-	}
-
-	// If no legacy fields are set, return nil (use defaults).
-	if req.FrameSize == 0 && req.Duration == 0 {
-		return nil
-	}
-
-	// Create a basic config from legacy fields.
-	//nolint:exhaustruct,mnd // Legacy fields only populate RFC2544; defaults for backwards compat.
-	config := &TestConfig{
-		RFC2544: &RFC2544TestConfig{
-			Duration:      req.Duration,
-			FrameSizes:    []uint32{req.FrameSize},
-			Resolution:    0.1,   // Default resolution.
-			MaxLoss:       0.0,   // Default max loss.
-			Warmup:        2,     // Default warmup.
-			Trials:        3,     // Default trials.
-			StepSize:      10.0,  // Default step size.
-			Bidirectional: false, // Default unidirectional.
-		},
-	}
-
-	// Set defaults if only one legacy field was provided.
-	if req.FrameSize == 0 {
-		config.RFC2544.FrameSizes = []uint32{1518} // Default frame size.
-	}
-	if req.Duration == 0 {
-		config.RFC2544.Duration = 60 // Default duration.
-	}
-
-	return config
 }

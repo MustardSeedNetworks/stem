@@ -501,7 +501,7 @@ func DisplayTestListByModuleTo(w io.Writer) {
 	}
 
 	_, _ = fmt.Fprintf(w, "For details: %sstem help <test-name>%s\n", colorGreen, colorReset)
-	_, _ = fmt.Fprintf(w, "For module view: %sstem list-tests --by-module%s\n", colorGreen, colorReset)
+	_, _ = fmt.Fprintf(w, "For module view: %sstem list-tests%s\n", colorGreen, colorReset)
 	_, _ = fmt.Fprintln(w)
 }
 
@@ -576,7 +576,7 @@ func ShowHelpTo(w io.Writer, topic string, simple bool) bool {
 	}
 
 	// Check if topic is module-related
-	if topic == "modules" || topic == "by-module" || topic == "tests-by-module" {
+	if topic == "modules" {
 		DisplayTestListByModuleTo(w)
 		return true
 	}

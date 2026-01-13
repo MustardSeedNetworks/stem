@@ -23,9 +23,9 @@ import { useFocusTrap } from '../hooks/useFocusTrap';
 import { cn, radius, spacing } from '../styles/theme';
 import { LicenseSection } from './LicenseSection';
 import { ModuleSelector } from './ModuleSelector';
-import type { RFC2544Config } from './RFC2544ConfigForm';
-import type { RFC2889Config } from './RFC2889ConfigForm';
-import type { RFC6349Config } from './RFC6349ConfigForm';
+import type { RFC2544Config } from './Rfc2544ConfigForm';
+import type { RFC2889Config } from './Rfc2889ConfigForm';
+import type { RFC6349Config } from './Rfc6349ConfigForm';
 import {
   InterfaceSection,
   MEFSection,
@@ -41,12 +41,9 @@ import {
 } from './settings';
 import type { InterfaceInfo, OperatingMode, ReflectorProfile } from './settings/types';
 import type { TrafficGenConfig } from './TrafficGenConfigForm';
-import type { TSNConfig } from './TSNConfigForm';
+import type { TSNConfig } from './TsnConfigForm';
 import type { Y1564Config } from './Y1564ConfigForm';
 import type { Y1731Config } from './Y1731ConfigForm';
-
-// Re-export types for backwards compatibility
-export type { InterfaceInfo, OperatingMode, ReflectorProfile };
 
 interface SettingsDrawerProps {
   isOpen: boolean;

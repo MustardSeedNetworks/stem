@@ -1055,8 +1055,6 @@ func TestShowHelpModuleTopics(t *testing.T) {
 		want  bool
 	}{
 		{"modules", true},
-		{"by-module", true},
-		{"tests-by-module", true},
 	}
 
 	for _, tt := range tests {

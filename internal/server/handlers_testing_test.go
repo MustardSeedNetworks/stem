@@ -352,7 +352,7 @@ func TestHandleTestStartValidation(t *testing.T) {
 func TestHandleTestStartOptionalParameters(t *testing.T) {
 	s := setupTestingTestServer(t)
 
-	t.Run("start with frame size", func(t *testing.T) {
+	t.Run("reject legacy frameSize field", func(t *testing.T) {
 		ifaces, err := netif.DetectInterfaces()
 		if err != nil || len(ifaces) == 0 {
 			t.Skip("No network interfaces available for testing")
@@ -369,18 +369,18 @@ func TestHandleTestStartOptionalParameters(t *testing.T) {
 
 		s.ServeHTTP(w, req)
 
-		// Should not fail due to frameSize parameter.
-		if w.Code == http.StatusBadRequest {
-			var resp map[string]any
-			_ = json.Unmarshal(w.Body.Bytes(), &resp)
-			msg, _ := resp["message"].(string)
-			if msg == "Invalid JSON in request body" {
-				t.Error("frameSize parameter should be accepted")
-			}
+		if w.Code != http.StatusBadRequest {
+			t.Fatalf("expected status 400, got %d", w.Code)
+		}
+		var resp map[string]any
+		_ = json.Unmarshal(w.Body.Bytes(), &resp)
+		msg, _ := resp["message"].(string)
+		if msg != "Invalid JSON in request body" {
+			t.Fatalf("expected invalid JSON error, got %q", msg)
 		}
 	})
 
-	t.Run("start with duration", func(t *testing.T) {
+	t.Run("reject legacy duration field", func(t *testing.T) {
 		ifaces, err := netif.DetectInterfaces()
 		if err != nil || len(ifaces) == 0 {
 			t.Skip("No network interfaces available for testing")
@@ -397,14 +397,14 @@ func TestHandleTestStartOptionalParameters(t *testing.T) {
 
 		s.ServeHTTP(w, req)
 
-		// Should not fail due to duration parameter.
-		if w.Code == http.StatusBadRequest {
-			var resp map[string]any
-			_ = json.Unmarshal(w.Body.Bytes(), &resp)
-			msg, _ := resp["message"].(string)
-			if msg == "Invalid JSON in request body" {
-				t.Error("duration parameter should be accepted")
-			}
+		if w.Code != http.StatusBadRequest {
+			t.Fatalf("expected status 400, got %d", w.Code)
+		}
+		var resp map[string]any
+		_ = json.Unmarshal(w.Body.Bytes(), &resp)
+		msg, _ := resp["message"].(string)
+		if msg != "Invalid JSON in request body" {
+			t.Fatalf("expected invalid JSON error, got %q", msg)
 		}
 	})
 }
