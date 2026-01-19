@@ -11,7 +11,7 @@ import { Zap } from 'lucide-react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CollapsibleSection } from '../../CollapsibleSection';
-import { type RFC2544Config, RFC2544ConfigForm } from '../../Rfc2544ConfigForm';
+import { type RFC2544Config, RFC2544ConfigForm } from '../../RFC2544ConfigForm';
 import { TestCheckbox } from '../TestCheckbox';
 import type { TestDefinition, TestSectionProps } from '../types';
 

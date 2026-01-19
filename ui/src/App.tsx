@@ -29,7 +29,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { HelpDrawer } from './components/HelpDrawer';
 import { ModuleCard } from './components/ModuleCard';
 import { ResultHistory } from './components/ResultHistory';
-import { defaultRFC2544Config, type RFC2544Config } from './components/Rfc2544ConfigForm';
+import { defaultRFC2544Config, type RFC2544Config } from './components/RFC2544ConfigForm';
 import { defaultRFC2889Config, type RFC2889Config } from './components/Rfc2889ConfigForm';
 import { defaultRFC6349Config, type RFC6349Config } from './components/Rfc6349ConfigForm';
 import { RecoveryForm } from './components/recovery/RecoveryForm';

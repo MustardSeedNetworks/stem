@@ -23,7 +23,7 @@ import { useFocusTrap } from '../hooks/useFocusTrap';
 import { cn, radius, spacing } from '../styles/theme';
 import { LicenseSection } from './LicenseSection';
 import { ModuleSelector } from './ModuleSelector';
-import type { RFC2544Config } from './Rfc2544ConfigForm';
+import type { RFC2544Config } from './RFC2544ConfigForm';
 import type { RFC2889Config } from './Rfc2889ConfigForm';
 import type { RFC6349Config } from './Rfc6349ConfigForm';
 import {
