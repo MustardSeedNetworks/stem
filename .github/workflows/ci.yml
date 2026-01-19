@@ -525,3 +525,85 @@ jobs:
             http://localhost:8080
           uploadArtifacts: true
           temporaryPublicStorage: true
+
+  # ============================================================================
+  # E2E Browser Tests (Playwright)
+  # ============================================================================
+  e2e:
+    name: E2E Browser Tests
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '25'
+          cache: 'npm'
+          cache-dependency-path: ui/package-lock.json
+
+      - name: Download frontend build
+        uses: actions/download-artifact@v7
+        with:
+          name: frontend-dist
+          path: ui/dist/
+
+      - name: Install frontend dependencies (for Playwright)
+        working-directory: ui
+        run: npm ci
+
+      - name: Build backend
+        run: |
+          mkdir -p internal/server/dist
+          cp -r ui/dist/* internal/server/dist/
+          go build -o bin/stem ./cmd/stem/
+
+      - name: Install Playwright browsers
+        working-directory: ui
+        run: npx playwright install --with-deps chromium
+
+      - name: Start backend server
+        run: |
+          nohup ./bin/stem > server.log 2>&1 &
+          echo "Waiting for server to start..."
+          for i in {1..30}; do
+            if curl -sf http://localhost:8080/api/health 2>/dev/null; then
+              echo "Server ready after $i attempts"
+              exit 0
+            fi
+            echo "Attempt $i: Server not ready, waiting..."
+            sleep $((i < 5 ? 1 : 2))
+          done
+          echo "Server failed to start after 30 attempts"
+          cat server.log
+          exit 1
+
+      - name: Run Playwright E2E tests
+        working-directory: ui
+        env:
+          E2E_BASE_URL: http://localhost:8080
+        run: npx playwright test --project=chromium --reporter=html
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: playwright-report
+          path: ui/playwright-report/
+          retention-days: 7
+
+      - name: Upload server logs on failure
+        uses: actions/upload-artifact@v6
+        if: failure()
+        with:
+          name: e2e-server-logs
+          path: server.log
