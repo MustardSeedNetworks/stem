@@ -75,7 +75,7 @@ export const defaultNs: Namespace = 'common';
 /**
  * Resources organized by language and namespace.
  */
-const resources = {
+const resources: Record<string, Record<string, unknown>> = {
   en: {
     common: enCommon,
     errors: enErrors,
@@ -98,7 +98,7 @@ const resources = {
   },
 };
 
-void i18n
+i18n
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
@@ -125,10 +125,13 @@ void i18n
 
     // Debug mode in development
     debug: import.meta.env.DEV,
+  })
+  .catch(() => {
+    // i18n initialization failure is non-recoverable, app will use fallback strings
   });
 
 export default i18n;
 
 export type { TFunction } from 'i18next';
-// Re-export for convenience
+// biome-ignore lint/performance/noBarrelFile: Re-exports are intentional for i18n module public API
 export { useTranslation } from 'react-i18next';

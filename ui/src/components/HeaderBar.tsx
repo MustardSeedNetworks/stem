@@ -18,7 +18,7 @@
  * - Uses theme tokens for consistent styling
  */
 
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { memo, type ReactElement, useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn, icon as iconTokens, layout, radius, spacing } from '../styles/theme';
 
@@ -64,7 +64,7 @@ interface HeaderBarProps {
 // Icons
 // =============================================================================
 
-function ActivityIcon({ className }: { className?: string }) {
+function ActivityIcon({ className }: { className?: string }): ReactElement {
   return (
     <svg
       className={className}
@@ -83,7 +83,7 @@ function ActivityIcon({ className }: { className?: string }) {
   );
 }
 
-function WifiIcon({ className }: { className?: string }) {
+function WifiIcon({ className }: { className?: string }): ReactElement {
   return (
     <svg
       className={className}
@@ -102,7 +102,7 @@ function WifiIcon({ className }: { className?: string }) {
   );
 }
 
-function WifiOffIcon({ className }: { className?: string }) {
+function WifiOffIcon({ className }: { className?: string }): ReactElement {
   return (
     <svg
       className={className}
@@ -130,7 +130,7 @@ function WifiOffIcon({ className }: { className?: string }) {
   );
 }
 
-function SunIcon({ className }: { className?: string }) {
+function SunIcon({ className }: { className?: string }): ReactElement {
   return (
     <svg className={className} fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
       <path
@@ -142,7 +142,7 @@ function SunIcon({ className }: { className?: string }) {
   );
 }
 
-function MoonIcon({ className }: { className?: string }) {
+function MoonIcon({ className }: { className?: string }): ReactElement {
   return (
     <svg className={className} fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
       <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
@@ -150,7 +150,7 @@ function MoonIcon({ className }: { className?: string }) {
   );
 }
 
-function RefreshIcon({ className }: { className?: string }) {
+function RefreshIcon({ className }: { className?: string }): ReactElement {
   return (
     <svg
       className={className}
@@ -169,7 +169,7 @@ function RefreshIcon({ className }: { className?: string }) {
   );
 }
 
-function HistoryIcon({ className }: { className?: string }) {
+function HistoryIcon({ className }: { className?: string }): ReactElement {
   return (
     <svg
       className={className}
@@ -188,7 +188,7 @@ function HistoryIcon({ className }: { className?: string }) {
   );
 }
 
-function HelpIcon({ className }: { className?: string }) {
+function HelpIcon({ className }: { className?: string }): ReactElement {
   return (
     <svg
       className={className}
@@ -207,7 +207,7 @@ function HelpIcon({ className }: { className?: string }) {
   );
 }
 
-function SettingsIcon({ className }: { className?: string }) {
+function SettingsIcon({ className }: { className?: string }): ReactElement {
   return (
     <svg
       className={className}
@@ -232,7 +232,7 @@ function SettingsIcon({ className }: { className?: string }) {
   );
 }
 
-function LogoutIcon({ className }: { className?: string }) {
+function LogoutIcon({ className }: { className?: string }): ReactElement {
   return (
     <svg
       className={className}
@@ -251,7 +251,7 @@ function LogoutIcon({ className }: { className?: string }) {
   );
 }
 
-function UserIcon({ className }: { className?: string }) {
+function UserIcon({ className }: { className?: string }): ReactElement {
   return (
     <svg
       className={className}
@@ -270,7 +270,7 @@ function UserIcon({ className }: { className?: string }) {
   );
 }
 
-function EthernetIcon({ className }: { className?: string }) {
+function EthernetIcon({ className }: { className?: string }): ReactElement {
   return (
     <svg
       className={className}
@@ -289,7 +289,7 @@ function EthernetIcon({ className }: { className?: string }) {
   );
 }
 
-function CheckIcon({ className }: { className?: string }) {
+function CheckIcon({ className }: { className?: string }): ReactElement {
   return (
     <svg className={className} fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
       <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
@@ -297,7 +297,7 @@ function CheckIcon({ className }: { className?: string }) {
   );
 }
 
-function SpinnerIcon({ className }: { className?: string }) {
+function SpinnerIcon({ className }: { className?: string }): ReactElement {
   return (
     <svg
       className={cn(className, 'animate-spin')}
@@ -321,13 +321,13 @@ function SpinnerIcon({ className }: { className?: string }) {
 
 function getFriendlyInterfaceName(name: string, type: string): string {
   if (type === 'wifi') {
-    const match = name.match(/\d+/);
+    const match = /\d+/.exec(name);
     if (match && Number.parseInt(match[0], 10) > 0) {
       return `Wi-Fi ${Number.parseInt(match[0], 10) + 1}`;
     }
     return 'Wi-Fi';
   }
-  const numMatch = name.match(/(\d+)$/);
+  const numMatch = /(\d+)$/.exec(name);
   if (numMatch) {
     const num = Number.parseInt(numMatch[1], 10);
     if (num > 0) {
@@ -337,7 +337,7 @@ function getFriendlyInterfaceName(name: string, type: string): string {
   return 'Ethernet';
 }
 
-const iconButtonClass = cn(
+const iconButtonClass: string = cn(
   radius.md,
   spacing.pad.sm,
   'hover:bg-surface-hover active:bg-surface-hover',
@@ -363,20 +363,22 @@ function ProfileDropdown({
   loading,
   onSelect,
   onManage,
-}: ProfileDropdownProps) {
+}: ProfileDropdownProps): ReactElement {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setIsOpen(false);
+    const handleClickOutside = (e: MouseEvent): void => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    return (): void => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleSelect = (id: string) => {
+  const handleSelect = (id: string): void => {
     onSelect(id);
     setIsOpen(false);
   };
@@ -386,7 +388,7 @@ function ProfileDropdown({
       <button
         type="button"
         className={iconButtonClass}
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={(): void => setIsOpen(!isOpen)}
         aria-label={t('accessibility.selectProfile', 'Select profile')}
         title={
           activeProfile
@@ -400,7 +402,7 @@ function ProfileDropdown({
           <UserIcon className={iconTokens.size.md} />
         )}
       </button>
-      {isOpen && (
+      {isOpen ? (
         <div
           className={cn(
             'absolute top-full right-0 mt-1 w-56',
@@ -420,7 +422,7 @@ function ProfileDropdown({
                 <button
                   type="button"
                   key={p.id}
-                  onClick={() => handleSelect(p.id)}
+                  onClick={(): void => handleSelect(p.id)}
                   className={cn(
                     'w-full text-left',
                     spacing.pad.sm,
@@ -430,19 +432,19 @@ function ProfileDropdown({
                 >
                   <div className="flex items-center justify-between">
                     <span className="body-small text-text-primary truncate">{p.name}</span>
-                    {p.id === activeProfile?.id && (
+                    {p.id === activeProfile?.id ? (
                       <CheckIcon className={cn(iconTokens.size.sm, 'text-brand-primary')} />
-                    )}
+                    ) : null}
                   </div>
                 </button>
               ))
             )}
           </div>
-          {onManage && (
+          {onManage ? (
             <div className="border-t border-surface-border">
               <button
                 type="button"
-                onClick={() => {
+                onClick={(): void => {
                   setIsOpen(false);
                   onManage();
                 }}
@@ -457,9 +459,9 @@ function ProfileDropdown({
                 <span className="body-small font-medium">{t('profile.manage', 'Manage')}</span>
               </button>
             </div>
-          )}
+          ) : null}
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -470,25 +472,31 @@ interface InterfaceDropdownProps {
   onSelect: (name: string) => void;
 }
 
-function InterfaceDropdown({ interfaces, currentInterface, onSelect }: InterfaceDropdownProps) {
+function InterfaceDropdown({
+  interfaces,
+  currentInterface,
+  onSelect,
+}: InterfaceDropdownProps): ReactElement {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setIsOpen(false);
+    const handleClickOutside = (e: MouseEvent): void => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    return (): void => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleSelect = (name: string) => {
+  const handleSelect = (name: string): void => {
     onSelect(name);
     setIsOpen(false);
   };
 
-  const filtered = interfaces.filter((i) => i.type !== 'loopback');
+  const filtered = interfaces.filter((i): boolean => i.type !== 'loopback');
 
   return (
     <div ref={ref} className="relative">
@@ -498,13 +506,13 @@ function InterfaceDropdown({ interfaces, currentInterface, onSelect }: Interface
           iconButtonClass,
           currentInterface && 'ring-2 ring-brand-primary ring-offset-1 ring-offset-surface-raised',
         )}
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={(): void => setIsOpen(!isOpen)}
         aria-label={t('accessibility.selectInterface', 'Select interface')}
         title={currentInterface || t('interface.select', 'Select Interface')}
       >
         <EthernetIcon className={iconTokens.size.md} />
       </button>
-      {isOpen && (
+      {isOpen ? (
         <div
           className={cn(
             'absolute top-full right-0 mt-1 w-64',
@@ -529,7 +537,7 @@ function InterfaceDropdown({ interfaces, currentInterface, onSelect }: Interface
                 <button
                   type="button"
                   key={iface.name}
-                  onClick={() => handleSelect(iface.name)}
+                  onClick={(): void => handleSelect(iface.name)}
                   className={cn(
                     'w-full text-left',
                     spacing.pad.sm,
@@ -558,18 +566,18 @@ function InterfaceDropdown({ interfaces, currentInterface, onSelect }: Interface
                         {iface.name}
                       </span>
                     </div>
-                    {iface.name === currentInterface && (
+                    {iface.name === currentInterface ? (
                       <CheckIcon
                         className={cn(iconTokens.size.sm, 'text-brand-primary shrink-0')}
                       />
-                    )}
+                    ) : null}
                   </div>
                 </button>
               ))
             )}
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -578,7 +586,7 @@ interface ConnectionBadgeProps {
   status: ConnectionStatus;
 }
 
-function ConnectionBadge({ status }: ConnectionBadgeProps) {
+function ConnectionBadge({ status }: ConnectionBadgeProps): ReactElement {
   const { t } = useTranslation();
   const isConnected = status === 'connected';
   const isConnecting = status === 'connecting';
@@ -621,7 +629,7 @@ interface ThemeToggleProps {
   onToggle: () => void;
 }
 
-function ThemeToggle({ darkMode, onToggle }: ThemeToggleProps) {
+function ThemeToggle({ darkMode, onToggle }: ThemeToggleProps): ReactElement {
   const { t } = useTranslation();
   const label = darkMode
     ? t('accessibility.switchToLightMode', 'Switch to light mode')
@@ -648,7 +656,7 @@ function ThemeToggle({ darkMode, onToggle }: ThemeToggleProps) {
 // Main Component
 // =============================================================================
 
-export const HeaderBar = memo(function HeaderBar({
+export const HeaderBar: React.FC<HeaderBarProps> = memo(function HeaderBarComponent({
   connectionStatus,
   darkMode,
   onReconnect,
@@ -666,7 +674,7 @@ export const HeaderBar = memo(function HeaderBar({
   onProfileSwitch,
   onProfileManage,
   profilesLoading = false,
-}: HeaderBarProps) {
+}: HeaderBarProps): ReactElement {
   const { t } = useTranslation();
 
   const isConnected = connectionStatus === 'connected';
@@ -674,7 +682,7 @@ export const HeaderBar = memo(function HeaderBar({
   const hasInterfaces = interfaces.length > 0 && onInterfaceChange;
   const hasProfiles = profiles.length > 0 && onProfileSwitch;
 
-  const getStatusTooltip = useCallback(() => {
+  const getStatusTooltip = useCallback((): string => {
     const statusMap: Record<ConnectionStatus, string> = {
       connected: t('status.connected', 'Connected'),
       connecting: t('status.connecting', 'Connecting...'),
@@ -685,14 +693,18 @@ export const HeaderBar = memo(function HeaderBar({
   }, [connectionStatus, t]);
 
   const handleProfileSelect = useCallback(
-    async (id: string) => {
-      if (onProfileSwitch) await onProfileSwitch(id);
+    (id: string): void => {
+      if (onProfileSwitch) {
+        onProfileSwitch(id).catch(() => {
+          // Handle profile switch error silently
+        });
+      }
     },
     [onProfileSwitch],
   );
 
   const handleInterfaceSelect = useCallback(
-    (name: string) => {
+    (name: string): void => {
       onInterfaceChange?.(name);
     },
     [onInterfaceChange],
@@ -714,10 +726,10 @@ export const HeaderBar = memo(function HeaderBar({
           <button
             type="button"
             className={cn(layout.inline.default, 'group', !isConnected && 'cursor-pointer')}
-            onClick={!isConnected ? onReconnect : undefined}
+            onClick={isConnected ? undefined : onReconnect}
             title={getStatusTooltip()}
             aria-label={
-              !isConnected ? t('status.clickToReconnect', 'Click to reconnect') : getStatusTooltip()
+              isConnected ? getStatusTooltip() : t('status.clickToReconnect', 'Click to reconnect')
             }
           >
             <div
@@ -742,7 +754,7 @@ export const HeaderBar = memo(function HeaderBar({
 
         {/* Icon toolbar */}
         <div className={cn('flex items-center', spacing.gap.tight)}>
-          {hasProfiles && (
+          {hasProfiles ? (
             <ProfileDropdown
               profiles={profiles}
               activeProfile={activeProfile}
@@ -750,14 +762,14 @@ export const HeaderBar = memo(function HeaderBar({
               onSelect={handleProfileSelect}
               onManage={onProfileManage}
             />
-          )}
-          {hasInterfaces && (
+          ) : null}
+          {hasInterfaces ? (
             <InterfaceDropdown
               interfaces={interfaces}
               currentInterface={currentInterface}
               onSelect={handleInterfaceSelect}
             />
-          )}
+          ) : null}
           <ThemeToggle darkMode={darkMode} onToggle={onToggleTheme} />
           <button
             type="button"

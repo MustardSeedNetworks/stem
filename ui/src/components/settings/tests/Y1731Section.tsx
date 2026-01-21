@@ -20,28 +20,28 @@ interface Y1731SectionProps extends TestSectionProps {
   onConfigChange: (config: Y1731Config) => void;
 }
 
-/** Test ID to translation key mapping */
-const TEST_KEYS = {
-  y1731_delay: 'delay',
-  y1731_loss: 'loss',
-  y1731_slm: 'slm',
-  y1731_loopback: 'loopback',
-} as const;
+/** Test ID to translation key mapping - keys match backend test identifiers */
+const testKeyMap: Map<string, string> = new Map([
+  ['y1731_delay', 'delay'],
+  ['y1731_loss', 'loss'],
+  ['y1731_slm', 'slm'],
+  ['y1731_loopback', 'loopback'],
+]);
 
-const TEST_IDS = Object.keys(TEST_KEYS) as Array<keyof typeof TEST_KEYS>;
+const testIds: string[] = [...testKeyMap.keys()];
 
 export function Y1731Section({
   selectedTests,
   onToggleTest,
   config,
   onConfigChange,
-}: Y1731SectionProps) {
+}: Y1731SectionProps): React.JSX.Element {
   const { t } = useTranslation('settings');
 
   const tests: TestDefinition[] = useMemo(
     () =>
-      TEST_IDS.map((id) => {
-        const key = TEST_KEYS[id];
+      testIds.map((id) => {
+        const key = testKeyMap.get(id);
         return {
           id,
           name: t(`tests.y1731.${key}.name`),
@@ -77,7 +77,7 @@ export function Y1731Section({
               key={test.id}
               test={test}
               checked={selectedTests.includes(test.id)}
-              onChange={() => onToggleTest(test.id)}
+              onChange={(): void => onToggleTest(test.id)}
             />
           ))}
         </div>

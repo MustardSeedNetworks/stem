@@ -43,19 +43,30 @@ export const defaultRFC6349Config: RFC6349Config = {
 };
 
 /** Test mode options */
-const MODE_OPTIONS = [
+const MODE_OPTIONS: Array<{ value: number; label: string; description: string }> = [
   { value: 0, label: 'Bidirectional', description: 'Test both directions' },
   { value: 1, label: 'Upstream', description: 'Client to server only' },
   { value: 2, label: 'Downstream', description: 'Server to client only' },
 ];
 
 /** Common MSS values */
-const MSS_OPTIONS = [
+const MSS_OPTIONS: Array<{ value: number; label: string }> = [
   { value: 536, label: '536 B (min)' },
   { value: 1220, label: '1220 B (IPv6)' },
   { value: 1460, label: '1460 B (standard)' },
   { value: 8960, label: '8960 B (jumbo)' },
 ];
+
+/** Format BDP value in appropriate unit */
+function formatBDP(bdpBytes: number): string {
+  if (bdpBytes >= 1048576) {
+    return `${(bdpBytes / 1048576).toFixed(2)} MB`;
+  }
+  if (bdpBytes >= 1024) {
+    return `${(bdpBytes / 1024).toFixed(2)} KB`;
+  }
+  return `${bdpBytes.toFixed(0)} B`;
+}
 
 interface RFC6349ConfigFormProps {
   config: RFC6349Config;
@@ -74,7 +85,7 @@ export function RFC6349ConfigForm({
     return null;
   }
 
-  const updateConfig = (updates: Partial<RFC6349Config>) => {
+  const updateConfig = (updates: Partial<RFC6349Config>): void => {
     setConfig({ ...config, ...updates });
   };
 
@@ -84,12 +95,7 @@ export function RFC6349ConfigForm({
 
   // Calculate Bandwidth-Delay Product
   const bdp = (config.targetRateMbps * 1000000 * config.maxRTTMs) / 8000;
-  const bdpFormatted =
-    bdp >= 1048576
-      ? `${(bdp / 1048576).toFixed(2)} MB`
-      : bdp >= 1024
-        ? `${(bdp / 1024).toFixed(2)} KB`
-        : `${bdp.toFixed(0)} B`;
+  const bdpFormatted = formatBDP(bdp);
 
   return (
     <CollapsibleSection
@@ -124,7 +130,9 @@ export function RFC6349ConfigForm({
                 max={100000}
                 step={1}
                 value={config.targetRateMbps}
-                onChange={(e) => updateConfig({ targetRateMbps: Number(e.target.value) })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  updateConfig({ targetRateMbps: Number(e.target.value) })
+                }
                 className="mt-1 w-full"
               />
             </div>
@@ -144,7 +152,9 @@ export function RFC6349ConfigForm({
                 max={1000}
                 step={0.1}
                 value={config.minRTTMs}
-                onChange={(e) => updateConfig({ minRTTMs: Number(e.target.value) })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  updateConfig({ minRTTMs: Number(e.target.value) })
+                }
                 className="mt-1 w-full"
               />
             </div>
@@ -164,7 +174,9 @@ export function RFC6349ConfigForm({
                 max={5000}
                 step={0.1}
                 value={config.maxRTTMs}
-                onChange={(e) => updateConfig({ maxRTTMs: Number(e.target.value) })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  updateConfig({ maxRTTMs: Number(e.target.value) })
+                }
                 className="mt-1 w-full"
               />
             </div>
@@ -193,7 +205,9 @@ export function RFC6349ConfigForm({
                 max={16777216}
                 step={1024}
                 value={config.rwndSize}
-                onChange={(e) => updateConfig({ rwndSize: Number(e.target.value) })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  updateConfig({ rwndSize: Number(e.target.value) })
+                }
                 className="mt-1 w-full"
               />
             </div>
@@ -209,7 +223,9 @@ export function RFC6349ConfigForm({
               <select
                 id="rfc6349-mss"
                 value={config.mss}
-                onChange={(e) => updateConfig({ mss: Number(e.target.value) })}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>): void =>
+                  updateConfig({ mss: Number(e.target.value) })
+                }
                 className="mt-1 w-full"
               >
                 {MSS_OPTIONS.map((opt) => (
@@ -237,7 +253,9 @@ export function RFC6349ConfigForm({
                 max={128}
                 step={1}
                 value={config.parallelStreams}
-                onChange={(e) => updateConfig({ parallelStreams: Number(e.target.value) })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  updateConfig({ parallelStreams: Number(e.target.value) })
+                }
                 className="mt-1 w-full"
               />
             </div>
@@ -253,7 +271,9 @@ export function RFC6349ConfigForm({
               <select
                 id="rfc6349-mode"
                 value={config.mode}
-                onChange={(e) => updateConfig({ mode: Number(e.target.value) })}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>): void =>
+                  updateConfig({ mode: Number(e.target.value) })
+                }
                 className="mt-1 w-full"
               >
                 {MODE_OPTIONS.map((opt) => (
@@ -282,7 +302,9 @@ export function RFC6349ConfigForm({
             max={3600}
             step={1}
             value={config.duration}
-            onChange={(e) => updateConfig({ duration: Number(e.target.value) })}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+              updateConfig({ duration: Number(e.target.value) })
+            }
             className="mt-1 w-full"
           />
         </div>
@@ -306,9 +328,9 @@ export function RFC6349ConfigForm({
             </div>
             <div>
               BDP (calculated): {bdpFormatted}
-              {config.rwndSize < bdp && (
-                <span className="text-[var(--color-status-warning)] ml-2">⚠ RWND &lt; BDP</span>
-              )}
+              {config.rwndSize < bdp ? (
+                <span className="text-[var(--color-status-warning)] ml-2">RWND &lt; BDP</span>
+              ) : null}
             </div>
             <div>
               Mode: {MODE_OPTIONS.find((m) => m.value === config.mode)?.label} | Streams:{' '}

@@ -17,7 +17,7 @@ interface TestCheckboxProps {
   onChange: () => void;
 }
 
-export function TestCheckbox({ test, checked, onChange }: TestCheckboxProps) {
+export function TestCheckbox({ test, checked, onChange }: TestCheckboxProps): React.JSX.Element {
   return (
     <label
       className={cn(

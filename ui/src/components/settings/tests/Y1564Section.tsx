@@ -20,27 +20,27 @@ interface Y1564SectionProps extends TestSectionProps {
   onConfigChange: (config: Y1564Config) => void;
 }
 
-/** Test ID to translation key mapping */
-const TEST_KEYS = {
-  y1564_config: 'config',
-  y1564_perf: 'performance',
-  y1564_full: 'full',
-} as const;
+/** Test ID to translation key mapping - keys match backend test identifiers */
+const testKeyMap: Map<string, string> = new Map([
+  ['y1564_config', 'config'],
+  ['y1564_perf', 'performance'],
+  ['y1564_full', 'full'],
+]);
 
-const TEST_IDS = Object.keys(TEST_KEYS) as Array<keyof typeof TEST_KEYS>;
+const testIds: string[] = [...testKeyMap.keys()];
 
 export function Y1564Section({
   selectedTests,
   onToggleTest,
   config,
   onConfigChange,
-}: Y1564SectionProps) {
+}: Y1564SectionProps): React.JSX.Element {
   const { t } = useTranslation('settings');
 
   const tests: TestDefinition[] = useMemo(
     () =>
-      TEST_IDS.map((id) => {
-        const key = TEST_KEYS[id];
+      testIds.map((id) => {
+        const key = testKeyMap.get(id);
         return {
           id,
           name: t(`tests.y1564.${key}.name`),
@@ -76,7 +76,7 @@ export function Y1564Section({
               key={test.id}
               test={test}
               checked={selectedTests.includes(test.id)}
-              onChange={() => onToggleTest(test.id)}
+              onChange={(): void => onToggleTest(test.id)}
             />
           ))}
         </div>

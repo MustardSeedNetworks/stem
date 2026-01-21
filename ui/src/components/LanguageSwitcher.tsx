@@ -23,7 +23,9 @@ export function LanguageSwitcher({
   const { i18n } = useTranslation();
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>): void => {
-    void i18n.changeLanguage(e.target.value);
+    i18n.changeLanguage(e.target.value).catch(() => {
+      // Language change failure is handled gracefully by i18next
+    });
   };
 
   return (

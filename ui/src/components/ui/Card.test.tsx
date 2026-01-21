@@ -88,7 +88,13 @@ describe('Card', () => {
 
     it('has button role when onClick is provided', () => {
       render(
-        <Card title="Interactive Card" status="success" onClick={() => {}}>
+        <Card
+          title="Interactive Card"
+          status="success"
+          onClick={(): void => {
+            /* noop for test */
+          }}
+        >
           Content
         </Card>,
       );
@@ -164,7 +170,13 @@ describe('Card', () => {
 
     it('has tabIndex 0 for interactive cards', () => {
       const { container } = render(
-        <Card title="Card" status="success" onClick={() => {}}>
+        <Card
+          title="Card"
+          status="success"
+          onClick={(): void => {
+            /* noop for test */
+          }}
+        >
           Content
         </Card>,
       );
@@ -176,7 +188,7 @@ describe('Card', () => {
   describe('live region', () => {
     it('adds aria-live when enableLiveRegion is true', () => {
       const { container } = render(
-        <Card title="Live Card" status="success" enableLiveRegion>
+        <Card title="Live Card" status="success" enableLiveRegion={true}>
           Content
         </Card>,
       );
@@ -214,13 +226,13 @@ describe('CardValue', () => {
   });
 
   it('applies monospace font when mono is true', () => {
-    const { container } = render(<CardValue value="12345" mono />);
+    const { container } = render(<CardValue value="12345" mono={true} />);
     const valueEl = container.querySelector('.font-mono');
     expect(valueEl).toBeInTheDocument();
   });
 
   it('allows text wrapping when allowWrap is true', () => {
-    const { container } = render(<CardValue value="Long value" allowWrap />);
+    const { container } = render(<CardValue value="Long value" allowWrap={true} />);
     const valueEl = container.querySelector('.break-all');
     expect(valueEl).toBeInTheDocument();
   });
@@ -234,13 +246,13 @@ describe('CardRow', () => {
   });
 
   it('applies monospace font when mono is true', () => {
-    const { container } = render(<CardRow label="Label" value="12345" mono />);
+    const { container } = render(<CardRow label="Label" value="12345" mono={true} />);
     const valueEl = container.querySelector('.font-mono');
     expect(valueEl).toBeInTheDocument();
   });
 
   it('allows wrapping when wrap is true', () => {
-    const { container } = render(<CardRow label="Label" value="Long value" wrap />);
+    const { container } = render(<CardRow label="Label" value="Long value" wrap={true} />);
     const valueEl = container.querySelector('.break-all');
     expect(valueEl).toBeInTheDocument();
   });

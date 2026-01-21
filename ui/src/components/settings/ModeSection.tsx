@@ -35,7 +35,11 @@ const MODES = [
   },
 ] as const;
 
-export function ModeSection({ mode, onModeChange, className }: ModeSectionProps) {
+export function ModeSection({
+  mode,
+  onModeChange,
+  className,
+}: ModeSectionProps): React.JSX.Element {
   const { t } = useTranslation();
 
   return (
@@ -64,7 +68,7 @@ export function ModeSection({ mode, onModeChange, className }: ModeSectionProps)
               type="radio"
               name="operatingMode"
               checked={mode === modeOption.id}
-              onChange={() => onModeChange(modeOption.id)}
+              onChange={(): void => onModeChange(modeOption.id)}
               className="w-4 h-4 accent-brand-primary"
             />
             <div>

@@ -71,9 +71,11 @@ export function SetupWizard({
     setError(null);
   };
 
-  const handleCopyPassword = async (): Promise<void> => {
+  const handleCopyPassword = (): void => {
     if (suggestedPassword) {
-      await navigator.clipboard.writeText(suggestedPassword);
+      navigator.clipboard.writeText(suggestedPassword).catch(() => {
+        // Clipboard API failed silently
+      });
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
@@ -106,10 +108,10 @@ export function SetupWizard({
       });
 
       if (!response.ok) {
-        const data = (await response.json()) as {
+        const data = await (response.json() as Promise<{
           error?: string;
           message?: string;
-        };
+        }>);
         setError(data.error ?? data.message ?? t('errors.setupFailed'));
         return;
       }
@@ -190,7 +192,7 @@ export function SetupWizard({
             </label>
 
             {/* Generated password option */}
-            {suggestedPassword && (
+            {suggestedPassword ? (
               <label className="flex items-start gap-3 p-3 rounded-xl border border-[var(--color-surface-border)] cursor-pointer hover:bg-[var(--color-surface-base)] transition-colors">
                 <input
                   type="radio"
@@ -208,7 +210,7 @@ export function SetupWizard({
                   <p className="text-xs text-[var(--color-text-muted)] mt-1">
                     {t('password.generated.description')}
                   </p>
-                  {passwordMode === 'generated' && (
+                  {passwordMode === 'generated' ? (
                     <div className="mt-3 p-2 rounded-lg bg-[var(--color-surface-sunken)] border border-[var(--color-surface-border)]">
                       <div className="flex items-center gap-2">
                         <code className="flex-1 font-mono text-xs text-[var(--color-brand-primary)] select-all break-all">
@@ -223,19 +225,19 @@ export function SetupWizard({
                           <Copy className="w-3.5 h-3.5" />
                         </button>
                       </div>
-                      {copied && (
+                      {copied ? (
                         <p className="text-xs text-[var(--color-status-success)] mt-1">
                           {t('buttons.copied')}
                         </p>
-                      )}
+                      ) : null}
                       <p className="text-xs text-[var(--color-status-warning)] mt-2">
                         {t('password.generated.saveWarning')}
                       </p>
                     </div>
-                  )}
+                  ) : null}
                 </div>
               </label>
-            )}
+            ) : null}
           </div>
 
           {/* Custom password fields */}
@@ -253,10 +255,12 @@ export function SetupWizard({
                     id="setup-password"
                     type={showPassword ? 'text' : 'password'}
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                      setPassword(e.target.value)
+                    }
                     className="w-full rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-base)] px-3 py-2 pr-10 text-sm text-[var(--color-text-primary)] focus:border-[var(--color-brand-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-primary)]/30"
                     placeholder={t('password.placeholder')}
-                    required
+                    required={true}
                     minLength={MIN_PASSWORD_LENGTH}
                   />
                   <button
@@ -284,24 +288,26 @@ export function SetupWizard({
                   id="setup-confirm-password"
                   type={showPassword ? 'text' : 'password'}
                   value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    setConfirmPassword(e.target.value)
+                  }
                   className="mt-1 w-full rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-base)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-[var(--color-brand-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-primary)]/30"
                   placeholder={t('password.confirm.placeholder')}
-                  required
+                  required={true}
                 />
               </div>
             </>
           )}
 
           {/* Error display */}
-          {error && (
+          {error ? (
             <div
               role="alert"
               className="mb-4 p-3 rounded-xl bg-[var(--color-status-error)]/10 border border-[var(--color-status-error)]/20 text-sm text-[var(--color-status-error)]"
             >
               {error}
             </div>
-          )}
+          ) : null}
 
           {/* Submit button */}
           <button

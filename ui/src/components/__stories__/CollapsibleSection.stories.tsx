@@ -1,6 +1,9 @@
 // Copyright (c) 2025 Mustard Seed Networks. All rights reserved.
 
+import type { PartialStoryFn } from '@storybook/csf';
+import type { ReactRenderer } from '@storybook/react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import type { ReactElement } from 'react';
 import { CollapsibleSection } from '../CollapsibleSection';
 import { CardRow } from '../ui/Card';
 
@@ -42,9 +45,9 @@ const meta: Meta<typeof CollapsibleSection> = {
     },
   },
   decorators: [
-    (Story) => (
+    (StoryComponent: PartialStoryFn<ReactRenderer>): ReactElement => (
       <div className="min-w-[400px]">
-        <Story />
+        <StoryComponent />
       </div>
     ),
   ],
@@ -155,8 +158,8 @@ export const CompactVariant: Story = {
     defaultOpen: true,
     children: (
       <div className="space-y-1">
-        <CardRow label="IP Address" value="192.168.1.100" mono />
-        <CardRow label="Port" value="5001" mono />
+        <CardRow label="IP Address" value="192.168.1.100" mono={true} />
+        <CardRow label="Port" value="5001" mono={true} />
         <CardRow label="Status" value="Active" status="success" />
       </div>
     ),

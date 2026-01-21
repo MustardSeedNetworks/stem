@@ -28,10 +28,12 @@ test.describe('Smoke Tests', () => {
     // Filter out expected errors (like 401 when not authenticated)
     const criticalErrors = errors.filter(
       (e) =>
-        !e.includes('401') &&
-        !e.includes('Unauthorized') &&
-        !e.includes('Failed to fetch') &&
-        !e.includes('favicon'),
+        !(
+          e.includes('401') ||
+          e.includes('Unauthorized') ||
+          e.includes('Failed to fetch') ||
+          e.includes('favicon')
+        ),
     );
 
     // No critical console errors

@@ -91,8 +91,10 @@ export function useStats({
   const fetchTestResult = useCallback(async () => {
     try {
       const response = await authFetch('/api/v1/test/result');
-      if (!response.ok) return;
-      const data = (await response.json()) as TestResult;
+      if (!response.ok) {
+        return;
+      }
+      const data = await (response.json() as Promise<TestResult>);
       if (data.status === 'completed' || data.status === 'error') {
         setTestResult(data);
       }
@@ -107,14 +109,29 @@ export function useStats({
     }
   }, [authFetch]);
 
+  // Handle test status transitions
+  const handleStatusTransition = useCallback(
+    (prevStatus: string, newStatus: string): void => {
+      if (isTestCompleted(prevStatus, newStatus)) {
+        fetchTestResult().catch(() => {
+          // Silent fail - result fetch is non-critical
+        });
+      }
+      if (isTestStarting(prevStatus, newStatus)) {
+        setTestResult(null);
+      }
+    },
+    [fetchTestResult],
+  );
+
   // Fetch stats
-  const fetchStats = useCallback(async () => {
+  const fetchStats = useCallback(async (): Promise<void> => {
     try {
       const response = await authFetch('/api/v1/stats');
       if (!response.ok) {
         throw new Error('Failed to refresh stats');
       }
-      const data: unknown = await response.json();
+      const data: unknown = await (response.json() as Promise<unknown>);
       if (!isValidStats(data)) {
         throw new Error('Invalid stats data received from server');
       }
@@ -122,28 +139,20 @@ export function useStats({
       setStats(newStats);
 
       // Handle test status transitions
-      const prevStatus = prevTestStatus.current;
-      const newStatus = newStats.testStatus;
-      if (isTestCompleted(prevStatus, newStatus)) {
-        void fetchTestResult();
-      }
-      if (isTestStarting(prevStatus, newStatus)) {
-        setTestResult(null);
-      }
-      prevTestStatus.current = newStatus;
+      handleStatusTransition(prevTestStatus.current, newStats.testStatus);
+      prevTestStatus.current = newStats.testStatus;
     } catch (error) {
-      if ((error as Error).message === 'Unauthorized') {
+      const message = error instanceof Error ? error.message : String(error);
+      if (message === 'Unauthorized') {
         return;
       }
       logWarn('Stats polling failed', {
         component: 'useStats',
         action: 'fetchStats',
-        additionalData: {
-          error: error instanceof Error ? error.message : String(error),
-        },
+        additionalData: { error: message },
       });
     }
-  }, [authFetch, fetchTestResult]);
+  }, [authFetch, handleStatusTransition]);
 
   // Poll stats when connected
   useEffect(() => {
@@ -155,10 +164,13 @@ export function useStats({
       return;
     }
 
-    statsIntervalRef.current = window.setInterval(() => {
-      void fetchStats();
-    }, 1000);
-    void fetchStats();
+    const triggerFetchStats = (): void => {
+      fetchStats().catch(() => {
+        // Errors already logged inside fetchStats
+      });
+    };
+    statsIntervalRef.current = window.setInterval(triggerFetchStats, 1000);
+    triggerFetchStats();
 
     return () => {
       if (statsIntervalRef.current !== null) {

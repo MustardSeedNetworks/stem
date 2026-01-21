@@ -15,22 +15,22 @@ import { CollapsibleSection } from '../../CollapsibleSection';
 import { TestCheckbox } from '../TestCheckbox';
 import type { TestDefinition, TestSectionProps } from '../types';
 
-/** Test ID to translation key mapping */
-const TEST_KEYS = {
-  mef_config: 'config',
-  mef_perf: 'performance',
-  mef_full: 'full',
-} as const;
+/** Test ID to translation key mapping - keys match backend test identifiers */
+const testKeyMap: Map<string, string> = new Map([
+  ['mef_config', 'config'],
+  ['mef_perf', 'performance'],
+  ['mef_full', 'full'],
+]);
 
-const TEST_IDS = Object.keys(TEST_KEYS) as Array<keyof typeof TEST_KEYS>;
+const testIds: string[] = [...testKeyMap.keys()];
 
-export function MEFSection({ selectedTests, onToggleTest }: TestSectionProps) {
+export function MEFSection({ selectedTests, onToggleTest }: TestSectionProps): React.JSX.Element {
   const { t } = useTranslation('settings');
 
   const tests: TestDefinition[] = useMemo(
     () =>
-      TEST_IDS.map((id) => {
-        const key = TEST_KEYS[id];
+      testIds.map((id) => {
+        const key = testKeyMap.get(id);
         return {
           id,
           name: t(`tests.mef.${key}.name`),
@@ -62,7 +62,7 @@ export function MEFSection({ selectedTests, onToggleTest }: TestSectionProps) {
             key={test.id}
             test={test}
             checked={selectedTests.includes(test.id)}
-            onChange={() => onToggleTest(test.id)}
+            onChange={(): void => onToggleTest(test.id)}
           />
         ))}
       </div>

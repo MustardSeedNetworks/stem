@@ -20,30 +20,30 @@ interface RFC2544SectionProps extends TestSectionProps {
   onConfigChange: (config: RFC2544Config) => void;
 }
 
-/** Test ID to translation key mapping */
-const TEST_KEYS = {
-  rfc2544_throughput: 'throughput',
-  rfc2544_latency: 'latency',
-  rfc2544_frame_loss: 'frameLoss',
-  rfc2544_back_to_back: 'backToBack',
-  rfc2544_system_recovery: 'systemRecovery',
-  rfc2544_reset: 'reset',
-} as const;
+/** Test ID to translation key mapping - keys match backend test identifiers */
+const testKeyMap: Map<string, string> = new Map([
+  ['rfc2544_throughput', 'throughput'],
+  ['rfc2544_latency', 'latency'],
+  ['rfc2544_frame_loss', 'frameLoss'],
+  ['rfc2544_back_to_back', 'backToBack'],
+  ['rfc2544_system_recovery', 'systemRecovery'],
+  ['rfc2544_reset', 'reset'],
+]);
 
-const TEST_IDS = Object.keys(TEST_KEYS) as Array<keyof typeof TEST_KEYS>;
+const testIds: string[] = [...testKeyMap.keys()];
 
 export function RFC2544Section({
   selectedTests,
   onToggleTest,
   config,
   onConfigChange,
-}: RFC2544SectionProps) {
+}: RFC2544SectionProps): React.JSX.Element {
   const { t } = useTranslation('settings');
 
   const tests: TestDefinition[] = useMemo(
     () =>
-      TEST_IDS.map((id) => {
-        const key = TEST_KEYS[id];
+      testIds.map((id) => {
+        const key = testKeyMap.get(id);
         return {
           id,
           name: t(`tests.rfc2544.${key}.name`),
@@ -79,7 +79,7 @@ export function RFC2544Section({
               key={test.id}
               test={test}
               checked={selectedTests.includes(test.id)}
-              onChange={() => onToggleTest(test.id)}
+              onChange={(): void => onToggleTest(test.id)}
             />
           ))}
         </div>

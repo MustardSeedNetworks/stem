@@ -8,6 +8,7 @@
  */
 
 import { AlertTriangle, Info, Settings2 } from 'lucide-react';
+import type React from 'react';
 import type { ReactElement } from 'react';
 import { CollapsibleSection } from './CollapsibleSection';
 import { HelpIcon } from './HelpIcon';
@@ -66,7 +67,7 @@ interface Y1564ConfigFormProps {
 }
 
 /** Standard Ethernet frame sizes */
-const FRAME_SIZE_OPTIONS = [
+const FRAME_SIZE_OPTIONS: Array<{ value: number; label: string }> = [
   { value: 64, label: '64 B (min)' },
   { value: 128, label: '128 B' },
   { value: 256, label: '256 B' },
@@ -88,11 +89,11 @@ export function Y1564ConfigForm({
     return null;
   }
 
-  const updateConfig = (updates: Partial<Y1564Config>) => {
+  const updateConfig = (updates: Partial<Y1564Config>): void => {
     setConfig({ ...config, ...updates });
   };
 
-  const toggleFrameSize = (size: number) => {
+  const toggleFrameSize = (size: number): void => {
     if (config.frameSizes.includes(size)) {
       updateConfig({ frameSizes: config.frameSizes.filter((s) => s !== size) });
     } else {
@@ -102,9 +103,9 @@ export function Y1564ConfigForm({
     }
   };
 
-  const isConfigTest = selectedTests.some((t) => t.includes('config'));
-  const isPerfTest = selectedTests.some((t) => t.includes('perf'));
-  const isFullTest = selectedTests.some((t) => t.includes('full'));
+  const isConfigTest: boolean = selectedTests.some((t) => t.includes('config'));
+  const isPerfTest: boolean = selectedTests.some((t) => t.includes('perf'));
+  const isFullTest: boolean = selectedTests.some((t) => t.includes('full'));
 
   return (
     <CollapsibleSection
@@ -139,7 +140,9 @@ export function Y1564ConfigForm({
               max={10000}
               step={1}
               value={config.cir}
-              onChange={(e) => updateConfig({ cir: Number(e.target.value) })}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                updateConfig({ cir: Number(e.target.value) })
+              }
               className="mt-1 w-full"
             />
           </div>
@@ -160,7 +163,9 @@ export function Y1564ConfigForm({
               max={10000}
               step={1}
               value={config.eir}
-              onChange={(e) => updateConfig({ eir: Number(e.target.value) })}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                updateConfig({ eir: Number(e.target.value) })
+              }
               className="mt-1 w-full"
             />
           </div>
@@ -181,7 +186,9 @@ export function Y1564ConfigForm({
               max={1024}
               step={1}
               value={config.cbs}
-              onChange={(e) => updateConfig({ cbs: Number(e.target.value) })}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                updateConfig({ cbs: Number(e.target.value) })
+              }
               className="mt-1 w-full"
             />
           </div>
@@ -202,7 +209,9 @@ export function Y1564ConfigForm({
               max={1024}
               step={1}
               value={config.ebs}
-              onChange={(e) => updateConfig({ ebs: Number(e.target.value) })}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                updateConfig({ ebs: Number(e.target.value) })
+              }
               className="mt-1 w-full"
             />
           </div>
@@ -230,7 +239,9 @@ export function Y1564ConfigForm({
               max={100}
               step={0.001}
               value={config.flrThreshold}
-              onChange={(e) => updateConfig({ flrThreshold: Number(e.target.value) })}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                updateConfig({ flrThreshold: Number(e.target.value) })
+              }
               className="mt-1 w-full"
             />
           </div>
@@ -251,7 +262,9 @@ export function Y1564ConfigForm({
               max={1000}
               step={1}
               value={config.fdThreshold}
-              onChange={(e) => updateConfig({ fdThreshold: Number(e.target.value) })}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                updateConfig({ fdThreshold: Number(e.target.value) })
+              }
               className="mt-1 w-full"
             />
           </div>
@@ -272,7 +285,9 @@ export function Y1564ConfigForm({
               max={100}
               step={1}
               value={config.fdvThreshold}
-              onChange={(e) => updateConfig({ fdvThreshold: Number(e.target.value) })}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                updateConfig({ fdvThreshold: Number(e.target.value) })
+              }
               className="mt-1 w-full"
             />
           </div>
@@ -314,7 +329,7 @@ export function Y1564ConfigForm({
             Test Duration
           </div>
 
-          {(isConfigTest || isFullTest) && (
+          {isConfigTest || isFullTest ? (
             <div>
               <label
                 htmlFor="y1564-config-duration"
@@ -330,16 +345,18 @@ export function Y1564ConfigForm({
                 max={300}
                 step={1}
                 value={config.configStepDuration}
-                onChange={(e) => updateConfig({ configStepDuration: Number(e.target.value) })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  updateConfig({ configStepDuration: Number(e.target.value) })
+                }
                 className="mt-1 w-full"
               />
               <div className="text-xs text-[var(--color-text-muted)] mt-1">
                 Total config test: ~{config.configStepDuration * 4 * config.frameSizes.length}s
               </div>
             </div>
-          )}
+          ) : null}
 
-          {(isPerfTest || isFullTest) && (
+          {isPerfTest || isFullTest ? (
             <div>
               <label
                 htmlFor="y1564-perf-duration"
@@ -355,14 +372,16 @@ export function Y1564ConfigForm({
                 max={86400}
                 step={60}
                 value={config.perfTestDuration}
-                onChange={(e) => updateConfig({ perfTestDuration: Number(e.target.value) })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  updateConfig({ perfTestDuration: Number(e.target.value) })
+                }
                 className="mt-1 w-full"
               />
               <div className="text-xs text-[var(--color-text-muted)] mt-1">
                 = {Math.floor(config.perfTestDuration / 60)} minutes
               </div>
             </div>
-          )}
+          ) : null}
         </div>
 
         {/* VLAN Configuration */}
@@ -386,7 +405,9 @@ export function Y1564ConfigForm({
               max={4094}
               step={1}
               value={config.vlanId}
-              onChange={(e) => updateConfig({ vlanId: Number(e.target.value) })}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                updateConfig({ vlanId: Number(e.target.value) })
+              }
               className="mt-1 w-full"
             />
             {config.vlanId === 0 && (
@@ -406,7 +427,9 @@ export function Y1564ConfigForm({
               <select
                 id="y1564-pcp"
                 value={config.pcp}
-                onChange={(e) => updateConfig({ pcp: Number(e.target.value) })}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>): void =>
+                  updateConfig({ pcp: Number(e.target.value) })
+                }
                 className="mt-1 w-full"
               >
                 <option value={0}>0 - Best Effort (BE)</option>
@@ -426,7 +449,9 @@ export function Y1564ConfigForm({
             <input
               type="checkbox"
               checked={config.colorAware}
-              onChange={(e) => updateConfig({ colorAware: e.target.checked })}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                updateConfig({ colorAware: e.target.checked })
+              }
               className="w-4 h-4 accent-[var(--color-brand-primary)]"
             />
             <div>

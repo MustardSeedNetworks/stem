@@ -116,16 +116,51 @@ interface ModuleCardProps {
 }
 
 function formatNumber(num: number): string {
-  if (num >= 1e9) return `${(num / 1e9).toFixed(1)}G`;
-  if (num >= 1e6) return `${(num / 1e6).toFixed(1)}M`;
-  if (num >= 1e3) return `${(num / 1e3).toFixed(1)}K`;
+  if (num >= 1e9) {
+    return `${(num / 1e9).toFixed(1)}G`;
+  }
+  if (num >= 1e6) {
+    return `${(num / 1e6).toFixed(1)}M`;
+  }
+  if (num >= 1e3) {
+    return `${(num / 1e3).toFixed(1)}K`;
+  }
   return num.toString();
 }
 
 function formatRate(pps: number): string {
-  if (pps >= 1e6) return `${(pps / 1e6).toFixed(2)}Mpps`;
-  if (pps >= 1e3) return `${(pps / 1e3).toFixed(1)}Kpps`;
+  if (pps >= 1e6) {
+    return `${(pps / 1e6).toFixed(2)}Mpps`;
+  }
+  if (pps >= 1e3) {
+    return `${(pps / 1e3).toFixed(1)}Kpps`;
+  }
   return `${pps}pps`;
+}
+
+/** Get color class for loss percentage based on threshold */
+function getLossColorClass(lossPercent: number, isPending: boolean): string {
+  if (isPending) {
+    return 'text-text-muted';
+  }
+  if (lossPercent === 0) {
+    return 'text-status-success';
+  }
+  if (lossPercent < 1) {
+    return 'text-status-warning';
+  }
+  return 'text-status-error';
+}
+
+/** Render rate cell content based on result status */
+function RateCellContent({ result }: { result: FrameSizeResult }): ReactElement {
+  if (result.status === 'pending') {
+    return <>—</>;
+  }
+  if (result.status === 'running') {
+    return <span className="text-text-muted">measuring</span>;
+  }
+  return <>{formatRate(result.throughputPps ?? 0)}</>;
 }
 
 /** Renders the frame size results table for RFC 2544 style tests */
@@ -140,7 +175,7 @@ function FrameSizeResultsTable({
     <div className="overflow-x-auto">
       <table className="w-full text-xs">
         <thead>
-          <tr className="text-[var(--color-text-muted)] border-b border-[var(--color-surface-border)]">
+          <tr className="text-text-muted border-b border-surface-border">
             <th className="text-left py-2 pr-2 font-medium">Frame</th>
             <th className="text-right py-2 px-2 font-medium">TX</th>
             <th className="text-right py-2 px-2 font-medium">RX</th>
@@ -154,45 +189,35 @@ function FrameSizeResultsTable({
             <tr
               key={result.frameSize}
               className={cn(
-                'border-b border-[var(--color-surface-border)]/50',
-                result.status === 'running' && 'bg-[var(--color-status-success)]/5',
+                'border-b border-surface-border/50',
+                result.status === 'running' && 'bg-status-success/5',
               )}
             >
-              <td className="py-2 pr-2 font-mono font-medium text-[var(--color-text-primary)]">
+              <td className="py-2 pr-2 font-mono font-medium text-text-primary">
                 {result.frameSize}B
               </td>
-              <td className="py-2 px-2 text-right font-mono text-[var(--color-text-secondary)]">
+              <td className="py-2 px-2 text-right font-mono text-text-secondary">
                 {result.status === 'pending' ? '—' : formatNumber(result.txPackets ?? 0)}
               </td>
-              <td className="py-2 px-2 text-right font-mono text-[var(--color-text-secondary)]">
+              <td className="py-2 px-2 text-right font-mono text-text-secondary">
                 {result.status === 'pending' ? '—' : formatNumber(result.rxPackets ?? 0)}
               </td>
               <td
                 className={cn(
                   'py-2 px-2 text-right font-mono',
-                  result.status === 'pending'
-                    ? 'text-[var(--color-text-muted)]'
-                    : (result.lossPercent ?? 0) === 0
-                      ? 'text-[var(--color-status-success)]'
-                      : (result.lossPercent ?? 0) < 1
-                        ? 'text-[var(--color-status-warning)]'
-                        : 'text-[var(--color-status-error)]',
+                  getLossColorClass(result.lossPercent ?? 0, result.status === 'pending'),
                 )}
               >
-                {result.status === 'pending' ? '—' : `${(result.lossPercent ?? 0).toFixed(2)}%`}
+                {result.status === 'pending'
+                  ? '\u2014'
+                  : `${(result.lossPercent ?? 0).toFixed(2)}%`}
               </td>
-              <td className="py-2 px-2 text-right font-mono text-[var(--color-text-secondary)]">
-                {result.status === 'pending' ? (
-                  '—'
-                ) : result.status === 'running' ? (
-                  <span className="text-[var(--color-text-muted)]">measuring</span>
-                ) : (
-                  formatRate(result.throughputPps ?? 0)
-                )}
+              <td className="py-2 px-2 text-right font-mono text-text-secondary">
+                <RateCellContent result={result} />
               </td>
               <td className="py-2 pl-2 text-center">
                 {result.status === 'completed' && (
-                  <Check className="w-4 h-4 text-[var(--color-status-success)] inline" />
+                  <Check className="w-4 h-4 text-status-success inline" />
                 )}
                 {result.status === 'running' && (
                   <div
@@ -204,10 +229,10 @@ function FrameSizeResultsTable({
                   />
                 )}
                 {result.status === 'error' && (
-                  <XCircle className="w-4 h-4 text-[var(--color-status-error)] inline" />
+                  <XCircle className="w-4 h-4 text-status-error inline" />
                 )}
                 {result.status === 'pending' && (
-                  <Clock className="w-4 h-4 text-[var(--color-text-muted)] inline" />
+                  <Clock className="w-4 h-4 text-text-muted inline" />
                 )}
               </td>
             </tr>
@@ -226,25 +251,19 @@ function ServiceFlowResultsTable({ results }: { results: ServiceFlowResult[] }):
         <div
           key={flow.flowId}
           className={cn(
-            'p-2 rounded-lg border border-[var(--color-surface-border)]',
-            flow.status === 'running' && 'bg-[var(--color-status-success)]/5',
+            'p-2 rounded-lg border border-surface-border',
+            flow.status === 'running' && 'bg-status-success/5',
           )}
         >
           <div className="flex items-center justify-between mb-1">
-            <span className="text-sm font-medium text-[var(--color-text-primary)]">
-              {flow.flowName}
-            </span>
+            <span className="text-sm font-medium text-text-primary">{flow.flowName}</span>
             <span
               className={cn(
                 'text-xs px-2 py-0.5 rounded-full',
-                flow.status === 'completed' &&
-                  'bg-[var(--color-status-success)]/10 text-[var(--color-status-success)]',
-                flow.status === 'running' &&
-                  'bg-[var(--color-status-info)]/10 text-[var(--color-status-info)]',
-                flow.status === 'pending' &&
-                  'bg-[var(--color-surface-base)] text-[var(--color-text-muted)]',
-                flow.status === 'error' &&
-                  'bg-[var(--color-status-error)]/10 text-[var(--color-status-error)]',
+                flow.status === 'completed' && 'bg-status-success/10 text-status-success',
+                flow.status === 'running' && 'bg-status-info/10 text-status-info',
+                flow.status === 'pending' && 'bg-surface-base text-text-muted',
+                flow.status === 'error' && 'bg-status-error/10 text-status-error',
               )}
             >
               {flow.status}
@@ -253,27 +272,27 @@ function ServiceFlowResultsTable({ results }: { results: ServiceFlowResult[] }):
           {flow.status !== 'pending' && (
             <div className="grid grid-cols-4 gap-2 text-xs">
               <div>
-                <div className="text-[var(--color-text-muted)]">CIR</div>
+                <div className="text-text-muted">CIR</div>
                 <div className="font-mono">
                   {flow.cirAchieved ?? '—'}/{flow.cir ?? '—'}
                 </div>
               </div>
               <div>
-                <div className="text-[var(--color-text-muted)]">Delay</div>
+                <div className="text-text-muted">Delay</div>
                 <div className="font-mono">
-                  {flow.frameDelay != null ? `${flow.frameDelay}ms` : '—'}
+                  {flow.frameDelay !== null ? `${flow.frameDelay}ms` : '—'}
                 </div>
               </div>
               <div>
-                <div className="text-[var(--color-text-muted)]">Jitter</div>
+                <div className="text-text-muted">Jitter</div>
                 <div className="font-mono">
-                  {flow.frameDelayVariation != null ? `${flow.frameDelayVariation}ms` : '—'}
+                  {flow.frameDelayVariation !== null ? `${flow.frameDelayVariation}ms` : '—'}
                 </div>
               </div>
               <div>
-                <div className="text-[var(--color-text-muted)]">Loss</div>
+                <div className="text-text-muted">Loss</div>
                 <div className="font-mono">
-                  {flow.frameLoss != null ? `${flow.frameLoss}%` : '—'}
+                  {flow.frameLoss !== null ? `${flow.frameLoss}%` : '—'}
                 </div>
               </div>
             </div>
@@ -292,25 +311,21 @@ function OamResultsTable({ results }: { results: OamMeasurementResult[] }): Reac
         <div
           key={measurement.measurementType}
           className={cn(
-            'p-2 rounded-lg border border-[var(--color-surface-border)]',
-            measurement.status === 'running' && 'bg-[var(--color-status-success)]/5',
+            'p-2 rounded-lg border border-surface-border',
+            measurement.status === 'running' && 'bg-status-success/5',
           )}
         >
           <div className="flex items-center justify-between mb-1">
-            <span className="text-sm font-medium text-[var(--color-text-primary)]">
+            <span className="text-sm font-medium text-text-primary">
               {measurement.measurementType}
             </span>
             <span
               className={cn(
                 'text-xs px-2 py-0.5 rounded-full',
-                measurement.status === 'completed' &&
-                  'bg-[var(--color-status-success)]/10 text-[var(--color-status-success)]',
-                measurement.status === 'running' &&
-                  'bg-[var(--color-status-info)]/10 text-[var(--color-status-info)]',
-                measurement.status === 'pending' &&
-                  'bg-[var(--color-surface-base)] text-[var(--color-text-muted)]',
-                measurement.status === 'error' &&
-                  'bg-[var(--color-status-error)]/10 text-[var(--color-status-error)]',
+                measurement.status === 'completed' && 'bg-status-success/10 text-status-success',
+                measurement.status === 'running' && 'bg-status-info/10 text-status-info',
+                measurement.status === 'pending' && 'bg-surface-base text-text-muted',
+                measurement.status === 'error' && 'bg-status-error/10 text-status-error',
               )}
             >
               {measurement.status}
@@ -319,20 +334,20 @@ function OamResultsTable({ results }: { results: OamMeasurementResult[] }): Reac
           {measurement.status !== 'pending' && (
             <div className="grid grid-cols-3 gap-2 text-xs">
               <div>
-                <div className="text-[var(--color-text-muted)]">Delay (min/avg/max)</div>
+                <div className="text-text-muted">Delay (min/avg/max)</div>
                 <div className="font-mono">
                   {measurement.delayMin ?? '—'}/{measurement.delayAvg ?? '—'}/
                   {measurement.delayMax ?? '—'}μs
                 </div>
               </div>
               <div>
-                <div className="text-[var(--color-text-muted)]">Jitter</div>
+                <div className="text-text-muted">Jitter</div>
                 <div className="font-mono">
-                  {measurement.jitter != null ? `${measurement.jitter}μs` : '—'}
+                  {measurement.jitter !== null ? `${measurement.jitter}μs` : '—'}
                 </div>
               </div>
               <div>
-                <div className="text-[var(--color-text-muted)]">Loss (near/far)</div>
+                <div className="text-text-muted">Loss (near/far)</div>
                 <div className="font-mono">
                   {measurement.lossNear ?? '—'}%/{measurement.lossFar ?? '—'}%
                 </div>
@@ -341,6 +356,220 @@ function OamResultsTable({ results }: { results: OamMeasurementResult[] }): Reac
           )}
         </div>
       ))}
+    </div>
+  );
+}
+
+/** Status indicator badge for module card */
+function ModuleStatusIndicator({
+  status,
+  isRunning,
+}: {
+  status: ModuleStatus;
+  isRunning: boolean;
+}): ReactElement | null {
+  if (isRunning) {
+    return (
+      <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-status-success/10">
+        <span className="w-2 h-2 rounded-full bg-status-success animate-pulse" />
+        <span className="text-xs font-medium text-status-success">
+          {status.status === 'starting' ? 'Starting...' : status.currentTest || 'Running'}
+        </span>
+      </div>
+    );
+  }
+  if (status.status === 'completed') {
+    return (
+      <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-status-info/10">
+        <span className="text-xs font-medium text-status-info">Completed</span>
+      </div>
+    );
+  }
+  if (status.status === 'error') {
+    return (
+      <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-status-error/10">
+        <span className="text-xs font-medium text-status-error">
+          Error{status.message ? `: ${status.message}` : ''}
+        </span>
+      </div>
+    );
+  }
+  return null;
+}
+
+/** Start/Stop button for module card */
+function ModuleActionButton({
+  config,
+  isRunning,
+  enabledTestCount,
+  onStart,
+  onStop,
+}: {
+  config: ModuleConfig;
+  isRunning: boolean;
+  enabledTestCount: number;
+  onStart: () => void;
+  onStop: () => void;
+}): ReactElement | null {
+  if (!config.enabled) {
+    return null;
+  }
+  if (isRunning) {
+    return (
+      <button
+        type="button"
+        onClick={onStop}
+        className={cn(
+          'px-4 py-2 rounded-lg flex items-center gap-2 transition-colors',
+          'bg-status-error/10 text-status-error',
+          'hover:bg-status-error/20',
+        )}
+      >
+        <Square className="w-4 h-4" />
+        <span className="text-sm font-medium">Stop</span>
+      </button>
+    );
+  }
+  return (
+    <button
+      type="button"
+      onClick={onStart}
+      disabled={enabledTestCount === 0}
+      className={cn(
+        'px-4 py-2 rounded-lg flex items-center gap-2 transition-colors',
+        enabledTestCount > 0
+          ? 'bg-brand-primary text-white hover:bg-brand-primary'
+          : 'bg-surface-base text-text-muted cursor-not-allowed',
+      )}
+    >
+      <Play className="w-4 h-4" />
+      <span className="text-sm font-medium">Start</span>
+    </button>
+  );
+}
+
+/** Results section for module card */
+function ModuleResultsSection({
+  results,
+  config,
+}: {
+  results: ModuleTestResults | null | undefined;
+  config: ModuleConfig;
+}): ReactElement {
+  return (
+    <div className="border-t border-surface-border bg-surface-base/50">
+      <div className={spacing.pad.sm}>
+        <div className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">
+          {results?.testType || 'Test'} Results
+        </div>
+
+        {/* Frame Size Results (RFC 2544 style) */}
+        {results?.frameSizeResults && results.frameSizeResults.length > 0 && (
+          <FrameSizeResultsTable results={results.frameSizeResults} color={config.color} />
+        )}
+
+        {/* Service Flow Results (Y.1564 style) */}
+        {results?.serviceFlowResults && results.serviceFlowResults.length > 0 && (
+          <ServiceFlowResultsTable results={results.serviceFlowResults} />
+        )}
+
+        {/* OAM Results (Y.1731 style) */}
+        {results?.oamResults && results.oamResults.length > 0 && (
+          <OamResultsTable results={results.oamResults} />
+        )}
+
+        {/* Error message */}
+        {results?.error ? (
+          <div className="mt-2 p-2 rounded-lg bg-status-error/10 border border-status-error/20">
+            <span className="text-xs text-status-error">{results.error}</span>
+          </div>
+        ) : null}
+
+        {/* Duration */}
+        {results?.duration !== undefined ? (
+          <div className="mt-2 text-xs text-text-muted">
+            Duration: {(results.duration / 1000).toFixed(1)}s
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+/** Expanded test list section for module card */
+function ModuleExpandedContent({
+  config,
+  status,
+  isRunning,
+  onToggleAutoStart,
+  onToggleTest,
+}: {
+  config: ModuleConfig;
+  status: ModuleStatus;
+  isRunning: boolean;
+  onToggleAutoStart: (enabled: boolean) => void;
+  onToggleTest: (testId: string, enabled: boolean) => void;
+}): ReactElement {
+  return (
+    <div className="border-t border-surface-border">
+      {/* Auto-start Toggle */}
+      <div className={cn(spacing.pad.sm, 'flex items-center justify-between bg-surface-base')}>
+        <div className="flex items-center gap-2">
+          <RefreshCw className={cn(iconTokens.size.sm, 'text-text-muted')} />
+          <span className="text-sm text-text-secondary">Auto-start on link</span>
+        </div>
+        <button
+          type="button"
+          onClick={(): void => onToggleAutoStart(!config.autoStart)}
+          className={cn(
+            'w-10 h-6 rounded-full relative transition-colors',
+            config.autoStart ? 'bg-brand-primary' : 'bg-surface-border',
+          )}
+        >
+          <span
+            className={cn(
+              'absolute top-1 w-4 h-4 rounded-full bg-white transition-transform',
+              config.autoStart ? 'translate-x-5' : 'translate-x-1',
+            )}
+          />
+        </button>
+      </div>
+
+      {/* Test List */}
+      <div className={spacing.pad.sm}>
+        <div className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">
+          Tests
+        </div>
+        <div className="space-y-1">
+          {config.tests.map((test) => (
+            <label
+              key={test.id}
+              className={cn(
+                'flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors',
+                'hover:bg-surface-hover',
+                test.enabled ? '' : 'opacity-60',
+              )}
+            >
+              <input
+                type="checkbox"
+                checked={test.enabled}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  onToggleTest(test.id, e.target.checked)
+                }
+                className="w-4 h-4"
+                style={{ accentColor: config.color }}
+              />
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium text-text-primary">{test.name}</div>
+                <div className="text-xs text-text-muted truncate">{test.description}</div>
+              </div>
+              {isRunning && status.currentTest === test.id && (
+                <span className="w-2 h-2 rounded-full bg-status-success animate-pulse" />
+              )}
+            </label>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -359,21 +588,15 @@ export function ModuleCard({
   const [expanded, setExpanded] = useState(false);
   const enabledTestCount = config.tests.filter((t) => t.enabled).length;
   const isRunning = status.status === 'running' || status.status === 'starting';
-  const hasResults =
-    results &&
-    ((results.frameSizeResults && results.frameSizeResults.length > 0) ||
-      (results.serviceFlowResults && results.serviceFlowResults.length > 0) ||
-      (results.oamResults && results.oamResults.length > 0));
-
-  // Auto-expand when running or has results to show
+  const hasResults = checkHasResults(results);
   const showResults = isRunning || status.status === 'completed' || status.status === 'error';
 
   return (
     <div
       className={cn(
         'border rounded-xl overflow-hidden transition-all',
-        config.enabled ? 'border-[var(--color-surface-border)]' : 'border-transparent opacity-60',
-        'bg-[var(--color-surface-raised)]',
+        config.enabled ? 'border-surface-border' : 'border-transparent opacity-60',
+        'bg-surface-raised',
       )}
       style={{
         borderLeftWidth: '4px',
@@ -386,12 +609,12 @@ export function ModuleCard({
           {/* Enable Toggle */}
           <button
             type="button"
-            onClick={() => onToggleModule(!config.enabled)}
+            onClick={(): void => onToggleModule(!config.enabled)}
             className={cn(
               'w-8 h-8 rounded-lg flex items-center justify-center transition-colors',
               config.enabled
-                ? 'bg-[var(--color-status-success)]/20 text-[var(--color-status-success)]'
-                : 'bg-[var(--color-surface-base)] text-[var(--color-text-muted)]',
+                ? 'bg-status-success/20 text-status-success'
+                : 'bg-surface-base text-text-muted',
             )}
             title={config.enabled ? 'Disable module' : 'Enable module'}
           >
@@ -405,39 +628,18 @@ export function ModuleCard({
                 className="w-3 h-3 rounded-full flex-shrink-0"
                 style={{ backgroundColor: config.color }}
               />
-              <h3 className="font-semibold text-[var(--color-text-primary)] truncate">
-                {config.displayName}
-              </h3>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-[var(--color-surface-base)] text-[var(--color-text-muted)]">
+              <h3 className="font-semibold text-text-primary truncate">{config.displayName}</h3>
+              <span className="text-xs px-2 py-0.5 rounded-full bg-surface-base text-text-muted">
                 {config.standard}
               </span>
             </div>
-            <p className="text-xs text-[var(--color-text-muted)] mt-0.5 truncate">
+            <p className="text-xs text-text-muted mt-0.5 truncate">
               {enabledTestCount}/{config.tests.length} tests enabled
             </p>
           </div>
 
           {/* Status Indicator */}
-          {isRunning && (
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--color-status-success)]/10">
-              <span className="w-2 h-2 rounded-full bg-[var(--color-status-success)] animate-pulse" />
-              <span className="text-xs font-medium text-[var(--color-status-success)]">
-                {status.status === 'starting' ? 'Starting...' : status.currentTest || 'Running'}
-              </span>
-            </div>
-          )}
-          {status.status === 'completed' && (
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--color-status-info)]/10">
-              <span className="text-xs font-medium text-[var(--color-status-info)]">Completed</span>
-            </div>
-          )}
-          {status.status === 'error' && (
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--color-status-error)]/10">
-              <span className="text-xs font-medium text-[var(--color-status-error)]">
-                Error{status.message ? `: ${status.message}` : ''}
-              </span>
-            </div>
-          )}
+          <ModuleStatusIndicator status={status} isRunning={isRunning} />
         </div>
 
         {/* Actions */}
@@ -448,8 +650,8 @@ export function ModuleCard({
             onClick={onConfigure}
             className={cn(
               'p-2 rounded-lg transition-colors',
-              'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]',
-              'hover:bg-[var(--color-surface-hover)]',
+              'text-text-muted hover:text-text-primary',
+              'hover:bg-surface-hover',
             )}
             title="Configure module"
           >
@@ -457,45 +659,22 @@ export function ModuleCard({
           </button>
 
           {/* Start/Stop Button */}
-          {config.enabled &&
-            (isRunning ? (
-              <button
-                type="button"
-                onClick={onStop}
-                className={cn(
-                  'px-4 py-2 rounded-lg flex items-center gap-2 transition-colors',
-                  'bg-[var(--color-status-error)]/10 text-[var(--color-status-error)]',
-                  'hover:bg-[var(--color-status-error)]/20',
-                )}
-              >
-                <Square className="w-4 h-4" />
-                <span className="text-sm font-medium">Stop</span>
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={onStart}
-                disabled={enabledTestCount === 0}
-                className={cn(
-                  'px-4 py-2 rounded-lg flex items-center gap-2 transition-colors',
-                  enabledTestCount > 0
-                    ? 'bg-[var(--color-brand-primary)] text-white hover:bg-[var(--color-brand-accent)]'
-                    : 'bg-[var(--color-surface-base)] text-[var(--color-text-muted)] cursor-not-allowed',
-                )}
-              >
-                <Play className="w-4 h-4" />
-                <span className="text-sm font-medium">Start</span>
-              </button>
-            ))}
+          <ModuleActionButton
+            config={config}
+            isRunning={isRunning}
+            enabledTestCount={enabledTestCount}
+            onStart={onStart}
+            onStop={onStop}
+          />
 
           {/* Expand Toggle */}
           <button
             type="button"
-            onClick={() => setExpanded(!expanded)}
+            onClick={(): void => setExpanded(!expanded)}
             className={cn(
               'p-2 rounded-lg transition-colors',
-              'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]',
-              'hover:bg-[var(--color-surface-hover)]',
+              'text-text-muted hover:text-text-primary',
+              'hover:bg-surface-hover',
             )}
             title={expanded ? 'Collapse' : 'Expand'}
           >
@@ -505,119 +684,42 @@ export function ModuleCard({
       </div>
 
       {/* Test Results Section - Always visible when running or has results */}
-      {config.enabled && showResults && hasResults && (
-        <div className="border-t border-[var(--color-surface-border)] bg-[var(--color-surface-base)]/50">
-          <div className={spacing.pad.sm}>
-            <div className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide mb-2">
-              {results?.testType || 'Test'} Results
-            </div>
-
-            {/* Frame Size Results (RFC 2544 style) */}
-            {results?.frameSizeResults && results.frameSizeResults.length > 0 && (
-              <FrameSizeResultsTable results={results.frameSizeResults} color={config.color} />
-            )}
-
-            {/* Service Flow Results (Y.1564 style) */}
-            {results?.serviceFlowResults && results.serviceFlowResults.length > 0 && (
-              <ServiceFlowResultsTable results={results.serviceFlowResults} />
-            )}
-
-            {/* OAM Results (Y.1731 style) */}
-            {results?.oamResults && results.oamResults.length > 0 && (
-              <OamResultsTable results={results.oamResults} />
-            )}
-
-            {/* Error message */}
-            {results?.error && (
-              <div className="mt-2 p-2 rounded-lg bg-[var(--color-status-error)]/10 border border-[var(--color-status-error)]/20">
-                <span className="text-xs text-[var(--color-status-error)]">{results.error}</span>
-              </div>
-            )}
-
-            {/* Duration */}
-            {results?.duration != null && (
-              <div className="mt-2 text-xs text-[var(--color-text-muted)]">
-                Duration: {(results.duration / 1000).toFixed(1)}s
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      {config.enabled && showResults && hasResults ? (
+        <ModuleResultsSection results={results} config={config} />
+      ) : null}
 
       {/* Expanded Content - Settings and Test Selection */}
-      {expanded && config.enabled && (
-        <div className="border-t border-[var(--color-surface-border)]">
-          {/* Auto-start Toggle */}
-          <div
-            className={cn(
-              spacing.pad.sm,
-              'flex items-center justify-between bg-[var(--color-surface-base)]',
-            )}
-          >
-            <div className="flex items-center gap-2">
-              <RefreshCw className={cn(iconTokens.size.sm, 'text-[var(--color-text-muted)]')} />
-              <span className="text-sm text-[var(--color-text-secondary)]">Auto-start on link</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => onToggleAutoStart(!config.autoStart)}
-              className={cn(
-                'w-10 h-6 rounded-full relative transition-colors',
-                config.autoStart
-                  ? 'bg-[var(--color-brand-primary)]'
-                  : 'bg-[var(--color-surface-border)]',
-              )}
-            >
-              <span
-                className={cn(
-                  'absolute top-1 w-4 h-4 rounded-full bg-white transition-transform',
-                  config.autoStart ? 'translate-x-5' : 'translate-x-1',
-                )}
-              />
-            </button>
-          </div>
-
-          {/* Test List */}
-          <div className={spacing.pad.sm}>
-            <div className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide mb-2">
-              Tests
-            </div>
-            <div className="space-y-1">
-              {config.tests.map((test) => (
-                <label
-                  key={test.id}
-                  className={cn(
-                    'flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors',
-                    'hover:bg-[var(--color-surface-hover)]',
-                    test.enabled ? '' : 'opacity-60',
-                  )}
-                >
-                  <input
-                    type="checkbox"
-                    checked={test.enabled}
-                    onChange={(e) => onToggleTest(test.id, e.target.checked)}
-                    className="w-4 h-4"
-                    style={{ accentColor: config.color }}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-[var(--color-text-primary)]">
-                      {test.name}
-                    </div>
-                    <div className="text-xs text-[var(--color-text-muted)] truncate">
-                      {test.description}
-                    </div>
-                  </div>
-                  {isRunning && status.currentTest === test.id && (
-                    <span className="w-2 h-2 rounded-full bg-[var(--color-status-success)] animate-pulse" />
-                  )}
-                </label>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+      {expanded && config.enabled ? (
+        <ModuleExpandedContent
+          config={config}
+          status={status}
+          isRunning={isRunning}
+          onToggleAutoStart={onToggleAutoStart}
+          onToggleTest={onToggleTest}
+        />
+      ) : null}
     </div>
   );
+}
+
+/** Helper to check if results have data */
+function checkHasResults(results: ModuleTestResults | null | undefined): boolean {
+  if (!results) {
+    return false;
+  }
+  const hasFrameSizeResults =
+    results.frameSizeResults !== null &&
+    results.frameSizeResults !== undefined &&
+    results.frameSizeResults.length > 0;
+  const hasServiceFlowResults =
+    results.serviceFlowResults !== null &&
+    results.serviceFlowResults !== undefined &&
+    results.serviceFlowResults.length > 0;
+  const hasOamResults =
+    results.oamResults !== null &&
+    results.oamResults !== undefined &&
+    results.oamResults.length > 0;
+  return hasFrameSizeResults || hasServiceFlowResults || hasOamResults;
 }
 
 export default ModuleCard;

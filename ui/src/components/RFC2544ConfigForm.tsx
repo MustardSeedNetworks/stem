@@ -50,7 +50,7 @@ interface RFC2544ConfigFormProps {
 }
 
 /** Standard Ethernet frame sizes per RFC 2544 */
-const FRAME_SIZE_OPTIONS = [
+const FRAME_SIZE_OPTIONS: Array<{ value: number; label: string }> = [
   { value: 64, label: '64 B (min)' },
   { value: 128, label: '128 B' },
   { value: 256, label: '256 B' },
@@ -72,11 +72,11 @@ export function RFC2544ConfigForm({
     return null;
   }
 
-  const updateConfig = (updates: Partial<RFC2544Config>) => {
+  const updateConfig = (updates: Partial<RFC2544Config>): void => {
     setConfig({ ...config, ...updates });
   };
 
-  const toggleFrameSize = (size: number) => {
+  const toggleFrameSize = (size: number): void => {
     if (config.frameSizes.includes(size)) {
       updateConfig({ frameSizes: config.frameSizes.filter((s) => s !== size) });
     } else {
@@ -114,7 +114,9 @@ export function RFC2544ConfigForm({
             max={3600}
             step={1}
             value={config.duration}
-            onChange={(e) => updateConfig({ duration: Number(e.target.value) })}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+              updateConfig({ duration: Number(e.target.value) })
+            }
             className="mt-1 w-full"
           />
         </div>
@@ -134,7 +136,9 @@ export function RFC2544ConfigForm({
             max={60}
             step={1}
             value={config.warmup}
-            onChange={(e) => updateConfig({ warmup: Number(e.target.value) })}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+              updateConfig({ warmup: Number(e.target.value) })
+            }
             className="mt-1 w-full"
           />
         </div>
@@ -154,14 +158,16 @@ export function RFC2544ConfigForm({
             max={10}
             step={1}
             value={config.trials}
-            onChange={(e) => updateConfig({ trials: Number(e.target.value) })}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+              updateConfig({ trials: Number(e.target.value) })
+            }
             className="mt-1 w-full"
           />
         </div>
       </div>
 
       {/* Throughput Test Parameters */}
-      {hasThroughput && (
+      {hasThroughput ? (
         <div className="space-y-3">
           <div className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">
             Throughput Test
@@ -182,7 +188,9 @@ export function RFC2544ConfigForm({
               max={10}
               step={0.01}
               value={config.resolution}
-              onChange={(e) => updateConfig({ resolution: Number(e.target.value) })}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                updateConfig({ resolution: Number(e.target.value) })
+              }
               className="mt-1 w-full"
             />
           </div>
@@ -202,15 +210,17 @@ export function RFC2544ConfigForm({
               max={1}
               step={0.001}
               value={config.maxLoss}
-              onChange={(e) => updateConfig({ maxLoss: Number(e.target.value) })}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                updateConfig({ maxLoss: Number(e.target.value) })
+              }
               className="mt-1 w-full"
             />
           </div>
         </div>
-      )}
+      ) : null}
 
       {/* Frame Loss Test Parameters */}
-      {hasFrameLoss && (
+      {hasFrameLoss ? (
         <div className="space-y-3">
           <div className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">
             Frame Loss Test
@@ -231,7 +241,9 @@ export function RFC2544ConfigForm({
               max={25}
               step={1}
               value={config.stepSize}
-              onChange={(e) => updateConfig({ stepSize: Number(e.target.value) })}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                updateConfig({ stepSize: Number(e.target.value) })
+              }
               className="mt-1 w-full"
             />
             <div className="text-xs text-[var(--color-text-muted)] mt-1">
@@ -243,7 +255,7 @@ export function RFC2544ConfigForm({
             </div>
           </div>
         </div>
-      )}
+      ) : null}
 
       {/* Frame Sizes */}
       <div className="space-y-2">
@@ -267,12 +279,12 @@ export function RFC2544ConfigForm({
             </label>
           ))}
         </div>
-        {config.frameSizes.length === 0 && (
+        {config.frameSizes.length === 0 ? (
           <div className="flex items-center gap-2 text-xs text-[var(--color-status-warning)]">
             <AlertTriangle className="w-3 h-3" />
             Select at least one frame size
           </div>
-        )}
+        ) : null}
       </div>
 
       {/* Advanced Options */}
@@ -285,7 +297,9 @@ export function RFC2544ConfigForm({
           <input
             type="checkbox"
             checked={config.bidirectional}
-            onChange={(e) => updateConfig({ bidirectional: e.target.checked })}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+              updateConfig({ bidirectional: e.target.checked })
+            }
             className="w-4 h-4 accent-[var(--color-brand-primary)]"
           />
           <div>
@@ -323,12 +337,12 @@ export function RFC2544ConfigForm({
             Duration: {config.duration}s × {config.trials} trials
             {config.warmup > 0 && ` + ${config.warmup}s warmup`}
           </div>
-          {hasThroughput && (
+          {hasThroughput ? (
             <div>
               Throughput: {config.resolution}% resolution, ≤{config.maxLoss}% loss
             </div>
-          )}
-          {config.bidirectional && <div>Mode: Bidirectional</div>}
+          ) : null}
+          {config.bidirectional ? <div>Mode: Bidirectional</div> : null}
           <div className="pt-1 border-t border-[var(--color-surface-border)] mt-1">
             Estimated time: ~
             {Math.ceil(

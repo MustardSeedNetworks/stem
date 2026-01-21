@@ -1,7 +1,10 @@
 // Copyright (c) 2025 Mustard Seed Networks. All rights reserved.
 
+import type { PartialStoryFn } from '@storybook/csf';
+import type { ReactRenderer } from '@storybook/react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from '@storybook/test';
+import type { ReactElement } from 'react';
 import { HeaderBar } from '../HeaderBar';
 
 const meta: Meta<typeof HeaderBar> = {
@@ -42,9 +45,9 @@ const meta: Meta<typeof HeaderBar> = {
     },
   },
   decorators: [
-    (Story) => (
+    (StoryComponent: PartialStoryFn<ReactRenderer>): ReactElement => (
       <div className="bg-gray-100 min-h-[200px]">
-        <Story />
+        <StoryComponent />
       </div>
     ),
   ],
@@ -54,7 +57,7 @@ export default meta;
 type Story = StoryObj<typeof HeaderBar>;
 
 // Mock handlers using Storybook actions
-const mockHandlers = {
+const mockHandlers: Record<string, ReturnType<typeof fn>> = {
   onToggleTheme: fn(),
   onRefresh: fn(),
   onHistoryOpen: fn(),
@@ -112,9 +115,9 @@ export const DarkTheme: Story = {
     ...mockHandlers,
   },
   decorators: [
-    (Story) => (
+    (StoryComponent: PartialStoryFn<ReactRenderer>): ReactElement => (
       <div className="bg-gray-900 min-h-[200px]">
-        <Story />
+        <StoryComponent />
       </div>
     ),
   ],

@@ -34,6 +34,123 @@ interface RecoveryInstructions {
   steps: string[];
 }
 
+/** Props for PasswordInput sub-component */
+interface PasswordInputProps {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  showPassword: boolean;
+  onToggleVisibility: () => void;
+  placeholder: string;
+  hasError: boolean;
+  showPasswordLabel: string;
+  hidePasswordLabel: string;
+  helperText?: string;
+  errorText?: string;
+}
+
+/** Reusable password input with visibility toggle */
+function PasswordInput({
+  id,
+  label,
+  value,
+  onChange,
+  showPassword,
+  onToggleVisibility,
+  placeholder,
+  hasError,
+  showPasswordLabel,
+  hidePasswordLabel,
+  helperText,
+  errorText,
+}: PasswordInputProps): ReactElement {
+  return (
+    <div>
+      <label htmlFor={id} className={cn('label block', spacing.margin.bottom.inline)}>
+        {label}
+      </label>
+      <div className="relative">
+        <Lock
+          className={cn(icon.size.sm, 'absolute left-3 top-1/2 -translate-y-1/2 text-text-muted')}
+        />
+        <input
+          id={id}
+          type={showPassword ? 'text' : 'password'}
+          value={value}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange(e.target.value)}
+          className={cn(
+            'w-full pl-10 pr-10',
+            input.size.md,
+            radius.xl,
+            'border bg-surface-base text-text-primary',
+            hasError ? 'border-status-error' : 'border-surface-border',
+            'focus:outline-none focus:ring-2 focus:ring-brand-primary/30',
+            hasError ? 'focus:border-status-error' : 'focus:border-brand-primary',
+          )}
+          placeholder={placeholder}
+          required={true}
+        />
+        <button
+          type="button"
+          onClick={onToggleVisibility}
+          className="absolute right-2 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
+          aria-label={showPassword ? hidePasswordLabel : showPasswordLabel}
+        >
+          {showPassword ? <EyeOff className={icon.size.sm} /> : <Eye className={icon.size.sm} />}
+        </button>
+      </div>
+      {helperText !== undefined && (
+        <p className={cn('caption mt-1', hasError ? 'text-status-error' : 'text-text-muted')}>
+          {helperText}
+        </p>
+      )}
+      {errorText !== undefined && hasError && (
+        <p className="caption mt-1 text-status-error">{errorText}</p>
+      )}
+    </div>
+  );
+}
+
+/** Props for InstructionsPanel sub-component */
+interface InstructionsPanelProps {
+  instructions: RecoveryInstructions;
+  tokenFilePath: string;
+  title: string;
+  tokenFileLabel: string;
+}
+
+/** Instructions panel showing recovery steps */
+function InstructionsPanel({
+  instructions,
+  tokenFilePath,
+  title,
+  tokenFileLabel,
+}: InstructionsPanelProps): ReactElement {
+  return (
+    <div
+      className={cn(
+        'bg-surface-sunken border border-surface-border',
+        radius.xl,
+        spacing.pad.default,
+        spacing.margin.bottom.content,
+      )}
+    >
+      <h3 className={cn('heading-4', spacing.margin.bottom.inline)}>{title}</h3>
+      <ol className="caption text-text-muted space-y-1 list-decimal list-inside">
+        {instructions.steps.map((step) => (
+          <li key={step}>{step}</li>
+        ))}
+      </ol>
+      {tokenFilePath !== '' && (
+        <p className={cn('caption text-text-muted', spacing.margin.top.inline)}>
+          {tokenFileLabel}: <code className="code">{tokenFilePath}</code>
+        </p>
+      )}
+    </div>
+  );
+}
+
 /**
  * RecoveryForm Component
  *
@@ -63,19 +180,23 @@ export function RecoveryForm({
       try {
         const response = await fetch('/api/v1/recovery/instructions');
         if (response.ok) {
-          const data = (await response.json()) as RecoveryInstructions;
+          const data = await (response.json() as Promise<RecoveryInstructions>);
           setInstructions(data);
         }
       } catch {
         // Instructions are optional, don't error
       }
     };
-    void fetchInstructions();
+    fetchInstructions().catch(() => {
+      // Already handled silently inside
+    });
   }, []);
 
   // Countdown timer for token expiry
   useEffect(() => {
-    if (remainingTime <= 0) return;
+    if (remainingTime <= 0) {
+      return;
+    }
 
     const interval = setInterval(() => {
       setRemainingTime((prev) => {
@@ -100,7 +221,7 @@ export function RecoveryForm({
   // Password validation
   const passwordValid = password.length >= MIN_PASSWORD_LENGTH;
   const passwordsMatch = password === confirmPassword;
-  const canSubmit = token.trim() && passwordValid && passwordsMatch && !isSubmitting;
+  const canSubmit = token.trim() !== '' && passwordValid && passwordsMatch && !isSubmitting;
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
@@ -130,13 +251,13 @@ export function RecoveryForm({
         }),
       });
 
-      const data = (await response.json()) as {
+      const data = await (response.json() as Promise<{
         success?: boolean;
         message?: string;
         error?: string;
-      };
+      }>);
 
-      if (response.ok && data.success) {
+      if (response.ok && data.success === true) {
         onRecoveryComplete();
       } else {
         setError(data.message ?? data.error ?? t('errors.recoveryFailed'));
@@ -188,29 +309,13 @@ export function RecoveryForm({
         )}
 
         {/* Instructions Panel */}
-        {instructions && (
-          <div
-            className={cn(
-              'bg-surface-sunken border border-surface-border',
-              radius.xl,
-              spacing.pad.default,
-              spacing.margin.bottom.content,
-            )}
-          >
-            <h3 className={cn('heading-4', spacing.margin.bottom.inline)}>
-              {t('instructions.title')}
-            </h3>
-            <ol className="caption text-text-muted space-y-1 list-decimal list-inside">
-              {instructions.steps.map((step) => (
-                <li key={step}>{step}</li>
-              ))}
-            </ol>
-            {tokenFilePath && (
-              <p className={cn('caption text-text-muted', spacing.margin.top.inline)}>
-                {t('instructions.tokenFile')}: <code className="code">{tokenFilePath}</code>
-              </p>
-            )}
-          </div>
+        {instructions !== null && (
+          <InstructionsPanel
+            instructions={instructions}
+            tokenFilePath={tokenFilePath}
+            title={t('instructions.title')}
+            tokenFileLabel={t('instructions.tokenFile')}
+          />
         )}
 
         {/* Form */}
@@ -242,7 +347,9 @@ export function RecoveryForm({
                 id="recovery-token"
                 type="text"
                 value={token}
-                onChange={(e) => setToken(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  setToken(e.target.value)
+                }
                 className={cn(
                   'w-full pl-10',
                   input.size.md,
@@ -253,126 +360,43 @@ export function RecoveryForm({
                 placeholder={t('token.placeholder')}
                 autoComplete="off"
                 spellCheck={false}
-                required
+                required={true}
               />
             </div>
           </div>
 
           {/* New Password Input */}
-          <div>
-            <label
-              htmlFor="recovery-password"
-              className={cn('label block', spacing.margin.bottom.inline)}
-            >
-              {t('password.label')}
-            </label>
-            <div className="relative">
-              <Lock
-                className={cn(
-                  icon.size.sm,
-                  'absolute left-3 top-1/2 -translate-y-1/2 text-text-muted',
-                )}
-              />
-              <input
-                id="recovery-password"
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className={cn(
-                  'w-full pl-10 pr-10',
-                  input.size.md,
-                  radius.xl,
-                  'border bg-surface-base text-text-primary',
-                  password && !passwordValid ? 'border-status-error' : 'border-surface-border',
-                  'focus:outline-none focus:ring-2 focus:ring-brand-primary/30',
-                  password && !passwordValid
-                    ? 'focus:border-status-error'
-                    : 'focus:border-brand-primary',
-                )}
-                placeholder={t('password.placeholder')}
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
-                aria-label={showPassword ? t('buttons.hidePassword') : t('buttons.showPassword')}
-              >
-                {showPassword ? (
-                  <EyeOff className={icon.size.sm} />
-                ) : (
-                  <Eye className={icon.size.sm} />
-                )}
-              </button>
-            </div>
-            <p
-              className={cn(
-                'caption mt-1',
-                password && !passwordValid ? 'text-status-error' : 'text-text-muted',
-              )}
-            >
-              {t('password.minLength', { count: MIN_PASSWORD_LENGTH })}
-            </p>
-          </div>
+          <PasswordInput
+            id="recovery-password"
+            label={t('password.label')}
+            value={password}
+            onChange={setPassword}
+            showPassword={showPassword}
+            onToggleVisibility={() => setShowPassword(!showPassword)}
+            placeholder={t('password.placeholder')}
+            hasError={password !== '' && !passwordValid}
+            showPasswordLabel={t('buttons.showPassword')}
+            hidePasswordLabel={t('buttons.hidePassword')}
+            helperText={t('password.minLength', { count: MIN_PASSWORD_LENGTH })}
+          />
 
           {/* Confirm Password Input */}
-          <div>
-            <label
-              htmlFor="recovery-confirm-password"
-              className={cn('label block', spacing.margin.bottom.inline)}
-            >
-              {t('password.confirmLabel')}
-            </label>
-            <div className="relative">
-              <Lock
-                className={cn(
-                  icon.size.sm,
-                  'absolute left-3 top-1/2 -translate-y-1/2 text-text-muted',
-                )}
-              />
-              <input
-                id="recovery-confirm-password"
-                type={showConfirmPassword ? 'text' : 'password'}
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className={cn(
-                  'w-full pl-10 pr-10',
-                  input.size.md,
-                  radius.xl,
-                  'border bg-surface-base text-text-primary',
-                  confirmPassword && !passwordsMatch
-                    ? 'border-status-error'
-                    : 'border-surface-border',
-                  'focus:outline-none focus:ring-2 focus:ring-brand-primary/30',
-                  confirmPassword && !passwordsMatch
-                    ? 'focus:border-status-error'
-                    : 'focus:border-brand-primary',
-                )}
-                placeholder={t('password.confirmPlaceholder')}
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
-                aria-label={
-                  showConfirmPassword ? t('buttons.hidePassword') : t('buttons.showPassword')
-                }
-              >
-                {showConfirmPassword ? (
-                  <EyeOff className={icon.size.sm} />
-                ) : (
-                  <Eye className={icon.size.sm} />
-                )}
-              </button>
-            </div>
-            {confirmPassword && !passwordsMatch && (
-              <p className="caption mt-1 text-status-error">{t('errors.passwordMismatch')}</p>
-            )}
-          </div>
+          <PasswordInput
+            id="recovery-confirm-password"
+            label={t('password.confirmLabel')}
+            value={confirmPassword}
+            onChange={setConfirmPassword}
+            showPassword={showConfirmPassword}
+            onToggleVisibility={() => setShowConfirmPassword(!showConfirmPassword)}
+            placeholder={t('password.confirmPlaceholder')}
+            hasError={confirmPassword !== '' && !passwordsMatch}
+            showPasswordLabel={t('buttons.showPassword')}
+            hidePasswordLabel={t('buttons.hidePassword')}
+            errorText={t('errors.passwordMismatch')}
+          />
 
           {/* Error display */}
-          {error && (
+          {error !== null && (
             <div role="alert" aria-live="assertive" className={cn(alert.base, alert.variant.error)}>
               {error}
             </div>

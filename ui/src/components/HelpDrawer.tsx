@@ -46,7 +46,7 @@ interface HelpDrawerProps {
   onClose: () => void;
 }
 
-export function HelpDrawer({ isOpen, onClose }: HelpDrawerProps) {
+export function HelpDrawer({ isOpen, onClose }: HelpDrawerProps): ReactElement | null {
   const [activeTab, setActiveTab] = useState<Tab>('tests');
   const [searchQuery, setSearchQuery] = useState('');
   const [simpleMode, setSimpleMode] = useState(true);
@@ -58,15 +58,17 @@ export function HelpDrawer({ isOpen, onClose }: HelpDrawerProps) {
     onEscape: onClose,
   });
 
-  if (!isOpen) return null;
+  if (!isOpen) {
+    return null;
+  }
 
-  const copyCommand = (command: string) => {
+  const copyCommand = (command: string): void => {
     navigator.clipboard.writeText(command);
     setCopiedCommand(command);
-    setTimeout(() => setCopiedCommand(null), 2000);
+    setTimeout((): void => setCopiedCommand(null), 2000);
   };
 
-  const getCategoryIcon = (categoryId: string) => {
+  const getCategoryIcon = (categoryId: string): ReactElement => {
     switch (categoryId) {
       case 'rfc2544':
         return <Zap className="w-4 h-4" />;
@@ -138,7 +140,7 @@ export function HelpDrawer({ isOpen, onClose }: HelpDrawerProps) {
           <div className={cn('flex gap-1 bg-surface-base p-1', radius.lg)}>
             <button
               type="button"
-              onClick={() => setActiveTab('tests')}
+              onClick={(): void => setActiveTab('tests')}
               className={cn(
                 'flex-1 px-3 py-2 text-sm font-medium transition-colors',
                 radius.md,
@@ -154,7 +156,7 @@ export function HelpDrawer({ isOpen, onClose }: HelpDrawerProps) {
             </button>
             <button
               type="button"
-              onClick={() => setActiveTab('tutorials')}
+              onClick={(): void => setActiveTab('tutorials')}
               className={cn(
                 'flex-1 px-3 py-2 text-sm font-medium transition-colors',
                 radius.md,
@@ -170,7 +172,7 @@ export function HelpDrawer({ isOpen, onClose }: HelpDrawerProps) {
             </button>
             <button
               type="button"
-              onClick={() => setActiveTab('glossary')}
+              onClick={(): void => setActiveTab('glossary')}
               className={cn(
                 'flex-1 px-3 py-2 text-sm font-medium transition-colors',
                 radius.md,
@@ -200,7 +202,9 @@ export function HelpDrawer({ isOpen, onClose }: HelpDrawerProps) {
                 type="text"
                 placeholder={`Search ${activeTab}...`}
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  setSearchQuery(e.target.value)
+                }
                 className={cn(
                   'w-full pl-9 pr-3 py-2 body-small',
                   'bg-surface-base border border-surface-border text-text-primary',
@@ -211,7 +215,7 @@ export function HelpDrawer({ isOpen, onClose }: HelpDrawerProps) {
             </div>
             <button
               type="button"
-              onClick={() => setSimpleMode(!simpleMode)}
+              onClick={(): void => setSimpleMode(!simpleMode)}
               className={cn(
                 'px-3 py-2 text-xs font-medium transition-colors',
                 radius.lg,
@@ -233,7 +237,7 @@ export function HelpDrawer({ isOpen, onClose }: HelpDrawerProps) {
             <TestDetailView
               test={selectedTest}
               simpleMode={simpleMode}
-              onBack={() => setSelectedTest(null)}
+              onBack={(): void => setSelectedTest(null)}
               onCopy={copyCommand}
               copiedCommand={copiedCommand}
             />
@@ -243,7 +247,7 @@ export function HelpDrawer({ isOpen, onClose }: HelpDrawerProps) {
           {selectedTutorial && activeTab === 'tutorials' && (
             <TutorialDetailView
               tutorial={selectedTutorial}
-              onBack={() => setSelectedTutorial(null)}
+              onBack={(): void => setSelectedTutorial(null)}
               onCopy={copyCommand}
               copiedCommand={copiedCommand}
             />
@@ -289,7 +293,7 @@ function TestsTab({
   simpleMode: boolean;
   onSelectTest: (test: TestHelp) => void;
   getCategoryIcon: (id: string) => ReactElement;
-}) {
+}): ReactElement {
   const categoryOrder = ['rfc2544', 'y1564', 'rfc2889', 'rfc6349', 'y1731', 'mef', 'tsn'];
 
   if (filteredTests) {
@@ -318,7 +322,9 @@ function TestsTab({
       </p>
       {categoryOrder.map((catId) => {
         const category = categories[catId];
-        if (!category) return null;
+        if (!category) {
+          return null;
+        }
         const catTests = getTestsByCategory(catId);
 
         return (
@@ -399,7 +405,7 @@ function TestDetailView({
   onBack: () => void;
   onCopy: (cmd: string) => void;
   copiedCommand: string | null;
-}) {
+}): ReactElement {
   return (
     <div className="section-gap">
       {/* Back Button */}
@@ -437,17 +443,17 @@ function TestDetailView({
       </div>
 
       {/* When NOT to Use */}
-      {test.whenNotToUse && (
+      {test.whenNotToUse ? (
         <div className={cn('bg-status-warning/10', radius.lg, spacing.pad.default)}>
           <h4 className={cn('section-title text-status-warning', spacing.margin.bottom.inline)}>
             When NOT to Use
           </h4>
           <p className="body-small text-text-primary whitespace-pre-line">{test.whenNotToUse}</p>
         </div>
-      )}
+      ) : null}
 
       {/* Parameters */}
-      {test.parameters.length > 0 && (
+      {test.parameters.length > 0 ? (
         <div>
           <h4 className={cn('section-title', spacing.margin.bottom.inline)}>Parameters</h4>
           <div className="stack-sm">
@@ -457,7 +463,9 @@ function TestDetailView({
                   <code className={cn('code', 'bg-surface-raised px-1.5 py-0.5', radius.default)}>
                     {param.flag}
                   </code>
-                  {param.required && <span className="caption text-status-warning">required</span>}
+                  {param.required ? (
+                    <span className="caption text-status-warning">required</span>
+                  ) : null}
                 </div>
                 <p className="caption mt-1">
                   Type: {param.type} | Default: {param.defaultValue}
@@ -469,10 +477,10 @@ function TestDetailView({
             ))}
           </div>
         </div>
-      )}
+      ) : null}
 
       {/* Metrics */}
-      {test.metrics.length > 0 && (
+      {test.metrics.length > 0 ? (
         <div>
           <h4 className={cn('section-title', spacing.margin.bottom.inline)}>Metrics</h4>
           <div className="stack-sm">
@@ -488,10 +496,10 @@ function TestDetailView({
             ))}
           </div>
         </div>
-      )}
+      ) : null}
 
       {/* Examples */}
-      {test.examples.length > 0 && (
+      {test.examples.length > 0 ? (
         <div>
           <h4 className={cn('section-title', spacing.margin.bottom.inline)}>Examples</h4>
           <div className="stack-sm">
@@ -505,7 +513,7 @@ function TestDetailView({
                   <code className="caption font-mono text-brand-primary">$ {example.command}</code>
                   <button
                     type="button"
-                    onClick={() => onCopy(example.command)}
+                    onClick={(): void => onCopy(example.command)}
                     className={cn('p-1 hover:bg-surface-hover', radius.default)}
                     title="Copy command"
                   >
@@ -520,10 +528,10 @@ function TestDetailView({
             ))}
           </div>
         </div>
-      )}
+      ) : null}
 
       {/* Tips */}
-      {test.tips.length > 0 && (
+      {test.tips.length > 0 ? (
         <div>
           <h4 className={cn('section-title', spacing.margin.bottom.inline)}>Tips</h4>
           <ul className="stack-xs">
@@ -538,10 +546,10 @@ function TestDetailView({
             ))}
           </ul>
         </div>
-      )}
+      ) : null}
 
       {/* See Also */}
-      {test.seeAlso.length > 0 && (
+      {test.seeAlso.length > 0 ? (
         <div className="pt-4 border-t border-surface-border">
           <h4 className={cn('section-title', spacing.margin.bottom.inline)}>Related Tests</h4>
           <div className={layout.inline.wrap}>
@@ -555,7 +563,7 @@ function TestDetailView({
             ))}
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -567,7 +575,7 @@ function TutorialsTab({
 }: {
   searchQuery: string;
   onSelectTutorial: (tutorial: Tutorial) => void;
-}) {
+}): ReactElement {
   const tutorialList = Object.values(tutorials);
   const filtered = searchQuery
     ? tutorialList.filter(
@@ -587,7 +595,7 @@ function TutorialsTab({
           <button
             type="button"
             key={tutorial.id}
-            onClick={() => onSelectTutorial(tutorial)}
+            onClick={(): void => onSelectTutorial(tutorial)}
             className={cn(
               'w-full text-left border transition-colors',
               spacing.pad.default,
@@ -676,14 +684,14 @@ function TutorialDetailView({
             >
               {step.content}
             </p>
-            {step.command && (
+            {step.command ? (
               <div
                 className={cn(layout.flex.between, 'bg-surface-raised p-2 mb-2', radius.default)}
               >
                 <code className="caption font-mono text-brand-primary">$ {step.command}</code>
                 <button
                   type="button"
-                  onClick={() => onCopy(step.command as string)}
+                  onClick={(): void => onCopy(step.command as string)}
                   className={cn('p-1 hover:bg-surface-hover', radius.default)}
                   title="Copy command"
                 >
@@ -694,13 +702,13 @@ function TutorialDetailView({
                   )}
                 </button>
               </div>
-            )}
-            {step.expected && (
+            ) : null}
+            {step.expected ? (
               <div className={cn('caption bg-surface-raised p-2', radius.default)}>
                 Expected: {step.expected}
               </div>
-            )}
-            {step.tip && (
+            ) : null}
+            {step.tip ? (
               <div
                 className={cn(
                   'mt-2 caption text-status-info bg-status-info/10 p-2',
@@ -709,7 +717,7 @@ function TutorialDetailView({
               >
                 Tip: {step.tip}
               </div>
-            )}
+            ) : null}
           </div>
         ))}
       </div>
@@ -726,7 +734,7 @@ function GlossaryTab({
   searchQuery: string;
   filteredGlossary: GlossaryEntry[] | null;
   simpleMode: boolean;
-}) {
+}): ReactElement {
   const glossaryEntries = filteredGlossary || Object.values(glossary);
 
   // Group by category
@@ -748,12 +756,12 @@ function GlossaryTab({
       <p className="body-small text-text-muted">
         Network testing terminology explained {simpleMode ? 'simply' : 'technically'}.
       </p>
-      {searchQuery && (
+      {searchQuery ? (
         <p className="caption">
           Found {glossaryEntries.length} term
           {glossaryEntries.length !== 1 ? 's' : ''}
         </p>
-      )}
+      ) : null}
       {categoryNames.map((category) => (
         <CollapsibleSection
           key={category}

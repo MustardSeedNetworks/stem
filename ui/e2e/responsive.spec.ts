@@ -96,7 +96,9 @@ test.describe('Responsive Design', () => {
     for (let i = 0; i < Math.min(count, 5); i++) {
       const element = textElements.nth(i);
       if (await element.isVisible()) {
-        const fontSize = await element.evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+        const fontSize = await element.evaluate((el) =>
+          Number.parseFloat(getComputedStyle(el).fontSize),
+        );
         expect(fontSize).toBeGreaterThanOrEqual(12);
       }
     }

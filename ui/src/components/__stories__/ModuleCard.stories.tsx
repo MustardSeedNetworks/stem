@@ -2,6 +2,7 @@
 
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { fn } from '@storybook/test';
+import type { ComponentProps, ReactElement } from 'react';
 import type { ModuleConfig, ModuleStatus, ModuleTestResults } from '../ModuleCard';
 import { ModuleCard } from '../ModuleCard';
 
@@ -394,7 +395,7 @@ export const WithAutoStart: Story = {
 
 // Grid of multiple modules
 export const ModuleGrid: Story = {
-  render: (args) => (
+  render: (args: ComponentProps<typeof ModuleCard>): ReactElement => (
     <div className="space-y-4">
       <ModuleCard {...args} config={benchmarkConfig} />
       <ModuleCard {...args} config={serviceTestConfig} />

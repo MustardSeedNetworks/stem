@@ -38,7 +38,7 @@
  * State: Manages isOpen state with useState
  */
 
-import { type ReactNode, useState } from 'react';
+import { type ReactElement, type ReactNode, useState } from 'react';
 import { border, cn, icon as iconTokens, layout, radius, spacing } from '../styles/theme';
 import type { Status } from './ui/Card';
 import { StatusBadge } from './ui/StatusBadge';
@@ -64,7 +64,7 @@ interface CollapsibleSectionProps {
  * ChevronRight icon for toggle indicator.
  * Rotates 90 degrees when expanded.
  */
-function ChevronIcon({ isOpen }: { isOpen: boolean }) {
+function ChevronIcon({ isOpen }: { isOpen: boolean }): ReactElement {
   return (
     <svg
       className={cn(
@@ -93,7 +93,7 @@ export function CollapsibleSection({
   status,
   variant = 'default',
   className = '',
-}: CollapsibleSectionProps) {
+}: CollapsibleSectionProps): ReactElement {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   const isCompact = variant === 'compact';
@@ -109,7 +109,7 @@ export function CollapsibleSection({
     >
       <button
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={(): void => setIsOpen(!isOpen)}
         className={cn(
           'w-full transition-colors',
           layout.flex.between,
@@ -121,7 +121,7 @@ export function CollapsibleSection({
       >
         <div className={layout.inline.default}>
           <ChevronIcon isOpen={isOpen} />
-          {status && <StatusBadge status={status} size="sm" />}
+          {status ? <StatusBadge status={status} size="sm" /> : null}
           <span
             className={cn('font-medium text-text-primary', isCompact ? 'caption' : 'body-small')}
           >
@@ -132,7 +132,7 @@ export function CollapsibleSection({
           </span>
         </div>
       </button>
-      {isOpen && (
+      {isOpen ? (
         <div
           className={cn(
             isCompact
@@ -142,7 +142,7 @@ export function CollapsibleSection({
         >
           {children}
         </div>
-      )}
+      ) : null}
     </section>
   );
 }

@@ -1,6 +1,7 @@
 // Copyright (c) 2025 Mustard Seed Networks. All rights reserved.
 
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import type { ReactElement } from 'react';
 import { ErrorBoundary } from '../ErrorBoundary';
 
 const meta: Meta<typeof ErrorBoundary> = {
@@ -27,7 +28,7 @@ function BuggyComponent(): never {
 }
 
 // Component that works normally
-function WorkingComponent() {
+function WorkingComponent(): ReactElement {
   return (
     <div className="p-8 text-center">
       <h2 className="text-xl font-semibold text-text-primary mb-2">Everything is working!</h2>

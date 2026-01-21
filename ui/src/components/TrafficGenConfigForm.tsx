@@ -55,7 +55,7 @@ export const defaultTrafficGenConfig: TrafficGenConfig = {
 };
 
 /** Frame size options */
-const FRAME_SIZE_OPTIONS = [
+const FRAME_SIZE_OPTIONS: Array<{ value: number; label: string }> = [
   { value: 64, label: '64 B (min)' },
   { value: 128, label: '128 B' },
   { value: 256, label: '256 B' },
@@ -67,7 +67,7 @@ const FRAME_SIZE_OPTIONS = [
 ];
 
 /** Rate presets */
-const RATE_PRESETS = [
+const RATE_PRESETS: Array<{ value: number; label: string }> = [
   { value: 10, label: '10%' },
   { value: 25, label: '25%' },
   { value: 50, label: '50%' },
@@ -95,7 +95,7 @@ export function TrafficGenConfigForm({
     return null;
   }
 
-  const updateConfig = (updates: Partial<TrafficGenConfig>) => {
+  const updateConfig = (updates: Partial<TrafficGenConfig>): void => {
     setConfig({ ...config, ...updates });
   };
 
@@ -143,7 +143,9 @@ export function TrafficGenConfigForm({
               <select
                 id="tgen-framesize"
                 value={config.frameSize}
-                onChange={(e) => updateConfig({ frameSize: Number(e.target.value) })}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>): void =>
+                  updateConfig({ frameSize: Number(e.target.value) })
+                }
                 className="mt-1 w-full"
               >
                 {FRAME_SIZE_OPTIONS.map((opt) => (
@@ -170,7 +172,9 @@ export function TrafficGenConfigForm({
                   max={100}
                   step={0.01}
                   value={config.ratePct}
-                  onChange={(e) => updateConfig({ ratePct: Number(e.target.value) })}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    updateConfig({ ratePct: Number(e.target.value) })
+                  }
                   className="w-full"
                 />
               </div>
@@ -209,7 +213,9 @@ export function TrafficGenConfigForm({
                 max={86400}
                 step={1}
                 value={config.duration}
-                onChange={(e) => updateConfig({ duration: Number(e.target.value) })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  updateConfig({ duration: Number(e.target.value) })
+                }
                 className="mt-1 w-full"
               />
             </div>
@@ -229,7 +235,9 @@ export function TrafficGenConfigForm({
                 max={60}
                 step={1}
                 value={config.warmup}
-                onChange={(e) => updateConfig({ warmup: Number(e.target.value) })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  updateConfig({ warmup: Number(e.target.value) })
+                }
                 className="mt-1 w-full"
               />
             </div>
@@ -237,7 +245,7 @@ export function TrafficGenConfigForm({
         </div>
 
         {/* Stream Configuration */}
-        {hasMultiStream && (
+        {hasMultiStream ? (
           <div className="space-y-3">
             <div className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">
               Stream Configuration
@@ -258,15 +266,17 @@ export function TrafficGenConfigForm({
                 max={65535}
                 step={1}
                 value={config.streamId}
-                onChange={(e) => updateConfig({ streamId: Number(e.target.value) })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  updateConfig({ streamId: Number(e.target.value) })
+                }
                 className="mt-1 w-full"
               />
             </div>
           </div>
-        )}
+        ) : null}
 
         {/* Burst Mode */}
-        {hasBurst && (
+        {hasBurst ? (
           <div className="space-y-3">
             <div className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">
               Burst Mode
@@ -277,7 +287,9 @@ export function TrafficGenConfigForm({
                 id="tgen-burstmode"
                 type="checkbox"
                 checked={config.burstMode}
-                onChange={(e) => updateConfig({ burstMode: e.target.checked })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  updateConfig({ burstMode: e.target.checked })
+                }
                 className="rounded border-[var(--color-surface-border)]"
               />
               <label htmlFor="tgen-burstmode" className="text-sm text-[var(--color-text-primary)]">
@@ -285,7 +297,7 @@ export function TrafficGenConfigForm({
               </label>
             </div>
 
-            {config.burstMode && (
+            {config.burstMode ? (
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label
@@ -302,7 +314,9 @@ export function TrafficGenConfigForm({
                     max={10000}
                     step={1}
                     value={config.burstSize}
-                    onChange={(e) => updateConfig({ burstSize: Number(e.target.value) })}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                      updateConfig({ burstSize: Number(e.target.value) })
+                    }
                     className="mt-1 w-full"
                   />
                 </div>
@@ -322,14 +336,16 @@ export function TrafficGenConfigForm({
                     max={1000000}
                     step={1}
                     value={config.interBurstGapUs}
-                    onChange={(e) => updateConfig({ interBurstGapUs: Number(e.target.value) })}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                      updateConfig({ interBurstGapUs: Number(e.target.value) })
+                    }
                     className="mt-1 w-full"
                   />
                 </div>
               </div>
-            )}
+            ) : null}
           </div>
-        )}
+        ) : null}
 
         {/* VLAN Configuration */}
         <div className="space-y-3">
@@ -353,7 +369,9 @@ export function TrafficGenConfigForm({
                 max={4094}
                 step={1}
                 value={config.vlanId}
-                onChange={(e) => updateConfig({ vlanId: Number(e.target.value) })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  updateConfig({ vlanId: Number(e.target.value) })
+                }
                 className="mt-1 w-full"
               />
             </div>
@@ -373,7 +391,9 @@ export function TrafficGenConfigForm({
                 max={7}
                 step={1}
                 value={config.vlanPriority}
-                onChange={(e) => updateConfig({ vlanPriority: Number(e.target.value) })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  updateConfig({ vlanPriority: Number(e.target.value) })
+                }
                 className="mt-1 w-full"
                 disabled={config.vlanId === 0}
               />
@@ -401,7 +421,9 @@ export function TrafficGenConfigForm({
                 type="text"
                 placeholder="aa:bb:cc:dd:ee:ff"
                 value={config.srcMac}
-                onChange={(e) => updateConfig({ srcMac: e.target.value })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  updateConfig({ srcMac: e.target.value })
+                }
                 className="mt-1 w-full"
               />
             </div>
@@ -419,7 +441,9 @@ export function TrafficGenConfigForm({
                 type="text"
                 placeholder="aa:bb:cc:dd:ee:ff"
                 value={config.dstMac}
-                onChange={(e) => updateConfig({ dstMac: e.target.value })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  updateConfig({ dstMac: e.target.value })
+                }
                 className="mt-1 w-full"
               />
             </div>
@@ -447,16 +471,16 @@ export function TrafficGenConfigForm({
               Frame: {config.frameSize}B @ {config.ratePct}% line rate (~
               {calculateThroughput()})
             </div>
-            {config.vlanId > 0 && (
+            {config.vlanId > 0 ? (
               <div>
                 VLAN: {config.vlanId} (priority {config.vlanPriority})
               </div>
-            )}
-            {config.burstMode && (
+            ) : null}
+            {config.burstMode ? (
               <div>
                 Burst: {config.burstSize} frames, {config.interBurstGapUs}µs gap
               </div>
-            )}
+            ) : null}
             <div>
               Duration: {config.duration}s + {config.warmup}s warmup
             </div>

@@ -94,7 +94,7 @@ export const WithSuggestedPassword: Story = {
 export const SubmittingSetup: Story = {
   args: {
     onComplete: noop,
-    onLogin: async () => {
+    onLogin: (): Promise<boolean> => {
       // Simulate slow API
       return new Promise((resolve) => {
         setTimeout(() => resolve(true), 3000);
@@ -119,9 +119,7 @@ export const SubmittingSetup: Story = {
 export const NetworkError: Story = {
   args: {
     onComplete: noop,
-    onLogin: async () => {
-      throw new Error('Network error');
-    },
+    onLogin: (): Promise<never> => Promise.reject(new Error('Network error')),
     username: 'admin',
     setupToken: 'test-token-12345',
   },
@@ -141,9 +139,7 @@ export const NetworkError: Story = {
 export const SetupCompleteLoginFailed: Story = {
   args: {
     onComplete: noop,
-    onLogin: async () => {
-      return false;
-    },
+    onLogin: async () => false,
     username: 'admin',
     setupToken: 'test-token-12345',
   },
@@ -234,7 +230,7 @@ export const InteractiveSetupFlow: Story = {
     return (
       <SetupWizard
         onComplete={() => setSetupComplete(true)}
-        onLogin={async (_username, _password) => {
+        onLogin={async (_username: string, _password: string): Promise<boolean> => {
           // Simulate API delay
           await new Promise((resolve) => setTimeout(resolve, 1000));
           return true;

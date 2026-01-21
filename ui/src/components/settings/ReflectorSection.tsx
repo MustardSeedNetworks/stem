@@ -49,7 +49,11 @@ const REFLECTOR_PROFILES = [
   },
 ] as const;
 
-export function ReflectorSection({ profile, onProfileChange, className }: ReflectorSectionProps) {
+export function ReflectorSection({
+  profile,
+  onProfileChange,
+  className,
+}: ReflectorSectionProps): React.JSX.Element {
   const { t } = useTranslation();
 
   return (
@@ -78,7 +82,7 @@ export function ReflectorSection({ profile, onProfileChange, className }: Reflec
               type="radio"
               name="reflectorProfile"
               checked={profile === p.id}
-              onChange={() => onProfileChange(p.id)}
+              onChange={(): void => onProfileChange(p.id)}
               className="w-4 h-4 accent-brand-primary"
             />
             <div>

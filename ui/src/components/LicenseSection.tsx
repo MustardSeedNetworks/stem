@@ -9,6 +9,7 @@
 import { AlertTriangle, CheckCircle, Clock, Key, Loader2, Shield } from 'lucide-react';
 import type { ReactElement } from 'react';
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { CollapsibleSection } from './CollapsibleSection';
 
 interface LicenseInfo {
@@ -30,7 +31,9 @@ const tierNames: Record<number, string> = {
 };
 
 function formatDate(dateStr: string): string {
-  if (!dateStr) return 'N/A';
+  if (!dateStr) {
+    return 'N/A';
+  }
   const date = new Date(dateStr);
   return date.toLocaleDateString();
 }
@@ -53,17 +56,19 @@ function LicenseStatusBadge({ licenseInfo }: LicenseStatusProps): ReactElement {
           Not Activated
         </span>
       )}
-      {licenseInfo.activated && (
+      {licenseInfo.activated ? (
         <span className="text-sm text-[var(--color-text-muted)]">
           {tierNames[licenseInfo.tier] || 'Unknown'}
         </span>
-      )}
+      ) : null}
     </div>
   );
 }
 
 function LicenseDetails({ licenseInfo }: LicenseStatusProps): ReactElement | null {
-  if (!licenseInfo.activated) return null;
+  if (!licenseInfo.activated) {
+    return null;
+  }
 
   return (
     <div className="bg-[var(--color-surface-hover)] rounded-md p-3 text-sm space-y-1">
@@ -71,14 +76,14 @@ function LicenseDetails({ licenseInfo }: LicenseStatusProps): ReactElement | nul
         <span className="text-[var(--color-text-muted)]">Tier</span>
         <span className="font-medium">{tierNames[licenseInfo.tier]}</span>
       </div>
-      {licenseInfo.isTrialMode && (
+      {licenseInfo.isTrialMode ? (
         <div className="flex justify-between">
           <span className="text-[var(--color-text-muted)]">Days Remaining</span>
           <span className="font-medium text-[var(--color-status-warning)]">
             {licenseInfo.daysRemaining} days
           </span>
         </div>
-      )}
+      ) : null}
       {!licenseInfo.isTrialMode && licenseInfo.expiresAt && (
         <div className="flex justify-between">
           <span className="text-[var(--color-text-muted)]">Expires</span>
@@ -94,7 +99,9 @@ function LicenseDetails({ licenseInfo }: LicenseStatusProps): ReactElement | nul
 }
 
 function LicenseFeatures({ licenseInfo }: LicenseStatusProps): ReactElement | null {
-  if (!licenseInfo.features || licenseInfo.features.length === 0) return null;
+  if (!licenseInfo.features || licenseInfo.features.length === 0) {
+    return null;
+  }
 
   return (
     <div>
@@ -138,7 +145,9 @@ function ActivationForm({
         <input
           type="text"
           value={licenseKey}
-          onChange={(e) => onKeyChange(e.target.value.toUpperCase())}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+            onKeyChange(e.target.value.toUpperCase())
+          }
           placeholder="XXXX-XXXX-XXXX-XXXX"
           className="font-mono text-center tracking-wider"
           maxLength={19}
@@ -162,7 +171,7 @@ function ActivationForm({
         )}
       </button>
 
-      {showTrial && (
+      {showTrial ? (
         <button
           type="button"
           onClick={onStartTrial}
@@ -172,7 +181,7 @@ function ActivationForm({
           <Clock className="w-4 h-4" />
           Start 14-Day Trial
         </button>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -183,45 +192,50 @@ interface MessageDisplayProps {
 }
 
 function MessageDisplay({ error, success }: MessageDisplayProps): ReactElement | null {
-  if (!error && !success) return null;
+  if (!(error || success)) {
+    return null;
+  }
 
   return (
     <>
-      {error && (
+      {error ? (
         <div className="text-sm text-[var(--color-status-error)] bg-red-500 bg-opacity-10 p-2 rounded">
           {error}
         </div>
-      )}
-      {success && (
+      ) : null}
+      {success ? (
         <div className="text-sm text-[var(--color-status-success)] bg-green-500 bg-opacity-10 p-2 rounded">
           {success}
         </div>
-      )}
+      ) : null}
     </>
   );
 }
 
 export function LicenseSection(): ReactElement {
+  useTranslation();
   const [licenseInfo, setLicenseInfo] = useState<LicenseInfo | null>(null);
   const [licenseKey, setLicenseKey] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  const fetchLicenseStatus = useCallback(async () => {
+  const fetchLicenseStatus = useCallback(async (): Promise<void> => {
     try {
       const response = await fetch('/api/license');
       if (response.ok) {
-        const data = await response.json();
+        const data = await (response.json() as Promise<LicenseInfo>);
         setLicenseInfo(data);
       }
-    } catch (_err) {
+    } catch {
       // Network error - silently ignore on status check
     }
   }, []);
 
   useEffect(() => {
-    fetchLicenseStatus();
+    fetchLicenseStatus().catch(() => {
+      // Handle error silently
+    });
   }, [fetchLicenseStatus]);
 
   const handleActivate = async (): Promise<void> => {
@@ -241,16 +255,18 @@ export function LicenseSection(): ReactElement {
         body: JSON.stringify({ key: licenseKey }),
       });
 
-      const data = await response.json();
+      const data = await (response.json() as Promise<{ success: boolean; message: string }>);
 
       if (data.success) {
         setSuccess(data.message);
         setLicenseKey('');
-        fetchLicenseStatus();
+        fetchLicenseStatus().catch(() => {
+          // Handle error silently
+        });
       } else {
         setError(data.message || 'Activation failed');
       }
-    } catch (_err) {
+    } catch {
       setError('Failed to connect to server');
     } finally {
       setLoading(false);
@@ -267,15 +283,17 @@ export function LicenseSection(): ReactElement {
         method: 'POST',
       });
 
-      const data = await response.json();
+      const data = await (response.json() as Promise<{ success: boolean; message: string }>);
 
       if (data.success) {
         setSuccess(data.message);
-        fetchLicenseStatus();
+        fetchLicenseStatus().catch(() => {
+          // Handle error silently
+        });
       } else {
         setError(data.message || 'Failed to start trial');
       }
-    } catch (_err) {
+    } catch {
       setError('Failed to connect to server');
     } finally {
       setLoading(false);
@@ -293,7 +311,7 @@ export function LicenseSection(): ReactElement {
           <span>License</span>
         </div>
       }
-      defaultOpen
+      defaultOpen={true}
     >
       <div className="space-y-4">
         {licenseInfo ? (
@@ -306,7 +324,7 @@ export function LicenseSection(): ReactElement {
           <div className="text-sm text-[var(--color-text-muted)]">Loading license status...</div>
         )}
 
-        {showActivationForm && (
+        {showActivationForm ? (
           <ActivationForm
             licenseKey={licenseKey}
             loading={loading}
@@ -315,7 +333,7 @@ export function LicenseSection(): ReactElement {
             onActivate={handleActivate}
             onStartTrial={handleStartTrial}
           />
-        )}
+        ) : null}
 
         <MessageDisplay error={error} success={success} />
       </div>

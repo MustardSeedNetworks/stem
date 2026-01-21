@@ -6,6 +6,7 @@
  */
 
 import { Gauge, Info } from 'lucide-react';
+import type React from 'react';
 import type { ReactElement } from 'react';
 import { CollapsibleSection } from './CollapsibleSection';
 import { HelpIcon } from './HelpIcon';
@@ -49,7 +50,7 @@ export const defaultY1731Config: Y1731Config = {
 };
 
 /** Standard CCM intervals per Y.1731 */
-const CCM_INTERVAL_OPTIONS = [
+const CCM_INTERVAL_OPTIONS: Array<{ value: number; label: string }> = [
   { value: 3, label: '3.33 ms' },
   { value: 10, label: '10 ms' },
   { value: 100, label: '100 ms' },
@@ -60,7 +61,7 @@ const CCM_INTERVAL_OPTIONS = [
 ];
 
 /** Frame size options */
-const FRAME_SIZE_OPTIONS = [
+const FRAME_SIZE_OPTIONS: Array<{ value: number; label: string }> = [
   { value: 64, label: '64 B (min)' },
   { value: 128, label: '128 B' },
   { value: 256, label: '256 B' },
@@ -86,14 +87,14 @@ export function Y1731ConfigForm({
     return null;
   }
 
-  const updateConfig = (updates: Partial<Y1731Config>) => {
+  const updateConfig = (updates: Partial<Y1731Config>): void => {
     setConfig({ ...config, ...updates });
   };
 
-  const hasDelay = selectedTests.includes('y1731_delay');
-  const hasLoss = selectedTests.includes('y1731_loss');
-  const hasSLM = selectedTests.includes('y1731_slm');
-  const hasLoopback = selectedTests.includes('y1731_loopback');
+  const hasDelay: boolean = selectedTests.includes('y1731_delay');
+  const hasLoss: boolean = selectedTests.includes('y1731_loss');
+  const hasSLM: boolean = selectedTests.includes('y1731_slm');
+  const hasLoopback: boolean = selectedTests.includes('y1731_loopback');
 
   return (
     <CollapsibleSection
@@ -128,7 +129,9 @@ export function Y1731ConfigForm({
                 max={8191}
                 step={1}
                 value={config.mepId}
-                onChange={(e) => updateConfig({ mepId: Number(e.target.value) })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  updateConfig({ mepId: Number(e.target.value) })
+                }
                 className="mt-1 w-full"
               />
             </div>
@@ -148,7 +151,9 @@ export function Y1731ConfigForm({
                 max={7}
                 step={1}
                 value={config.megLevel}
-                onChange={(e) => updateConfig({ megLevel: Number(e.target.value) })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  updateConfig({ megLevel: Number(e.target.value) })
+                }
                 className="mt-1 w-full"
               />
             </div>
@@ -166,7 +171,9 @@ export function Y1731ConfigForm({
                 type="text"
                 maxLength={48}
                 value={config.megId}
-                onChange={(e) => updateConfig({ megId: e.target.value })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  updateConfig({ megId: e.target.value })
+                }
                 className="mt-1 w-full"
               />
             </div>
@@ -191,7 +198,9 @@ export function Y1731ConfigForm({
               <select
                 id="y1731-ccm"
                 value={config.ccmInterval}
-                onChange={(e) => updateConfig({ ccmInterval: Number(e.target.value) })}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>): void =>
+                  updateConfig({ ccmInterval: Number(e.target.value) })
+                }
                 className="mt-1 w-full"
               >
                 {CCM_INTERVAL_OPTIONS.map((opt) => (
@@ -217,7 +226,9 @@ export function Y1731ConfigForm({
                 max={7}
                 step={1}
                 value={config.priority}
-                onChange={(e) => updateConfig({ priority: Number(e.target.value) })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  updateConfig({ priority: Number(e.target.value) })
+                }
                 className="mt-1 w-full"
               />
             </div>
@@ -228,7 +239,9 @@ export function Y1731ConfigForm({
               id="y1731-tagged"
               type="checkbox"
               checked={config.priorityTagged}
-              onChange={(e) => updateConfig({ priorityTagged: e.target.checked })}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                updateConfig({ priorityTagged: e.target.checked })
+              }
               className="rounded border-[var(--color-surface-border)]"
             />
             <label htmlFor="y1731-tagged" className="text-sm text-[var(--color-text-primary)]">
@@ -255,7 +268,9 @@ export function Y1731ConfigForm({
               <select
                 id="y1731-framesize"
                 value={config.frameSize}
-                onChange={(e) => updateConfig({ frameSize: Number(e.target.value) })}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>): void =>
+                  updateConfig({ frameSize: Number(e.target.value) })
+                }
                 className="mt-1 w-full"
               >
                 {FRAME_SIZE_OPTIONS.map((opt) => (
@@ -281,7 +296,9 @@ export function Y1731ConfigForm({
                 max={10000}
                 step={10}
                 value={config.intervalMs}
-                onChange={(e) => updateConfig({ intervalMs: Number(e.target.value) })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  updateConfig({ intervalMs: Number(e.target.value) })
+                }
                 className="mt-1 w-full"
               />
             </div>
@@ -303,7 +320,9 @@ export function Y1731ConfigForm({
                 max={1000}
                 step={1}
                 value={config.count}
-                onChange={(e) => updateConfig({ count: Number(e.target.value) })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  updateConfig({ count: Number(e.target.value) })
+                }
                 className="mt-1 w-full"
               />
             </div>
@@ -323,7 +342,9 @@ export function Y1731ConfigForm({
                 max={86400}
                 step={1}
                 value={config.duration}
-                onChange={(e) => updateConfig({ duration: Number(e.target.value) })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  updateConfig({ duration: Number(e.target.value) })
+                }
                 className="mt-1 w-full"
               />
             </div>

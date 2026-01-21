@@ -170,9 +170,13 @@ export const CardRowExamples: Story = {
     <div className="space-y-2 p-4 bg-gray-50 rounded-lg min-w-[300px]">
       <CardRow label="Interface" value="eth0" />
       <CardRow label="Status" value="Connected" status="success" />
-      <CardRow label="Speed" value="1000 Mbps" mono />
-      <CardRow label="MAC Address" value="00:11:22:33:44:55" mono />
-      <CardRow label="Long Value" value="This is a very long value that might need wrapping" wrap />
+      <CardRow label="Speed" value="1000 Mbps" mono={true} />
+      <CardRow label="MAC Address" value="00:11:22:33:44:55" mono={true} />
+      <CardRow
+        label="Long Value"
+        value="This is a very long value that might need wrapping"
+        wrap={true}
+      />
     </div>
   ),
 };

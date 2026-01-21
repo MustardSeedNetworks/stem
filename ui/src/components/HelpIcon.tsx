@@ -6,6 +6,7 @@
  */
 
 import { HelpCircle } from 'lucide-react';
+import type { ReactElement } from 'react';
 import { useEffect, useRef, useState } from 'react';
 
 interface HelpIconProps {
@@ -15,7 +16,12 @@ interface HelpIconProps {
   size?: 'sm' | 'md' | 'lg';
 }
 
-export function HelpIcon({ tooltip, onClick, className = '', size = 'sm' }: HelpIconProps) {
+export function HelpIcon({
+  tooltip,
+  onClick,
+  className = '',
+  size = 'sm',
+}: HelpIconProps): ReactElement {
   const [showTooltip, setShowTooltip] = useState(false);
   const [tooltipPosition, setTooltipPosition] = useState<'top' | 'bottom'>('top');
   const iconRef = useRef<HTMLButtonElement>(null);
@@ -47,14 +53,14 @@ export function HelpIcon({ tooltip, onClick, className = '', size = 'sm' }: Help
       <button
         ref={iconRef}
         type="button"
-        onClick={(e) => {
+        onClick={(e: React.MouseEvent<HTMLButtonElement>): void => {
           e.stopPropagation();
           onClick?.();
         }}
-        onMouseEnter={() => setShowTooltip(true)}
-        onMouseLeave={() => setShowTooltip(false)}
-        onFocus={() => setShowTooltip(true)}
-        onBlur={() => setShowTooltip(false)}
+        onMouseEnter={(): void => setShowTooltip(true)}
+        onMouseLeave={(): void => setShowTooltip(false)}
+        onFocus={(): void => setShowTooltip(true)}
+        onBlur={(): void => setShowTooltip(false)}
         className="p-0.5 rounded-full hover:bg-[var(--color-surface-hover)] transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-primary)]/50"
         aria-label={`Help: ${tooltip}`}
       >
@@ -64,7 +70,7 @@ export function HelpIcon({ tooltip, onClick, className = '', size = 'sm' }: Help
       </button>
 
       {/* Tooltip */}
-      {showTooltip && (
+      {showTooltip ? (
         <div
           ref={tooltipRef}
           role="tooltip"
@@ -75,11 +81,11 @@ export function HelpIcon({ tooltip, onClick, className = '', size = 'sm' }: Help
           }`}
         >
           {tooltip}
-          {onClick && (
+          {onClick ? (
             <span className="block text-[var(--color-brand-primary)] mt-1 text-[10px]">
               Click for more details
             </span>
-          )}
+          ) : null}
           {/* Tooltip Arrow */}
           <div
             className={`absolute w-2 h-2 bg-[var(--color-surface-raised)] border-[var(--color-surface-border)] rotate-45 ${
@@ -89,7 +95,7 @@ export function HelpIcon({ tooltip, onClick, className = '', size = 'sm' }: Help
             }`}
           />
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

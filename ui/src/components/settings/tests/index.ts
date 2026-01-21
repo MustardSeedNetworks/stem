@@ -6,6 +6,7 @@
  * Modular test selection components for each test standard.
  */
 
+// biome-ignore lint/performance/noBarrelFile: Central export point for test section components
 export { MEFSection } from './MefSection';
 export { RFC2544Section } from './RFC2544Section';
 export { RFC2889Section } from './RFC2889Section';

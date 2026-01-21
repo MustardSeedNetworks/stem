@@ -20,29 +20,29 @@ interface RFC2889SectionProps extends TestSectionProps {
   onConfigChange: (config: RFC2889Config) => void;
 }
 
-/** Test ID to translation key mapping */
-const TEST_KEYS = {
-  rfc2889_forwarding: 'forwarding',
-  rfc2889_caching: 'caching',
-  rfc2889_learning: 'learning',
-  rfc2889_broadcast: 'broadcast',
-  rfc2889_congestion: 'congestion',
-} as const;
+/** Test ID to translation key mapping - keys match backend test identifiers */
+const testKeyMap: Map<string, string> = new Map([
+  ['rfc2889_forwarding', 'forwarding'],
+  ['rfc2889_caching', 'caching'],
+  ['rfc2889_learning', 'learning'],
+  ['rfc2889_broadcast', 'broadcast'],
+  ['rfc2889_congestion', 'congestion'],
+]);
 
-const TEST_IDS = Object.keys(TEST_KEYS) as Array<keyof typeof TEST_KEYS>;
+const testIds: string[] = [...testKeyMap.keys()];
 
 export function RFC2889Section({
   selectedTests,
   onToggleTest,
   config,
   onConfigChange,
-}: RFC2889SectionProps) {
+}: RFC2889SectionProps): React.JSX.Element {
   const { t } = useTranslation('settings');
 
   const tests: TestDefinition[] = useMemo(
     () =>
-      TEST_IDS.map((id) => {
-        const key = TEST_KEYS[id];
+      testIds.map((id) => {
+        const key = testKeyMap.get(id);
         return {
           id,
           name: t(`tests.rfc2889.${key}.name`),
@@ -78,7 +78,7 @@ export function RFC2889Section({
               key={test.id}
               test={test}
               checked={selectedTests.includes(test.id)}
-              onChange={() => onToggleTest(test.id)}
+              onChange={(): void => onToggleTest(test.id)}
             />
           ))}
         </div>

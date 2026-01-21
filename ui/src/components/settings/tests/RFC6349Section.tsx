@@ -20,26 +20,26 @@ interface RFC6349SectionProps extends TestSectionProps {
   onConfigChange: (config: RFC6349Config) => void;
 }
 
-/** Test ID to translation key mapping */
-const TEST_KEYS = {
-  rfc6349_throughput: 'capacity',
-  rfc6349_path: 'path',
-} as const;
+/** Test ID to translation key mapping - keys match backend test identifiers */
+const testKeyMap: Map<string, string> = new Map([
+  ['rfc6349_throughput', 'capacity'],
+  ['rfc6349_path', 'path'],
+]);
 
-const TEST_IDS = Object.keys(TEST_KEYS) as Array<keyof typeof TEST_KEYS>;
+const testIds: string[] = [...testKeyMap.keys()];
 
 export function RFC6349Section({
   selectedTests,
   onToggleTest,
   config,
   onConfigChange,
-}: RFC6349SectionProps) {
+}: RFC6349SectionProps): React.JSX.Element {
   const { t } = useTranslation('settings');
 
   const tests: TestDefinition[] = useMemo(
     () =>
-      TEST_IDS.map((id) => {
-        const key = TEST_KEYS[id];
+      testIds.map((id) => {
+        const key = testKeyMap.get(id);
         return {
           id,
           name: t(`tests.rfc6349.${key}.name`),
@@ -75,7 +75,7 @@ export function RFC6349Section({
               key={test.id}
               test={test}
               checked={selectedTests.includes(test.id)}
-              onChange={() => onToggleTest(test.id)}
+              onChange={(): void => onToggleTest(test.id)}
             />
           ))}
         </div>

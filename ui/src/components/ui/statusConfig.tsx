@@ -114,7 +114,12 @@ type SizeKey = keyof typeof sizeConfig;
 /**
  * Type-safe getter for status configuration.
  */
-export function getStatusConfig(status: Status) {
+export function getStatusConfig(status: Status): {
+  icon: ReactNode;
+  color: string;
+  bgColor: string;
+  label: string;
+} {
   switch (status) {
     case 'success':
       return statusConfig.success;
@@ -126,13 +131,19 @@ export function getStatusConfig(status: Status) {
       return statusConfig.unknown;
     case 'loading':
       return statusConfig.loading;
+    default: {
+      const exhaustiveCheck: never = status;
+      return exhaustiveCheck;
+    }
   }
 }
 
 /**
  * Type-safe getter for size configuration.
  */
-export function getSizeConfig(size: SizeKey) {
-  if (size === 'sm') return sizeConfig.sm;
+export function getSizeConfig(size: SizeKey): { icon: string; dot: string; padding: string } {
+  if (size === 'sm') {
+    return sizeConfig.sm;
+  }
   return sizeConfig.md;
 }

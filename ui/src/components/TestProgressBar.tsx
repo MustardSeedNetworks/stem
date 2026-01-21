@@ -30,15 +30,21 @@ interface TestProgressBarProps {
 }
 
 function formatTime(seconds: number): string {
-  if (seconds < 0) return '0:00';
+  if (seconds < 0) {
+    return '0:00';
+  }
   const mins = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
 function formatETA(seconds: number): string {
-  if (seconds <= 0) return 'Complete';
-  if (seconds < 60) return `~${Math.ceil(seconds)}s`;
+  if (seconds <= 0) {
+    return 'Complete';
+  }
+  if (seconds < 60) {
+    return `~${Math.ceil(seconds)}s`;
+  }
   const mins = Math.ceil(seconds / 60);
   return `~${mins}m`;
 }
@@ -126,9 +132,9 @@ export function TestProgressBar({ progress }: TestProgressBarProps): ReactElemen
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          {isActive && (
+          {isActive ? (
             <Loader2 className="w-4 h-4 animate-spin text-[var(--color-brand-primary)]" />
-          )}
+          ) : null}
           <span className="font-medium text-[var(--color-text-primary)]">
             {progress.currentTest}
           </span>
@@ -152,14 +158,14 @@ export function TestProgressBar({ progress }: TestProgressBarProps): ReactElemen
           style={{ width: `${Math.min(100, calculatedPercent)}%` }}
         />
         {/* Animated shine effect for active tests */}
-        {isActive && (
+        {isActive ? (
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
-        )}
+        ) : null}
       </div>
 
       {/* Footer */}
       <div className="flex items-center justify-between mt-2 text-xs text-[var(--color-text-muted)]">
-        <div>{progress.currentStep && <span>{progress.currentStep}</span>}</div>
+        <div>{progress.currentStep ? <span>{progress.currentStep}</span> : null}</div>
         <div className="font-medium">{Math.round(calculatedPercent)}%</div>
       </div>
     </div>

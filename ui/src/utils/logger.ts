@@ -11,7 +11,7 @@
  * In production builds, Vite replaces import.meta.env.DEV with false
  * and tree-shakes the logging code.
  */
-const isDev = import.meta.env.DEV;
+const isDev: boolean = import.meta.env.DEV;
 
 /**
  * Error context for logging.
@@ -31,7 +31,9 @@ interface ErrorContext {
  * @param context - Additional context about where/why the error occurred
  */
 export function logError(error: unknown, context?: ErrorContext): void {
-  if (!isDev) return;
+  if (!isDev) {
+    return;
+  }
 
   const errorMessage = error instanceof Error ? error.message : String(error);
   const errorStack = error instanceof Error ? error.stack : undefined;
@@ -53,7 +55,9 @@ export function logError(error: unknown, context?: ErrorContext): void {
  * @param context - Additional context
  */
 export function logWarn(message: string, context?: ErrorContext): void {
-  if (!isDev) return;
+  if (!isDev) {
+    return;
+  }
 
   console.warn('[STEM Warning]', {
     message,
@@ -70,7 +74,9 @@ export function logWarn(message: string, context?: ErrorContext): void {
  * @param data - Additional data to log
  */
 export function logDebug(message: string, data?: Record<string, unknown>): void {
-  if (!isDev) return;
+  if (!isDev) {
+    return;
+  }
 
   // biome-ignore lint/suspicious/noConsole: Development-only logging
   console.debug('[STEM Debug]', message, data);

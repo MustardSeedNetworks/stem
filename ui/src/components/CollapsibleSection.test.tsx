@@ -29,7 +29,7 @@ describe('CollapsibleSection', () => {
 
     it('renders children when defaultOpen is true', () => {
       render(
-        <CollapsibleSection title="Test Section" defaultOpen>
+        <CollapsibleSection title="Test Section" defaultOpen={true}>
           <p>Visible Content</p>
         </CollapsibleSection>,
       );
@@ -112,7 +112,7 @@ describe('CollapsibleSection', () => {
 
     it('collapses when header is clicked again', () => {
       render(
-        <CollapsibleSection title="Toggle Me" defaultOpen>
+        <CollapsibleSection title="Toggle Me" defaultOpen={true}>
           <p>Collapsible Content</p>
         </CollapsibleSection>,
       );

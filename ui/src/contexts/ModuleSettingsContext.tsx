@@ -240,7 +240,8 @@ interface ModuleSettingsContextValue {
   resetToDefaults: () => void;
 }
 
-const ModuleSettingsContext = createContext<ModuleSettingsContextValue | null>(null);
+const ModuleSettingsContext: React.Context<ModuleSettingsContextValue | null> =
+  createContext<ModuleSettingsContextValue | null>(null);
 
 function loadFromStorage(): ModuleConfig[] | null {
   try {

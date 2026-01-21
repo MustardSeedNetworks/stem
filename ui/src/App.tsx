@@ -75,9 +75,15 @@ interface RecoveryStatus {
 }
 
 function formatNumber(num: number): string {
-  if (num >= 1e9) return `${(num / 1e9).toFixed(2)}B`;
-  if (num >= 1e6) return `${(num / 1e6).toFixed(2)}M`;
-  if (num >= 1e3) return `${(num / 1e3).toFixed(2)}K`;
+  if (num >= 1e9) {
+    return `${(num / 1e9).toFixed(2)}B`;
+  }
+  if (num >= 1e6) {
+    return `${(num / 1e6).toFixed(2)}M`;
+  }
+  if (num >= 1e3) {
+    return `${(num / 1e3).toFixed(2)}K`;
+  }
   return num.toString();
 }
 
@@ -197,8 +203,12 @@ interface TestResultsProps {
 }
 
 function formatDuration(ms: number): string {
-  if (ms < 1000) return `${ms}ms`;
-  if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
+  if (ms < 1000) {
+    return `${ms}ms`;
+  }
+  if (ms < 60000) {
+    return `${(ms / 1000).toFixed(1)}s`;
+  }
   const minutes = Math.floor(ms / 60000);
   const seconds = ((ms % 60000) / 1000).toFixed(0);
   return `${minutes}m ${seconds}s`;
@@ -274,12 +284,12 @@ function TestResults({ testStatus, result }: TestResultsProps): ReactElement {
       </div>
 
       {/* Error Message */}
-      {result.error && (
+      {result.error ? (
         <div className="mb-4 p-3 rounded-lg bg-[var(--color-status-error)]/10 border border-[var(--color-status-error)]/20">
           <div className="text-sm font-medium text-[var(--color-status-error)]">Error</div>
           <div className="text-sm text-[var(--color-text-primary)]">{result.error}</div>
         </div>
-      )}
+      ) : null}
 
       {/* Metrics Grid */}
       {result.metrics && Object.keys(result.metrics).length > 0 && (
@@ -305,10 +315,12 @@ function TestResults({ testStatus, result }: TestResultsProps): ReactElement {
 
       {/* Timestamps */}
       <div className="text-xs text-[var(--color-text-muted)] flex gap-4">
-        {result.startedAt && <span>Started: {new Date(result.startedAt).toLocaleString()}</span>}
-        {result.completedAt && (
+        {result.startedAt ? (
+          <span>Started: {new Date(result.startedAt).toLocaleString()}</span>
+        ) : null}
+        {result.completedAt ? (
           <span>Completed: {new Date(result.completedAt).toLocaleString()}</span>
-        )}
+        ) : null}
       </div>
     </div>
   );
@@ -343,6 +355,51 @@ function mapStatsPayload(payload: Partial<Stats>): Stats {
     testStatus: normalizeTestStatus(payload.testStatus),
     currentTest: payload.currentTest ?? null,
   };
+}
+
+/** Extract error message from response JSON, or return default */
+async function extractResponseError(response: Response, defaultMessage: string): Promise<string> {
+  try {
+    const errorData = await (response.json() as Promise<{ error?: string }>);
+    return errorData?.error || defaultMessage;
+  } catch {
+    return defaultMessage;
+  }
+}
+
+/** Build test configuration based on test type prefix */
+function buildTestConfig(
+  testType: string,
+  configs: {
+    rfc2544: RFC2544Config;
+    rfc2889: RFC2889Config;
+    rfc6349: RFC6349Config;
+    y1564: Y1564Config;
+    y1731: Y1731Config;
+    tsn: TSNConfig;
+    trafficGen: TrafficGenConfig;
+  },
+): Record<string, unknown> | undefined {
+  const prefixToConfig: Record<string, Record<string, unknown>> = {
+    rfc2544: { rfc2544: configs.rfc2544 },
+    rfc2889: { rfc2889: configs.rfc2889 },
+    rfc6349: { rfc6349: configs.rfc6349 },
+    y1564: { y1564: configs.y1564 },
+    y1731: { y1731: configs.y1731 },
+    tsn: { tsn: configs.tsn },
+  };
+
+  if (testType === 'custom_stream') {
+    return { trafficGen: configs.trafficGen };
+  }
+
+  for (const [prefix, config] of Object.entries(prefixToConfig)) {
+    if (testType.startsWith(prefix)) {
+      return config;
+    }
+  }
+
+  return;
 }
 
 function AppContent(): ReactElement {
@@ -466,6 +523,26 @@ function AppContent(): ReactElement {
     }
   }, []);
 
+  // Helper: Make an authenticated request with headers
+  const makeAuthRequest = useCallback(
+    async (input: RequestInfo, init: RequestInit, headers: Headers): Promise<Response> =>
+      fetch(input, { ...init, headers, credentials: 'include' }),
+    [],
+  );
+
+  // Helper: Handle 401 unauthorized response with retry
+  const handle401Retry = useCallback(
+    async (input: RequestInfo, init: RequestInit, headers: Headers): Promise<Response | null> => {
+      const refreshed = await refreshAccessToken();
+      if (!refreshed) {
+        return null;
+      }
+      const retryResponse = await makeAuthRequest(input, init, headers);
+      return retryResponse.ok ? retryResponse : null;
+    },
+    [makeAuthRequest, refreshAccessToken],
+  );
+
   const authFetch = useCallback(
     async (input: RequestInfo, init: RequestInit = {}) => {
       if (!isAuthenticated) {
@@ -475,26 +552,13 @@ function AppContent(): ReactElement {
       if (init.body && !(init.body instanceof FormData) && !headers.has('Content-Type')) {
         headers.set('Content-Type', 'application/json');
       }
-      // Include cookies in request (auth token is in httpOnly cookie)
-      let response = await fetch(input, {
-        ...init,
-        headers,
-        credentials: 'include',
-      });
 
-      // On 401, attempt token refresh before expiring session
+      const response = await makeAuthRequest(input, init, headers);
+
       if (response.status === 401) {
-        const refreshed = await refreshAccessToken();
-        if (refreshed) {
-          // Retry request with new cookie (set by refresh endpoint)
-          response = await fetch(input, {
-            ...init,
-            headers,
-            credentials: 'include',
-          });
-          if (response.ok) {
-            return response;
-          }
+        const retryResponse = await handle401Retry(input, init, headers);
+        if (retryResponse) {
+          return retryResponse;
         }
         expireSession();
         throw new Error('Unauthorized');
@@ -506,8 +570,22 @@ function AppContent(): ReactElement {
       }
       return response;
     },
-    [expireSession, isAuthenticated, refreshAccessToken],
+    [expireSession, handle401Retry, isAuthenticated, makeAuthRequest],
   );
+
+  // Helper: Select best interface by score or keep current
+  const selectBestInterface = useCallback((interfaceData: InterfaceInfo[]): void => {
+    if (interfaceData.length === 0) {
+      return;
+    }
+    setSelectedInterface((prev) => {
+      if (prev) {
+        return prev;
+      }
+      const best = interfaceData.reduce((a, b) => (a.score > b.score ? a : b));
+      return best.name;
+    });
+  }, []);
 
   const fetchInterfaces = useCallback(async () => {
     if (!isAuthenticated) {
@@ -518,21 +596,12 @@ function AppContent(): ReactElement {
       if (!response.ok) {
         throw new Error('Failed to load interfaces');
       }
-      const data: unknown = await response.json();
+      const data = await (response.json() as Promise<unknown>);
       if (!isValidInterfaceArray(data)) {
         throw new Error('Invalid interface data received from server');
       }
       setInterfaces(data);
-      // Auto-select highest scored interface
-      if (data.length > 0) {
-        setSelectedInterface((prev) => {
-          if (prev) return prev;
-          const best = data.reduce((a: InterfaceInfo, b: InterfaceInfo) =>
-            a.score > b.score ? a : b,
-          );
-          return best.name;
-        });
-      }
+      selectBestInterface(data);
       setConnected(true);
     } catch (error) {
       const err = error instanceof Error ? error : new Error('Unknown error');
@@ -541,14 +610,16 @@ function AppContent(): ReactElement {
       }
       setConnected(false);
     }
-  }, [authFetch, isAuthenticated]);
+  }, [authFetch, isAuthenticated, selectBestInterface]);
 
   // Fetch test result when test completes
   const fetchTestResult = useCallback(async () => {
     try {
       const response = await authFetch('/api/v1/test/result');
-      if (!response.ok) return;
-      const data = (await response.json()) as TestResult;
+      if (!response.ok) {
+        return;
+      }
+      const data = await (response.json() as Promise<TestResult>);
       if (data.status === 'completed' || data.status === 'error') {
         setTestResult(data);
       }
@@ -567,35 +638,39 @@ function AppContent(): ReactElement {
   // Track previous test status to detect transitions
   const prevTestStatus = useRef<string>('idle');
 
+  // Handle test status transitions - extracted to reduce cognitive complexity
+  const handleStatusTransition = useCallback(
+    (prevStatus: string, newStatus: string): void => {
+      if (isTestCompleted(prevStatus, newStatus)) {
+        fetchTestResult().catch(() => {
+          // Silent fail - result fetch is non-critical
+        });
+      }
+      if (isTestStarting(prevStatus, newStatus)) {
+        setTestResult(null);
+      }
+      prevTestStatus.current = newStatus;
+    },
+    [fetchTestResult],
+  );
+
   const fetchStats = useCallback(async () => {
     try {
       const response = await authFetch('/api/v1/stats');
       if (!response.ok) {
         throw new Error('Failed to refresh stats');
       }
-      const data: unknown = await response.json();
+      const data = await (response.json() as Promise<unknown>);
       if (!isValidStats(data)) {
         throw new Error('Invalid stats data received from server');
       }
       const newStats = mapStatsPayload(data as Partial<Stats>);
       setStats(newStats);
-
-      // Handle test status transitions
-      const prevStatus = prevTestStatus.current;
-      const newStatus = newStats.testStatus;
-      if (isTestCompleted(prevStatus, newStatus)) {
-        void fetchTestResult();
-      }
-      if (isTestStarting(prevStatus, newStatus)) {
-        setTestResult(null);
-      }
-      prevTestStatus.current = newStatus;
+      handleStatusTransition(prevTestStatus.current, newStats.testStatus);
     } catch (error) {
       if ((error as Error).message === 'Unauthorized') {
         return;
       }
-      // Log polling failures for debugging but don't spam user
-      // These are often temporary network issues
       logWarn('Stats polling failed', {
         component: 'App',
         action: 'fetchStats',
@@ -604,7 +679,7 @@ function AppContent(): ReactElement {
         },
       });
     }
-  }, [authFetch, fetchTestResult]);
+  }, [authFetch, handleStatusTransition]);
 
   const handleLogin = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
@@ -619,12 +694,12 @@ function AppContent(): ReactElement {
           body: JSON.stringify({ username, password }),
         });
         if (!response.ok) {
-          const text = (await response.text()) || 'Authentication failed';
+          const text = (await (response.text() as Promise<string>)) || 'Authentication failed';
           setLoginError(text);
           setConnected(false);
           return;
         }
-        const data: unknown = await response.json();
+        const data = await (response.json() as Promise<unknown>);
         if (!isValidAuthResponse(data)) {
           setLoginError('Authentication failed');
           setConnected(false);
@@ -636,7 +711,7 @@ function AppContent(): ReactElement {
         window.localStorage.setItem(AUTH_FLAG_KEY, 'true');
         setLoginError(null);
         setConnected(true);
-      } catch (_error) {
+      } catch {
         setLoginError('Unable to reach authentication server.');
         setConnected(false);
       } finally {
@@ -647,7 +722,9 @@ function AppContent(): ReactElement {
   );
 
   const handleStartTest = useCallback(async (): Promise<void> => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated) {
+      return;
+    }
     setIsStartingTest(true);
     setTestStartError(null);
 
@@ -656,23 +733,16 @@ function AppContent(): ReactElement {
       const testType =
         mode === 'reflector' ? 'reflect' : (selectedTests[0] ?? 'rfc2544_throughput');
 
-      // Build test configuration based on test type
-      let config: Record<string, unknown> | undefined;
-      if (testType.startsWith('rfc2544')) {
-        config = { rfc2544: rfc2544Config };
-      } else if (testType.startsWith('rfc2889')) {
-        config = { rfc2889: rfc2889Config };
-      } else if (testType.startsWith('rfc6349')) {
-        config = { rfc6349: rfc6349Config };
-      } else if (testType.startsWith('y1564')) {
-        config = { y1564: y1564Config };
-      } else if (testType.startsWith('y1731')) {
-        config = { y1731: y1731Config };
-      } else if (testType.startsWith('tsn')) {
-        config = { tsn: tsnConfig };
-      } else if (testType === 'custom_stream') {
-        config = { trafficGen: trafficGenConfig };
-      }
+      // Build test configuration using helper
+      const config = buildTestConfig(testType, {
+        rfc2544: rfc2544Config,
+        rfc2889: rfc2889Config,
+        rfc6349: rfc6349Config,
+        y1564: y1564Config,
+        y1731: y1731Config,
+        tsn: tsnConfig,
+        trafficGen: trafficGenConfig,
+      });
 
       const response = await authFetch('/api/v1/test/start', {
         method: 'POST',
@@ -688,8 +758,7 @@ function AppContent(): ReactElement {
 
       // Check for validation errors in response
       if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        const errorMessage = (errorData as { error?: string })?.error || 'Failed to start test';
+        const errorMessage = await extractResponseError(response, 'Failed to start test');
         setTestStartError(errorMessage);
         return;
       }
@@ -718,7 +787,9 @@ function AppContent(): ReactElement {
   ]);
 
   const handleStopTest = useCallback(async (): Promise<void> => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated) {
+      return;
+    }
     setIsStoppingTest(true);
     try {
       await authFetch('/api/v1/test/stop', { method: 'POST' });
@@ -735,41 +806,53 @@ function AppContent(): ReactElement {
     }
   }, [authFetch, isAuthenticated]);
 
+  // Helper: Check if module needs RFC 2544 style frame size initialization
+  const needsFrameSizeInit = useCallback(
+    (moduleName: string): boolean => moduleName === 'benchmark' || moduleName === 'certify',
+    [],
+  );
+
+  // Helper: Initialize frame size results for module
+  const { frameSizes } = rfc2544Config;
+  const initFrameSizeResults = useCallback(
+    (moduleName: string, testType: string): void => {
+      if (!needsFrameSizeInit(moduleName)) {
+        return;
+      }
+      setModuleResults(moduleName, {
+        testType,
+        startedAt: new Date().toISOString(),
+        frameSizeResults: frameSizes.map((size) => ({
+          frameSize: size,
+          status: 'pending' as const,
+        })),
+      });
+    },
+    [frameSizes, setModuleResults, needsFrameSizeInit],
+  );
+
   // Module-specific start handler
   const handleModuleStart = useCallback(
     async (moduleName: string): Promise<void> => {
-      if (!isAuthenticated || !selectedInterface) return;
+      if (!(isAuthenticated && selectedInterface)) {
+        return;
+      }
 
-      // Get enabled tests for this module
       const moduleConfig = modules.find((m) => m.name === moduleName);
-      if (!moduleConfig) return;
+      if (!moduleConfig) {
+        return;
+      }
 
       const enabledTests = moduleConfig.tests.filter((t) => t.enabled);
-      if (enabledTests.length === 0) return;
+      if (enabledTests.length === 0) {
+        return;
+      }
 
       const testType = enabledTests[0].id;
 
-      // Clear previous results and initialize new results structure
       clearModuleResults(moduleName);
-
-      // Initialize frame size results for RFC 2544 style tests
-      if (moduleName === 'benchmark' || moduleName === 'certify') {
-        const frameSizes = rfc2544Config.frameSizes;
-        setModuleResults(moduleName, {
-          testType,
-          startedAt: new Date().toISOString(),
-          frameSizeResults: frameSizes.map((size) => ({
-            frameSize: size,
-            status: 'pending' as const,
-          })),
-        });
-      }
-
-      // Update module status
-      setModuleStatus(moduleName, {
-        status: 'starting',
-        currentTest: testType,
-      });
+      initFrameSizeResults(moduleName, testType);
+      setModuleStatus(moduleName, { status: 'starting', currentTest: testType });
 
       try {
         await authFetch('/api/v1/test/start', {
@@ -782,27 +865,19 @@ function AppContent(): ReactElement {
           }),
         });
 
-        setModuleStatus(moduleName, {
-          status: 'running',
-          currentTest: testType,
-        });
-        setStats((prev) => ({
-          ...prev,
-          testStatus: 'running',
-          currentTest: testType,
-        }));
-      } catch (_error) {
+        setModuleStatus(moduleName, { status: 'running', currentTest: testType });
+        setStats((prev) => ({ ...prev, testStatus: 'running', currentTest: testType }));
+      } catch {
         setModuleStatus(moduleName, { status: 'error', currentTest: null });
       }
     },
     [
       authFetch,
       clearModuleResults,
+      initFrameSizeResults,
       modules,
       isAuthenticated,
-      rfc2544Config.frameSizes,
       selectedInterface,
-      setModuleResults,
       setModuleStatus,
     ],
   );
@@ -810,7 +885,9 @@ function AppContent(): ReactElement {
   // Module-specific stop handler
   const handleModuleStop = useCallback(
     async (moduleName: string): Promise<void> => {
-      if (!isAuthenticated) return;
+      if (!isAuthenticated) {
+        return;
+      }
 
       try {
         await authFetch('/api/v1/test/stop', { method: 'POST' });
@@ -881,7 +958,7 @@ function AppContent(): ReactElement {
           credentials: 'include',
         });
         if (setupResponse.ok) {
-          const data = (await setupResponse.json()) as SetupStatus;
+          const data = await (setupResponse.json() as Promise<SetupStatus>);
           setSetupStatus(data);
         }
 
@@ -891,7 +968,7 @@ function AppContent(): ReactElement {
           credentials: 'include',
         });
         if (recoveryResponse.ok) {
-          const data = (await recoveryResponse.json()) as RecoveryStatus;
+          const data = await (recoveryResponse.json() as Promise<RecoveryStatus>);
           setRecoveryStatus(data);
         }
       } catch (error) {
@@ -907,7 +984,9 @@ function AppContent(): ReactElement {
         setSetupChecked(true);
       }
     };
-    void checkStatuses();
+    checkStatuses().catch(() => {
+      // Errors already logged inside checkStatuses
+    });
   }, []);
 
   // Login helper function (shared by login form and setup wizard)
@@ -926,7 +1005,7 @@ function AppContent(): ReactElement {
         if (!response.ok) {
           return false;
         }
-        const data: unknown = await response.json();
+        const data = await (response.json() as Promise<unknown>);
         if (!isValidAuthResponse(data)) {
           return false;
         }
@@ -962,7 +1041,9 @@ function AppContent(): ReactElement {
 
   // Sync auth flag with localStorage
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined') {
+      return;
+    }
     if (isAuthenticated) {
       window.localStorage.setItem(AUTH_FLAG_KEY, 'true');
     } else {
@@ -1002,7 +1083,9 @@ function AppContent(): ReactElement {
 
   // Fetch interfaces on mount
   useEffect(() => {
-    fetchInterfaces();
+    fetchInterfaces().catch(() => {
+      // Errors already handled inside fetchInterfaces
+    });
   }, [fetchInterfaces]);
 
   // Poll stats when connected - uses ref for proper cleanup on session expire
@@ -1016,10 +1099,13 @@ function AppContent(): ReactElement {
       return;
     }
 
-    statsIntervalRef.current = window.setInterval(() => {
-      void fetchStats();
-    }, 1000);
-    void fetchStats();
+    const triggerFetchStats = (): void => {
+      fetchStats().catch(() => {
+        // Errors already logged inside fetchStats
+      });
+    };
+    statsIntervalRef.current = window.setInterval(triggerFetchStats, 1000);
+    triggerFetchStats();
 
     return () => {
       if (statsIntervalRef.current !== null) {
@@ -1163,7 +1249,9 @@ function AppContent(): ReactElement {
           <div className="flex items-center gap-4">
             <select
               value={selectedInterface}
-              onChange={(e) => setSelectedInterface(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>): void =>
+                setSelectedInterface(e.target.value)
+              }
               className="w-48"
               aria-label="Select network interface"
             >
@@ -1218,7 +1306,7 @@ function AppContent(): ReactElement {
             )}
 
             {/* Test Start Error Display */}
-            {testStartError && (
+            {testStartError ? (
               <div
                 className="text-sm text-[var(--color-status-error)] flex items-center gap-2"
                 role="alert"
@@ -1227,7 +1315,7 @@ function AppContent(): ReactElement {
                 <AlertTriangle className="w-4 h-4" aria-hidden="true" />
                 {testStartError}
               </div>
-            )}
+            ) : null}
           </div>
 
           {/* Test Status Indicator */}
@@ -1274,9 +1362,15 @@ function AppContent(): ReactElement {
                   }
                 }
                 results={moduleResults[moduleConfig.name]}
-                onToggleModule={(enabled) => toggleModule(moduleConfig.name, enabled)}
-                onToggleAutoStart={(enabled) => toggleAutoStart(moduleConfig.name, enabled)}
-                onToggleTest={(testId, enabled) => toggleTest(moduleConfig.name, testId, enabled)}
+                onToggleModule={(enabled: boolean): void =>
+                  toggleModule(moduleConfig.name, enabled)
+                }
+                onToggleAutoStart={(enabled: boolean): void =>
+                  toggleAutoStart(moduleConfig.name, enabled)
+                }
+                onToggleTest={(testId: string, enabled: boolean): void =>
+                  toggleTest(moduleConfig.name, testId, enabled)
+                }
                 onStart={() => handleModuleStart(moduleConfig.name)}
                 onStop={() => handleModuleStop(moduleConfig.name)}
                 onConfigure={() => handleModuleConfigure(moduleConfig.name)}
@@ -1441,7 +1535,7 @@ function AppContent(): ReactElement {
         currentResult={testResult}
       />
       {/* Setup Wizard - shown before login if initial setup required */}
-      {setupChecked && setupStatus?.needsSetup && (
+      {setupChecked && setupStatus?.needsSetup ? (
         <SetupWizard
           onComplete={handleSetupComplete}
           onLogin={performLogin}
@@ -1449,17 +1543,17 @@ function AppContent(): ReactElement {
           username={setupStatus.username}
           setupToken={setupStatus.setupToken}
         />
-      )}
+      ) : null}
 
       {/* Recovery Form - shown when user clicks "Forgot Password" and recovery is available */}
-      {showRecoveryForm && recoveryStatus?.active && (
+      {showRecoveryForm && recoveryStatus?.active ? (
         <RecoveryForm
           onRecoveryComplete={handleRecoveryComplete}
           onBackToLogin={handleBackToLogin}
           remainingTime={recoveryStatus.remainingTime}
           tokenFilePath={recoveryStatus.instructions}
         />
-      )}
+      ) : null}
 
       {/* Login Modal - shown after setup complete or if setup not needed */}
       {!isAuthenticated && setupChecked && !setupStatus?.needsSetup && !showRecoveryForm && (
@@ -1494,7 +1588,9 @@ function AppContent(): ReactElement {
                   type="text"
                   autoComplete="username"
                   value={username}
-                  onChange={(event) => setUsername(event.target.value)}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                    setUsername(event.target.value)
+                  }
                   className="mt-1 w-full rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-base)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-[var(--color-brand-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-primary)]/30"
                 />
               </div>
@@ -1510,13 +1606,15 @@ function AppContent(): ReactElement {
                   type="password"
                   autoComplete="current-password"
                   value={password}
-                  onChange={(event) => setPassword(event.target.value)}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                    setPassword(event.target.value)
+                  }
                   className="mt-1 w-full rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-base)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-[var(--color-brand-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-primary)]/30"
                 />
               </div>
-              {loginError && (
+              {loginError ? (
                 <p className="text-xs text-[var(--color-status-error)]">{loginError}</p>
-              )}
+              ) : null}
               <button
                 type="submit"
                 className="btn btn-primary w-full justify-center"
@@ -1526,7 +1624,7 @@ function AppContent(): ReactElement {
               </button>
 
               {/* Forgot Password link - only shown when recovery is available */}
-              {recoveryStatus?.active && (
+              {recoveryStatus?.active ? (
                 <button
                   type="button"
                   onClick={() => setShowRecoveryForm(true)}
@@ -1534,7 +1632,7 @@ function AppContent(): ReactElement {
                 >
                   Forgot password?
                 </button>
-              )}
+              ) : null}
             </form>
           </div>
         </div>

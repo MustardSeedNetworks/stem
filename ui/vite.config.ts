@@ -29,16 +29,16 @@
  * See: web/embed.go for how dist/ is embedded in the Go binary
  */
 
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
-import { fileURLToPath, URL } from "node:url";
+import { fileURLToPath, URL } from 'node:url';
+import react from '@vitejs/plugin-react';
+import { defineConfig } from 'vite';
 
 export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      "@": fileURLToPath(new URL("./src", import.meta.url)),
-      "@locales": fileURLToPath(new URL("../internal/i18n/locales", import.meta.url)),
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+      '@locales': fileURLToPath(new URL('../internal/i18n/locales', import.meta.url)),
     },
   },
   server: {
@@ -51,7 +51,7 @@ export default defineConfig({
     },
   },
   build: {
-    outDir: "dist",
+    outDir: 'dist',
     sourcemap: true,
     modulePreload: false,
     cssCodeSplit: false,

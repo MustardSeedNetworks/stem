@@ -25,7 +25,7 @@ import { getStatusConfig, type Status } from './StatusConfig';
 export type { Status };
 
 // Type-safe size class getter
-function getSizeClass(size: 'sm' | 'md' | 'lg') {
+function getSizeClass(size: 'sm' | 'md' | 'lg'): string {
   switch (size) {
     case 'sm':
       return 'body-small';
@@ -33,6 +33,8 @@ function getSizeClass(size: 'sm' | 'md' | 'lg') {
       return 'body font-medium leading-snug';
     case 'lg':
       return 'body-large font-semibold leading-snug';
+    default:
+      return 'body font-medium leading-snug';
   }
 }
 
@@ -76,15 +78,17 @@ export function Card({
   headerAction,
   enableLiveRegion = false,
   ariaLabel,
-}: CardProps) {
+}: CardProps): React.JSX.Element {
   // Card is interactive if click handler is provided
   const isInteractive = typeof onClick === 'function';
 
   /**
    * Handle keyboard activation (Enter/Space) for interactive cards.
    */
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (!isInteractive) return;
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>): void => {
+    if (!isInteractive) {
+      return;
+    }
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       onClick?.();
@@ -126,16 +130,17 @@ export function Card({
     >
       <div className={layout.flex.between}>
         <div className={layout.inline.default}>
-          {icon && (
+          {/* biome-ignore lint/nursery/noMisusedPromises: icon is ReactNode, not a Promise */}
+          {icon ? (
             <span className={cn('text-text-muted shrink-0', iconTokens.size.md)} aria-hidden="true">
               {icon}
             </span>
-          )}
+          ) : null}
           <div className={layout.flex.col}>
             <h3 className="heading-4 font-display" id={titleId}>
               {title}
             </h3>
-            {subtitle && <p className="caption leading-tight">{subtitle}</p>}
+            {subtitle ? <p className="caption leading-tight">{subtitle}</p> : null}
           </div>
         </div>
         <div className={layout.inline.default}>
@@ -171,7 +176,7 @@ export function CardValue({
   status,
   mono = false,
   allowWrap = false,
-}: CardValueProps) {
+}: CardValueProps): React.JSX.Element {
   const statusColorClass = status ? getStatusConfig(status).color : 'text-text-primary';
   const textMods = [
     statusColorClass,
@@ -185,16 +190,16 @@ export function CardValue({
 
   return (
     <div>
-      {label && <p className={cn('caption', spacing.margin.bottom.tight)}>{label}</p>}
+      {label ? <p className={cn('caption', spacing.margin.bottom.tight)}>{label}</p> : null}
       <p className={cn(getSizeClass(size), textMods, layout.inline.tight)} data-testid="card-value">
-        {statusIcon && (
+        {statusIcon ? (
           <span className={cn(layout.flex.center, iconTokens.size.xs, 'shrink-0 text-current')}>
             {statusIcon}
           </span>
-        )}
+        ) : null}
         <span className={cn(layout.inline.tight, 'items-baseline')}>
           <span>{value}</span>
-          {unit && <span className="body-small font-normal text-text-muted">{unit}</span>}
+          {unit ? <span className="body-small font-normal text-text-muted">{unit}</span> : null}
         </span>
       </p>
     </div>
@@ -220,7 +225,7 @@ export function CardRow({
   wrap = false,
   mono = false,
   align = 'right',
-}: CardRowProps) {
+}: CardRowProps): React.JSX.Element {
   const resolvedStatus = status ? getStatusConfig(status) : null;
   const statusIcon = resolvedStatus?.icon ?? null;
   const justifyClass = align === 'right' ? 'justify-end' : 'justify-start';
@@ -248,9 +253,9 @@ export function CardRow({
         title={String(value)}
         data-testid="card-row-value"
       >
-        {statusIcon && (
+        {statusIcon ? (
           <span className={cn(iconTokens.size.xs, 'shrink-0 text-current')}>{statusIcon}</span>
-        )}
+        ) : null}
         <span>{value}</span>
       </span>
     </div>
@@ -264,6 +269,6 @@ interface CardDividerProps {
 /**
  * Horizontal divider line for separating card sections.
  */
-export function CardDivider({ className = '' }: CardDividerProps) {
+export function CardDivider({ className = '' }: CardDividerProps): React.JSX.Element {
   return <hr className={cn('border-surface-border', spacing.margin.top.content, className)} />;
 }

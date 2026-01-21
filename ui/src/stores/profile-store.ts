@@ -84,7 +84,7 @@ function mergeWithDefaults(
  * Profile store with Zustand.
  * Uses immer for immutable updates and subscribeWithSelector for optimized subscriptions.
  */
-export const useProfileStore = create<ProfileStore>()(
+export const useProfileStore: ReturnType<typeof create<ProfileStore>> = create<ProfileStore>()(
   devtools(
     persist(
       subscribeWithSelector(
@@ -369,7 +369,7 @@ export const useProfileStore = create<ProfileStore>()(
               const result = await profileApi.import(data);
 
               // Reload profiles after import
-              await get().loadProfiles();
+              await (get().loadProfiles() as Promise<void>);
 
               set((state) => {
                 state.isLoading = false;
@@ -388,7 +388,7 @@ export const useProfileStore = create<ProfileStore>()(
       {
         name: 'stem-profile-store',
         // Only persist the active profile ID, not the full data
-        partialize: (state) => ({
+        partialize: (state: ProfileStoreState): { activeProfileId: string | undefined } => ({
           activeProfileId: state.activeProfile?.id,
         }),
       },

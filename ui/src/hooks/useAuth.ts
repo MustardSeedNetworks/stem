@@ -15,7 +15,7 @@ const AUTH_FLAG_KEY = 'stem-authenticated';
 const CSRF_HEADER_NAME = 'X-Csrf-Token';
 
 /** HTTP methods that require CSRF token */
-const STATE_CHANGING_METHODS = ['POST', 'PUT', 'DELETE', 'PATCH'];
+const STATE_CHANGING_METHODS: readonly string[] = ['POST', 'PUT', 'DELETE', 'PATCH'];
 
 interface UseAuthResult {
   /** Whether the user is authenticated */
@@ -87,7 +87,7 @@ export function useAuth(): UseAuthResult {
         credentials: 'include',
       });
       if (response.ok) {
-        const data = (await response.json()) as { token: string };
+        const data = await (response.json() as Promise<{ token: string }>);
         csrfTokenRef.current = data.token;
         return data.token;
       }
@@ -98,9 +98,9 @@ export function useAuth(): UseAuthResult {
   }, []);
 
   // Get current CSRF token, fetching if needed
-  const getCsrfToken = useCallback(async (): Promise<string | null> => {
+  const getCsrfToken = useCallback((): Promise<string | null> => {
     if (csrfTokenRef.current) {
-      return csrfTokenRef.current;
+      return Promise.resolve(csrfTokenRef.current);
     }
     return fetchCsrfToken();
   }, [fetchCsrfToken]);
@@ -128,7 +128,9 @@ export function useAuth(): UseAuthResult {
   // Helper: Add CSRF token to headers if needed
   const addCsrfTokenIfNeeded = useCallback(
     async (headers: Headers, method: string): Promise<void> => {
-      if (!STATE_CHANGING_METHODS.includes(method)) return;
+      if (!STATE_CHANGING_METHODS.includes(method)) {
+        return;
+      }
       const token = await getCsrfToken();
       if (token) {
         headers.set(CSRF_HEADER_NAME, token);
@@ -139,9 +141,8 @@ export function useAuth(): UseAuthResult {
 
   // Helper: Make authenticated request
   const makeRequest = useCallback(
-    async (input: RequestInfo, init: RequestInit, headers: Headers): Promise<Response> => {
-      return fetch(input, { ...init, headers, credentials: 'include' });
-    },
+    async (input: RequestInfo, init: RequestInit, headers: Headers): Promise<Response> =>
+      fetch(input, { ...init, headers, credentials: 'include' }),
     [],
   );
 
@@ -154,7 +155,9 @@ export function useAuth(): UseAuthResult {
       method: string,
     ): Promise<Response | null> => {
       const refreshed = await refreshAccessToken();
-      if (!refreshed) return null;
+      if (!refreshed) {
+        return null;
+      }
 
       await addCsrfTokenIfNeeded(headers, method);
       const retryResponse = await makeRequest(input, init, headers);
@@ -171,18 +174,54 @@ export function useAuth(): UseAuthResult {
       init: RequestInit,
       headers: Headers,
     ): Promise<Response | null> => {
-      const text = await response.text();
-      if (!text.includes('CSRF')) return null;
+      const text = await (response.text() as Promise<string>);
+      if (!text.includes('CSRF')) {
+        return null;
+      }
 
       csrfTokenRef.current = null;
       const newToken = await getCsrfToken();
-      if (!newToken) return null;
+      if (!newToken) {
+        return null;
+      }
 
       headers.set(CSRF_HEADER_NAME, newToken);
       const retryResponse = await makeRequest(input, init, headers);
       return retryResponse.ok ? retryResponse : null;
     },
     [getCsrfToken, makeRequest],
+  );
+
+  // Helper: Handle response status and retry if needed
+  const handleResponseStatus = useCallback(
+    async (
+      response: Response,
+      input: RequestInfo,
+      init: RequestInit,
+      headers: Headers,
+      method: string,
+    ): Promise<Response> => {
+      if (response.status === 401) {
+        const retryResponse = await handle401(input, init, headers, method);
+        if (retryResponse) {
+          return retryResponse;
+        }
+        expireSession();
+        throw new Error('Unauthorized');
+      }
+
+      if (response.status === 403) {
+        const retryResponse = await handle403(response, input, init, headers);
+        if (retryResponse) {
+          return retryResponse;
+        }
+        expireSession('Access forbidden. Please sign in again.');
+        throw new Error('Forbidden');
+      }
+
+      return response;
+    },
+    [expireSession, handle401, handle403],
   );
 
   // Authenticated fetch wrapper with CSRF protection
@@ -194,31 +233,19 @@ export function useAuth(): UseAuthResult {
 
       const method = init.method?.toUpperCase() ?? 'GET';
       const headers = new Headers(init.headers || {});
+      const needsContentType =
+        init.body && !(init.body instanceof FormData) && !headers.has('Content-Type');
 
-      if (init.body && !(init.body instanceof FormData) && !headers.has('Content-Type')) {
+      if (needsContentType) {
         headers.set('Content-Type', 'application/json');
       }
 
       await addCsrfTokenIfNeeded(headers, method);
       const response = await makeRequest(input, init, headers);
 
-      if (response.status === 401) {
-        const retryResponse = await handle401(input, init, headers, method);
-        if (retryResponse) return retryResponse;
-        expireSession();
-        throw new Error('Unauthorized');
-      }
-
-      if (response.status === 403) {
-        const retryResponse = await handle403(response, input, init, headers);
-        if (retryResponse) return retryResponse;
-        expireSession('Access forbidden. Please sign in again.');
-        throw new Error('Forbidden');
-      }
-
-      return response;
+      return handleResponseStatus(response, input, init, headers, method);
     },
-    [addCsrfTokenIfNeeded, expireSession, handle401, handle403, isAuthenticated, makeRequest],
+    [addCsrfTokenIfNeeded, handleResponseStatus, isAuthenticated, makeRequest],
   );
 
   // Login handler
@@ -234,12 +261,12 @@ export function useAuth(): UseAuthResult {
           body: JSON.stringify({ username, password }),
         });
         if (!response.ok) {
-          const text = (await response.text()) || 'Authentication failed';
+          const text = (await (response.text() as Promise<string>)) || 'Authentication failed';
           setLoginError(text);
           setConnected(false);
           return;
         }
-        const data: unknown = await response.json();
+        const data: unknown = await (response.json() as Promise<unknown>);
         if (!isValidAuthResponse(data)) {
           setLoginError('Authentication failed');
           setConnected(false);
@@ -292,7 +319,9 @@ export function useAuth(): UseAuthResult {
 
   // Sync auth flag with localStorage
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined') {
+      return;
+    }
     if (isAuthenticated) {
       window.localStorage.setItem(AUTH_FLAG_KEY, 'true');
     } else {
@@ -303,7 +332,9 @@ export function useAuth(): UseAuthResult {
   // Fetch CSRF token on mount if already authenticated
   useEffect(() => {
     if (isAuthenticated && !csrfTokenRef.current) {
-      void fetchCsrfToken();
+      fetchCsrfToken().catch(() => {
+        // Silent fail - CSRF token will be fetched on next request
+      });
     }
   }, [fetchCsrfToken, isAuthenticated]);
 

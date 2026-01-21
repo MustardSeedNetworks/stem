@@ -20,27 +20,27 @@ interface TrafficGenSectionProps extends TestSectionProps {
   onConfigChange: (config: TrafficGenConfig) => void;
 }
 
-/** Test ID to translation key mapping */
-const TEST_KEYS = {
-  custom_stream: 'stream',
-  trafficgen_burst: 'burst',
-  trafficgen_multistream: 'multistream',
-} as const;
+/** Test ID to translation key mapping - keys match backend test identifiers */
+const testKeyMap: Map<string, string> = new Map([
+  ['custom_stream', 'stream'],
+  ['trafficgen_burst', 'burst'],
+  ['trafficgen_multistream', 'multistream'],
+]);
 
-const TEST_IDS = Object.keys(TEST_KEYS) as Array<keyof typeof TEST_KEYS>;
+const testIds: string[] = [...testKeyMap.keys()];
 
 export function TrafficGenSection({
   selectedTests,
   onToggleTest,
   config,
   onConfigChange,
-}: TrafficGenSectionProps) {
+}: TrafficGenSectionProps): React.JSX.Element {
   const { t } = useTranslation('settings');
 
   const tests: TestDefinition[] = useMemo(
     () =>
-      TEST_IDS.map((id) => {
-        const key = TEST_KEYS[id];
+      testIds.map((id) => {
+        const key = testKeyMap.get(id);
         return {
           id,
           name: t(`tests.trafficgen.${key}.name`),
@@ -76,7 +76,7 @@ export function TrafficGenSection({
               key={test.id}
               test={test}
               checked={selectedTests.includes(test.id)}
-              onChange={() => onToggleTest(test.id)}
+              onChange={(): void => onToggleTest(test.id)}
             />
           ))}
         </div>

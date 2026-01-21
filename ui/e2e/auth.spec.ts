@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 test.describe('Authentication', () => {
   test('should show login page', async ({ page }) => {
@@ -28,7 +28,7 @@ test.describe('Authentication', () => {
     await page.fill('[name="username"]', 'admin');
     await page.fill('[name="password"]', 'admin');
     await page.click('button[type="submit"]');
-    
+
     // Then logout
     await page.click('[data-testid="logout-button"]');
     await expect(page).toHaveURL(/login/);

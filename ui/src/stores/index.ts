@@ -6,6 +6,7 @@
  * Centralized exports for Zustand stores.
  */
 
+// biome-ignore lint/performance/noBarrelFile: Intentional barrel file for store exports
 export {
   useDisplaySettings,
   useEffectiveSettings,

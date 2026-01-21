@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 test.describe('Test Execution', () => {
   test.beforeEach(async ({ page }) => {
@@ -21,11 +21,11 @@ test.describe('Test Execution', () => {
     // Select interface
     await page.click('[data-testid="interface-selector"]');
     await page.click('[data-testid="interface-option"]');
-    
+
     // Select test type
     await page.click('[data-testid="test-type-selector"]');
     await page.click('[data-testid="throughput-option"]');
-    
+
     // Start test
     await page.click('[data-testid="start-test-button"]');
     await expect(page.getByText(/running|progress|started/i)).toBeVisible();

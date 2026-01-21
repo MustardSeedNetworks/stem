@@ -103,11 +103,11 @@
       "style": {
         "noCommonJs": "error",
         "noDefaultExport": "off",
-        "noImplicitBoolean": "off",
+        "noImplicitBoolean": "error",
         "noInferrableTypes": "error",
         "noNamespace": "error",
-        "noNegationElse": "off",
-        "noNestedTernary": "off",
+        "noNegationElse": "error",
+        "noNestedTernary": "error",
         "noNonNullAssertion": "error",
         "noParameterAssign": "error",
         "noRestrictedGlobals": "error",
@@ -118,8 +118,8 @@
         "noYodaExpression": "error",
         "useArrayLiterals": "error",
         "useAsConstAssertion": "error",
-        "useAtIndex": "off",
-        "useBlockStatements": "off",
+        "useAtIndex": "error",
+        "useBlockStatements": "error",
         "useCollapsedElseIf": "error",
         "useCollapsedIf": "error",
         "useConsistentArrayType": "error",
@@ -127,7 +127,7 @@
         "useConsistentCurlyBraces": "error",
         "useConst": "error",
         "useDefaultParameterLast": "error",
-        "useDefaultSwitchClause": "off",
+        "useDefaultSwitchClause": "error",
         "useEnumInitializers": "error",
         "useExplicitLengthCheck": "error",
         "useExponentiationOperator": "error",
@@ -165,10 +165,6 @@
               {
                 "selector": { "kind": "variable" },
                 "formats": ["camelCase", "CONSTANT_CASE", "PascalCase"]
-              },
-              {
-                "selector": { "kind": "objectLiteralProperty" },
-                "formats": ["camelCase", "snake_case", "CONSTANT_CASE"]
               }
             ]
           }
@@ -247,7 +243,7 @@
         "noThenProperty": "error",
         "noUnsafeDeclarationMerging": "error",
         "noUnsafeNegation": "error",
-        "useAwait": "off",
+        "useAwait": "error",
         "useDefaultSwitchClauseLast": "error",
         "useErrorMessage": "error",
         "useGetterReturn": "error",
@@ -276,13 +272,13 @@
         "noExcessiveCognitiveComplexity": {
           "level": "error",
           "options": {
-            "maxAllowedComplexity": 35
+            "maxAllowedComplexity": 15
           }
         },
         "noExcessiveNestedTestSuites": "error",
         "noExtraBooleanCast": "error",
         "noFlatMapIdentity": "error",
-        "noForEach": "off",
+        "noForEach": "error",
         "noStaticOnlyClass": "error",
         "noThisInStatic": "error",
         "noUselessCatch": "error",
@@ -300,7 +296,7 @@
         "noUselessThisAlias": "error",
         "noUselessTypeConstraint": "error",
         "noUselessUndefinedInitialization": "error",
-        "noVoid": "off",
+        "noVoid": "error",
         "useArrowFunction": "error",
         "useDateNow": "error",
         "useFlatMap": "error",
@@ -310,7 +306,7 @@
         "useOptionalChain": "error",
         "useRegexLiterals": "error",
         "useSimpleNumberKeys": "error",
-        "useSimplifiedLogicExpression": "off",
+        "useSimplifiedLogicExpression": "error",
         "useWhile": "error"
       },
       "security": {
@@ -357,24 +353,24 @@
         "noDeprecatedImports": "error",
         "noDuplicateDependencies": "error",
         "noDuplicatedSpreadProps": "error",
-        "noEqualsToNull": "off",
-        "noFloatingPromises": "off",
+        "noEqualsToNull": "error",
+        "noFloatingPromises": "error",
         "noImportCycles": "warn",
-        "noLeakedRender": "off",
+        "noLeakedRender": "error",
         "noMisusedPromises": "error",
         "noParametersOnlyUsedInRecursion": "error",
-        "noShadow": "off",
+        "noShadow": "error",
         "noUnusedExpressions": "error",
-        "noUselessCatchBinding": "off",
+        "noUselessCatchBinding": "error",
         "noUselessUndefined": "error",
         "useArraySortCompare": "error",
-        "useAwaitThenable": "off",
-        "useConsistentArrowReturn": "off",
-        "useDestructuring": "off",
+        "useAwaitThenable": "error",
+        "useConsistentArrowReturn": "error",
+        "useDestructuring": "error",
         "useExhaustiveSwitchCases": "error",
-        "useExplicitType": "off",
+        "useExplicitType": "error",
         "useFind": "error",
-        "useRegexpExec": "off",
+        "useRegexpExec": "error",
         "useSpread": "error"
       }
     }
@@ -397,19 +393,15 @@
       }
     },
     {
-      "includes": ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx", "**/test/**/*.ts"],
+      "includes": ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx"],
       "linter": {
         "rules": {
           "suspicious": {
             "noExplicitAny": "off",
-            "noExportsInTest": "off",
-            "noEmptyBlockStatements": "off"
+            "noExportsInTest": "off"
           },
           "complexity": {
             "noExcessiveCognitiveComplexity": "off"
-          },
-          "style": {
-            "useNamingConvention": "off"
           }
         }
       }
@@ -445,11 +437,36 @@
       }
     },
     {
-      "includes": ["**/api/index.ts", "**/settings/index.ts", "**/settings/tests/index.ts", "**/ui/index.ts", "**/stores/index.ts", "**/i18n/index.ts"],
+      "includes": ["**/api/index.ts"],
       "linter": {
         "rules": {
           "performance": {
             "noBarrelFile": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["**/App.tsx"],
+      "linter": {
+        "rules": {
+          "complexity": {
+            "noExcessiveCognitiveComplexity": {
+              "level": "warn",
+              "options": {
+                "maxAllowedComplexity": 40
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["**/data/help-content.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "useNamingConvention": "off"
           }
         }
       }

@@ -101,7 +101,7 @@ export function SettingsDrawer({
   setTSNConfig,
   trafficGenConfig,
   setTrafficGenConfig,
-}: SettingsDrawerProps) {
+}: SettingsDrawerProps): React.ReactElement | null {
   const { t } = useTranslation();
   const [viewMode, setViewMode] = useState<ViewMode>('standard');
 
@@ -111,9 +111,9 @@ export function SettingsDrawer({
   });
 
   const toggleTest = useCallback(
-    (testId: string) => {
+    (testId: string): void => {
       if (selectedTests.includes(testId)) {
-        setSelectedTests(selectedTests.filter((t) => t !== testId));
+        setSelectedTests(selectedTests.filter((currentTest) => currentTest !== testId));
       } else {
         setSelectedTests([...selectedTests, testId]);
       }
@@ -121,7 +121,9 @@ export function SettingsDrawer({
     [selectedTests, setSelectedTests],
   );
 
-  if (!isOpen) return null;
+  if (!isOpen) {
+    return null;
+  }
 
   return (
     <>
@@ -257,7 +259,7 @@ interface ViewToggleProps {
   onViewModeChange: (mode: ViewMode) => void;
 }
 
-function ViewToggle({ viewMode, onViewModeChange }: ViewToggleProps) {
+function ViewToggle({ viewMode, onViewModeChange }: ViewToggleProps): React.ReactElement {
   const { t } = useTranslation();
 
   return (
@@ -274,7 +276,7 @@ function ViewToggle({ viewMode, onViewModeChange }: ViewToggleProps) {
       <div className={cn('flex', radius.lg, 'overflow-hidden border border-surface-border')}>
         <button
           type="button"
-          onClick={() => onViewModeChange('standard')}
+          onClick={(): void => onViewModeChange('standard')}
           className={cn(
             'flex items-center gap-1 px-3 py-1.5 caption',
             viewMode === 'standard'
@@ -287,7 +289,7 @@ function ViewToggle({ viewMode, onViewModeChange }: ViewToggleProps) {
         </button>
         <button
           type="button"
-          onClick={() => onViewModeChange('module')}
+          onClick={(): void => onViewModeChange('module')}
           className={cn(
             'flex items-center gap-1 px-3 py-1.5 caption',
             viewMode === 'module'

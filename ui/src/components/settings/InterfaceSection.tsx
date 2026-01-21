@@ -25,7 +25,7 @@ export function InterfaceSection({
   selectedInterface,
   onInterfaceChange,
   className,
-}: InterfaceSectionProps) {
+}: InterfaceSectionProps): React.JSX.Element {
   const { t } = useTranslation();
 
   const maxScore = useMemo(() => Math.max(...interfaces.map((i) => i.score), 0), [interfaces]);
@@ -49,7 +49,9 @@ export function InterfaceSection({
       <div className="space-y-3">
         <select
           value={selectedInterface}
-          onChange={(e) => onInterfaceChange(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLSelectElement>): void =>
+            onInterfaceChange(e.target.value)
+          }
           className="w-full"
           aria-label={t('settings.interface.select', 'Select network interface')}
         >
@@ -67,7 +69,7 @@ export function InterfaceSection({
               {t('settings.interface.driver', 'Driver')}: {selectedDetails.driver}
             </div>
             <div className="flex gap-2">
-              {selectedDetails.xdp && (
+              {selectedDetails.xdp === true && (
                 <span
                   className={cn(
                     'text-status-success bg-status-success/10',
@@ -79,7 +81,7 @@ export function InterfaceSection({
                   XDP
                 </span>
               )}
-              {selectedDetails.physical && (
+              {selectedDetails.physical === true && (
                 <span
                   className={cn(
                     'text-status-success bg-status-success/10',

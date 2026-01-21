@@ -30,7 +30,9 @@ const MAX_HISTORY_ITEMS = 50;
 
 /** Load history from localStorage */
 function loadHistory(): HistoricalResult[] {
-  if (typeof window === 'undefined') return [];
+  if (typeof window === 'undefined') {
+    return [];
+  }
   try {
     const stored = window.localStorage.getItem(HISTORY_STORAGE_KEY);
     if (stored) {
@@ -45,7 +47,9 @@ function loadHistory(): HistoricalResult[] {
 
 /** Save history to localStorage */
 function saveHistory(history: HistoricalResult[]): void {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined') {
+    return;
+  }
   try {
     // Keep only the most recent items
     const trimmed = history.slice(0, MAX_HISTORY_ITEMS);
@@ -78,17 +82,27 @@ interface ResultHistoryProps {
 }
 
 function formatDuration(ms: number): string {
-  if (ms < 1000) return `${ms}ms`;
-  if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
+  if (ms < 1000) {
+    return `${ms}ms`;
+  }
+  if (ms < 60000) {
+    return `${(ms / 1000).toFixed(1)}s`;
+  }
   const minutes = Math.floor(ms / 60000);
   const seconds = ((ms % 60000) / 1000).toFixed(0);
   return `${minutes}m ${seconds}s`;
 }
 
 function formatNumber(num: number): string {
-  if (num >= 1e9) return `${(num / 1e9).toFixed(2)}B`;
-  if (num >= 1e6) return `${(num / 1e6).toFixed(2)}M`;
-  if (num >= 1e3) return `${(num / 1e3).toFixed(2)}K`;
+  if (num >= 1e9) {
+    return `${(num / 1e9).toFixed(2)}B`;
+  }
+  if (num >= 1e6) {
+    return `${(num / 1e6).toFixed(2)}M`;
+  }
+  if (num >= 1e3) {
+    return `${(num / 1e3).toFixed(2)}K`;
+  }
   return num.toString();
 }
 
@@ -136,14 +150,14 @@ function ResultCard({ result, isExpanded, onToggle, onDelete }: ResultCardProps)
       </button>
 
       {/* Expanded Details */}
-      {isExpanded && (
+      {isExpanded ? (
         <div className="border-t border-[var(--color-surface-border)] p-4 space-y-4">
-          {result.error && (
+          {result.error ? (
             <div className="p-3 rounded-lg bg-[var(--color-status-error)]/10 border border-[var(--color-status-error)]/20">
               <div className="text-sm font-medium text-[var(--color-status-error)]">Error</div>
               <div className="text-sm text-[var(--color-text-primary)]">{result.error}</div>
             </div>
-          )}
+          ) : null}
 
           {result.duration !== undefined && (
             <div className="text-sm">
@@ -176,10 +190,12 @@ function ResultCard({ result, isExpanded, onToggle, onDelete }: ResultCardProps)
           )}
 
           <div className="text-xs text-[var(--color-text-muted)] space-y-1">
-            {result.startedAt && <div>Started: {new Date(result.startedAt).toLocaleString()}</div>}
-            {result.completedAt && (
+            {result.startedAt ? (
+              <div>Started: {new Date(result.startedAt).toLocaleString()}</div>
+            ) : null}
+            {result.completedAt ? (
               <div>Completed: {new Date(result.completedAt).toLocaleString()}</div>
-            )}
+            ) : null}
           </div>
 
           <button
@@ -191,7 +207,7 @@ function ResultCard({ result, isExpanded, onToggle, onDelete }: ResultCardProps)
             Delete
           </button>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -257,7 +273,9 @@ export function ResultHistory({
     [onClose],
   );
 
-  if (!isOpen) return null;
+  if (!isOpen) {
+    return null;
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-end">
@@ -351,9 +369,7 @@ export function useResultHistory(): {
     saveHistory(updated);
   }, []);
 
-  const getHistory = useCallback(() => {
-    return loadHistory();
-  }, []);
+  const getHistory = useCallback(() => loadHistory(), []);
 
   return { addResult, getHistory };
 }

@@ -30,7 +30,7 @@
  * ```
  */
 
-import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { Component, type ErrorInfo, type ReactElement, type ReactNode } from 'react';
 import { Translation } from 'react-i18next';
 import { button, cn, icon as iconTokens, radius, spacing } from '../styles/theme';
 import { logError } from '../utils/logger';
@@ -62,7 +62,7 @@ interface ErrorBoundaryState {
 /**
  * Alert triangle icon for error display
  */
-function AlertIcon() {
+function AlertIcon(): ReactElement {
   return (
     <svg
       className={cn(iconTokens.size.md, 'text-status-error shrink-0')}
@@ -82,7 +82,7 @@ function AlertIcon() {
 /**
  * Refresh icon for retry button
  */
-function RefreshIcon() {
+function RefreshIcon(): ReactElement {
   return (
     <svg
       className={iconTokens.size.sm}
@@ -181,7 +181,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       // Render default error UI
       return (
         <Translation ns="common">
-          {(t) => (
+          {(t: (key: string, defaultValue?: string) => string): ReactElement => (
             <div
               role="alert"
               className="min-h-screen flex items-center justify-center bg-surface-base p-4"
@@ -215,7 +215,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                 </div>
 
                 {/* Error details */}
-                {this.state.error && (
+                {this.state.error ? (
                   <div
                     className={cn(
                       'mb-4',
@@ -231,7 +231,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                       {this.state.error.message}
                     </p>
                   </div>
-                )}
+                ) : null}
 
                 {/* Action buttons */}
                 <div className={cn('flex', spacing.gap.default)}>

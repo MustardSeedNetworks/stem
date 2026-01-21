@@ -64,7 +64,8 @@ vi.mock('react-i18next', () => ({
       changeLanguage: vi.fn(),
     },
   }),
-  Trans: ({ children }: { children: React.ReactNode }) => children,
+  // biome-ignore lint/style/useNamingConvention: React component name must match i18n library API
+  Trans: ({ children }: { children: React.ReactNode }): React.ReactNode => children,
   initReactI18next: { type: '3rdParty', init: vi.fn() },
 }));
 
@@ -92,13 +93,13 @@ export function createMockLocalStorage(): MockLocalStorage {
     clear: () => {
       store = {};
     },
-    get _store() {
+    get _store(): Record<string, string> {
       return store;
     },
   };
 }
 
-const mockLocalStorage = createMockLocalStorage();
+const mockLocalStorage: MockLocalStorage = createMockLocalStorage();
 Object.defineProperty(window, 'localStorage', { value: mockLocalStorage });
 
 // Export for use in tests
@@ -107,11 +108,22 @@ export { mockLocalStorage };
 // ============================================================
 // Mock fetch
 // ============================================================
-export const mockFetch = vi.fn();
+export const mockFetch: ReturnType<typeof vi.fn> = vi.fn();
 global.fetch = mockFetch;
 
 // Helper to create standard API responses
-export function createMockResponse<T>(data: T, ok = true, status = 200) {
+// biome-ignore lint/nursery/useExplicitType: Types inferred from defaults; explicit types cause noInferrableTypes error
+export function createMockResponse<T>(
+  data: T,
+  ok = true,
+  status = 200,
+): Promise<{
+  ok: boolean;
+  status: number;
+  json: () => Promise<T>;
+  text: () => Promise<string>;
+  headers: Headers;
+}> {
   return Promise.resolve({
     ok,
     status,
@@ -122,20 +134,21 @@ export function createMockResponse<T>(data: T, ok = true, status = 200) {
 }
 
 // Helper to create error responses
-export function createMockErrorResponse(status = 500, message = 'Error') {
+// biome-ignore lint/nursery/useExplicitType: Types inferred from defaults; explicit types cause noInferrableTypes error
+export function createMockErrorResponse(status = 500, message = 'Error'): Promise<Response> {
   return Promise.resolve({
     ok: false,
     status,
     json: () => Promise.resolve({ error: message }),
     text: () => Promise.resolve(message),
     headers: new Headers(),
-  });
+  } as unknown as Response);
 }
 
 // ============================================================
 // Mock window.location
 // ============================================================
-export function mockWindowLocation(overrides: Partial<Location> = {}) {
+export function mockWindowLocation(overrides: Partial<Location> = {}): void {
   const defaultLocation = {
     protocol: 'http:',
     host: 'localhost:8080',
@@ -173,6 +186,7 @@ afterEach(() => {
 // ============================================================
 
 // Auth token factory
+// biome-ignore lint/nursery/useExplicitType: Type is explicitly declared in return type
 export function createMockAuthToken(expiresInSeconds = 3600): {
   token: string;
   expiry: number;

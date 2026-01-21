@@ -27,6 +27,7 @@
  * ```
  */
 
+import type React from 'react';
 import { cn, layout, radius } from '../../styles/theme';
 import { getSizeConfig, getStatusConfig, type Status } from './StatusConfig';
 
@@ -57,7 +58,7 @@ export function StatusBadge({
   variant = 'icon',
   size = 'sm',
   className = '',
-}: StatusBadgeProps) {
+}: StatusBadgeProps): React.ReactElement {
   const config = getStatusConfig(status);
   const sizes = getSizeConfig(size);
 

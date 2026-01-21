@@ -40,7 +40,7 @@ export const defaultRFC2889Config: RFC2889Config = {
 };
 
 /** Standard frame sizes for RFC 2889 */
-const FRAME_SIZE_OPTIONS = [
+const FRAME_SIZE_OPTIONS: Array<{ value: number; label: string }> = [
   { value: 64, label: '64 B (min)' },
   { value: 128, label: '128 B' },
   { value: 256, label: '256 B' },
@@ -51,7 +51,7 @@ const FRAME_SIZE_OPTIONS = [
 ];
 
 /** Traffic pattern options */
-const PATTERN_OPTIONS = [
+const PATTERN_OPTIONS: Array<{ value: number; label: string; description: string }> = [
   { value: 0, label: 'Full Mesh', description: 'All ports to all ports' },
   { value: 1, label: 'Pair', description: 'Port pairs (1→2, 3→4, etc.)' },
   { value: 2, label: 'Broadcast', description: 'One port to all others' },
@@ -74,7 +74,7 @@ export function RFC2889ConfigForm({
     return null;
   }
 
-  const updateConfig = (updates: Partial<RFC2889Config>) => {
+  const updateConfig = (updates: Partial<RFC2889Config>): void => {
     setConfig({ ...config, ...updates });
   };
 
@@ -117,7 +117,9 @@ export function RFC2889ConfigForm({
                 max={3600}
                 step={1}
                 value={config.duration}
-                onChange={(e) => updateConfig({ duration: Number(e.target.value) })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  updateConfig({ duration: Number(e.target.value) })
+                }
                 className="mt-1 w-full"
               />
             </div>
@@ -137,7 +139,9 @@ export function RFC2889ConfigForm({
                 max={60}
                 step={1}
                 value={config.warmup}
-                onChange={(e) => updateConfig({ warmup: Number(e.target.value) })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  updateConfig({ warmup: Number(e.target.value) })
+                }
                 className="mt-1 w-full"
               />
             </div>
@@ -156,7 +160,9 @@ export function RFC2889ConfigForm({
           <select
             id="rfc2889-framesize"
             value={config.frameSize}
-            onChange={(e) => updateConfig({ frameSize: Number(e.target.value) })}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>): void =>
+              updateConfig({ frameSize: Number(e.target.value) })
+            }
             className="mt-1 w-full"
           >
             {FRAME_SIZE_OPTIONS.map((opt) => (
@@ -189,7 +195,9 @@ export function RFC2889ConfigForm({
                 max={48}
                 step={1}
                 value={config.portCount}
-                onChange={(e) => updateConfig({ portCount: Number(e.target.value) })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  updateConfig({ portCount: Number(e.target.value) })
+                }
                 className="mt-1 w-full"
               />
             </div>
@@ -205,7 +213,9 @@ export function RFC2889ConfigForm({
               <select
                 id="rfc2889-pattern"
                 value={config.pattern}
-                onChange={(e) => updateConfig({ pattern: Number(e.target.value) })}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>): void =>
+                  updateConfig({ pattern: Number(e.target.value) })
+                }
                 className="mt-1 w-full"
               >
                 {PATTERN_OPTIONS.map((opt) => (
@@ -219,7 +229,7 @@ export function RFC2889ConfigForm({
         </div>
 
         {/* Learning/Caching Config */}
-        {(hasCaching || hasLearning) && (
+        {hasCaching || hasLearning ? (
           <div>
             <label
               htmlFor="rfc2889-addresscount"
@@ -235,11 +245,13 @@ export function RFC2889ConfigForm({
               max={100000}
               step={1}
               value={config.addressCount}
-              onChange={(e) => updateConfig({ addressCount: Number(e.target.value) })}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                updateConfig({ addressCount: Number(e.target.value) })
+              }
               className="mt-1 w-full"
             />
           </div>
-        )}
+        ) : null}
 
         {/* Acceptable Loss */}
         <div>
@@ -257,7 +269,9 @@ export function RFC2889ConfigForm({
             max={1}
             step={0.001}
             value={config.acceptableLoss}
-            onChange={(e) => updateConfig({ acceptableLoss: Number(e.target.value) })}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+              updateConfig({ acceptableLoss: Number(e.target.value) })
+            }
             className="mt-1 w-full"
           />
         </div>

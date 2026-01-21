@@ -103,7 +103,9 @@ export interface TestStartRequest {
 
 /** Validate InterfaceInfo array response */
 export function isValidInterfaceArray(data: unknown): data is InterfaceInfo[] {
-  if (!Array.isArray(data)) return false;
+  if (!Array.isArray(data)) {
+    return false;
+  }
   return data.every(
     (item) =>
       typeof item === 'object' &&
@@ -116,7 +118,9 @@ export function isValidInterfaceArray(data: unknown): data is InterfaceInfo[] {
 
 /** Validate Stats response */
 export function isValidStats(data: unknown): data is Partial<Stats> {
-  if (typeof data !== 'object' || data === null) return false;
+  if (typeof data !== 'object' || data === null) {
+    return false;
+  }
   const obj = data as Record<string, unknown>;
   // At minimum, uptime should be a number
   return typeof obj.uptime === 'number' || typeof obj.packetsReceived === 'number';
@@ -124,7 +128,9 @@ export function isValidStats(data: unknown): data is Partial<Stats> {
 
 /** Validate AuthResponse */
 export function isValidAuthResponse(data: unknown): data is AuthResponse {
-  if (typeof data !== 'object' || data === null) return false;
+  if (typeof data !== 'object' || data === null) {
+    return false;
+  }
   const obj = data as Record<string, unknown>;
   return typeof obj.token === 'string';
 }

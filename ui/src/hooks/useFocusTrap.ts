@@ -9,7 +9,7 @@
 import { type RefObject, useEffect, useRef } from 'react';
 
 /** Focusable element selectors */
-const FOCUSABLE_SELECTORS = [
+const FOCUSABLE_SELECTORS: string = [
   'button:not([disabled])',
   'input:not([disabled])',
   'select:not([disabled])',
@@ -43,10 +43,12 @@ function handleTabKey(
   container: HTMLElement,
   focusableElements: HTMLElement[],
 ): void {
-  if (focusableElements.length === 0) return;
+  if (focusableElements.length === 0) {
+    return;
+  }
 
-  const firstElement = focusableElements[0];
-  const lastElement = focusableElements[focusableElements.length - 1];
+  const [firstElement] = focusableElements;
+  const lastElement = focusableElements.at(-1);
   const isAtFirst = document.activeElement === firstElement;
   const isAtLast = document.activeElement === lastElement;
   const isOutside = !container.contains(document.activeElement);
@@ -103,7 +105,9 @@ export function useFocusTrap<T extends HTMLElement = HTMLDivElement>(
   const previousActiveElement = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
-    if (!isActive) return;
+    if (!isActive) {
+      return;
+    }
 
     // Store the currently focused element to restore later
     if (restoreFocus) {
@@ -111,12 +115,14 @@ export function useFocusTrap<T extends HTMLElement = HTMLDivElement>(
     }
 
     const container = containerRef.current;
-    if (!container) return;
+    if (!container) {
+      return;
+    }
 
     // Auto-focus the first focusable element
     if (autoFocus) {
       const focusableElements = getFocusableElements(container);
-      const firstElement = focusableElements[0];
+      const [firstElement] = focusableElements;
       if (firstElement) {
         requestAnimationFrame(() => {
           firstElement.focus();
@@ -125,7 +131,7 @@ export function useFocusTrap<T extends HTMLElement = HTMLDivElement>(
     }
 
     // Handle keyboard navigation
-    const handleKeyDown = (event: KeyboardEvent) => {
+    const handleKeyDown = (event: KeyboardEvent): void => {
       // Handle Escape key
       if (event.key === 'Escape' && onEscape) {
         event.preventDefault();
@@ -142,12 +148,16 @@ export function useFocusTrap<T extends HTMLElement = HTMLDivElement>(
     };
 
     // Handle focus leaving the container
-    const handleFocusOut = (event: FocusEvent) => {
+    const handleFocusOut = (event: FocusEvent): void => {
       const isLeavingContainer = !container.contains(event.relatedTarget as Node);
-      if (!isLeavingContainer) return;
+      if (!isLeavingContainer) {
+        return;
+      }
 
       const focusableElements = getFocusableElements(container);
-      if (focusableElements.length === 0) return;
+      if (focusableElements.length === 0) {
+        return;
+      }
 
       requestAnimationFrame(() => {
         if (!container.contains(document.activeElement)) {
