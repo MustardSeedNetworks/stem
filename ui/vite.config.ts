@@ -51,7 +51,7 @@ export default defineConfig({
     },
   },
   build: {
-    outDir: 'dist',
+    outDir: '../internal/api/dist',
     sourcemap: true,
     modulePreload: false,
     cssCodeSplit: false,
