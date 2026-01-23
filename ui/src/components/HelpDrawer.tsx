@@ -33,6 +33,7 @@ import {
   searchTests,
   type TestHelp,
   type Tutorial,
+  type TutorialStep,
   tutorials,
 } from '../data/help-content';
 import { useFocusTrap } from '../hooks/useFocusTrap';
@@ -553,7 +554,7 @@ function TestDetailView({
         <div className="pt-4 border-t border-surface-border">
           <h4 className={cn('section-title', spacing.margin.bottom.inline)}>Related Tests</h4>
           <div className={layout.inline.wrap}>
-            {test.seeAlso.map((related) => (
+            {test.seeAlso.map((related: string) => (
               <span
                 key={related}
                 className={cn('caption bg-surface-base px-2 py-1', radius.default)}
@@ -576,10 +577,10 @@ function TutorialsTab({
   searchQuery: string;
   onSelectTutorial: (tutorial: Tutorial) => void;
 }): ReactElement {
-  const tutorialList = Object.values(tutorials);
+  const tutorialList: Tutorial[] = Object.values(tutorials);
   const filtered = searchQuery
     ? tutorialList.filter(
-        (t) =>
+        (t: Tutorial) =>
           t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
           t.description.toLowerCase().includes(searchQuery.toLowerCase()),
       )
@@ -591,7 +592,7 @@ function TutorialsTab({
         Step-by-step guides to help you get started with network testing.
       </p>
       <div className="stack-sm">
-        {filtered.map((tutorial) => (
+        {filtered.map((tutorial: Tutorial) => (
           <button
             type="button"
             key={tutorial.id}
@@ -661,7 +662,7 @@ function TutorialDetailView({
 
       {/* Steps */}
       <div className="stack-lg">
-        {tutorial.steps.map((step, stepIndex) => (
+        {tutorial.steps.map((step: TutorialStep, stepIndex: number) => (
           <div key={step.title} className={cn('bg-surface-base', radius.lg, spacing.pad.default)}>
             <div className={cn(layout.inline.default, spacing.margin.bottom.inline)}>
               <span
