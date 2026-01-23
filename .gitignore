@@ -79,6 +79,7 @@ core.*
 coverage.html
 coverage.txt
 data/
+!ui/src/data/
 DebugImages/
 go.work
 go.work.sum
