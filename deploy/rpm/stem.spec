@@ -26,7 +26,7 @@ mkdir -p %{buildroot}/var/lib/stem
 mkdir -p %{buildroot}/var/log/stem
 
 # Copy binary (single binary with embedded assets)
-install -m 755 %{_repo_root}/stem %{buildroot}/usr/bin/stem
+install -m 755 %{_repo_root}/bin/stem-linux %{buildroot}/usr/bin/stem
 
 # Copy systemd service file
 install -m 644 %{_repo_root}/deploy/systemd/stem.service %{buildroot}/usr/lib/systemd/system/stem.service

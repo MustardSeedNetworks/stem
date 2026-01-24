@@ -12,7 +12,8 @@
 # =============================================================================
 
 .PHONY: all ui ui-deps go quick clean \
-        build c-build dataplane c-build-docker \
+        build build-darwin build-linux \
+        c-build dataplane c-build-docker \
         build-minimal build-xdp build-dpdk \
         build-iperf3 build-iperf3-docker \
         build-linux-docker \
@@ -42,12 +43,9 @@ ui-deps: ## Install UI dependencies
 	@echo "Installing UI dependencies..."
 	cd ui && npm install
 
-ui: ui-deps ## Build React WebUI
+ui: ui-deps ## Build React WebUI (output: internal/api/dist/)
 	@echo "Building React WebUI..."
 	cd ui && npm run build
-	@echo "Copying dist to internal/web for embedding..."
-	mkdir -p internal/web/dist
-	cp -r ui/dist/* internal/web/dist/
 
 # =============================================================================
 # Backend Build
@@ -63,6 +61,18 @@ quick: ## Quick build (Go only, assumes UI is already built)
 	@echo "Quick build (Go only)..."
 	mkdir -p bin
 	$(GO) build $(GOFLAGS) -o $(BINARY_NAME) ./cmd/stem/
+
+build-darwin: ui ## Build for macOS (native architecture)
+	@echo "Building for macOS ($(shell uname -m))..."
+	mkdir -p bin
+	@CGO_ENABLED=0 $(GO) build $(GOFLAGS) -o bin/stem-darwin ./cmd/stem/
+	@echo "Built: bin/stem-darwin"
+
+build-linux: ui ## Build for Linux AMD64 (CGO_ENABLED=0, no DPDK)
+	@echo "Building for Linux AMD64 (pure Go)..."
+	mkdir -p bin
+	@GOOS=linux GOARCH=amd64 CGO_ENABLED=0 $(GO) build $(GOFLAGS) -o bin/stem-linux ./cmd/stem/
+	@echo "Built: bin/stem-linux"
 
 # =============================================================================
 # C Dataplane Build

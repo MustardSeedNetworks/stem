@@ -27,7 +27,7 @@ RPM_ARCH=$(shell uname -m | sed 's/amd64/x86_64/;s/arm64/aarch64/')
 # Debian Packages
 # =============================================================================
 
-deb: build ## Build Debian package (.deb)
+deb: build-linux ## Build Debian package (.deb)
 	@printf "$(BOLD)Building Debian package...$(RESET)\n"
 	@mkdir -p dist/deb/DEBIAN
 	@mkdir -p dist/deb/usr/bin
@@ -83,7 +83,7 @@ _deb-arch:
 # RPM Packages
 # =============================================================================
 
-rpm: build ## Build RPM package (.rpm)
+rpm: build-linux ## Build RPM package (.rpm)
 	@printf "$(BOLD)Building RPM package...$(RESET)\n"
 	@mkdir -p dist/rpm/BUILD dist/rpm/RPMS dist/rpm/SOURCES dist/rpm/SPECS dist/rpm/SRPMS
 	@mkdir -p dist/rpm/SOURCES/stem-$(PKG_VERSION)
