@@ -7,6 +7,9 @@ URL:        https://github.com/krisarmstrong/stem
 BuildArch:  __ARCHITECTURE__
 
 Requires:   systemd, libcap
+Requires(pre): shadow-utils
+Provides: user(stem)
+Provides: group(stem)
 
 %description
 The Stem is a high-performance network testing tool supporting:
