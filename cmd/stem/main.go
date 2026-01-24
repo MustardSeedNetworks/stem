@@ -634,6 +634,9 @@ func parseTestFlags(args []string) (*testCmdFlags, error) {
 
 	parseErr := fs.Parse(args)
 	if parseErr != nil {
+		if errors.Is(parseErr, flag.ErrHelp) {
+			return nil, parseErr
+		}
 		return nil, fmt.Errorf("failed to parse test flags: %w", parseErr)
 	}
 
@@ -729,6 +732,9 @@ func runTestSuite(
 func testCmd(args []string) error {
 	flags, err := parseTestFlags(args)
 	if err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			return nil
+		}
 		_, _ = fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		return err
 	}

@@ -134,12 +134,10 @@ run_test() {
     if [[ $exit_code -eq $expected_exit ]]; then
         log_pass "$name"
         TESTS_PASSED=$((TESTS_PASSED + 1))
-        return 0
     else
         log_fail "$name (exit: $exit_code, expected: $expected_exit)"
         echo "  Output: $(echo "$output" | head -3 | tr '\n' ' ')"
         TESTS_FAILED=$((TESTS_FAILED + 1))
-        return 1
     fi
 }
 
