@@ -161,11 +161,9 @@ assert_contains() {
     if echo "$output" | grep -qi "$expected"; then
         log_pass "$name"
         TESTS_PASSED=$((TESTS_PASSED + 1))
-        return 0
     else
         log_fail "$name (expected to contain: $expected)"
         TESTS_FAILED=$((TESTS_FAILED + 1))
-        return 1
     fi
 }
 
@@ -181,11 +179,9 @@ assert_json_field() {
     if [[ "$value" == "$expected" ]]; then
         log_pass "$name"
         TESTS_PASSED=$((TESTS_PASSED + 1))
-        return 0
     else
         log_fail "$name (got: '$value', expected: '$expected')"
         TESTS_FAILED=$((TESTS_FAILED + 1))
-        return 1
     fi
 }
 
@@ -306,9 +302,16 @@ test_test_types() {
     assert_contains "$list_output" "tsn" "TSN tests listed"
 
     log_header "Test Count Verification"
-    local test_count=$(echo "$list_output" | grep -c "^\s\s[a-z]" || echo "0")
-    run_test "At least 27 test types defined" \
-        "test $test_count -ge 27"
+    local test_count
+    test_count=$(echo "$list_output" | grep -c "^[[:space:]]*[a-z]" 2>/dev/null || echo "0")
+    TESTS_RUN=$((TESTS_RUN + 1))
+    if [[ "$test_count" -ge 27 ]]; then
+        log_pass "At least 27 test types defined ($test_count found)"
+        TESTS_PASSED=$((TESTS_PASSED + 1))
+    else
+        log_fail "At least 27 test types defined (only $test_count found)"
+        TESTS_FAILED=$((TESTS_FAILED + 1))
+    fi
 }
 
 # ============================================================================
@@ -331,7 +334,7 @@ test_reflector() {
         log_fail "Reflector failed to start"
         TESTS_FAILED=$((TESTS_FAILED + 1))
         REFLECTOR_PID=""
-        return 1
+        return 0
     fi
 
     log_header "Graceful Shutdown"
@@ -421,7 +424,7 @@ test_webui() {
         log_fail "WebUI failed to start"
         TESTS_FAILED=$((TESTS_FAILED + 1))
         WEB_PID=""
-        return 1
+        return 0
     fi
 
     log_header "API Health Endpoint"
