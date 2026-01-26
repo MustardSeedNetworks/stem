@@ -31,6 +31,7 @@ WEB_PORT_ALT=8888
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="${SCRIPT_DIR}/../.."
 STEM_BIN="${PROJECT_ROOT}/bin/stem"
+STEM_COOKIE_JAR="$(mktemp -t stem-smoke-cookie.XXXXXX)"
 
 # Test counters
 TESTS_RUN=0
@@ -92,6 +93,12 @@ cleanup() {
     ip link delete "${VETH_TX}" 2>/dev/null || true
 
     log_info "Cleanup complete"
+    if [[ -f "$STEM_COOKIE_JAR" ]]; then
+        rm -f "$STEM_COOKIE_JAR"
+    fi
+    if [[ -f /tmp/stem_login.json ]]; then
+        rm -f /tmp/stem_login.json
+    fi
 }
 
 # Set up trap for cleanup
@@ -477,6 +484,26 @@ test_webui() {
 
     run_test "POST /api/v1/test/stop requires auth (401)" \
         "curl -s -o /dev/null -w '%{http_code}' -X POST ${BASE}/api/v1/test/stop | grep -q '401'"
+
+    log_header "Authenticated Endpoints"
+    local login_payload
+    login_payload=$(printf '{"username":"%s","password":"%s"}' "$STEM_AUTH_USERNAME" "$STEM_AUTH_PASSWORD")
+    local login_status
+    login_status=$(curl -s -c "$STEM_COOKIE_JAR" -o /tmp/stem_login.json -w "%{http_code}" \
+        -H "Content-Type: application/json" \
+        -d "$login_payload" \
+        ${BASE}/api/v1/auth/login)
+
+    TESTS_RUN=$((TESTS_RUN + 1))
+    if [[ "$login_status" == "200" ]]; then
+        log_pass "Login succeeds for authenticated checks"
+        TESTS_PASSED=$((TESTS_PASSED + 1))
+        run_test "GET /api/v1/auth/csrf returns token when authenticated" \
+            "curl -s -b \"$STEM_COOKIE_JAR\" ${BASE}/api/v1/auth/csrf | grep -q 'token'"
+    else
+        log_fail "Login failed for authenticated checks (HTTP $login_status)"
+        TESTS_FAILED=$((TESTS_FAILED + 1))
+    fi
 
     log_header "Static File Serving"
     run_test "Root path serves HTML" \
