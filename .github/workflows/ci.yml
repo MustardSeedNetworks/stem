@@ -97,7 +97,7 @@ jobs:
         run: npm run build
 
       - name: Upload frontend build
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: frontend-dist
           path: ui/dist/
@@ -462,7 +462,7 @@ jobs:
           ./bin/stem-${{ matrix.os }}-${{ matrix.arch }} version || true
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: stem-${{ matrix.os }}-${{ matrix.arch }}
           path: bin/stem-${{ matrix.os }}-${{ matrix.arch }}
@@ -594,7 +594,7 @@ jobs:
         run: npx playwright test --project=chromium --reporter=html
 
       - name: Upload Playwright report
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: playwright-report
@@ -602,7 +602,7 @@ jobs:
           retention-days: 7
 
       - name: Upload server logs on failure
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: e2e-server-logs

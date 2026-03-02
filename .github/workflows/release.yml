@@ -175,7 +175,7 @@ jobs:
             -bb stem.spec
 
       - name: Upload release artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: release-linux-${{ matrix.arch }}
           path: |
@@ -289,7 +289,7 @@ jobs:
           ./deploy/macos/build-pkg.sh "./dist/stem-darwin-${ARCH}" "${PKG_VERSION}"
 
       - name: Upload release artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: release-darwin-${{ matrix.arch }}
           path: |

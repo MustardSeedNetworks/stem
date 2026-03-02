@@ -54,7 +54,7 @@ jobs:
           cat todo-report.md
 
       - name: Upload report
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: todo-report
           path: todo-report.md
