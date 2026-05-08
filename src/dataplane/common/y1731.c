@@ -165,10 +165,9 @@ int y1731_loss_measurement(rfc2544_ctx_t *ctx, y1731_session_t *session, uint32_
 
     /* Run at moderate rate for loss measurement */
     trial_result_t trial;
-    int ret =
-        run_trial_custom(ctx, 128, 50.0, /* 50% rate */
-                         duration_sec, Y1731_DEFAULT_WARMUP_SEC, Y1731_SIGNATURE_LOCAL,
-                         session->local_mep.mep_id, &trial);
+    int ret = run_trial_custom(ctx, 128, 50.0, /* 50% rate */
+                               duration_sec, Y1731_DEFAULT_WARMUP_SEC, Y1731_SIGNATURE_LOCAL,
+                               session->local_mep.mep_id, &trial);
 
     if (ret < 0) {
         rfc2544_log(LOG_ERROR, "Loss measurement trial failed: %d", ret);

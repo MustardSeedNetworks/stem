@@ -66,7 +66,7 @@ typedef enum {
 #define RFC2544_MIN_FRAME_SIZE 66
 
 /* Standard frame sizes array - starts at 128 for full payload support */
-#define RFC2544_FRAME_SIZES {128, 256, 512, 1024, 1280, 1518}
+#define RFC2544_FRAME_SIZES      {128, 256, 512, 1024, 1280, 1518}
 #define RFC2544_FRAME_SIZE_COUNT 6
 // NOLINTEND(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
 
