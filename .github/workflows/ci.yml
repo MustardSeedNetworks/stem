@@ -61,7 +61,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            gcc-13 \
+            clang-18 \
             libbpf-dev \
             libelf-dev \
             libxdp-dev \
@@ -69,7 +69,7 @@ jobs:
             zlib1g-dev
 
       - name: Build native dataplane library
-        run: make CC=gcc-13 dataplane
+        run: make CC=clang-18 dataplane
 
       - name: Install golangci-lint
         run: go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.1

@@ -49,7 +49,8 @@ REFLECTOR_AVAILABLE=false
 
 # Auth credentials and TLS config for WebUI smoke tests
 export STEM_AUTH_USERNAME="smoketest"
-export STEM_AUTH_PASSWORD="SmokeTest2025!"
+: "${STEM_AUTH_PASSWORD:=$(openssl rand -base64 18)}"
+export STEM_AUTH_PASSWORD
 export STEM_TLS_ENABLED=false
 
 # Timing
