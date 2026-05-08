@@ -79,6 +79,10 @@ func (e *Executor) Execute(testType string, cfg *modtypes.TestConfig) (*modtypes
 		return nil, modtypes.ErrInvalidConfig
 	}
 
+	if e.ctx == nil {
+		return nil, fmt.Errorf("dataplane context is not configured")
+	}
+
 	// Configure the context.
 	err := e.configureContext(cfg)
 	if err != nil {
@@ -187,6 +191,10 @@ func (e *Executor) runMEF(testType string, cfg *modtypes.TestConfig) (any, error
 
 // configureContext sets up the dataplane context from test config.
 func (e *Executor) configureContext(cfg *modtypes.TestConfig) error {
+	if e.ctx == nil {
+		return fmt.Errorf("dataplane context is not configured")
+	}
+
 	dpCfg := &dataplane.Config{
 		Interface:      cfg.Interface,
 		LineRate:       0,

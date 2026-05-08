@@ -72,6 +72,11 @@ func (e *Executor) Execute(testType string, cfg *modtypes.TestConfig) (*modtypes
 		return nil, modtypes.ErrTestNotImplemented
 	}
 
+	if e.ctx == nil {
+		result.Error = "dataplane context is not configured"
+		return result, fmt.Errorf("trafficgen %s failed: %s", testType, result.Error)
+	}
+
 	config := &dataplane.TrafficGenConfig{
 		FrameSize:       cfg.FrameSize,
 		RatePct:         modtypes.GetFloat64Param(cfg.Params, "rate_pct", defaultRatePct),

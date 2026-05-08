@@ -73,6 +73,11 @@ func (e *Executor) Execute(testType string, cfg *modtypes.TestConfig) (*modtypes
 		Data:       nil,
 	}
 
+	if e.ctx == nil {
+		result.Error = "dataplane context is not configured"
+		return result, fmt.Errorf("measure %s failed: %s", testType, result.Error)
+	}
+
 	ycfg := buildY1731Config(cfg)
 
 	var data any
