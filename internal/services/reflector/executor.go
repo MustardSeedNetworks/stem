@@ -98,6 +98,11 @@ func (e *Executor) Execute(testType string, _ *Config) (*Result, error) {
 
 	switch testType {
 	case "reflect":
+		if e.dp == nil {
+			result.Error = "reflector dataplane is not configured"
+			return result, fmt.Errorf("start reflector: %s", result.Error)
+		}
+
 		// Start reflector mode.
 		err := e.dp.Start()
 		if err != nil {

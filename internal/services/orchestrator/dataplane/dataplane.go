@@ -9,8 +9,8 @@
 package dataplane
 
 /*
-#cgo CFLAGS: -I${SRCDIR}/../../../include
-#cgo LDFLAGS: -L${SRCDIR}/../../../build -lreflector -lpthread -lm
+#cgo CFLAGS: -I${SRCDIR}/../../../../include
+#cgo LDFLAGS: -L${SRCDIR}/../../../../build -lreflector -lpthread -lm
 #cgo linux LDFLAGS: -lxdp -lbpf
 
 #include <stdlib.h>
