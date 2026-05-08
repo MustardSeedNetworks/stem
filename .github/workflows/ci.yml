@@ -57,6 +57,20 @@ jobs:
           npm ci --prefix ui
           npm run build --prefix ui
 
+      - name: Install native build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            gcc-13 \
+            libbpf-dev \
+            libelf-dev \
+            libxdp-dev \
+            make \
+            zlib1g-dev
+
+      - name: Build native dataplane library
+        run: make CC=gcc-13 dataplane
+
       - name: Install golangci-lint
         run: go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.1
 
@@ -224,9 +238,6 @@ jobs:
           
           if [ -s cppcheck.log ]; then
             echo "::warning::cppcheck found issues"
-          fi
-          else
-            echo "No C source files found, skipping cppcheck"
           fi
 
   # ============================================================================
