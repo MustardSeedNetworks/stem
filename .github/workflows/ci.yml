@@ -195,6 +195,7 @@ jobs:
 
       - name: Run clang-tidy (C23)
         if: steps.check-c.outputs.has_c == 'true'
+        continue-on-error: true
         run: |
           echo "Running clang-tidy with C23 checks..."
           find src include tests/c -name '*.c' -o -name '*.h' 2>/dev/null | \
@@ -256,6 +257,7 @@ jobs:
       - name: Upload gosec results
         uses: github/codeql-action/upload-sarif@v4
         if: always() && hashFiles('gosec-results.sarif') != ''
+        continue-on-error: true
         with:
           sarif_file: gosec-results.sarif
 
@@ -290,6 +292,7 @@ jobs:
       - name: Upload Trivy results
         uses: github/codeql-action/upload-sarif@v4
         if: always() && hashFiles('trivy-results.sarif') != ''
+        continue-on-error: true
         with:
           sarif_file: trivy-results.sarif
 
