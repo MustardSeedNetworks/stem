@@ -139,7 +139,7 @@ DOCKER_TAG?=$(VERSION)
 
 # C compiler settings - C23 standard
 CC := gcc
-CFLAGS := -std=c23 -Wall -Wextra -Wpedantic -O3 -march=native -pthread -Iinclude
+CFLAGS := -D_GNU_SOURCE -D_DEFAULT_SOURCE -std=c23 -Wall -Wextra -Wpedantic -O3 -march=native -pthread -Iinclude
 C_LDFLAGS := -pthread -lm
 
 # C sources - both dataplane and reflector (excluding main.c)
