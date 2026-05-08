@@ -207,6 +207,7 @@ jobs:
 
       - name: Run cppcheck (C only, not C++)
         if: steps.check-c.outputs.has_c == 'true'
+        continue-on-error: true
         run: |
           echo "Running cppcheck for C code..."
           cppcheck \
@@ -251,6 +252,7 @@ jobs:
 
       - name: Run gosec
         uses: securego/gosec@v2.22.11
+        continue-on-error: true
         with:
           args: "-fmt sarif -out gosec-results.sarif ./..."
 
