@@ -116,6 +116,11 @@ func ensureSelfSignedCert(certsDir string) (string, string, error) {
 	if err := os.MkdirAll(certsDir, 0o700); err != nil {
 		return "", "", fmt.Errorf("create certs directory: %w", err)
 	}
+	certRoot, err := os.OpenRoot(certsDir)
+	if err != nil {
+		return "", "", fmt.Errorf("open certs directory: %w", err)
+	}
+	defer func() { _ = certRoot.Close() }()
 
 	// Generate private key with 4096-bit RSA.
 	privateKey, err := rsa.GenerateKey(rand.Reader, rsaKeyBits)
@@ -135,12 +140,12 @@ func ensureSelfSignedCert(certsDir string) (string, string, error) {
 	}
 
 	// Write certificate.
-	if writeErr := writeCertificate(certFile, certDER); writeErr != nil {
+	if writeErr := writeCertificate(certRoot, filepath.Base(certFile), certDER); writeErr != nil {
 		return "", "", writeErr
 	}
 
 	// Write private key with restricted permissions.
-	if writeErr := writePrivateKey(keyFile, privateKey); writeErr != nil {
+	if writeErr := writePrivateKey(certRoot, filepath.Base(keyFile), privateKey); writeErr != nil {
 		return "", "", writeErr
 	}
 
@@ -197,8 +202,8 @@ func createSelfSignedCert(template *x509.Certificate, privateKey *rsa.PrivateKey
 	)
 }
 
-func writeCertificate(certFile string, certDER []byte) error {
-	certOut, err := os.Create(certFile)
+func writeCertificate(root *os.Root, certFile string, certDER []byte) error {
+	certOut, err := root.Create(certFile)
 	if err != nil {
 		return fmt.Errorf("create cert file: %w", err)
 	}
@@ -214,8 +219,8 @@ func writeCertificate(certFile string, certDER []byte) error {
 	return nil
 }
 
-func writePrivateKey(keyFile string, privateKey *rsa.PrivateKey) error {
-	keyOut, err := os.OpenFile(keyFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600)
+func writePrivateKey(root *os.Root, keyFile string, privateKey *rsa.PrivateKey) error {
+	keyOut, err := root.OpenFile(keyFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600)
 	if err != nil {
 		return fmt.Errorf("create key file: %w", err)
 	}
