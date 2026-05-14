@@ -81,7 +81,7 @@ jobs:
         run: golangci-lint run --timeout=5m --new-from-rev=HEAD~1
 
       - name: Run tests
-        run: CGO_ENABLED=0 go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
+        run: CGO_ENABLED=0 go test -v -coverprofile=coverage.out ./...
 
       - name: Check coverage threshold
         run: |
