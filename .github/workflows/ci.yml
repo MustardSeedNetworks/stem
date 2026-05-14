@@ -534,7 +534,7 @@ jobs:
           path: internal/api/dist/
 
       - name: Build backend
-        run: go build -o bin/stem ./cmd/stem/
+        run: CGO_ENABLED=0 go build -o bin/stem ./cmd/stem/
 
       - name: Start server
         run: |
@@ -593,7 +593,7 @@ jobs:
         run: npm ci
 
       - name: Build backend
-        run: go build -o bin/stem ./cmd/stem/
+        run: CGO_ENABLED=0 go build -o bin/stem ./cmd/stem/
 
       - name: Install Playwright browsers
         working-directory: ui
