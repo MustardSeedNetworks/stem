@@ -27,6 +27,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 * **ci:** resolve stem workflow blockers ([314785d](https://github.com/krisarmstrong/stem/commit/314785d6c3f3a0f763e3758b3ba64fffdddf50c5))
 * **ci:** restore stem validation pipeline ([c1a26b2](https://github.com/krisarmstrong/stem/commit/c1a26b20afce1f59e5a0b694d263d62860b1c41f))
 * **ci:** run stub unit tests without race ([6272714](https://github.com/krisarmstrong/stem/commit/62727147bada8993d1ce1682e64925c09aee02b6))
+* **ci:** run stem intel macos release on current runner ([7f9d234](https://github.com/krisarmstrong/stem/commit/7f9d23427a7a4466b8626f6b6d8ee76179df6f10))
 * **ci:** satisfy servicetest lint ([ec275df](https://github.com/krisarmstrong/stem/commit/ec275df79aa63360ee069f492469d13c6633fc70))
 * **ci:** scope stem container and license checks ([d267154](https://github.com/krisarmstrong/stem/commit/d2671547ae280830d09777768d5635d58721dfd6))
 * **ci:** scope stem e2e smoke suite ([4ce2153](https://github.com/krisarmstrong/stem/commit/4ce2153966bff419ad4fb47f75edbd336db2c9a9))
