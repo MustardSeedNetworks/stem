@@ -474,7 +474,7 @@ func (s *Server) setupRoutes() {
 	s.handleRateLimited("/api/v1/modules/", s.handleModuleByName, s.apiLimiter)
 
 	// Static files (embedded UI).
-	staticFS, err := fs.Sub(staticFiles, "dist")
+	staticFS, err := fs.Sub(staticFiles, "ui")
 	if err != nil {
 		logging.Warn("Could not load embedded UI", "error", err)
 		// Serve a simple fallback page.
