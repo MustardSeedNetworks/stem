@@ -158,7 +158,6 @@ type Server struct {
 	csrfManager          *auth.CSRFManager          // CSRF token manager for protection against CSRF attacks
 	setupTokenManager    *auth.SetupTokenManager    // Setup token manager for first-time setup security
 	setupComplete        bool                       // Whether initial setup has been completed
-	setupModeStartTime   time.Time                  // When setup mode was activated (for timeout)
 	recoveryTokenManager *auth.RecoveryTokenManager // Recovery token manager for password recovery
 	dataDir              string                     // Application data directory for recovery files
 	acmeChallengeServer  *http.Server               // HTTP-01 challenge server for ACME
@@ -254,7 +253,6 @@ func NewServer(port int) (*Server, error) {
 	s.csrfManager = auth.NewCSRFManager(logging.Get())
 	s.setupTokenManager = auth.NewSetupTokenManager()
 	s.setupComplete = false
-	s.setupModeStartTime = time.Time{}
 	s.recoveryTokenManager = auth.NewRecoveryTokenManager(getDataDir())
 	s.dataDir = getDataDir()
 	s.setupRoutes()

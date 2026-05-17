@@ -7,34 +7,33 @@
  */
 
 import {
-  Activity,
-  Book,
-  BookOpen,
-  Check,
-  ChevronRight,
-  Clock,
-  Copy,
-  Cpu,
-  GraduationCap,
-  Radio,
-  Search,
-  Settings2,
-  X,
-  Zap,
+    Activity,
+    Book,
+    BookOpen,
+    Check,
+    ChevronRight,
+    Clock,
+    Copy,
+    Cpu,
+    GraduationCap,
+    Radio,
+    Search,
+    Settings2,
+    X,
+    Zap,
 } from 'lucide-react';
 import type { ReactElement } from 'react';
 import { useState } from 'react';
 import {
-  categories,
-  type GlossaryEntry,
-  getTestsByCategory,
-  glossary,
-  searchGlossary,
-  searchTests,
-  type TestHelp,
-  type Tutorial,
-  type TutorialStep,
-  tutorials,
+    categories,
+    getTestsByCategory,
+    glossary,
+    type GlossaryEntry,
+    searchGlossary,
+    searchTests,
+    type TestHelp,
+    type Tutorial,
+    tutorials,
 } from '../data/help-content';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 import { cn, icon as iconTokens, layout, modal, radius, spacing } from '../styles/theme';
@@ -464,9 +463,7 @@ function TestDetailView({
                   <code className={cn('code', 'bg-surface-raised px-1.5 py-0.5', radius.default)}>
                     {param.flag}
                   </code>
-                  {param.required ? (
-                    <span className="caption text-status-warning">required</span>
-                  ) : null}
+                  {param.required ? <span className="caption text-status-warning">required</span> : null}
                 </div>
                 <p className="caption mt-1">
                   Type: {param.type} | Default: {param.defaultValue}
@@ -554,7 +551,7 @@ function TestDetailView({
         <div className="pt-4 border-t border-surface-border">
           <h4 className={cn('section-title', spacing.margin.bottom.inline)}>Related Tests</h4>
           <div className={layout.inline.wrap}>
-            {test.seeAlso.map((related: string) => (
+            {test.seeAlso.map((related) => (
               <span
                 key={related}
                 className={cn('caption bg-surface-base px-2 py-1', radius.default)}
@@ -577,10 +574,10 @@ function TutorialsTab({
   searchQuery: string;
   onSelectTutorial: (tutorial: Tutorial) => void;
 }): ReactElement {
-  const tutorialList: Tutorial[] = Object.values(tutorials);
+  const tutorialList = Object.values(tutorials);
   const filtered = searchQuery
     ? tutorialList.filter(
-        (t: Tutorial) =>
+        (t) =>
           t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
           t.description.toLowerCase().includes(searchQuery.toLowerCase()),
       )
@@ -592,7 +589,7 @@ function TutorialsTab({
         Step-by-step guides to help you get started with network testing.
       </p>
       <div className="stack-sm">
-        {filtered.map((tutorial: Tutorial) => (
+        {filtered.map((tutorial) => (
           <button
             type="button"
             key={tutorial.id}
@@ -662,7 +659,7 @@ function TutorialDetailView({
 
       {/* Steps */}
       <div className="stack-lg">
-        {tutorial.steps.map((step: TutorialStep, stepIndex: number) => (
+        {tutorial.steps.map((step, stepIndex) => (
           <div key={step.title} className={cn('bg-surface-base', radius.lg, spacing.pad.default)}>
             <div className={cn(layout.inline.default, spacing.margin.bottom.inline)}>
               <span
@@ -757,12 +754,12 @@ function GlossaryTab({
       <p className="body-small text-text-muted">
         Network testing terminology explained {simpleMode ? 'simply' : 'technically'}.
       </p>
-      {searchQuery ? (
+      {searchQuery && (
         <p className="caption">
           Found {glossaryEntries.length} term
           {glossaryEntries.length !== 1 ? 's' : ''}
         </p>
-      ) : null}
+      )}
       {categoryNames.map((category) => (
         <CollapsibleSection
           key={category}
@@ -770,7 +767,7 @@ function GlossaryTab({
           defaultOpen={searchQuery.length > 0}
         >
           <div className="stack-sm">
-            {byCategory[category].map((entry: GlossaryEntry) => (
+            {byCategory[category].map((entry) => (
               <div key={entry.term} className={cn('bg-surface-base', radius.lg, spacing.pad.sm)}>
                 <div className={layout.inline.default}>
                   <span className="font-medium body-small text-text-primary">{entry.term}</span>
@@ -782,7 +779,7 @@ function GlossaryTab({
                 {entry.related.length > 0 && (
                   <div className={cn(layout.inline.tight, 'mt-2')}>
                     <span className="caption">Related:</span>
-                    {entry.related.map((r: string) => (
+                    {entry.related.map((r) => (
                       <span key={r} className="caption text-brand-primary">
                         {r}
                       </span>

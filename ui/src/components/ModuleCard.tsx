@@ -7,16 +7,16 @@
  */
 
 import {
-  Check,
-  ChevronDown,
-  ChevronUp,
-  Clock,
-  Play,
-  Power,
-  RefreshCw,
-  Settings2,
-  Square,
-  XCircle,
+    Check,
+    ChevronDown,
+    ChevronUp,
+    Clock,
+    Play,
+    Power,
+    RefreshCw,
+    Settings2,
+    Square,
+    XCircle,
 } from 'lucide-react';
 import type { ReactElement } from 'react';
 import { useState } from 'react';
@@ -208,9 +208,7 @@ function FrameSizeResultsTable({
                   getLossColorClass(result.lossPercent ?? 0, result.status === 'pending'),
                 )}
               >
-                {result.status === 'pending'
-                  ? '\u2014'
-                  : `${(result.lossPercent ?? 0).toFixed(2)}%`}
+                {result.status === 'pending' ? '\u2014' : `${(result.lossPercent ?? 0).toFixed(2)}%`}
               </td>
               <td className="py-2 px-2 text-right font-mono text-text-secondary">
                 <RateCellContent result={result} />
@@ -256,14 +254,20 @@ function ServiceFlowResultsTable({ results }: { results: ServiceFlowResult[] }):
           )}
         >
           <div className="flex items-center justify-between mb-1">
-            <span className="text-sm font-medium text-text-primary">{flow.flowName}</span>
+            <span className="text-sm font-medium text-text-primary">
+              {flow.flowName}
+            </span>
             <span
               className={cn(
                 'text-xs px-2 py-0.5 rounded-full',
-                flow.status === 'completed' && 'bg-status-success/10 text-status-success',
-                flow.status === 'running' && 'bg-status-info/10 text-status-info',
-                flow.status === 'pending' && 'bg-surface-base text-text-muted',
-                flow.status === 'error' && 'bg-status-error/10 text-status-error',
+                flow.status === 'completed' &&
+                  'bg-status-success/10 text-status-success',
+                flow.status === 'running' &&
+                  'bg-status-info/10 text-status-info',
+                flow.status === 'pending' &&
+                  'bg-surface-base text-text-muted',
+                flow.status === 'error' &&
+                  'bg-status-error/10 text-status-error',
               )}
             >
               {flow.status}
@@ -322,10 +326,14 @@ function OamResultsTable({ results }: { results: OamMeasurementResult[] }): Reac
             <span
               className={cn(
                 'text-xs px-2 py-0.5 rounded-full',
-                measurement.status === 'completed' && 'bg-status-success/10 text-status-success',
-                measurement.status === 'running' && 'bg-status-info/10 text-status-info',
-                measurement.status === 'pending' && 'bg-surface-base text-text-muted',
-                measurement.status === 'error' && 'bg-status-error/10 text-status-error',
+                measurement.status === 'completed' &&
+                  'bg-status-success/10 text-status-success',
+                measurement.status === 'running' &&
+                  'bg-status-info/10 text-status-info',
+                measurement.status === 'pending' &&
+                  'bg-surface-base text-text-muted',
+                measurement.status === 'error' &&
+                  'bg-status-error/10 text-status-error',
               )}
             >
               {measurement.status}
@@ -360,220 +368,6 @@ function OamResultsTable({ results }: { results: OamMeasurementResult[] }): Reac
   );
 }
 
-/** Status indicator badge for module card */
-function ModuleStatusIndicator({
-  status,
-  isRunning,
-}: {
-  status: ModuleStatus;
-  isRunning: boolean;
-}): ReactElement | null {
-  if (isRunning) {
-    return (
-      <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-status-success/10">
-        <span className="w-2 h-2 rounded-full bg-status-success animate-pulse" />
-        <span className="text-xs font-medium text-status-success">
-          {status.status === 'starting' ? 'Starting...' : status.currentTest || 'Running'}
-        </span>
-      </div>
-    );
-  }
-  if (status.status === 'completed') {
-    return (
-      <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-status-info/10">
-        <span className="text-xs font-medium text-status-info">Completed</span>
-      </div>
-    );
-  }
-  if (status.status === 'error') {
-    return (
-      <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-status-error/10">
-        <span className="text-xs font-medium text-status-error">
-          Error{status.message ? `: ${status.message}` : ''}
-        </span>
-      </div>
-    );
-  }
-  return null;
-}
-
-/** Start/Stop button for module card */
-function ModuleActionButton({
-  config,
-  isRunning,
-  enabledTestCount,
-  onStart,
-  onStop,
-}: {
-  config: ModuleConfig;
-  isRunning: boolean;
-  enabledTestCount: number;
-  onStart: () => void;
-  onStop: () => void;
-}): ReactElement | null {
-  if (!config.enabled) {
-    return null;
-  }
-  if (isRunning) {
-    return (
-      <button
-        type="button"
-        onClick={onStop}
-        className={cn(
-          'px-4 py-2 rounded-lg flex items-center gap-2 transition-colors',
-          'bg-status-error/10 text-status-error',
-          'hover:bg-status-error/20',
-        )}
-      >
-        <Square className="w-4 h-4" />
-        <span className="text-sm font-medium">Stop</span>
-      </button>
-    );
-  }
-  return (
-    <button
-      type="button"
-      onClick={onStart}
-      disabled={enabledTestCount === 0}
-      className={cn(
-        'px-4 py-2 rounded-lg flex items-center gap-2 transition-colors',
-        enabledTestCount > 0
-          ? 'bg-brand-primary text-white hover:bg-brand-primary'
-          : 'bg-surface-base text-text-muted cursor-not-allowed',
-      )}
-    >
-      <Play className="w-4 h-4" />
-      <span className="text-sm font-medium">Start</span>
-    </button>
-  );
-}
-
-/** Results section for module card */
-function ModuleResultsSection({
-  results,
-  config,
-}: {
-  results: ModuleTestResults | null | undefined;
-  config: ModuleConfig;
-}): ReactElement {
-  return (
-    <div className="border-t border-surface-border bg-surface-base/50">
-      <div className={spacing.pad.sm}>
-        <div className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">
-          {results?.testType || 'Test'} Results
-        </div>
-
-        {/* Frame Size Results (RFC 2544 style) */}
-        {results?.frameSizeResults && results.frameSizeResults.length > 0 && (
-          <FrameSizeResultsTable results={results.frameSizeResults} color={config.color} />
-        )}
-
-        {/* Service Flow Results (Y.1564 style) */}
-        {results?.serviceFlowResults && results.serviceFlowResults.length > 0 && (
-          <ServiceFlowResultsTable results={results.serviceFlowResults} />
-        )}
-
-        {/* OAM Results (Y.1731 style) */}
-        {results?.oamResults && results.oamResults.length > 0 && (
-          <OamResultsTable results={results.oamResults} />
-        )}
-
-        {/* Error message */}
-        {results?.error ? (
-          <div className="mt-2 p-2 rounded-lg bg-status-error/10 border border-status-error/20">
-            <span className="text-xs text-status-error">{results.error}</span>
-          </div>
-        ) : null}
-
-        {/* Duration */}
-        {results?.duration !== undefined ? (
-          <div className="mt-2 text-xs text-text-muted">
-            Duration: {(results.duration / 1000).toFixed(1)}s
-          </div>
-        ) : null}
-      </div>
-    </div>
-  );
-}
-
-/** Expanded test list section for module card */
-function ModuleExpandedContent({
-  config,
-  status,
-  isRunning,
-  onToggleAutoStart,
-  onToggleTest,
-}: {
-  config: ModuleConfig;
-  status: ModuleStatus;
-  isRunning: boolean;
-  onToggleAutoStart: (enabled: boolean) => void;
-  onToggleTest: (testId: string, enabled: boolean) => void;
-}): ReactElement {
-  return (
-    <div className="border-t border-surface-border">
-      {/* Auto-start Toggle */}
-      <div className={cn(spacing.pad.sm, 'flex items-center justify-between bg-surface-base')}>
-        <div className="flex items-center gap-2">
-          <RefreshCw className={cn(iconTokens.size.sm, 'text-text-muted')} />
-          <span className="text-sm text-text-secondary">Auto-start on link</span>
-        </div>
-        <button
-          type="button"
-          onClick={(): void => onToggleAutoStart(!config.autoStart)}
-          className={cn(
-            'w-10 h-6 rounded-full relative transition-colors',
-            config.autoStart ? 'bg-brand-primary' : 'bg-surface-border',
-          )}
-        >
-          <span
-            className={cn(
-              'absolute top-1 w-4 h-4 rounded-full bg-white transition-transform',
-              config.autoStart ? 'translate-x-5' : 'translate-x-1',
-            )}
-          />
-        </button>
-      </div>
-
-      {/* Test List */}
-      <div className={spacing.pad.sm}>
-        <div className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">
-          Tests
-        </div>
-        <div className="space-y-1">
-          {config.tests.map((test) => (
-            <label
-              key={test.id}
-              className={cn(
-                'flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors',
-                'hover:bg-surface-hover',
-                test.enabled ? '' : 'opacity-60',
-              )}
-            >
-              <input
-                type="checkbox"
-                checked={test.enabled}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                  onToggleTest(test.id, e.target.checked)
-                }
-                className="w-4 h-4"
-                style={{ accentColor: config.color }}
-              />
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium text-text-primary">{test.name}</div>
-                <div className="text-xs text-text-muted truncate">{test.description}</div>
-              </div>
-              {isRunning && status.currentTest === test.id && (
-                <span className="w-2 h-2 rounded-full bg-status-success animate-pulse" />
-              )}
-            </label>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export function ModuleCard({
   config,
   status,
@@ -588,7 +382,13 @@ export function ModuleCard({
   const [expanded, setExpanded] = useState(false);
   const enabledTestCount = config.tests.filter((t) => t.enabled).length;
   const isRunning = status.status === 'running' || status.status === 'starting';
-  const hasResults = checkHasResults(results);
+  const hasResults =
+    results &&
+    ((results.frameSizeResults && results.frameSizeResults.length > 0) ||
+      (results.serviceFlowResults && results.serviceFlowResults.length > 0) ||
+      (results.oamResults && results.oamResults.length > 0));
+
+  // Auto-expand when running or has results to show
   const showResults = isRunning || status.status === 'completed' || status.status === 'error';
 
   return (
@@ -609,7 +409,7 @@ export function ModuleCard({
           {/* Enable Toggle */}
           <button
             type="button"
-            onClick={(): void => onToggleModule(!config.enabled)}
+            onClick={() => onToggleModule(!config.enabled)}
             className={cn(
               'w-8 h-8 rounded-lg flex items-center justify-center transition-colors',
               config.enabled
@@ -628,7 +428,9 @@ export function ModuleCard({
                 className="w-3 h-3 rounded-full flex-shrink-0"
                 style={{ backgroundColor: config.color }}
               />
-              <h3 className="font-semibold text-text-primary truncate">{config.displayName}</h3>
+              <h3 className="font-semibold text-text-primary truncate">
+                {config.displayName}
+              </h3>
               <span className="text-xs px-2 py-0.5 rounded-full bg-surface-base text-text-muted">
                 {config.standard}
               </span>
@@ -639,7 +441,26 @@ export function ModuleCard({
           </div>
 
           {/* Status Indicator */}
-          <ModuleStatusIndicator status={status} isRunning={isRunning} />
+          {isRunning ? (
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-status-success/10">
+              <span className="w-2 h-2 rounded-full bg-status-success animate-pulse" />
+              <span className="text-xs font-medium text-status-success">
+                {status.status === 'starting' ? 'Starting...' : status.currentTest || 'Running'}
+              </span>
+            </div>
+          ) : null}
+          {status.status === 'completed' && (
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-status-info/10">
+              <span className="text-xs font-medium text-status-info">Completed</span>
+            </div>
+          )}
+          {status.status === 'error' && (
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-status-error/10">
+              <span className="text-xs font-medium text-status-error">
+                Error{status.message ? `: ${status.message}` : ''}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Actions */}
@@ -659,18 +480,42 @@ export function ModuleCard({
           </button>
 
           {/* Start/Stop Button */}
-          <ModuleActionButton
-            config={config}
-            isRunning={isRunning}
-            enabledTestCount={enabledTestCount}
-            onStart={onStart}
-            onStop={onStop}
-          />
+          {config.enabled ? (
+            isRunning ? (
+              <button
+                type="button"
+                onClick={onStop}
+                className={cn(
+                  'px-4 py-2 rounded-lg flex items-center gap-2 transition-colors',
+                  'bg-status-error/10 text-status-error',
+                  'hover:bg-status-error/20',
+                )}
+              >
+                <Square className="w-4 h-4" />
+                <span className="text-sm font-medium">Stop</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={onStart}
+                disabled={enabledTestCount === 0}
+                className={cn(
+                  'px-4 py-2 rounded-lg flex items-center gap-2 transition-colors',
+                  enabledTestCount > 0
+                    ? 'bg-brand-primary text-white hover:bg-brand-primary'
+                    : 'bg-surface-base text-text-muted cursor-not-allowed',
+                )}
+              >
+                <Play className="w-4 h-4" />
+                <span className="text-sm font-medium">Start</span>
+              </button>
+            )
+          ) : null}
 
           {/* Expand Toggle */}
           <button
             type="button"
-            onClick={(): void => setExpanded(!expanded)}
+            onClick={() => setExpanded(!expanded)}
             className={cn(
               'p-2 rounded-lg transition-colors',
               'text-text-muted hover:text-text-primary',
@@ -684,42 +529,119 @@ export function ModuleCard({
       </div>
 
       {/* Test Results Section - Always visible when running or has results */}
-      {config.enabled && showResults && hasResults ? (
-        <ModuleResultsSection results={results} config={config} />
-      ) : null}
+      {config.enabled && showResults && hasResults && (
+        <div className="border-t border-surface-border bg-surface-base/50">
+          <div className={spacing.pad.sm}>
+            <div className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">
+              {results?.testType || 'Test'} Results
+            </div>
+
+            {/* Frame Size Results (RFC 2544 style) */}
+            {results?.frameSizeResults && results.frameSizeResults.length > 0 && (
+              <FrameSizeResultsTable results={results.frameSizeResults} color={config.color} />
+            )}
+
+            {/* Service Flow Results (Y.1564 style) */}
+            {results?.serviceFlowResults && results.serviceFlowResults.length > 0 && (
+              <ServiceFlowResultsTable results={results.serviceFlowResults} />
+            )}
+
+            {/* OAM Results (Y.1731 style) */}
+            {results?.oamResults && results.oamResults.length > 0 && (
+              <OamResultsTable results={results.oamResults} />
+            )}
+
+            {/* Error message */}
+            {results?.error && (
+              <div className="mt-2 p-2 rounded-lg bg-status-error/10 border border-status-error/20">
+                <span className="text-xs text-status-error">{results.error}</span>
+              </div>
+            )}
+
+            {/* Duration */}
+            {results?.duration !== null && (
+              <div className="mt-2 text-xs text-text-muted">
+                Duration: {(results.duration / 1000).toFixed(1)}s
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Expanded Content - Settings and Test Selection */}
-      {expanded && config.enabled ? (
-        <ModuleExpandedContent
-          config={config}
-          status={status}
-          isRunning={isRunning}
-          onToggleAutoStart={onToggleAutoStart}
-          onToggleTest={onToggleTest}
-        />
-      ) : null}
+      {expanded && config.enabled && (
+        <div className="border-t border-surface-border">
+          {/* Auto-start Toggle */}
+          <div
+            className={cn(
+              spacing.pad.sm,
+              'flex items-center justify-between bg-surface-base',
+            )}
+          >
+            <div className="flex items-center gap-2">
+              <RefreshCw className={cn(iconTokens.size.sm, 'text-text-muted')} />
+              <span className="text-sm text-text-secondary">Auto-start on link</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => onToggleAutoStart(!config.autoStart)}
+              className={cn(
+                'w-10 h-6 rounded-full relative transition-colors',
+                config.autoStart
+                  ? 'bg-brand-primary'
+                  : 'bg-surface-border',
+              )}
+            >
+              <span
+                className={cn(
+                  'absolute top-1 w-4 h-4 rounded-full bg-white transition-transform',
+                  config.autoStart ? 'translate-x-5' : 'translate-x-1',
+                )}
+              />
+            </button>
+          </div>
+
+          {/* Test List */}
+          <div className={spacing.pad.sm}>
+            <div className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">
+              Tests
+            </div>
+            <div className="space-y-1">
+              {config.tests.map((test) => (
+                <label
+                  key={test.id}
+                  className={cn(
+                    'flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors',
+                    'hover:bg-surface-hover',
+                    test.enabled ? '' : 'opacity-60',
+                  )}
+                >
+                  <input
+                    type="checkbox"
+                    checked={test.enabled}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onToggleTest(test.id, e.target.checked)}
+                    className="w-4 h-4"
+                    style={{ accentColor: config.color }}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-text-primary">
+                      {test.name}
+                    </div>
+                    <div className="text-xs text-text-muted truncate">
+                      {test.description}
+                    </div>
+                  </div>
+                  {isRunning && status.currentTest === test.id && (
+                    <span className="w-2 h-2 rounded-full bg-status-success animate-pulse" />
+                  )}
+                </label>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
-}
-
-/** Helper to check if results have data */
-function checkHasResults(results: ModuleTestResults | null | undefined): boolean {
-  if (!results) {
-    return false;
-  }
-  const hasFrameSizeResults =
-    results.frameSizeResults !== null &&
-    results.frameSizeResults !== undefined &&
-    results.frameSizeResults.length > 0;
-  const hasServiceFlowResults =
-    results.serviceFlowResults !== null &&
-    results.serviceFlowResults !== undefined &&
-    results.serviceFlowResults.length > 0;
-  const hasOamResults =
-    results.oamResults !== null &&
-    results.oamResults !== undefined &&
-    results.oamResults.length > 0;
-  return hasFrameSizeResults || hasServiceFlowResults || hasOamResults;
 }
 
 export default ModuleCard;

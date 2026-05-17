@@ -5,7 +5,6 @@ package auth_test
 import (
 	"sync"
 	"testing"
-	"time"
 
 	"github.com/krisarmstrong/stem/internal/auth"
 )
@@ -223,9 +222,21 @@ func TestSetupTokenManager_Concurrent(t *testing.T) {
 	wg.Wait()
 }
 
-func TestSetupTokenExpiry(t *testing.T) {
-	// Verify the expiry constant is reasonable.
-	if auth.SetupTokenExpiry != 15*time.Minute {
-		t.Errorf("SetupTokenExpiry = %v, want 15 minutes", auth.SetupTokenExpiry)
+func TestSetupTokenSingleUse(t *testing.T) {
+	// Verify that tokens are single-use (not time-based expiry).
+	mgr := auth.NewSetupTokenManager()
+	token, err := mgr.GenerateToken()
+	if err != nil {
+		t.Fatalf("GenerateToken() error: %v", err)
+	}
+
+	// First use should succeed.
+	if !mgr.ValidateToken(token) {
+		t.Error("ValidateToken() should succeed on first use")
+	}
+
+	// Second use should fail.
+	if mgr.ValidateToken(token) {
+		t.Error("ValidateToken() should fail on second use (single-use)")
 	}
 }

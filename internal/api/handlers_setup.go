@@ -5,7 +5,6 @@ package api
 import (
 	"net/http"
 	"os"
-	"time"
 
 	"github.com/krisarmstrong/stem/internal/auth"
 	"github.com/krisarmstrong/stem/internal/logging"
@@ -164,5 +163,4 @@ func (s *Server) needsInitialSetup() bool {
 // markSetupComplete marks the initial setup as complete.
 func (s *Server) markSetupComplete() {
 	s.setupComplete = true
-	s.setupModeStartTime = time.Time{} // Reset setup mode timer.
 }

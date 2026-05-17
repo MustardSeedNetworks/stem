@@ -29,6 +29,7 @@ import (
 	"time"
 
 	"github.com/krisarmstrong/stem/internal/api"
+	"github.com/krisarmstrong/stem/internal/auth"
 	"github.com/krisarmstrong/stem/internal/help"
 	"github.com/krisarmstrong/stem/internal/license"
 	"github.com/krisarmstrong/stem/internal/logging"
@@ -118,6 +119,8 @@ func main() {
 	}
 
 	switch os.Args[1] {
+	case "auth":
+		authCmd(os.Args[2:])
 	case "reflect":
 		if cmdErr := reflectCmd(os.Args[2:]); cmdErr != nil {
 			os.Exit(1)
@@ -168,6 +171,7 @@ USAGE:
     stem <command> [options]
 
 COMMANDS:
+    auth         Authentication management (reset-password)
     reflect      Start packet reflector (Tier 1 license)
     test         Run network tests (Tier 2 license required)
     web          Start WebUI server
@@ -1132,7 +1136,16 @@ func webCmd(args []string) {
 		os.Exit(1)
 	}
 
+<<<<<<< Updated upstream
 	_, _ = fmt.Fprintf(os.Stdout, "%s %s - WebUI Server\n", ProductName, version.GetVersion())
+||||||| Stash base
+	_, _ = fmt.Fprintf(os.Stdout, "%s %s - WebUI Server\n", ProductName, version.Version())
+=======
+	// First boot: auto-generate credentials if not configured.
+	ensureStemCredentials(*port)
+
+	_, _ = fmt.Fprintf(os.Stdout, "%s %s - WebUI Server\n", ProductName, version.Version())
+>>>>>>> Stashed changes
 	_, _ = fmt.Fprintf(os.Stdout, "Starting on http://%s:%d\n", *host, *port)
 
 	srv, err := api.NewServer(*port)
@@ -1149,6 +1162,112 @@ func webCmd(args []string) {
 		_, _ = fmt.Fprintf(os.Stderr, "Server error: %v\n", err)
 		os.Exit(1)
 	}
+}
+
+const (
+	// stemEnvironmentFile is where auto-generated credentials are persisted.
+	stemEnvironmentFile = "/etc/stem/environment"
+	// stemPasswordLength is the length for auto-generated passwords.
+	stemPasswordLength = 16
+)
+
+// ensureStemCredentials generates credentials on first boot if not configured.
+func ensureStemCredentials(port int) {
+	if os.Getenv("STEM_AUTH_PASSWORD") != "" {
+		return
+	}
+
+	password, err := auth.GenerateSecurePassword(stemPasswordLength)
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "Fatal: Failed to generate password: %v\n", err)
+		os.Exit(1)
+	}
+
+	username := os.Getenv("STEM_AUTH_USERNAME")
+	if username == "" {
+		username = "admin"
+		os.Setenv("STEM_AUTH_USERNAME", username)
+	}
+	os.Setenv("STEM_AUTH_PASSWORD", password)
+
+	writeEnvironmentFile(username, password)
+	printFirstBootCredentials(username, password, port)
+}
+
+// writeEnvironmentFile persists credentials to the systemd environment file.
+func writeEnvironmentFile(username, password string) {
+	dir := "/etc/stem"
+	if mkdirErr := os.MkdirAll(dir, 0o750); mkdirErr != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "Warning: Failed to create %s: %v\n", dir, mkdirErr)
+		return
+	}
+
+	content := fmt.Sprintf("STEM_AUTH_USERNAME=%s\nSTEM_AUTH_PASSWORD=%s\n", username, password)
+	if writeErr := os.WriteFile(stemEnvironmentFile, []byte(content), 0o600); writeErr != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "Warning: Failed to write environment file: %v\n", writeErr)
+	}
+}
+
+// printFirstBootCredentials prints the auto-generated credentials banner.
+func printFirstBootCredentials(username, password string, port int) {
+	_, _ = fmt.Fprintf(os.Stderr, `
+╔══════════════════════════════════════════════════════════════════╗
+║              THE STEM - FIRST BOOT CREDENTIALS                   ║
+║              Mustard Seed Networks                               ║
+╠══════════════════════════════════════════════════════════════════╣
+║  Username: %-53s ║
+║  Password: %-53s ║
+║  Web UI:   http://localhost:%-38d ║
+║                                                                  ║
+║  IMPORTANT: Save this password now!                              ║
+║  Use 'stem auth reset-password' to generate a new one.           ║
+╚══════════════════════════════════════════════════════════════════╝
+`, username, password, port)
+}
+
+// authCmd handles the auth subcommand.
+func authCmd(args []string) {
+	if len(args) == 0 {
+		_, _ = fmt.Fprintln(os.Stderr, "Usage: stem auth <subcommand>")
+		_, _ = fmt.Fprintln(os.Stderr, "")
+		_, _ = fmt.Fprintln(os.Stderr, "Subcommands:")
+		_, _ = fmt.Fprintln(os.Stderr, "  reset-password   Generate a new admin password")
+		os.Exit(1)
+	}
+
+	switch args[0] {
+	case "reset-password":
+		authResetPassword()
+	default:
+		_, _ = fmt.Fprintf(os.Stderr, "Unknown auth subcommand: %s\n", args[0])
+		os.Exit(1)
+	}
+}
+
+// authResetPassword generates a new password and writes it to the environment file.
+func authResetPassword() {
+	password, err := auth.GenerateSecurePassword(stemPasswordLength)
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "Error: Failed to generate password: %v\n", err)
+		os.Exit(1)
+	}
+
+	username := os.Getenv("STEM_AUTH_USERNAME")
+	if username == "" {
+		username = "admin"
+	}
+
+	writeEnvironmentFile(username, password)
+
+	_, _ = fmt.Fprintln(os.Stdout, "╔══════════════════════════════════════════════════════════════════╗")
+	_, _ = fmt.Fprintln(os.Stdout, "║              THE STEM - PASSWORD RESET                           ║")
+	_, _ = fmt.Fprintln(os.Stdout, "╠══════════════════════════════════════════════════════════════════╣")
+	_, _ = fmt.Fprintf(os.Stdout, "║  Username: %-53s ║\n", username)
+	_, _ = fmt.Fprintf(os.Stdout, "║  Password: %-53s ║\n", password)
+	_, _ = fmt.Fprintln(os.Stdout, "║                                                                  ║")
+	_, _ = fmt.Fprintln(os.Stdout, "║  Restart the service for changes to take effect:                 ║")
+	_, _ = fmt.Fprintln(os.Stdout, "║    sudo systemctl restart stem                                   ║")
+	_, _ = fmt.Fprintln(os.Stdout, "╚══════════════════════════════════════════════════════════════════╝")
 }
 
 // tuiReflectMode runs the reflector TUI mode.

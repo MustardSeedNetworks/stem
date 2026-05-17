@@ -8,14 +8,14 @@
  */
 
 import type {
-  CreateProfileRequest,
-  Profile,
-  ProfileConfig,
-  ProfileExport,
-  ProfileImportRequest,
-  ProfileImportResult,
-  ProfileListItem,
-  UpdateProfileRequest,
+    CreateProfileRequest,
+    Profile,
+    ProfileConfig,
+    ProfileExport,
+    ProfileImportRequest,
+    ProfileImportResult,
+    ProfileListItem,
+    UpdateProfileRequest,
 } from '../types/profile';
 
 const API_BASE = '/api/v1';
@@ -47,7 +47,14 @@ async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
   });
 
   if (!response.ok) {
+<<<<<<< Updated upstream
     const errorText = await response.text();
+||||||| Stash base
+    // biome-ignore lint/nursery/useAwaitThenable: Response.text() returns Promise<string>
+    const errorText = await response.text();
+=======
+    const errorText = response.text();
+>>>>>>> Stashed changes
     throw new ApiError(response.status, errorText || `HTTP ${response.status}`);
   }
 

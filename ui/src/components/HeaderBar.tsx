@@ -472,11 +472,7 @@ interface InterfaceDropdownProps {
   onSelect: (name: string) => void;
 }
 
-function InterfaceDropdown({
-  interfaces,
-  currentInterface,
-  onSelect,
-}: InterfaceDropdownProps): ReactElement {
+function InterfaceDropdown({ interfaces, currentInterface, onSelect }: InterfaceDropdownProps): ReactElement {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -656,7 +652,7 @@ function ThemeToggle({ darkMode, onToggle }: ThemeToggleProps): ReactElement {
 // Main Component
 // =============================================================================
 
-export const HeaderBar: React.FC<HeaderBarProps> = memo(function HeaderBarComponent({
+export const HeaderBar = memo(function HeaderBarComponent({
   connectionStatus,
   darkMode,
   onReconnect,
@@ -693,11 +689,9 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function HeaderBarCompon
   }, [connectionStatus, t]);
 
   const handleProfileSelect = useCallback(
-    (id: string): void => {
+    async (id: string): Promise<void> => {
       if (onProfileSwitch) {
-        onProfileSwitch(id).catch(() => {
-          // Handle profile switch error silently
-        });
+        await onProfileSwitch(id);
       }
     },
     [onProfileSwitch],

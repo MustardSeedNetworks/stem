@@ -30,7 +30,6 @@
  * ```
  */
 
-import type { TFunction } from 'i18next';
 import { Component, type ErrorInfo, type ReactElement, type ReactNode } from 'react';
 import { Translation } from 'react-i18next';
 import { button, cn, icon as iconTokens, radius, spacing } from '../styles/theme';
@@ -182,7 +181,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       // Render default error UI
       return (
         <Translation ns="common">
-          {(t: TFunction<'common'>): ReactElement => (
+          {(t: (key: string, defaultValue?: string) => string): ReactElement => (
             <div
               role="alert"
               className="min-h-screen flex items-center justify-center bg-surface-base p-4"

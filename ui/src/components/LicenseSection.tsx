@@ -179,7 +179,7 @@ function ActivationForm({
           className="btn btn-secondary w-full"
         >
           <Clock className="w-4 h-4" />
-          Start 14-Day Trial
+          {t('common:startTrial')}
         </button>
       ) : null}
     </div>
@@ -213,18 +213,18 @@ function MessageDisplay({ error, success }: MessageDisplayProps): ReactElement |
 }
 
 export function LicenseSection(): ReactElement {
-  useTranslation();
+  const { t } = useTranslation();
   const [licenseInfo, setLicenseInfo] = useState<LicenseInfo | null>(null);
   const [licenseKey, setLicenseKey] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  const fetchLicenseStatus = useCallback(async (): Promise<void> => {
+  const fetchLicenseStatus = useCallback(async () => {
     try {
       const response = await fetch('/api/license');
       if (response.ok) {
-        const data = await (response.json() as Promise<LicenseInfo>);
+        const data = response.json();
         setLicenseInfo(data);
       }
     } catch {
@@ -255,7 +255,7 @@ export function LicenseSection(): ReactElement {
         body: JSON.stringify({ key: licenseKey }),
       });
 
-      const data = await (response.json() as Promise<{ success: boolean; message: string }>);
+      const data = response.json();
 
       if (data.success) {
         setSuccess(data.message);
@@ -283,7 +283,7 @@ export function LicenseSection(): ReactElement {
         method: 'POST',
       });
 
-      const data = await (response.json() as Promise<{ success: boolean; message: string }>);
+      const data = response.json();
 
       if (data.success) {
         setSuccess(data.message);

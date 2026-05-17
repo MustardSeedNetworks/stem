@@ -8,24 +8,18 @@ import (
 	"encoding/base64"
 	"fmt"
 	"sync"
-	"time"
 )
 
 // Setup token configuration.
 const (
 	// setupTokenLength is the length of setup tokens in bytes before encoding.
 	setupTokenLength = 32
-
-	// SetupTokenExpiry is how long a setup token remains valid.
-	// Short expiry prevents token reuse after the setup wizard is closed.
-	SetupTokenExpiry = 15 * time.Minute
 )
 
 // SetupToken represents a one-time setup token with metadata.
 type SetupToken struct {
-	Token     string    // The actual token string (base64-encoded)
-	ExpiresAt time.Time // When the token expires
-	Used      bool      // Whether the token has been used
+	Token string // The actual token string (base64-encoded)
+	Used  bool   // Whether the token has been used
 }
 
 // SetupTokenManager manages setup token generation and validation.
@@ -62,9 +56,8 @@ func (m *SetupTokenManager) GenerateToken() (string, error) {
 
 	// Store the new token, replacing any existing one.
 	m.token = &SetupToken{
-		Token:     token,
-		ExpiresAt: time.Now().Add(SetupTokenExpiry),
-		Used:      false,
+		Token: token,
+		Used:  false,
 	}
 
 	return token, nil
@@ -91,12 +84,6 @@ func (m *SetupTokenManager) ValidateToken(providedToken string) bool {
 		return false
 	}
 
-	// Check expiry.
-	if time.Now().After(m.token.ExpiresAt) {
-		m.token = nil // Clean up expired token.
-		return false
-	}
-
 	// Constant-time comparison to prevent timing attacks.
 	if subtle.ConstantTimeCompare([]byte(providedToken), []byte(m.token.Token)) != 1 {
 		return false
@@ -116,15 +103,11 @@ func (m *SetupTokenManager) Invalidate() {
 	m.token = nil
 }
 
-// HasValidToken returns true if there's a valid unexpired token.
+// HasValidToken returns true if there's an unused token.
 // Used for debugging/logging purposes only.
 func (m *SetupTokenManager) HasValidToken() bool {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	if m.token == nil || m.token.Used {
-		return false
-	}
-
-	return time.Now().Before(m.token.ExpiresAt)
+	return m.token != nil && !m.token.Used
 }

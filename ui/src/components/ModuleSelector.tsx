@@ -21,7 +21,7 @@ interface Module {
 }
 
 // Test descriptions for tooltips
-// Keys use underscores to match backend API test IDs
+// biome-ignore lint/style/useNamingConvention: Test IDs use underscores to match backend API
 const testDescriptions: Record<string, { name: string; desc: string; tooltip: string }> = {
   // Benchmark (RFC 2544) - with rfc2544_ prefix
   rfc2544_throughput: {
@@ -200,8 +200,8 @@ export function ModuleSelector({
       try {
         const response = await fetch('/api/modules');
         if (response.ok) {
-          const data = await (response.json() as Promise<{ modules?: Module[] }>);
-          setModules(data.modules ?? []);
+          const data = await response.json();
+          setModules(data.modules || []);
         } else {
           // Use fallback static data if API unavailable
           setModules(getStaticModules());
@@ -213,9 +213,7 @@ export function ModuleSelector({
         setLoading(false);
       }
     };
-    fetchModules().catch(() => {
-      // Handle fetch error silently - fallback already set
-    });
+    fetchModules();
   }, []);
 
   const toggleTest = (test: string): void => {
@@ -346,11 +344,11 @@ export function ModuleSelector({
                           {testInfo.name}
                           <HelpIcon tooltip={testInfo.tooltip} />
                         </div>
-                        {testInfo.desc ? (
+                        {testInfo.desc && (
                           <div className="text-xs text-[var(--color-text-muted)]">
                             {testInfo.desc}
                           </div>
-                        ) : null}
+                        )}
                       </div>
                     </label>
                   );

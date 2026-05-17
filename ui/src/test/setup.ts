@@ -64,7 +64,14 @@ vi.mock('react-i18next', () => ({
       changeLanguage: vi.fn(),
     },
   }),
+<<<<<<< Updated upstream
   Trans: ({ children }: { children: React.ReactNode }): React.ReactNode => children,
+||||||| Stash base
+  // biome-ignore lint/style/useNamingConvention: React component name must match i18n library API
+  Trans: ({ children }: { children: React.ReactNode }): React.ReactNode => children,
+=======
+  Trans: ({ children }: { children: React.ReactNode }) => children,
+>>>>>>> Stashed changes
   initReactI18next: { type: '3rdParty', init: vi.fn() },
 }));
 
@@ -92,13 +99,13 @@ export function createMockLocalStorage(): MockLocalStorage {
     clear: () => {
       store = {};
     },
-    get _store(): Record<string, string> {
+    get _store() {
       return store;
     },
   };
 }
 
-const mockLocalStorage: MockLocalStorage = createMockLocalStorage();
+const mockLocalStorage = createMockLocalStorage();
 Object.defineProperty(window, 'localStorage', { value: mockLocalStorage });
 
 // Export for use in tests
@@ -107,10 +114,11 @@ export { mockLocalStorage };
 // ============================================================
 // Mock fetch
 // ============================================================
-export const mockFetch: ReturnType<typeof vi.fn> = vi.fn();
+export const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
 // Helper to create standard API responses
+<<<<<<< Updated upstream
 export function createMockResponse<T>(
   data: T,
   ok = true,
@@ -122,6 +130,22 @@ export function createMockResponse<T>(
   text: () => Promise<string>;
   headers: Headers;
 }> {
+||||||| Stash base
+// biome-ignore lint/nursery/useExplicitType: Types inferred from defaults; explicit types cause noInferrableTypes error
+export function createMockResponse<T>(
+  data: T,
+  ok = true,
+  status = 200,
+): Promise<{
+  ok: boolean;
+  status: number;
+  json: () => Promise<T>;
+  text: () => Promise<string>;
+  headers: Headers;
+}> {
+=======
+export function createMockResponse<T>(data: T, ok = true, status = 200) {
+>>>>>>> Stashed changes
   return Promise.resolve({
     ok,
     status,
@@ -132,7 +156,14 @@ export function createMockResponse<T>(
 }
 
 // Helper to create error responses
+<<<<<<< Updated upstream
 export function createMockErrorResponse(status = 500, message = 'Error'): Promise<Response> {
+||||||| Stash base
+// biome-ignore lint/nursery/useExplicitType: Types inferred from defaults; explicit types cause noInferrableTypes error
+export function createMockErrorResponse(status = 500, message = 'Error'): Promise<Response> {
+=======
+export function createMockErrorResponse(status: number = 500, message: string = 'Error'): Promise<Response> {
+>>>>>>> Stashed changes
   return Promise.resolve({
     ok: false,
     status,
