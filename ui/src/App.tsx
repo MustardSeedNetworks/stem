@@ -36,11 +36,13 @@ import { SetupWizard } from './components/setup/SetupWizard';
 import { TestProgressBar, useTestProgress } from './components/TestProgressBar';
 import { defaultTrafficGenConfig, type TrafficGenConfig } from './components/TrafficGenConfigForm';
 import { defaultTSNConfig, type TSNConfig } from './components/TSNConfigForm';
+import { CommandPalette } from './components/ui/CommandPalette';
 import { defaultY1564Config, type Y1564Config } from './components/Y1564ConfigForm';
 import { defaultY1731Config, type Y1731Config } from './components/Y1731ConfigForm';
 import { AppContext, type AppContextValue } from './contexts/AppContext';
 import { ModuleSettingsProvider, useModuleSettings } from './contexts/ModuleSettingsContext';
 import { useFocusTrap } from './hooks/useFocusTrap';
+import { useTheme } from './hooks/useTheme';
 import { navGroups } from './navGroups';
 import { pages } from './pageRegistry';
 import {
@@ -409,12 +411,8 @@ function AppContent(): ReactElement {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return window.matchMedia('(prefers-color-scheme: dark)').matches;
-    }
-    return false;
-  });
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const { isDark, toggleTheme } = useTheme();
   // Track authentication state (tokens are in httpOnly cookies, inaccessible to JS)
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
@@ -952,14 +950,7 @@ function AppContent(): ReactElement {
     }
   }, [isAuthenticated]);
 
-  // Toggle dark mode
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [darkMode]);
+  // Dark mode managed by useTheme(); persists to localStorage.
 
   // Handle mode changes - update selected tests accordingly
   useEffect(() => {
@@ -1016,10 +1007,6 @@ function AppContent(): ReactElement {
     };
   }, [connected, fetchStats]);
 
-  const toggleDarkMode = (): void => {
-    setDarkMode(!darkMode);
-  };
-
   const openHelp = (): void => {
     setHelpOpen(true);
   };
@@ -1071,12 +1058,12 @@ function AppContent(): ReactElement {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={toggleDarkMode}
+            onClick={toggleTheme}
             className="p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover"
-            title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
-            aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+            title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
           >
-            {darkMode ? (
+            {isDark ? (
               <Sun className="h-5 w-5" aria-hidden="true" />
             ) : (
               <Moon className="h-5 w-5" aria-hidden="true" />
@@ -1407,6 +1394,17 @@ function AppContent(): ReactElement {
             </div>
           </div>
         ) : null}
+
+        {/* Command palette (⌘K / Ctrl+K) */}
+        <CommandPalette
+          groups={navGroups}
+          open={paletteOpen}
+          onOpenChange={setPaletteOpen}
+          onOpenSettings={openSettings}
+          onOpenHelp={openHelp}
+          onToggleTheme={toggleTheme}
+          isDark={isDark}
+        />
       </AppContext.Provider>
     </BrowserRouter>
   );
