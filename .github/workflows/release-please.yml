@@ -1,12 +1,23 @@
-# Release Please Workflow
-# Mustard Seed Networks - The Stem
+# =============================================================================
+# Release Please - Automated Version Management
+# =============================================================================
+# Creates release PRs with changelogs when commits land on main.
+# When a release PR is merged, creates a GitHub release which triggers
+# release.yml for building packages (via version tag).
 #
-# Automatically creates release PRs based on conventional commits
-# Triggers release.yml when a release is created
+# Trigger mirrors seed and niac's canonical pattern: fires on every CI
+# workflow completion, only acts when CI succeeded (otherwise the
+# version would bump on broken code). workflow_dispatch is kept for
+# manual triggers / debugging.
+# =============================================================================
 
 name: Release Please
 
 on:
+  workflow_run:
+    workflows: ["CI"]
+    branches: [main]
+    types: [completed]
   workflow_dispatch:
 
 permissions:
@@ -15,6 +26,8 @@ permissions:
 
 jobs:
   release-please:
+    # Only run if CI workflow succeeded (or this is a manual dispatch).
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     name: Release Please
     runs-on: ubuntu-latest
     outputs:
