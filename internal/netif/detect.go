@@ -114,24 +114,23 @@ type InterfaceInfo struct {
 	Usable      bool   `json:"usable"`   // true if the interface is plausibly testable
 }
 
-// virtualInterfacePrefixes lists name prefixes that indicate a virtual
-// or platform-managed interface that should not be exposed by default
-// when the UI is filtering for "usable" interfaces. Operators can still
-// opt to show all interfaces from the UI.
-var virtualInterfacePrefixes = []string{
-	// macOS virtual interfaces.
-	"utun", "awdl", "llw", "anpi", "ap", "bridge", "stf", "gif", "p2p",
-	// Linux container/tunnel/bridge surfaces.
-	"docker", "br-", "veth", "virbr", "tun", "tap", "vlan", "wg",
-	// Hypervisor/VPN virtual NICs.
-	"vmnet", "vboxnet", "vnic", "vboxnet0",
-}
-
 // isVirtualInterfaceName returns true when name starts with a known
-// virtual-interface prefix.
+// virtual-interface prefix — virtual / platform-managed interfaces
+// that should not be exposed by default when the UI filters for
+// "usable" interfaces. Operators can still opt to show all from the UI.
+// Prefix table is local to this function rather than a package global
+// (linter: gochecknoglobals).
 func isVirtualInterfaceName(name string) bool {
+	prefixes := [...]string{
+		// macOS virtual interfaces.
+		"utun", "awdl", "llw", "anpi", "ap", "bridge", "stf", "gif", "p2p",
+		// Linux container/tunnel/bridge surfaces.
+		"docker", "br-", "veth", "virbr", "tun", "tap", "vlan", "wg",
+		// Hypervisor/VPN virtual NICs.
+		"vmnet", "vboxnet", "vnic",
+	}
 	lower := strings.ToLower(name)
-	for _, prefix := range virtualInterfacePrefixes {
+	for _, prefix := range prefixes {
 		if strings.HasPrefix(lower, prefix) {
 			return true
 		}
