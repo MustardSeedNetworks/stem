@@ -38,6 +38,7 @@ import { twMerge } from 'tailwind-merge';
  * =============================================================================
  */
 
+// biome-ignore lint/performance/noBarrelFile: Design system barrel is intentional for API stability across ~100+ component import sites
 export { status } from './themeColors';
 export { alert, badge, button, card, input, modal } from './themeComponents';
 export { border, icon, layout, radius } from './themeLayout';
