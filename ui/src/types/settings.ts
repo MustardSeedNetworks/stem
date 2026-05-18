@@ -238,36 +238,3 @@ export const defaultTSNConfig: TSNConfig = {
   gateControlList: '',
 };
 
-export const defaultSettings: AppSettings = {
-  mode: 'test_master',
-  license: {
-    key: '',
-    tier: 2,
-    activated: false,
-    expiresAt: '',
-    deviceCount: 0,
-    maxDevices: 3,
-  },
-  interface: {
-    name: '',
-    autoSelect: true,
-  },
-  reflector: {
-    profile: 'all',
-    signatureFilter: [],
-    ouiFilter: '',
-    portFilter: 0,
-  },
-  tests: {
-    rfc2544: defaultRFC2544Config,
-    y1564: defaultY1564Config,
-    rfc2889: defaultRFC2889Config,
-    rfc6349: defaultRFC6349Config,
-    y1731: defaultY1731Config,
-    mef: defaultMEFConfig,
-    tsn: defaultTSNConfig,
-  },
-  appearance: {
-    theme: 'system',
-  },
-};

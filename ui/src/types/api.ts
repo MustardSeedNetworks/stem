@@ -63,17 +63,6 @@ export interface TestResult {
   data?: Record<string, unknown>;
 }
 
-/** SSE test event payload */
-export interface TestEventPayload {
-  status?: string;
-  testType?: string | null;
-  module?: string;
-  success?: boolean;
-  error?: string;
-  message?: string;
-  data?: TestResult;
-}
-
 /** License information */
 export interface LicenseInfo {
   valid: boolean;
@@ -88,17 +77,6 @@ export interface AuthResponse {
   token: string;
   refreshToken: string;
   expiresIn: number;
-}
-
-/** Test start request */
-export interface TestStartRequest {
-  interface: string;
-  testType: string;
-  module?: string;
-  mode?: 'reflector' | 'test_master';
-  profile?: string;
-  tests?: string[];
-  config?: Record<string, unknown>;
 }
 
 /** Validate InterfaceInfo array response */

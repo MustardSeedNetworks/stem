@@ -52,34 +52,6 @@ export interface Translations {
 }
 
 /**
- * Helper type to get nested keys from an object type.
- * Example: NestedKeys<{a: {b: string}}> = 'a.b'
- */
-type NestedKeys<T, Prefix extends string = ''> = T extends object
-  ? {
-      [K in keyof T]: K extends string
-        ? T[K] extends object
-          ? NestedKeys<T[K], Prefix extends '' ? K : `${Prefix}.${K}`>
-          : Prefix extends ''
-            ? K
-            : `${Prefix}.${K}`
-        : never;
-    }[keyof T]
-  : never;
-
-/**
- * Type-safe translation keys for each namespace.
- */
-export type CommonKeys = NestedKeys<CommonTranslations>;
-export type ErrorsKeys = NestedKeys<ErrorsTranslations>;
-export type ModulesKeys = NestedKeys<ModulesTranslations>;
-export type RecoveryKeys = NestedKeys<RecoveryTranslations>;
-export type SettingsKeys = NestedKeys<SettingsTranslations>;
-export type SetupKeys = NestedKeys<SetupTranslations>;
-export type CliKeys = NestedKeys<CliTranslations>;
-export type ParamsKeys = NestedKeys<ParamsTranslations>;
-
-/**
  * Declaration merging for react-i18next.
  * This enables autocomplete for translation keys.
  */

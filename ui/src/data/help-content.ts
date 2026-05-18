@@ -1378,11 +1378,6 @@ Useful when standard tests don't cover your specific scenario.`,
   },
 };
 
-// Helper function to get test by ID
-export function getTest(id: string): TestHelp | undefined {
-  return tests[id];
-}
-
 // Helper function to get tests by category
 export function getTestsByCategory(categoryId: string): TestHelp[] {
   const cat = categories[categoryId];
@@ -1390,11 +1385,6 @@ export function getTestsByCategory(categoryId: string): TestHelp[] {
     return [];
   }
   return cat.tests.map((id) => tests[id]).filter(Boolean);
-}
-
-// Helper to get all test IDs
-export function getAllTestIds(): string[] {
-  return Object.keys(tests);
 }
 
 // Helper to search tests
@@ -2031,7 +2021,3 @@ High jitter (variation) matters more than latency for real-time applications.`,
   },
 };
 
-// Get all tutorials
-export function getAllTutorials(): Tutorial[] {
-  return Object.values(tutorials);
-}

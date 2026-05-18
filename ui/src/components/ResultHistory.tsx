@@ -354,24 +354,4 @@ export function ResultHistory({
   );
 }
 
-/** Hook to add results to history from outside the component */
-export function useResultHistory(): {
-  addResult: (result: Omit<HistoricalResult, 'id'>) => void;
-  getHistory: () => HistoricalResult[];
-} {
-  const addResult = useCallback((result: Omit<HistoricalResult, 'id'>) => {
-    const historyData = loadHistory();
-    const newResult: HistoricalResult = {
-      id: generateId(),
-      ...result,
-    };
-    const updated = [newResult, ...historyData];
-    saveHistory(updated);
-  }, []);
-
-  const getHistory = useCallback(() => loadHistory(), []);
-
-  return { addResult, getHistory };
-}
-
 export default ResultHistory;

@@ -170,45 +170,6 @@ export const spacing = {
 } as const;
 
 // ============================================================================
-// TYPOGRAPHY
-// ============================================================================
-
-export const typography = {
-  heading: {
-    h1: 'heading-1',
-    h2: 'heading-2',
-    h3: 'heading-3',
-    h4: 'heading-4',
-    section: 'section-title',
-  },
-
-  body: {
-    large: 'body-large',
-    default: 'body',
-    small: 'body-small',
-    caption: 'caption',
-  },
-
-  label: 'label',
-  code: 'code',
-
-  size: {
-    xs: 'text-xs',
-    sm: 'text-sm',
-    base: 'text-base',
-    lg: 'text-lg',
-    xl: 'text-xl',
-  },
-
-  weight: {
-    normal: 'font-normal',
-    medium: 'font-medium',
-    semibold: 'font-semibold',
-    bold: 'font-bold',
-  },
-} as const;
-
-// ============================================================================
 // COMPONENT VARIANTS
 // ============================================================================
 
@@ -328,46 +289,6 @@ export const modal = {
   },
 } as const;
 
-/**
- * Status indicator variants - for connection status, health, etc.
- */
-export const status = {
-  dot: 'inline-block w-2 h-2 rounded-full',
-
-  color: {
-    success: 'bg-status-success',
-    warning: 'bg-status-warning',
-    error: 'bg-status-error',
-    info: 'bg-status-info',
-    inactive: 'bg-surface-border',
-  },
-
-  withLabel: 'inline-flex items-center gap-2',
-} as const;
-
-/**
- * Sizing tokens - for consistent heights/widths
- */
-export const sizing = {
-  height: {
-    modal: 'max-h-modal', // 85vh
-    drawer: 'h-full',
-    panel: 'max-h-[70vh]',
-  },
-
-  width: {
-    drawer: 'w-80', // 320px
-    drawerWide: 'w-96', // 384px
-    panel: 'w-72', // 288px
-    dropdown: 'w-64', // 256px
-  },
-
-  minHeight: {
-    card: 'min-h-[120px]',
-    section: 'min-h-[200px]',
-  },
-} as const;
-
 // ============================================================================
 // ICON SIZING
 // ============================================================================
@@ -464,57 +385,6 @@ export const layout = {
 // MODULE COLORS - The Stem specific
 // ============================================================================
 
-/**
- * Module colors - accent colors for The Stem's test modules
- *
- * IMPORTANT: Use these for icons and small badges only, NOT for card backgrounds.
- * Cards should remain consistent (surface-raised) across all modules.
- */
-export const moduleColor = {
-  reflector: {
-    icon: 'text-module-reflector',
-    badge: 'bg-module-reflector/20 text-module-reflector',
-    border: 'border-module-reflector/30',
-  },
-  benchmark: {
-    icon: 'text-module-benchmark',
-    badge: 'bg-module-benchmark/20 text-module-benchmark',
-    border: 'border-module-benchmark/30',
-  },
-  servicetest: {
-    icon: 'text-module-servicetest',
-    badge: 'bg-module-servicetest/20 text-module-servicetest',
-    border: 'border-module-servicetest/30',
-  },
-  trafficgen: {
-    icon: 'text-module-trafficgen',
-    badge: 'bg-module-trafficgen/20 text-module-trafficgen',
-    border: 'border-module-trafficgen/30',
-  },
-  measure: {
-    icon: 'text-module-measure',
-    badge: 'bg-module-measure/20 text-module-measure',
-    border: 'border-module-measure/30',
-  },
-  certify: {
-    icon: 'text-module-certify',
-    badge: 'bg-module-certify/20 text-module-certify',
-    border: 'border-module-certify/30',
-  },
-} as const;
-
-/**
- * Brand colors - for special brand elements
- */
-export const brand = {
-  gold: {
-    text: 'text-brand-gold',
-    bg: 'bg-brand-gold',
-    badge: 'bg-brand-gold/20 text-brand-gold',
-    border: 'border-brand-gold/30',
-  },
-} as const;
-
 // ============================================================================
 // UTILITY FUNCTIONS
 // ============================================================================
@@ -526,56 +396,3 @@ export function cn(...classes: (string | boolean | undefined | null)[]): string 
   return twMerge(classes.filter(Boolean).join(' '));
 }
 
-/**
- * Build a button class string
- */
-export function buttonClass(
-  variant: keyof typeof button.variant = 'primary',
-  size: keyof typeof button.size = 'md',
-  className?: string,
-): string {
-  return cn(button.base, button.variant[variant], button.size[size], className);
-}
-
-/**
- * Build a card class string
- */
-export function cardClass(
-  variant: keyof typeof card.variant = 'default',
-  padding: keyof typeof card.padding = 'md',
-  className?: string,
-): string {
-  return cn(card.base, card.variant[variant], card.padding[padding], className);
-}
-
-/**
- * Build a badge class string
- */
-export function badgeClass(
-  variant: keyof typeof badge.variant = 'default',
-  className?: string,
-): string {
-  return cn(badge.base, badge.variant[variant], className);
-}
-
-/**
- * Build an input class string
- */
-export function inputClass(
-  state: keyof typeof input.state = 'default',
-  size: keyof typeof input.size = 'md',
-  className?: string,
-): string {
-  return cn(input.base, input.state[state], input.size[size], className);
-}
-
-/**
- * Build a modal class string
- */
-export function modalClass(
-  size: keyof typeof modal.size = 'md',
-  padding: keyof typeof modal.padding = 'md',
-  className?: string,
-): string {
-  return cn(modal.content, modal.size[size], modal.padding[padding], className);
-}

@@ -66,18 +66,3 @@ export function logWarn(message: string, context?: ErrorContext): void {
   });
 }
 
-/**
- * Log debug information.
- * In production, this is a no-op.
- *
- * @param message - Debug message
- * @param data - Additional data to log
- */
-export function logDebug(message: string, data?: Record<string, unknown>): void {
-  if (!isDev) {
-    return;
-  }
-
-  // biome-ignore lint/suspicious/noConsole: Development-only logging
-  console.debug('[STEM Debug]', message, data);
-}
