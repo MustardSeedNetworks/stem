@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.0](https://github.com/krisarmstrong/stem/compare/v0.10.0...v0.11.0) (2026-05-18)
+
+
+### Features
+
+* **make:** add capability-aware dev-run target ([#197](https://github.com/krisarmstrong/stem/issues/197)) ([ba3f344](https://github.com/krisarmstrong/stem/commit/ba3f344711064fe12a8dd5e21d0aa2aeca385eb6))
+* product favicons + drop per-file copyright headers (SPDX for Go) ([#198](https://github.com/krisarmstrong/stem/issues/198)) ([faef765](https://github.com/krisarmstrong/stem/commit/faef765944195980af4c398dea22541cc0a0aedf))
+
+
+### Bug Fixes
+
+* **ci:** race detector needs C dataplane deps + serialize SSE tests ([#199](https://github.com/krisarmstrong/stem/issues/199)) ([34fad0d](https://github.com/krisarmstrong/stem/commit/34fad0d5337e9b1dc03315599d39c7dd4087d483))
+* **tests:** gate remaining measure tests under -short ([#201](https://github.com/krisarmstrong/stem/issues/201)) ([b0fc1be](https://github.com/krisarmstrong/stem/commit/b0fc1be9382e540c9ae252445de392db22e7a696))
+* **tests:** make race detector pass on Linux + CGO ([#200](https://github.com/krisarmstrong/stem/issues/200)) ([23cb945](https://github.com/krisarmstrong/stem/commit/23cb9458dd5328361591743b2ccb1de468308597))
+
 ## [0.10.0](https://github.com/krisarmstrong/stem/compare/v0.9.12...v0.10.0) (2026-05-18)
 
 
