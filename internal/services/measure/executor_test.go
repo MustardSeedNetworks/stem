@@ -219,7 +219,12 @@ func TestExecutorExecuteValidTestTypes(t *testing.T) {
 }
 
 // TestExecutorWithY1731Params tests Execute with various Y.1731 parameters.
+// Skipped under -short — drives the same real C dataplane path as
+// TestExecutorExecuteValidTestTypes; see that test for details.
 func TestExecutorWithY1731Params(t *testing.T) {
+	if testing.Short() {
+		t.Skip("requires real network interface; skipped under -short")
+	}
 	executor, err := measure.NewExecutor("eth0")
 	if err != nil {
 		t.Skip("Skipping test - executor not available on this platform")
@@ -333,7 +338,11 @@ func TestModuleEmbedsInExecutor(t *testing.T) {
 }
 
 // TestExecutorResultStructure tests the structure of execution results.
+// Skipped under -short — Execute("y1731_delay", ...) drives real C code.
 func TestExecutorResultStructure(t *testing.T) {
+	if testing.Short() {
+		t.Skip("requires real network interface; skipped under -short")
+	}
 	executor, err := measure.NewExecutor("eth0")
 	if err != nil {
 		t.Skip("Skipping test - executor not available on this platform")
@@ -411,7 +420,11 @@ func TestExecutorErrorMessages(t *testing.T) {
 }
 
 // TestExecutorConcurrentAccess tests that the executor handles concurrent access.
+// Skipped under -short — concurrent Execute() calls drive real C code.
 func TestExecutorConcurrentAccess(t *testing.T) {
+	if testing.Short() {
+		t.Skip("requires real network interface; skipped under -short")
+	}
 	executor, err := measure.NewExecutor("eth0")
 	if err != nil {
 		t.Skip("Skipping test - executor not available on this platform")
