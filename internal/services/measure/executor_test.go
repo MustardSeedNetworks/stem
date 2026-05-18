@@ -166,7 +166,14 @@ func TestExecutorExecuteInvalidTestType(t *testing.T) {
 }
 
 // TestExecutorExecuteValidTestTypes tests Execute with valid Y.1731 test types.
+// Skipped under -short because Execute() drives real C dataplane code paths
+// (y1731_delay_measurement et al.) that send packets on the configured
+// interface; in a CI runner with no usable eth0 / no NET_RAW caps the C
+// library SIGSEGVs during the cgo call. Run without -short to exercise.
 func TestExecutorExecuteValidTestTypes(t *testing.T) {
+	if testing.Short() {
+		t.Skip("requires real network interface; skipped under -short")
+	}
 	executor, err := measure.NewExecutor("eth0")
 	if err != nil {
 		t.Skip("Skipping test - executor not available on this platform")
