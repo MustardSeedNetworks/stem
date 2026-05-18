@@ -1,146 +1,192 @@
 # The Stem
 
-**Unified Network Testing Tool by Mustard Seed Networks**
+> RFC-compliant network performance testing — reflector, traffic generator, and certifier in one binary.
 
-Part of The Seed ecosystem - combining packet reflection and RFC-compliant network testing in a single tool.
+[![CI](https://github.com/krisarmstrong/stem/actions/workflows/ci.yml/badge.svg)](https://github.com/krisarmstrong/stem/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/krisarmstrong/stem?logo=github)](https://github.com/krisarmstrong/stem/releases/latest)
+[![CodeQL](https://github.com/krisarmstrong/stem/actions/workflows/codeql.yml/badge.svg)](https://github.com/krisarmstrong/stem/actions/workflows/codeql.yml)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/krisarmstrong/stem/badge)](https://scorecard.dev/viewer/?uri=github.com/krisarmstrong/stem)
+[![Go Reference](https://pkg.go.dev/badge/github.com/krisarmstrong/stem.svg)](https://pkg.go.dev/github.com/krisarmstrong/stem)
+[![Go Report Card](https://goreportcard.com/badge/github.com/krisarmstrong/stem)](https://goreportcard.com/report/github.com/krisarmstrong/stem)
+[![License: BSL 1.1](https://img.shields.io/badge/License-BSL%201.1-blue.svg)](LICENSE)
+
+The Stem is a network performance testing tool from **Mustard Seed Networks**.
+It packages a high-performance reflector and a full suite of RFC-compliant
+testing modules into a single Go binary with a CLI, TUI, and React web UI.
+
+Run it as a service-level loopback target, generate traffic against another
+endpoint, or drive a full RFC 2544 / Y.1564 certification suite — all from
+the same install.
+
+## Features
+
+### Reflector (always available)
+- High-performance packet reflection on AF_PACKET, AF_XDP, or DPDK
+- Signature detection for NetAlly, RFC 2544/Y.1564 testers, MSN
+- Profile presets: NetAlly, MSN, All, Custom
+- Filter by signature, OUI, or UDP/TCP port
+
+### Test modules
+
+| Module | Standard | Test Types |
+|--------|----------|------------|
+| **Benchmark** | RFC 2544 | throughput, latency, frame loss, back-to-back |
+| **ServiceTest** | ITU-T Y.1564, MEF 48/49 | config + performance test, full service test |
+| **TrafficGen** | custom | scriptable stream generation |
+| **Measure** | ITU-T Y.1731 | delay, loss, synthetic loss measurement, loopback (OAM) |
+| **Certify** | RFC 2889 / RFC 6349 / IEEE 802.1Qbv | LAN switch certification, TCP throughput, TSN gate-timing |
+
+### Interfaces
+- **CLI** — scriptable `stem <cmd>` for CI integration
+- **TUI** — single-screen Bubbletea dashboard for ad-hoc use
+- **Web UI** — React/TypeScript control plane on port 8080
+- **REST + SSE** — `/api/v1/events` streams live test results
 
 ## Quick Start
 
 ```bash
-# Build everything
-make
-
-# Run reflector (Tier 1)
-./bin/stem reflect -i eth0
-
-# Run network tests (Tier 2)
-./bin/stem test -t throughput -i eth0
-
-# Start WebUI
-./bin/stem web -p 8080
-
-# Start TUI dashboard
-./bin/stem tui
-```
-
-## Features
-
-### Tier 1: Reflector
-- High-performance packet reflection
-- ITO/RFC2544/Y.1564/MSN signature detection
-- Profile presets (NetAlly, MSN, All, Custom)
-- AF_XDP and DPDK support
-
-### Tier 2: Full Test Suite (includes Reflector)
-- **RFC 2544**: Throughput, Latency, Frame Loss, Back-to-Back, System Recovery, Reset
-- **ITU-T Y.1564**: Configuration Test, Performance Test, Full Test
-- **RFC 2889**: Forwarding, Caching, Learning, Broadcast, Congestion
-- **RFC 6349**: TCP Throughput, Path Analysis
-- **ITU-T Y.1731**: Delay, Loss, SLM, Loopback (OAM)
-- **MEF 48/49**: Service Configuration, Performance Test
-- **IEEE 802.1Qbv TSN**: Gate Timing, Traffic Isolation, Scheduled Latency
-
-## Interfaces
-
-| Interface | Command | Description |
-|-----------|---------|-------------|
-| CLI | `stem <command>` | Command-line interface |
-| TUI | `stem tui` | Terminal dashboard |
-| WebUI | `stem web -p 8080` | http://localhost:8080 |
-
-## Realtime Updates
-
-The WebUI supports real-time test result streaming via Server-Sent Events (SSE) at `/api/v1/events`.
-
-## Build
-
-### Prerequisites
-- Go 1.25+
-- Node.js 25+
-- GCC/Clang (for C dataplane, C23 standard)
-
-### Build Commands
-
-```bash
-# Build CLI binary
+# Install (Linux/macOS, requires Go 1.26+)
+git clone https://github.com/krisarmstrong/stem
+cd stem
 make build
 
-# Build WebUI
-cd ui && npm install && npm run build
+# Run as a reflector on eth0
+sudo ./bin/stem reflect -i eth0
 
-# Build everything
-make
+# Run a throughput test
+sudo ./bin/stem test -t throughput -i eth0 --target 192.0.2.10
 
-# Run tests
-make test
+# List tests by standard, or by module
+./bin/stem list-tests
+./bin/stem list-tests --by-module
 
-# Run linting
-make lint
+# Start the web UI
+sudo ./bin/stem web -p 8080
+# → open http://localhost:8080
+
+# Or the TUI
+sudo ./bin/stem tui
 ```
+
+## Commands
+
+| Command | Purpose |
+|---------|---------|
+| `stem version` | Show version + build metadata |
+| `stem reflect -i <iface>` | Start the reflector |
+| `stem test -t <type> -i <iface>` | Run a single test |
+| `stem web -p <port>` | Start the web UI + REST API |
+| `stem tui` | Launch the TUI dashboard |
+| `stem license --status` | Show license tier + activation state |
+| `stem list-tests [--by-module]` | Catalogue all supported tests |
+| `stem help modules` | Module + test type reference |
+
+Run `stem <cmd> --help` for flags.
+
+## Architecture
+
+```
+ui/src/             → React/TypeScript control plane (Vite)
+                          ↓ npm run build
+internal/api/ui/    → Built assets (embedded via go:embed)
+                          ↓
+cmd/stem/           → CLI entry point
+internal/
+├── services/       → Test module implementations
+│   ├── reflector/
+│   ├── benchmark/  (RFC 2544)
+│   ├── servicetest/(Y.1564, MEF)
+│   ├── trafficgen/
+│   ├── measure/    (Y.1731)
+│   ├── certify/    (RFC 2889/6349, TSN)
+│   └── orchestrator/  test execution + lifecycle
+├── api/            → HTTP/SSE handlers + WebUI embed
+├── auth/           → JWT authentication
+├── license/        → Tiered licensing
+├── netif/          → Interface discovery
+├── reflector/      → Reflector kernel-bypass plumbing
+└── version/        → Build metadata (injected via ldflags)
+src/dataplane/      → C dataplane (C23, Linux-only): DPDK / AF_XDP / AF_PACKET
+include/            → C headers
+```
+
+The Go binary is pure-Go (`CGO_ENABLED=0`); the C dataplane is built
+separately on Linux for kernel-bypass workloads.
 
 ## Licensing
 
-The Stem uses a tiered licensing model:
+Tiered model. License keys are 16-character alphanumeric
+(`XXXX-XXXX-XXXX-XXXX`), validated offline, bound to up to three devices
+via hardware fingerprint.
 
-| Tier | Features | License Key Prefix |
-|------|----------|-------------------|
+| Tier | Features | Key Prefix |
+|------|----------|------------|
+| Trial | Full features, 14 days | (no key needed) |
 | Tier 1 | Reflector only | `1001-*` |
-| Tier 2 | Full test suite + Reflector | `2001-*` |
-| Tier 3 | Enterprise (future) | `3001-*` |
+| Tier 2 | Reflector + full test suite | `2001-*` |
+| Tier 3 | Enterprise (planned) | `3001-*` |
 
-### Trial Mode
-- 14-day full-featured trial (no license required)
-- Start via WebUI Settings > License > Start Trial
-
-### Activation
-- License keys are 16-character alphanumeric (XXXX-XXXX-XXXX-XXXX)
-- Offline validation (no internet required after activation)
-- 3 device activations per license
-- Device binding via hardware fingerprint
-
-## Project Structure
-
-```
-stem/
-├── cmd/stem/           # CLI entrypoint
-├── internal/           # Private Go packages
-│   ├── modules/        # Test modules (benchmark, servicetest, etc.)
-│   ├── reflector/      # Reflector subsystem
-│   ├── testmaster/     # Test execution subsystem
-│   ├── server/         # REST API server
-│   ├── auth/           # JWT authentication
-│   ├── license/        # Licensing system
-│   └── netif/          # Network interface detection
-├── src/dataplane/      # C dataplane code (C23)
-├── include/            # C headers
-└── ui/                 # React WebUI (TypeScript)
+Start a trial via web UI Settings → License → Start Trial, or:
+```bash
+stem license trial
 ```
 
-## API Endpoints
+## Build
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/health` | GET | Server health check |
+| Command | Purpose |
+|---------|---------|
+| `make build` | Full build (frontend + Go backend; C dataplane on Linux) |
+| `make test` | Go tests |
+| `make lint` | golangci-lint + Biome + clang-tidy + cppcheck |
+| `make lint-go` | Go only |
+| `make lint-c` | C only (Linux) |
+| `make fmt` | Format all (Go + TS + C) |
+| `make packages` | `.deb` + `.rpm` via GoReleaser |
+| `make pkg` | macOS `.pkg` |
+| `make quick` | Backend-only dev iteration (do **not** ship) |
+
+Verified versions: **Go 1.26.3**, Node.js 26, golangci-lint v2.12.1,
+DPDK 23.11 LTS (optional, Linux).
+
+## REST API (selected)
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/__version` | GET | Build metadata (no auth) |
+| `/api/health` | GET | Server liveness |
 | `/api/interfaces` | GET | List network interfaces |
-| `/api/settings` | GET/POST | Get/update settings |
-| `/api/mode` | GET/POST | Get/set operating mode |
-| `/api/test/start` | POST | Start test (requires auth) |
-| `/api/test/stop` | POST | Stop test (requires auth) |
-| `/api/test/result` | GET | Get test results (requires auth) |
-| `/api/auth/login` | POST | Authenticate and get JWT |
-| `/api/v1/events` | GET | SSE for live results |
 | `/api/modules` | GET | List test modules |
-| `/api/modules/{name}` | GET | Get module details |
+| `/api/modules/{name}` | GET | Module details + supported test types |
+| `/api/test/start` | POST | Start a test |
+| `/api/test/stop` | POST | Stop the running test |
+| `/api/test/result` | GET | Latest result |
+| `/api/v1/events` | GET (SSE) | Live test events |
+| `/api/auth/login` | POST | Issue JWT |
 | `/api/license` | GET | License status |
-| `/api/license/activate` | POST | Activate license |
+| `/api/license/activate` | POST | Activate a license key |
 | `/api/license/trial` | POST | Start trial |
-| `/api/reflector/config` | GET/POST | Reflector configuration |
-| `/api/reflector/stats` | GET | Reflector statistics |
+| `/api/reflector/config` | GET / POST | Reflector configuration |
+| `/api/reflector/stats` | GET | Reflector counters |
 
-## Support
+Most write endpoints require a JWT issued by `/api/auth/login`.
 
-For licensing inquiries and support, contact Mustard Seed Networks.
+## Versioning & Releases
+
+Conventional commits drive [release-please](https://github.com/googleapis/release-please).
+Release tags trigger `release.yml` which cross-builds binaries
+(linux/macOS/windows × amd64/arm64), `.deb`, `.rpm`, macOS `.pkg`, Windows
+`.zip`, and a multi-arch container image — all signed via cosign keyless
+OIDC and shipped with SLSA-3 provenance + Syft SBOM.
 
 ## License
 
-Copyright (c) 2025 Mustard Seed Networks. All rights reserved.
+[Business Source License 1.1](LICENSE). The Stem converts to Apache-2.0 on
+the change date stated in the LICENSE file.
+
+## Related projects
+
+The Stem is the performance-testing tool. Two sibling projects round out
+the Mustard Seed Networks toolkit:
+
+- **[seed](https://github.com/krisarmstrong/seed)** — portable network diagnostic appliance
+- **[niac-go](https://github.com/krisarmstrong/niac-go)** — network device simulator
