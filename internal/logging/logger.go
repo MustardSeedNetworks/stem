@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Mustard Seed Networks. All rights reserved.
+// SPDX-License-Identifier: BUSL-1.1
 
 // Package logging provides structured logging with automatic redaction of sensitive data.
 //

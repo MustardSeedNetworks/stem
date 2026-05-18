@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Mustard Seed Networks. All rights reserved.
+// SPDX-License-Identifier: BUSL-1.1
 //
 // # The Stem - Network Performance Testing
 //
@@ -155,7 +155,7 @@ func printVersion(w io.Writer) {
 	_, _ = fmt.Fprintf(w, "%s %s\n", ProductName, version.GetVersion())
 	_, _ = fmt.Fprintf(w, "Commit: %s\n", version.GetCommit())
 	_, _ = fmt.Fprintf(w, "Built:  %s\n", version.GetBuildTime())
-	_, _ = fmt.Fprintf(w, "Copyright (c) 2025 %s\n", Company)
+	_, _ = fmt.Fprintf(w, "Copyright © %d %s\n", time.Now().Year(), Company)
 	_, _ = fmt.Fprintln(w, "Network Performance Testing")
 }
 

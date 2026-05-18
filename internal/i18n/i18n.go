@@ -3,8 +3,6 @@
  *
  * Provides localization for English (en) and Spanish (es).
  * Translations are loaded from embedded JSON files in the locales directory.
- *
- * Copyright (c) 2025 Mustard Seed Networks. All rights reserved.
  */
 
 package i18n

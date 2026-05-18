@@ -1,7 +1,5 @@
 /*
  * The Stem - i18n Tests
- *
- * Copyright (c) 2025 Mustard Seed Networks. All rights reserved.
  */
 
 package i18n_test

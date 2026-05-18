@@ -2,8 +2,6 @@
  * @fileoverview The Stem - License Section Component
  * @description Displays license status and provides activation functionality.
  *              Supports full license activation and 14-day trial mode.
- * @copyright 2025 Mustard Seed Networks. All rights reserved.
- * @license Proprietary
  */
 
 import { AlertTriangle, CheckCircle, Clock, Key, Loader2, Shield } from 'lucide-react';

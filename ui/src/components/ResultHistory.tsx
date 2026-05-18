@@ -1,8 +1,6 @@
 /**
  * @fileoverview The Stem - Test Result History Component
  * @description Displays and manages historical test results with localStorage persistence.
- * @copyright 2025 Mustard Seed Networks. All rights reserved.
- * @license Proprietary
  */
 
 import { Activity, ChevronDown, ChevronRight, Clock, History, Trash2, X } from 'lucide-react';

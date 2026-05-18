@@ -1,6 +1,5 @@
 //go:build cgo && linux
 
-// Copyright (c) 2025 Mustard Seed Networks. All rights reserved.
 
 // Package dataplane provides CGO bindings to the C reflector dataplane.
 //

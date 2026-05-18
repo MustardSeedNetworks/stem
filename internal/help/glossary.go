@@ -3,8 +3,6 @@
  *
  * Definitions for network terminology, accessible to both technical users
  * and newcomers to network testing.
- *
- * Copyright (c) 2025 Mustard Seed Networks. All rights reserved.
  */
 
 package help

@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Mustard Seed Networks. All rights reserved.
+// SPDX-License-Identifier: BUSL-1.1
 
 // Package tui provides the Terminal User Interface for the Reflector.
 //

@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Mustard Seed Networks. All rights reserved.
+// SPDX-License-Identifier: BUSL-1.1
 
 // Package servicetest implements the ServiceTest module for Y.1564 and MEF testing.
 // This module owns service activation and performance validation tests.

@@ -1,8 +1,6 @@
 /**
  * @fileoverview The Stem - Test Progress Bar Component
  * @description Displays test execution progress with elapsed time, ETA, and visual progress bar.
- * @copyright 2025 Mustard Seed Networks. All rights reserved.
- * @license Proprietary
  */
 
 import { Clock, Loader2 } from 'lucide-react';

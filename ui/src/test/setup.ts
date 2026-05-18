@@ -1,5 +1,3 @@
-// Copyright (c) 2025 Mustard Seed Networks. All rights reserved.
-
 import type React from 'react';
 /**
  * Test Setup and Utilities

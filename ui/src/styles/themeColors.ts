@@ -1,5 +1,3 @@
-// Copyright (c) 2025 Mustard Seed Networks. All rights reserved.
-
 /**
  * themeColors.ts — semantic color tokens for status states.
  * Re-exported through theme.ts.

@@ -1,5 +1,3 @@
-// Copyright (c) 2025 Mustard Seed Networks. All rights reserved.
-
 import type { PartialStoryFn } from '@storybook/csf';
 import type { ReactRenderer } from '@storybook/react';
 import type { Meta, StoryObj } from '@storybook/react-vite';

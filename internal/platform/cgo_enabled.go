@@ -1,6 +1,5 @@
 //go:build cgo
 
-// Copyright (c) 2025 Mustard Seed Networks. All rights reserved.
 
 package platform
 

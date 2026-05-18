@@ -1,8 +1,6 @@
 /**
  * @fileoverview The Stem - RFC 2889 LAN Switch Test Configuration
  * @description Configuration form for RFC 2889 LAN Switch Benchmarking Tests.
- * @copyright 2025 Mustard Seed Networks. All rights reserved.
- * @license Proprietary
  */
 
 import { Info, Network } from 'lucide-react';

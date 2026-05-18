@@ -2,8 +2,6 @@
  * Seed Test Suite - Configuration Documentation
  *
  * Comprehensive documentation for all configuration options.
- *
- * Copyright (c) 2025 Mustard Seed Networks. All rights reserved.
  */
 
 package help

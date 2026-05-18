@@ -3,8 +3,6 @@
  * @description Advanced configuration form for ITU-T Y.1564 / MEF Service Activation Testing.
  *              Allows users to configure service parameters including CIR, EIR, CBS, EBS,
  *              frame sizes, test duration, and VLAN settings.
- * @copyright 2025 Mustard Seed Networks. All rights reserved.
- * @license Proprietary
  */
 
 import { AlertTriangle, Info, Settings2 } from 'lucide-react';

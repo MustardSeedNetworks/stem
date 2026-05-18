@@ -1,8 +1,6 @@
 /**
  * @fileoverview The Stem - Y.1731 OAM Test Configuration
  * @description Configuration form for ITU-T Y.1731 Ethernet OAM Testing.
- * @copyright 2025 Mustard Seed Networks. All rights reserved.
- * @license Proprietary
  */
 
 import { Gauge, Info } from 'lucide-react';

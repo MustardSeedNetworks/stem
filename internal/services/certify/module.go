@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Mustard Seed Networks. All rights reserved.
+// SPDX-License-Identifier: BUSL-1.1
 
 // Package certify implements the Certify module for compliance certification.
 // This module owns RFC 2889 switch tests, RFC 6349 TCP tests, and TSN 802.1Qbv tests.

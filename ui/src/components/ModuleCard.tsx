@@ -2,8 +2,6 @@
  * @fileoverview The Stem - Module Card Component
  * @description Card component for each test module (Benchmark, ServiceTest, etc.)
  *              with enable/disable toggles, autostart options, and test execution.
- * @copyright 2025 Mustard Seed Networks. All rights reserved.
- * @license Proprietary
  */
 
 import {

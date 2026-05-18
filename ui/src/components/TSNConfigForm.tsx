@@ -1,8 +1,6 @@
 /**
  * @fileoverview The Stem - TSN Test Configuration
  * @description Configuration form for IEEE 802.1 Time-Sensitive Networking Testing.
- * @copyright 2025 Mustard Seed Networks. All rights reserved.
- * @license Proprietary
  */
 
 import { Clock, Info } from 'lucide-react';

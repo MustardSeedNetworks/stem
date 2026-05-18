@@ -2,8 +2,6 @@
  * The Stem - i18n Internal Tests
  *
  * Tests for unexported functions using package-internal access.
- *
- * Copyright (c) 2025 Mustard Seed Networks. All rights reserved.
  */
 
 package i18n

@@ -1,5 +1,3 @@
-// Copyright (c) 2025 Mustard Seed Networks. All rights reserved.
-
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { defaultRFC2889Config, type RFC2889Config, RFC2889ConfigForm } from '../RFC2889ConfigForm';

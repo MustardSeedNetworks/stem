@@ -1,8 +1,6 @@
 /**
  * @fileoverview Shared API types for The Stem
  * @description Centralized type definitions for API responses and requests
- * @copyright 2025 Mustard Seed Networks. All rights reserved.
- * @license Proprietary
  */
 
 /** Test status values */

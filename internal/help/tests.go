@@ -2,8 +2,6 @@
  * Seed Test Suite - Test Documentation
  *
  * Comprehensive documentation for all 27 test types across 7 categories.
- *
- * Copyright (c) 2025 Mustard Seed Networks. All rights reserved.
  */
 
 package help

@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Mustard Seed Networks. All rights reserved.
+// SPDX-License-Identifier: BUSL-1.1
 
 // Package measure implements the Measure module for Y.1731 OAM testing.
 // This module owns frame delay, frame loss, and loopback measurements.

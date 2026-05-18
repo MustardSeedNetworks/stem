@@ -2,8 +2,6 @@
  * @fileoverview The Stem - Help Content for WebUI
  * @description This file mirrors the Go pkg/help content for use in the React UI.
  *              Both technical and layman-friendly explanations are included.
- * @copyright 2025 Mustard Seed Networks. All rights reserved.
- * @license Proprietary
  */
 
 export interface TestHelp {

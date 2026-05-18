@@ -2,8 +2,6 @@
  * Seed Test Suite - Error Messages
  *
  * Enhanced error messages with context, causes, and solutions.
- *
- * Copyright (c) 2025 Mustard Seed Networks. All rights reserved.
  */
 
 package help

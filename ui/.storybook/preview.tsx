@@ -1,5 +1,3 @@
-// Copyright (c) 2025 Mustard Seed Networks. All rights reserved.
-
 import type { Preview } from '@storybook/react-vite';
 import '../src/index.css';
 

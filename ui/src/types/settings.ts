@@ -2,8 +2,6 @@
  * @fileoverview The Stem - TypeScript Type Definitions
  * @description Defines all TypeScript interfaces and types used throughout the WebUI.
  *              Includes interface info, test configurations, license info, and app settings.
- * @copyright 2025 Mustard Seed Networks. All rights reserved.
- * @license Proprietary
  */
 
 /** Network interface information from the backend */

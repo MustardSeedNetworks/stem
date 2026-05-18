@@ -2,8 +2,6 @@
  * Seed Test Suite - Tutorials
  *
  * Step-by-step guides for common tasks.
- *
- * Copyright (c) 2025 Mustard Seed Networks. All rights reserved.
  */
 
 package help

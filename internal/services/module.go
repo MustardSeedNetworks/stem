@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Mustard Seed Networks. All rights reserved.
+// SPDX-License-Identifier: BUSL-1.1
 
 // Package modules provides the module-oriented architecture layer for The Stem.
 // Modules (Benchmark, ServiceTest, TrafficGen, Measure, Certify) own workflows

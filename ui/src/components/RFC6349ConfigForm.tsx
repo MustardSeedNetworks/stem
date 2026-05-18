@@ -1,8 +1,6 @@
 /**
  * @fileoverview The Stem - RFC 6349 TCP Throughput Test Configuration
  * @description Configuration form for RFC 6349 TCP Throughput Testing.
- * @copyright 2025 Mustard Seed Networks. All rights reserved.
- * @license Proprietary
  */
 
 import { Activity, Info } from 'lucide-react';

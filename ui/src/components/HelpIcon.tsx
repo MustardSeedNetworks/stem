@@ -1,8 +1,6 @@
 /**
  * @fileoverview The Stem - Help Icon Component
  * @description A (?) icon that shows a tooltip on hover and opens help on click.
- * @copyright 2025 Mustard Seed Networks. All rights reserved.
- * @license Proprietary
  */
 
 import { HelpCircle } from 'lucide-react';

@@ -1,8 +1,6 @@
 /**
  * @fileoverview Initial Setup Wizard Component
  * @description Guides users through the first-time setup process for The Stem application.
- * @copyright 2025 Mustard Seed Networks. All rights reserved.
- * @license Proprietary
  */
 
 import { Activity, Copy, Eye, EyeOff, Lock, Zap } from 'lucide-react';

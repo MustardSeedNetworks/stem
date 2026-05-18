@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Mustard Seed Networks. All rights reserved.
+// SPDX-License-Identifier: BUSL-1.1
 
 // Package modtypes provides shared types used across all module executors.
 // This package exists to avoid import cycles between modules and sub-modules.

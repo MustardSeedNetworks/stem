@@ -3,8 +3,6 @@
  * @description A component that displays tests organized by module (Reflector, Benchmark,
  *              ServiceTest, TrafficGen, Measure, Certify) with module-specific colors.
  *              Allows users to select tests using the module-oriented architecture.
- * @copyright 2025 Mustard Seed Networks. All rights reserved.
- * @license Proprietary
  */
 
 import { type ReactElement, useEffect, useState } from 'react';

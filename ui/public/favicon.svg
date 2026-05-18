@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="The Stem">
+  <title>The Stem</title>
+  <!-- Background tile, rounded -->
+  <rect x="0" y="0" width="64" height="64" rx="12" fill="#2d7a3e"/>
+  <!-- Vertical stem-as-arrow shaft -->
+  <rect x="28" y="14" width="8" height="36" rx="2" fill="#fafaf7"/>
+  <!-- Arrow head pointing up (peak of the stem) -->
+  <path d="M32 6 L 50 22 L 14 22 Z" fill="#fafaf7"/>
+  <!-- Traffic-flow chevrons traveling up the stem -->
+  <g fill="none" stroke="#2d7a3e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="26,42 32,36 38,42"/>
+    <polyline points="26,34 32,28 38,34"/>
+    <polyline points="26,26 32,20 38,26"/>
+  </g>
+  <!-- Base bracket (ground/anchor) -->
+  <rect x="18" y="52" width="28" height="6" rx="2" fill="#fafaf7"/>
+</svg>

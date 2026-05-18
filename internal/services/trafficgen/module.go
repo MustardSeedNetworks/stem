@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Mustard Seed Networks. All rights reserved.
+// SPDX-License-Identifier: BUSL-1.1
 
 // Package trafficgen implements the TrafficGen module for custom traffic generation.
 // This module owns custom traffic stream generation capabilities.

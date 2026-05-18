@@ -3,7 +3,7 @@
     "title": "The Stem",
     "tagline": "Pruebas de Rendimiento de Red por Mustard Seed Networks",
     "description": "Herramienta de Pruebas de Rendimiento de Red",
-    "copyright": "Copyright (c) 2025 Mustard Seed Networks. Todos los derechos reservados."
+    "copyright": "© {{year}} Mustard Seed Networks. Todos los derechos reservados."
   },
   "buttons": {
     "save": "Guardar",

@@ -2,8 +2,6 @@
  * @fileoverview The Stem - Help Drawer Component
  * @description Comprehensive help panel with tests, tutorials, and glossary.
  *              Supports both technical and layman-friendly explanations.
- * @copyright 2025 Mustard Seed Networks. All rights reserved.
- * @license Proprietary
  */
 
 import {

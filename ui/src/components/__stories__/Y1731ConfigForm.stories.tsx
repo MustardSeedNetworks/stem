@@ -1,5 +1,3 @@
-// Copyright (c) 2025 Mustard Seed Networks. All rights reserved.
-
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 import { defaultY1731Config, type Y1731Config, Y1731ConfigForm } from '../Y1731ConfigForm';

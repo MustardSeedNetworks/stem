@@ -1,4 +1,4 @@
-// Copyright (c) 2025 Mustard Seed Networks. All rights reserved.
+// SPDX-License-Identifier: BUSL-1.1
 
 // Package benchmark implements the Benchmark module for RFC 2544 device testing.
 // This module owns throughput, latency, frame loss, back-to-back, and recovery tests.

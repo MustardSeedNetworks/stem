@@ -3,8 +3,6 @@
  * @description Advanced configuration form for RFC 2544 Benchmarking Tests.
  *              Allows users to configure test parameters including duration,
  *              frame sizes, resolution, loss threshold, warmup, and trials.
- * @copyright 2025 Mustard Seed Networks. All rights reserved.
- * @license Proprietary
  */
 
 import { AlertTriangle, Info } from 'lucide-react';

@@ -1,8 +1,6 @@
 /**
  * @fileoverview Password Recovery Form Component
  * @description Allows admin to recover password using filesystem-based token.
- * @copyright 2025 Mustard Seed Networks. All rights reserved.
- * @license Proprietary
  */
 
 import { ArrowLeft, Eye, EyeOff, KeyRound, Lock, Timer } from 'lucide-react';

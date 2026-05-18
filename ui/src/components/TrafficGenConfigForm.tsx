@@ -1,8 +1,6 @@
 /**
  * @fileoverview The Stem - Traffic Generator Configuration
  * @description Configuration form for Custom Traffic Generation.
- * @copyright 2025 Mustard Seed Networks. All rights reserved.
- * @license Proprietary
  */
 
 import { Info, Radio } from 'lucide-react';

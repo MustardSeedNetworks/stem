@@ -2,8 +2,6 @@
  * Seed Test Suite - Help Display Formatting
  *
  * Terminal output formatting for help content.
- *
- * Copyright (c) 2025 Mustard Seed Networks. All rights reserved.
  */
 
 package help

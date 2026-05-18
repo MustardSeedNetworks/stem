@@ -3,8 +3,6 @@
  *
  * This package provides help content for both CLI and WebUI.
  * All test explanations include both technical and layman-friendly descriptions.
- *
- * Copyright (c) 2025 Mustard Seed Networks. All rights reserved.
  */
 
 package help

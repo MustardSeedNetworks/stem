@@ -2,8 +2,6 @@
  * @fileoverview Development Logger Utility
  * @description Provides logging utilities that are no-ops in production.
  *              Uses proper logging service hooks for future monitoring integration.
- * @copyright 2025 Mustard Seed Networks. All rights reserved.
- * @license Proprietary
  */
 
 /**

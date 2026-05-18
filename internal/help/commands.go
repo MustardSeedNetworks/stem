@@ -2,8 +2,6 @@
  * Seed Test Suite - CLI Command Help
  *
  * Documentation for all CLI commands and their options.
- *
- * Copyright (c) 2025 Mustard Seed Networks. All rights reserved.
  */
 
 package help
