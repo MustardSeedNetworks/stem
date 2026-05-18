@@ -124,6 +124,13 @@ function ResultCard({ result, isExpanded, onToggle, onDelete }: ResultCardProps)
       <button
         type="button"
         onClick={onToggle}
+        title={
+          isExpanded
+            ? `Collapse details for ${result.testType}`
+            : `Expand to view metrics, duration, and any errors from this ${result.testType} run`
+        }
+        aria-label={isExpanded ? 'Collapse result details' : 'Expand result details'}
+        aria-expanded={isExpanded}
         className="w-full flex items-center justify-between p-3 hover:bg-[var(--color-surface-hover)] transition-colors text-left"
       >
         <div className="flex items-center gap-3">
@@ -201,6 +208,8 @@ function ResultCard({ result, isExpanded, onToggle, onDelete }: ResultCardProps)
           <button
             type="button"
             onClick={onDelete}
+            title="Permanently remove this result from history; cannot be undone"
+            aria-label="Delete this test result from history"
             className="btn btn-ghost text-[var(--color-status-error)] text-sm"
           >
             <Trash2 className="w-3 h-3" />
@@ -285,6 +294,7 @@ export function ResultHistory({
         className="absolute inset-0 bg-black/50 cursor-default"
         onClick={onClose}
         onKeyDown={handleBackdropKeyDown}
+        title="Click outside to close the history drawer"
         aria-label="Close history drawer"
       />
 
@@ -311,7 +321,8 @@ export function ResultHistory({
                 type="button"
                 onClick={handleClearAll}
                 className="btn btn-ghost text-[var(--color-status-error)]"
-                title="Clear all history"
+                title={`Permanently delete all ${history.length} saved test result${history.length === 1 ? '' : 's'} from local storage; cannot be undone`}
+                aria-label="Clear all test history"
               >
                 <Trash2 className="w-4 h-4" />
                 Clear All
@@ -321,7 +332,7 @@ export function ResultHistory({
               type="button"
               onClick={onClose}
               className="btn btn-ghost"
-              title="Close"
+              title="Close the test history drawer and return to the main view"
               aria-label="Close test history"
             >
               <X className="w-5 h-5" aria-hidden="true" />

@@ -20,7 +20,14 @@
 
 import { memo, type ReactElement, useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { cn, icon as iconTokens, layout, radius, spacing, status as statusColor } from '../styles/theme';
+import {
+  cn,
+  icon as iconTokens,
+  layout,
+  radius,
+  spacing,
+  status as statusColor,
+} from '../styles/theme';
 
 // =============================================================================
 // Types
@@ -774,7 +781,10 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function HeaderBarCompon
             className={iconButtonClass}
             onClick={onRefresh}
             aria-label={t('accessibility.refreshInterfaces', 'Refresh interfaces')}
-            title={t('accessibility.refreshInterfaces', 'Refresh interfaces')}
+            title={t(
+              'tooltips.header.refresh',
+              'Rescan available network interfaces and reload current status',
+            )}
           >
             <RefreshIcon className={iconTokens.size.md} />
           </button>
@@ -783,7 +793,10 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function HeaderBarCompon
             className={iconButtonClass}
             onClick={onHistoryOpen}
             aria-label={t('accessibility.openHistory', 'Open test history')}
-            title={t('history.title', 'Test History')}
+            title={t(
+              'tooltips.header.history',
+              'Open the test history drawer to review past results, metrics, and errors',
+            )}
           >
             <HistoryIcon className={iconTokens.size.md} />
           </button>
@@ -792,7 +805,10 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function HeaderBarCompon
             className={iconButtonClass}
             onClick={onHelpOpen}
             aria-label={t('accessibility.openHelp', 'Open help')}
-            title={t('help.title', 'Help & Documentation')}
+            title={t(
+              'tooltips.header.help',
+              'Open the help drawer with test references, tutorials, and a glossary',
+            )}
           >
             <HelpIcon className={iconTokens.size.md} />
           </button>
@@ -801,7 +817,10 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function HeaderBarCompon
             className={iconButtonClass}
             onClick={onSettingsOpen}
             aria-label={t('accessibility.openSettings', 'Open settings')}
-            title={t('settings.title', 'Settings')}
+            title={t(
+              'tooltips.header.settings',
+              'Open the settings drawer to configure modules, interfaces, and thresholds',
+            )}
           >
             <SettingsIcon className={iconTokens.size.md} />
           </button>
@@ -810,7 +829,10 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function HeaderBarCompon
             className={iconButtonClass}
             onClick={onLogout}
             aria-label={t('buttons.logout', 'Logout')}
-            title={t('buttons.logout', 'Logout')}
+            title={t(
+              'tooltips.header.logout',
+              'Sign out of the session and return to the login screen',
+            )}
           >
             <LogoutIcon className={iconTokens.size.md} />
           </button>
@@ -830,6 +852,15 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function HeaderBarCompon
           <button
             type="button"
             onClick={onReconnect}
+            title={
+              isConnecting
+                ? t('status.connecting', 'Connecting...')
+                : t(
+                    'status.tapToReconnectHint',
+                    'Reconnect to the backend WebSocket and refresh live data',
+                  )
+            }
+            aria-label={t('status.tapToReconnect', 'Tap to reconnect')}
             className={cn(
               'caption flex items-center gap-1.5',
               isConnecting ? statusColor.text.warning : statusColor.text.error,

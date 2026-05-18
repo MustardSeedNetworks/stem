@@ -9,7 +9,17 @@ import { ArrowLeft, Eye, EyeOff, KeyRound, Lock, Timer } from 'lucide-react';
 import type { FormEvent, ReactElement } from 'react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { alert, button, cn, icon, input, layout, radius, spacing, status } from '../../styles/theme';
+import {
+  alert,
+  button,
+  cn,
+  icon,
+  input,
+  layout,
+  radius,
+  spacing,
+  status,
+} from '../../styles/theme';
 
 /** Minimum password length (matches backend validation) */
 const MIN_PASSWORD_LENGTH = 12;
@@ -95,6 +105,7 @@ function PasswordInput({
           type="button"
           onClick={onToggleVisibility}
           className="absolute right-2 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
+          title={showPassword ? hidePasswordLabel : showPasswordLabel}
           aria-label={showPassword ? hidePasswordLabel : showPasswordLabel}
         >
           {showPassword ? <EyeOff className={icon.size.sm} /> : <Eye className={icon.size.sm} />}

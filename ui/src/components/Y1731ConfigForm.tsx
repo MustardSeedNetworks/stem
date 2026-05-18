@@ -242,9 +242,14 @@ export function Y1731ConfigForm({
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
                 updateConfig({ priorityTagged: e.target.checked })
               }
+              aria-label="Use 802.1Q priority tagging on OAM frames"
               className="rounded border-[var(--color-surface-border)]"
             />
-            <label htmlFor="y1731-tagged" className="text-sm text-[var(--color-text-primary)]">
+            <label
+              htmlFor="y1731-tagged"
+              title="Add an IEEE 802.1Q VLAN tag with the selected priority to all Y.1731 OAM frames"
+              className="text-sm text-[var(--color-text-primary)]"
+            >
               Use priority tagging (802.1Q)
             </label>
           </div>

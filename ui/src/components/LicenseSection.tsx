@@ -158,6 +158,7 @@ function ActivationForm({
         type="button"
         onClick={onActivate}
         disabled={loading || !licenseKey.trim()}
+        title="Validate the license key against this device and unlock the licensed features"
         className="btn btn-primary w-full"
       >
         {loading ? (
@@ -176,6 +177,7 @@ function ActivationForm({
           type="button"
           onClick={onStartTrial}
           disabled={loading}
+          title="Enable all licensed features for 14 days without a license key; trial can only be started once per device"
           className="btn btn-secondary w-full"
         >
           <Clock className="w-4 h-4" />

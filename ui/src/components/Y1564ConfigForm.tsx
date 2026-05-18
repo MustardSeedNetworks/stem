@@ -303,12 +303,14 @@ export function Y1564ConfigForm({
             {FRAME_SIZE_OPTIONS.map((option) => (
               <label
                 key={option.value}
+                title={`Include ${option.value}-byte frames in the Y.1564 service activation sweep`}
                 className="flex items-center gap-2 p-2 rounded-lg cursor-pointer hover:bg-[var(--color-surface-hover)] text-sm"
               >
                 <input
                   type="checkbox"
                   checked={config.frameSizes.includes(option.value)}
                   onChange={() => toggleFrameSize(option.value)}
+                  aria-label={`Test ${option.value}-byte frames`}
                   className="w-4 h-4 accent-[var(--color-brand-primary)]"
                 />
                 <span className="text-[var(--color-text-primary)]">{option.label}</span>
@@ -445,13 +447,17 @@ export function Y1564ConfigForm({
           )}
 
           {/* Color-Aware Mode */}
-          <label className="flex items-center gap-3 p-2 rounded-lg cursor-pointer hover:bg-[var(--color-surface-hover)]">
+          <label
+            title="Send traffic as green (in-profile, conforms to CIR) and yellow (out-of-profile, conforms to EIR) and verify each color is treated correctly"
+            className="flex items-center gap-3 p-2 rounded-lg cursor-pointer hover:bg-[var(--color-surface-hover)]"
+          >
             <input
               type="checkbox"
               checked={config.colorAware}
               onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
                 updateConfig({ colorAware: e.target.checked })
               }
+              aria-label="Enable color-aware Y.1564 testing"
               className="w-4 h-4 accent-[var(--color-brand-primary)]"
             />
             <div>

@@ -370,7 +370,12 @@ function ModuleStatusIndicator({
 }): ReactElement | null {
   if (isRunning) {
     return (
-      <div className={cn('flex items-center gap-2 px-3 py-1.5 rounded-full', statusColor.bg.successSoft)}>
+      <div
+        className={cn(
+          'flex items-center gap-2 px-3 py-1.5 rounded-full',
+          statusColor.bg.successSoft,
+        )}
+      >
         <span className={cn('w-2 h-2 rounded-full animate-pulse', statusColor.bg.success)} />
         <span className={cn('text-xs font-medium', statusColor.text.success)}>
           {status.status === 'starting' ? 'Starting...' : status.currentTest || 'Running'}
@@ -380,14 +385,18 @@ function ModuleStatusIndicator({
   }
   if (status.status === 'completed') {
     return (
-      <div className={cn('flex items-center gap-2 px-3 py-1.5 rounded-full', statusColor.bg.infoSoft)}>
+      <div
+        className={cn('flex items-center gap-2 px-3 py-1.5 rounded-full', statusColor.bg.infoSoft)}
+      >
         <span className={cn('text-xs font-medium', statusColor.text.info)}>Completed</span>
       </div>
     );
   }
   if (status.status === 'error') {
     return (
-      <div className={cn('flex items-center gap-2 px-3 py-1.5 rounded-full', statusColor.bg.errorSoft)}>
+      <div
+        className={cn('flex items-center gap-2 px-3 py-1.5 rounded-full', statusColor.bg.errorSoft)}
+      >
         <span className={cn('text-xs font-medium', statusColor.text.error)}>
           Error{status.message ? `: ${status.message}` : ''}
         </span>
@@ -419,6 +428,8 @@ function ModuleActionButton({
       <button
         type="button"
         onClick={onStop}
+        title={`Stop the running ${config.displayName} test and discard incomplete results`}
+        aria-label={`Stop ${config.displayName} test`}
         className={cn(
           'px-4 py-2 rounded-lg flex items-center gap-2 transition-colors',
           statusColor.badge.error,
@@ -435,6 +446,12 @@ function ModuleActionButton({
       type="button"
       onClick={onStart}
       disabled={enabledTestCount === 0}
+      title={
+        enabledTestCount === 0
+          ? `Enable at least one ${config.displayName} test below to start`
+          : `Start the ${enabledTestCount} enabled ${config.displayName} test${enabledTestCount === 1 ? '' : 's'} using the current configuration`
+      }
+      aria-label={`Start ${config.displayName} tests`}
       className={cn(
         'px-4 py-2 rounded-lg flex items-center gap-2 transition-colors',
         enabledTestCount > 0
@@ -480,7 +497,13 @@ function ModuleResultsSection({
 
         {/* Error message */}
         {results?.error ? (
-          <div className={cn('mt-2 p-2 rounded-lg border', statusColor.bg.errorSoft, statusColor.border.errorSoft)}>
+          <div
+            className={cn(
+              'mt-2 p-2 rounded-lg border',
+              statusColor.bg.errorSoft,
+              statusColor.border.errorSoft,
+            )}
+          >
             <span className={cn('text-xs', statusColor.text.error)}>{results.error}</span>
           </div>
         ) : null}
@@ -521,6 +544,12 @@ function ModuleExpandedContent({
         <button
           type="button"
           onClick={(): void => onToggleAutoStart(!config.autoStart)}
+          title={
+            config.autoStart
+              ? 'Disable auto-start; tests will only run when manually started'
+              : 'Automatically run the enabled tests in this module whenever a link comes up on the test interface'
+          }
+          aria-label={config.autoStart ? 'Disable auto-start on link' : 'Enable auto-start on link'}
           className={cn(
             'w-10 h-6 rounded-full relative transition-colors',
             config.autoStart ? 'bg-brand-primary' : 'bg-surface-border',
@@ -544,6 +573,7 @@ function ModuleExpandedContent({
           {config.tests.map((test) => (
             <label
               key={test.id}
+              title={`${test.description} — toggle whether to include "${test.name}" when starting the module`}
               className={cn(
                 'flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors',
                 'hover:bg-surface-hover',
@@ -556,6 +586,7 @@ function ModuleExpandedContent({
                 onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
                   onToggleTest(test.id, e.target.checked)
                 }
+                aria-label={`Include ${test.name} when running module`}
                 className="w-4 h-4"
                 style={{ accentColor: config.color }}
               />
@@ -612,11 +643,18 @@ export function ModuleCard({
             onClick={(): void => onToggleModule(!config.enabled)}
             className={cn(
               'w-8 h-8 rounded-lg flex items-center justify-center transition-colors',
-              config.enabled
-                ? statusColor.badge.successStrong
-                : 'bg-surface-base text-text-muted',
+              config.enabled ? statusColor.badge.successStrong : 'bg-surface-base text-text-muted',
             )}
-            title={config.enabled ? 'Disable module' : 'Enable module'}
+            title={
+              config.enabled
+                ? `Disable ${config.displayName} (${config.standard}); tests in this module will be skipped`
+                : `Enable ${config.displayName} (${config.standard}); allows running its tests`
+            }
+            aria-label={
+              config.enabled
+                ? `Disable ${config.displayName} module`
+                : `Enable ${config.displayName} module`
+            }
           >
             <Power className="w-4 h-4" />
           </button>
@@ -653,7 +691,8 @@ export function ModuleCard({
               'text-text-muted hover:text-text-primary',
               'hover:bg-surface-hover',
             )}
-            title="Configure module"
+            title={`Open the configuration drawer for ${config.displayName} (frame sizes, durations, thresholds)`}
+            aria-label={`Configure ${config.displayName}`}
           >
             <Settings2 className="w-4 h-4" />
           </button>
@@ -676,7 +715,12 @@ export function ModuleCard({
               'text-text-muted hover:text-text-primary',
               'hover:bg-surface-hover',
             )}
-            title={expanded ? 'Collapse' : 'Expand'}
+            title={
+              expanded
+                ? `Collapse the ${config.displayName} card and hide test selection`
+                : `Expand the ${config.displayName} card to choose which tests to run and toggle auto-start`
+            }
+            aria-label={expanded ? 'Collapse module card' : 'Expand module card'}
           >
             {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>

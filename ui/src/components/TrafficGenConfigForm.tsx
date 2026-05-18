@@ -290,9 +290,14 @@ export function TrafficGenConfigForm({
                 onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
                   updateConfig({ burstMode: e.target.checked })
                 }
+                aria-label="Enable burst mode traffic generation"
                 className="rounded border-[var(--color-surface-border)]"
               />
-              <label htmlFor="tgen-burstmode" className="text-sm text-[var(--color-text-primary)]">
+              <label
+                htmlFor="tgen-burstmode"
+                title="Send frames in short bursts separated by idle gaps rather than at a continuous rate; useful for testing buffer behavior"
+                className="text-sm text-[var(--color-text-primary)]"
+              >
                 Enable burst mode
               </label>
             </div>

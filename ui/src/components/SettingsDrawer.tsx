@@ -132,6 +132,7 @@ export function SettingsDrawer({
         type="button"
         className="fixed inset-0 bg-black/50 z-40 cursor-default"
         onClick={onClose}
+        title={t('accessibility.closeSettings', 'Close settings drawer')}
         aria-label={t('accessibility.closeSettings', 'Close settings drawer')}
       />
 
@@ -150,6 +151,7 @@ export function SettingsDrawer({
             type="button"
             onClick={onClose}
             className={cn(spacing.pad.sm, 'hover:bg-surface-hover', radius.lg, 'transition-colors')}
+            title={t('accessibility.closeSettings', 'Close settings')}
             aria-label={t('accessibility.closeSettings', 'Close settings')}
           >
             <X className="w-5 h-5 text-text-muted" aria-hidden="true" />
@@ -277,6 +279,10 @@ function ViewToggle({ viewMode, onViewModeChange }: ViewToggleProps): React.Reac
         <button
           type="button"
           onClick={(): void => onViewModeChange('standard')}
+          title={t(
+            'settings.viewStandardHint',
+            'Group settings by configuration section (mode, interface, thresholds)',
+          )}
           className={cn(
             'flex items-center gap-1 px-3 py-1.5 caption',
             viewMode === 'standard'
@@ -290,6 +296,10 @@ function ViewToggle({ viewMode, onViewModeChange }: ViewToggleProps): React.Reac
         <button
           type="button"
           onClick={(): void => onViewModeChange('module')}
+          title={t(
+            'settings.viewModuleHint',
+            'Group settings by test module (Benchmark, ServiceTest, TrafficGen, Measure, Certify)',
+          )}
           className={cn(
             'flex items-center gap-1 px-3 py-1.5 caption',
             viewMode === 'module'

@@ -273,9 +273,14 @@ function PTPConfigSection({ config, updateConfig }: PTPConfigSectionProps): Reac
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
               updateConfig({ ptpEnabled: e.target.checked })
             }
+            aria-label="Enable IEEE 1588 PTP hardware timestamping"
             className="rounded border-[var(--color-surface-border)]"
           />
-          <label htmlFor="tsn-ptpenabled" className="text-sm text-[var(--color-text-primary)]">
+          <label
+            htmlFor="tsn-ptpenabled"
+            title="Use IEEE 1588 PTP hardware timestamps for sub-microsecond delay measurement; requires PTP-capable NIC"
+            className="text-sm text-[var(--color-text-primary)]"
+          >
             Enable PTP timestamping (IEEE 1588)
           </label>
         </div>
@@ -288,9 +293,14 @@ function PTPConfigSection({ config, updateConfig }: PTPConfigSectionProps): Reac
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
               updateConfig({ requirePTPSync: e.target.checked })
             }
+            aria-label="Require PTP synchronization before starting test"
             className="rounded border-[var(--color-surface-border)]"
           />
-          <label htmlFor="tsn-requiresync" className="text-sm text-[var(--color-text-primary)]">
+          <label
+            htmlFor="tsn-requiresync"
+            title="Block the test from starting until the local PTP clock has locked to the grandmaster within the configured tolerance"
+            className="text-sm text-[var(--color-text-primary)]"
+          >
             Require PTP synchronization before test
           </label>
         </div>
@@ -348,9 +358,14 @@ function SchedulingConfigSection({
           onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
             updateConfig({ preemptionEnabled: e.target.checked })
           }
+          aria-label="Enable IEEE 802.1Qbu frame preemption"
           className="rounded border-[var(--color-surface-border)]"
         />
-        <label htmlFor="tsn-preemption" className="text-sm text-[var(--color-text-primary)]">
+        <label
+          htmlFor="tsn-preemption"
+          title="Allow express traffic to preempt in-flight preemptable frames per IEEE 802.1Qbu; reduces latency for critical traffic classes"
+          className="text-sm text-[var(--color-text-primary)]"
+        >
           Enable frame preemption (802.1Qbu)
         </label>
       </div>

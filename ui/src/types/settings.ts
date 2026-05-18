@@ -237,4 +237,3 @@ export const defaultTSNConfig: TSNConfig = {
   cyclePeriod: 1000,
   gateControlList: '',
 };
-

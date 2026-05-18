@@ -62,6 +62,7 @@ export function HelpIcon({
         onFocus={(): void => setShowTooltip(true)}
         onBlur={(): void => setShowTooltip(false)}
         className="p-0.5 rounded-full hover:bg-[var(--color-surface-hover)] transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-primary)]/50"
+        title={onClick ? `${tooltip} (click for details)` : tooltip}
         aria-label={`Help: ${tooltip}`}
       >
         <HelpCircle

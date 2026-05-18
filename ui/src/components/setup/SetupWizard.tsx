@@ -220,7 +220,11 @@ export function SetupWizard({
                           type="button"
                           onClick={handleCopyPassword}
                           className="shrink-0 p-1.5 rounded-md text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-base)] border border-[var(--color-surface-border)]"
-                          title={t('buttons.copy')}
+                          title={t(
+                            'buttons.copyTooltip',
+                            'Copy the generated password to the clipboard so you can save it in a password manager',
+                          )}
+                          aria-label={t('buttons.copy', 'Copy password to clipboard')}
                         >
                           <Copy className="w-3.5 h-3.5" />
                         </button>
@@ -267,6 +271,11 @@ export function SetupWizard({
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
+                    title={
+                      showPassword
+                        ? 'Hide the password (mask characters with dots)'
+                        : 'Show the password in plain text to verify what you typed'
+                    }
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}

@@ -71,14 +71,24 @@ export function InterfaceSection({
             <div className="flex gap-2">
               {selectedDetails.xdp === true && (
                 <span
-                  className={cn(status.badge.success, spacing.chip.sm, radius.default, 'font-medium')}
+                  className={cn(
+                    status.badge.success,
+                    spacing.chip.sm,
+                    radius.default,
+                    'font-medium',
+                  )}
                 >
                   XDP
                 </span>
               )}
               {selectedDetails.physical === true && (
                 <span
-                  className={cn(status.badge.success, spacing.chip.sm, radius.default, 'font-medium')}
+                  className={cn(
+                    status.badge.success,
+                    spacing.chip.sm,
+                    radius.default,
+                    'font-medium',
+                  )}
                 >
                   {t('settings.interface.physical', 'Physical')}
                 </span>

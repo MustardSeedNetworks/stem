@@ -267,12 +267,14 @@ export function RFC2544ConfigForm({
           {FRAME_SIZE_OPTIONS.map((option) => (
             <label
               key={option.value}
+              title={`Include ${option.value}-byte frames in the RFC 2544 sweep; required by RFC 2544 for full compliance reporting`}
               className="flex items-center gap-2 p-2 rounded-lg cursor-pointer hover:bg-[var(--color-surface-hover)] text-sm"
             >
               <input
                 type="checkbox"
                 checked={config.frameSizes.includes(option.value)}
                 onChange={() => toggleFrameSize(option.value)}
+                aria-label={`Test ${option.value}-byte frames`}
                 className="w-4 h-4 accent-[var(--color-brand-primary)]"
               />
               <span className="text-[var(--color-text-primary)]">{option.label}</span>
@@ -293,13 +295,17 @@ export function RFC2544ConfigForm({
           Advanced Options
         </div>
 
-        <label className="flex items-center gap-3 p-2 rounded-lg cursor-pointer hover:bg-[var(--color-surface-hover)]">
+        <label
+          title="Send and measure traffic in both directions simultaneously; doubles the offered load and exercises full-duplex forwarding"
+          className="flex items-center gap-3 p-2 rounded-lg cursor-pointer hover:bg-[var(--color-surface-hover)]"
+        >
           <input
             type="checkbox"
             checked={config.bidirectional}
             onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
               updateConfig({ bidirectional: e.target.checked })
             }
+            aria-label="Enable bidirectional testing"
             className="w-4 h-4 accent-[var(--color-brand-primary)]"
           />
           <div>

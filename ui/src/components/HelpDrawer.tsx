@@ -131,6 +131,7 @@ export function HelpDrawer({ isOpen, onClose }: HelpDrawerProps): ReactElement |
                 radius.lg,
                 'hover:bg-surface-hover',
               )}
+              title="Close the help drawer and return to the main view"
               aria-label="Close help"
             >
               <X className={iconTokens.size.md} aria-hidden="true" />
@@ -142,6 +143,7 @@ export function HelpDrawer({ isOpen, onClose }: HelpDrawerProps): ReactElement |
             <button
               type="button"
               onClick={(): void => setActiveTab('tests')}
+              title="Browse all 27 supported tests grouped by standard (RFC 2544, Y.1564, Y.1731, MEF, TSN)"
               className={cn(
                 'flex-1 px-3 py-2 text-sm font-medium transition-colors',
                 radius.md,
@@ -158,6 +160,7 @@ export function HelpDrawer({ isOpen, onClose }: HelpDrawerProps): ReactElement |
             <button
               type="button"
               onClick={(): void => setActiveTab('tutorials')}
+              title="Step-by-step walkthroughs for common testing workflows"
               className={cn(
                 'flex-1 px-3 py-2 text-sm font-medium transition-colors',
                 radius.md,
@@ -174,6 +177,7 @@ export function HelpDrawer({ isOpen, onClose }: HelpDrawerProps): ReactElement |
             <button
               type="button"
               onClick={(): void => setActiveTab('glossary')}
+              title="Reference dictionary of networking and test-engineering terms"
               className={cn(
                 'flex-1 px-3 py-2 text-sm font-medium transition-colors',
                 radius.md,
@@ -224,7 +228,12 @@ export function HelpDrawer({ isOpen, onClose }: HelpDrawerProps): ReactElement |
                   ? cn(status.bg.info, 'text-text-inverse')
                   : 'bg-surface-base text-text-muted border border-surface-border hover:bg-surface-hover',
               )}
-              title={simpleMode ? 'Showing simple explanations' : 'Showing technical explanations'}
+              title={
+                simpleMode
+                  ? 'Switch to technical explanations with RFC details, packet structures, and engineering parameters'
+                  : 'Switch to plain-language explanations suitable for non-engineers'
+              }
+              aria-label={simpleMode ? 'Switch to technical view' : 'Switch to simple view'}
             >
               {simpleMode ? 'Simple' : 'Technical'}
             </button>
@@ -492,7 +501,9 @@ function TestDetailView({
                   <span className="caption">{metric.unit}</span>
                 </div>
                 <p className={cn('caption mt-1', status.text.success)}>Good: {metric.goodRange}</p>
-                <p className={cn('caption mt-0.5', status.text.warning)}>Bad: {metric.badMeaning}</p>
+                <p className={cn('caption mt-0.5', status.text.warning)}>
+                  Bad: {metric.badMeaning}
+                </p>
               </div>
             ))}
           </div>
@@ -516,7 +527,8 @@ function TestDetailView({
                     type="button"
                     onClick={(): void => onCopy(example.command)}
                     className={cn('p-1 hover:bg-surface-hover', radius.default)}
-                    title="Copy command"
+                    title="Copy this command to the clipboard so you can paste it in a terminal"
+                    aria-label="Copy command to clipboard"
                   >
                     {copiedCommand === example.command ? (
                       <Check className={cn(iconTokens.size.xs, status.text.success)} />
@@ -694,7 +706,8 @@ function TutorialDetailView({
                   type="button"
                   onClick={(): void => onCopy(step.command as string)}
                   className={cn('p-1 hover:bg-surface-hover', radius.default)}
-                  title="Copy command"
+                  title="Copy this command to the clipboard so you can paste it in a terminal"
+                  aria-label="Copy command to clipboard"
                 >
                   {copiedCommand === step.command ? (
                     <Check className={cn(iconTokens.size.xs, status.text.success)} />
@@ -710,12 +723,7 @@ function TutorialDetailView({
               </div>
             ) : null}
             {step.tip ? (
-              <div
-                className={cn(
-                  cn('mt-2 caption p-2', status.badge.info),
-                  radius.default,
-                )}
-              >
+              <div className={cn(cn('mt-2 caption p-2', status.badge.info), radius.default)}>
                 Tip: {step.tip}
               </div>
             ) : null}

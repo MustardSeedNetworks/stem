@@ -264,6 +264,9 @@ export function ModuleSelector({
           <button
             type="button"
             onClick={(): void => toggleModule(mod.name)}
+            title={`${mod.description}. Click to ${expandedModule === mod.name ? 'collapse and hide' : 'expand and choose'} ${mod.tests.length} ${mod.standard} test${mod.tests.length === 1 ? '' : 's'}.`}
+            aria-label={`${mod.displayName} module — ${expandedModule === mod.name ? 'collapse' : 'expand'} test list`}
+            aria-expanded={expandedModule === mod.name}
             className="w-full flex items-center justify-between p-3 hover:bg-[var(--color-surface-hover)] transition-colors"
             style={{ borderLeft: `4px solid ${mod.color}` }}
           >
@@ -307,6 +310,7 @@ export function ModuleSelector({
                 <button
                   type="button"
                   onClick={() => selectAllInModule(mod)}
+                  title={`Select every test in ${mod.displayName} (${mod.tests.length} test${mod.tests.length === 1 ? '' : 's'})`}
                   className="text-xs text-[var(--color-status-info)] hover:underline"
                 >
                   Select All
@@ -315,6 +319,7 @@ export function ModuleSelector({
                 <button
                   type="button"
                   onClick={() => deselectAllInModule(mod)}
+                  title={`Clear all test selections in ${mod.displayName}`}
                   className="text-xs text-[var(--color-text-muted)] hover:underline"
                 >
                   Deselect All
@@ -332,12 +337,14 @@ export function ModuleSelector({
                   return (
                     <label
                       key={testId}
+                      title={testInfo.tooltip}
                       className="flex items-start gap-3 p-2 rounded-lg cursor-pointer hover:bg-[var(--color-surface-hover)]"
                     >
                       <input
                         type="checkbox"
                         checked={selectedTests.includes(testId)}
                         onChange={() => toggleTest(testId)}
+                        aria-label={`Include ${testInfo.name} (${testId}) in the test run`}
                         className="mt-0.5 w-4 h-4"
                         style={{ accentColor: mod.color }}
                       />

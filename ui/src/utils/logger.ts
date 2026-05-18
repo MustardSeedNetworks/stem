@@ -65,4 +65,3 @@ export function logWarn(message: string, context?: ErrorContext): void {
     timestamp: new Date().toISOString(),
   });
 }
-
