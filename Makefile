@@ -190,6 +190,7 @@ include mk/security.mk
 include mk/deps.mk
 include mk/package.mk
 include mk/container.mk
+include mk/dev.mk
 
 # =============================================================================
 # Default Target
