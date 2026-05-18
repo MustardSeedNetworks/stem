@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.0](https://github.com/krisarmstrong/stem/compare/v0.9.12...v0.10.0) (2026-05-18)
+
+
+### Features
+
+* **ui:** comprehensive tooltip parity — add ~42 tooltips for icon-only buttons + complex actions ([5a9ef39](https://github.com/krisarmstrong/stem/commit/5a9ef39aa0482871c77bd3cdecb612cb6d81927e))
+* **ui:** phase A router + sidebar architecture (multi-page) ([207129b](https://github.com/krisarmstrong/stem/commit/207129b802ebe8212d281ad29033bc9f01647b1c))
+* **ui:** port useTheme hook from seed for cross-repo parity ([a6d7494](https://github.com/krisarmstrong/stem/commit/a6d74945029ed4a9efc69d68edac5a013e29b2dd))
+
+
+### Bug Fixes
+
+* **ci:** rename status import to statusColor to avoid noShadow lint ([da4d3d9](https://github.com/krisarmstrong/stem/commit/da4d3d9de1535eb94d7c030e6352f5ce8c703c8d))
+* **ci:** suppress biome noBarrelFile on intentional theme barrel ([ee76bd3](https://github.com/krisarmstrong/stem/commit/ee76bd3ac7de18181a02386e1d30f38f39078b38))
+
 ## [0.9.12](https://github.com/krisarmstrong/stem/compare/v0.9.11...v0.9.12) (2026-05-18)
 
 
