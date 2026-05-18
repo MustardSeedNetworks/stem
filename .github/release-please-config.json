@@ -7,7 +7,7 @@
       "bump-patch-for-minor-pre-major": true,
       "changelog-path": "CHANGELOG.md",
       "versioning": "default",
-      "extra-files": ["CLAUDE.md", "ui/package.json"]
+      "extra-files": ["ui/package.json"]
     }
   },
   "changelog-sections": [

@@ -5,10 +5,14 @@
 # When a release PR is merged, creates a GitHub release which triggers
 # release.yml for building packages (via version tag).
 #
-# Trigger mirrors seed and niac's canonical pattern: fires on every CI
-# workflow completion, only acts when CI succeeded (otherwise the
-# version would bump on broken code). workflow_dispatch is kept for
-# manual triggers / debugging.
+# Trigger pattern (shared with seed, stem, niac):
+#   - workflow_run on CI completion: real trigger; gated on success
+#   - workflow_dispatch: manual debug / force trigger
+#
+# Versioning behaviour is driven by .github/release-please-config.json
+# and .github/.release-please-manifest.json so that release-please knows
+# the current version and applies the same changelog grouping across
+# all three projects.
 # =============================================================================
 
 name: Release Please
@@ -41,7 +45,10 @@ jobs:
         with:
           # PAT (not GITHUB_TOKEN) so the release PR's CI runs and the
           # tag-push event triggers release.yml. With GITHUB_TOKEN those
-          # downstream workflows are silently skipped.
+          # downstream workflows are silently skipped per GitHub's
+          # anti-recursion policy. Falls back to GITHUB_TOKEN if the
+          # secret isn't set, so the workflow doesn't break if the PAT
+          # expires before being renewed (cascade is lost until renewed).
           token: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
           release-type: go
           config-file: .github/release-please-config.json
