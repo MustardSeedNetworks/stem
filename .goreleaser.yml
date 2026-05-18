@@ -124,7 +124,7 @@ nfpms:
     package_name: stem
     vendor: Mustard Seed Networks
     homepage: https://github.com/krisarmstrong/stem
-    maintainer: Kris Armstrong <kris@mustardseednetworks.com>
+    maintainer: Kris Armstrong <kris.armstrong@icloud.com>
     description: |
       The Stem - Network Performance Testing Tool by Mustard Seed Networks
       .
