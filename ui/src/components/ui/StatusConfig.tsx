@@ -8,7 +8,7 @@
  */
 
 import type { ReactNode } from 'react';
-import { icon as iconTokens, spacing, status } from '../../styles/theme';
+import { icon as iconTokens, spacing, status as statusColor } from '../../styles/theme';
 
 export type Status = 'success' | 'warning' | 'error' | 'info' | 'unknown' | 'loading';
 
@@ -27,8 +27,8 @@ export const statusConfig: Record<
         />
       </svg>
     ),
-    color: status.text.success,
-    bgColor: status.bg.successSoft,
+    color: statusColor.text.success,
+    bgColor: statusColor.bg.successSoft,
     label: 'Status: success',
   },
   warning: {
@@ -41,8 +41,8 @@ export const statusConfig: Record<
         />
       </svg>
     ),
-    color: status.text.warning,
-    bgColor: status.bg.warningSoft,
+    color: statusColor.text.warning,
+    bgColor: statusColor.bg.warningSoft,
     label: 'Status: warning',
   },
   error: {
@@ -55,8 +55,8 @@ export const statusConfig: Record<
         />
       </svg>
     ),
-    color: status.text.error,
-    bgColor: status.bg.errorSoft,
+    color: statusColor.text.error,
+    bgColor: statusColor.bg.errorSoft,
     label: 'Status: error',
   },
   info: {
@@ -69,8 +69,8 @@ export const statusConfig: Record<
         />
       </svg>
     ),
-    color: status.text.info,
-    bgColor: status.bg.infoSoft,
+    color: statusColor.text.info,
+    bgColor: statusColor.bg.infoSoft,
     label: 'Status: info',
   },
   unknown: {
@@ -103,8 +103,8 @@ export const statusConfig: Record<
         <path className="opacity-75" fill="currentColor" d="M18 10a8 8 0 00-8-8v4a4 4 0 014 4h4z" />
       </svg>
     ),
-    color: status.text.info,
-    bgColor: status.bg.infoSoft,
+    color: statusColor.text.info,
+    bgColor: statusColor.bg.infoSoft,
     label: 'Status: loading',
   },
 };
