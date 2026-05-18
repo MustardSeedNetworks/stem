@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.0](https://github.com/krisarmstrong/stem/compare/v0.12.1...v0.13.0) (2026-05-18)
+
+
+### Features
+
+* **ui:** Flat sidebar + header role-chip + slimmed Settings + valid-interface filter ([#210](https://github.com/krisarmstrong/stem/issues/210)) ([1cb58bd](https://github.com/krisarmstrong/stem/commit/1cb58bd04693f1cd72597a3a1a868ecd504c8e19))
+
 ## [0.12.1](https://github.com/krisarmstrong/stem/compare/v0.12.0...v0.12.1) (2026-05-18)
 
 
