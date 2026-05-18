@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.12](https://github.com/krisarmstrong/stem/compare/v0.9.11...v0.9.12) (2026-05-18)
+
+
+### Bug Fixes
+
+* **api:** update fs.Sub subdir to "ui" to match embed glob ([058d44f](https://github.com/krisarmstrong/stem/commit/058d44fdf297cb15b689eb3c5329260b98526460))
+* **ci:** auto-trigger release-please on CI completion (was manual-only) ([5334db2](https://github.com/krisarmstrong/stem/commit/5334db21fa76875e2a7ded4a24e14a8a52f31147))
+* **ci:** bump Dockerfile go-build to golang:1.26-bookworm ([032a37e](https://github.com/krisarmstrong/stem/commit/032a37e2d50e3d774469132756532ee783eaae38))
+* **ci:** correct artifact path + Docker [@locales](https://github.com/locales) copy ([b4902e4](https://github.com/krisarmstrong/stem/commit/b4902e4ac2ae194aa06925c48fab173c33f74804))
+* **metrics:** serialize tests that share Prometheus counter labels ([3e413bc](https://github.com/krisarmstrong/stem/commit/3e413bc196564221a31f5a4ced920cc446623e15))
+
 ## [0.9.11](https://github.com/krisarmstrong/stem/compare/v0.9.10...v0.9.11) (2026-05-14)
 
 
