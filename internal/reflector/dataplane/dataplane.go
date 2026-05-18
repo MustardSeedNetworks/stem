@@ -216,8 +216,13 @@ func (dp *Dataplane) IsRunning() bool {
 	return dp.running
 }
 
-// Interface returns the network interface name
+// Interface returns the network interface name. Safe on a zero-value
+// receiver — matches the stub build's contract so tests that construct
+// `&Dataplane{}` directly work under both CGO and non-CGO builds.
 func (dp *Dataplane) Interface() string {
+	if dp == nil || dp.cfg == nil {
+		return ""
+	}
 	return dp.cfg.Interface
 }
 

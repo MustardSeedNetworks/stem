@@ -307,6 +307,13 @@ func TestHandleTestStartValidation(t *testing.T) {
 	})
 
 	t.Run("start with supported test types", func(t *testing.T) {
+		// Each iteration calls ServeHTTP -> handler -> RFC2544 test master
+		// which kicks off real C dataplane packet generation in a goroutine.
+		// Under -race the background goroutines outlive the subtest and
+		// SIGSEGV in the cgo cleanup path. Skip under -short.
+		if testing.Short() {
+			t.Skip("starts real C dataplane test; skipped under -short")
+		}
 		token := getTestingAuthToken(t, s)
 
 		// Get a real interface.
