@@ -122,8 +122,9 @@ jobs:
   # ============================================================================
   # Dedicated race-only job to match seed's CI matrix (#56). Stem's main
   # backend tests run under CGO_ENABLED=0; the race detector requires cgo,
-  # so this job sets CGO_ENABLED=1 explicitly. Pure-Go runtime — no libpcap
-  # needed.
+  # which means the dataplane cgo bindings need libxdp/libbpf/libelf at link
+  # time. Install the same native deps as the Backend (Go) job and build
+  # libreflector.a before invoking go test.
   race:
     name: Backend (race detector)
     runs-on: ubuntu-latest
@@ -151,6 +152,20 @@ jobs:
         run: |
           npm ci --prefix ui
           npm run build --prefix ui
+
+      - name: Install native build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            clang-18 \
+            libbpf-dev \
+            libelf-dev \
+            libxdp-dev \
+            make \
+            zlib1g-dev
+
+      - name: Build native dataplane library
+        run: make CC=clang-18 dataplane
 
       - name: Run tests with race detector
         env:

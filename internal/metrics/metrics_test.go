@@ -401,11 +401,11 @@ func TestRecordTestExecution_MultipleCalls(t *testing.T) {
 // SSE Connection Tests
 // -----------------------------------------------------------------------------
 
+// SSE tests share a process-global Prometheus gauge, so before/after value
+// assertions cannot run in parallel — sibling goroutines mutating the same
+// gauge corrupt the delta. Keep these serial; everything else in this file
+// stays parallel.
 func TestIncrementSSEConnections(t *testing.T) {
-	t.Parallel()
-
-	// Instead of checking exact values (which is flaky with parallel tests),
-	// verify that the function doesn't panic and the gauge increases.
 	beforeValue := getGaugeValue(t, metrics.GetMetrics().SSEConnectionsActive)
 
 	metrics.IncrementSSEConnections()
@@ -420,21 +420,12 @@ func TestIncrementSSEConnections(t *testing.T) {
 }
 
 func TestDecrementSSEConnections(t *testing.T) {
-	t.Parallel()
-
-	// Test that DecrementSSEConnections doesn't panic and the gauge reflects changes.
-	// We can't reliably check exact values with parallel tests affecting the shared gauge.
-	// Instead, verify the increment/decrement pattern works atomically.
 	metrics.IncrementSSEConnections()
 	metrics.IncrementSSEConnections() // Ensure gauge is positive
 	metrics.DecrementSSEConnections()
-
-	// If we get here without panic, the decrement function works.
-	// The gauge value is indeterminate due to parallel test interference.
 }
 
 func TestSSEConnections_IncrementDecrement(t *testing.T) {
-	t.Parallel()
 
 	// Test that increment/decrement functions work correctly.
 	// Due to parallel test interference, we can't check exact values.
@@ -454,8 +445,6 @@ func TestSSEConnections_IncrementDecrement(t *testing.T) {
 }
 
 func TestSSEConnections_MultipleIncrements(t *testing.T) {
-	t.Parallel()
-
 	initialValue := getGaugeValue(t, metrics.GetMetrics().SSEConnectionsActive)
 
 	const numConnections = 100
