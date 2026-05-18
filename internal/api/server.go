@@ -497,9 +497,28 @@ func (s *Server) setupRoutes() {
 		})
 	} else {
 		fileServer := http.FileServer(http.FS(staticFS))
-		// Static files don't need CORS headers - they're served from the same origin.
-		// CORS is handled by corsMiddleware for API endpoints.
-		s.mux.Handle("/", fileServer)
+		// SPA fallback: serve index.html for any path that isn't an actual
+		// file in the embedded FS so client-side routes like /tests/benchmark
+		// survive a browser refresh / direct hit instead of 404ing. API +
+		// health + __version routes are registered above and match before
+		// this catch-all.
+		s.mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+			cleanPath := strings.TrimPrefix(r.URL.Path, "/")
+			if cleanPath != "" {
+				if _, statErr := fs.Stat(staticFS, cleanPath); statErr == nil {
+					fileServer.ServeHTTP(w, r)
+					return
+				}
+			}
+			indexBytes, readErr := fs.ReadFile(staticFS, "index.html")
+			if readErr != nil {
+				http.NotFound(w, r)
+				return
+			}
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			w.Header().Set("Cache-Control", "no-cache")
+			_, _ = w.Write(indexBytes)
+		})
 	}
 }
 
