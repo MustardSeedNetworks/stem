@@ -13,7 +13,7 @@
 # =============================================================================
 
 .PHONY: lint lint-go lint-c lint-frontend lint-frontend-quiet lint-md \
-        format format-go format-c format-frontend fix fix-all
+        fmt fmt-go fmt-c fmt-frontend fix fix-all
 
 # =============================================================================
 # Linting
@@ -83,20 +83,20 @@ lint-md: ## Lint markdown files with markdownlint
 # Formatting
 # =============================================================================
 
-format: format-go format-frontend ## Format all code
+fmt: fmt-go fmt-frontend ## Format all code
 	@printf "$(GREEN)✓ All code formatted$(RESET)\n"
 
-format-go: ## Format Go code
+fmt-go: ## Format Go code
 	@printf "$(BOLD)🔧 Formatting Go code...$(RESET)\n"
 	@gofmt -w -s .
 	@printf "$(GREEN)✓ Go code formatted$(RESET)\n"
 
-format-frontend: ## Format frontend code with Biome
+fmt-frontend: ## Format frontend code with Biome
 	@printf "$(BOLD)🔧 Formatting frontend code (Biome)...$(RESET)\n"
 	@cd ui && npx @biomejs/biome format --write src/
 	@printf "$(GREEN)✓ Frontend code formatted$(RESET)\n"
 
-format-c: ## Format C code (Linux only)
+fmt-c: ## Format C code (Linux only)
 ifeq ($(UNAME),Linux)
 	@printf "$(BOLD)🔧 Formatting C code...$(RESET)\n"
 	@if ! command -v clang-format >/dev/null 2>&1; then \
@@ -124,4 +124,4 @@ fix: ## Auto-fix Go and frontend linting issues
 	@cd ui && npx @biomejs/biome check --write .
 	@printf "$(GREEN)✓ Auto-fix complete$(RESET)\n"
 
-fix-all: fix format-c ## Auto-fix all code (Go + frontend + C)
+fix-all: fix fmt-c ## Auto-fix all code (Go + frontend + C)
