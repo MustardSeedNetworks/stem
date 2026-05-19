@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.3](https://github.com/krisarmstrong/stem/compare/v0.13.2...v0.13.3) (2026-05-19)
+
+
+### Bug Fixes
+
+* **ci:** point Lighthouse at the real served URLs ([#65](https://github.com/krisarmstrong/stem/issues/65)) ([#220](https://github.com/krisarmstrong/stem/issues/220)) ([cde7653](https://github.com/krisarmstrong/stem/commit/cde7653e76c771bcc8f497c0cba8cdd419f974ed))
+
 ## [0.13.2](https://github.com/krisarmstrong/stem/compare/v0.13.1...v0.13.2) (2026-05-18)
 
 
