@@ -175,6 +175,11 @@ func TestHandleMode_GetSuccess(t *testing.T) {
 func TestHandleMode_PostSwitchMode(t *testing.T) {
 	s := setupSettingsTestServer(t)
 	token := getSettingsAuthToken(t, s)
+	// Force the platform-capability probe to "supported" so the
+	// reflector switch is not rejected with 403 on macOS / Windows
+	// CI runners. The 403 path is exercised in handlers_mode_test.go.
+	s.UseReflectorAvailabilityForTest(func() (bool, string) { return true, "" })
+	t.Cleanup(func() { s.UseReflectorAvailabilityForTest(nil) })
 
 	t.Run("switch to reflector", func(t *testing.T) {
 		body := bytes.NewBufferString(`{"mode":"reflector"}`)

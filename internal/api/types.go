@@ -53,9 +53,15 @@ type ModeResponse struct {
 }
 
 // ModeUpdateResponse for mode updates.
+//
+// Status is "updated" when the mode actually changed and "unchanged"
+// when a POST asked for the mode the server was already in. Previous
+// is always the mode the server was in before this request; when
+// Status == "unchanged" it equals Mode.
 type ModeUpdateResponse struct {
-	Status string `json:"status"`
-	Mode   string `json:"mode"`
+	Status   string `json:"status"`
+	Mode     string `json:"mode"`
+	Previous string `json:"previous"`
 }
 
 // SettingsResponse for settings queries.

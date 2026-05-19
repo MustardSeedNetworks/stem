@@ -74,3 +74,23 @@ func CreateACMEManagerForTest(config ACMEConfig) (*autocert.Manager, error) {
 func DefaultACMECacheDirForTest() string {
 	return defaultACMECacheDir
 }
+
+// UseReflectorAvailabilityForTest swaps the platform-capability probe
+// used by POST /api/v1/mode. The fn returns (available, reason);
+// reason is ignored when available is true and surfaced verbatim in
+// the 403 response message when available is false. Passing nil
+// restores the default probe (real reflector dataplane availability).
+//
+// Tests use this to exercise the unsupported-platform branch of the
+// mode handler without rebuilding under different cgo tags — the same
+// pattern the executor resolver uses to avoid touching the real
+// dataplane.
+func (s *Server) UseReflectorAvailabilityForTest(fn func() (bool, string)) {
+	if fn == nil {
+		s.reflectorAvailability = nil
+		return
+	}
+	s.reflectorAvailability = func() (bool, string) {
+		return fn()
+	}
+}

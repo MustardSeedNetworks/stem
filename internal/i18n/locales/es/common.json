@@ -171,6 +171,12 @@
       "bannerBody": "Las compilaciones para macOS y Windows usan la pila de red pura en Go, que soporta el modo Test Master pero no el dataplane de Reflector a velocidad de linea. Usa la compilacion para Linux para actuar como nodo Reflector, o cambia este stem al modo Test Master.",
       "switchToTestMaster": "Cambiar a Test Master",
       "startDisabledTooltip": "El modo Reflector no esta disponible en esta plataforma. Usa la compilacion para Linux para actuar como nodo Reflector."
+    },
+    "switchError": {
+      "label": "Fallo el cambio de rol:",
+      "dismiss": "Descartar",
+      "unsupported": "El modo Reflector no es compatible con esta plataforma.",
+      "network": "No se pudo conectar con el backend del stem."
     }
   }
 }

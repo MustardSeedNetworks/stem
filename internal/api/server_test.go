@@ -304,6 +304,12 @@ func TestHandleModeGet(t *testing.T) {
 
 func TestHandleModePost(t *testing.T) {
 	s := setupTestServer(t)
+	// Force the platform probe to "supported" so this test does not
+	// depend on the host's CGO / Linux availability. The
+	// unsupported-platform 403 path is covered in
+	// handlers_mode_test.go.
+	s.UseReflectorAvailabilityForTest(func() (bool, string) { return true, "" })
+	t.Cleanup(func() { s.UseReflectorAvailabilityForTest(nil) })
 
 	body := bytes.NewBufferString(`{"mode": "` + testModeReflector + `"}`)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/mode", body)

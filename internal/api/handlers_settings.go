@@ -7,7 +7,21 @@ import (
 
 	"github.com/krisarmstrong/stem/internal/logging"
 	"github.com/krisarmstrong/stem/internal/netif"
+	reflectorDP "github.com/krisarmstrong/stem/internal/reflector/dataplane"
 )
+
+// reflectorAvailabilityFn is a swappable platform-capability probe so
+// tests can simulate macOS / Windows builds without rebuilding with
+// different tags. Production code uses [reflectorDP.Available]; tests
+// override via [Server.UseReflectorAvailabilityForTest].
+type reflectorAvailabilityFn func() (available bool, reason string)
+
+func defaultReflectorAvailability() (bool, string) {
+	if reflectorDP.Available() {
+		return true, ""
+	}
+	return false, reflectorDP.UnsupportedReason()
+}
 
 // handleSettings handles settings get/update.
 func (s *Server) handleSettings(w http.ResponseWriter, r *http.Request) {
@@ -50,6 +64,30 @@ func (s *Server) handleSettings(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleMode handles mode switching between reflector and test_master.
+//
+// GET returns the current mode. POST validates the request body and
+// switches modes, performing the role-change side effects in this
+// order:
+//
+//  1. Reject unknown mode values (400).
+//  2. If the binary cannot support the requested mode on this platform
+//     (e.g. reflector on macOS / Windows pure-Go builds), reject with
+//     403 and a reason from the dataplane availability probe — the
+//     same probe /api/v1/capabilities uses.
+//  3. No-op if the requested mode equals the current mode: return 200
+//     with previous == new so clients can render consistently without
+//     any side effects.
+//  4. Tear down any running role-bound work before swapping the mode
+//     flag: stop the active reflector executor (if any) and cancel any
+//     running / starting test. This mirrors the user-facing semantics
+//     described by the RoleChip confirm dialog ("any in-progress test
+//     will be cancelled").
+//  5. Update [Server.mode] under the stats lock.
+//  6. Emit an api.mode.changed audit log line with previous, new, and
+//     caller IP so operators can trace role flips.
+//
+// Returns a [ModeUpdateResponse] with the new mode plus the previous
+// mode it replaced.
 func (s *Server) handleMode(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
@@ -59,26 +97,124 @@ func (s *Server) handleMode(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, ModeResponse{Mode: mode})
 
 	case http.MethodPost:
-		var req ModeRequest
-		if !decodeJSONStrict(w, r, &req) {
-			return
-		}
-
-		if req.Mode != modeReflector && req.Mode != modeTestMaster {
-			logging.Warn("mode update failed: invalid mode", "mode", req.Mode)
-			WriteInvalidRequest(w, "Invalid mode (must be 'reflector' or 'test_master')")
-			return
-		}
-
-		s.statsMu.Lock()
-		oldMode := s.mode
-		s.mode = req.Mode
-		s.statsMu.Unlock()
-		logging.Info("mode changed", "from", oldMode, "to", req.Mode)
-		writeJSON(w, ModeUpdateResponse{Status: "updated", Mode: req.Mode})
+		s.handleModeUpdate(w, r)
 
 	default:
 		WriteMethodNotAllowed(w)
+	}
+}
+
+// handleModeUpdate is the POST branch of [Server.handleMode], split out
+// to keep the dispatch handler well within the cyclomatic-complexity
+// budget enforced by golangci-lint.
+func (s *Server) handleModeUpdate(w http.ResponseWriter, r *http.Request) {
+	var req ModeRequest
+	if !decodeJSONStrict(w, r, &req) {
+		return
+	}
+
+	if req.Mode != modeReflector && req.Mode != modeTestMaster {
+		logging.Warn("mode update failed: invalid mode", "mode", req.Mode)
+		WriteInvalidRequest(w, "Invalid mode (must be 'reflector' or 'test_master')")
+		return
+	}
+
+	// Platform gate: reject modes the binary cannot actually run.
+	// Today this is reflector on non-CGO / non-Linux builds. The
+	// same probe powers /api/v1/capabilities so the UI gets a
+	// consistent answer no matter which endpoint it asks.
+	availability := s.reflectorAvailability
+	if availability == nil {
+		availability = defaultReflectorAvailability
+	}
+	if req.Mode == modeReflector {
+		available, reason := availability()
+		if !available {
+			if reason == "" {
+				reason = "Reflector mode is not supported on this platform"
+			}
+			logging.Warn("mode update rejected: reflector unavailable",
+				"mode", req.Mode,
+				"reason", reason,
+			)
+			WriteError(w, &Error{
+				HTTPStatus:  http.StatusForbidden,
+				Code:        ErrCodePermissionDenied,
+				Message:     reason,
+				InternalErr: nil,
+			})
+			return
+		}
+	}
+
+	s.statsMu.RLock()
+	oldMode := s.mode
+	s.statsMu.RUnlock()
+
+	// No-op same-mode: short-circuit before tearing anything down.
+	// The audit trail still logs nothing because nothing changed.
+	if oldMode == req.Mode {
+		writeJSON(w, ModeUpdateResponse{
+			Status:   "unchanged",
+			Mode:     req.Mode,
+			Previous: oldMode,
+		})
+		return
+	}
+
+	// Side effects of a real role change: stop the active reflector
+	// (if any) and cancel any running / starting test. We do this
+	// before flipping the mode flag so observers (e.g. the stats
+	// handler) never see a window where the mode says "test_master"
+	// while the reflector executor is still alive.
+	s.teardownForModeSwitch()
+
+	s.statsMu.Lock()
+	s.mode = req.Mode
+	s.statsMu.Unlock()
+
+	logging.Info("api.mode.changed",
+		"previous", oldMode,
+		"new", req.Mode,
+		"caller_ip", logging.GetClientIP(r),
+	)
+
+	writeJSON(w, ModeUpdateResponse{
+		Status:   "updated",
+		Mode:     req.Mode,
+		Previous: oldMode,
+	})
+}
+
+// teardownForModeSwitch stops the running reflector (if any) and
+// cancels any in-progress test. Called from the mode-update path
+// before swapping s.mode so the binary never serves a request from an
+// inconsistent state (e.g. mode=test_master with a live reflector
+// executor still attached).
+//
+// This is intentionally narrower than [Server.Shutdown]: it does not
+// touch the rate limiters, auth manager, or HTTP server. It only
+// reverses the side effects of the previous role.
+func (s *Server) teardownForModeSwitch() {
+	s.statsMu.Lock()
+	exec := s.reflectorExec
+	wasRunning := s.testStatus == statusRunning || s.testStatus == statusStarting
+	if wasRunning {
+		s.testStatus = statusCancelled
+		s.currentTest = ""
+		s.currentModule = ""
+	}
+	if exec != nil {
+		s.reflectorExec = nil
+	}
+	s.statsMu.Unlock()
+
+	if exec != nil {
+		logging.Info("stopping reflector for mode switch")
+		exec.Stop()
+	}
+	if wasRunning {
+		logging.Info("test cancelled for mode switch")
 	}
 }
 
