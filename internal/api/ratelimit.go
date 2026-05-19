@@ -249,12 +249,43 @@ func (rl *RateLimiter) Middleware(next http.Handler) http.Handler {
 }
 
 // getClientIP extracts the client IP from the request.
-// Checks X-Forwarded-For and X-Real-IP headers before falling back to RemoteAddr.
+//
+// SECURITY: X-Forwarded-For and X-Real-IP headers are only honored when the
+// immediate TCP peer (RemoteAddr) is a loopback address. This means a
+// reverse proxy on localhost (the common dev/single-host deployment) can
+// still convey the real client IP, but a request arriving directly from
+// the public internet cannot spoof its IP by sending forged headers.
+// Without this gate, an attacker can defeat per-IP rate limiting and
+// pollute audit logs by sending `X-Forwarded-For: 1.2.3.4` on every
+// request.
+//
+// For deployments behind a non-loopback reverse proxy, a trusted-proxy
+// CIDR configuration is needed (filed as a followup, see
+// docs/security/AUTH_AUDIT_2026-05-19.md).
 func getClientIP(r *http.Request) string {
-	// Check X-Forwarded-For header (may contain comma-separated list).
+	remoteIP, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		// RemoteAddr might not have a port.
+		remoteIP = r.RemoteAddr
+	}
+
+	// Only trust forwarding headers when the immediate peer is loopback.
+	if !isLoopbackIP(remoteIP) {
+		return remoteIP
+	}
+	if forwarded := forwardedClientIP(r); forwarded != "" {
+		return forwarded
+	}
+	return remoteIP
+}
+
+// forwardedClientIP returns the client IP conveyed by X-Forwarded-For or
+// X-Real-IP, or the empty string if neither header carries a usable value.
+// Callers MUST gate use of this on the immediate peer being trusted.
+func forwardedClientIP(r *http.Request) string {
+	// X-Forwarded-For wins; take the first IP (leftmost = original client).
 	xff := r.Header.Get("X-Forwarded-For")
 	if xff != "" {
-		// Take the first IP in the list (client's original IP).
 		ip := xff
 		for i := range xff {
 			if xff[i] == ',' {
@@ -268,19 +299,23 @@ func getClientIP(r *http.Request) string {
 		}
 	}
 
-	// Check X-Real-IP header.
+	// Fall back to X-Real-IP.
 	xri := r.Header.Get("X-Real-IP")
 	if xri != "" {
 		return trimSpace(xri)
 	}
+	return ""
+}
 
-	// Fall back to RemoteAddr, stripping the port.
-	ip, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		// RemoteAddr might not have a port.
-		return r.RemoteAddr
+// isLoopbackIP reports whether the given address string is an IPv4 or IPv6
+// loopback address. Returns false for unparseable input so we fail closed
+// (forwarding headers are NOT trusted from an unknown peer).
+func isLoopbackIP(s string) bool {
+	ip := net.ParseIP(s)
+	if ip == nil {
+		return false
 	}
-	return ip
+	return ip.IsLoopback()
 }
 
 // trimSpace removes leading and trailing whitespace from a string.

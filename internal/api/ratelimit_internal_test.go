@@ -350,6 +350,32 @@ func TestGetClientIP(t *testing.T) {
 			xri:        "10.0.0.1",
 			want:       "10.0.0.1",
 		},
+		{
+			// Security: non-loopback peers MUST NOT be able to spoof their
+			// source IP by sending forged X-Forwarded-For. Returns the actual
+			// TCP peer instead.
+			name:       "non-loopback peer cannot spoof X-Forwarded-For",
+			remoteAddr: "203.0.113.50:12345",
+			xff:        "1.2.3.4",
+			xri:        "",
+			want:       "203.0.113.50",
+		},
+		{
+			// Same as above, but with X-Real-IP.
+			name:       "non-loopback peer cannot spoof X-Real-IP",
+			remoteAddr: "203.0.113.50:12345",
+			xff:        "",
+			xri:        "1.2.3.4",
+			want:       "203.0.113.50",
+		},
+		{
+			// IPv6 loopback is also a trusted source for forwarding headers.
+			name:       "IPv6 loopback peer can forward client IP",
+			remoteAddr: "[::1]:12345",
+			xff:        "203.0.113.195",
+			xri:        "",
+			want:       "203.0.113.195",
+		},
 	}
 
 	for _, tt := range tests {
