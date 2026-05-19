@@ -27,10 +27,16 @@ const (
 type Executor struct {
 	*Module
 
-	ctx *dataplane.Context
+	dp Y1731Dataplane
 }
 
-// NewExecutor creates a new Measure executor with a dataplane context.
+// NewExecutor creates a new Measure executor backed by the real cgo
+// dataplane for the given interface.
+//
+// This is the production constructor. Tests that want to exercise the
+// executor's dispatch logic without invoking the real C dataplane should
+// use NewExecutorWithDataplane and pass a mock that satisfies
+// Y1731Dataplane.
 func NewExecutor(iface string) (*Executor, error) {
 	ctx, err := dataplane.NewContext(iface)
 	if err != nil {
@@ -39,8 +45,20 @@ func NewExecutor(iface string) (*Executor, error) {
 
 	return &Executor{
 		Module: New(),
-		ctx:    ctx,
+		dp:     ctx,
 	}, nil
+}
+
+// NewExecutorWithDataplane creates a Measure executor backed by any
+// implementation of Y1731Dataplane.
+//
+// Production callers should use NewExecutor; this constructor exists to
+// allow tests to inject a mock dataplane.
+func NewExecutorWithDataplane(dp Y1731Dataplane) *Executor {
+	return &Executor{
+		Module: New(),
+		dp:     dp,
+	}
 }
 
 // SupportsExecution returns true as Measure can accept execution requests.
@@ -50,8 +68,8 @@ func (e *Executor) SupportsExecution() bool {
 
 // Close releases any resources.
 func (e *Executor) Close() {
-	if e.ctx != nil {
-		e.ctx.Close()
+	if e.dp != nil {
+		e.dp.Close()
 	}
 }
 
@@ -73,8 +91,8 @@ func (e *Executor) Execute(testType string, cfg *modtypes.TestConfig) (*modtypes
 		Data:       nil,
 	}
 
-	if e.ctx == nil {
-		result.Error = "dataplane context is not configured"
+	if e.dp == nil {
+		result.Error = "dataplane is not configured"
 		return result, fmt.Errorf("measure %s failed: %s", testType, result.Error)
 	}
 
@@ -85,13 +103,13 @@ func (e *Executor) Execute(testType string, cfg *modtypes.TestConfig) (*modtypes
 
 	switch testType {
 	case "y1731_delay":
-		data, runErr = e.ctx.RunY1731DelayTest(ycfg)
+		data, runErr = e.dp.RunY1731DelayTest(ycfg)
 	case "y1731_loss":
-		data, runErr = e.ctx.RunY1731LossTest(ycfg)
+		data, runErr = e.dp.RunY1731LossTest(ycfg)
 	case "y1731_slm":
-		data, runErr = e.ctx.RunY1731SyntheticLossTest(ycfg)
+		data, runErr = e.dp.RunY1731SyntheticLossTest(ycfg)
 	case "y1731_loopback":
-		data, runErr = e.ctx.RunY1731LoopbackTest(ycfg)
+		data, runErr = e.dp.RunY1731LoopbackTest(ycfg)
 	default:
 		return nil, modtypes.ErrTestNotImplemented
 	}

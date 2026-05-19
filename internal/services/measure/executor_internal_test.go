@@ -12,11 +12,12 @@ import (
 )
 
 // newTestExecutor creates an Executor for testing without a real dataplane.
-// The executor has a nil context, so methods that use ctx will fail gracefully.
+// The executor has a nil dataplane, so methods that use it will fail
+// gracefully via the "dataplane is not configured" error path.
 func newTestExecutor() *Executor {
 	return &Executor{
 		Module: New(),
-		ctx:    nil, // Nil context for testing.
+		dp:     nil, // Nil dataplane for testing.
 	}
 }
 
@@ -545,9 +546,10 @@ func TestExecutorExecuteNilConfigInternal(t *testing.T) {
 	}
 }
 
-// TestExecutorExecuteValidTestTypesWithNilContext tests Execute with valid test types.
-// Since the context is nil, the dataplane calls will panic, but we catch it.
-func TestExecutorExecuteValidTestTypesWithNilContext(t *testing.T) {
+// TestExecutorExecuteValidTestTypesWithNilDataplane tests Execute with
+// valid test types when the executor has no dataplane configured. The
+// dispatcher should return a structured error rather than panic.
+func TestExecutorExecuteValidTestTypesWithNilDataplane(t *testing.T) {
 	executor := newTestExecutor()
 
 	cfg := &modtypes.TestConfig{
@@ -566,16 +568,22 @@ func TestExecutorExecuteValidTestTypesWithNilContext(t *testing.T) {
 
 	for _, testType := range validTypes {
 		t.Run("testType_"+testType, func(t *testing.T) {
-			// This will panic because ctx is nil, but we catch it.
-			func() {
-				defer func() {
-					if r := recover(); r != nil {
-						// Expected panic due to nil context - this is OK.
-						t.Logf("Execute(%q) panicked as expected with nil context: %v", testType, r)
-					}
-				}()
-				_, _ = executor.Execute(testType, cfg)
-			}()
+			result, err := executor.Execute(testType, cfg)
+			if err == nil {
+				t.Fatalf("Execute(%q) should return error when dataplane is nil", testType)
+			}
+			if result == nil {
+				t.Fatalf("Execute(%q) should return a result describing the failure", testType)
+			}
+			if result.Success {
+				t.Errorf("Execute(%q) Success = true, want false", testType)
+			}
+			if !strings.Contains(result.Error, "dataplane") {
+				t.Errorf("Execute(%q) error = %q, want it to mention dataplane", testType, result.Error)
+			}
+			if result.TestType != testType {
+				t.Errorf("Result.TestType = %q, want %q", result.TestType, testType)
+			}
 		})
 	}
 }
@@ -657,23 +665,26 @@ func TestExecutorWithConfigs(t *testing.T) {
 		}
 	})
 
-	t.Run("empty config panics due to nil ctx", func(_ *testing.T) {
+	t.Run("empty config returns dataplane error", func(t *testing.T) {
 		cfg := &modtypes.TestConfig{
 			Interface: "",
 			FrameSize: 0,
 			Duration:  0,
 			Params:    nil,
 		}
-		func() {
-			defer func() {
-				// Panic is expected due to nil context.
-				_ = recover()
-			}()
-			_, _ = executor.Execute("y1731_delay", cfg)
-		}()
+		result, err := executor.Execute("y1731_delay", cfg)
+		if err == nil {
+			t.Fatal("Execute should return an error when dataplane is nil")
+		}
+		if result == nil || result.Success {
+			t.Fatalf("Result should report failure, got %#v", result)
+		}
+		if !strings.Contains(result.Error, "dataplane") {
+			t.Errorf("Result.Error = %q, want it to mention dataplane", result.Error)
+		}
 	})
 
-	t.Run("full config panics due to nil ctx", func(_ *testing.T) {
+	t.Run("full config returns dataplane error", func(t *testing.T) {
 		cfg := &modtypes.TestConfig{
 			Interface: "eth0",
 			FrameSize: 512,
@@ -689,13 +700,13 @@ func TestExecutorWithConfigs(t *testing.T) {
 				"priority_tagged": false,
 			},
 		}
-		func() {
-			defer func() {
-				// Panic is expected due to nil context.
-				_ = recover()
-			}()
-			_, _ = executor.Execute("y1731_delay", cfg)
-		}()
+		result, err := executor.Execute("y1731_delay", cfg)
+		if err == nil {
+			t.Fatal("Execute should return an error when dataplane is nil")
+		}
+		if result == nil || result.Success {
+			t.Fatalf("Result should report failure, got %#v", result)
+		}
 	})
 }
 

@@ -165,21 +165,11 @@ func TestExecutorExecuteInvalidTestType(t *testing.T) {
 	}
 }
 
-// TestExecutorExecuteValidTestTypes tests Execute with valid Y.1731 test types.
-// Skipped under -short because Execute() drives real C dataplane code paths
-// (y1731_delay_measurement et al.) that send packets on the configured
-// interface; in a CI runner with no usable eth0 / no NET_RAW caps the C
-// library SIGSEGVs during the cgo call. Run without -short to exercise.
+// TestExecutorExecuteValidTestTypes exercises Execute() for every valid
+// Y.1731 test type against an in-memory dataplane mock. This validates
+// the executor's dispatch table (test type -> dataplane method) without
+// driving real C code.
 func TestExecutorExecuteValidTestTypes(t *testing.T) {
-	if testing.Short() {
-		t.Skip("requires real network interface; skipped under -short")
-	}
-	executor, err := measure.NewExecutor("eth0")
-	if err != nil {
-		t.Skip("Skipping test - executor not available on this platform")
-	}
-	defer executor.Close()
-
 	validTypes := []string{
 		"y1731_delay",
 		"y1731_loss",
@@ -196,41 +186,59 @@ func TestExecutorExecuteValidTestTypes(t *testing.T) {
 
 	for _, testType := range validTypes {
 		t.Run("testType_"+testType, func(t *testing.T) {
-			// On supported platforms, this will attempt to run the test.
-			// On stub platforms, this might fail with platform error.
-			result, execErr := executor.Execute(testType, cfg)
+			mock := newMockY1731Dataplane()
+			executor := measure.NewExecutorWithDataplane(mock)
+			defer executor.Close()
 
-			// The test type is valid, so we shouldn't get "cannot run test type" error.
-			if execErr != nil && strings.Contains(execErr.Error(), "cannot run test type") {
-				t.Errorf("Valid test type %q rejected", testType)
+			result, execErr := executor.Execute(testType, cfg)
+			if execErr != nil {
+				t.Fatalf("Execute(%q) error: %v", testType, execErr)
+			}
+			if result == nil {
+				t.Fatalf("Execute(%q) returned nil result", testType)
+			}
+			if !result.Success {
+				t.Errorf("Result.Success = false, want true (error=%q)", result.Error)
+			}
+			if result.TestType != testType {
+				t.Errorf("Result.TestType = %q, want %q", result.TestType, testType)
+			}
+			if result.ModuleName != "measure" {
+				t.Errorf("Result.ModuleName = %q, want %q", result.ModuleName, "measure")
+			}
+			if result.Data == nil {
+				t.Errorf("Result.Data should be populated by the mock dataplane")
 			}
 
-			// If we got a result, verify it has the right test type and module.
-			if result != nil {
-				if result.TestType != testType {
-					t.Errorf("Result.TestType = %q, want %q", result.TestType, testType)
+			// Verify the dispatcher routed to the correct dataplane method.
+			switch testType {
+			case "y1731_delay":
+				if got := mock.delayCalls.Load(); got != 1 {
+					t.Errorf("delay calls = %d, want 1", got)
 				}
-				if result.ModuleName != "measure" {
-					t.Errorf("Result.ModuleName = %q, want %q", result.ModuleName, "measure")
+			case "y1731_loss":
+				if got := mock.lossCalls.Load(); got != 1 {
+					t.Errorf("loss calls = %d, want 1", got)
+				}
+			case "y1731_slm":
+				if got := mock.slmCalls.Load(); got != 1 {
+					t.Errorf("slm calls = %d, want 1", got)
+				}
+			case "y1731_loopback":
+				if got := mock.loopbackCalls.Load(); got != 1 {
+					t.Errorf("loopback calls = %d, want 1", got)
 				}
 			}
 		})
 	}
 }
 
-// TestExecutorWithY1731Params tests Execute with various Y.1731 parameters.
-// Skipped under -short — drives the same real C dataplane path as
-// TestExecutorExecuteValidTestTypes; see that test for details.
+// TestExecutorWithY1731Params runs Execute() with a representative set of
+// Y.1731 parameter variants against the in-memory mock dataplane. The
+// goal is to confirm the parameter-translation path (buildY1731Config +
+// dispatch) does not panic and produces a successful result for any
+// valid input shape, including JSON-decoded float64 numbers.
 func TestExecutorWithY1731Params(t *testing.T) {
-	if testing.Short() {
-		t.Skip("requires real network interface; skipped under -short")
-	}
-	executor, err := measure.NewExecutor("eth0")
-	if err != nil {
-		t.Skip("Skipping test - executor not available on this platform")
-	}
-	defer executor.Close()
-
 	testCases := []struct {
 		name   string
 		params map[string]any
@@ -269,7 +277,11 @@ func TestExecutorWithY1731Params(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.name, func(_ *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
+			mock := newMockY1731Dataplane()
+			executor := measure.NewExecutorWithDataplane(mock)
+			defer executor.Close()
+
 			cfg := &modtypes.TestConfig{
 				Interface: "eth0",
 				FrameSize: 64,
@@ -277,13 +289,20 @@ func TestExecutorWithY1731Params(t *testing.T) {
 				Params:    tc.params,
 			}
 
-			// Execute should not panic with any valid params.
 			result, execErr := executor.Execute("y1731_delay", cfg)
-
-			// Error is OK (platform may not support actual execution).
-			// We're mainly testing that the code doesn't panic.
-			_ = result
-			_ = execErr
+			if execErr != nil {
+				t.Fatalf("Execute returned error: %v", execErr)
+			}
+			if result == nil || !result.Success {
+				t.Fatalf("Expected successful result, got %#v", result)
+			}
+			if got := mock.delayCalls.Load(); got != 1 {
+				t.Errorf("delay calls = %d, want 1", got)
+			}
+			// Mock should have received a non-nil Y1731Config.
+			if mock.lastConfig.Load() == nil {
+				t.Errorf("Mock did not receive a Y1731Config")
+			}
 		})
 	}
 }
@@ -337,18 +356,10 @@ func TestModuleEmbedsInExecutor(t *testing.T) {
 	}
 }
 
-// TestExecutorResultStructure tests the structure of execution results.
-// Skipped under -short — Execute("y1731_delay", ...) drives real C code.
+// TestExecutorResultStructure exercises both the success and failure
+// shapes of *modtypes.Result returned by Execute(). It uses a mock
+// dataplane so the test can deterministically trigger each path.
 func TestExecutorResultStructure(t *testing.T) {
-	if testing.Short() {
-		t.Skip("requires real network interface; skipped under -short")
-	}
-	executor, err := measure.NewExecutor("eth0")
-	if err != nil {
-		t.Skip("Skipping test - executor not available on this platform")
-	}
-	defer executor.Close()
-
 	cfg := &modtypes.TestConfig{
 		Interface: "eth0",
 		FrameSize: 64,
@@ -356,33 +367,58 @@ func TestExecutorResultStructure(t *testing.T) {
 		Params:    nil,
 	}
 
-	result, execErr := executor.Execute("y1731_delay", cfg)
+	t.Run("success", func(t *testing.T) {
+		mock := newMockY1731Dataplane()
+		executor := measure.NewExecutorWithDataplane(mock)
+		defer executor.Close()
 
-	// Whether successful or not, if we get a result, verify its structure.
-	if result == nil {
-		return
-	}
+		result, execErr := executor.Execute("y1731_delay", cfg)
+		if execErr != nil {
+			t.Fatalf("Execute returned error: %v", execErr)
+		}
+		if result == nil {
+			t.Fatal("Execute returned nil result")
+		}
+		if result.TestType != "y1731_delay" {
+			t.Errorf("Result.TestType = %q, want %q", result.TestType, "y1731_delay")
+		}
+		if result.ModuleName != "measure" {
+			t.Errorf("Result.ModuleName = %q, want %q", result.ModuleName, "measure")
+		}
+		if !result.Success {
+			t.Errorf("Result.Success = false, want true (error=%q)", result.Error)
+		}
+		if result.Error != "" {
+			t.Errorf("Result.Error = %q, want empty", result.Error)
+		}
+		if result.Data == nil {
+			t.Error("Result.Data should be set on success")
+		}
+	})
 
-	// TestType should be set.
-	if result.TestType != "y1731_delay" {
-		t.Errorf("Result.TestType = %q, want %q", result.TestType, "y1731_delay")
-	}
+	t.Run("dataplane failure", func(t *testing.T) {
+		mock := newMockY1731Dataplane()
+		mock.delayErr = errors.New("simulated dataplane failure")
+		executor := measure.NewExecutorWithDataplane(mock)
+		defer executor.Close()
 
-	// ModuleName should be "measure".
-	if result.ModuleName != "measure" {
-		t.Errorf("Result.ModuleName = %q, want %q", result.ModuleName, "measure")
-	}
-
-	// If there was an error, Success should be false and Error should be set.
-	if execErr == nil {
-		return
-	}
-	if result.Success {
-		t.Error("Result.Success should be false when error is returned")
-	}
-	if result.Error == "" {
-		t.Error("Result.Error should be set when error is returned")
-	}
+		result, execErr := executor.Execute("y1731_delay", cfg)
+		if execErr == nil {
+			t.Fatal("Execute should return error when dataplane fails")
+		}
+		if result == nil {
+			t.Fatal("Execute should return a result describing the failure")
+		}
+		if result.Success {
+			t.Error("Result.Success should be false on dataplane failure")
+		}
+		if result.Error == "" {
+			t.Error("Result.Error should be populated on dataplane failure")
+		}
+		if !strings.Contains(execErr.Error(), "simulated dataplane failure") {
+			t.Errorf("Returned error should wrap the dataplane error, got: %v", execErr)
+		}
+	})
 }
 
 // TestExecutorErrorMessages tests that error messages are meaningful.
@@ -419,20 +455,14 @@ func TestExecutorErrorMessages(t *testing.T) {
 	}
 }
 
-// TestExecutorConcurrentAccess tests that the executor handles concurrent access.
-// Skipped under -short — concurrent Execute() calls drive real C code.
+// TestExecutorConcurrentAccess validates that concurrent calls to
+// Execute() against the mock dataplane do not race or panic, and that
+// every dispatch lands on the right dataplane method.
 func TestExecutorConcurrentAccess(t *testing.T) {
-	if testing.Short() {
-		t.Skip("requires real network interface; skipped under -short")
-	}
-	executor, err := measure.NewExecutor("eth0")
-	if err != nil {
-		t.Skip("Skipping test - executor not available on this platform")
-	}
+	mock := newMockY1731Dataplane()
+	executor := measure.NewExecutorWithDataplane(mock)
 	defer executor.Close()
 
-	// Note: The current implementation may not be thread-safe.
-	// This test just ensures concurrent calls don't panic.
 	cfg := &modtypes.TestConfig{
 		Interface: "eth0",
 		FrameSize: 64,
@@ -440,18 +470,33 @@ func TestExecutorConcurrentAccess(t *testing.T) {
 		Params:    nil,
 	}
 
-	done := make(chan bool, 4)
+	testTypes := []string{"y1731_delay", "y1731_loss", "y1731_slm", "y1731_loopback"}
+	done := make(chan error, len(testTypes))
 
-	for _, testType := range []string{"y1731_delay", "y1731_loss", "y1731_slm", "y1731_loopback"} {
+	for _, testType := range testTypes {
 		go func(tt string) {
-			_, _ = executor.Execute(tt, cfg)
-			done <- true
+			_, err := executor.Execute(tt, cfg)
+			done <- err
 		}(testType)
 	}
 
-	// Wait for all goroutines.
-	for range 4 {
-		<-done
+	for range testTypes {
+		if err := <-done; err != nil {
+			t.Errorf("Concurrent Execute returned error: %v", err)
+		}
+	}
+
+	if got := mock.delayCalls.Load(); got != 1 {
+		t.Errorf("delay calls = %d, want 1", got)
+	}
+	if got := mock.lossCalls.Load(); got != 1 {
+		t.Errorf("loss calls = %d, want 1", got)
+	}
+	if got := mock.slmCalls.Load(); got != 1 {
+		t.Errorf("slm calls = %d, want 1", got)
+	}
+	if got := mock.loopbackCalls.Load(); got != 1 {
+		t.Errorf("loopback calls = %d, want 1", got)
 	}
 }
 

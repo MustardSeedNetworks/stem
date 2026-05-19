@@ -162,6 +162,12 @@ type Server struct {
 	recoveryTokenManager *auth.RecoveryTokenManager // Recovery token manager for password recovery
 	dataDir              string                     // Application data directory for recovery files
 	acmeChallengeServer  *http.Server               // HTTP-01 challenge server for ACME
+
+	// executorResolver maps a module name to a factory producing a
+	// testExecutor. If nil, defaultExecutorFactory is used. Tests inject
+	// an override here to swap in a mock executor without touching the
+	// real cgo dataplane.
+	executorResolver func(moduleName string) (executorFactory, bool)
 }
 
 var (

@@ -31,10 +31,14 @@ type testExecutor interface {
 // executorFactory creates a new executor for the given interface.
 type executorFactory func(iface string) (testExecutor, error)
 
-// getExecutorFactory returns the executor factory for a given module name.
-// This function-based approach satisfies gochecknoglobals while maintaining
-// the registry pattern for module executor dispatch.
-func getExecutorFactory(moduleName string) (executorFactory, bool) {
+// defaultExecutorFactory returns the production executor factory for a
+// given module name. It wires each module's NewExecutor constructor,
+// which in turn opens a real dataplane context backed by cgo on Linux.
+//
+// Tests that need to drive executeTest without touching the real
+// dataplane should override Server.executorResolver with a factory that
+// returns a fake testExecutor.
+func defaultExecutorFactory(moduleName string) (executorFactory, bool) {
 	factories := map[string]executorFactory{
 		moduleBenchmark:   func(iface string) (testExecutor, error) { return benchmark.NewExecutor(iface) },
 		moduleServicetest: func(iface string) (testExecutor, error) { return servicetest.NewExecutor(iface) },
@@ -53,7 +57,11 @@ func (s *Server) executeTest(moduleName, testType, iface string, config *TestCon
 		return s.executeReflector(iface, config)
 	}
 
-	factory, ok := getExecutorFactory(moduleName)
+	resolver := s.executorResolver
+	if resolver == nil {
+		resolver = defaultExecutorFactory
+	}
+	factory, ok := resolver(moduleName)
 	if !ok {
 		return fmt.Errorf("executor not implemented for module: %s", moduleName)
 	}

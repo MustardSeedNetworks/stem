@@ -8,11 +8,48 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/krisarmstrong/stem/internal/api"
 	"github.com/krisarmstrong/stem/internal/netif"
+	"github.com/krisarmstrong/stem/internal/services/modtypes"
 )
+
+// fakeAPIExecutor is a no-op testExecutor used to drive the Server's
+// test-start path without invoking the real cgo dataplane.
+type fakeAPIExecutor struct {
+	closeCalls atomic.Uint32
+}
+
+func (f *fakeAPIExecutor) Close() {
+	f.closeCalls.Add(1)
+}
+
+func (f *fakeAPIExecutor) Execute(
+	testType string,
+	_ *modtypes.TestConfig,
+) (*modtypes.Result, error) {
+	return &modtypes.Result{
+		TestType:   testType,
+		ModuleName: "",
+		Success:    true,
+		Error:      "",
+		Data:       nil,
+	}, nil
+}
+
+// resetServerTestState gives any in-flight runModuleTest goroutine from
+// a prior test-start request a moment to finish, then forcibly clears
+// the Server's transient test state so the next request sees a clean
+// status. The fakeAPIExecutor returns immediately, so a short sleep is
+// sufficient.
+func resetServerTestState(t *testing.T, s *api.Server) {
+	t.Helper()
+	time.Sleep(20 * time.Millisecond)
+	s.ResetTestStateForTest()
+}
 
 // Test constants for testing handlers.
 const (
@@ -307,13 +344,12 @@ func TestHandleTestStartValidation(t *testing.T) {
 	})
 
 	t.Run("start with supported test types", func(t *testing.T) {
-		// Each iteration calls ServeHTTP -> handler -> RFC2544 test master
-		// which kicks off real C dataplane packet generation in a goroutine.
-		// Under -race the background goroutines outlive the subtest and
-		// SIGSEGV in the cgo cleanup path. Skip under -short.
-		if testing.Short() {
-			t.Skip("starts real C dataplane test; skipped under -short")
-		}
+		// This subtest verifies the API's test-start path accepts the
+		// supported RFC 2544 test types. It uses a fake executor (via
+		// Server.UseTestExecutorResolver) so the request never reaches
+		// the real cgo dataplane — earlier this test was gated under
+		// -short because it SIGSEGV'd in CI runners without raw-socket
+		// capabilities.
 		token := getTestingAuthToken(t, s)
 
 		// Get a real interface.
@@ -322,6 +358,13 @@ func TestHandleTestStartValidation(t *testing.T) {
 			t.Skip("No network interfaces available for testing")
 		}
 		testIface := ifaces[0].Name
+
+		s.UseTestExecutorResolver(func(_ string) (api.TestExecutorFactory, bool) {
+			return func(_ string) (api.TestExecutor, error) {
+				return &fakeAPIExecutor{}, nil
+			}, true
+		})
+		t.Cleanup(func() { s.UseTestExecutorResolver(nil) })
 
 		testTypes := []string{
 			"rfc2544_throughput",
@@ -332,6 +375,10 @@ func TestHandleTestStartValidation(t *testing.T) {
 
 		for _, testType := range testTypes {
 			t.Run(testType, func(t *testing.T) {
+				// Reset server test state between subtests so each
+				// request starts from a clean status.
+				resetServerTestState(t, s)
+
 				body := bytes.NewBufferString(
 					fmt.Sprintf(`{"testType":"%s","interface":"%s"}`, testType, testIface),
 				)
