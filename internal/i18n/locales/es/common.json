@@ -165,6 +165,12 @@
       "needTestMaster": "Este stem esta configurado actualmente como Reflector. Cambia a Test Master para ejecutar {{module}}.",
       "needReflector": "Este stem esta configurado actualmente como Test Master. Cambia a Reflector para usar el reflector de loopback.",
       "switchAction": "Cambiar rol"
+    },
+    "platform": {
+      "bannerTitle": "El modo Reflector no esta disponible en esta plataforma.",
+      "bannerBody": "Las compilaciones para macOS y Windows usan la pila de red pura en Go, que soporta el modo Test Master pero no el dataplane de Reflector a velocidad de linea. Usa la compilacion para Linux para actuar como nodo Reflector, o cambia este stem al modo Test Master.",
+      "switchToTestMaster": "Cambiar a Test Master",
+      "startDisabledTooltip": "El modo Reflector no esta disponible en esta plataforma. Usa la compilacion para Linux para actuar como nodo Reflector."
     }
   }
 }

@@ -52,6 +52,28 @@ type Dataplane struct {
 // ErrNotSupported is returned when CGO dataplane is not available.
 var ErrNotSupported = errors.New("CGO dataplane not available on this platform")
 
+// unsupportedReasonText is the operator-facing reason surfaced via the
+// /api/v1/capabilities endpoint and any platform-guard UX. Industry
+// terms ("CGO", "Linux") are kept verbatim so they read identically
+// across locales.
+const unsupportedReasonText = "CGO + Linux required"
+
+// Available reports whether the CGO + Linux reflector dataplane is
+// compiled into this binary. The stub build always returns false; the
+// real build returns true. Callers use this to gate UX rather than
+// waiting for a Start failure to surface
+// "CGO dataplane not available on this platform".
+func Available() bool {
+	return false
+}
+
+// UnsupportedReason returns a short, operator-facing reason describing
+// why the reflector dataplane is unavailable on this binary. Empty
+// string when [Available] returns true.
+func UnsupportedReason() string {
+	return unsupportedReasonText
+}
+
 // New creates a new dataplane instance (stub).
 func New(_ *config.Config) (*Dataplane, error) {
 	return nil, ErrNotSupported

@@ -3,94 +3,60 @@ import { expect, test } from '@playwright/test';
 /**
  * Result History Tests
  *
- * Tests for test result history drawer:
- * - History display
- * - Result details
- * - Filtering and search
+ * Tests for the result history drawer triggered from the header bar.
+ *
+ * Mocks /api/v1/setup/status so the first-run setup wizard doesn't
+ * intercept clicks on the history button.
  */
 
 test.describe('Result History', () => {
   test.beforeEach(async ({ page }) => {
+    await page.route('**/api/v1/setup/status', (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ needsSetup: false }),
+      });
+    });
+
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.getByLabel(/username/i).fill('admin');
+    await page.getByLabel(/password/i).fill('admin');
+    await page.getByRole('button', { name: /sign in/i }).click();
+    await expect(page.getByRole('button', { name: /logout/i })).toBeVisible();
   });
 
   test('should have history button in header', async ({ page }) => {
-    const historyButton = page.getByRole('button', { name: /history|results|log/i });
-    const count = await historyButton.count();
-    expect(count).toBeGreaterThanOrEqual(0);
+    await expect(page.getByRole('button', { name: /open test history/i })).toBeVisible();
   });
 
   test('should open history drawer when clicking history button', async ({ page }) => {
-    const historyButton = page.getByRole('button', { name: /history/i }).first();
-    if (await historyButton.isVisible()) {
-      await historyButton.click();
+    await page.getByRole('button', { name: /open test history/i }).click();
 
-      // Drawer should appear
-      const drawer = page.locator('[role="dialog"], .drawer, [class*="drawer"]').first();
-      await expect(drawer).toBeVisible();
-    }
+    const drawer = page.getByRole('dialog', { name: /test history/i });
+    await expect(drawer).toBeVisible();
   });
 
-  test('should display result list in history', async ({ page }) => {
-    const historyButton = page.getByRole('button', { name: /history/i }).first();
-    if (await historyButton.isVisible()) {
-      await historyButton.click();
+  test('should display content in history drawer', async ({ page }) => {
+    await page.getByRole('button', { name: /open test history/i }).click();
 
-      // Should show result list or empty state
-      const content = page.locator('[role="dialog"], .drawer').first();
-      await expect(content).toBeVisible();
-    }
-  });
+    const drawer = page.getByRole('dialog', { name: /test history/i });
+    await expect(drawer).toBeVisible();
 
-  test('should show empty state when no results', async ({ page }) => {
-    const historyButton = page.getByRole('button', { name: /history/i }).first();
-    if (await historyButton.isVisible()) {
-      await historyButton.click();
-
-      // Should show some content
-      const drawer = page.locator('[role="dialog"], .drawer').first();
-      const text = await drawer.textContent();
-      expect(text?.length).toBeGreaterThan(0);
-    }
+    const text = await drawer.textContent();
+    expect(text?.length ?? 0).toBeGreaterThan(0);
   });
 
   test('should close history drawer', async ({ page }) => {
-    const historyButton = page.getByRole('button', { name: /history/i }).first();
-    if (await historyButton.isVisible()) {
-      await historyButton.click();
+    await page.getByRole('button', { name: /open test history/i }).click();
 
-      // Find close button
-      const closeButton = page.getByRole('button', { name: /close|dismiss/i }).first();
-      if (await closeButton.isVisible()) {
-        await closeButton.click();
+    const drawer = page.getByRole('dialog', { name: /test history/i });
+    await expect(drawer).toBeVisible();
 
-        // Drawer should close
-        await page.waitForTimeout(300);
-        const drawer = page.locator('[role="dialog"], .drawer');
-        const isVisible = await drawer
-          .first()
-          .isVisible()
-          .catch(() => false);
-        // Drawer should be closed or hidden
-        expect(isVisible).toBeFalsy();
-      }
-    }
-  });
-
-  test('should display result details when clicking a result', async ({ page }) => {
-    // This test assumes there are results in history
-    const historyButton = page.getByRole('button', { name: /history/i }).first();
-    if (await historyButton.isVisible()) {
-      await historyButton.click();
-
-      // Click first result if any
-      const resultItem = page.locator('[class*="result"], [class*="item"], li').first();
-      if (await resultItem.isVisible()) {
-        await resultItem.click();
-        // Details should show
-        await expect(page.locator('body')).toBeVisible();
-      }
-    }
+    await page
+      .getByRole('button', { name: /close history drawer|close test history/i })
+      .first()
+      .click();
+    await expect(drawer).not.toBeVisible();
   });
 });

@@ -26,7 +26,11 @@ import { useTranslation } from 'react-i18next';
 import { HeaderInterfaceSelector } from '../components/HeaderInterfaceSelector';
 import { RoleGuard } from '../components/RoleGuard';
 import { ReflectorSection } from '../components/settings/ReflectorSection';
+import { Alert } from '../components/ui/Alert';
+import { Button } from '../components/ui/Button';
 import { useAppContext } from '../contexts/AppContext';
+import { useRole } from '../contexts/RoleContext';
+import { useCapabilities } from '../hooks/useCapabilities';
 import type { InterfaceInfo, Stats } from '../types/api';
 import { Breadcrumbs } from '../ui/Breadcrumbs';
 import { PageHeader } from '../ui/PageHeader';
@@ -158,9 +162,27 @@ export function ReflectorPage(): ReactElement {
     isStoppingReflector,
     reflectorStartError,
   } = useAppContext();
+  const capabilities = useCapabilities();
+  const { setRole } = useRole();
 
   const selectedIface = interfaces.find((i) => i.name === selectedInterface);
   const reflectorRunning = stats.testStatus === 'running' || stats.testStatus === 'starting';
+
+  // When the backend reports reflector.supported=false (macOS / Windows
+  // builds ship without the CGO + Linux dataplane) we surface a
+  // platform-guard banner, disable the Start button, and offer a
+  // one-click switch to Test Master mode. The rest of the page stays
+  // visible — read-only feels more honest than hiding controls.
+  const { supported: reflectorSupported, reason: platformReasonRaw } = capabilities.reflector;
+  const platformReason = platformReasonRaw ?? '';
+  const unsupportedTooltip = t(
+    'role.platform.startDisabledTooltip',
+    'Reflector mode is not available on this platform. Use the Linux build to act as a Reflector node.',
+  );
+
+  const handleSwitchToTestMaster = (): void => {
+    setRole('test_master');
+  };
 
   return (
     <section className="space-y-6">
@@ -173,6 +195,36 @@ export function ReflectorPage(): ReactElement {
       />
 
       <RoleGuard requires="reflector">
+        {!reflectorSupported ? (
+          <Alert status="warning" className="flex-wrap">
+            <div className="flex flex-1 flex-wrap items-center gap-3">
+              <span className="flex-1 min-w-[16rem]">
+                <strong className="font-semibold">
+                  {t(
+                    'role.platform.bannerTitle',
+                    'Reflector mode is not available on this platform.',
+                  )}
+                </strong>{' '}
+                {t(
+                  'role.platform.bannerBody',
+                  'macOS and Windows builds use the pure-Go networking stack, which supports Test Master mode but not the line-rate Reflector dataplane. Use the Linux build to act as a Reflector node, or switch this stem to Test Master mode.',
+                )}
+                {platformReason ? (
+                  <span className="ml-1 opacity-80">({platformReason})</span>
+                ) : null}
+              </span>
+              <Button
+                variant="outline"
+                tone="violet"
+                size="sm"
+                onClick={handleSwitchToTestMaster}
+              >
+                {t('role.platform.switchToTestMaster', 'Switch to Test Master')}
+              </Button>
+            </div>
+          </Alert>
+        ) : null}
+
         {/* Control row: interface picker + start/stop + status */}
         <div className="flex flex-wrap items-start gap-3">
           <HeaderInterfaceSelector
@@ -206,8 +258,11 @@ export function ReflectorPage(): ReactElement {
               type="button"
               onClick={onStartReflector}
               className="btn btn-primary"
-              disabled={!selectedInterface || isStartingReflector}
+              disabled={!selectedInterface || isStartingReflector || !reflectorSupported}
               aria-busy={isStartingReflector}
+              aria-disabled={!reflectorSupported}
+              title={!reflectorSupported ? unsupportedTooltip : undefined}
+              data-testid="reflector-start-button"
             >
               {isStartingReflector ? (
                 <>

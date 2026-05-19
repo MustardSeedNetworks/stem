@@ -445,6 +445,11 @@ func (s *Server) setupRoutes() {
 	// keys: version, commit, buildTime, uiBuildHash.
 	s.handle("/__version", s.handleBuildVersion)
 
+	// Platform capabilities (unauthenticated by design — the UI calls
+	// this before login to gate features like the Reflector page on
+	// CGO-less builds). See handlers_capabilities.go.
+	s.handle("/api/v1/capabilities", s.handleCapabilities)
+
 	// API v1 routes - Interfaces (rate limited).
 	s.handleRateLimited("/api/v1/interfaces", s.handleInterfaces, s.apiLimiter)
 
