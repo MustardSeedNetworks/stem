@@ -72,6 +72,7 @@ import (
 	"fmt"
 	"io/fs"
 	"math"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -673,8 +674,16 @@ func apiVersionMiddleware(next http.Handler) http.Handler {
 
 // Run starts the web server with graceful shutdown support.
 // Listens for SIGTERM and SIGINT signals to initiate shutdown.
+//
+// Binding goes through bindWithFallback so a busy canonical port (8080)
+// falls back to port+1..+9 instead of refusing to start (see #69).
 func (s *Server) Run() error {
-	addr := fmt.Sprintf(":%d", s.port)
+	// Bind first so the actual bound port is known before we announce it.
+	ln, actualPort, bindErr := bindWithFallback(context.Background(), "", s.port)
+	if bindErr != nil {
+		return fmt.Errorf("bind web server: %w", bindErr)
+	}
+	addr := fmt.Sprintf(":%d", actualPort)
 
 	// Determine protocol for logging.
 	protocol := "http"
@@ -712,9 +721,9 @@ func (s *Server) Run() error {
 	go func() {
 		var listenErr error
 		if s.tlsConfig.Enabled {
-			listenErr = s.startTLS()
+			listenErr = s.startTLS(ln)
 		} else {
-			listenErr = s.httpServer.ListenAndServe()
+			listenErr = s.httpServer.Serve(ln)
 		}
 		if listenErr != nil && !errors.Is(listenErr, http.ErrServerClosed) {
 			errChan <- fmt.Errorf("server failed: %w", listenErr)
@@ -732,15 +741,15 @@ func (s *Server) Run() error {
 	}
 }
 
-// startTLS starts the server with TLS encryption.
-// Priority order: ACME → manual certificates → self-signed.
-func (s *Server) startTLS() error {
+// startTLS starts the server with TLS encryption on the already-bound
+// listener. Priority order: ACME → manual certificates → self-signed.
+func (s *Server) startTLS(ln net.Listener) error {
 	// Priority 1: ACME/Let's Encrypt automatic certificates
 	if s.tlsConfig.ACME.Enabled {
 		if s.tlsConfig.ACME.Domain == "" {
 			return errors.New("ACME enabled but no domain specified")
 		}
-		return s.startTLSWithACME()
+		return s.startTLSWithACME(ln)
 	}
 
 	// Priority 2: Manual certificates from config
@@ -765,16 +774,17 @@ func (s *Server) startTLS() error {
 		"cert_file", certFile,
 	)
 
-	listenErr := s.httpServer.ListenAndServeTLS(certFile, keyFile)
+	listenErr := s.httpServer.ServeTLS(ln, certFile, keyFile)
 	if listenErr != nil {
-		return fmt.Errorf("listen and serve TLS: %w", listenErr)
+		return fmt.Errorf("serve TLS: %w", listenErr)
 	}
 	return nil
 }
 
-// startTLSWithACME starts the server with automatic Let's Encrypt certificates.
-// Ported from Seed project for automatic certificate management.
-func (s *Server) startTLSWithACME() error {
+// startTLSWithACME starts the server with automatic Let's Encrypt certificates
+// on the already-bound listener. Ported from Seed project for automatic
+// certificate management.
+func (s *Server) startTLSWithACME(ln net.Listener) error {
 	manager, err := createACMEManager(s.tlsConfig.ACME)
 	if err != nil {
 		return fmt.Errorf("create ACME manager: %w", err)
@@ -802,8 +812,8 @@ func (s *Server) startTLSWithACME() error {
 		}
 	}()
 
-	// ListenAndServeTLS with empty cert/key paths uses GetCertificate from TLSConfig
-	if listenErr := s.httpServer.ListenAndServeTLS("", ""); listenErr != nil {
+	// ServeTLS with empty cert/key paths uses GetCertificate from TLSConfig.
+	if listenErr := s.httpServer.ServeTLS(ln, "", ""); listenErr != nil {
 		return fmt.Errorf("https server with ACME: %w", listenErr)
 	}
 	return nil
