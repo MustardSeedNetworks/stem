@@ -50,6 +50,22 @@ import (
 	"github.com/krisarmstrong/stem/internal/reflector/config"
 )
 
+// Available reports whether the CGO + Linux reflector dataplane is
+// compiled into this binary. The real (CGO + Linux) build always
+// returns true; the stub build (non-Linux, or CGO disabled) returns
+// false. Callers use this to gate UX rather than waiting for a Start
+// failure to surface "CGO dataplane not available on this platform".
+func Available() bool {
+	return true
+}
+
+// UnsupportedReason returns a short, operator-facing reason describing
+// why the reflector dataplane is unavailable. The real build returns an
+// empty string; the stub build returns "CGO + Linux required".
+func UnsupportedReason() string {
+	return ""
+}
+
 // Stats holds dataplane statistics
 type Stats struct {
 	PacketsReceived  uint64

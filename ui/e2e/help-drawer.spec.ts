@@ -6,53 +6,57 @@ import { expect, test } from '@playwright/test';
  * Tests for the help documentation drawer:
  * - Open/close functionality
  * - Help content display
- * - Navigation within help
+ *
+ * Mocks /api/v1/setup/status so the first-run setup wizard doesn't
+ * intercept clicks on the sidebar's help button.
  */
 
 test.describe('Help Drawer', () => {
   test.beforeEach(async ({ page }) => {
+    await page.route('**/api/v1/setup/status', (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ needsSetup: false }),
+      });
+    });
+
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.getByLabel(/username/i).fill('admin');
+    await page.getByLabel(/password/i).fill('admin');
+    await page.getByRole('button', { name: /sign in/i }).click();
+    await expect(page.getByRole('button', { name: /logout/i })).toBeVisible();
   });
 
   test('should have help button in header', async ({ page }) => {
-    // Help button should be visible (question mark icon)
-    const helpButton = page.getByRole('button', { name: /help|documentation/i });
+    const helpButton = page.getByRole('button', { name: /open help/i });
     await expect(helpButton).toBeVisible();
   });
 
   test('should open help drawer when clicking help button', async ({ page }) => {
-    const helpButton = page.getByRole('button', { name: /help|documentation/i });
-    await helpButton.click();
+    await page.getByRole('button', { name: /open help/i }).click();
 
-    // Drawer should appear
-    const drawer = page.locator('[role="dialog"], .drawer, [class*="drawer"]').first();
+    const drawer = page.getByRole('dialog', { name: /help.*documentation/i });
     await expect(drawer).toBeVisible();
   });
 
   test('should close help drawer when clicking close button', async ({ page }) => {
-    // Open help
-    const helpButton = page.getByRole('button', { name: /help|documentation/i });
-    await helpButton.click();
+    await page.getByRole('button', { name: /open help/i }).click();
 
-    // Find and click close button
-    const closeButton = page.getByRole('button', { name: /close|dismiss/i }).first();
-    if (await closeButton.isVisible()) {
-      await closeButton.click();
+    const drawer = page.getByRole('dialog', { name: /help.*documentation/i });
+    await expect(drawer).toBeVisible();
 
-      // Drawer should be closed
-      const drawer = page.locator('[role="dialog"], .drawer, [class*="drawer"]');
-      await expect(drawer).not.toBeVisible();
-    }
+    await page.getByRole('button', { name: /close help/i }).click();
+    await expect(drawer).not.toBeVisible();
   });
 
   test('should display help content', async ({ page }) => {
-    const helpButton = page.getByRole('button', { name: /help|documentation/i });
-    await helpButton.click();
+    await page.getByRole('button', { name: /open help/i }).click();
 
-    // Help content should have useful information
-    const helpContent = page.locator('[role="dialog"], .drawer').first();
-    const text = await helpContent.textContent();
-    expect(text?.length).toBeGreaterThan(50); // Some content should exist
+    const drawer = page.getByRole('dialog', { name: /help.*documentation/i });
+    await expect(drawer).toBeVisible();
+
+    const text = await drawer.textContent();
+    expect(text?.length ?? 0).toBeGreaterThan(50);
   });
 });

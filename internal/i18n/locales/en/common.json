@@ -165,6 +165,12 @@
       "needTestMaster": "This stem is currently configured as Reflector. Switch to Test Master to run {{module}}.",
       "needReflector": "This stem is currently configured as Test Master. Switch to Reflector to use the loopback reflector.",
       "switchAction": "Switch role"
+    },
+    "platform": {
+      "bannerTitle": "Reflector mode is not available on this platform.",
+      "bannerBody": "macOS and Windows builds use the pure-Go networking stack, which supports Test Master mode but not the line-rate Reflector dataplane. Use the Linux build to act as a Reflector node, or switch this stem to Test Master mode.",
+      "switchToTestMaster": "Switch to Test Master",
+      "startDisabledTooltip": "Reflector mode is not available on this platform. Use the Linux build to act as a Reflector node."
     }
   }
 }

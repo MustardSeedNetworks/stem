@@ -26,7 +26,11 @@ import { useTranslation } from 'react-i18next';
 import { HeaderInterfaceSelector } from '../components/HeaderInterfaceSelector';
 import { RoleGuard } from '../components/RoleGuard';
 import { ReflectorSection } from '../components/settings/ReflectorSection';
+import { Alert } from '../components/ui/Alert';
+import { Button } from '../components/ui/Button';
 import { useAppContext } from '../contexts/AppContext';
+import { useRole } from '../contexts/RoleContext';
+import { useCapabilities } from '../hooks/useCapabilities';
 import type { InterfaceInfo, Stats } from '../types/api';
 import { Breadcrumbs } from '../ui/Breadcrumbs';
 import { PageHeader } from '../ui/PageHeader';
@@ -143,6 +147,73 @@ function InterfaceDetails({ iface }: InterfaceDetailsProps): ReactElement {
   );
 }
 
+interface PlatformBannerProps {
+  reason: string;
+  onSwitchToTestMaster: () => void;
+}
+
+// Surfaces when the backend reports reflector.supported=false (macOS / Windows
+// builds ship without the CGO + Linux dataplane). Splits the rendering out of
+// the main page function to keep its complexity below the Biome ceiling.
+function PlatformBanner({ reason, onSwitchToTestMaster }: PlatformBannerProps): ReactElement {
+  const { t } = useTranslation();
+  return (
+    <Alert status="warning" className="flex-wrap">
+      <div className="flex flex-1 flex-wrap items-center gap-3">
+        <span className="flex-1 min-w-[16rem]">
+          <strong className="font-semibold">
+            {t('role.platform.bannerTitle', 'Reflector mode is not available on this platform.')}
+          </strong>{' '}
+          {t(
+            'role.platform.bannerBody',
+            'macOS and Windows builds use the pure-Go networking stack, which supports Test Master mode but not the line-rate Reflector dataplane. Use the Linux build to act as a Reflector node, or switch this stem to Test Master mode.',
+          )}
+          {reason ? <span className="ml-1 opacity-80">({reason})</span> : null}
+        </span>
+        <Button variant="outline" tone="violet" size="sm" onClick={onSwitchToTestMaster}>
+          {t('role.platform.switchToTestMaster', 'Switch to Test Master')}
+        </Button>
+      </div>
+    </Alert>
+  );
+}
+
+interface RunningStatusProps {
+  testStatus: Stats['testStatus'];
+}
+
+// Inline status badges (running / cancelled / error) rendered to the right
+// of the start/stop controls. Extracted to keep ReflectorPage simple.
+function RunningStatus({ testStatus }: RunningStatusProps): ReactElement | null {
+  const { t } = useTranslation();
+  const running = testStatus === 'running' || testStatus === 'starting';
+
+  if (running) {
+    return (
+      <output className="status-badge success flex items-center gap-2">
+        <span
+          className="w-2 h-2 rounded-full bg-[var(--color-status-success)] animate-pulse"
+          aria-hidden="true"
+        />
+        {testStatus === 'starting'
+          ? t('status.starting', 'Starting')
+          : t('status.running', 'Running')}
+      </output>
+    );
+  }
+  if (testStatus === 'cancelled') {
+    return <output className="status-badge warning">{t('status.stopped', 'Stopped')}</output>;
+  }
+  if (testStatus === 'error') {
+    return (
+      <output className="status-badge error" role="alert">
+        {t('status.error', 'Error')}
+      </output>
+    );
+  }
+  return null;
+}
+
 export function ReflectorPage(): ReactElement {
   const { t } = useTranslation();
   const {
@@ -158,9 +229,21 @@ export function ReflectorPage(): ReactElement {
     isStoppingReflector,
     reflectorStartError,
   } = useAppContext();
+  const capabilities = useCapabilities();
+  const { setRole } = useRole();
 
   const selectedIface = interfaces.find((i) => i.name === selectedInterface);
   const reflectorRunning = stats.testStatus === 'running' || stats.testStatus === 'starting';
+  const { supported: reflectorSupported, reason: platformReasonRaw } = capabilities.reflector;
+  const platformReason = platformReasonRaw ?? '';
+  const unsupportedTooltip = t(
+    'role.platform.startDisabledTooltip',
+    'Reflector mode is not available on this platform. Use the Linux build to act as a Reflector node.',
+  );
+
+  const handleSwitchToTestMaster = (): void => {
+    setRole('test_master');
+  };
 
   return (
     <section className="space-y-6">
@@ -173,6 +256,10 @@ export function ReflectorPage(): ReactElement {
       />
 
       <RoleGuard requires="reflector">
+        {!reflectorSupported ? (
+          <PlatformBanner reason={platformReason} onSwitchToTestMaster={handleSwitchToTestMaster} />
+        ) : null}
+
         {/* Control row: interface picker + start/stop + status */}
         <div className="flex flex-wrap items-start gap-3">
           <HeaderInterfaceSelector
@@ -206,8 +293,11 @@ export function ReflectorPage(): ReactElement {
               type="button"
               onClick={onStartReflector}
               className="btn btn-primary"
-              disabled={!selectedInterface || isStartingReflector}
+              disabled={!selectedInterface || isStartingReflector || !reflectorSupported}
               aria-busy={isStartingReflector}
+              aria-disabled={!reflectorSupported}
+              title={!reflectorSupported ? unsupportedTooltip : undefined}
+              data-testid="reflector-start-button"
             >
               {isStartingReflector ? (
                 <>
@@ -235,25 +325,7 @@ export function ReflectorPage(): ReactElement {
           ) : null}
 
           <div className="flex items-center gap-3 ml-auto" aria-live="polite" aria-atomic="true">
-            {reflectorRunning ? (
-              <output className="status-badge success flex items-center gap-2">
-                <span
-                  className="w-2 h-2 rounded-full bg-[var(--color-status-success)] animate-pulse"
-                  aria-hidden="true"
-                />
-                {stats.testStatus === 'starting'
-                  ? t('status.starting', 'Starting')
-                  : t('status.running', 'Running')}
-              </output>
-            ) : null}
-            {stats.testStatus === 'cancelled' ? (
-              <output className="status-badge warning">{t('status.stopped', 'Stopped')}</output>
-            ) : null}
-            {stats.testStatus === 'error' ? (
-              <output className="status-badge error" role="alert">
-                {t('status.error', 'Error')}
-              </output>
-            ) : null}
+            <RunningStatus testStatus={stats.testStatus} />
           </div>
         </div>
 
