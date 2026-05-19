@@ -2487,6 +2487,13 @@ func TestHandleModeCoverage(t *testing.T) {
 	})
 
 	t.Run("set mode to reflector", func(t *testing.T) {
+		// Force the platform probe to "supported" so this coverage
+		// test does not depend on the host OS / cgo state. The 403
+		// path for unsupported platforms is covered in
+		// handlers_mode_test.go.
+		s.UseReflectorAvailabilityForTest(func() (bool, string) { return true, "" })
+		t.Cleanup(func() { s.UseReflectorAvailabilityForTest(nil) })
+
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/mode",
 			bytes.NewBufferString(`{"mode":"reflector"}`))
 		w := httptest.NewRecorder()

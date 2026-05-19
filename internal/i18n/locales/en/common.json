@@ -171,6 +171,12 @@
       "bannerBody": "macOS and Windows builds use the pure-Go networking stack, which supports Test Master mode but not the line-rate Reflector dataplane. Use the Linux build to act as a Reflector node, or switch this stem to Test Master mode.",
       "switchToTestMaster": "Switch to Test Master",
       "startDisabledTooltip": "Reflector mode is not available on this platform. Use the Linux build to act as a Reflector node."
+    },
+    "switchError": {
+      "label": "Role switch failed:",
+      "dismiss": "Dismiss",
+      "unsupported": "Reflector mode is not supported on this platform.",
+      "network": "Could not reach the stem backend."
     }
   }
 }

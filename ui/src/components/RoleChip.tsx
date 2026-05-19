@@ -4,12 +4,14 @@
  * Segmented control with two values: Reflector / Test Master. Clicking
  * the inactive value pops a ConfirmModal explaining the consequences
  * (active reflector or in-progress test will be cancelled). On confirm
- * the role flips via RoleContext.
+ * the role flips via RoleContext, which POSTs /api/v1/mode and
+ * updates local state only after the backend accepts the change.
  *
- * Today the change is local-only; the backend role-switch endpoint
- * does not yet exist (see TODO(#66) in RoleContext.tsx).
+ * While the POST is in flight the chip shows an inline spinner. If
+ * the POST fails, an inline error tag renders below the chip with a
+ * dismiss control. Translation keys live under role.switchError.*.
  */
-import { Repeat, Target } from 'lucide-react';
+import { Loader2, Repeat, Target, X } from 'lucide-react';
 import { type FC, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { type StemRole, useRole } from '../contexts/RoleContext';
@@ -43,7 +45,7 @@ const ROLE_OPTIONS: readonly RoleOption[] = [
 
 export const RoleChip: FC<RoleChipProps> = ({ className = '' }) => {
   const { t } = useTranslation();
-  const { role, setRole } = useRole();
+  const { role, setRole, isSwitchingRole, roleSwitchError, clearRoleSwitchError } = useRole();
   const [pendingRole, setPendingRole] = useState<StemRole | null>(null);
 
   const handleClick = useCallback(
@@ -51,9 +53,14 @@ export const RoleChip: FC<RoleChipProps> = ({ className = '' }) => {
       if (next === role) {
         return;
       }
+      // Block new switches while one is in flight. Clicking the
+      // other option mid-spin is a no-op rather than queueing.
+      if (isSwitchingRole) {
+        return;
+      }
       setPendingRole(next);
     },
-    [role],
+    [role, isSwitchingRole],
   );
 
   const handleConfirm = useCallback((): void => {
@@ -83,10 +90,11 @@ export const RoleChip: FC<RoleChipProps> = ({ className = '' }) => {
       : 'Any in-progress test will be cancelled. This stem will start as a Reflector.';
 
   return (
-    <>
+    <div className={`inline-flex flex-col items-start gap-1 ${className}`}>
       <fieldset
-        className={`inline-flex items-center gap-0 rounded-lg border border-surface-border bg-surface-raised p-0.5 ${className}`}
+        className="inline-flex items-center gap-0 rounded-lg border border-surface-border bg-surface-raised p-0.5"
         aria-label={t('role.label', 'Stem role')}
+        aria-busy={isSwitchingRole}
       >
         <legend className="sr-only">{t('role.label', 'Stem role')}</legend>
         {ROLE_OPTIONS.map((option) => {
@@ -97,7 +105,8 @@ export const RoleChip: FC<RoleChipProps> = ({ className = '' }) => {
               key={option.id}
               type="button"
               onClick={() => handleClick(option.id)}
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary ${
+              disabled={isSwitchingRole}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary disabled:opacity-60 disabled:cursor-not-allowed ${
                 active
                   ? 'bg-brand-primary text-text-inverse shadow-sm'
                   : 'text-text-muted hover:text-text-primary hover:bg-surface-hover'
@@ -105,12 +114,40 @@ export const RoleChip: FC<RoleChipProps> = ({ className = '' }) => {
               aria-pressed={active}
               data-testid={`role-chip-${option.id}`}
             >
-              <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+              {active && isSwitchingRole ? (
+                <Loader2
+                  className="h-3.5 w-3.5 animate-spin"
+                  aria-hidden="true"
+                  data-testid="role-chip-spinner"
+                />
+              ) : (
+                <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+              )}
               <span>{t(option.labelKey, option.labelDefault)}</span>
             </button>
           );
         })}
       </fieldset>
+
+      {roleSwitchError !== null && roleSwitchError.length > 0 ? (
+        <div
+          role="alert"
+          data-testid="role-chip-error"
+          className="inline-flex items-center gap-2 rounded-md border border-status-error/40 bg-status-error/10 px-2 py-1 text-xs text-status-error"
+        >
+          <span className="font-medium">{t('role.switchError.label', 'Role switch failed:')}</span>
+          <span className="font-normal text-text-primary">{roleSwitchError}</span>
+          <button
+            type="button"
+            onClick={clearRoleSwitchError}
+            aria-label={t('role.switchError.dismiss', 'Dismiss')}
+            className="inline-flex h-4 w-4 items-center justify-center rounded text-status-error/80 hover:bg-status-error/20 hover:text-status-error focus:outline-none focus-visible:ring-2 focus-visible:ring-status-error"
+            data-testid="role-chip-error-dismiss"
+          >
+            <X className="h-3 w-3" aria-hidden="true" />
+          </button>
+        </div>
+      ) : null}
 
       <ConfirmModal
         isOpen={pendingRole !== null}
@@ -122,7 +159,7 @@ export const RoleChip: FC<RoleChipProps> = ({ className = '' }) => {
         cancelLabel={t('buttons.cancel', 'Cancel')}
         confirmTone="violet"
       />
-    </>
+    </div>
   );
 };
 
