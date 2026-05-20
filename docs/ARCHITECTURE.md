@@ -61,6 +61,8 @@ stem/
 
 ## API
 
-REST API served on port 8443 (HTTPS) or 8080 (dev).
+REST API served on port 8444 (HTTPS, default) with a 308 redirector on
+8043. The `--http` flag (or `STEM_HTTP_ONLY=1`) serves plaintext HTTP on
+8444 for legacy deployments.
 
 See [API Reference](../../../msn-docs-internal/) for detailed API documentation.

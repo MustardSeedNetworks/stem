@@ -3,7 +3,7 @@ package api
 // server_port_fallback.go provides bindWithFallback, a helper that opens a
 // TCP listener on a desired port and walks +1..+9 if the canonical port
 // is already in use. This keeps `stem web` runnable for developers who
-// have another service squatting on 8080 without changing the documented
+// have another service squatting on 8444 without changing the documented
 // default port (see #69).
 
 import (

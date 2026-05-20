@@ -45,8 +45,12 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/api': {
-        target: 'http://localhost:8080',
+        // Backend serves HTTPS on :8444 by default (Wave 1 task #81).
+        // For local dev with the self-signed cert we let the proxy
+        // accept it; secure:false is required for self-signed.
+        target: 'https://localhost:8444',
         changeOrigin: true,
+        secure: false,
       },
     },
   },

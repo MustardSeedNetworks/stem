@@ -26,7 +26,7 @@ func setupRecoveryTestServer(t testing.TB) *api.Server {
 	t.Setenv("STEM_AUTH_USERNAME", recoveryTestUsername)
 	t.Setenv("STEM_AUTH_PASSWORD", recoveryTestPassword)
 
-	s, err := api.NewServer(8080)
+	s, err := api.NewServer(8444)
 	if err != nil {
 		t.Fatalf("NewServer() error: %v", err)
 	}
@@ -338,7 +338,7 @@ func BenchmarkHandleRecoveryStatus(b *testing.B) {
 	b.Setenv("STEM_AUTH_USERNAME", "benchuser")
 	b.Setenv("STEM_AUTH_PASSWORD", "benchpass123")
 
-	s, err := api.NewServer(8080)
+	s, err := api.NewServer(8444)
 	if err != nil {
 		b.Fatalf("NewServer() error: %v", err)
 	}
@@ -356,7 +356,7 @@ func BenchmarkHandleRecoveryInstructions(b *testing.B) {
 	b.Setenv("STEM_AUTH_USERNAME", "benchuser")
 	b.Setenv("STEM_AUTH_PASSWORD", "benchpass123")
 
-	s, err := api.NewServer(8080)
+	s, err := api.NewServer(8444)
 	if err != nil {
 		b.Fatalf("NewServer() error: %v", err)
 	}

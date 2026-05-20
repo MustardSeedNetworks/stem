@@ -96,6 +96,14 @@ const (
 	HTTPReadTimeout       = 30 * time.Second
 	HTTPWriteTimeout      = 30 * time.Second
 	HTTPIdleTimeout       = 120 * time.Second
+
+	// defaultHTTPRedirectPort is the plaintext port the HTTP→HTTPS 308
+	// redirector binds to when TLS is enabled (paired with 8444 over TLS).
+	defaultHTTPRedirectPort = 8043
+
+	// redirectReadWriteTimeoutSec is the read/write timeout for the
+	// redirect-only HTTP listener.
+	redirectReadWriteTimeoutSec = 10
 )
 
 // APIVersion is the current API version.
@@ -163,6 +171,8 @@ type Server struct {
 	recoveryTokenManager *auth.RecoveryTokenManager // Recovery token manager for password recovery
 	dataDir              string                     // Application data directory for recovery files
 	acmeChallengeServer  *http.Server               // HTTP-01 challenge server for ACME
+	redirectServer       *http.Server               // HTTP→HTTPS 308 redirect server (when TLS is enabled)
+	tlsFingerprint       tlsFingerprintCache        // Cached SHA-256 fingerprint of the active TLS cert (exposed via /__version)
 
 	// executorResolver maps a module name to a factory producing a
 	// testExecutor. If nil, defaultExecutorFactory is used. Tests inject
@@ -225,8 +235,14 @@ func NewServer(port int) (*Server, error) {
 		return nil, fmt.Errorf("authentication setup failed: %w", err)
 	}
 
-	// Determine if TLS is enabled via environment variable.
-	tlsEnabled := os.Getenv("STEM_TLS_ENABLED") != "false" // Default: enabled
+	// Determine if TLS is enabled. The default is TLS-on (task #81/#83);
+	// operators opt out either with --http on the CLI (which sets
+	// STEM_HTTP_ONLY=1) or by setting STEM_TLS_ENABLED=false explicitly
+	// for legacy deployments. STEM_HTTP_ONLY is the new canonical name —
+	// STEM_TLS_ENABLED is kept for backward compatibility with anything
+	// pre-Wave 1.
+	tlsEnabled := os.Getenv("STEM_HTTP_ONLY") != "1" &&
+		os.Getenv("STEM_TLS_ENABLED") != "false"
 
 	s := &Server{}
 	s.port = port
@@ -289,7 +305,7 @@ func isLocalhostOrigin(origin string) bool {
 }
 
 // isSameOrigin checks if the Origin header matches the request's Host.
-// This allows browsers to access the server from its actual address (e.g., 10.0.0.210:8080).
+// This allows browsers to access the server from its actual address (e.g., 10.0.0.210:8444).
 func isSameOrigin(origin string, requestHost string) bool {
 	u, err := url.Parse(origin)
 	if err != nil {
@@ -475,6 +491,9 @@ func (s *Server) setupRoutes() {
 	s.handleRateLimited("/api/v1/auth/login", s.handleAuthLogin, s.authLimiter)
 	s.handleRateLimited("/api/v1/auth/logout", s.handleAuthLogout, s.apiLimiter)
 	s.handleRateLimited("/api/v1/auth/refresh", s.handleAuthRefresh, s.authLimiter)
+	// /api/v1/auth/csrf-token is the canonical path (Wave 1 #87 task);
+	// /api/v1/auth/csrf is kept as an alias for older clients.
+	s.handleAuthRateLimited("/api/v1/auth/csrf-token", s.handleAuthCSRF, s.apiLimiter)
 	s.handleAuthRateLimited("/api/v1/auth/csrf", s.handleAuthCSRF, s.apiLimiter)
 
 	// API v1 routes - Setup (rate limited, no auth - for first-time setup).
@@ -650,7 +669,7 @@ func corsMiddleware(next http.Handler) http.Handler {
 		}
 
 		// Allow localhost, same-origin, or RFC 1918 private network origins.
-		// Same-origin: browser accessing server from server's actual IP (e.g., http://10.0.0.210:8080).
+		// Same-origin: browser accessing server from server's actual IP (e.g., https://10.0.0.210:8444).
 		// RFC 1918: allows private network addresses (192.168.x.x, 10.x.x.x, 172.16-31.x.x).
 		if !isLocalhostOrigin(origin) && !isSameOrigin(origin, r.Host) && !isRFC1918Origin(origin) {
 			http.Error(w, "CORS: origin not allowed", http.StatusForbidden)
@@ -689,7 +708,7 @@ func apiVersionMiddleware(next http.Handler) http.Handler {
 // Run starts the web server with graceful shutdown support.
 // Listens for SIGTERM and SIGINT signals to initiate shutdown.
 //
-// Binding goes through bindWithFallback so a busy canonical port (8080)
+// Binding goes through bindWithFallback so a busy canonical port (8444)
 // falls back to port+1..+9 instead of refusing to start (see #69).
 func (s *Server) Run() error {
 	// Bind first so the actual bound port is known before we announce it.
@@ -728,6 +747,13 @@ func (s *Server) Run() error {
 		ReadTimeout:       HTTPReadTimeout,
 		WriteTimeout:      HTTPWriteTimeout,
 		IdleTimeout:       HTTPIdleTimeout,
+	}
+
+	// Start HTTP→HTTPS 308 redirector when TLS is on (#83 companion).
+	// Skipped in HTTP-only mode (--http / STEM_HTTP_ONLY=1) — there is
+	// nothing to redirect to.
+	if s.tlsConfig.Enabled {
+		go s.startHTTPRedirect(defaultHTTPRedirectPort, actualPort)
 	}
 
 	// Start server in goroutine.
@@ -853,6 +879,14 @@ func (s *Server) Shutdown() error {
 		logging.Info("Shutting down ACME challenge server...")
 		if err := s.acmeChallengeServer.Shutdown(ctx); err != nil {
 			logging.Error("Error shutting down ACME challenge server", "error", err)
+		}
+	}
+
+	// Shutdown HTTP→HTTPS redirect server if running.
+	if s.redirectServer != nil {
+		logging.Info("Shutting down HTTP→HTTPS redirect server...")
+		if err := s.redirectServer.Shutdown(ctx); err != nil {
+			logging.Error("Error shutting down redirect server", "error", err)
 		}
 	}
 

@@ -111,7 +111,7 @@ You can run the reflector on:
 				Title:    "Basic Reflector Setup",
 				Content:  `Start a basic reflector on your interface:`,
 				Command:  "stem reflect -i eth0",
-				Expected: "Reflector running on eth0:3842 (AF_PACKET mode)\nWeb UI: http://localhost:8080",
+				Expected: "Reflector running on eth0:3842 (AF_PACKET mode)\nWeb UI: https://localhost:8444",
 				Tip:      "The reflector auto-detects the best performance mode for your system",
 			},
 			{
@@ -140,7 +140,7 @@ gets reflected. Use OUI filtering to only respond to specific devices:`,
 • Configuration status
 
 Access it at:`,
-				Command:  "# Open in browser: http://<reflector-ip>:8080",
+				Command:  "# Open in browser: https://<reflector-ip>:8444",
 				Expected: "Web interface showing live statistics",
 				Tip:      "Use -w 0 to disable the web interface if not needed",
 			},
@@ -481,7 +481,7 @@ Check connectivity:`,
 			{
 				Title:    "Check Reflector Status",
 				Content:  `Verify the reflector is running and receiving packets:`,
-				Command:  "curl http://<reflector-ip>:8080/api/stats",
+				Command:  "curl -k https://<reflector-ip>:8444/api/v1/stats",
 				Expected: "Shows packet counts and status",
 				Tip:      "If packets_received is 0, traffic isn't reaching reflector",
 			},

@@ -22,7 +22,7 @@ func setupModeTestServer(t *testing.T) *api.Server {
 	t.Setenv("STEM_AUTH_USERNAME", "modeuser")
 	t.Setenv("STEM_AUTH_PASSWORD", "modepass123")
 
-	s, err := api.NewServer(8080)
+	s, err := api.NewServer(8444)
 	if err != nil {
 		t.Fatalf("NewServer() error: %v", err)
 	}

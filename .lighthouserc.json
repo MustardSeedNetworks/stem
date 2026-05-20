@@ -1,7 +1,7 @@
 {
   "ci": {
     "collect": {
-      "url": ["http://localhost:8080/", "http://localhost:8080/reflector"],
+      "url": ["http://localhost:8444/", "http://localhost:8444/reflector"],
       "numberOfRuns": 3,
       "settings": {
         "preset": "desktop"

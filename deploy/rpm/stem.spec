@@ -86,10 +86,10 @@ fi
 
 # Configure firewall if firewalld is running
 if systemctl is-active --quiet firewalld 2>/dev/null; then
-    firewall-cmd --permanent --add-port=8080/tcp 2>/dev/null || true
-    firewall-cmd --permanent --add-port=8443/tcp 2>/dev/null || true
+    firewall-cmd --permanent --add-port=8444/tcp 2>/dev/null || true
+    firewall-cmd --permanent --add-port=8043/tcp 2>/dev/null || true
     firewall-cmd --reload 2>/dev/null || true
-    echo "Firewall configured for Stem service (ports 8080, 8443)"
+    echo "Firewall configured for Stem service (ports 8444, 8043)"
 fi
 
 %systemd_post stem.service
@@ -104,8 +104,8 @@ fi
 if [ $1 -eq 0 ]; then
     # Remove firewall rules
     if systemctl is-active --quiet firewalld 2>/dev/null; then
-        firewall-cmd --permanent --remove-port=8080/tcp 2>/dev/null || true
-        firewall-cmd --permanent --remove-port=8443/tcp 2>/dev/null || true
+        firewall-cmd --permanent --remove-port=8444/tcp 2>/dev/null || true
+        firewall-cmd --permanent --remove-port=8043/tcp 2>/dev/null || true
         firewall-cmd --reload 2>/dev/null || true
     fi
 

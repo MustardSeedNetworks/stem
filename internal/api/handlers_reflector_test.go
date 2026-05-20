@@ -19,7 +19,7 @@ func setupReflectorTestServer(t testing.TB) *api.Server {
 	t.Setenv("STEM_AUTH_USERNAME", "reflectortest")
 	t.Setenv("STEM_AUTH_PASSWORD", "reflectorpass123")
 
-	s, err := api.NewServer(8080)
+	s, err := api.NewServer(8444)
 	if err != nil {
 		t.Fatalf("NewServer() error: %v", err)
 	}
@@ -283,7 +283,7 @@ func BenchmarkHandleReflectorStats(b *testing.B) {
 	b.Setenv("STEM_AUTH_USERNAME", "benchuser")
 	b.Setenv("STEM_AUTH_PASSWORD", "benchpass123")
 
-	s, err := api.NewServer(8080)
+	s, err := api.NewServer(8444)
 	if err != nil {
 		b.Fatalf("NewServer() error: %v", err)
 	}
@@ -301,7 +301,7 @@ func BenchmarkHandleReflectorConfig(b *testing.B) {
 	b.Setenv("STEM_AUTH_USERNAME", "benchuser")
 	b.Setenv("STEM_AUTH_PASSWORD", "benchpass123")
 
-	s, err := api.NewServer(8080)
+	s, err := api.NewServer(8444)
 	if err != nil {
 		b.Fatalf("NewServer() error: %v", err)
 	}
@@ -346,7 +346,7 @@ func TestHandleReflectorConfigPost_Success(t *testing.T) {
 
 	body := bytes.NewBufferString(`{"profile":"netally","portFilter":9999}`)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/reflector/config", body)
-	req.Header.Set("Authorization", "Bearer "+token)
+	authorizeWithCSRF(t, s, req, token)
 	w := httptest.NewRecorder()
 
 	s.ServeHTTP(w, req)
@@ -373,7 +373,7 @@ func TestHandleReflectorConfigPost_InvalidProfile(t *testing.T) {
 
 	body := bytes.NewBufferString(`{"profile":"invalid_profile"}`)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/reflector/config", body)
-	req.Header.Set("Authorization", "Bearer "+token)
+	authorizeWithCSRF(t, s, req, token)
 	w := httptest.NewRecorder()
 
 	s.ServeHTTP(w, req)
@@ -390,7 +390,7 @@ func TestHandleReflectorConfigPost_OUIFilter(t *testing.T) {
 
 	body := bytes.NewBufferString(`{"ouiFilter":"aa:bb:cc"}`)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/reflector/config", body)
-	req.Header.Set("Authorization", "Bearer "+token)
+	authorizeWithCSRF(t, s, req, token)
 	w := httptest.NewRecorder()
 
 	s.ServeHTTP(w, req)
@@ -407,7 +407,7 @@ func TestHandleReflectorConfigPost_SignatureFilter(t *testing.T) {
 
 	body := bytes.NewBufferString(`{"signatureFilter":["probeot","dataot"]}`)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/reflector/config", body)
-	req.Header.Set("Authorization", "Bearer "+token)
+	authorizeWithCSRF(t, s, req, token)
 	w := httptest.NewRecorder()
 
 	s.ServeHTTP(w, req)
@@ -424,7 +424,7 @@ func TestHandleReflectorConfigPost_InvalidJSON(t *testing.T) {
 
 	body := bytes.NewBufferString(`{invalid json}`)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/reflector/config", body)
-	req.Header.Set("Authorization", "Bearer "+token)
+	authorizeWithCSRF(t, s, req, token)
 	w := httptest.NewRecorder()
 
 	s.ServeHTTP(w, req)
@@ -440,7 +440,7 @@ func TestHandleReflectorConfigPost_EmptyBody(t *testing.T) {
 	token := getReflectorAuthToken(t, s)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/reflector/config", nil)
-	req.Header.Set("Authorization", "Bearer "+token)
+	authorizeWithCSRF(t, s, req, token)
 	w := httptest.NewRecorder()
 
 	s.ServeHTTP(w, req)
@@ -457,7 +457,7 @@ func TestHandleReflectorConfigPost_NoChanges(t *testing.T) {
 
 	body := bytes.NewBufferString(`{}`)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/reflector/config", body)
-	req.Header.Set("Authorization", "Bearer "+token)
+	authorizeWithCSRF(t, s, req, token)
 	w := httptest.NewRecorder()
 
 	s.ServeHTTP(w, req)

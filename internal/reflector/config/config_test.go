@@ -46,14 +46,14 @@ func TestConfigStruct(t *testing.T) {
 func TestWebUIConfig(t *testing.T) {
 	cfg := config.WebUIConfig{
 		Enabled: true,
-		Port:    8080,
+		Port:    8444,
 	}
 
 	if !cfg.Enabled {
 		t.Error("Expected Enabled true")
 	}
-	if cfg.Port != 8080 {
-		t.Errorf("Expected Port 8080, got %d", cfg.Port)
+	if cfg.Port != 8444 {
+		t.Errorf("Expected Port 8444, got %d", cfg.Port)
 	}
 }
 
@@ -137,8 +137,8 @@ func TestApplyDefaultsViaLoadFile(t *testing.T) {
 		t.Fatalf("LoadFile() error = %v", err)
 	}
 
-	if cfg.WebUI.Port != 8080 {
-		t.Errorf("Expected default WebUI.Port 8080, got %d", cfg.WebUI.Port)
+	if cfg.WebUI.Port != 8444 {
+		t.Errorf("Expected default WebUI.Port 8444, got %d", cfg.WebUI.Port)
 	}
 	if cfg.SignatureFilter != testFilterAll {
 		t.Errorf("Expected default SignatureFilter '%s', got '%s'", testFilterAll, cfg.SignatureFilter)
@@ -235,7 +235,7 @@ func TestValidate(t *testing.T) {
 				Interface:       "eth0",
 				Verbose:         false,
 				SignatureFilter: "",
-				WebUI:           config.WebUIConfig{Enabled: false, Port: 8080},
+				WebUI:           config.WebUIConfig{Enabled: false, Port: 8444},
 				TUI:             config.TUIConfig{Enabled: false},
 				Filtering:       config.FilterConfig{Port: 0, FilterOUI: true, OUI: "invalid", FilterMAC: false},
 				Reflection:      config.ReflectConfig{Mode: "all"},
@@ -251,7 +251,7 @@ func TestValidate(t *testing.T) {
 				Interface:       "eth0",
 				Verbose:         false,
 				SignatureFilter: "",
-				WebUI:           config.WebUIConfig{Enabled: false, Port: 8080},
+				WebUI:           config.WebUIConfig{Enabled: false, Port: 8444},
 				TUI:             config.TUIConfig{Enabled: false},
 				Filtering:       config.FilterConfig{Port: 0, FilterOUI: false, OUI: "00:c0:17", FilterMAC: false},
 				Reflection:      config.ReflectConfig{Mode: "invalid"},
@@ -267,7 +267,7 @@ func TestValidate(t *testing.T) {
 				Interface:       "eth0",
 				Verbose:         false,
 				SignatureFilter: "",
-				WebUI:           config.WebUIConfig{Enabled: false, Port: 8080},
+				WebUI:           config.WebUIConfig{Enabled: false, Port: 8444},
 				TUI:             config.TUIConfig{Enabled: false},
 				Filtering:       config.FilterConfig{Port: 0, FilterOUI: false, OUI: "00:c0:17", FilterMAC: false},
 				Reflection:      config.ReflectConfig{Mode: "all"},
@@ -315,7 +315,7 @@ func TestValidate(t *testing.T) {
 				Interface:       "eth0",
 				Verbose:         false,
 				SignatureFilter: "",
-				WebUI:           config.WebUIConfig{Enabled: false, Port: 8080},
+				WebUI:           config.WebUIConfig{Enabled: false, Port: 8444},
 				TUI:             config.TUIConfig{Enabled: false},
 				Filtering:       config.FilterConfig{Port: 0, FilterOUI: false, OUI: "00:c0:17", FilterMAC: false},
 				Reflection:      config.ReflectConfig{Mode: "all"},
@@ -436,7 +436,7 @@ verbose: true
 signature_filter: all
 web_ui:
   enabled: true
-  port: 8080
+  port: 8444
 filtering:
   port: 3842
   filter_oui: true
@@ -466,8 +466,8 @@ stats:
 	if !cfg.Verbose {
 		t.Error("Expected Verbose true")
 	}
-	if cfg.WebUI.Port != 8080 {
-		t.Errorf("Expected WebUI.Port 8080, got %d", cfg.WebUI.Port)
+	if cfg.WebUI.Port != 8444 {
+		t.Errorf("Expected WebUI.Port 8444, got %d", cfg.WebUI.Port)
 	}
 }
 
@@ -505,7 +505,7 @@ func BenchmarkValidate(b *testing.B) {
 		Interface:       "eth0",
 		Verbose:         false,
 		SignatureFilter: "",
-		WebUI:           config.WebUIConfig{Enabled: false, Port: 8080},
+		WebUI:           config.WebUIConfig{Enabled: false, Port: 8444},
 		TUI:             config.TUIConfig{Enabled: false},
 		Filtering:       config.FilterConfig{Port: 0, FilterOUI: false, OUI: "00:c0:17", FilterMAC: false},
 		Reflection:      config.ReflectConfig{Mode: "all"},

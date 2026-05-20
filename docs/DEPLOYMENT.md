@@ -95,7 +95,7 @@ docker run -d \
   -e STEM_AUTH_USERNAME=admin \
   -e STEM_AUTH_PASSWORD=your-secure-password \
   -e STEM_JWT_SECRET=your-256-bit-secret \
-  ghcr.io/krisarmstrong/stem:latest web -p 8080
+  ghcr.io/krisarmstrong/stem:latest web -p 8444
 ```
 
 ---
@@ -152,17 +152,21 @@ STEM_LOG_FORMAT=json
 ### WebUI Mode
 
 ```bash
-# Start web server on default port (8080)
+# Start web server on default port (HTTPS on 8444)
 stem web
 
 # Start on custom port
-stem web -p 8443
+stem web -p 9443
 
 # Start with host binding
-stem web --host 0.0.0.0 -p 8080
+stem web --host 0.0.0.0 -p 8444
+
+# Plaintext HTTP only (legacy)
+stem web --http -p 8444
 ```
 
-Access at: `http://localhost:8080`
+Access at: `https://localhost:8444` (self-signed cert; run
+`sudo stem install-ca` once to trust it system-wide).
 
 ### Reflector Mode (CLI)
 
@@ -218,7 +222,7 @@ Type=simple
 User=stem
 Group=stem
 EnvironmentFile=/etc/stem/stem.env
-ExecStart=/usr/local/bin/stem web -p 8080
+ExecStart=/usr/local/bin/stem web -p 8444
 Restart=always
 RestartSec=5
 LimitNOFILE=65535
@@ -269,7 +273,7 @@ server {
     ssl_certificate_key /etc/ssl/private/stem.key;
 
     location / {
-        proxy_pass http://127.0.0.1:8080;
+        proxy_pass https://127.0.0.1:8444;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
@@ -281,7 +285,7 @@ server {
 
     # SSE support (long-lived connections for real-time updates)
     location /api/v1/events {
-        proxy_pass http://127.0.0.1:8080;
+        proxy_pass https://127.0.0.1:8444;
         proxy_http_version 1.1;
         proxy_set_header Connection "";
         proxy_buffering off;
@@ -318,7 +322,7 @@ spec:
       - name: stem
         image: ghcr.io/krisarmstrong/stem:latest
         ports:
-        - containerPort: 8080
+        - containerPort: 8444
         env:
         - name: STEM_AUTH_USERNAME
           valueFrom:
@@ -341,13 +345,13 @@ spec:
         livenessProbe:
           httpGet:
             path: /health/live
-            port: 8080
+            port: 8444
           initialDelaySeconds: 5
           periodSeconds: 10
         readinessProbe:
           httpGet:
             path: /health/ready
-            port: 8080
+            port: 8444
           initialDelaySeconds: 5
           periodSeconds: 5
         resources:
@@ -371,7 +375,7 @@ spec:
     app: stem
   ports:
   - port: 80
-    targetPort: 8080
+    targetPort: 8444
   type: ClusterIP
 ```
 
@@ -450,7 +454,7 @@ sudo setcap cap_net_raw,cap_net_admin=eip /usr/local/bin/stem
 
 ```bash
 # Find process using port
-sudo lsof -i :8080
+sudo lsof -i :8444
 
 # Kill process
 sudo kill -9 <PID>
@@ -473,7 +477,7 @@ sudo kill -9 <PID>
 ```bash
 # Enable debug logging
 export STEM_LOG_LEVEL=debug
-stem web -p 8080
+stem web -p 8444
 ```
 
 ### Support

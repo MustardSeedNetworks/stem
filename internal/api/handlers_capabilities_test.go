@@ -21,7 +21,7 @@ func setupCapabilitiesTestServer(t testing.TB) *api.Server {
 	t.Setenv("STEM_AUTH_USERNAME", "capstest")
 	t.Setenv("STEM_AUTH_PASSWORD", "capspass123")
 
-	s, err := api.NewServer(8080)
+	s, err := api.NewServer(8444)
 	if err != nil {
 		t.Fatalf("NewServer() error: %v", err)
 	}

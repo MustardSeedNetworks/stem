@@ -18,7 +18,7 @@ type ConfigOption struct {
 	Name       string   // "port"
 	Path       string   // "server.port"
 	Type       string   // "integer"
-	Default    string   // "8080"
+	Default    string   // "8444"
 	EnvVar     string   // "STEM_SERVER_PORT"
 	TechDesc   string   // Technical description
 	LaymanDesc string   // Plain English
@@ -60,10 +60,10 @@ func serverConfig() ConfigSection {
 				Name:       "port",
 				Path:       "server.port",
 				Type:       "integer",
-				Default:    "8080",
+				Default:    "8444",
 				EnvVar:     "STEM_SERVER_PORT",
-				TechDesc:   "TCP port for the HTTP server. If port is in use during package installation, an alternative port is auto-selected.",
-				LaymanDesc: "The port number for the web interface. Default is 8080 (like http://localhost:8080).",
+				TechDesc:   "TCP port for the HTTPS server. If port is in use during package installation, an alternative port is auto-selected.",
+				LaymanDesc: "The port number for the web interface. Default is 8444 (like https://localhost:8444).",
 				Example:    "port: 9000",
 			},
 			{

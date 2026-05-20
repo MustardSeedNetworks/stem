@@ -138,6 +138,22 @@ func (m *CSRFManager) ValidateToken(sessionID, token string) error {
 	return nil
 }
 
+// GetOrCreateToken returns the existing token for the session if one
+// exists and has not expired, or mints and returns a new one. This is
+// the handler-side helper for GET /api/v1/auth/csrf-token: clients that
+// fetch the token multiple times within a session lifetime get the same
+// value back, so the UI can store it once and reuse it. Rotation happens
+// on login via RevokeToken (see handleAuthLogin).
+func (m *CSRFManager) GetOrCreateToken(sessionID string) (string, error) {
+	m.mu.RLock()
+	stored, exists := m.tokens[sessionID]
+	m.mu.RUnlock()
+	if exists && time.Now().Before(stored.ExpiresAt) {
+		return stored.Token, nil
+	}
+	return m.GenerateToken(sessionID)
+}
+
 // RevokeToken removes a CSRF token, typically on logout.
 func (m *CSRFManager) RevokeToken(sessionID string) {
 	m.mu.Lock()
@@ -181,11 +197,61 @@ func (m *CSRFManager) Stop() {
 	m.cancel()
 }
 
-// CSRFMiddleware returns HTTP middleware that validates CSRF tokens on state-changing requests.
-// It exempts GET, HEAD, OPTIONS, and TRACE methods as they should be safe/idempotent.
+// isCSRFExemptPath reports whether path is on the explicit allow-list of
+// endpoints that bypass CSRF validation. The default for everything else
+// is "validate" — this is the fail-closed posture required by task #87.
+// Add to this list only after thinking through whether the endpoint can
+// be safely invoked cross-origin without a CSRF token.
+//
+// Allow-list contents (keep in sync with the body):
+//
+//   - /api/v1/auth/login: pre-session, no CSRF possible. The credential
+//     itself (username + password) provides the proof-of-intent.
+//   - /api/v1/setup/status: read-only GET — already covered by the safe-
+//     method check above; not duplicated here. The safe-method short-
+//     circuit returns first.
+//   - /api/v1/harvest/logs/client: fire-and-forget client-side log
+//     ingestion that runs before the user has authenticated and therefore
+//     cannot present a CSRF token. The endpoint accepts only telemetry
+//     payloads and writes no user-visible state.
+//   - /api/v1/sso/*: SSO callback handlers (OAuth/SAML/OIDC). The IdP
+//     POSTs to these endpoints with its own signed-assertion proof of
+//     intent; a CSRF token would not exist at that point in the flow.
+//
+// REMOVED from the previous exempt list (#87 fail-closed):
+//   - /api/v1/auth/refresh: state change on a session-scoped credential.
+//     The browser holds the refresh-token cookie; CSRF is the standard
+//     defense against an attacker initiating a silent refresh.
+//   - /api/v1/auth/logout: without CSRF, an attacker can force-logout a
+//     user (denial-of-service / session-fixation vector).
+//   - /api/v1/setup/complete: completes initial admin setup; state-
+//     changing. Setup token alone is not a substitute for CSRF — the
+//     token can be lifted from the network or browser memory.
+//
+// Implemented as a function (not a package-level map/slice) to avoid
+// gochecknoglobals while keeping the list reviewable in one place.
+func isCSRFExemptPath(path string) bool {
+	switch path {
+	case "/api/v1/auth/login",
+		"/api/v1/harvest/logs/client":
+		return true
+	}
+	// Prefix match for SSO callbacks whose suffix varies by provider
+	// (e.g. /api/v1/sso/google/callback, /api/v1/sso/saml/acs).
+	return strings.HasPrefix(path, "/api/v1/sso/")
+}
+
+// CSRFMiddleware returns HTTP middleware that validates CSRF tokens on
+// state-changing requests. It exempts GET, HEAD, OPTIONS, and TRACE
+// methods as they should be safe/idempotent, plus an explicit allow-list
+// (isCSRFExemptPath) of endpoints that cannot reasonably carry a CSRF
+// token (pre-session login, IdP callbacks, etc.).
+//
+// Everything else fails closed: an authenticated state-changing request
+// without a valid CSRF token returns 403 Forbidden.
 func (m *CSRFManager) CSRFMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Skip CSRF check for safe methods (RFC 7231)
+		// Skip CSRF check for safe methods (RFC 7231).
 		if r.Method == http.MethodGet ||
 			r.Method == http.MethodHead ||
 			r.Method == http.MethodOptions ||
@@ -194,45 +260,38 @@ func (m *CSRFManager) CSRFMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		// Skip CSRF for non-API routes (static files, etc.)
+		// Skip CSRF for non-API routes (static files, etc.).
 		if !strings.HasPrefix(r.URL.Path, "/api/") {
 			next.ServeHTTP(w, r)
 			return
 		}
 
-		// Skip CSRF for auth endpoints that don't have a session yet
-		// - login: no session yet
-		// - refresh: may not have valid CSRF when access token expires
-		// - logout: safe operation
-		if r.URL.Path == "/api/v1/auth/login" ||
-			r.URL.Path == "/api/v1/auth/refresh" ||
-			r.URL.Path == "/api/v1/auth/logout" {
+		// Explicit exempt-list — see isCSRFExemptPath for the rationale.
+		if isCSRFExemptPath(r.URL.Path) {
 			next.ServeHTTP(w, r)
 			return
 		}
 
-		// Extract session ID from request (use username from JWT payload)
+		// Extract session ID from request (use the JWT payload segment).
 		sessionID := GetSessionIDFromRequest(r)
 
-		// If no session ID, skip CSRF check - let auth middleware handle authentication.
-		// CSRF protection is only relevant for authenticated sessions.
+		// No session = no CSRF protection needed yet. Auth middleware
+		// will handle the authentication check and return 401 for
+		// state-changing requests that need a session. This preserves
+		// the "401 if unauthenticated, 403 if CSRF-missing" semantics
+		// the UI relies on to differentiate the two failure modes.
 		if sessionID == "" {
 			next.ServeHTTP(w, r)
 			return
 		}
 
-		// Check if a CSRF token exists for this session.
-		// If no token was ever generated (user never called /api/v1/auth/csrf),
-		// skip CSRF check and let auth middleware validate the session.
-		if !m.HasToken(sessionID) {
-			next.ServeHTTP(w, r)
-			return
-		}
-
-		// Get CSRF token from request header
+		// Get CSRF token from request header.
 		token := r.Header.Get(CSRFHeaderName)
 
-		// Validate the token
+		// Validate the token. Fail closed: if the session never minted a
+		// CSRF token, validation returns ErrCSRFTokenInvalid (no entry
+		// in m.tokens) and we 403. Clients must call
+		// GET /api/v1/auth/csrf-token after login to obtain the token.
 		err := m.ValidateToken(sessionID, token)
 		if err != nil {
 			m.logger.Warn("CSRF validation failed",
