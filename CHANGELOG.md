@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.15.0](https://github.com/krisarmstrong/stem/compare/v0.14.0...v0.15.0) (2026-05-20)
+
+
+### Features
+
+* **auth:** argon2id password hashing + zxcvbn strength + hibp breach check ([#233](https://github.com/krisarmstrong/stem/issues/233)) ([4d85f83](https://github.com/krisarmstrong/stem/commit/4d85f83a626c25b07ae683365f98a0672c8957f8))
+* **auth:** TOTP MFA + WebAuthn passkeys (Wave 3) ([#234](https://github.com/krisarmstrong/stem/issues/234)) ([91fcfac](https://github.com/krisarmstrong/stem/commit/91fcfacfdeebe2eadc81579cc0cf8ce7980991e9))
+* **ci:** Add provenance_only mode for SLSA backfill ([#75](https://github.com/krisarmstrong/stem/issues/75)) ([#226](https://github.com/krisarmstrong/stem/issues/226)) ([04af510](https://github.com/krisarmstrong/stem/commit/04af510af5e4cd95b610e17c3179769fdaa18a53))
+* tls by default + canonical port 8444 + http redirector + csrf fail-closed ([#232](https://github.com/krisarmstrong/stem/issues/232)) ([406bc43](https://github.com/krisarmstrong/stem/commit/406bc43d68675aa71b0828ec029523c385abe19e))
+* **ui,api:** Reflector platform-guard + E2E cleanup of imaginary-UI specs ([#70](https://github.com/krisarmstrong/stem/issues/70) / [#64](https://github.com/krisarmstrong/stem/issues/64)) ([#224](https://github.com/krisarmstrong/stem/issues/224)) ([d765f62](https://github.com/krisarmstrong/stem/commit/d765f6224a2e0e302b579a71b19b94a70621c6e3))
+* **ui,api:** Wire RoleChip to backend mode-switch endpoint ([#74](https://github.com/krisarmstrong/stem/issues/74)) ([#225](https://github.com/krisarmstrong/stem/issues/225)) ([cf69a9d](https://github.com/krisarmstrong/stem/commit/cf69a9d38feba0b8add742e8a808885dfa41f5e0))
+
+
+### Bug Fixes
+
+* **auth:** Serialise HIBP test seams behind a sync.RWMutex ([#235](https://github.com/krisarmstrong/stem/issues/235)) ([5f87f35](https://github.com/krisarmstrong/stem/commit/5f87f35a7f7e5358056e0adc9d7c54470df49cc1))
+* **ci:** add target_tag input to SLSA backfill ([#75](https://github.com/krisarmstrong/stem/issues/75) follow-up) ([#228](https://github.com/krisarmstrong/stem/issues/228)) ([6e00400](https://github.com/krisarmstrong/stem/commit/6e0040087d2fdf81baddff14d5f544e2158ffa52))
+* **ci:** unescape apostrophe in target_tag description ([#229](https://github.com/krisarmstrong/stem/issues/229)) ([e0c3d16](https://github.com/krisarmstrong/stem/commit/e0c3d16120d2265e050a1e5c5c7cbc31be5bc5c0))
+
 ## [0.14.0](https://github.com/krisarmstrong/stem/compare/v0.13.3...v0.14.0) (2026-05-19)
 
 
