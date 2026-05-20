@@ -48,8 +48,12 @@ test.describe('Dashboard', () => {
     await expect(statusBadge).toBeVisible();
   });
 
-  test('should display test modules section', async ({ page }) => {
-    await expect(page.getByText(/test modules/i)).toBeVisible();
+  test('should land on the Reflector page after login', async ({ page }) => {
+    // After the #66 redesign there is no "Test Modules" dashboard
+    // section anymore — module pages live under /tests/* in the
+    // sidebar, and `/` redirects to `/reflector`. Assert we landed
+    // there by checking for the Reflector page heading.
+    await expect(page.getByRole('heading', { name: /reflector/i })).toBeVisible();
   });
 
   test('should have start/stop test buttons', async ({ page }) => {

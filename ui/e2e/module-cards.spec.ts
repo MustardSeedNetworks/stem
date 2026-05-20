@@ -1,11 +1,13 @@
 import { expect, test } from '@playwright/test';
 
 /**
- * Module Cards Tests
+ * Module Pages Tests
  *
- * Validates that the dashboard exposes the test-module sections
- * (Benchmark, ServiceTest, TrafficGen, Measure, Certify) listed in
- * the Stem module architecture.
+ * Validates that each test-module page (Benchmark, ServiceTest,
+ * TrafficGen, Measure, Certify) listed in the Stem module architecture
+ * renders with its module name. After the #66 redesign these moved
+ * from "dashboard cards" to dedicated routes under /tests/*; the sidebar
+ * has Test group nav links pointing at each.
  *
  * Mocks /api/v1/setup/status so the first-run setup wizard doesn't
  * intercept clicks, then logs in as admin/admin.
@@ -30,10 +32,17 @@ test.describe('Module Cards', () => {
     await expect(page.getByRole('button', { name: /logout/i })).toBeVisible();
   });
 
-  test('should display all module names somewhere in the UI', async ({ page }) => {
-    // Each module name should appear at least once on the authenticated app.
+  test('should render each module page with its name visible', async ({ page }) => {
+    // Navigate to /tests/<module> for each and assert the heading
+    // carries the module name. Exercises both routing and the per-
+    // module render — stronger than the old "any text visible
+    // anywhere" check that broke when the dashboard cards were
+    // removed in #66.
     for (const name of MODULE_NAMES) {
-      await expect(page.getByText(new RegExp(name, 'i')).first()).toBeVisible();
+      await page.goto(`/tests/${name}`);
+      await expect(
+        page.getByRole('heading', { name: new RegExp(name, 'i') }).first(),
+      ).toBeVisible();
     }
   });
 });
