@@ -6,11 +6,19 @@ import { mockAuthenticated } from './helpers/auth';
  *
  * Uses mockAuthenticated() to skip the login modal — these tests don't
  * exercise the auth flow itself (see helpers/auth.ts).
+ *
+ * The ViewToggle (Standard | Module) only renders when the stem role is
+ * test_master (#210 — Reflector role doesn't need test selection). The
+ * default persisted role is reflector, so we hydrate the role-storage
+ * key to test_master before navigation.
  */
 
 test.describe('Settings drawer module view', () => {
   test.beforeEach(async ({ page }) => {
     await mockAuthenticated(page);
+    await page.addInitScript(() => {
+      window.localStorage.setItem('stem-role', 'test_master');
+    });
     await page.goto('/');
   });
 
