@@ -233,7 +233,16 @@ func (m *CSRFManager) Stop() {
 func isCSRFExemptPath(path string) bool {
 	switch path {
 	case "/api/v1/auth/login",
-		"/api/v1/harvest/logs/client":
+		"/api/v1/harvest/logs/client",
+		// Wave 3 (#85): MFA login finishers are pre-session in the
+		// same way /api/v1/auth/login is — the mfa_token (a server-
+		// signed pending-MFA JWT) provides the proof of intent and
+		// the request cannot carry a CSRF token because the caller
+		// has not yet completed authentication. Rate-limiting still
+		// caps brute force.
+		"/api/v1/auth/login/totp",
+		"/api/v1/auth/webauthn/login/begin",
+		"/api/v1/auth/webauthn/login/finish":
 		return true
 	}
 	// Prefix match for SSO callbacks whose suffix varies by provider

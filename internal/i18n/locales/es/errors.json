@@ -2,7 +2,16 @@
   "auth": {
     "invalidCredentials": "Credenciales invalidas",
     "unauthorized": "No autorizado",
-    "sessionExpired": "Sesion expirada. Por favor inicie sesion nuevamente."
+    "sessionExpired": "Sesion expirada. Por favor inicie sesion nuevamente.",
+    "mfaRequired": "Se requiere autenticacion de dos factores.",
+    "mfaInvalidCode": "Codigo de verificacion invalido o ausente.",
+    "mfaTokenExpired": "Sesion de verificacion expirada. Por favor inicie sesion nuevamente.",
+    "mfaTokenInvalid": "Sesion de verificacion invalida.",
+    "mfaAlreadyEnabled": "La autenticacion de dos factores ya esta activada.",
+    "mfaNotEnabled": "La autenticacion de dos factores no esta activada.",
+    "webauthnNoCredentials": "No hay llaves de acceso registradas para esta cuenta.",
+    "webauthnCeremonyInvalid": "La verificacion de la llave de acceso fallo. Intente nuevamente.",
+    "webauthnNotConfigured": "WebAuthn no ha sido configurado en este servidor."
   },
   "network": {
     "connectionFailed": "Conexion fallida",

@@ -324,6 +324,11 @@ function AppContent(): ReactElement {
   });
   const [loginLoading, setLoginLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
+  // Wave 3 (#85): when login returns mfaRequired, we hold the
+  // mfa_token and prompt for the second-factor code before flipping
+  // isAuthenticated.
+  const [mfaPending, setMfaPending] = useState<{ mfaToken: string; factor: string } | null>(null);
+  const [mfaCode, setMfaCode] = useState('');
   const [setupStatus, setSetupStatus] = useState<SetupStatus | null>(null);
   const [setupChecked, setSetupChecked] = useState(false);
   const [recoveryStatus, setRecoveryStatus] = useState<RecoveryStatus | null>(null);
@@ -596,7 +601,21 @@ function AppContent(): ReactElement {
           setConnected(false);
           return;
         }
-        const data = await (response.json() as Promise<unknown>);
+        const data = (await response.json()) as
+          | { mfaRequired: true; mfaToken: string; factor: string }
+          | unknown;
+        // Wave 3 (#85): if MFA is required, hold the mfa_token and
+        // show the code prompt. The user will POST to
+        // /api/v1/auth/login/totp to complete.
+        if (
+          typeof data === 'object' &&
+          data !== null &&
+          (data as { mfaRequired?: unknown }).mfaRequired === true
+        ) {
+          const mfaData = data as { mfaRequired: true; mfaToken: string; factor: string };
+          setMfaPending({ mfaToken: mfaData.mfaToken, factor: mfaData.factor });
+          return;
+        }
         if (!isValidAuthResponse(data)) {
           setLoginError('Authentication failed');
           setConnected(false);
@@ -616,6 +635,47 @@ function AppContent(): ReactElement {
       }
     },
     [password, username],
+  );
+
+  // Wave 3 (#85): submit the MFA code captured by the MFA prompt.
+  const handleMFAVerify = useCallback(
+    async (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      if (!mfaPending) {
+        return;
+      }
+      setLoginLoading(true);
+      setLoginError(null);
+      try {
+        const response = await fetch('/api/v1/auth/login/totp', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mfaToken: mfaPending.mfaToken, code: mfaCode }),
+        });
+        if (!response.ok) {
+          const text = (await response.text()) || 'Verification failed';
+          setLoginError(text);
+          return;
+        }
+        const data = (await response.json()) as unknown;
+        if (!isValidAuthResponse(data)) {
+          setLoginError('Verification failed');
+          return;
+        }
+        setIsAuthenticated(true);
+        window.localStorage.setItem(AUTH_FLAG_KEY, 'true');
+        setMfaPending(null);
+        setMfaCode('');
+        setLoginError(null);
+        setConnected(true);
+      } catch {
+        setLoginError('Unable to reach verification endpoint.');
+      } finally {
+        setLoginLoading(false);
+      }
+    },
+    [mfaCode, mfaPending],
   );
 
   const handleStartTest = useCallback(async (): Promise<void> => {
@@ -1218,67 +1278,117 @@ function AppContent(): ReactElement {
               <p className="text-sm text-[var(--color-text-muted)]">
                 Authenticate with your Stem credentials.
               </p>
-              <form className="mt-6 space-y-4" onSubmit={handleLogin}>
-                <div>
-                  <label
-                    htmlFor="stem-login-username"
-                    className="text-xs font-semibold text-[var(--color-text-muted)]"
+              {mfaPending ? (
+                <form className="mt-6 space-y-4" onSubmit={handleMFAVerify}>
+                  <p className="text-sm text-[var(--color-text-muted)]">
+                    Enter the code from your authenticator app to continue.
+                  </p>
+                  <div>
+                    <label
+                      htmlFor="stem-login-mfa"
+                      className="text-xs font-semibold text-[var(--color-text-muted)]"
+                    >
+                      Verification code
+                    </label>
+                    <input
+                      id="stem-login-mfa"
+                      name="mfa"
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]{6}"
+                      autoComplete="one-time-code"
+                      value={mfaCode}
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                        setMfaCode(event.target.value)
+                      }
+                      className="mt-1 w-full rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-base)] px-3 py-2 text-sm font-mono tracking-widest text-[var(--color-text-primary)] focus:border-[var(--color-brand-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-primary)]/30"
+                    />
+                  </div>
+                  {loginError ? (
+                    <p className="text-xs text-[var(--color-status-error)]">{loginError}</p>
+                  ) : null}
+                  <button
+                    type="submit"
+                    className="btn btn-primary w-full justify-center"
+                    disabled={loginLoading}
                   >
-                    Username
-                  </label>
-                  <input
-                    id="stem-login-username"
-                    name="username"
-                    type="text"
-                    autoComplete="username"
-                    value={username}
-                    onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                      setUsername(event.target.value)
-                    }
-                    className="mt-1 w-full rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-base)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-[var(--color-brand-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-primary)]/30"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="stem-login-password"
-                    className="text-xs font-semibold text-[var(--color-text-muted)]"
-                  >
-                    Password
-                  </label>
-                  <input
-                    id="stem-login-password"
-                    name="password"
-                    type="password"
-                    autoComplete="current-password"
-                    value={password}
-                    onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                      setPassword(event.target.value)
-                    }
-                    className="mt-1 w-full rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-base)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-[var(--color-brand-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-primary)]/30"
-                  />
-                </div>
-                {loginError ? (
-                  <p className="text-xs text-[var(--color-status-error)]">{loginError}</p>
-                ) : null}
-                <button
-                  type="submit"
-                  className="btn btn-primary w-full justify-center"
-                  disabled={loginLoading}
-                >
-                  {loginLoading ? 'Signing in...' : 'Sign In'}
-                </button>
-
-                {/* Forgot Password link - only shown when recovery is available */}
-                {recoveryStatus?.active ? (
+                    {loginLoading ? 'Verifying...' : 'Verify'}
+                  </button>
                   <button
                     type="button"
-                    onClick={() => setShowRecoveryForm(true)}
-                    className="w-full mt-4 text-sm text-[var(--color-text-muted)] hover:text-[var(--color-brand-primary)]"
+                    onClick={() => {
+                      setMfaPending(null);
+                      setMfaCode('');
+                      setLoginError(null);
+                    }}
+                    className="w-full mt-2 text-sm text-[var(--color-text-muted)] hover:text-[var(--color-brand-primary)]"
                   >
-                    Forgot password?
+                    Use different account
                   </button>
-                ) : null}
-              </form>
+                </form>
+              ) : (
+                <form className="mt-6 space-y-4" onSubmit={handleLogin}>
+                  <div>
+                    <label
+                      htmlFor="stem-login-username"
+                      className="text-xs font-semibold text-[var(--color-text-muted)]"
+                    >
+                      Username
+                    </label>
+                    <input
+                      id="stem-login-username"
+                      name="username"
+                      type="text"
+                      autoComplete="username"
+                      value={username}
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                        setUsername(event.target.value)
+                      }
+                      className="mt-1 w-full rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-base)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-[var(--color-brand-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-primary)]/30"
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="stem-login-password"
+                      className="text-xs font-semibold text-[var(--color-text-muted)]"
+                    >
+                      Password
+                    </label>
+                    <input
+                      id="stem-login-password"
+                      name="password"
+                      type="password"
+                      autoComplete="current-password"
+                      value={password}
+                      onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                        setPassword(event.target.value)
+                      }
+                      className="mt-1 w-full rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-base)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-[var(--color-brand-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-primary)]/30"
+                    />
+                  </div>
+                  {loginError ? (
+                    <p className="text-xs text-[var(--color-status-error)]">{loginError}</p>
+                  ) : null}
+                  <button
+                    type="submit"
+                    className="btn btn-primary w-full justify-center"
+                    disabled={loginLoading}
+                  >
+                    {loginLoading ? 'Signing in...' : 'Sign In'}
+                  </button>
+
+                  {/* Forgot Password link - only shown when recovery is available */}
+                  {recoveryStatus?.active ? (
+                    <button
+                      type="button"
+                      onClick={() => setShowRecoveryForm(true)}
+                      className="w-full mt-4 text-sm text-[var(--color-text-muted)] hover:text-[var(--color-brand-primary)]"
+                    >
+                      Forgot password?
+                    </button>
+                  ) : null}
+                </form>
+              )}
             </div>
           </div>
         ) : null}

@@ -6,7 +6,16 @@
  * The previous singleton 'Mode' group was removed in #66; the role
  * selector now lives in the header RoleChip.
  */
-import { Award, BarChart3, History, Repeat, Settings2, Waves, Zap } from 'lucide-react';
+import {
+  Award,
+  BarChart3,
+  History,
+  Repeat,
+  Settings2,
+  ShieldCheck,
+  Waves,
+  Zap,
+} from 'lucide-react';
 import type { SidebarNavGroup } from './ui/Sidebar';
 
 export const navGroups: SidebarNavGroup[] = [
@@ -27,5 +36,9 @@ export const navGroups: SidebarNavGroup[] = [
   {
     label: '',
     items: [{ path: '/history', label: 'History', icon: History }],
+  },
+  {
+    label: 'Account',
+    items: [{ path: '/account/security', label: 'Security', icon: ShieldCheck }],
   },
 ];

@@ -43,6 +43,10 @@ const (
 
 	jwtSecretLength = 32
 	tokenIDLength   = 16
+
+	// defaultIssuer is the JWT issuer string. Used by the access-token
+	// generator and the Wave-3 mfa_pending token generator alike.
+	defaultIssuer = "The Stem"
 )
 
 // Claims represents the custom portion of the JWT payload.
@@ -63,6 +67,21 @@ type Manager struct {
 	issuer         string
 	blacklist      *TokenBlacklist
 	randReader     io.Reader
+	// totp holds the optional second-factor configuration. Wave 3 (#85)
+	// introduced TOTP MFA; see totp_state.go for the storage contract.
+	// The secret is in-memory only — operators who restart the binary
+	// must re-enrol via /api/v1/auth/totp/setup.
+	totp totpState
+	// webauthnCredentials holds zero or more registered WebAuthn
+	// credentials (passkeys). Each entry is one device. Wave 3 (#85)
+	// stores these in-memory alongside totp; persistence is deferred to
+	// a future wave that introduces a secret-management layer.
+	webauthnCredentials []WebAuthnStoredCredential
+	// webauthnSessions holds pending registration/login ceremonies
+	// keyed by username. WebAuthn ceremonies are two-step: begin
+	// returns a challenge, finish consumes it. The challenge MUST be
+	// remembered server-side between the two calls.
+	webauthnSessions map[string]*WebAuthnSessionState
 }
 
 // NewManager creates an auth manager that can sign tokens.
@@ -92,14 +111,17 @@ func NewManager(jwtSecret string, sessionTimeout time.Duration, username, passwo
 	}
 
 	return &Manager{
-		mu:             sync.RWMutex{},
-		jwtSecret:      []byte(secret),
-		sessionTimeout: sessionTimeout,
-		username:       username,
-		passwordHash:   []byte(hash),
-		issuer:         "The Stem",
-		blacklist:      NewTokenBlacklist(),
-		randReader:     rand.Reader,
+		mu:                  sync.RWMutex{},
+		jwtSecret:           []byte(secret),
+		sessionTimeout:      sessionTimeout,
+		username:            username,
+		passwordHash:        []byte(hash),
+		issuer:              defaultIssuer,
+		blacklist:           NewTokenBlacklist(),
+		randReader:          rand.Reader,
+		totp:                totpState{secret: "", enabled: false},
+		webauthnCredentials: nil,
+		webauthnSessions:    make(map[string]*WebAuthnSessionState),
 	}, nil
 }
 

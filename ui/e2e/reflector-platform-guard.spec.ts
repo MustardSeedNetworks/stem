@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { mockAuthenticated } from './helpers/auth';
 
 /**
  * Reflector platform guard
@@ -9,24 +10,16 @@ import { expect, test } from '@playwright/test';
  * payload to show a warning banner and disable the Start button.
  *
  * These specs mock the capabilities endpoint so the platform-guard UX
- * is reachable from any CI runner (Linux or otherwise).
+ * is reachable from any CI runner (Linux or otherwise). Uses
+ * mockAuthenticated() to skip the login modal (see helpers/auth.ts).
  */
 
 test.describe('Reflector page platform guard', () => {
   test.beforeEach(async ({ page }) => {
-    // Bypass first-run setup wizard.
-    await page.route('**/api/v1/setup/status', (route) => {
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ needsSetup: false }),
-      });
-    });
+    await mockAuthenticated(page);
   });
 
-  test('shows banner and disables Start button when reflector is unsupported', async ({
-    page,
-  }) => {
+  test('shows banner and disables Start button when reflector is unsupported', async ({ page }) => {
     await page.route('**/api/v1/capabilities', (route) => {
       route.fulfill({
         status: 200,
@@ -39,10 +32,6 @@ test.describe('Reflector page platform guard', () => {
     });
 
     await page.goto('/');
-    await page.getByLabel(/username/i).fill('admin');
-    await page.getByLabel(/password/i).fill('admin');
-    await page.getByRole('button', { name: /sign in/i }).click();
-    await expect(page.getByRole('button', { name: /logout/i })).toBeVisible();
 
     // App auto-redirects "/" to "/reflector"; assert URL just to be sure.
     await expect(page).toHaveURL(/\/reflector(\?|$)/);
@@ -79,17 +68,13 @@ test.describe('Reflector page platform guard', () => {
     });
 
     await page.goto('/');
-    await page.getByLabel(/username/i).fill('admin');
-    await page.getByLabel(/password/i).fill('admin');
-    await page.getByRole('button', { name: /sign in/i }).click();
-    await expect(page.getByRole('button', { name: /logout/i })).toBeVisible();
 
     await expect(page).toHaveURL(/\/reflector(\?|$)/);
 
     // No platform-guard banner.
-    await expect(
-      page.getByText(/Reflector mode is not available on this platform\./i),
-    ).toHaveCount(0);
+    await expect(page.getByText(/Reflector mode is not available on this platform\./i)).toHaveCount(
+      0,
+    );
 
     // Start button has no platform tooltip — it may still be disabled
     // because no interface is selected, but that's a different code

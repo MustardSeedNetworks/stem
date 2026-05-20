@@ -11,6 +11,7 @@ import {
   type LucideIcon,
   Repeat,
   Settings2,
+  ShieldCheck,
   Waves,
   Zap,
 } from 'lucide-react';
@@ -36,6 +37,9 @@ const CertifyPage = lazy(() =>
 );
 const HistoryPage = lazy(() =>
   import('./pages/HistoryPage').then((m) => ({ default: m.HistoryPage })),
+);
+const SecurityPage = lazy(() =>
+  import('./pages/account/security/SecurityPage').then((m) => ({ default: m.SecurityPage })),
 );
 
 export interface PageConfig {
@@ -103,5 +107,13 @@ export const pages: PageConfig[] = [
     description: 'Latest test result snapshot.',
     icon: History,
     component: HistoryPage,
+  },
+  {
+    path: '/account/security',
+    label: 'Security',
+    title: 'Account Security',
+    description: 'Manage two-factor authentication and passkeys.',
+    icon: ShieldCheck,
+    component: SecurityPage,
   },
 ];

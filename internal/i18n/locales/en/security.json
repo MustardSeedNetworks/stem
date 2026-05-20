@@ -1,0 +1,43 @@
+{
+  "title": "Account Security",
+  "subtitle": "Manage two-factor authentication and passkeys.",
+  "mfa": {
+    "heading": "Two-factor authentication",
+    "statusEnabled": "Enabled",
+    "statusDisabled": "Disabled",
+    "description": "Add a second factor to protect your account from password theft.",
+    "enableButton": "Enable authenticator app",
+    "disableButton": "Disable authenticator app",
+    "setup": {
+      "title": "Set up authenticator app",
+      "instructions": "Scan the QR code with your authenticator app, then enter the 6-digit code it shows.",
+      "secretLabel": "Secret (if you can't scan):",
+      "codeLabel": "Verification code",
+      "codePlaceholder": "123456",
+      "confirmButton": "Verify and enable",
+      "cancelButton": "Cancel"
+    },
+    "disable": {
+      "title": "Disable two-factor authentication",
+      "instructions": "Confirm your password and a current code to disable the second factor.",
+      "passwordLabel": "Current password",
+      "codeLabel": "Current code",
+      "confirmButton": "Disable",
+      "cancelButton": "Cancel"
+    }
+  },
+  "passkeys": {
+    "heading": "Passkeys",
+    "description": "Use a hardware key or your device biometrics as a phishing-resistant second factor.",
+    "countLabel": "Registered passkeys: {{count}}",
+    "addButton": "Add a passkey",
+    "addingButton": "Waiting for browser...",
+    "errorTitle": "Passkey registration failed",
+    "successMessage": "Passkey registered."
+  },
+  "login": {
+    "mfaTitle": "Two-factor authentication",
+    "mfaPrompt": "Enter the code from your authenticator app.",
+    "submitButton": "Verify"
+  }
+}

@@ -495,13 +495,37 @@ func (s *Server) setupRoutes() {
 	s.handleAuthRateLimited("/api/v1/test/result", s.handleTestResult, s.apiLimiter)
 
 	// API v1 routes - Authentication (strict rate limiting: 5/min).
-	s.handleRateLimited("/api/v1/auth/login", s.handleAuthLogin, s.authLimiter)
+	// Wave 3 (#85): the login handler now consults MFA state and may
+	// return an mfa_required short-circuit instead of issuing tokens.
+	s.handleRateLimited("/api/v1/auth/login", s.loginWithMFAGate, s.authLimiter)
 	s.handleRateLimited("/api/v1/auth/logout", s.handleAuthLogout, s.apiLimiter)
 	s.handleRateLimited("/api/v1/auth/refresh", s.handleAuthRefresh, s.authLimiter)
 	// /api/v1/auth/csrf-token is the canonical path (Wave 1 #87 task);
 	// /api/v1/auth/csrf is kept as an alias for older clients.
 	s.handleAuthRateLimited("/api/v1/auth/csrf-token", s.handleAuthCSRF, s.apiLimiter)
 	s.handleAuthRateLimited("/api/v1/auth/csrf", s.handleAuthCSRF, s.apiLimiter)
+
+	// API v1 routes - Multi-Factor Authentication (Wave 3 #85).
+	// TOTP enrolment + management endpoints require auth (the user is
+	// modifying their own MFA settings). The login-finisher
+	// /api/v1/auth/login/totp does NOT require auth — it presents an
+	// mfa_token from the password stage as its proof of intent (and
+	// is CSRF-exempt for the same reason as /api/v1/auth/login).
+	s.handleAuthRateLimited("/api/v1/auth/totp/setup", s.handleTOTPSetup, s.authLimiter)
+	s.handleAuthRateLimited("/api/v1/auth/totp/verify", s.handleTOTPVerify, s.authLimiter)
+	s.handleAuthRateLimited("/api/v1/auth/totp/disable", s.handleTOTPDisable, s.authLimiter)
+	s.handleRateLimited("/api/v1/auth/login/totp", s.handleLoginTOTP, s.authLimiter)
+	s.handleAuthRateLimited("/api/v1/auth/mfa/status", s.handleMFAStatus, s.apiLimiter)
+	// WebAuthn (passkey) ceremonies. Register endpoints require auth.
+	// Login endpoints do not — the assertion itself proves identity.
+	s.handleAuthRateLimited("/api/v1/auth/webauthn/register/begin",
+		s.handleWebAuthnRegisterBegin, s.authLimiter)
+	s.handleAuthRateLimited("/api/v1/auth/webauthn/register/finish",
+		s.handleWebAuthnRegisterFinish, s.authLimiter)
+	s.handleRateLimited("/api/v1/auth/webauthn/login/begin",
+		s.handleWebAuthnLoginBegin, s.authLimiter)
+	s.handleRateLimited("/api/v1/auth/webauthn/login/finish",
+		s.handleWebAuthnLoginFinish, s.authLimiter)
 
 	// API v1 routes - Setup (rate limited, no auth - for first-time setup).
 	s.handleRateLimited("/api/v1/setup/status", s.handleSetupStatus, s.apiLimiter)

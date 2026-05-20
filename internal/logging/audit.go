@@ -40,6 +40,21 @@ const (
 	// EventPasswordChange records a password-set or password-change attempt
 	// (success or rejection). See AuditPasswordChange.
 	EventPasswordChange SecurityEventType = "password_change"
+	// EventMFASetup records a TOTP enrolment begin (the secret was
+	// staged but not yet verified). See AuditMFASetup.
+	EventMFASetup SecurityEventType = "mfa_setup"
+	// EventMFAVerify records an MFA verification attempt (success or
+	// failure) during enrolment or login. See AuditMFAAttempt.
+	EventMFAVerify SecurityEventType = "mfa_attempt"
+	// EventMFADisable records that the second factor was switched off.
+	// See AuditMFADisable.
+	EventMFADisable SecurityEventType = "mfa_disable"
+	// EventWebAuthnRegister records a passkey registration ceremony
+	// completion (success or failure). See AuditWebAuthnRegister.
+	EventWebAuthnRegister SecurityEventType = "webauthn_register"
+	// EventWebAuthnLogin records a passkey login ceremony completion
+	// (success or failure). See AuditWebAuthnLogin.
+	EventWebAuthnLogin SecurityEventType = "webauthn_login"
 )
 
 // PasswordChangeResult enumerates outcomes of a password change.
@@ -225,6 +240,21 @@ func LogSecurityEvent(ctx context.Context, event *SecurityEvent) {
 		} else {
 			logger.WarnContext(ctx, "security_audit", attrs...)
 		}
+	case EventMFAVerify, EventWebAuthnLogin, EventWebAuthnRegister:
+		// MFA verification outcomes: success at INFO, failure at WARN
+		// — failures during second-factor verification are higher
+		// signal than password failures (the attacker already passed
+		// the first factor) and merit a louder log line.
+		if event.Result == string(MFAResultSuccess) {
+			logger.InfoContext(ctx, "security_audit", attrs...)
+		} else {
+			logger.WarnContext(ctx, "security_audit", attrs...)
+		}
+	case EventMFASetup, EventMFADisable:
+		// Setup/disable are informational state-change records — they
+		// are gated by step-up authentication in the handlers, so a
+		// successful event here is by construction authorised.
+		logger.InfoContext(ctx, "security_audit", attrs...)
 	default:
 		logger.InfoContext(ctx, "security_audit", attrs...)
 	}

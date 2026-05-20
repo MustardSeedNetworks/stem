@@ -2,7 +2,16 @@
   "auth": {
     "invalidCredentials": "Invalid credentials",
     "unauthorized": "Unauthorized",
-    "sessionExpired": "Session expired. Please log in again."
+    "sessionExpired": "Session expired. Please log in again.",
+    "mfaRequired": "Two-factor authentication is required.",
+    "mfaInvalidCode": "Invalid or missing verification code.",
+    "mfaTokenExpired": "Verification session expired. Please sign in again.",
+    "mfaTokenInvalid": "Invalid verification session.",
+    "mfaAlreadyEnabled": "Two-factor authentication is already enabled.",
+    "mfaNotEnabled": "Two-factor authentication is not enabled.",
+    "webauthnNoCredentials": "No passkeys are registered for this account.",
+    "webauthnCeremonyInvalid": "Passkey verification failed. Please try again.",
+    "webauthnNotConfigured": "WebAuthn has not been configured on this server."
   },
   "network": {
     "connectionFailed": "Connection failed",

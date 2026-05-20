@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { mockAuthenticated } from './helpers/auth';
 
 /**
  * RoleChip backend wiring (issue #74)
@@ -14,18 +15,15 @@ import { expect, test } from '@playwright/test';
  *  - On a 200 OK the chip activates the new role.
  *  - On a 4xx error the inline error tag appears and the role
  *    stays put.
+ *
+ * Uses mockAuthenticated() to skip the login modal — the auth flow is
+ * covered by auth.spec.ts and pounding /api/v1/auth/login from every
+ * spec blows past the 5-per-minute rate budget (see helpers/auth.ts).
  */
 
 test.describe('RoleChip backend wiring', () => {
   test.beforeEach(async ({ page }) => {
-    // Bypass first-run setup so we land on the authenticated app.
-    await page.route('**/api/v1/setup/status', (route) => {
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ needsSetup: false }),
-      });
-    });
+    await mockAuthenticated(page);
 
     // Capabilities probe — both modes supported so the platform
     // guard does not pre-empt our spec.
@@ -63,10 +61,6 @@ test.describe('RoleChip backend wiring', () => {
     });
 
     await page.goto('/');
-    await page.getByLabel(/username/i).fill('admin');
-    await page.getByLabel(/password/i).fill('admin');
-    await page.getByRole('button', { name: /sign in/i }).click();
-    await expect(page.getByRole('button', { name: /logout/i })).toBeVisible();
 
     // The chip should be present in the header.
     const testMasterChip = page.getByTestId('role-chip-test_master');
@@ -104,10 +98,6 @@ test.describe('RoleChip backend wiring', () => {
     });
 
     await page.goto('/');
-    await page.getByLabel(/username/i).fill('admin');
-    await page.getByLabel(/password/i).fill('admin');
-    await page.getByRole('button', { name: /sign in/i }).click();
-    await expect(page.getByRole('button', { name: /logout/i })).toBeVisible();
 
     const reflectorChip = page.getByTestId('role-chip-reflector');
     const testMasterChip = page.getByTestId('role-chip-test_master');

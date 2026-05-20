@@ -22,6 +22,7 @@ import type enErrors from '@locales/en/errors.json';
 import type enModules from '@locales/en/modules.json';
 import type enParams from '@locales/en/params.json';
 import type enRecovery from '@locales/en/recovery.json';
+import type enSecurity from '@locales/en/security.json';
 import type enSettings from '@locales/en/settings.json';
 import type enSetup from '@locales/en/setup.json';
 
@@ -32,6 +33,7 @@ export type CommonTranslations = typeof enCommon;
 export type ErrorsTranslations = typeof enErrors;
 export type ModulesTranslations = typeof enModules;
 export type RecoveryTranslations = typeof enRecovery;
+export type SecurityTranslations = typeof enSecurity;
 export type SettingsTranslations = typeof enSettings;
 export type SetupTranslations = typeof enSetup;
 export type CliTranslations = typeof enCli;
@@ -45,6 +47,7 @@ export interface Translations {
   errors: ErrorsTranslations;
   modules: ModulesTranslations;
   recovery: RecoveryTranslations;
+  security: SecurityTranslations;
   settings: SettingsTranslations;
   setup: SetupTranslations;
   cli: CliTranslations;

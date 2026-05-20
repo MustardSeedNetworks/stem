@@ -1,26 +1,20 @@
 import { expect, test } from '@playwright/test';
+import { mockAuthenticated } from './helpers/auth';
 
 /**
  * Theme Tests
  *
  * Tests for dark/light mode functionality.
  *
- * Mocks /api/v1/setup/status so the first-run setup wizard doesn't
- * intercept clicks on the theme toggle (which lives in the app shell
- * and is visible even on the login page).
+ * Uses mockAuthenticated() to skip the login modal — the theme toggle
+ * lives in the authenticated app shell, not on the login page (see
+ * helpers/auth.ts).
  */
 
 test.describe('Theme', () => {
   test.beforeEach(async ({ page }) => {
-    await page.route('**/api/v1/setup/status', (route) => {
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ needsSetup: false }),
-      });
-    });
+    await mockAuthenticated(page);
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: /sign in/i })).toBeVisible();
   });
 
   test('should have theme toggle button', async ({ page }) => {

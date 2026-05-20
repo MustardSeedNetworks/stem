@@ -1,27 +1,25 @@
 import { expect, test } from '@playwright/test';
+import { mockAuthenticated } from './helpers/auth';
 
 /**
  * Settings drawer — Module view
  *
- * Mocks /api/v1/setup/status so the first-run setup wizard doesn't
- * intercept clicks on the settings drawer toggle.
+ * Uses mockAuthenticated() to skip the login modal — these tests don't
+ * exercise the auth flow itself (see helpers/auth.ts).
+ *
+ * The ViewToggle (Standard | Module) only renders when the stem role is
+ * test_master (#210 — Reflector role doesn't need test selection). The
+ * default persisted role is reflector, so we hydrate the role-storage
+ * key to test_master before navigation.
  */
 
 test.describe('Settings drawer module view', () => {
   test.beforeEach(async ({ page }) => {
-    await page.route('**/api/v1/setup/status', (route) => {
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ needsSetup: false }),
-      });
+    await mockAuthenticated(page);
+    await page.addInitScript(() => {
+      window.localStorage.setItem('stem-role', 'test_master');
     });
-
     await page.goto('/');
-    await page.getByLabel(/username/i).fill('admin');
-    await page.getByLabel(/password/i).fill('admin');
-    await page.getByRole('button', { name: /sign in/i }).click();
-    await expect(page.getByRole('button', { name: /logout/i })).toBeVisible();
   });
 
   test('switches to module view and shows modules', async ({ page }) => {
