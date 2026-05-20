@@ -11,7 +11,11 @@ package auth
 // SetHibpEndpointForTest overrides the in-package hibpEndpoint variable
 // so tests can redirect the HIBP API URL at an httptest.Server. It
 // returns the previous value so the caller can restore it on cleanup.
+// The write is serialised through hibpMu so parallel hibp_test.go
+// cases (t.Parallel + withTestEndpoint) clear the race detector.
 func SetHibpEndpointForTest(url string) string {
+	hibpMu.Lock()
+	defer hibpMu.Unlock()
 	prev := hibpEndpoint
 	hibpEndpoint = url
 	return prev
@@ -19,8 +23,11 @@ func SetHibpEndpointForTest(url string) string {
 
 // SetHibpLoggerForTest overrides the in-package hibpLogger variable so
 // tests can capture soft-failure log calls. It returns the previous
-// logger so the caller can restore it on cleanup.
+// logger so the caller can restore it on cleanup. Serialised through
+// hibpMu for the same reason as SetHibpEndpointForTest.
 func SetHibpLoggerForTest(fn func(string, error)) func(string, error) {
+	hibpMu.Lock()
+	defer hibpMu.Unlock()
 	prev := hibpLogger
 	hibpLogger = fn
 	return prev

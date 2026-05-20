@@ -14,6 +14,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -40,10 +41,19 @@ const (
 	hibpSuccessStatusClass = 2
 )
 
+// hibpMu guards the test seams (hibpEndpoint, hibpLogger) so the
+// race detector stays clean when parallel hibp_test.go cases mutate
+// them via withTestEndpoint / SetHibpLoggerForTest. Production reads
+// the same vars on every CheckPasswordBreached call, so the lock is
+// required to make the test-write / production-read pairing safe.
+//
+//nolint:gochecknoglobals // sentinel for the package-level test seams
+var hibpMu sync.RWMutex
+
 // hibpEndpoint is overridable for tests; production code reads via
 // resolveHIBPEndpoint() which falls back to hibpDefaultEndpoint.
 //
-//nolint:gochecknoglobals // test seam, mutated only in tests
+//nolint:gochecknoglobals // test seam, guarded by hibpMu
 var hibpEndpoint = ""
 
 // hibpClient is a lazily-constructed HTTP client with a short timeout.
@@ -54,6 +64,8 @@ var hibpClient = &http.Client{Timeout: hibpTimeout}
 
 // resolveHIBPEndpoint returns the active HIBP range URL prefix.
 func resolveHIBPEndpoint() string {
+	hibpMu.RLock()
+	defer hibpMu.RUnlock()
 	if hibpEndpoint != "" {
 		return hibpEndpoint
 	}
@@ -170,17 +182,23 @@ func parseHIBPRangeBody(body io.Reader, wantSuffix string) (int, error) {
 // logging into the auth package. By default it is a no-op; the api
 // package registers a slog-backed logger on init.
 //
-//nolint:gochecknoglobals // singleton hook (no init cycle)
+//nolint:gochecknoglobals // singleton hook (no init cycle), guarded by hibpMu
 var hibpLogger = func(_ string, _ error) {}
 
 // SetHIBPLogger lets the api layer inject its slog instance for soft
 // HIBP failures without creating an import cycle into internal/logging.
 func SetHIBPLogger(fn func(msg string, err error)) {
-	if fn != nil {
-		hibpLogger = fn
+	if fn == nil {
+		return
 	}
+	hibpMu.Lock()
+	defer hibpMu.Unlock()
+	hibpLogger = fn
 }
 
 func logHIBPSoftFailure(msg string, err error) {
-	hibpLogger(msg, err)
+	hibpMu.RLock()
+	fn := hibpLogger
+	hibpMu.RUnlock()
+	fn(msg, err)
 }
