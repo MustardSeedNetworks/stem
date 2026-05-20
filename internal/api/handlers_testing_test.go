@@ -64,7 +64,7 @@ func setupTestingTestServer(t testing.TB) *api.Server {
 	t.Setenv("STEM_AUTH_USERNAME", testingTestUsername)
 	t.Setenv("STEM_AUTH_PASSWORD", testingTestPassword)
 
-	s, err := api.NewServer(8080)
+	s, err := api.NewServer(8444)
 	if err != nil {
 		t.Fatalf("NewServer() error: %v", err)
 	}
@@ -107,7 +107,7 @@ func TestHandleTestStop(t *testing.T) {
 		token := getTestingAuthToken(t, s)
 
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/test/stop", nil)
-		req.Header.Set("Authorization", "Bearer "+token)
+		authorizeWithCSRF(t, s, req, token)
 		w := httptest.NewRecorder()
 
 		s.ServeHTTP(w, req)
@@ -209,7 +209,7 @@ func TestHandleTestResult(t *testing.T) {
 		token := getTestingAuthToken(t, s)
 
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/test/result", nil)
-		req.Header.Set("Authorization", "Bearer "+token)
+		authorizeWithCSRF(t, s, req, token)
 		w := httptest.NewRecorder()
 
 		s.ServeHTTP(w, req)
@@ -252,7 +252,7 @@ func TestHandleTestStartWithInterface(t *testing.T) {
 			fmt.Sprintf(`{"testType":"rfc2544_throughput","interface":"%s"}`, testIface),
 		)
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/test/start", body)
-		req.Header.Set("Authorization", "Bearer "+token)
+		authorizeWithCSRF(t, s, req, token)
 		w := httptest.NewRecorder()
 
 		s.ServeHTTP(w, req)
@@ -277,7 +277,7 @@ func TestHandleTestStartWithInterface(t *testing.T) {
 			`{"testType":"rfc2544_throughput","interface":"nonexistent_iface_xyz123"}`,
 		)
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/test/start", body)
-		req.Header.Set("Authorization", "Bearer "+token)
+		authorizeWithCSRF(t, s, req, token)
 		w := httptest.NewRecorder()
 
 		s.ServeHTTP(w, req)
@@ -302,7 +302,7 @@ func TestHandleTestStartValidation(t *testing.T) {
 
 		body := bytes.NewBufferString(`{invalid json}`)
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/test/start", body)
-		req.Header.Set("Authorization", "Bearer "+token)
+		authorizeWithCSRF(t, s, req, token)
 		w := httptest.NewRecorder()
 
 		s.ServeHTTP(w, req)
@@ -317,7 +317,7 @@ func TestHandleTestStartValidation(t *testing.T) {
 
 		body := bytes.NewBufferString(`{"testType":"rfc2544_throughput","unknownField":"value"}`)
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/test/start", body)
-		req.Header.Set("Authorization", "Bearer "+token)
+		authorizeWithCSRF(t, s, req, token)
 		w := httptest.NewRecorder()
 
 		s.ServeHTTP(w, req)
@@ -332,7 +332,7 @@ func TestHandleTestStartValidation(t *testing.T) {
 		token := getTestingAuthToken(t, s)
 
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/test/start", nil)
-		req.Header.Set("Authorization", "Bearer "+token)
+		authorizeWithCSRF(t, s, req, token)
 		w := httptest.NewRecorder()
 
 		s.ServeHTTP(w, req)
@@ -383,7 +383,7 @@ func TestHandleTestStartValidation(t *testing.T) {
 					fmt.Sprintf(`{"testType":"%s","interface":"%s"}`, testType, testIface),
 				)
 				req := httptest.NewRequest(http.MethodPost, "/api/v1/test/start", body)
-				req.Header.Set("Authorization", "Bearer "+token)
+				authorizeWithCSRF(t, s, req, token)
 				w := httptest.NewRecorder()
 
 				s.ServeHTTP(w, req)
@@ -418,7 +418,7 @@ func TestHandleTestStartOptionalParameters(t *testing.T) {
 			fmt.Sprintf(`{"testType":"throughput","interface":"%s","frameSize":1518}`, testIface),
 		)
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/test/start", body)
-		req.Header.Set("Authorization", "Bearer "+token)
+		authorizeWithCSRF(t, s, req, token)
 		w := httptest.NewRecorder()
 
 		s.ServeHTTP(w, req)
@@ -446,7 +446,7 @@ func TestHandleTestStartOptionalParameters(t *testing.T) {
 			fmt.Sprintf(`{"testType":"throughput","interface":"%s","duration":60}`, testIface),
 		)
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/test/start", body)
-		req.Header.Set("Authorization", "Bearer "+token)
+		authorizeWithCSRF(t, s, req, token)
 		w := httptest.NewRecorder()
 
 		s.ServeHTTP(w, req)
@@ -496,7 +496,7 @@ func BenchmarkHandleTestResult(b *testing.B) {
 	b.Setenv("STEM_AUTH_USERNAME", "benchuser")
 	b.Setenv("STEM_AUTH_PASSWORD", "benchpass123")
 
-	s, err := api.NewServer(8080)
+	s, err := api.NewServer(8444)
 	if err != nil {
 		b.Fatalf("NewServer() error: %v", err)
 	}

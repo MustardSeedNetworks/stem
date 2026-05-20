@@ -64,7 +64,7 @@ RUN setcap 'cap_net_raw,cap_net_admin=+ep' /usr/bin/stem
 
 USER stem
 WORKDIR /var/lib/stem
-EXPOSE 8080
+EXPOSE 8444 8043
 
 # OCI labels for traceability.
 ARG VERSION=dev

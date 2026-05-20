@@ -10,7 +10,7 @@
 //
 //	stem reflect --interface eth0       # Reflector mode (Tier 1)
 //	stem test --type throughput         # Test Master mode (Tier 2)
-//	stem web --port 8080                # WebUI
+//	stem web --port 8444                # WebUI (HTTPS by default)
 //	stem tui                            # Terminal UI
 package main
 
@@ -57,6 +57,13 @@ const (
 )
 
 // Default values for test configuration.
+// Subcommand verbs. Hoisted out of the dispatch switch and per-subcommand
+// flag.NewFlagSet calls so the canonical spelling lives in one place.
+const (
+	subReflect = "reflect"
+	subTest    = "test"
+)
+
 const (
 	defaultTestDuration     = 60
 	defaultResolution       = 0.1
@@ -67,7 +74,7 @@ const (
 	defaultFDVThreshold     = 5.0
 	defaultFLRThreshold     = 0.01
 	defaultFrameSize        = 1518
-	defaultWebPort          = 8080
+	defaultWebPort          = 8444
 	defaultLoadLevelStep    = 10.0
 	defaultLoadLevelMax     = 100.0
 	defaultBackToBackBurst  = 10000
@@ -117,38 +124,53 @@ func main() {
 		os.Exit(1)
 	}
 
-	switch os.Args[1] {
-	case "reflect":
-		if cmdErr := reflectCmd(os.Args[2:]); cmdErr != nil {
-			os.Exit(1)
-		}
-	case "test":
-		if cmdErr := testCmd(os.Args[2:]); cmdErr != nil {
-			os.Exit(1)
-		}
-	case "web":
-		webCmd(os.Args[2:])
-	case "tui":
-		if cmdErr := tuiCmd(os.Args[2:]); cmdErr != nil {
-			os.Exit(1)
-		}
-	case "license":
-		licenseCmd(os.Args[2:])
-	case "list-tests":
-		listTestsCmd(os.Args[2:])
-	case "help", "--help", "-h":
-		helpCmd(os.Args[2:])
-	case "tutorial":
-		tutorialCmd(os.Args[2:])
-	case "glossary":
-		glossaryCmd(os.Args[2:])
-	case "version", "--version", "-v":
-		printVersion(os.Stdout)
-	default:
+	if !dispatchSubcommand(os.Args[1], os.Args[2:]) {
 		_, _ = fmt.Fprintf(os.Stdout, "Unknown command: %s\n", os.Args[1])
 		printUsage(os.Stdout)
 		os.Exit(1)
 	}
+}
+
+// dispatchSubcommand routes the CLI verb to its handler. Returns false
+// if the command is unknown so main() can print usage and exit. Pulled
+// out of main() to keep cyclomatic complexity below the project lint
+// threshold as new verbs (install-ca, install-ca --uninstall) are added.
+func dispatchSubcommand(cmd string, args []string) bool {
+	switch cmd {
+	case subReflect:
+		if cmdErr := reflectCmd(args); cmdErr != nil {
+			os.Exit(1)
+		}
+	case subTest:
+		if cmdErr := testCmd(args); cmdErr != nil {
+			os.Exit(1)
+		}
+	case "web":
+		webCmd(args)
+	case "tui":
+		if cmdErr := tuiCmd(args); cmdErr != nil {
+			os.Exit(1)
+		}
+	case "license":
+		licenseCmd(args)
+	case "list-tests":
+		listTestsCmd(args)
+	case "help", "--help", "-h":
+		helpCmd(args)
+	case "tutorial":
+		tutorialCmd(args)
+	case "glossary":
+		glossaryCmd(args)
+	case "version", "--version", "-v":
+		printVersion(os.Stdout)
+	case "install-ca":
+		if cmdErr := installCACmd(args); cmdErr != nil {
+			os.Exit(1)
+		}
+	default:
+		return false
+	}
+	return true
 }
 
 func printVersion(w io.Writer) {
@@ -205,8 +227,10 @@ Y.1564 OPTIONS:
     --flr-threshold    Frame Loss Rate threshold %% (default: 0.01)
 
 WEB OPTIONS:
-    -p, --port         HTTP port (default: 8080)
+    -p, --port         HTTPS port (default: 8444)
     --host             Bind address (default: 0.0.0.0)
+    --http             Serve plaintext HTTP only (opt-out of TLS).
+                       Equivalent to STEM_HTTP_ONLY=1.
 
 LICENSE OPTIONS:
     --activate <key>   Activate with license key
@@ -227,8 +251,11 @@ EXAMPLES:
     # Y.1564 service test
     stem test -i eth0 -t y1564 --cir 100 --eir 50
 
-    # Start WebUI
-    stem web -p 8080
+    # Start WebUI (HTTPS by default on :8444)
+    stem web -p 8444
+
+    # Start WebUI in plaintext HTTP mode (legacy)
+    stem web --http -p 8444
 
     # License management
     stem license --status
@@ -408,7 +435,7 @@ type reflectCmdArgs struct {
 }
 
 func parseReflectFlags(args []string) (*reflectCmdArgs, *flag.FlagSet, error) {
-	fs := flag.NewFlagSet("reflect", flag.ExitOnError)
+	fs := flag.NewFlagSet(subReflect, flag.ExitOnError)
 	iface := fs.String("interface", "", "Network interface")
 	fs.StringVar(iface, "i", "", "Network interface (shorthand)")
 	profile := fs.String("profile", DefaultProfile, "Preset profile")
@@ -596,7 +623,7 @@ type testCmdFlags struct {
 
 // parseTestFlags parses test command flags and returns the parsed values.
 func parseTestFlags(args []string) (*testCmdFlags, error) {
-	fs := flag.NewFlagSet("test", flag.ContinueOnError)
+	fs := flag.NewFlagSet(subTest, flag.ContinueOnError)
 
 	// Basic options.
 	iface := fs.String("interface", "", "Network interface")
@@ -1116,9 +1143,11 @@ func printCSVResults(results []any) {
 
 func webCmd(args []string) {
 	fs := flag.NewFlagSet("web", flag.ExitOnError)
-	port := fs.Int("port", defaultWebPort, "HTTP port (1-65535)")
-	fs.IntVar(port, "p", defaultWebPort, "HTTP port (shorthand)")
+	port := fs.Int("port", defaultWebPort, "HTTPS port (1-65535)")
+	fs.IntVar(port, "p", defaultWebPort, "HTTPS port (shorthand)")
 	host := fs.String("host", "0.0.0.0", "Bind address")
+	httpOnly := fs.Bool("http", false,
+		"Serve plaintext HTTP only (opt-out of TLS). Equivalent to STEM_HTTP_ONLY=1.")
 
 	err := fs.Parse(args)
 	if err != nil {
@@ -1132,8 +1161,21 @@ func webCmd(args []string) {
 		os.Exit(1)
 	}
 
+	// --http on the CLI overrides whatever STEM_HTTP_ONLY says. We propagate
+	// to the env var so api.NewServer (which reads the env directly) sees
+	// the operator's intent without an extra constructor argument.
+	if *httpOnly {
+		_ = os.Setenv("STEM_HTTP_ONLY", "1")
+	}
+	tlsEnabled := os.Getenv("STEM_HTTP_ONLY") != "1"
+
+	scheme := "https"
+	if !tlsEnabled {
+		scheme = "http"
+	}
+
 	_, _ = fmt.Fprintf(os.Stdout, "%s %s - WebUI Server\n", ProductName, version.GetVersion())
-	_, _ = fmt.Fprintf(os.Stdout, "Starting on http://%s:%d\n", *host, *port)
+	_, _ = fmt.Fprintf(os.Stdout, "Starting on %s://%s:%d\n", scheme, *host, *port)
 
 	srv, err := api.NewServer(*port)
 	if err != nil {
@@ -1274,11 +1316,11 @@ func tuiCmd(args []string) error {
 	_, _ = fmt.Fprintf(os.Stdout, "%s %s - Terminal UI\n", ProductName, version.GetVersion())
 
 	switch *mode {
-	case "reflect", "reflector":
+	case subReflect, "reflector":
 		if modeErr := tuiReflectMode(*iface); modeErr != nil {
 			return modeErr
 		}
-	case "test", "testmaster", "":
+	case subTest, "testmaster", "":
 		if modeErr := tuiTestMode(); modeErr != nil {
 			return modeErr
 		}

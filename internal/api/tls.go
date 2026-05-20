@@ -177,17 +177,30 @@ func newSerialNumber() (*big.Int, error) {
 }
 
 func newSelfSignedTemplate(serialNumber *big.Int) x509.Certificate {
+	// The cert is a single-tier self-signed CA: it acts as both the root
+	// (Issuer == Subject) and the leaf the TLS listener serves. This lets
+	// `stem install-ca` install the same file into the OS trust store so
+	// browsers stop showing the self-signed warning. Without IsCA=true and
+	// KeyUsageCertSign, OS trust stores will reject the cert as not
+	// eligible to act as a root.
+	//
+	// Existing certs on disk are not regenerated automatically; they will
+	// continue to work for TLS but cannot be installed as roots until they
+	// are deleted and stem regenerates them.
 	return x509.Certificate{
 		SerialNumber: serialNumber,
 		Subject: pkix.Name{
 			Organization: []string{"The Stem"},
 			CommonName:   "The Stem Self-Signed",
 		},
-		NotBefore:             time.Now(),
-		NotAfter:              time.Now().AddDate(certValidYears, 0, 0),
-		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
+		NotBefore: time.Now(),
+		NotAfter:  time.Now().AddDate(certValidYears, 0, 0),
+		KeyUsage: x509.KeyUsageKeyEncipherment |
+			x509.KeyUsageDigitalSignature |
+			x509.KeyUsageCertSign,
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		BasicConstraintsValid: true,
+		IsCA:                  true,
 		DNSNames:              []string{"localhost", "stem.local"},
 	}
 }

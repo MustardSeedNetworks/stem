@@ -21,7 +21,7 @@ func setupSettingsTestServer(t testing.TB) *api.Server {
 	t.Setenv("STEM_AUTH_USERNAME", "settingstest")
 	t.Setenv("STEM_AUTH_PASSWORD", "settingspass123")
 
-	s, err := api.NewServer(8080)
+	s, err := api.NewServer(8444)
 	if err != nil {
 		t.Fatalf("NewServer() error: %v", err)
 	}
@@ -97,7 +97,7 @@ func TestHandleSettings_PostUpdateInterface(t *testing.T) {
 
 	body := bytes.NewBufferString(fmt.Sprintf(`{"interface":"%s"}`, testIface))
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/settings", body)
-	req.Header.Set("Authorization", "Bearer "+token)
+	authorizeWithCSRF(t, s, req, token)
 	w := httptest.NewRecorder()
 
 	s.ServeHTTP(w, req)
@@ -114,7 +114,7 @@ func TestHandleSettings_PostInvalidInterface(t *testing.T) {
 
 	body := bytes.NewBufferString(`{"interface":"nonexistent_iface_xyz"}`)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/settings", body)
-	req.Header.Set("Authorization", "Bearer "+token)
+	authorizeWithCSRF(t, s, req, token)
 	w := httptest.NewRecorder()
 
 	s.ServeHTTP(w, req)
@@ -133,7 +133,7 @@ func TestHandleSettings_MethodNotAllowed(t *testing.T) {
 	for _, method := range methods {
 		t.Run(method, func(t *testing.T) {
 			req := httptest.NewRequest(method, "/api/v1/settings", nil)
-			req.Header.Set("Authorization", "Bearer "+token)
+			authorizeWithCSRF(t, s, req, token)
 			w := httptest.NewRecorder()
 
 			s.ServeHTTP(w, req)
@@ -184,7 +184,7 @@ func TestHandleMode_PostSwitchMode(t *testing.T) {
 	t.Run("switch to reflector", func(t *testing.T) {
 		body := bytes.NewBufferString(`{"mode":"reflector"}`)
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/mode", body)
-		req.Header.Set("Authorization", "Bearer "+token)
+		authorizeWithCSRF(t, s, req, token)
 		w := httptest.NewRecorder()
 
 		s.ServeHTTP(w, req)
@@ -197,7 +197,7 @@ func TestHandleMode_PostSwitchMode(t *testing.T) {
 	t.Run("switch to test_master", func(t *testing.T) {
 		body := bytes.NewBufferString(`{"mode":"test_master"}`)
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/mode", body)
-		req.Header.Set("Authorization", "Bearer "+token)
+		authorizeWithCSRF(t, s, req, token)
 		w := httptest.NewRecorder()
 
 		s.ServeHTTP(w, req)
@@ -215,7 +215,7 @@ func TestHandleMode_PostInvalidMode(t *testing.T) {
 
 	body := bytes.NewBufferString(`{"mode":"invalid_mode"}`)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/mode", body)
-	req.Header.Set("Authorization", "Bearer "+token)
+	authorizeWithCSRF(t, s, req, token)
 	w := httptest.NewRecorder()
 
 	s.ServeHTTP(w, req)
@@ -234,7 +234,7 @@ func TestHandleMode_MethodNotAllowed(t *testing.T) {
 	for _, method := range methods {
 		t.Run(method, func(t *testing.T) {
 			req := httptest.NewRequest(method, "/api/v1/mode", nil)
-			req.Header.Set("Authorization", "Bearer "+token)
+			authorizeWithCSRF(t, s, req, token)
 			w := httptest.NewRecorder()
 
 			s.ServeHTTP(w, req)

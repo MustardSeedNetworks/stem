@@ -31,7 +31,7 @@ const (
 	defaultInitialBurst      = 1000
 	defaultTrials            = 50
 	defaultBatchSize         = 32
-	defaultWebUIAddress      = ":8080"
+	defaultWebUIAddress      = ":8444"
 
 	// RFC 2889 defaults.
 	defaultRFC2889PortCount     = 2
@@ -258,7 +258,7 @@ type BackToBackConfig struct {
 // WebUIConfig for web interface.
 type WebUIConfig struct {
 	Enabled bool   `yaml:"enabled"`
-	Address string `yaml:"address"` // e.g., ":8080".
+	Address string `yaml:"address"` // e.g., ":8444".
 }
 
 // Y1564SLA defines SLA parameters for Y.1564 testing.

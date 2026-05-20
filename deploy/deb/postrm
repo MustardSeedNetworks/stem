@@ -36,8 +36,8 @@ case "$1" in
 
         # Remove firewall rules if ufw is available
         if command -v ufw >/dev/null 2>&1; then
-            ufw delete allow 8080/tcp >/dev/null 2>&1 || true
-            ufw delete allow 8443/tcp >/dev/null 2>&1 || true
+            ufw delete allow 8444/tcp >/dev/null 2>&1 || true
+            ufw delete allow 8043/tcp >/dev/null 2>&1 || true
         fi
 
         # Remove user

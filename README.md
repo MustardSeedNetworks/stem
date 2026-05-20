@@ -39,7 +39,7 @@ the same install.
 ### Interfaces
 - **CLI** — scriptable `stem <cmd>` for CI integration
 - **TUI** — single-screen Bubbletea dashboard for ad-hoc use
-- **Web UI** — React/TypeScript control plane on port 8080
+- **Web UI** — React/TypeScript control plane on port 8444 (HTTPS by default; 8043 plaintext redirector)
 - **REST + SSE** — `/api/v1/events` streams live test results
 
 ## Quick Start
@@ -60,9 +60,10 @@ sudo ./bin/stem test -t throughput -i eth0 --target 192.0.2.10
 ./bin/stem list-tests
 ./bin/stem list-tests --by-module
 
-# Start the web UI
-sudo ./bin/stem web -p 8080
-# → open http://localhost:8080
+# Start the web UI (HTTPS by default)
+sudo ./bin/stem web -p 8444
+# → open https://localhost:8444 (self-signed cert)
+# → run `sudo ./bin/stem install-ca` once to trust the cert system-wide
 
 # Or the TUI
 sudo ./bin/stem tui

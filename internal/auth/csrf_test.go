@@ -191,7 +191,7 @@ func TestCSRFMiddlewareNonAPIPath(t *testing.T) {
 	}
 }
 
-func TestCSRFMiddlewareAuthEndpoints(t *testing.T) {
+func TestCSRFMiddlewareExemptEndpoints(t *testing.T) {
 	manager := auth.NewCSRFManager(newTestLogger())
 	defer manager.Stop()
 
@@ -201,10 +201,15 @@ func TestCSRFMiddlewareAuthEndpoints(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
+	// Only login is exempted pre-session; harvest/logs/client is exempt
+	// because it runs before auth; SSO callbacks are exempt because the
+	// IdP provides its own proof-of-intent. (See csrfExemptPaths /
+	// csrfExemptPrefixes in csrf.go.)
 	exemptPaths := []string{
 		"/api/v1/auth/login",
-		"/api/v1/auth/refresh",
-		"/api/v1/auth/logout",
+		"/api/v1/harvest/logs/client",
+		"/api/v1/sso/google/callback",
+		"/api/v1/sso/saml/acs",
 	}
 
 	for _, path := range exemptPaths {
@@ -215,10 +220,68 @@ func TestCSRFMiddlewareAuthEndpoints(t *testing.T) {
 		handler.ServeHTTP(w, req)
 
 		if !called {
-			t.Errorf("auth endpoint %s should skip CSRF check", path)
+			t.Errorf("exempt endpoint %s should skip CSRF check", path)
 		}
 		if w.Code != http.StatusOK {
-			t.Errorf("auth endpoint %s should return 200, got %d", path, w.Code)
+			t.Errorf("exempt endpoint %s should return 200, got %d", path, w.Code)
+		}
+	}
+}
+
+// TestCSRFMiddlewareFailClosedPreviouslyExempt asserts that endpoints
+// removed from the exempt list (#87) now require a valid CSRF token on
+// state-changing methods. Failure mode: an authenticated session with
+// an existing CSRF token submits POST/PUT/PATCH/DELETE without the
+// X-Csrf-Token header → 403.
+func TestCSRFMiddlewareFailClosedPreviouslyExempt(t *testing.T) {
+	manager := auth.NewCSRFManager(newTestLogger())
+	defer manager.Stop()
+
+	// Mint a CSRF token for the session so HasToken returns true and the
+	// missing-header path is taken (rather than the "no token ever
+	// minted" path, which used to short-circuit but now also fails
+	// closed via ValidateToken).
+	sessionID := "eyJ1c2VybmFtZSI6ImFkbWluIn0"
+	if _, err := manager.GenerateToken(sessionID); err != nil {
+		t.Fatalf("failed to generate token: %v", err)
+	}
+
+	handler := manager.CSRFMiddleware(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	// These paths used to be exempted (#87). They are now CSRF-protected
+	// like any other state-changing API endpoint.
+	formerlyExemptPaths := []string{
+		"/api/v1/auth/refresh",
+		"/api/v1/auth/logout",
+		"/api/v1/setup/complete",
+	}
+	methods := []string{
+		http.MethodPost,
+		http.MethodPut,
+		http.MethodPatch,
+		http.MethodDelete,
+	}
+
+	for _, path := range formerlyExemptPaths {
+		for _, method := range methods {
+			req := httptest.NewRequest(method, path, nil)
+			req.AddCookie(&http.Cookie{
+				Name:  auth.CookieNameAccess,
+				Value: "header." + sessionID + ".signature",
+			})
+			// Intentionally no X-Csrf-Token header.
+			w := httptest.NewRecorder()
+
+			handler.ServeHTTP(w, req)
+
+			if w.Code != http.StatusForbidden {
+				t.Errorf(
+					"%s %s without CSRF token: expected 403, got %d",
+					method, path, w.Code,
+				)
+			}
 		}
 	}
 }

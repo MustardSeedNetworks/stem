@@ -22,7 +22,7 @@ import (
 func newTestServer(t testing.TB) *Server {
 	t.Helper()
 	t.Setenv("STEM_TEST_MODE", "1") // Use fast bcrypt for tests
-	s, err := NewServer(8080)
+	s, err := NewServer(8444)
 	if err != nil {
 		t.Fatalf("NewServer() error: %v", err)
 	}
@@ -711,7 +711,7 @@ func TestNewServer_MissingCredentials(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "")
 	t.Setenv("STEM_AUTH_PASSWORD", "")
 
-	_, err := NewServer(8080)
+	_, err := NewServer(8444)
 	if err == nil {
 		t.Error("NewServer() should return error with missing credentials")
 	}
@@ -723,7 +723,7 @@ func TestNewServer_PartialCredentials(t *testing.T) {
 		t.Setenv("STEM_AUTH_USERNAME", "user")
 		t.Setenv("STEM_AUTH_PASSWORD", "")
 
-		_, err := NewServer(8080)
+		_, err := NewServer(8444)
 		if err == nil {
 			t.Error("NewServer() should return error with username only")
 		}
@@ -733,7 +733,7 @@ func TestNewServer_PartialCredentials(t *testing.T) {
 		t.Setenv("STEM_AUTH_USERNAME", "")
 		t.Setenv("STEM_AUTH_PASSWORD", "pass123")
 
-		_, err := NewServer(8080)
+		_, err := NewServer(8444)
 		if err == nil {
 			t.Error("NewServer() should return error with password only")
 		}

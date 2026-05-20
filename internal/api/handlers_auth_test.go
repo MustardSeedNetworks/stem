@@ -26,12 +26,33 @@ func setupAuthTestServer(t testing.TB) *api.Server {
 	t.Setenv("STEM_AUTH_USERNAME", authTestUsername)
 	t.Setenv("STEM_AUTH_PASSWORD", authTestPassword)
 
-	s, err := api.NewServer(8080)
+	s, err := api.NewServer(8444)
 	if err != nil {
 		t.Fatalf("NewServer() error: %v", err)
 	}
 	t.Cleanup(func() { _ = s.Shutdown() })
 	return s
+}
+
+// authorizeWithCSRF stamps both the Authorization: Bearer header and the
+// X-Csrf-Token header on a test request that targets a CSRF-protected
+// endpoint. The CSRF token is minted directly against the server's
+// CSRFManager for the session ID embedded in jwt (the JWT payload
+// segment). Tests covering state-changing endpoints under
+// /api/v1/* must use this helper after the Wave 1 fail-closed change
+// (#87) — naked Bearer requests now 403.
+func authorizeWithCSRF(t testing.TB, s *api.Server, req *http.Request, jwt string) {
+	t.Helper()
+	req.Header.Set("Authorization", "Bearer "+jwt)
+	sessionID := api.SessionIDFromJWTForTest(jwt)
+	if sessionID == "" {
+		t.Fatalf("authorizeWithCSRF: empty session ID from JWT")
+	}
+	csrfToken, err := s.CSRFManagerForTest().GetOrCreateToken(sessionID)
+	if err != nil {
+		t.Fatalf("authorizeWithCSRF: GetOrCreateToken: %v", err)
+	}
+	req.Header.Set("X-Csrf-Token", csrfToken)
 }
 
 // getAuthToken performs login and returns both access and refresh tokens.
@@ -72,7 +93,7 @@ func TestHandleAuthLogout(t *testing.T) {
 		token, _ := getAuthToken(t, s)
 
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/logout", nil)
-		req.Header.Set("Authorization", "Bearer "+token)
+		authorizeWithCSRF(t, s, req, token)
 		w := httptest.NewRecorder()
 
 		s.ServeHTTP(w, req)
@@ -138,7 +159,7 @@ func TestHandleAuthLogout(t *testing.T) {
 
 		// Logout.
 		logoutReq := httptest.NewRequest(http.MethodPost, "/api/v1/auth/logout", nil)
-		logoutReq.Header.Set("Authorization", "Bearer "+token)
+		authorizeWithCSRF(t, s, logoutReq, token)
 		logoutW := httptest.NewRecorder()
 		s.ServeHTTP(logoutW, logoutReq)
 
@@ -146,13 +167,16 @@ func TestHandleAuthLogout(t *testing.T) {
 			t.Fatalf("Logout failed: %d", logoutW.Code)
 		}
 
-		// Try to use revoked token.
+		// Try to use revoked token. CSRF token for this session is
+		// still in the map (logout does not revoke CSRF — it revokes
+		// the JWT), so we attach it and expect 401 from the auth layer
+		// downstream of CSRF validation.
 		testReq := httptest.NewRequest(
 			http.MethodPost,
 			"/api/v1/test/start",
 			bytes.NewBufferString(`{"testType":"throughput"}`),
 		)
-		testReq.Header.Set("Authorization", "Bearer "+token)
+		authorizeWithCSRF(t, s, testReq, token)
 		testW := httptest.NewRecorder()
 		s.ServeHTTP(testW, testReq)
 
@@ -342,7 +366,7 @@ func TestHandleAuthCSRF(t *testing.T) {
 		token, _ := getAuthToken(t, s)
 
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/csrf", nil)
-		req.Header.Set("Authorization", "Bearer "+token)
+		authorizeWithCSRF(t, s, req, token)
 		w := httptest.NewRecorder()
 
 		s.ServeHTTP(w, req)
@@ -357,7 +381,7 @@ func TestHandleAuthCSRF(t *testing.T) {
 		token, _ := getAuthToken(t, s)
 
 		req := httptest.NewRequest(http.MethodPut, "/api/v1/auth/csrf", nil)
-		req.Header.Set("Authorization", "Bearer "+token)
+		authorizeWithCSRF(t, s, req, token)
 		w := httptest.NewRecorder()
 
 		s.ServeHTTP(w, req)
@@ -372,7 +396,7 @@ func TestHandleAuthCSRF(t *testing.T) {
 		token, _ := getAuthToken(t, s)
 
 		req := httptest.NewRequest(http.MethodDelete, "/api/v1/auth/csrf", nil)
-		req.Header.Set("Authorization", "Bearer "+token)
+		authorizeWithCSRF(t, s, req, token)
 		w := httptest.NewRecorder()
 
 		s.ServeHTTP(w, req)
@@ -413,6 +437,121 @@ func TestHandleAuthCSRF(t *testing.T) {
 	})
 }
 
+// fetchCSRFToken issues a GET to the canonical Wave 1 endpoint
+// /api/v1/auth/csrf-token and returns the token string from the JSON
+// response body. Fails the test if the call doesn't return 200.
+func fetchCSRFToken(t *testing.T, s *api.Server, jwt string) string {
+	t.Helper()
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/csrf-token", nil)
+	req.Header.Set("Authorization", "Bearer "+jwt)
+	w := httptest.NewRecorder()
+	s.ServeHTTP(w, req)
+	if w.Code != http.StatusOK {
+		t.Fatalf("fetch csrf-token: %d %s", w.Code, w.Body.String())
+	}
+	var resp map[string]string
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("decode csrf-token: %v", err)
+	}
+	return resp["token"]
+}
+
+// TestHandleAuthCSRFToken_Unauthenticated asserts that the canonical
+// Wave 1 endpoint (#87) returns 401 when called without a session.
+func TestHandleAuthCSRFToken_Unauthenticated(t *testing.T) {
+	s := setupAuthTestServer(t)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/csrf-token", nil)
+	w := httptest.NewRecorder()
+	s.ServeHTTP(w, req)
+
+	if w.Code != http.StatusUnauthorized {
+		t.Errorf("Expected 401 without auth, got %d", w.Code)
+	}
+}
+
+// TestHandleAuthCSRFToken_Authenticated asserts that the canonical Wave
+// 1 endpoint (#87) returns a non-empty token for an authenticated
+// session.
+func TestHandleAuthCSRFToken_Authenticated(t *testing.T) {
+	s := setupAuthTestServer(t)
+	token, _ := getAuthToken(t, s)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/csrf-token", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
+	w := httptest.NewRecorder()
+	s.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("Expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+	var resp map[string]any
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	csrfToken, ok := resp["token"].(string)
+	if !ok || csrfToken == "" {
+		t.Errorf("expected non-empty 'token' field, got %v", resp)
+	}
+}
+
+// TestHandleAuthCSRFToken_RepeatedCallsReturnSameToken asserts that the
+// canonical Wave 1 endpoint (#87) returns the same CSRF token across
+// multiple GETs within the same session — the UI is allowed to cache
+// the token and reuse it until next login or expiry.
+func TestHandleAuthCSRFToken_RepeatedCallsReturnSameToken(t *testing.T) {
+	s := setupAuthTestServer(t)
+	token, _ := getAuthToken(t, s)
+
+	first := fetchCSRFToken(t, s, token)
+	second := fetchCSRFToken(t, s, token)
+	if first == "" {
+		t.Fatal("expected non-empty token")
+	}
+	if first != second {
+		t.Errorf(
+			"expected same CSRF token across calls for the same session; got %q then %q",
+			first, second,
+		)
+	}
+}
+
+// TestHandleAuthCSRFToken_LoginRotatesToken asserts that a fresh login
+// revokes the CSRF token bound to whatever session ID the new JWT
+// payload decodes to (#87). The new session must start without a CSRF
+// token; the UI is expected to call /api/v1/auth/csrf-token after
+// logging in.
+func TestHandleAuthCSRFToken_LoginRotatesToken(t *testing.T) {
+	s := setupAuthTestServer(t)
+
+	first, _ := getAuthToken(t, s)
+	_ = fetchCSRFToken(t, s, first)
+
+	firstSessionID := api.SessionIDFromJWTForTest(first)
+	if firstSessionID == "" {
+		t.Fatal("expected non-empty session ID from JWT payload")
+	}
+	if !s.CSRFManagerForTest().HasToken(firstSessionID) {
+		t.Fatal("first session should have a CSRF token after fetch")
+	}
+
+	// Log in a second time. handleAuthLogin revokes the CSRF token for
+	// whichever session ID the new JWT decodes to. We verify the new
+	// session does NOT inherit a pre-existing token.
+	second, _ := getAuthToken(t, s)
+	secondSessionID := api.SessionIDFromJWTForTest(second)
+	if secondSessionID == "" {
+		t.Fatal("expected non-empty session ID from second JWT payload")
+	}
+	if s.CSRFManagerForTest().HasToken(secondSessionID) {
+		t.Errorf(
+			"second session must start without a CSRF token (rotation broken); "+
+				"session ID %q already has one",
+			secondSessionID,
+		)
+	}
+}
+
 // TestAuthRoutesRegistered verifies auth endpoint routes are registered.
 func TestAuthRoutesRegistered(t *testing.T) {
 	s := setupAuthTestServer(t)
@@ -425,6 +564,7 @@ func TestAuthRoutesRegistered(t *testing.T) {
 		{"/api/v1/auth/logout", http.MethodPost},
 		{"/api/v1/auth/refresh", http.MethodPost},
 		{"/api/v1/auth/csrf", http.MethodGet},
+		{"/api/v1/auth/csrf-token", http.MethodGet},
 	}
 
 	for _, route := range routes {
@@ -447,7 +587,7 @@ func BenchmarkHandleAuthCSRF(b *testing.B) {
 	b.Setenv("STEM_AUTH_USERNAME", "benchuser")
 	b.Setenv("STEM_AUTH_PASSWORD", "benchpass123")
 
-	s, err := api.NewServer(8080)
+	s, err := api.NewServer(8444)
 	if err != nil {
 		b.Fatalf("NewServer() error: %v", err)
 	}

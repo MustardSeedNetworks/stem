@@ -145,15 +145,15 @@ export function createMockErrorResponse(status = 500, message = 'Error'): Promis
 // ============================================================
 export function mockWindowLocation(overrides: Partial<Location> = {}): void {
   const defaultLocation = {
-    protocol: 'http:',
-    host: 'localhost:8080',
+    protocol: 'https:',
+    host: 'localhost:8444',
     hostname: 'localhost',
-    port: '8080',
+    port: '8444',
     pathname: '/',
     search: '',
     hash: '',
-    href: 'http://localhost:8080/',
-    origin: 'http://localhost:8080',
+    href: 'https://localhost:8444/',
+    origin: 'https://localhost:8444',
     ...overrides,
   };
 

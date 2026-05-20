@@ -119,7 +119,7 @@ func LoadFile(path string) (*Config, error) {
 // applyDefaults sets default values for unspecified fields.
 func (c *Config) applyDefaults() {
 	if c.WebUI.Port == 0 {
-		c.WebUI.Port = 8080
+		c.WebUI.Port = 8444
 	}
 	if c.SignatureFilter == "" {
 		c.SignatureFilter = filterAll

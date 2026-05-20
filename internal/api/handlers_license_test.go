@@ -19,7 +19,7 @@ func setupLicenseTestServer(t testing.TB) *api.Server {
 	t.Setenv("STEM_AUTH_USERNAME", "licensetest")
 	t.Setenv("STEM_AUTH_PASSWORD", "licensepass123")
 
-	s, err := api.NewServer(8080)
+	s, err := api.NewServer(8444)
 	if err != nil {
 		t.Fatalf("NewServer() error: %v", err)
 	}
@@ -91,7 +91,11 @@ func TestHandleLicense_MethodNotAllowed(t *testing.T) {
 	for _, method := range methods {
 		t.Run(method, func(t *testing.T) {
 			req := httptest.NewRequest(method, "/api/v1/license", nil)
-			req.Header.Set("Authorization", "Bearer "+token)
+			// These are unsafe methods on an authenticated endpoint;
+			// the CSRF middleware would 403 a naked Bearer request
+			// (Wave 1 fail-closed). Provide a valid CSRF token so the
+			// handler-level 405 surfaces as the test expects.
+			authorizeWithCSRF(t, s, req, token)
 			w := httptest.NewRecorder()
 
 			s.ServeHTTP(w, req)
@@ -113,6 +117,12 @@ func TestHandleLicenseActivate_MethodNotAllowed(t *testing.T) {
 		t.Run(method, func(t *testing.T) {
 			req := httptest.NewRequest(method, "/api/v1/license/activate", nil)
 			req.Header.Set("Authorization", "Bearer "+token)
+			// GET is safe (CSRF middleware bypasses); PUT/DELETE on an
+			// authenticated endpoint need a CSRF token to reach the
+			// handler's 405 path.
+			if method != http.MethodGet {
+				authorizeWithCSRF(t, s, req, token)
+			}
 			w := httptest.NewRecorder()
 
 			s.ServeHTTP(w, req)
@@ -131,7 +141,7 @@ func TestHandleLicenseActivate_EmptyKey(t *testing.T) {
 
 	body := bytes.NewBufferString(`{"licenseKey":""}`)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/license/activate", body)
-	req.Header.Set("Authorization", "Bearer "+token)
+	authorizeWithCSRF(t, s, req, token)
 	w := httptest.NewRecorder()
 
 	s.ServeHTTP(w, req)
@@ -159,7 +169,7 @@ func TestHandleLicenseActivate_InvalidKey(t *testing.T) {
 
 	body := bytes.NewBufferString(`{"licenseKey":"INVALID-KEY-FORMAT"}`)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/license/activate", body)
-	req.Header.Set("Authorization", "Bearer "+token)
+	authorizeWithCSRF(t, s, req, token)
 	w := httptest.NewRecorder()
 
 	s.ServeHTTP(w, req)
@@ -212,7 +222,7 @@ func TestHandleLicenseTrial_StartTrial(t *testing.T) {
 	token := getLicenseAuthToken(t, s)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/license/trial", nil)
-	req.Header.Set("Authorization", "Bearer "+token)
+	authorizeWithCSRF(t, s, req, token)
 	w := httptest.NewRecorder()
 
 	s.ServeHTTP(w, req)
@@ -232,7 +242,7 @@ func TestHandleLicenseTrial_MethodNotAllowed(t *testing.T) {
 	for _, method := range methods {
 		t.Run(method, func(t *testing.T) {
 			req := httptest.NewRequest(method, "/api/v1/license/trial", nil)
-			req.Header.Set("Authorization", "Bearer "+token)
+			authorizeWithCSRF(t, s, req, token)
 			w := httptest.NewRecorder()
 
 			s.ServeHTTP(w, req)

@@ -92,9 +92,9 @@ fi
 # Configure firewall (ufw) if available and active
 if command -v ufw >/dev/null 2>&1; then
     if ufw status 2>/dev/null | grep -q "Status: active"; then
-        ufw allow 8080/tcp comment 'Stem WebUI HTTP' >/dev/null 2>&1 || true
-        ufw allow 8443/tcp comment 'Stem WebUI HTTPS' >/dev/null 2>&1 || true
-        echo "Firewall configured for Stem service (ports 8080, 8443)"
+        ufw allow 8444/tcp comment 'Stem WebUI HTTPS' >/dev/null 2>&1 || true
+        ufw allow 8043/tcp comment 'Stem HTTP→HTTPS redirector' >/dev/null 2>&1 || true
+        echo "Firewall configured for Stem service (ports 8444, 8043)"
     fi
 fi
 
@@ -118,7 +118,8 @@ echo "=============================================="
 echo "  The Stem installed successfully!"
 echo "=============================================="
 echo ""
-echo "Web interface: http://localhost:8080"
+echo "Web interface: https://localhost:8444 (self-signed certificate)"
+echo "  Trust the cert: sudo stem install-ca"
 echo ""
 echo "Quick start:"
 echo "  1. Edit /etc/stem/environment to set credentials"

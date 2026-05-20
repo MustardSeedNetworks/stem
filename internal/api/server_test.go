@@ -37,7 +37,7 @@ func setupTestServer(t testing.TB) *api.Server {
 	t.Setenv("STEM_AUTH_USERNAME", testUsername)
 	t.Setenv("STEM_AUTH_PASSWORD", testPassword)
 
-	s, err := api.NewServer(8080)
+	s, err := api.NewServer(8444)
 	if err != nil {
 		t.Fatalf("NewServer() error: %v", err)
 	}
@@ -184,7 +184,7 @@ func TestHandleTestStartUnknownType(t *testing.T) {
 	body := strings.NewReader(`{"testType": "nonexistent_test"}`)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/test/start", body)
 	token := loginToken(t, s)
-	req.Header.Set("Authorization", "Bearer "+token)
+	authorizeWithCSRF(t, s, req, token)
 	w := httptest.NewRecorder()
 
 	s.ServeHTTP(w, req)

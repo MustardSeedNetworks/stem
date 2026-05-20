@@ -10,12 +10,12 @@ esac
 
 if [ "$is_purge" -eq 1 ]; then
     if command -v ufw >/dev/null 2>&1; then
-        ufw delete allow 8080/tcp >/dev/null 2>&1 || true
-        ufw delete allow 8443/tcp >/dev/null 2>&1 || true
+        ufw delete allow 8444/tcp >/dev/null 2>&1 || true
+        ufw delete allow 8043/tcp >/dev/null 2>&1 || true
     fi
     if command -v firewall-cmd >/dev/null 2>&1 && systemctl is-active --quiet firewalld 2>/dev/null; then
-        firewall-cmd --permanent --remove-port=8080/tcp >/dev/null 2>&1 || true
-        firewall-cmd --permanent --remove-port=8443/tcp >/dev/null 2>&1 || true
+        firewall-cmd --permanent --remove-port=8444/tcp >/dev/null 2>&1 || true
+        firewall-cmd --permanent --remove-port=8043/tcp >/dev/null 2>&1 || true
         firewall-cmd --reload >/dev/null 2>&1 || true
     fi
 
