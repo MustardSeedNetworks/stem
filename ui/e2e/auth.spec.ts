@@ -1,5 +1,10 @@
 import { expect, test } from '@playwright/test';
 
+// Opt out of the suite-wide authenticated storageState (from
+// e2e/global-setup.ts) so each test starts from a clean
+// unauthenticated context — this spec exercises the real form.
+test.use({ storageState: { cookies: [], origins: [] } });
+
 test.describe('Authentication', () => {
   test.beforeEach(async ({ page }) => {
     await page.route('**/api/v1/setup/status', (route) => {

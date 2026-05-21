@@ -7,7 +7,12 @@ import { expect, test } from '@playwright/test';
  * - Wizard display
  * - Step navigation
  * - Form validation
+ *
+ * Opts out of the suite-wide authenticated storageState so the wizard
+ * detection runs against a clean unauthenticated context.
  */
+
+test.use({ storageState: { cookies: [], origins: [] } });
 
 test.describe('Setup Wizard', () => {
   test('should show setup wizard on first visit', async ({ page }) => {

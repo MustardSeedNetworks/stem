@@ -3,20 +3,25 @@ import type { Page } from '@playwright/test';
 /**
  * Shared E2E auth helpers.
  *
- * Wave 2 (#77) tightened the auth rate limiter to 5 login attempts per
- * minute per IP (internal/api/ratelimit.go: AuthRateLimit = 5). When every
- * spec drives the real /api/v1/auth/login in beforeEach, the suite blows
- * past that budget after a handful of tests and subsequent specs land on a
- * 429 — the login modal stays mounted and intercepts every shell click.
+ * The auth rate limiter in internal/api/ratelimit.go caps real logins
+ * at 5/minute per IP. Pre-globalSetup we worked around this by having
+ * each spec hydrate auth state locally via mockAuthenticated(); now
+ * we do ONE real login in e2e/global-setup.ts and reuse the resulting
+ * cookies via playwright.config.ts use.storageState. Specs that
+ * exercise the auth flow itself opt back into a clean context with
  *
- * Tests that don't exercise the login flow itself should call
- * mockAuthenticated() instead of pounding the real endpoint.
+ *   test.use({ storageState: { cookies: [], origins: [] } });
+ *
+ * Standardized across the seed/stem/niac trio (see seed#1054).
  */
 
 export const TEST_CREDENTIALS = {
   username: 'admin',
   password: 'admin',
 } as const;
+
+/** Path (relative to ui/) where global-setup persists the storage state. */
+export const AUTH_STORAGE_STATE = 'playwright/.auth/user.json';
 
 const AUTH_FLAG_KEY = 'stem-authenticated';
 
