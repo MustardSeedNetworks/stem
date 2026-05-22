@@ -3,14 +3,16 @@ import type { Page } from '@playwright/test';
 /**
  * Shared E2E auth helpers.
  *
- * The auth rate limiter in internal/api/ratelimit.go caps real logins
- * at 5/minute per IP. Pre-globalSetup we worked around this by having
- * each spec hydrate auth state locally via mockAuthenticated(); now
- * we do ONE real login in e2e/global-setup.ts and reuse the resulting
- * cookies via playwright.config.ts use.storageState. Specs that
- * exercise the auth flow itself opt back into a clean context with
+ * Auth state for the suite is restored from a real login performed
+ * once in e2e/global-setup.ts (see #238) and reused via
+ * playwright.config.ts use.storageState. Specs exercising the auth
+ * flow itself opt back into a clean context with:
  *
  *   test.use({ storageState: { cookies: [], origins: [] } });
+ *
+ * The only remaining per-spec helper is skipSetupWizard(), which
+ * stubs the /api/v1/setup/status probe so the first-run wizard
+ * doesn't fire on the synthetic test DB.
  *
  * Standardized across the seed/stem/niac trio (see seed#1054).
  */
@@ -23,17 +25,16 @@ export const TEST_CREDENTIALS = {
 /** Path (relative to ui/) where global-setup persists the storage state. */
 export const AUTH_STORAGE_STATE = 'playwright/.auth/user.json';
 
-const AUTH_FLAG_KEY = 'stem-authenticated';
-
 /**
- * Skip the login modal for tests whose subject is anything other than the
- * authentication flow itself. Mocks the setup-status probe so the first-run
- * wizard doesn't fire, and pre-sets the same localStorage flag the App reads
- * on mount to hydrate isAuthenticated=true.
+ * Stub the /api/v1/setup/status probe so the first-run wizard
+ * doesn't fire. Must be called before page.goto so the route
+ * matcher is attached when the app's initial fetch lands.
  *
- * Must be called before page.goto so the init script runs at the right time.
+ * The legacy localStorage flag (`stem-authenticated`) used to be
+ * set here too, but storageState now provides the real auth cookie
+ * so the flag is no longer load-bearing.
  */
-export async function mockAuthenticated(page: Page): Promise<void> {
+export async function skipSetupWizard(page: Page): Promise<void> {
   await page.route('**/api/v1/setup/status', (route) => {
     route.fulfill({
       status: 200,
@@ -41,15 +42,13 @@ export async function mockAuthenticated(page: Page): Promise<void> {
       body: JSON.stringify({ needsSetup: false }),
     });
   });
-  await page.addInitScript((key: string) => {
-    window.localStorage.setItem(key, 'true');
-  }, AUTH_FLAG_KEY);
 }
 
 /**
  * Drive the real login form. Reserve for specs that genuinely test the
  * auth flow end-to-end (auth.spec.ts). Other specs should use
- * mockAuthenticated() to avoid the rate-limit cliff.
+ * skipSetupWizard() + the global storageState to avoid the
+ * rate-limit cliff.
  */
 export async function loginViaUI(
   page: Page,

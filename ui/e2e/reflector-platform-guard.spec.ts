@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { mockAuthenticated } from './helpers/auth';
+import { skipSetupWizard } from './helpers/auth';
 
 /**
  * Reflector platform guard
@@ -11,12 +11,12 @@ import { mockAuthenticated } from './helpers/auth';
  *
  * These specs mock the capabilities endpoint so the platform-guard UX
  * is reachable from any CI runner (Linux or otherwise). Uses
- * mockAuthenticated() to skip the login modal (see helpers/auth.ts).
+ * skipSetupWizard() to skip the login modal (see helpers/auth.ts).
  */
 
 test.describe('Reflector page platform guard', () => {
   test.beforeEach(async ({ page }) => {
-    await mockAuthenticated(page);
+    await skipSetupWizard(page);
   });
 
   test('shows banner and disables Start button when reflector is unsupported', async ({ page }) => {

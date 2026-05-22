@@ -1,10 +1,10 @@
 import { expect, test } from '@playwright/test';
-import { mockAuthenticated } from './helpers/auth';
+import { skipSetupWizard } from './helpers/auth';
 
 /**
  * Settings drawer — Module view
  *
- * Uses mockAuthenticated() to skip the login modal — these tests don't
+ * Uses skipSetupWizard() to skip the login modal — these tests don't
  * exercise the auth flow itself (see helpers/auth.ts).
  *
  * The ViewToggle (Standard | Module) only renders when the stem role is
@@ -15,7 +15,7 @@ import { mockAuthenticated } from './helpers/auth';
 
 test.describe('Settings drawer module view', () => {
   test.beforeEach(async ({ page }) => {
-    await mockAuthenticated(page);
+    await skipSetupWizard(page);
     await page.addInitScript(() => {
       window.localStorage.setItem('stem-role', 'test_master');
     });

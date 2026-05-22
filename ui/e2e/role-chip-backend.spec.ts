@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { mockAuthenticated } from './helpers/auth';
+import { skipSetupWizard } from './helpers/auth';
 
 /**
  * RoleChip backend wiring (issue #74)
@@ -16,14 +16,14 @@ import { mockAuthenticated } from './helpers/auth';
  *  - On a 4xx error the inline error tag appears and the role
  *    stays put.
  *
- * Uses mockAuthenticated() to skip the login modal — the auth flow is
+ * Uses skipSetupWizard() to skip the login modal — the auth flow is
  * covered by auth.spec.ts and pounding /api/v1/auth/login from every
  * spec blows past the 5-per-minute rate budget (see helpers/auth.ts).
  */
 
 test.describe('RoleChip backend wiring', () => {
   test.beforeEach(async ({ page }) => {
-    await mockAuthenticated(page);
+    await skipSetupWizard(page);
 
     // Capabilities probe — both modes supported so the platform
     // guard does not pre-empt our spec.

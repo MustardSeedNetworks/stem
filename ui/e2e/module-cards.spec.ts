@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { mockAuthenticated } from './helpers/auth';
+import { skipSetupWizard } from './helpers/auth';
 
 /**
  * Module Pages Tests
@@ -10,7 +10,7 @@ import { mockAuthenticated } from './helpers/auth';
  * from "dashboard cards" to dedicated routes under /tests/*; the sidebar
  * has Test group nav links pointing at each.
  *
- * Uses mockAuthenticated() to skip the login modal — these tests don't
+ * Uses skipSetupWizard() to skip the login modal — these tests don't
  * exercise the auth flow itself (see helpers/auth.ts).
  */
 
@@ -18,7 +18,7 @@ const MODULE_NAMES = ['benchmark', 'servicetest', 'trafficgen', 'measure', 'cert
 
 test.describe('Module Cards', () => {
   test.beforeEach(async ({ page }) => {
-    await mockAuthenticated(page);
+    await skipSetupWizard(page);
   });
 
   test('should render each module page with its name visible', async ({ page }) => {

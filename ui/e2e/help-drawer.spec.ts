@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { mockAuthenticated } from './helpers/auth';
+import { skipSetupWizard } from './helpers/auth';
 
 /**
  * Help Drawer Tests
@@ -8,13 +8,13 @@ import { mockAuthenticated } from './helpers/auth';
  * - Open/close functionality
  * - Help content display
  *
- * Uses mockAuthenticated() to skip the login modal — these tests don't
+ * Uses skipSetupWizard() to skip the login modal — these tests don't
  * exercise the auth flow itself (see helpers/auth.ts).
  */
 
 test.describe('Help Drawer', () => {
   test.beforeEach(async ({ page }) => {
-    await mockAuthenticated(page);
+    await skipSetupWizard(page);
     await page.goto('/');
   });
 

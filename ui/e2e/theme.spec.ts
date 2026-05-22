@@ -1,19 +1,19 @@
 import { expect, test } from '@playwright/test';
-import { mockAuthenticated } from './helpers/auth';
+import { skipSetupWizard } from './helpers/auth';
 
 /**
  * Theme Tests
  *
  * Tests for dark/light mode functionality.
  *
- * Uses mockAuthenticated() to skip the login modal — the theme toggle
+ * Uses skipSetupWizard() to skip the login modal — the theme toggle
  * lives in the authenticated app shell, not on the login page (see
  * helpers/auth.ts).
  */
 
 test.describe('Theme', () => {
   test.beforeEach(async ({ page }) => {
-    await mockAuthenticated(page);
+    await skipSetupWizard(page);
     await page.goto('/');
   });
 

@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { mockAuthenticated } from './helpers/auth';
+import { skipSetupWizard } from './helpers/auth';
 
 /**
  * Dashboard Tests
@@ -10,14 +10,14 @@ import { mockAuthenticated } from './helpers/auth';
  * - Connection status
  * - Test controls
  *
- * Uses mockAuthenticated() to skip the login modal — these tests don't
+ * Uses skipSetupWizard() to skip the login modal — these tests don't
  * exercise the auth flow itself and shouldn't burn the suite-wide
  * 5-per-minute auth rate budget (see helpers/auth.ts for the why).
  */
 
 test.describe('Dashboard', () => {
   test.beforeEach(async ({ page }) => {
-    await mockAuthenticated(page);
+    await skipSetupWizard(page);
     await page.goto('/');
   });
 
