@@ -15,6 +15,7 @@ import { twMerge } from 'tailwind-merge';
  *
  * Token modules:
  *  - themeSpacing.ts    — margin / padding / gap / stack tokens
+ *  - themeTypography.ts — heading / body / size / weight / family / leading
  *  - themeComponents.ts — button, input, card, badge, alert, modal variants
  *  - themeLayout.ts     — icon, radius, border, layout patterns
  *
@@ -41,6 +42,7 @@ export { status } from './themeColors';
 export { alert, badge, button, card, input, modal } from './themeComponents';
 export { border, icon, layout, radius } from './themeLayout';
 export { spacing } from './themeSpacing';
+export { typography } from './themeTypography';
 
 /**
  * Combine class names with Tailwind class conflict resolution.
