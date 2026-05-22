@@ -118,3 +118,4 @@ yarn-error.log*
 # Build output
 dist/
 *.coverage.out
+ui/storybook-static/

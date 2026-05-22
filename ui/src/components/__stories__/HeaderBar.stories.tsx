@@ -1,8 +1,8 @@
 import type { PartialStoryFn } from '@storybook/csf';
 import type { ReactRenderer } from '@storybook/react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { fn } from '@storybook/test';
 import type { ReactElement } from 'react';
+import { fn } from 'storybook/test';
 import { HeaderBar } from '../HeaderBar';
 
 const meta: Meta<typeof HeaderBar> = {

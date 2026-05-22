@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { fn } from '@storybook/test';
 import type { ComponentProps, ReactElement } from 'react';
+import { fn } from 'storybook/test';
 import type { ModuleConfig, ModuleStatus, ModuleTestResults } from '../ModuleCard';
 import { ModuleCard } from '../ModuleCard';
 
