@@ -88,10 +88,14 @@
      Accent: Mustard Gold - the "mustard seed" highlight
      ========================================================================== */
 
-  /* Brand Colors */
-  --color-brand-primary: #2d7a3e; /* Stem Green - primary actions, links */
-  --color-brand-accent: #4caf50; /* Lighter Stem Green - hover states */
-  --color-brand-gold: #d4a017; /* Mustard Gold - special highlights, premium features */
+  /* Brand Colors — constant across light/dark (canonical 2026-05-22).
+   * Stem product anchor is stem-500 (Material blue) — replaces pre-audit
+   * Seed-green primary which had Stem visually identifying as a green
+   * product. Stem is a performance-testing tool; blue is the universal
+   * test/measurement language (Spirent, Viavi, Keysight, Fluke). */
+  --color-brand-primary: #1976d2; /* Stem anchor (stem-500) — buttons, focus, glows */
+  --color-brand-accent: #64b5f6; /* Lighter sibling (stem-300) — hover states */
+  --color-brand-gold: #d4a017; /* Mustard cross-brand accent (mustard-500) */
 
   /* Surface Colors - Botanical-earth: warm cream palette (canonical 2026-05-22) */
   --color-surface-base: #fbfaf5; /* Warm cream - page background */
@@ -104,7 +108,7 @@
   --color-text-primary: #1a2520; /* Deep botanical - main text */
   --color-text-secondary: #4a5650; /* Muted botanical - secondary text */
   --color-text-muted: #6b766f; /* Subtle botanical - tertiary text */
-  --color-text-accent: #166534; /* Green 800 - links (Phase 5 retargets to Stem blue) */
+  --color-text-accent: #0d5fb0; /* Stem-600 (canonical) — links on light surfaces (AA) */
   --color-text-inverse: #ffffff; /* Pure White - text on colored backgrounds */
 
   /* Status Colors - canonical anchors, constant across modes (2026-05-22) */
@@ -135,10 +139,10 @@
      Uses NEUTRAL dark colors (not blue-tinted slate).
      ========================================================================== */
 
-  /* Brand Colors - Lightened for dark backgrounds */
-  --color-brand-primary: #81c784; /* Lighter Stem Green */
-  --color-brand-accent: #a5d6a7; /* Even Lighter Stem Green */
-  --color-brand-gold: #fbbf24; /* Lighter Mustard Gold */
+  /* Brand Colors — constant across modes (no .dark override).
+   * Lightening previously applied here violated the brand-constant rule
+   * (canonical 2026-05-22). Foreground for AA on dark surfaces is
+   * provided via text-accent below. */
 
   /* Surface Colors - Botanical-earth: deep green-black palette */
   --color-surface-base: #0e1612; /* Deep botanical - page background */
@@ -151,7 +155,7 @@
   --color-text-primary: #e8eee9; /* Botanical white - main text */
   --color-text-secondary: #a3b1a7; /* Muted botanical - secondary text */
   --color-text-muted: #9aa297; /* Subtle botanical - tertiary text (AA vs surface) */
-  --color-text-accent: #81c784; /* Lighter Stem Green - links (Phase 5 retargets) */
+  --color-text-accent: #64b5f6; /* Stem-300 (canonical) — links on dark surfaces (AA) */
   --color-text-inverse: #1a2520; /* Card botanical - text on colored backgrounds */
 
   /* Status Colors - canonical anchors (same as light, constant by design) */
