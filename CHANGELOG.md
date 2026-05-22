@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.16.0](https://github.com/krisarmstrong/stem/compare/v0.15.0...v0.16.0) (2026-05-22)
+
+
+### Features
+
+* **stories:** Primitive Storybook coverage + biome pin (Wave 5 / [#236](https://github.com/krisarmstrong/stem/issues/236)) ([#241](https://github.com/krisarmstrong/stem/issues/241)) ([b26dc80](https://github.com/krisarmstrong/stem/commit/b26dc804f04768ca20d85a5515d5f79d971fd308))
+* **ui:** expand UI primitive barrel exports (Wave 5 / [#236](https://github.com/krisarmstrong/stem/issues/236)) ([#240](https://github.com/krisarmstrong/stem/issues/240)) ([798772b](https://github.com/krisarmstrong/stem/commit/798772b96fa9c2d954d1eac2982070d2f4123df1))
+
 ## [0.15.0](https://github.com/krisarmstrong/stem/compare/v0.14.0...v0.15.0) (2026-05-20)
 
 
