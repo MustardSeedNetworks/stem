@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.17.0](https://github.com/krisarmstrong/stem/compare/v0.16.0...v0.17.0) (2026-05-22)
+
+
+### Features
+
+* **theme:** add themeTypography barrel module (Phase 3) ([0f69005](https://github.com/krisarmstrong/stem/commit/0f690053c698696fe7bfc860b4b7690c4fcf5c1f))
+* **theme:** adopt botanical-earth surface palette (Phase 4) ([d82ae9d](https://github.com/krisarmstrong/stem/commit/d82ae9d29a1f28b8d56dac4fc38746f9fae43549))
+* **theme:** Apply 2026-05-22 brand audit — Stem becomes blue ([24576de](https://github.com/krisarmstrong/stem/commit/24576de60478f062cd23430bfe21c18848d3ec91))
+* **theme:** fix button contrast against constant brand anchor (Phase 7) ([901eb9b](https://github.com/krisarmstrong/stem/commit/901eb9b04bb4797ddf9c96771102ace018b0505b))
+* **theme:** identity shift — Stem becomes blue (Phase 5) ([0475681](https://github.com/krisarmstrong/stem/commit/04756815530f0854c8a580003ce06c7ab33ac28a))
+* **theme:** self-host Inter + JetBrains Mono via [@fontsource-variable](https://github.com/fontsource-variable) (Phase 2) ([78459f0](https://github.com/krisarmstrong/stem/commit/78459f0e1eb58b146c4fb284dc66f23e246eb562))
+* **theme:** swap status palette to canonical brand-tied anchors (Phase 1) ([40e298c](https://github.com/krisarmstrong/stem/commit/40e298c63daa676d2c3d8b66b070d6e0dd8c9d48))
+
+
+### Bug Fixes
+
+* **deps:** bump golang.org/x/net to v0.55.0 (GO-2026-5026) ([855f165](https://github.com/krisarmstrong/stem/commit/855f1659df1b4ade02bde6b1678de9705070db32))
+* **deps:** Bump golang.org/x/net to v0.55.0 (GO-2026-5026) ([4011ac4](https://github.com/krisarmstrong/stem/commit/4011ac41a5598ce1268636d508ac224305c0e52d))
+* **vite:** stop inlining font assets as data: URLs (CSP fix) ([2f3099f](https://github.com/krisarmstrong/stem/commit/2f3099fef8ed508bfc1fe1651a31aafa639d90c4))
+* **vite:** Stop inlining font assets as data: URLs (CSP fix) ([96b4b8a](https://github.com/krisarmstrong/stem/commit/96b4b8a812dcaacb79907df73cc017755949e0c2))
+
 ## [0.16.0](https://github.com/krisarmstrong/stem/compare/v0.15.0...v0.16.0) (2026-05-22)
 
 
