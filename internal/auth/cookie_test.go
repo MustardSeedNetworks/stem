@@ -12,35 +12,13 @@ import (
 	"github.com/krisarmstrong/stem/internal/auth"
 )
 
-func TestDefaultCookieConfig_Secure(t *testing.T) {
+func TestDefaultCookieConfig(t *testing.T) {
 	t.Parallel()
 
-	config := auth.DefaultCookieConfig(true)
+	config := auth.DefaultCookieConfig()
 
-	if !config.Secure {
-		t.Error("Secure should be true when passed true")
-	}
-	if config.SameSite != http.SameSiteStrictMode {
-		t.Errorf("SameSite = %v, want SameSiteStrictMode", config.SameSite)
-	}
 	if config.Domain != "" {
 		t.Errorf("Domain = %q, want empty string", config.Domain)
-	}
-	if config.Path != "/" {
-		t.Errorf("Path = %q, want /", config.Path)
-	}
-}
-
-func TestDefaultCookieConfig_Insecure(t *testing.T) {
-	t.Parallel()
-
-	config := auth.DefaultCookieConfig(false)
-
-	if config.Secure {
-		t.Error("Secure should be false when passed false")
-	}
-	if config.SameSite != http.SameSiteStrictMode {
-		t.Errorf("SameSite = %v, want SameSiteStrictMode", config.SameSite)
 	}
 	if config.Path != "/" {
 		t.Errorf("Path = %q, want /", config.Path)
@@ -52,10 +30,8 @@ func TestSetAccessTokenCookie(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	config := auth.CookieConfig{
-		Secure:   true,
-		SameSite: http.SameSiteStrictMode,
-		Domain:   "example.com",
-		Path:     "/api",
+		Domain: "example.com",
+		Path:   "/api",
 	}
 	duration := 15 * time.Minute
 	token := "test-access-token"
@@ -102,10 +78,8 @@ func TestSetRefreshTokenCookie(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	config := auth.CookieConfig{
-		Secure:   true,
-		SameSite: http.SameSiteLaxMode,
-		Domain:   "",
-		Path:     "/",
+		Domain: "",
+		Path:   "/",
 	}
 	duration := 7 * 24 * time.Hour
 	token := "test-refresh-token"
@@ -133,8 +107,8 @@ func TestSetRefreshTokenCookie(t *testing.T) {
 	if !cookie.HttpOnly {
 		t.Error("cookie should be HttpOnly")
 	}
-	if cookie.SameSite != http.SameSiteLaxMode {
-		t.Errorf("cookie SameSite = %v, want SameSiteLaxMode", cookie.SameSite)
+	if cookie.SameSite != http.SameSiteStrictMode {
+		t.Errorf("cookie SameSite = %v, want SameSiteStrictMode (hardcoded)", cookie.SameSite)
 	}
 	if cookie.MaxAge != int(duration.Seconds()) {
 		t.Errorf("cookie MaxAge = %d, want %d", cookie.MaxAge, int(duration.Seconds()))
@@ -146,10 +120,8 @@ func TestClearAuthCookies(t *testing.T) {
 
 	w := httptest.NewRecorder()
 	config := auth.CookieConfig{
-		Secure:   true,
-		SameSite: http.SameSiteStrictMode,
-		Domain:   "",
-		Path:     "/",
+		Domain: "",
+		Path:   "/",
 	}
 
 	auth.ClearAuthCookies(w, config)
@@ -413,7 +385,7 @@ func TestSetAccessTokenCookie_DefaultConfig(t *testing.T) {
 	t.Parallel()
 
 	w := httptest.NewRecorder()
-	config := auth.DefaultCookieConfig(false)
+	config := auth.DefaultCookieConfig()
 	duration := 5 * time.Minute
 	token := "my-access-token"
 
@@ -428,8 +400,14 @@ func TestSetAccessTokenCookie_DefaultConfig(t *testing.T) {
 	}
 
 	cookie := cookies[0]
-	if cookie.Secure {
-		t.Error("cookie should not be secure when DefaultCookieConfig(false)")
+	if !cookie.Secure {
+		t.Error("cookie must be Secure (HTTPS-only, hardcoded)")
+	}
+	if !cookie.HttpOnly {
+		t.Error("cookie must be HttpOnly")
+	}
+	if cookie.SameSite != http.SameSiteStrictMode {
+		t.Errorf("cookie SameSite = %v, want SameSiteStrictMode (hardcoded)", cookie.SameSite)
 	}
 	if cookie.Path != "/" {
 		t.Errorf("cookie path = %q, want /", cookie.Path)

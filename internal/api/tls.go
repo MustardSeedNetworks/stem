@@ -32,6 +32,10 @@ const (
 
 	// acmeReadHeaderTimeoutSec is the timeout for reading ACME challenge request headers.
 	acmeReadHeaderTimeoutSec = 10
+
+	// privateKeyFileMode is the umask-restricted mode for new TLS key files
+	// (owner read/write only, no group/other access).
+	privateKeyFileMode os.FileMode = 0o600
 )
 
 // ACMEConfig contains ACME/Let's Encrypt certificate settings.
@@ -233,7 +237,7 @@ func writeCertificate(root *os.Root, certFile string, certDER []byte) error {
 }
 
 func writePrivateKey(root *os.Root, keyFile string, privateKey *rsa.PrivateKey) error {
-	keyOut, err := root.OpenFile(keyFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600)
+	keyOut, err := root.OpenFile(keyFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, privateKeyFileMode)
 	if err != nil {
 		return fmt.Errorf("create key file: %w", err)
 	}

@@ -19,15 +19,15 @@ type testHelpUsage struct {
 }
 
 type testHelpDetails struct {
-	Parameters   []Parameter
-	Metrics      []Metric
-	PassCriteria string
-	FailMeaning  string
-	Examples     []Example
-	Tips         []string
-	CommonIssues []Issue
-	RFCSection   string
-	SeeAlso      []string
+	Parameters         []Parameter
+	Metrics            []Metric
+	SuccessCriteria    string
+	FailureExplanation string
+	Examples           []Example
+	Tips               []string
+	CommonIssues       []Issue
+	RFCSection         string
+	SeeAlso            []string
 }
 
 func buildTestHelp(
@@ -37,23 +37,23 @@ func buildTestHelp(
 	details testHelpDetails,
 ) TestHelp {
 	return TestHelp{
-		ID:           meta.ID,
-		Name:         meta.Name,
-		Standard:     meta.Standard,
-		Category:     meta.Category,
-		Summary:      desc.Summary,
-		TechDesc:     desc.TechDesc,
-		LaymanDesc:   desc.LaymanDesc,
-		WhenToUse:    usage.WhenToUse,
-		WhenNotToUse: usage.WhenNotToUse,
-		Parameters:   details.Parameters,
-		Metrics:      details.Metrics,
-		PassCriteria: details.PassCriteria,
-		FailMeaning:  details.FailMeaning,
-		Examples:     details.Examples,
-		Tips:         details.Tips,
-		CommonIssues: details.CommonIssues,
-		RFCSection:   details.RFCSection,
-		SeeAlso:      details.SeeAlso,
+		ID:                 meta.ID,
+		Name:               meta.Name,
+		Standard:           meta.Standard,
+		Category:           meta.Category,
+		Summary:            desc.Summary,
+		TechDesc:           desc.TechDesc,
+		LaymanDesc:         desc.LaymanDesc,
+		WhenToUse:          usage.WhenToUse,
+		WhenNotToUse:       usage.WhenNotToUse,
+		Parameters:         details.Parameters,
+		Metrics:            details.Metrics,
+		SuccessCriteria:    details.SuccessCriteria,
+		FailureExplanation: details.FailureExplanation,
+		Examples:           details.Examples,
+		Tips:               details.Tips,
+		CommonIssues:       details.CommonIssues,
+		RFCSection:         details.RFCSection,
+		SeeAlso:            details.SeeAlso,
 	}
 }

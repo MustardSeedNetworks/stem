@@ -242,14 +242,9 @@ func NewServer(port int) (*Server, error) {
 		return nil, fmt.Errorf("authentication setup failed: %w", err)
 	}
 
-	// Determine if TLS is enabled. The default is TLS-on (task #81/#83);
-	// operators opt out either with --http on the CLI (which sets
-	// STEM_HTTP_ONLY=1) or by setting STEM_TLS_ENABLED=false explicitly
-	// for legacy deployments. STEM_HTTP_ONLY is the new canonical name —
-	// STEM_TLS_ENABLED is kept for backward compatibility with anything
-	// pre-Wave 1.
-	tlsEnabled := os.Getenv("STEM_HTTP_ONLY") != "1" &&
-		os.Getenv("STEM_TLS_ENABLED") != "false"
+	// HTTPS is required, unconditionally. Auth cookies hardcode Secure=true
+	// and browsers refuse them over plain HTTP. The HTTP listener exists
+	// only as a 308 redirector. No opt-out is supported.
 
 	s := &Server{}
 	s.port = port
@@ -284,12 +279,12 @@ func NewServer(port int) (*Server, error) {
 	s.authLimiter = NewAuthRateLimiter()
 	s.apiLimiter = NewAPIRateLimiter()
 	s.tlsConfig = TLSConfig{
-		Enabled:  tlsEnabled,
+		Enabled:  true,
 		CertFile: os.Getenv("STEM_TLS_CERT"),
 		KeyFile:  os.Getenv("STEM_TLS_KEY"),
 		CertsDir: os.Getenv("STEM_TLS_CERTS_DIR"),
 	}
-	s.cookieConfig = auth.DefaultCookieConfig(tlsEnabled)
+	s.cookieConfig = auth.DefaultCookieConfig()
 	s.csrfManager = auth.NewCSRFManager(logging.Get())
 	s.setupTokenManager = auth.NewSetupTokenManager()
 	s.setupComplete = false
@@ -749,15 +744,9 @@ func (s *Server) Run() error {
 	}
 	addr := fmt.Sprintf(":%d", actualPort)
 
-	// Determine protocol for logging.
-	protocol := "http"
-	if s.tlsConfig.Enabled {
-		protocol = "https"
-	}
 	logging.Info("Starting The Stem web server",
-		"address", fmt.Sprintf("%s://localhost%s", protocol, addr),
+		"address", fmt.Sprintf("https://localhost%s", addr),
 		"version", version.GetVersion(),
-		"tls_enabled", s.tlsConfig.Enabled,
 	)
 
 	// Set up signal handling for graceful shutdown.
@@ -780,22 +769,13 @@ func (s *Server) Run() error {
 		IdleTimeout:       HTTPIdleTimeout,
 	}
 
-	// Start HTTP→HTTPS 308 redirector when TLS is on (#83 companion).
-	// Skipped in HTTP-only mode (--http / STEM_HTTP_ONLY=1) — there is
-	// nothing to redirect to.
-	if s.tlsConfig.Enabled {
-		go s.startHTTPRedirect(defaultHTTPRedirectPort, actualPort)
-	}
+	// Start HTTP→HTTPS 308 redirector (#83 companion). HTTPS is always on.
+	go s.startHTTPRedirect(defaultHTTPRedirectPort, actualPort)
 
-	// Start server in goroutine.
+	// Start server in goroutine. HTTPS is required, no plaintext branch.
 	errChan := make(chan error, 1)
 	go func() {
-		var listenErr error
-		if s.tlsConfig.Enabled {
-			listenErr = s.startTLS(ln)
-		} else {
-			listenErr = s.httpServer.Serve(ln)
-		}
+		listenErr := s.startTLS(ln)
 		if listenErr != nil && !errors.Is(listenErr, http.ErrServerClosed) {
 			errChan <- fmt.Errorf("server failed: %w", listenErr)
 		}
