@@ -1,6 +1,5 @@
 //go:build cgo && linux
 
-
 // Package dataplane provides CGO bindings to the C reflector dataplane.
 //
 // This package wraps the high-performance C dataplane library, which uses

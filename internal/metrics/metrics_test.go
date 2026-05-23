@@ -419,13 +419,13 @@ func TestIncrementSSEConnections(t *testing.T) {
 	metrics.DecrementSSEConnections()
 }
 
-func TestDecrementSSEConnections(t *testing.T) {
+func TestDecrementSSEConnections(_ *testing.T) {
 	metrics.IncrementSSEConnections()
 	metrics.IncrementSSEConnections() // Ensure gauge is positive
 	metrics.DecrementSSEConnections()
 }
 
-func TestSSEConnections_IncrementDecrement(t *testing.T) {
+func TestSSEConnections_IncrementDecrement(_ *testing.T) {
 	// Test that increment/decrement functions work correctly.
 	// Due to parallel test interference, we can't check exact values.
 	// Instead, verify the functions don't panic and clean up properly.

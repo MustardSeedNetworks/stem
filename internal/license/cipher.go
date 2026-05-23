@@ -12,17 +12,18 @@ const (
 	digitModulus      = 10
 	letterModulus     = 26
 	alphanumericSplit = 10 // Values 0-9 are digits, 10-35 are letters.
+	byteMask          = 0xFF
 )
 
 // MSN-specific rotor tables (unique to Mustard Seed Networks products).
 // These provide the substitution mapping for license key encoding/decoding.
 
-func baseRotor10() [10]int {
-	return [10]int{7, 2, 9, 0, 5, 8, 1, 6, 3, 4}
+func baseRotor10() [10]byte {
+	return [10]byte{7, 2, 9, 0, 5, 8, 1, 6, 3, 4}
 }
 
-func baseRotor26() [26]int {
-	return [26]int{
+func baseRotor26() [26]byte {
+	return [26]byte{
 		19, 3, 24, 7, 12, 0, 21, 15, 8, 25,
 		2, 17, 10, 5, 22, 13, 1, 18, 6, 11,
 		23, 4, 16, 9, 20, 14,
@@ -35,10 +36,10 @@ func InitRotors() {}
 // RotorCipher provides Enigma-style encoding/decoding.
 type RotorCipher struct {
 	position   int // Current rotor position (advances with each character).
-	rotor10    [10]int
-	rotor26    [26]int
-	rotor10Inv [10]int
-	rotor26Inv [26]int
+	rotor10    [10]byte
+	rotor26    [26]byte
+	rotor10Inv [10]byte
+	rotor26Inv [26]byte
 }
 
 // NewRotorCipher creates a new cipher with the given starting position.
@@ -46,14 +47,14 @@ func NewRotorCipher(startPosition int) *RotorCipher {
 	rotor10 := baseRotor10()
 	rotor26 := baseRotor26()
 
-	var rotor10Inv [10]int
-	var rotor26Inv [26]int
+	var rotor10Inv [10]byte
+	var rotor26Inv [26]byte
 
 	for i, v := range rotor10 {
-		rotor10Inv[v] = i
+		rotor10Inv[v] = byte(i)
 	}
 	for i, v := range rotor26 {
-		rotor26Inv[v] = i
+		rotor26Inv[v] = byte(i)
 	}
 
 	position := startPosition % rotorModulus
@@ -75,29 +76,39 @@ func (rc *RotorCipher) Encode(c byte) byte {
 	switch {
 	case c >= '0' && c <= '9':
 		// Digit encoding.
-		idx := int(c - '0')
-		idx = (idx + rc.position) % digitModulus
+		idx := (int(c-'0') + rc.position) % digitModulus
 		encoded := rc.rotor10[idx]
 		rc.position = (rc.position + 1) % rotorModulus
-		return byte('0' + encoded)
+		return '0' + encoded
 	case c >= 'A' && c <= 'Z':
 		// Letter encoding.
 		idx := int(c - 'A')
 		idx = (idx + rc.position) % letterModulus
 		encoded := rc.rotor26[idx]
 		rc.position = (rc.position + 1) % rotorModulus
-		return byte('A' + encoded)
+		return 'A' + encoded
 	case c >= 'a' && c <= 'z':
 		// Lowercase - convert to upper, encode, keep case.
 		idx := int(c - 'a')
 		idx = (idx + rc.position) % letterModulus
 		encoded := rc.rotor26[idx]
 		rc.position = (rc.position + 1) % rotorModulus
-		return byte('a' + encoded)
+		return 'a' + encoded
 	default:
 		// Non-alphanumeric passes through unchanged.
 		return c
 	}
+}
+
+// shiftByMod returns a non-negative value in [0, modulus). idx and modulus
+// are int because rc.position is int; the result fits in byte because
+// modulus is a small literal constant (10 or 26).
+func shiftByMod(idx, position, modulus int) byte {
+	v := (idx - position%modulus + modulus) % modulus
+	// Mask to byte: modular arithmetic above guarantees v ∈ [0, modulus)
+	// where modulus is 10 or 26, both well within byte range. The mask
+	// proves the bound to the type checker without a branch.
+	return byte(v & byteMask)
 }
 
 // Decode decodes a single character through the inverse rotor.
@@ -105,22 +116,19 @@ func (rc *RotorCipher) Decode(c byte) byte {
 	switch {
 	case c >= '0' && c <= '9':
 		// Digit decoding.
-		idx := rc.rotor10Inv[int(c-'0')]
-		idx = (idx - rc.position%digitModulus + digitModulus) % digitModulus
+		shift := shiftByMod(int(rc.rotor10Inv[int(c-'0')]), rc.position, digitModulus)
 		rc.position = (rc.position + 1) % rotorModulus
-		return byte('0' + idx)
+		return '0' + shift
 	case c >= 'A' && c <= 'Z':
 		// Letter decoding.
-		idx := rc.rotor26Inv[int(c-'A')]
-		idx = (idx - rc.position%letterModulus + letterModulus) % letterModulus
+		shift := shiftByMod(int(rc.rotor26Inv[int(c-'A')]), rc.position, letterModulus)
 		rc.position = (rc.position + 1) % rotorModulus
-		return byte('A' + idx)
+		return 'A' + shift
 	case c >= 'a' && c <= 'z':
 		// Lowercase decoding.
-		idx := rc.rotor26Inv[int(c-'a')]
-		idx = (idx - rc.position%letterModulus + letterModulus) % letterModulus
+		shift := shiftByMod(int(rc.rotor26Inv[int(c-'a')]), rc.position, letterModulus)
 		rc.position = (rc.position + 1) % rotorModulus
-		return byte('a' + idx)
+		return 'a' + shift
 	default:
 		return c
 	}
@@ -184,10 +192,16 @@ func ValidateChecksum(s string) bool {
 
 // toAlphanumeric converts a value 0-35 to 0-9 or A-Z.
 func toAlphanumeric(val int) byte {
-	if val < alphanumericSplit {
-		return byte('0' + val)
+	// Defensive: by construction val is always in [0, alphanumericSplit+25],
+	// but an explicit guard keeps gosec G115 happy and prevents panics from
+	// hypothetical caller bugs.
+	if val < 0 || val >= alphanumericSplit+26 {
+		return '?'
 	}
-	return byte('A' + val - alphanumericSplit)
+	if val < alphanumericSplit {
+		return '0' + byte(val)
+	}
+	return 'A' + byte(val-alphanumericSplit)
 }
 
 // fromAlphanumeric converts 0-9 or A-Z to a value 0-35.

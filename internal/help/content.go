@@ -27,9 +27,9 @@ type TestHelp struct {
 	Parameters []Parameter
 
 	// Results interpretation
-	Metrics      []Metric
-	PassCriteria string
-	FailMeaning  string
+	Metrics            []Metric
+	SuccessCriteria    string
+	FailureExplanation string
 
 	// Practical guidance
 	Examples     []Example

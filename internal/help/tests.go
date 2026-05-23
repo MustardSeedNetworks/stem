@@ -115,15 +115,15 @@ func rfc2544ThroughputUsage() testHelpUsage {
 
 func rfc2544ThroughputDetails() testHelpDetails {
 	return testHelpDetails{
-		Parameters:   rfc2544ThroughputParameters(),
-		Metrics:      rfc2544ThroughputMetrics(),
-		PassCriteria: "Zero frame loss at the reported throughput rate",
-		FailMeaning:  "Unable to achieve any rate without frame loss - check connectivity and configuration",
-		Examples:     rfc2544ThroughputExamples(),
-		Tips:         rfc2544ThroughputTips(),
-		CommonIssues: rfc2544ThroughputIssues(),
-		RFCSection:   "Section 26.1",
-		SeeAlso:      []string{"latency", "frame_loss", "y1564_config"},
+		Parameters:         rfc2544ThroughputParameters(),
+		Metrics:            rfc2544ThroughputMetrics(),
+		SuccessCriteria:    "Zero frame loss at the reported throughput rate",
+		FailureExplanation: "Unable to achieve any rate without frame loss - check connectivity and configuration",
+		Examples:           rfc2544ThroughputExamples(),
+		Tips:               rfc2544ThroughputTips(),
+		CommonIssues:       rfc2544ThroughputIssues(),
+		RFCSection:         "Section 26.1",
+		SeeAlso:            []string{"latency", "frame_loss", "y1564_config"},
 	}
 }
 
@@ -312,15 +312,15 @@ func rfc2544LatencyUsage() testHelpUsage {
 
 func rfc2544LatencyDetails() testHelpDetails {
 	return testHelpDetails{
-		Parameters:   rfc2544LatencyParameters(),
-		Metrics:      rfc2544LatencyMetrics(),
-		PassCriteria: "Latency within acceptable range for intended application",
-		FailMeaning:  "Network may not be suitable for latency-sensitive applications",
-		Examples:     rfc2544LatencyExamples(),
-		Tips:         rfc2544LatencyTips(),
-		CommonIssues: rfc2544LatencyIssues(),
-		RFCSection:   "Section 26.2",
-		SeeAlso:      []string{"throughput", "frame_delay", "y1564_performance"},
+		Parameters:         rfc2544LatencyParameters(),
+		Metrics:            rfc2544LatencyMetrics(),
+		SuccessCriteria:    "Latency within acceptable range for intended application",
+		FailureExplanation: "Network may not be suitable for latency-sensitive applications",
+		Examples:           rfc2544LatencyExamples(),
+		Tips:               rfc2544LatencyTips(),
+		CommonIssues:       rfc2544LatencyIssues(),
+		RFCSection:         "Section 26.2",
+		SeeAlso:            []string{"throughput", "frame_delay", "y1564_performance"},
 	}
 }
 
@@ -497,15 +497,15 @@ func rfc2544FrameLossUsage() testHelpUsage {
 
 func rfc2544FrameLossDetails() testHelpDetails {
 	return testHelpDetails{
-		Parameters:   rfc2544FrameLossParameters(),
-		Metrics:      rfc2544FrameLossMetrics(),
-		PassCriteria: "Zero loss at planned operating rate",
-		FailMeaning:  "Network cannot sustain planned traffic levels",
-		Examples:     rfc2544FrameLossExamples(),
-		Tips:         rfc2544FrameLossTips(),
-		CommonIssues: rfc2544FrameLossIssues(),
-		RFCSection:   "Section 26.3",
-		SeeAlso:      []string{"throughput", "y1731_frame_loss"},
+		Parameters:         rfc2544FrameLossParameters(),
+		Metrics:            rfc2544FrameLossMetrics(),
+		SuccessCriteria:    "Zero loss at planned operating rate",
+		FailureExplanation: "Network cannot sustain planned traffic levels",
+		Examples:           rfc2544FrameLossExamples(),
+		Tips:               rfc2544FrameLossTips(),
+		CommonIssues:       rfc2544FrameLossIssues(),
+		RFCSection:         "Section 26.3",
+		SeeAlso:            []string{"throughput", "y1731_frame_loss"},
 	}
 }
 
@@ -662,15 +662,15 @@ func rfc2544BackToBackUsage() testHelpUsage {
 
 func rfc2544BackToBackDetails() testHelpDetails {
 	return testHelpDetails{
-		Parameters:   rfc2544BackToBackParameters(),
-		Metrics:      rfc2544BackToBackMetrics(),
-		PassCriteria: "Burst capacity meets application requirements",
-		FailMeaning:  "May experience drops during traffic bursts",
-		Examples:     rfc2544BackToBackExamples(),
-		Tips:         rfc2544BackToBackTips(),
-		CommonIssues: nil,
-		RFCSection:   "Section 26.4",
-		SeeAlso:      []string{"throughput", "congestion"},
+		Parameters:         rfc2544BackToBackParameters(),
+		Metrics:            rfc2544BackToBackMetrics(),
+		SuccessCriteria:    "Burst capacity meets application requirements",
+		FailureExplanation: "May experience drops during traffic bursts",
+		Examples:           rfc2544BackToBackExamples(),
+		Tips:               rfc2544BackToBackTips(),
+		CommonIssues:       nil,
+		RFCSection:         "Section 26.4",
+		SeeAlso:            []string{"throughput", "congestion"},
 	}
 }
 
@@ -808,8 +808,8 @@ traffic spikes.`,
 			},
 		},
 
-		PassCriteria: "Recovery time within acceptable limits for application",
-		FailMeaning:  "DUT may cause extended service impact after congestion events",
+		SuccessCriteria:    "Recovery time within acceptable limits for application",
+		FailureExplanation: "DUT may cause extended service impact after congestion events",
 
 		Examples: []Example{
 			{
@@ -888,8 +888,8 @@ Lower reset times mean less disruption during maintenance or failures.`,
 			},
 		},
 
-		PassCriteria: "Reset time meets availability requirements",
-		FailMeaning:  "Equipment restart takes too long for required uptime SLA",
+		SuccessCriteria:    "Reset time meets availability requirements",
+		FailureExplanation: "Equipment restart takes too long for required uptime SLA",
 
 		Examples: []Example{
 			{
@@ -970,15 +970,15 @@ func y1564ConfigUsage() testHelpUsage {
 
 func y1564ConfigDetails() testHelpDetails {
 	return testHelpDetails{
-		Parameters:   y1564ConfigParameters(),
-		Metrics:      y1564ConfigMetrics(),
-		PassCriteria: "All metrics within thresholds at all four CIR steps (25%, 50%, 75%, 100%)",
-		FailMeaning:  "Service does not meet SLA - contact carrier for resolution",
-		Examples:     y1564ConfigExamples(),
-		Tips:         y1564ConfigTips(),
-		CommonIssues: y1564ConfigIssues(),
-		RFCSection:   "",
-		SeeAlso:      []string{"y1564_performance", "throughput", "mef_config"},
+		Parameters:         y1564ConfigParameters(),
+		Metrics:            y1564ConfigMetrics(),
+		SuccessCriteria:    "All metrics within thresholds at all four CIR steps (25%, 50%, 75%, 100%)",
+		FailureExplanation: "Service does not meet SLA - contact carrier for resolution",
+		Examples:           y1564ConfigExamples(),
+		Tips:               y1564ConfigTips(),
+		CommonIssues:       y1564ConfigIssues(),
+		RFCSection:         "",
+		SeeAlso:            []string{"y1564_performance", "throughput", "mef_config"},
 	}
 }
 
@@ -1194,8 +1194,8 @@ thorough validation.`,
 			},
 		},
 
-		PassCriteria: "All metrics within thresholds for entire test duration",
-		FailMeaning:  "Service shows instability over time",
+		SuccessCriteria:    "All metrics within thresholds for entire test duration",
+		FailureExplanation: "Service shows instability over time",
 
 		Examples: []Example{
 			{
@@ -1278,8 +1278,8 @@ Total test time is typically 30 minutes for a standard activation.`,
 
 		Metrics: nil,
 
-		PassCriteria: "Both Configuration and Performance tests pass",
-		FailMeaning:  "Service does not meet acceptance criteria",
+		SuccessCriteria:    "Both Configuration and Performance tests pass",
+		FailureExplanation: "Service does not meet acceptance criteria",
 
 		Examples: []Example{
 			{
@@ -1371,8 +1371,8 @@ Important for environments with many active connections simultaneously.`,
 			},
 		},
 
-		PassCriteria: "Aggregate throughput meets switch specifications",
-		FailMeaning:  "Switch may not handle full load scenarios",
+		SuccessCriteria:    "Aggregate throughput meets switch specifications",
+		FailureExplanation: "Switch may not handle full load scenarios",
 
 		Examples: []Example{
 			{
@@ -1459,8 +1459,8 @@ Think of it like a phonebook:
 			},
 		},
 
-		PassCriteria: "Address capacity meets deployment requirements",
-		FailMeaning:  "May need a switch with larger MAC table",
+		SuccessCriteria:    "Address capacity meets deployment requirements",
+		FailureExplanation: "May need a switch with larger MAC table",
 
 		Examples: []Example{
 			{
@@ -1528,8 +1528,8 @@ Faster learning = smoother experience for users joining the network.`,
 			},
 		},
 
-		PassCriteria: "",
-		FailMeaning:  "",
+		SuccessCriteria:    "",
+		FailureExplanation: "",
 
 		Examples: []Example{
 			{
@@ -1601,8 +1601,8 @@ This test checks if your switch can handle normal broadcast levels without probl
 			},
 		},
 
-		PassCriteria: "",
-		FailMeaning:  "",
+		SuccessCriteria:    "",
+		FailureExplanation: "",
 
 		Examples: []Example{
 			{
@@ -1679,8 +1679,8 @@ This test reveals your switch's personality under stress.`,
 			},
 		},
 
-		PassCriteria: "",
-		FailMeaning:  "",
+		SuccessCriteria:    "",
+		FailureExplanation: "",
 
 		Examples: []Example{
 			{
@@ -1759,15 +1759,15 @@ func rfc6349TCPThroughputUsage() testHelpUsage {
 
 func rfc6349TCPThroughputDetails() testHelpDetails {
 	return testHelpDetails{
-		Parameters:   rfc6349TCPThroughputParameters(),
-		Metrics:      rfc6349TCPThroughputMetrics(),
-		PassCriteria: "TCP throughput meets application requirements",
-		FailMeaning:  "Network may need optimization for TCP applications",
-		Examples:     rfc6349TCPThroughputExamples(),
-		Tips:         nil,
-		CommonIssues: nil,
-		RFCSection:   "",
-		SeeAlso:      []string{"path_analysis", "throughput"},
+		Parameters:         rfc6349TCPThroughputParameters(),
+		Metrics:            rfc6349TCPThroughputMetrics(),
+		SuccessCriteria:    "TCP throughput meets application requirements",
+		FailureExplanation: "Network may need optimization for TCP applications",
+		Examples:           rfc6349TCPThroughputExamples(),
+		Tips:               nil,
+		CommonIssues:       nil,
+		RFCSection:         "",
+		SeeAlso:            []string{"path_analysis", "throughput"},
 	}
 }
 
@@ -1898,8 +1898,8 @@ Use this when downloads are slow and you want to know WHY, not just HOW slow.`,
 			},
 		},
 
-		PassCriteria: "",
-		FailMeaning:  "",
+		SuccessCriteria:    "",
+		FailureExplanation: "",
 
 		Examples: []Example{
 			{
@@ -1973,15 +1973,15 @@ func y1731FrameDelayUsage() testHelpUsage {
 
 func y1731FrameDelayDetails() testHelpDetails {
 	return testHelpDetails{
-		Parameters:   y1731FrameDelayParameters(),
-		Metrics:      y1731FrameDelayMetrics(),
-		PassCriteria: "",
-		FailMeaning:  "",
-		Examples:     y1731FrameDelayExamples(),
-		Tips:         nil,
-		CommonIssues: nil,
-		RFCSection:   "",
-		SeeAlso:      []string{"latency", "y1731_frame_loss"},
+		Parameters:         y1731FrameDelayParameters(),
+		Metrics:            y1731FrameDelayMetrics(),
+		SuccessCriteria:    "",
+		FailureExplanation: "",
+		Examples:           y1731FrameDelayExamples(),
+		Tips:               nil,
+		CommonIssues:       nil,
+		RFCSection:         "",
+		SeeAlso:            []string{"latency", "y1731_frame_loss"},
 	}
 }
 
@@ -2082,8 +2082,8 @@ Benefits:
 			},
 		},
 
-		PassCriteria: "",
-		FailMeaning:  "",
+		SuccessCriteria:    "",
+		FailureExplanation: "",
 
 		Examples: []Example{
 			{
@@ -2140,8 +2140,8 @@ Think of it like a "network heartbeat" - always checking, always monitoring.`,
 			},
 		},
 
-		PassCriteria: "",
-		FailMeaning:  "",
+		SuccessCriteria:    "",
+		FailureExplanation: "",
 
 		Examples: []Example{
 			{
@@ -2207,8 +2207,8 @@ Useful for:
 			},
 		},
 
-		PassCriteria: "",
-		FailMeaning:  "",
+		SuccessCriteria:    "",
+		FailureExplanation: "",
 
 		Examples: []Example{
 			{
@@ -2276,15 +2276,15 @@ func mefConfigUsage() testHelpUsage {
 
 func mefConfigDetails() testHelpDetails {
 	return testHelpDetails{
-		Parameters:   mefConfigParameters(),
-		Metrics:      mefConfigMetrics(),
-		PassCriteria: "",
-		FailMeaning:  "",
-		Examples:     mefConfigExamples(),
-		Tips:         nil,
-		CommonIssues: nil,
-		RFCSection:   "",
-		SeeAlso:      []string{"y1564_config", "mef_performance"},
+		Parameters:         mefConfigParameters(),
+		Metrics:            mefConfigMetrics(),
+		SuccessCriteria:    "",
+		FailureExplanation: "",
+		Examples:           mefConfigExamples(),
+		Tips:               nil,
+		CommonIssues:       nil,
+		RFCSection:         "",
+		SeeAlso:            []string{"y1564_config", "mef_performance"},
 	}
 }
 
@@ -2384,8 +2384,8 @@ This catches problems that only show up after running for a while.`,
 
 		Metrics: nil,
 
-		PassCriteria: "",
-		FailMeaning:  "",
+		SuccessCriteria:    "",
+		FailureExplanation: "",
 
 		Examples: []Example{
 			{
@@ -2433,8 +2433,8 @@ Use this for official service acceptance when MEF compliance is required.`,
 
 		Metrics: nil,
 
-		PassCriteria: "",
-		FailMeaning:  "",
+		SuccessCriteria:    "",
+		FailureExplanation: "",
 
 		Examples: []Example{
 			{
@@ -2510,15 +2510,15 @@ func tsnGateTimingUsage() testHelpUsage {
 
 func tsnGateTimingDetails() testHelpDetails {
 	return testHelpDetails{
-		Parameters:   tsnGateTimingParameters(),
-		Metrics:      tsnGateTimingMetrics(),
-		PassCriteria: "All gates within timing tolerance",
-		FailMeaning:  "Network cannot support deterministic timing requirements",
-		Examples:     tsnGateTimingExamples(),
-		Tips:         tsnGateTimingTips(),
-		CommonIssues: nil,
-		RFCSection:   "",
-		SeeAlso:      []string{"traffic_isolation", "scheduled_latency"},
+		Parameters:         tsnGateTimingParameters(),
+		Metrics:            tsnGateTimingMetrics(),
+		SuccessCriteria:    "All gates within timing tolerance",
+		FailureExplanation: "Network cannot support deterministic timing requirements",
+		Examples:           tsnGateTimingExamples(),
+		Tips:               tsnGateTimingTips(),
+		CommonIssues:       nil,
+		RFCSection:         "",
+		SeeAlso:            []string{"traffic_isolation", "scheduled_latency"},
 	}
 }
 
@@ -2627,15 +2627,15 @@ func tsnTrafficIsolationUsage() testHelpUsage {
 
 func tsnTrafficIsolationDetails() testHelpDetails {
 	return testHelpDetails{
-		Parameters:   tsnTrafficIsolationParameters(),
-		Metrics:      tsnTrafficIsolationMetrics(),
-		PassCriteria: "",
-		FailMeaning:  "",
-		Examples:     tsnTrafficIsolationExamples(),
-		Tips:         nil,
-		CommonIssues: nil,
-		RFCSection:   "",
-		SeeAlso:      []string{"gate_timing", "scheduled_latency"},
+		Parameters:         tsnTrafficIsolationParameters(),
+		Metrics:            tsnTrafficIsolationMetrics(),
+		SuccessCriteria:    "",
+		FailureExplanation: "",
+		Examples:           tsnTrafficIsolationExamples(),
+		Tips:               nil,
+		CommonIssues:       nil,
+		RFCSection:         "",
+		SeeAlso:            []string{"gate_timing", "scheduled_latency"},
 	}
 }
 
@@ -2739,15 +2739,15 @@ func tsnScheduledLatencyUsage() testHelpUsage {
 
 func tsnScheduledLatencyDetails() testHelpDetails {
 	return testHelpDetails{
-		Parameters:   tsnScheduledLatencyParameters(),
-		Metrics:      tsnScheduledLatencyMetrics(),
-		PassCriteria: "",
-		FailMeaning:  "",
-		Examples:     tsnScheduledLatencyExamples(),
-		Tips:         nil,
-		CommonIssues: nil,
-		RFCSection:   "",
-		SeeAlso:      []string{"gate_timing", "traffic_isolation"},
+		Parameters:         tsnScheduledLatencyParameters(),
+		Metrics:            tsnScheduledLatencyMetrics(),
+		SuccessCriteria:    "",
+		FailureExplanation: "",
+		Examples:           tsnScheduledLatencyExamples(),
+		Tips:               nil,
+		CommonIssues:       nil,
+		RFCSection:         "",
+		SeeAlso:            []string{"gate_timing", "traffic_isolation"},
 	}
 }
 
@@ -2836,8 +2836,8 @@ into production.`,
 
 		Metrics: nil,
 
-		PassCriteria: "",
-		FailMeaning:  "",
+		SuccessCriteria:    "",
+		FailureExplanation: "",
 
 		Examples: []Example{
 			{

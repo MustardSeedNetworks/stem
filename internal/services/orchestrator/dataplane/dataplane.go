@@ -1,6 +1,5 @@
 //go:build cgo && linux
 
-
 // Package dataplane provides CGO bindings to the C test master dataplane.
 //
 // This package wraps the high-performance C library for test execution,

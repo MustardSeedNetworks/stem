@@ -229,8 +229,6 @@ Y.1564 OPTIONS:
 WEB OPTIONS:
     -p, --port         HTTPS port (default: 8444)
     --host             Bind address (default: 0.0.0.0)
-    --http             Serve plaintext HTTP only (opt-out of TLS).
-                       Equivalent to STEM_HTTP_ONLY=1.
 
 LICENSE OPTIONS:
     --activate <key>   Activate with license key
@@ -253,9 +251,6 @@ EXAMPLES:
 
     # Start WebUI (HTTPS by default on :8444)
     stem web -p 8444
-
-    # Start WebUI in plaintext HTTP mode (legacy)
-    stem web --http -p 8444
 
     # License management
     stem license --status
@@ -1146,8 +1141,6 @@ func webCmd(args []string) {
 	port := fs.Int("port", defaultWebPort, "HTTPS port (1-65535)")
 	fs.IntVar(port, "p", defaultWebPort, "HTTPS port (shorthand)")
 	host := fs.String("host", "0.0.0.0", "Bind address")
-	httpOnly := fs.Bool("http", false,
-		"Serve plaintext HTTP only (opt-out of TLS). Equivalent to STEM_HTTP_ONLY=1.")
 
 	err := fs.Parse(args)
 	if err != nil {
@@ -1161,18 +1154,7 @@ func webCmd(args []string) {
 		os.Exit(1)
 	}
 
-	// --http on the CLI overrides whatever STEM_HTTP_ONLY says. We propagate
-	// to the env var so api.NewServer (which reads the env directly) sees
-	// the operator's intent without an extra constructor argument.
-	if *httpOnly {
-		_ = os.Setenv("STEM_HTTP_ONLY", "1")
-	}
-	tlsEnabled := os.Getenv("STEM_HTTP_ONLY") != "1"
-
 	scheme := "https"
-	if !tlsEnabled {
-		scheme = "http"
-	}
 
 	_, _ = fmt.Fprintf(os.Stdout, "%s %s - WebUI Server\n", ProductName, version.GetVersion())
 	_, _ = fmt.Fprintf(os.Stdout, "Starting on %s://%s:%d\n", scheme, *host, *port)
