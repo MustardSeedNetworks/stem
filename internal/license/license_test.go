@@ -152,8 +152,10 @@ func TestTierString(t *testing.T) {
 		expected string
 	}{
 		{license.TierReflector, "Reflector"},
-		{license.TierTestSuite, "Test Suite"},
-		{license.TierEnterprise, "Enterprise"},
+		{license.TierProfessional, "Professional"},
+		// TierEnterprise is deprecated and folded into Professional —
+		// its String() now reports "Professional" to match.
+		{license.TierEnterprise, "Professional"},
 		{license.TierInvalid, "Invalid"},
 	}
 

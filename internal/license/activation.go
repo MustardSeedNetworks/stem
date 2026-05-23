@@ -195,7 +195,7 @@ func (m *Manager) StartTrial() *ActivationResult {
 		return &ActivationResult{
 			Success:       true,
 			Message:       fmt.Sprintf("Trial active: %d days remaining", remaining),
-			Tier:          TierTestSuite, // Full features during trial.
+			Tier:          TierProfessional, // Full features during trial.
 			DaysRemaining: remaining,
 			IsTrialMode:   true,
 		}
@@ -205,13 +205,13 @@ func (m *Manager) StartTrial() *ActivationResult {
 	m.state = &ActivationState{
 		LicenseKey:      "",
 		DeviceHash:      m.fingerprint.Hash(),
-		Tier:            TierTestSuite, // Full features during trial.
+		Tier:            TierProfessional, // Full features during trial.
 		ActivatedAt:     time.Time{},
 		LastValidatedAt: time.Time{},
 		ExpiresAt:       time.Time{},
 		TrialStartedAt:  time.Now(),
 		IsTrialMode:     true,
-		Features:        []string{"reflector", "rfc2544", "y1564", "rfc2889", "rfc6349", "y1731", "mef", "tsn"},
+		Features:        proFeatures(),
 	}
 
 	saveErr := m.saveState()
@@ -228,7 +228,7 @@ func (m *Manager) StartTrial() *ActivationResult {
 	return &ActivationResult{
 		Success:       true,
 		Message:       fmt.Sprintf("Trial started! %d days of full access.", TrialDays),
-		Tier:          TierTestSuite,
+		Tier:          TierProfessional,
 		DaysRemaining: TrialDays,
 		IsTrialMode:   true,
 	}

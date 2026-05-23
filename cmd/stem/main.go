@@ -576,8 +576,8 @@ func checkTestLicense() bool {
 		_, _ = fmt.Fprintln(os.Stdout, "Error: License expired. Please activate a valid license.")
 		_, _ = fmt.Fprintln(os.Stdout, "Run 'stem license --status' for details")
 		return false
-	case state.Tier < license.TierTestSuite && !state.IsTrialMode:
-		_, _ = fmt.Fprintln(os.Stdout, "Error: Test Suite requires Tier 2 license")
+	case state.Tier < license.TierProfessional && !state.IsTrialMode:
+		_, _ = fmt.Fprintln(os.Stdout, "Error: Professional features require a Tier 2 (Professional) license")
 		_, _ = fmt.Fprintln(os.Stdout, "Your license: Tier 1 (Reflector only)")
 		return false
 	}
@@ -1274,8 +1274,8 @@ func tuiTestMode() error {
 				_, _ = fmt.Fprintf(os.Stdout, "Error: %s\n", result.Message)
 				return fmt.Errorf("license trial failed: %s", result.Message)
 			}
-		} else if state.Tier < license.TierTestSuite && !state.IsTrialMode {
-			_, _ = fmt.Fprintln(os.Stdout, "Error: Test Suite TUI requires Tier 2 license")
+		} else if state.Tier < license.TierProfessional && !state.IsTrialMode {
+			_, _ = fmt.Fprintln(os.Stdout, "Error: Professional TUI requires a Tier 2 (Professional) license")
 			return errors.New("license tier too low")
 		}
 	}

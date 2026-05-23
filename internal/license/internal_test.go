@@ -2252,8 +2252,9 @@ func TestTierStringValues(t *testing.T) {
 	}{
 		{TierInvalid, "Invalid"},
 		{TierReflector, "Reflector"},
-		{TierTestSuite, "Test Suite"},
-		{TierEnterprise, "Enterprise"},
+		{TierProfessional, "Professional"},
+		// TierEnterprise is deprecated and folded into Professional.
+		{TierEnterprise, "Professional"},
 		{Tier(99), "Invalid"}, // Unknown tier should return "Invalid".
 	}
 
@@ -3046,8 +3047,10 @@ func TestValidateLicenseKeyWithAllTiers(t *testing.T) {
 		expectedTier string
 	}{
 		{"1001", TierReflector, "Reflector"},
-		{"2001", TierTestSuite, "Test Suite"},
-		{"3001", TierEnterprise, "Enterprise"},
+		{"2001", TierProfessional, "Professional"},
+		// TierEnterprise (3) is deprecated; existing keys still validate
+		// and report as Professional per LICENSE_STRATEGY 2026-05-19.
+		{"3001", TierEnterprise, "Professional"},
 	}
 
 	for _, tc := range tiers {

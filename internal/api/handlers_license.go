@@ -53,7 +53,7 @@ func (s *Server) handleLicense(w http.ResponseWriter, r *http.Request) {
 		status = LicenseStatus{
 			Activated:     true,
 			IsTrialMode:   true,
-			Tier:          int(license.TierTestSuite),
+			Tier:          int(license.TierProfessional),
 			TierName:      "Trial",
 			DaysRemaining: s.licenseManager.TrialDaysRemaining(),
 			Features:      state.Features,

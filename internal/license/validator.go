@@ -20,15 +20,17 @@ MSN License Key Format (16 characters):
 
 Positions:
   0-1:  Checksum prefix (encoded validation).
-  2-5:  Product code (1001=Reflector, 2001=TestSuite).
+  2-5:  Product code (1001=Reflector, 2001=Professional).
   6-12: Serial number (unique per license).
-  13:   Tier (1=Reflector, 2=Full Suite, 3=Enterprise).
+  13:   Tier (1=Reflector, 2=Professional, 3=Enterprise-deprecated).
   14-15: Checksum suffix.
 
 Product Codes:
-  1001: Seed Reflector (Tier 1).
-  2001: Seed Test Suite (Tier 2).
-  3001: Seed Enterprise (Tier 3, future).
+  1001: Stem Reflector (Tier 1).
+  2001: Stem Professional (Tier 2). Was "Test Suite"; renamed per
+        LICENSE_STRATEGY 2026-05-19. Wire value preserved.
+  3001: Stem Enterprise (Tier 3, deprecated). Folded into Professional;
+        existing keys continue to validate and grant Pro features.
 */
 
 // License key format constants.
@@ -50,10 +52,22 @@ const (
 	TierInvalid Tier = 0
 	// TierReflector provides reflector-only functionality.
 	TierReflector Tier = 1
-	// TierTestSuite provides full test suite plus reflector.
-	TierTestSuite Tier = 2
-	// TierEnterprise provides enterprise features (future).
+	// TierProfessional provides the full Stem test suite (RFC 2544 /
+	// Y.1564 / Y.1731 / RFC 2889 / RFC 6349 / MEF / TSN) plus the
+	// reflector and API access.
+	TierProfessional Tier = 2
+	// TierEnterprise is deprecated as a SKU per LICENSE_STRATEGY
+	// 2026-05-19 (folded into Professional). The constant is retained
+	// so previously issued Enterprise keys keep validating; they now
+	// grant the same features as Professional.
 	TierEnterprise Tier = 3
+
+	// TierTestSuite is a deprecated alias for TierProfessional, kept
+	// so external callers that referenced the old name still compile.
+	// New code MUST use TierProfessional.
+	//
+	// Deprecated: use TierProfessional.
+	TierTestSuite = TierProfessional
 )
 
 // Error messages.
@@ -70,10 +84,10 @@ func (t Tier) String() string {
 		return "Invalid"
 	case TierReflector:
 		return "Reflector"
-	case TierTestSuite:
-		return "Test Suite"
+	case TierProfessional:
+		return "Professional"
 	case TierEnterprise:
-		return "Enterprise"
+		return "Professional"
 	}
 	return "Invalid"
 }
@@ -148,13 +162,11 @@ func ValidateLicenseKey(key string) *Info {
 		info.Tier = TierReflector
 		info.Features = []string{"reflector"}
 	case '2':
-		info.Tier = TierTestSuite
-		info.Features = []string{"reflector", "rfc2544", "y1564", "rfc2889", "rfc6349", "y1731", "mef", "tsn"}
+		info.Tier = TierProfessional
+		info.Features = proFeatures()
 	case '3':
 		info.Tier = TierEnterprise
-		info.Features = []string{
-			"reflector", "rfc2544", "y1564", "rfc2889", "rfc6349", "y1731", "mef", "tsn", "api", "multiuser",
-		}
+		info.Features = proFeatures()
 	default:
 		info.ErrorMsg = "Invalid license tier"
 		return info
@@ -168,7 +180,7 @@ func ValidateLicenseKey(key string) *Info {
 			return info
 		}
 	case "2001":
-		if info.Tier != TierTestSuite {
+		if info.Tier != TierProfessional {
 			info.ErrorMsg = errProductCodeMismatch
 			return info
 		}
@@ -263,7 +275,26 @@ func (li *Info) CanRunReflector() bool {
 	return li.Valid && li.Tier >= TierReflector
 }
 
-// CanRunTests returns true if the license allows test suite.
+// CanRunTests returns true if the license allows the Professional
+// test suite (or higher).
 func (li *Info) CanRunTests() bool {
-	return li.Valid && li.Tier >= TierTestSuite
+	return li.Valid && li.Tier >= TierProfessional
+}
+
+// proFeatures returns the feature list granted to TierProfessional.
+// TierEnterprise (deprecated) now grants the same set per
+// LICENSE_STRATEGY 2026-05-19. Listed alphabetically after reflector.
+func proFeatures() []string {
+	return []string{
+		"reflector",
+		"api",
+		"mef",
+		"multiuser",
+		"rfc2544",
+		"rfc2889",
+		"rfc6349",
+		"tsn",
+		"y1564",
+		"y1731",
+	}
 }
