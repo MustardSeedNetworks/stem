@@ -66,6 +66,10 @@ regexes = [
     '''changeme''',
     '''admin123''',
     '''TestP@ssw0rd''',
+    # FieldPassword is a slog field-NAME token used by RedactingHandler to
+    # identify password-bearing log keys — it is the literal string "password"
+    # as a dictionary key, not a credential value.
+    '''FieldPassword = "password"''',
 ]
 
 # Known safe commit hashes (documentation references)
