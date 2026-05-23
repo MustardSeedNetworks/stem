@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.17.1](https://github.com/krisarmstrong/stem/compare/v0.17.0...v0.17.1) (2026-05-22)
+
+
+### Performance Improvements
+
+* **e2e:** bump CI workers 1-&gt;2 and retries 2-&gt;1 ([#255](https://github.com/krisarmstrong/stem/issues/255)) ([6b8c658](https://github.com/krisarmstrong/stem/commit/6b8c65891f95b62c0a6b9200b22c3dc61739d5ef))
+
 ## [0.17.0](https://github.com/krisarmstrong/stem/compare/v0.16.0...v0.17.0) (2026-05-22)
 
 
