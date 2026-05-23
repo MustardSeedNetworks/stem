@@ -11,8 +11,8 @@ func GetAllTutorials() map[string]Tutorial {
 	return map[string]Tutorial{
 		"quickstart":   QuickstartTutorial(),
 		"reflector":    ReflectorTutorial(),
-		"rfc2544":      RFC2544Tutorial(),
-		"y1564":        Y1564Tutorial(),
+		CatRFC2544:     RFC2544Tutorial(),
+		CatY1564:       Y1564Tutorial(),
 		"troubleshoot": TroubleshootTutorial(),
 		"results":      ResultsTutorial(),
 	}
@@ -173,7 +173,7 @@ Then enable and start:`,
 // RFC2544Tutorial - RFC 2544 deep dive.
 func RFC2544Tutorial() Tutorial {
 	return Tutorial{
-		ID:          "rfc2544",
+		ID:          CatRFC2544,
 		Title:       "Understanding RFC 2544 Tests",
 		Duration:    "15 min",
 		Level:       "Intermediate",
@@ -322,7 +322,7 @@ func rfc2544TutorialSummarySteps() []TutorialStep {
 
 func Y1564Tutorial() Tutorial {
 	return Tutorial{
-		ID:          "y1564",
+		ID:          CatY1564,
 		Title:       "Carrier Ethernet Testing with Y.1564",
 		Duration:    "15 min",
 		Level:       "Intermediate",

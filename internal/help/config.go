@@ -17,7 +17,7 @@ type ConfigSection struct {
 type ConfigOption struct {
 	Name       string   // "port"
 	Path       string   // "server.port"
-	Type       string   // "integer"
+	Type       string   // TypeInteger
 	Default    string   // "8444"
 	EnvVar     string   // "STEM_SERVER_PORT"
 	TechDesc   string   // Technical description
@@ -59,7 +59,7 @@ func serverConfig() ConfigSection {
 			{
 				Name:       "port",
 				Path:       "server.port",
-				Type:       "integer",
+				Type:       TypeInteger,
 				Default:    "8444",
 				EnvVar:     "STEM_SERVER_PORT",
 				TechDesc:   "TCP port for the HTTPS server. If port is in use during package installation, an alternative port is auto-selected.",
@@ -69,7 +69,7 @@ func serverConfig() ConfigSection {
 			{
 				Name:       "tls_port",
 				Path:       "server.tls_port",
-				Type:       "integer",
+				Type:       TypeInteger,
 				Default:    "8443",
 				EnvVar:     "STEM_SERVER_TLS_PORT",
 				TechDesc:   "TCP port for HTTPS server. Set to 0 to disable TLS. Requires tls_cert and tls_key or auto-generates self-signed certificate.",
@@ -137,18 +137,18 @@ func reflectorConfig() ConfigSection {
 			{
 				Name:       "signature_filter",
 				Path:       "reflector.signature_filter",
-				Type:       "string",
+				Type:       TypeString,
 				Default:    "all",
 				EnvVar:     "STEM_REFLECTOR_SIGNATURE",
 				TechDesc:   "Filter for test packet signatures. Controls which test traffic types are reflected.",
 				LaymanDesc: "Which types of test packets to reflect back. 'all' means respond to everything.",
-				Values:     []string{"all", "ito", "rfc2544", "y1564", "msn", "custom"},
+				Values:     []string{"all", "ito", CatRFC2544, CatY1564, "msn", "custom"},
 				Example:    "signature_filter: \"rfc2544\"",
 			},
 			{
 				Name:       "mode",
 				Path:       "reflector.mode",
-				Type:       "string",
+				Type:       TypeString,
 				Default:    "all",
 				EnvVar:     "STEM_REFLECTOR_MODE",
 				TechDesc:   "Reflection mode: 'mac' swaps L2 addresses only, 'mac-ip' swaps L2 and L3, 'all' reflects all matching traffic.",
@@ -159,7 +159,7 @@ func reflectorConfig() ConfigSection {
 			{
 				Name:       "port",
 				Path:       "reflector.filtering.port",
-				Type:       "integer",
+				Type:       TypeInteger,
 				Default:    "3842",
 				EnvVar:     "STEM_REFLECTOR_PORT",
 				TechDesc:   "UDP port for ITO (Intelligent Test Operations) protocol. Set to 0 to accept any port.",
@@ -169,8 +169,8 @@ func reflectorConfig() ConfigSection {
 			{
 				Name:       "filter_oui",
 				Path:       "reflector.filtering.filter_oui",
-				Type:       "boolean",
-				Default:    "false",
+				Type:       TypeBoolean,
+				Default:    ValueFalse,
 				EnvVar:     "STEM_FILTER_OUI",
 				TechDesc:   "Enable OUI-based MAC address filtering. Only reflects packets from matching source OUI.",
 				LaymanDesc: "Only respond to packets from specific device manufacturers. Usually disabled.",
@@ -189,8 +189,8 @@ func reflectorConfig() ConfigSection {
 			{
 				Name:       "filter_mac",
 				Path:       "reflector.filtering.filter_mac",
-				Type:       "boolean",
-				Default:    "false",
+				Type:       TypeBoolean,
+				Default:    ValueFalse,
 				EnvVar:     "STEM_FILTER_MAC",
 				TechDesc:   "Enable destination MAC filtering. Only reflects packets destined for specific MAC addresses.",
 				LaymanDesc: "Only respond to packets sent to specific addresses. Usually disabled.",
@@ -208,8 +208,8 @@ func platformConfig() ConfigSection {
 			{
 				Name:       "use_dpdk",
 				Path:       "platform.use_dpdk",
-				Type:       "boolean",
-				Default:    "false",
+				Type:       TypeBoolean,
+				Default:    ValueFalse,
 				EnvVar:     "STEM_USE_DPDK",
 				TechDesc:   "Enable DPDK (Data Plane Development Kit) for kernel-bypass packet processing. Requires DPDK installation and hugepages configuration.",
 				LaymanDesc: "Use ultra-high-speed packet processing. Only enable if DPDK is installed and configured.",
@@ -218,7 +218,7 @@ func platformConfig() ConfigSection {
 			{
 				Name:       "use_af_xdp",
 				Path:       "platform.use_af_xdp",
-				Type:       "boolean",
+				Type:       TypeBoolean,
 				Default:    "true",
 				EnvVar:     "STEM_USE_AF_XDP",
 				TechDesc:   "Use AF_XDP sockets for high-performance packet I/O. Faster than AF_PACKET, slower than DPDK. Requires Linux 5.0+.",
@@ -228,7 +228,7 @@ func platformConfig() ConfigSection {
 			{
 				Name:       "dpdk_args",
 				Path:       "platform.dpdk_args",
-				Type:       "string",
+				Type:       TypeString,
 				Default:    "",
 				EnvVar:     "STEM_DPDK_ARGS",
 				TechDesc:   "DPDK EAL (Environment Abstraction Layer) arguments. Used to configure DPDK core affinity, memory, and device binding.",
@@ -247,7 +247,7 @@ func statsConfig() ConfigSection {
 			{
 				Name:       "format",
 				Path:       "stats.format",
-				Type:       "string",
+				Type:       TypeString,
 				Default:    "json",
 				EnvVar:     "STEM_STATS_FORMAT",
 				TechDesc:   "Output format for statistics. JSON for programmatic parsing, text for human readability, CSV for spreadsheets.",
@@ -258,7 +258,7 @@ func statsConfig() ConfigSection {
 			{
 				Name:       "interval",
 				Path:       "stats.interval",
-				Type:       "integer (seconds)",
+				Type:       TypeIntegerSeconds,
 				Default:    "10",
 				EnvVar:     "STEM_STATS_INTERVAL",
 				TechDesc:   "Interval between statistics updates in seconds. Lower values provide more granular data but increase CPU usage.",
@@ -277,7 +277,7 @@ func loggingConfig() ConfigSection {
 			{
 				Name:       "level",
 				Path:       "logging.level",
-				Type:       "string",
+				Type:       TypeString,
 				Default:    "info",
 				EnvVar:     "STEM_LOG_LEVEL",
 				TechDesc:   "Minimum log level to output. debug < info < warn < error. Debug includes detailed packet traces.",
@@ -288,7 +288,7 @@ func loggingConfig() ConfigSection {
 			{
 				Name:       "format",
 				Path:       "logging.format",
-				Type:       "string",
+				Type:       TypeString,
 				Default:    "json",
 				EnvVar:     "STEM_LOG_FORMAT",
 				TechDesc:   "Log output format. JSON for structured logging (recommended for production), text for human readability.",
@@ -318,7 +318,7 @@ func licenseConfig() ConfigSection {
 			{
 				Name:       "key",
 				Path:       "license.key",
-				Type:       "string",
+				Type:       TypeString,
 				Default:    "",
 				EnvVar:     "STEM_LICENSE_KEY",
 				TechDesc:   "License key in format XXXX-XXXX-XXXX-XXXX. Determines available features (Reflector, TestSuite, Enterprise tiers).",
@@ -355,7 +355,7 @@ func GetEnvironmentVariables() []ConfigOption {
 		{
 			Name:       "Auth Username",
 			Path:       "",
-			Type:       "string",
+			Type:       TypeString,
 			Default:    "admin",
 			EnvVar:     "STEM_AUTH_USERNAME",
 			TechDesc:   "Username for web interface authentication. Set in /etc/stem/environment for security.",
@@ -365,7 +365,7 @@ func GetEnvironmentVariables() []ConfigOption {
 		{
 			Name:       "Auth Password",
 			Path:       "",
-			Type:       "string",
+			Type:       TypeString,
 			Default:    "",
 			EnvVar:     "STEM_AUTH_PASSWORD",
 			TechDesc:   "Password for web interface authentication. Must be set before enabling auth. Never store in config file.",
@@ -375,7 +375,7 @@ func GetEnvironmentVariables() []ConfigOption {
 		{
 			Name:       "JWT Secret",
 			Path:       "",
-			Type:       "string",
+			Type:       TypeString,
 			Default:    "",
 			EnvVar:     "STEM_JWT_SECRET",
 			TechDesc:   "Secret key for JWT token signing. Should be cryptographically random, minimum 32 characters. Auto-generated if empty.",

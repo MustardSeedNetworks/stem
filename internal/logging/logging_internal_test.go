@@ -654,7 +654,7 @@ func TestRedactionInJSONLogs(t *testing.T) {
 	}
 
 	// Password should be redacted.
-	if pwd, ok := logEntry["password"].(string); ok && pwd != "[REDACTED]" {
+	if pwd, ok := logEntry["password"].(string); ok && pwd != RedactedPlaceholder {
 		t.Errorf("expected password to be redacted, got %q", pwd)
 	}
 
@@ -871,13 +871,13 @@ func TestRedactString(t *testing.T) {
 		input    string
 		contains string
 	}{
-		{"password=secret123", "[REDACTED]"},
-		{"token=abc123def", "[REDACTED]"},
-		{"api_key=xyz789", "[REDACTED]"},
+		{"password=secret123", RedactedPlaceholder},
+		{"token=abc123def", RedactedPlaceholder},
+		{"api_key=xyz789", RedactedPlaceholder},
 		{
 			"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." +
 				"eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U",
-			"[REDACTED]",
+			RedactedPlaceholder,
 		},
 		{"regular text without secrets", "regular text without secrets"},
 	}
@@ -903,10 +903,10 @@ func TestRedactHeaders(t *testing.T) {
 
 	redacted := RedactHeaders(headers)
 
-	if redacted["Authorization"] != "[REDACTED]" {
+	if redacted["Authorization"] != RedactedPlaceholder {
 		t.Errorf("expected Authorization to be redacted, got %q", redacted["Authorization"])
 	}
-	if redacted["X-Api-Key"] != "[REDACTED]" {
+	if redacted["X-Api-Key"] != RedactedPlaceholder {
 		t.Errorf("expected X-Api-Key to be redacted, got %q", redacted["X-Api-Key"])
 	}
 	if redacted["Content-Type"] != "application/json" {
@@ -931,10 +931,10 @@ func TestRedactMap(t *testing.T) {
 	if redacted["username"] != "john" {
 		t.Errorf("expected username to be preserved, got %v", redacted["username"])
 	}
-	if redacted["password"] != "[REDACTED]" {
+	if redacted["password"] != RedactedPlaceholder {
 		t.Errorf("expected password to be redacted, got %v", redacted["password"])
 	}
-	if redacted["api_key"] != "[REDACTED]" {
+	if redacted["api_key"] != RedactedPlaceholder {
 		t.Errorf("expected api_key to be redacted, got %v", redacted["api_key"])
 	}
 }

@@ -39,6 +39,10 @@ paths = [
     '''docs/NetAllyAirMapper/.*''',
     '''docs/.*\.md$''',
     '''configs/.*\.yaml$''',
+    # Structured-logging field-name token map. The `const FieldPassword =
+    # "password"` here is a slog dictionary KEY (RedactingHandler matches
+    # this to redact log values), not a credential.
+    '''internal/logging/logger\.go$''',
     # Build artifacts and caches (gitignored)
     '''build/.*''',
     '''dist/.*''',

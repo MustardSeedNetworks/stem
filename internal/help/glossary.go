@@ -44,9 +44,9 @@ func getBandwidthTerms() map[string]GlossaryEntry {
 			FullName:  "Network Bandwidth",
 			TechDef:   "The maximum data transfer capacity of a network link, measured in bits per second (bps)",
 			LaymanDef: "How much data your network can carry - like the width of a highway. More bandwidth = more data can flow at once",
-			Related:   []string{"throughput", "cir", "line_rate"},
+			Related:   []string{TestTypeThroughput, "cir", "line_rate"},
 		},
-		"throughput": {
+		TestTypeThroughput: {
 			Term:      "Throughput",
 			FullName:  "Network Throughput",
 			TechDef:   "The actual rate of successful data transfer, accounting for protocol overhead and losses",
@@ -54,8 +54,8 @@ func getBandwidthTerms() map[string]GlossaryEntry {
 			Related:   []string{"bandwidth", "goodput"},
 		},
 		"cir": {
-			Term:      "CIR",
-			FullName:  "Committed Information Rate",
+			Term:      TermCIR,
+			FullName:  TermCIRFull,
 			TechDef:   "The guaranteed bandwidth specified in a service level agreement that the carrier commits to deliver",
 			LaymanDef: "The speed your ISP promises you'll always get, no matter what",
 			Related:   []string{"eir", "sla", "bandwidth"},
@@ -86,14 +86,14 @@ func getBandwidthTerms() map[string]GlossaryEntry {
 			FullName:  "Line Rate / Wire Speed",
 			TechDef:   "The maximum theoretical bit rate of a physical interface (e.g., 1 Gbps, 10 Gbps)",
 			LaymanDef: "The maximum speed the cable/port can physically handle - like the top speed of a car",
-			Related:   []string{"bandwidth", "throughput"},
+			Related:   []string{"bandwidth", TestTypeThroughput},
 		},
 		"goodput": {
 			Term:      "Goodput",
 			FullName:  "Application Goodput",
 			TechDef:   "The rate of useful data transfer excluding protocol overhead, retransmissions, and headers",
 			LaymanDef: "The actual useful data speed your applications see - always less than throughput due to overhead",
-			Related:   []string{"throughput"},
+			Related:   []string{TestTypeThroughput},
 		},
 	}
 }
@@ -101,7 +101,7 @@ func getBandwidthTerms() map[string]GlossaryEntry {
 // getLatencyTerms returns latency and timing terms.
 func getLatencyTerms() map[string]GlossaryEntry {
 	return map[string]GlossaryEntry{
-		"latency": {
+		TestTypeLatency: {
 			Term:      "Latency",
 			FullName:  "Network Latency",
 			TechDef:   "The time delay for a packet to travel from source to destination, usually measured in milliseconds or microseconds",
@@ -113,14 +113,14 @@ func getLatencyTerms() map[string]GlossaryEntry {
 			FullName:  "Round-Trip Time",
 			TechDef:   "Total time for a packet to travel to a destination and back, including processing delays",
 			LaymanDef: "Time for a message to go there and come back - what you see when you ping something",
-			Related:   []string{"latency", "ping"},
+			Related:   []string{TestTypeLatency, "ping"},
 		},
 		"jitter": {
 			Term:      "Jitter",
 			FullName:  "Packet Delay Variation",
 			TechDef:   "The variation in latency between packets in a flow. Low jitter means consistent timing",
 			LaymanDef: "How consistent the delay is. High jitter = choppy video/audio because packets arrive at uneven times",
-			Related:   []string{"latency", "fdv"},
+			Related:   []string{TestTypeLatency, "fdv"},
 		},
 		"fdv": {
 			Term:      "FDV",
@@ -134,7 +134,7 @@ func getLatencyTerms() map[string]GlossaryEntry {
 			FullName:  "Frame Delay",
 			TechDef:   "ITU-T term for the delay of individual frames in carrier ethernet",
 			LaymanDef: "How long it takes for a single data packet to arrive",
-			Related:   []string{"latency", "fdv"},
+			Related:   []string{TestTypeLatency, "fdv"},
 		},
 	}
 }
@@ -147,7 +147,7 @@ func getLossTerms() map[string]GlossaryEntry {
 			FullName:  "Packet Loss Rate",
 			TechDef:   "The percentage of packets that fail to reach their destination",
 			LaymanDef: "Lost messages - like letters that never arrive. Even 0.1% loss can cause problems for video calls",
-			Related:   []string{"flr", "frame_loss"},
+			Related:   []string{"flr", TestTypeFrameLoss},
 		},
 		"flr": {
 			Term:      "FLR",
@@ -303,14 +303,14 @@ func getServiceTerms() map[string]GlossaryEntry {
 			FullName:  "Carrier-Grade Ethernet Service",
 			TechDef:   "Ethernet services provided by telecommunications carriers with SLA guarantees",
 			LaymanDef: "Professional ethernet service from a phone/cable company with guaranteed quality - not just best effort",
-			Related:   []string{"mef", "y1564"},
+			Related:   []string{CatMEF, CatY1564},
 		},
-		"mef": {
-			Term:      "MEF",
+		CatMEF: {
+			Term:      StandardMEF,
 			FullName:  "Metro Ethernet Forum",
 			TechDef:   "Industry organization defining standards for carrier ethernet services",
 			LaymanDef: "The group that sets standards for professional ethernet services - their certification means it meets industry standards",
-			Related:   []string{"carrier_ethernet", "y1564"},
+			Related:   []string{"carrier_ethernet", CatY1564},
 		},
 	}
 }
@@ -391,14 +391,14 @@ func getOAMTerms() map[string]GlossaryEntry {
 			FullName:  "Operations, Administration, and Maintenance",
 			TechDef:   "Network management functions for monitoring, troubleshooting, and maintaining services",
 			LaymanDef: "Built-in tools for checking if the network is healthy and finding problems",
-			Related:   []string{"y1731", "cfm"},
+			Related:   []string{CatY1731, "cfm"},
 		},
 		"cfm": {
 			Term:      "CFM",
 			FullName:  "Connectivity Fault Management",
 			TechDef:   "IEEE 802.1ag standard for detecting, isolating, and reporting connectivity faults",
 			LaymanDef: "Automatic system for finding where network connections are broken",
-			Related:   []string{"oam", "y1731"},
+			Related:   []string{"oam", CatY1731},
 		},
 		"mep": {
 			Term:      "MEP",
@@ -420,8 +420,8 @@ func getOAMTerms() map[string]GlossaryEntry {
 // getTSNTerms returns TSN-related terms.
 func getTSNTerms() map[string]GlossaryEntry {
 	return map[string]GlossaryEntry{
-		"tsn": {
-			Term:      "TSN",
+		CatTSN: {
+			Term:      StandardTSN,
 			FullName:  "Time-Sensitive Networking",
 			TechDef:   "IEEE 802.1 standards for deterministic, low-latency networking in industrial applications",
 			LaymanDef: "Special networking for factories and cars where timing must be EXACT - packets arrive at precise times",
@@ -432,21 +432,21 @@ func getTSNTerms() map[string]GlossaryEntry {
 			FullName:  "Time-Aware Shaper",
 			TechDef:   "IEEE 802.1Qbv mechanism that uses time-based gates to schedule traffic transmission",
 			LaymanDef: "Traffic lights for network packets - only lets certain traffic through at specific times",
-			Related:   []string{"tsn", "gcl"},
+			Related:   []string{CatTSN, "gcl"},
 		},
 		"gcl": {
 			Term:      "GCL",
 			FullName:  "Gate Control List",
 			TechDef:   "The schedule defining when each traffic class gate opens and closes in TAS",
 			LaymanDef: "The timetable for network traffic - says when each type of traffic is allowed to go",
-			Related:   []string{"tas", "tsn"},
+			Related:   []string{"tas", CatTSN},
 		},
 		"ptp": {
 			Term:      "PTP",
 			FullName:  "Precision Time Protocol",
 			TechDef:   "IEEE 1588 protocol for precise clock synchronization, achieving sub-microsecond accuracy",
 			LaymanDef: "A way to synchronize clocks across a network to nanosecond precision - essential for TSN",
-			Related:   []string{"tsn", "ntp"},
+			Related:   []string{CatTSN, "ntp"},
 		},
 	}
 }
@@ -479,21 +479,21 @@ func getTestingTerms() map[string]GlossaryEntry {
 			FullName:  "Binary Search Algorithm",
 			TechDef:   "Algorithm used in RFC 2544 to efficiently find maximum throughput by halving the search range",
 			LaymanDef: "A smart way to find the right speed - instead of trying every speed, it narrows down quickly by halves",
-			Related:   []string{"throughput"},
+			Related:   []string{TestTypeThroughput},
 		},
-		"baseline": {
+		ValueBaseline: {
 			Term:      "Baseline",
 			FullName:  "Performance Baseline",
 			TechDef:   "Reference measurements taken under known good conditions for comparison",
 			LaymanDef: "Your 'normal' measurements - so you can tell if something changes later",
-			Related:   []string{"benchmark"},
+			Related:   []string{ModuleBenchmark},
 		},
-		"benchmark": {
+		ModuleBenchmark: {
 			Term:      "Benchmark",
 			FullName:  "Performance Benchmark",
 			TechDef:   "Standardized tests for comparing equipment or network performance",
 			LaymanDef: "Official tests for comparing how fast different equipment is",
-			Related:   []string{"baseline", "rfc2544"},
+			Related:   []string{ValueBaseline, CatRFC2544},
 		},
 	}
 }
@@ -520,7 +520,7 @@ func getCongestionTerms() map[string]GlossaryEntry {
 			FullName:  "Bufferbloat",
 			TechDef:   "Excessive buffering that causes high latency without improving throughput",
 			LaymanDef: "When buffers are so big that packets wait too long - causes lag even though nothing is lost",
-			Related:   []string{"buffer", "latency"},
+			Related:   []string{"buffer", TestTypeLatency},
 		},
 		"queue": {
 			Term:      "Queue",
@@ -542,40 +542,40 @@ func getCongestionTerms() map[string]GlossaryEntry {
 // getStandardsTerms returns standards-related terms.
 func getStandardsTerms() map[string]GlossaryEntry {
 	return map[string]GlossaryEntry{
-		"rfc2544": {
-			Term:      "RFC 2544",
+		CatRFC2544: {
+			Term:      StandardRFC2544,
 			FullName:  "Benchmarking Methodology for Network Interconnect Devices",
 			TechDef:   "IETF standard defining procedures for measuring network device performance",
 			LaymanDef: "The official rulebook for how to test network equipment performance",
-			Related:   []string{"rfc2889", "rfc6349"},
+			Related:   []string{CatRFC2889, CatRFC6349},
 		},
-		"rfc2889": {
-			Term:      "RFC 2889",
+		CatRFC2889: {
+			Term:      StandardRFC2889,
 			FullName:  "Benchmarking Methodology for LAN Switching Devices",
 			TechDef:   "IETF standard extending RFC 2544 for switch-specific testing",
 			LaymanDef: "Testing rules specifically for network switches",
-			Related:   []string{"rfc2544"},
+			Related:   []string{CatRFC2544},
 		},
-		"rfc6349": {
-			Term:      "RFC 6349",
+		CatRFC6349: {
+			Term:      StandardRFC6349,
 			FullName:  "Framework for TCP Throughput Testing",
 			TechDef:   "IETF standard for testing TCP performance considering protocol behavior",
 			LaymanDef: "Testing rules for measuring real application speeds (not just raw network speed)",
-			Related:   []string{"tcp", "rfc2544"},
+			Related:   []string{"tcp", CatRFC2544},
 		},
-		"y1564": {
-			Term:      "Y.1564",
-			FullName:  "ITU-T Y.1564",
+		CatY1564: {
+			Term:      StandardY1564,
+			FullName:  StandardITUY1564,
 			TechDef:   "ITU standard for Ethernet Service Activation Test methodology",
 			LaymanDef: "The official test for verifying carrier ethernet service quality",
-			Related:   []string{"y1731", "mef"},
+			Related:   []string{CatY1731, CatMEF},
 		},
-		"y1731": {
+		CatY1731: {
 			Term:      "Y.1731",
-			FullName:  "ITU-T Y.1731",
+			FullName:  StandardITUY1731,
 			TechDef:   "ITU standard for OAM functions in Ethernet-based networks",
 			LaymanDef: "Standard for monitoring and maintaining carrier ethernet networks",
-			Related:   []string{"y1564", "oam"},
+			Related:   []string{CatY1564, "oam"},
 		},
 	}
 }
@@ -584,10 +584,10 @@ func getStandardsTerms() map[string]GlossaryEntry {
 func GetGlossaryTermsByCategory() map[string][]string {
 	return map[string][]string{
 		"Bandwidth & Rate": {
-			"bandwidth", "throughput", "cir", "eir", "cbs", "ebs", "line_rate", "goodput",
+			"bandwidth", TestTypeThroughput, "cir", "eir", "cbs", "ebs", "line_rate", "goodput",
 		},
 		"Latency & Timing": {
-			"latency", "rtt", "jitter", "fdv", "fd",
+			TestTypeLatency, "rtt", "jitter", "fdv", "fd",
 		},
 		"Loss": {
 			"packet_loss", "flr",
@@ -605,7 +605,7 @@ func GetGlossaryTermsByCategory() map[string][]string {
 			"dut", "sut", "switch", "router", "reflector",
 		},
 		"Service Terms": {
-			"sla", "carrier_ethernet", "mef",
+			"sla", "carrier_ethernet", CatMEF,
 		},
 		"Measurements": {
 			"pps", "bps", "fps",
@@ -616,20 +616,20 @@ func GetGlossaryTermsByCategory() map[string][]string {
 		"OAM": {
 			"oam", "cfm", "mep", "mip",
 		},
-		"TSN": {
-			"tsn", "tas", "gcl", "ptp",
+		StandardTSN: {
+			CatTSN, "tas", "gcl", "ptp",
 		},
 		"Network Layers": {
 			"layer2", "layer3",
 		},
 		"Testing": {
-			"binary_search", "baseline", "benchmark",
+			"binary_search", ValueBaseline, ModuleBenchmark,
 		},
 		"Congestion": {
 			"congestion", "buffer", "buffer_bloat", "queue", "hol_blocking",
 		},
 		"Standards": {
-			"rfc2544", "rfc2889", "rfc6349", "y1564", "y1731",
+			CatRFC2544, CatRFC2889, CatRFC6349, CatY1564, CatY1731,
 		},
 	}
 }

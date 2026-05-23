@@ -424,7 +424,7 @@ func DisplayTestListTo(w io.Writer) {
 	categories := GetAllCategories()
 
 	// Define category order
-	catOrder := []string{"rfc2544", "y1564", "rfc2889", "rfc6349", "y1731", "mef", "tsn"}
+	catOrder := []string{CatRFC2544, CatY1564, CatRFC2889, CatRFC6349, CatY1731, CatMEF, CatTSN}
 
 	hs := NewSystem()
 
@@ -468,7 +468,7 @@ func DisplayTestListByModuleTo(w io.Writer) {
 	_, _ = fmt.Fprintln(w)
 
 	// Define module display order (Tier 1 first, then Tier 2 by color) - use lowercase module names
-	moduleOrder := []string{"reflector", "benchmark", "servicetest", "trafficgen", "measure", "certify"}
+	moduleOrder := []string{"reflector", ModuleBenchmark, "servicetest", "trafficgen", "measure", "certify"}
 
 	hs := NewSystem()
 

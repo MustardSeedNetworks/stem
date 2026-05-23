@@ -10,6 +10,11 @@ import (
 	"strings"
 )
 
+// RedactedPlaceholder is the string used to mask sensitive values in
+// logs and error messages. Hoisted as a const so format changes are a
+// single-line edit and tests don't need to repeat the literal.
+const RedactedPlaceholder = "[REDACTED]"
+
 // Sensitive field patterns that should always be redacted.
 // Comprehensive patterns for: passwords, tokens, API keys, secrets, SSNs, credit cards, etc.
 func redactionPatterns() []*regexp.Regexp {
@@ -91,7 +96,7 @@ func redactionHeaderSet() map[string]bool {
 // RedactString removes sensitive data from a string.
 func RedactString(s string) string {
 	for _, pattern := range redactionPatterns() {
-		s = pattern.ReplaceAllString(s, "[REDACTED]")
+		s = pattern.ReplaceAllString(s, RedactedPlaceholder)
 	}
 	return s
 }
@@ -103,7 +108,7 @@ func RedactHeaders(headers http.Header) map[string]string {
 	for key, values := range headers {
 		lowerKey := strings.ToLower(key)
 		if headerSet[lowerKey] {
-			redacted[key] = "[REDACTED]"
+			redacted[key] = RedactedPlaceholder
 		} else {
 			redacted[key] = strings.Join(values, ", ")
 		}
@@ -116,12 +121,12 @@ func RedactMap(data map[string]any) map[string]any {
 	redacted := make(map[string]any)
 	for key, value := range data {
 		lowerKey := strings.ToLower(key)
-		if strings.Contains(lowerKey, "password") ||
+		if strings.Contains(lowerKey, FieldPassword) ||
 			strings.Contains(lowerKey, "secret") ||
 			strings.Contains(lowerKey, "token") ||
 			strings.Contains(lowerKey, "key") ||
 			strings.Contains(lowerKey, "auth") {
-			redacted[key] = "[REDACTED]"
+			redacted[key] = RedactedPlaceholder
 		} else {
 			// For string values, apply pattern-based redaction
 			if strVal, ok := value.(string); ok {

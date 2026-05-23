@@ -74,7 +74,7 @@ func (h *RedactingHandler) redactAttr(a slog.Attr) slog.Attr {
 
 	// Check if the key itself indicates sensitive data
 	if isSensitiveKey(key) {
-		return slog.String(key, "[REDACTED]")
+		return slog.String(key, RedactedPlaceholder)
 	}
 
 	// Handle different value types
@@ -127,7 +127,7 @@ func (h *RedactingHandler) redactAttr(a slog.Attr) slog.Attr {
 func isSensitiveKey(key string) bool {
 	// Check against common sensitive field names (case-insensitive)
 	sensitiveKeys := map[string]bool{
-		"password":      true,
+		FieldPassword:   true,
 		"passwd":        true,
 		"pwd":           true,
 		"secret":        true,

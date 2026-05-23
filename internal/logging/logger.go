@@ -6,12 +6,12 @@
 // request ID correlation, and configurable output formats (text/JSON).
 //
 // JSON Log Format:
-// When Format is "json", logs are output in structured JSON format:
+// When Format is FormatJSON, logs are output in structured JSON format:
 //
 //	{"time":"2026-01-05T10:00:00Z","level":"INFO","msg":"Request processed","component":"server","request_id":"abc123","duration_ms":45}
 //
 // Environment Variables:
-//   - LOG_FORMAT: Set to "json" to enable JSON mode (also respects STEM_LOG_FORMAT)
+//   - LOG_FORMAT: Set to FormatJSON to enable JSON mode (also respects STEM_LOG_FORMAT)
 //   - STEM_LOG_LEVEL: Set log level (debug, info, warn, error)
 //   - STEM_LOG_FORMAT: Set log format (text, json)
 //
@@ -51,11 +51,27 @@ const (
 	defaultMaxAgeDays = 30  // Default days to keep old files.
 )
 
+// Log level + format string constants. Match slog's standard naming and
+// what STEM_LOG_LEVEL/STEM_LOG_FORMAT expect from operators.
+const (
+	LevelDebug = "debug"
+	LevelInfo  = "info"
+	LevelWarn  = "warn"
+	LevelError = "error"
+	FormatText = "text"
+	FormatJSON = "json"
+)
+
+// FieldPassword is the canonical field-name token used by RedactingHandler
+// to identify password-bearing log keys. Hoisted as a const so the redactor
+// + handler + tests stay in sync.
+const FieldPassword = "password" // gitleaks:allow — field NAME, not a credential value
+
 // DefaultConfig returns sensible defaults for logging.
 func DefaultConfig() *Config {
 	return &Config{
-		Level:      "info",
-		Format:     "json",
+		Level:      LevelInfo,
+		Format:     FormatJSON,
 		AddSource:  false,
 		File:       "",
 		MaxSize:    defaultMaxSizeMB,
@@ -97,13 +113,13 @@ const (
 // parseLevel converts a string level to [slog.Level].
 func parseLevel(level string) slog.Level {
 	switch strings.ToLower(level) {
-	case "debug":
+	case LevelDebug:
 		return slog.LevelDebug
-	case "info":
+	case LevelInfo:
 		return slog.LevelInfo
-	case "warn", "warning":
+	case LevelWarn, "warning":
 		return slog.LevelWarn
-	case "error":
+	case LevelError:
 		return slog.LevelError
 	default:
 		return slog.LevelInfo
@@ -137,7 +153,7 @@ func jsonReplaceAttr(isJSON bool) func([]string, slog.Attr) slog.Attr {
 }
 
 func configureDefaultLogger(cfg *Config, output io.Writer) {
-	isJSON := strings.EqualFold(cfg.Format, "json")
+	isJSON := strings.EqualFold(cfg.Format, FormatJSON)
 	opts := &slog.HandlerOptions{
 		Level:       parseLevel(cfg.Level),
 		AddSource:   cfg.AddSource,
@@ -167,7 +183,7 @@ func configureDefaultLogger(cfg *Config, output io.Writer) {
 // For JSON format, the output uses customized field names:
 //   - "time" -> "timestamp"
 //   - "msg" -> "message"
-//   - level values are lowercase (e.g., "info" instead of "INFO")
+//   - level values are lowercase (e.g., LevelInfo instead of "INFO")
 func Init(cfg *Config) error {
 	if cfg == nil {
 		cfg = DefaultConfig()

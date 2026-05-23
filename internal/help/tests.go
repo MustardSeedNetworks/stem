@@ -10,12 +10,12 @@ package help
 func GetAllTests() map[string]TestHelp {
 	return map[string]TestHelp{
 		// RFC 2544 Tests
-		"throughput":      rfc2544Throughput(),
-		"latency":         rfc2544Latency(),
-		"frame_loss":      rfc2544FrameLoss(),
-		"back_to_back":    rfc2544BackToBack(),
-		"system_recovery": rfc2544SystemRecovery(),
-		"reset":           rfc2544Reset(),
+		TestTypeThroughput: rfc2544Throughput(),
+		TestTypeLatency:    rfc2544Latency(),
+		TestTypeFrameLoss:  rfc2544FrameLoss(),
+		"back_to_back":     rfc2544BackToBack(),
+		"system_recovery":  rfc2544SystemRecovery(),
+		"reset":            rfc2544Reset(),
 
 		// Y.1564 Tests
 		"y1564_config":      y1564Config(),
@@ -59,10 +59,10 @@ func GetAllTests() map[string]TestHelp {
 func rfc2544Throughput() TestHelp {
 	return buildTestHelp(
 		testHelpMeta{
-			ID:       "throughput",
+			ID:       TestTypeThroughput,
 			Name:     "Throughput Test",
 			Standard: "RFC 2544 Section 26.1",
-			Category: "RFC 2544",
+			Category: StandardRFC2544,
 		},
 		rfc2544ThroughputDescriptions(),
 		rfc2544ThroughputUsage(),
@@ -123,25 +123,25 @@ func rfc2544ThroughputDetails() testHelpDetails {
 		Tips:               rfc2544ThroughputTips(),
 		CommonIssues:       rfc2544ThroughputIssues(),
 		RFCSection:         "Section 26.1",
-		SeeAlso:            []string{"latency", "frame_loss", "y1564_config"},
+		SeeAlso:            []string{TestTypeLatency, TestTypeFrameLoss, "y1564_config"},
 	}
 }
 
 func rfc2544ThroughputParameters() []Parameter {
 	return []Parameter{
 		{
-			Name:       "Frame Sizes",
-			Flag:       "--frame-sizes",
+			Name:       LabelFrameSizes,
+			Flag:       FlagFrameSizes,
 			Type:       "comma-separated integers (bytes)",
-			Default:    "64,128,256,512,1024,1280,1518",
+			Default:    DefaultFrameSizes,
 			Required:   false,
 			TechDesc:   "Ethernet frame sizes to test, as specified in RFC 2544",
 			LaymanDesc: "Different packet sizes to try - small packets stress the network differently than large ones",
-			Example:    "--frame-sizes 64,512,1518",
+			Example:    ExampleFrameSizes,
 		},
 		{
 			Name:       "Trial Duration",
-			Flag:       "--duration",
+			Flag:       FlagDuration,
 			Type:       "integer (seconds)",
 			Default:    "60",
 			Required:   false,
@@ -250,10 +250,10 @@ func rfc2544ThroughputIssues() []Issue {
 func rfc2544Latency() TestHelp {
 	return buildTestHelp(
 		testHelpMeta{
-			ID:       "latency",
+			ID:       TestTypeLatency,
 			Name:     "Latency Test",
 			Standard: "RFC 2544 Section 26.2",
-			Category: "RFC 2544",
+			Category: StandardRFC2544,
 		},
 		rfc2544LatencyDescriptions(),
 		rfc2544LatencyUsage(),
@@ -320,41 +320,41 @@ func rfc2544LatencyDetails() testHelpDetails {
 		Tips:               rfc2544LatencyTips(),
 		CommonIssues:       rfc2544LatencyIssues(),
 		RFCSection:         "Section 26.2",
-		SeeAlso:            []string{"throughput", "frame_delay", "y1564_performance"},
+		SeeAlso:            []string{TestTypeThroughput, "frame_delay", "y1564_performance"},
 	}
 }
 
 func rfc2544LatencyParameters() []Parameter {
 	return []Parameter{
 		{
-			Name:       "Frame Sizes",
-			Flag:       "--frame-sizes",
+			Name:       LabelFrameSizes,
+			Flag:       FlagFrameSizes,
 			Type:       "comma-separated integers (bytes)",
-			Default:    "64,128,256,512,1024,1280,1518",
+			Default:    DefaultFrameSizes,
 			Required:   false,
 			TechDesc:   "Frame sizes at which to measure latency",
 			LaymanDesc: "Packet sizes to test - larger packets may have slightly higher latency",
-			Example:    "--frame-sizes 64,512,1518",
+			Example:    ExampleFrameSizes,
 		},
 		{
 			Name:       "Rate",
 			Flag:       "--rate",
 			Type:       "float (percentage) or 'auto'",
-			Default:    "auto",
+			Default:    ValueAuto,
 			Required:   false,
 			TechDesc:   "Rate at which to measure latency (auto uses throughput test result)",
 			LaymanDesc: "Network speed during test - 'auto' uses maximum lossless rate",
 			Example:    "--rate 80",
 		},
 		{
-			Name:       "Duration",
-			Flag:       "--duration",
+			Name:       LabelDuration,
+			Flag:       FlagDuration,
 			Type:       "integer (seconds)",
 			Default:    "120",
 			Required:   false,
 			TechDesc:   "Test duration for statistical accuracy",
 			LaymanDesc: "How long to collect measurements - longer is more accurate",
-			Example:    "--duration 60",
+			Example:    ExampleDuration60,
 		},
 		{
 			Name:       "Sample Count",
@@ -440,10 +440,10 @@ func rfc2544LatencyIssues() []Issue {
 func rfc2544FrameLoss() TestHelp {
 	return buildTestHelp(
 		testHelpMeta{
-			ID:       "frame_loss",
+			ID:       TestTypeFrameLoss,
 			Name:     "Frame Loss Rate Test",
 			Standard: "RFC 2544 Section 26.3",
-			Category: "RFC 2544",
+			Category: StandardRFC2544,
 		},
 		rfc2544FrameLossDescriptions(),
 		rfc2544FrameLossUsage(),
@@ -505,21 +505,21 @@ func rfc2544FrameLossDetails() testHelpDetails {
 		Tips:               rfc2544FrameLossTips(),
 		CommonIssues:       rfc2544FrameLossIssues(),
 		RFCSection:         "Section 26.3",
-		SeeAlso:            []string{"throughput", "y1731_frame_loss"},
+		SeeAlso:            []string{TestTypeThroughput, "y1731_frame_loss"},
 	}
 }
 
 func rfc2544FrameLossParameters() []Parameter {
 	return []Parameter{
 		{
-			Name:       "Frame Sizes",
-			Flag:       "--frame-sizes",
+			Name:       LabelFrameSizes,
+			Flag:       FlagFrameSizes,
 			Type:       "comma-separated integers (bytes)",
-			Default:    "64,128,256,512,1024,1280,1518",
+			Default:    DefaultFrameSizes,
 			Required:   false,
 			TechDesc:   "Frame sizes at which to measure loss rate",
 			LaymanDesc: "Packet sizes to test",
-			Example:    "--frame-sizes 64,512,1518",
+			Example:    ExampleFrameSizes,
 		},
 		{
 			Name:       "Start Rate",
@@ -542,8 +542,8 @@ func rfc2544FrameLossParameters() []Parameter {
 			Example:    "--step 5",
 		},
 		{
-			Name:       "Duration",
-			Flag:       "--duration",
+			Name:       LabelDuration,
+			Flag:       FlagDuration,
 			Type:       "integer (seconds)",
 			Default:    "60",
 			Required:   false,
@@ -610,7 +610,7 @@ func rfc2544BackToBack() TestHelp {
 			ID:       "back_to_back",
 			Name:     "Back-to-Back Frames Test",
 			Standard: "RFC 2544 Section 26.4",
-			Category: "RFC 2544",
+			Category: StandardRFC2544,
 		},
 		rfc2544BackToBackDescriptions(),
 		rfc2544BackToBackUsage(),
@@ -670,17 +670,17 @@ func rfc2544BackToBackDetails() testHelpDetails {
 		Tips:               rfc2544BackToBackTips(),
 		CommonIssues:       nil,
 		RFCSection:         "Section 26.4",
-		SeeAlso:            []string{"throughput", "congestion"},
+		SeeAlso:            []string{TestTypeThroughput, "congestion"},
 	}
 }
 
 func rfc2544BackToBackParameters() []Parameter {
 	return []Parameter{
 		{
-			Name:       "Frame Sizes",
-			Flag:       "--frame-sizes",
+			Name:       LabelFrameSizes,
+			Flag:       FlagFrameSizes,
 			Type:       "comma-separated integers (bytes)",
-			Default:    "64,128,256,512,1024,1280,1518",
+			Default:    DefaultFrameSizes,
 			Required:   false,
 			TechDesc:   "Frame sizes at which to measure burst capacity",
 			LaymanDesc: "Packet sizes to test",
@@ -739,7 +739,7 @@ func rfc2544SystemRecovery() TestHelp {
 		ID:       "system_recovery",
 		Name:     "System Recovery Test",
 		Standard: "RFC 2544 Section 26.5",
-		Category: "RFC 2544",
+		Category: StandardRFC2544,
 
 		Summary: "Measures how quickly the network recovers after being overloaded.",
 
@@ -823,7 +823,7 @@ traffic spikes.`,
 		CommonIssues: nil,
 
 		RFCSection: "Section 26.5",
-		SeeAlso:    []string{"throughput", "reset"},
+		SeeAlso:    []string{TestTypeThroughput, "reset"},
 	}
 }
 
@@ -832,7 +832,7 @@ func rfc2544Reset() TestHelp {
 		ID:       "reset",
 		Name:     "Reset Test",
 		Standard: "RFC 2544 Section 26.6",
-		Category: "RFC 2544",
+		Category: StandardRFC2544,
 
 		Summary: "Measures how long the device takes to recover from a hardware or software reset.",
 
@@ -916,8 +916,8 @@ func y1564Config() TestHelp {
 		testHelpMeta{
 			ID:       "y1564_config",
 			Name:     "Y.1564 Service Configuration Test",
-			Standard: "ITU-T Y.1564",
-			Category: "Y.1564",
+			Standard: StandardITUY1564,
+			Category: StandardY1564,
 		},
 		y1564ConfigDescriptions(),
 		y1564ConfigUsage(),
@@ -978,21 +978,21 @@ func y1564ConfigDetails() testHelpDetails {
 		Tips:               y1564ConfigTips(),
 		CommonIssues:       y1564ConfigIssues(),
 		RFCSection:         "",
-		SeeAlso:            []string{"y1564_performance", "throughput", "mef_config"},
+		SeeAlso:            []string{"y1564_performance", TestTypeThroughput, "mef_config"},
 	}
 }
 
 func y1564ConfigParameters() []Parameter {
 	return []Parameter{
 		{
-			Name:       "CIR",
-			Flag:       "--cir",
+			Name:       TermCIR,
+			Flag:       FlagCIR,
 			Type:       "integer (Mbps)",
 			Default:    "1000",
 			Required:   true,
 			TechDesc:   "Committed Information Rate - guaranteed bandwidth",
 			LaymanDesc: "The speed your contract guarantees (e.g., 100 for 100 Mbps)",
-			Example:    "--cir 100",
+			Example:    ExampleCIR100,
 		},
 		{
 			Name:       "EIR",
@@ -1051,7 +1051,7 @@ func y1564ConfigMetrics() []Metric {
 	return []Metric{
 		{
 			Name:       "IR (Information Rate)",
-			Unit:       "Mbps",
+			Unit:       UnitMbps,
 			GoodRange:  "Within 1% of configured CIR",
 			BadMeaning: "Service not delivering promised bandwidth",
 		},
@@ -1119,8 +1119,8 @@ func y1564Performance() TestHelp {
 	return TestHelp{
 		ID:       "y1564_performance",
 		Name:     "Y.1564 Service Performance Test",
-		Standard: "ITU-T Y.1564",
-		Category: "Y.1564",
+		Standard: StandardITUY1564,
+		Category: StandardY1564,
 
 		Summary: "Extended duration test to validate service quality over time.",
 
@@ -1158,31 +1158,31 @@ thorough validation.`,
 
 		Parameters: []Parameter{
 			{
-				Name:       "CIR",
-				Flag:       "--cir",
+				Name:       TermCIR,
+				Flag:       FlagCIR,
 				Type:       "integer (Mbps)",
 				Default:    "1000",
 				Required:   true,
-				TechDesc:   "Committed Information Rate",
+				TechDesc:   TermCIRFull,
 				LaymanDesc: "Your contracted bandwidth",
-				Example:    "--cir 100",
+				Example:    ExampleCIR100,
 			},
 			{
-				Name:       "Duration",
-				Flag:       "--duration",
+				Name:       LabelDuration,
+				Flag:       FlagDuration,
 				Type:       "integer (minutes)",
 				Default:    "15",
 				Required:   false,
 				TechDesc:   "Test duration in minutes",
 				LaymanDesc: "How long to run the test",
-				Example:    "--duration 60",
+				Example:    ExampleDuration60,
 			},
 		},
 
 		Metrics: []Metric{
 			{
 				Name:       "Sustained Rate",
-				Unit:       "Mbps",
+				Unit:       UnitMbps,
 				GoodRange:  "Within 1% of CIR for entire duration",
 				BadMeaning: "Performance degrades over time",
 			},
@@ -1222,8 +1222,8 @@ func y1564Full() TestHelp {
 	return TestHelp{
 		ID:       "y1564_full",
 		Name:     "Y.1564 Full SAC Test",
-		Standard: "ITU-T Y.1564",
-		Category: "Y.1564",
+		Standard: StandardITUY1564,
+		Category: StandardY1564,
 
 		Summary: "Complete Service Activation Test - Configuration followed by Performance.",
 
@@ -1255,14 +1255,14 @@ Total test time is typically 30 minutes for a standard activation.`,
 
 		Parameters: []Parameter{
 			{
-				Name:       "CIR",
-				Flag:       "--cir",
+				Name:       TermCIR,
+				Flag:       FlagCIR,
 				Type:       "integer (Mbps)",
 				Default:    "1000",
 				Required:   true,
-				TechDesc:   "Committed Information Rate",
+				TechDesc:   TermCIRFull,
 				LaymanDesc: "Your contracted bandwidth",
-				Example:    "--cir 100",
+				Example:    ExampleCIR100,
 			},
 			{
 				Name:       "Performance Duration",
@@ -1306,7 +1306,7 @@ func rfc2889Forwarding() TestHelp {
 		ID:       "forwarding",
 		Name:     "Forwarding Rate Test",
 		Standard: "RFC 2889 Section 5.2",
-		Category: "RFC 2889",
+		Category: StandardRFC2889,
 
 		Summary: "Measures how fast a switch can move packets between ports.",
 
@@ -1386,7 +1386,7 @@ Important for environments with many active connections simultaneously.`,
 		CommonIssues: nil,
 
 		RFCSection: "Section 5.2",
-		SeeAlso:    []string{"address_cache", "throughput"},
+		SeeAlso:    []string{"address_cache", TestTypeThroughput},
 	}
 }
 
@@ -1395,7 +1395,7 @@ func rfc2889AddressCache() TestHelp {
 		ID:       "address_cache",
 		Name:     "Address Caching Capacity Test",
 		Standard: "RFC 2889 Section 5.5",
-		Category: "RFC 2889",
+		Category: StandardRFC2889,
 
 		Summary: "Determines how many MAC addresses a switch can remember.",
 
@@ -1483,7 +1483,7 @@ func rfc2889LearningRate() TestHelp {
 		ID:       "learning_rate",
 		Name:     "Address Learning Rate Test",
 		Standard: "RFC 2889 Section 5.6",
-		Category: "RFC 2889",
+		Category: StandardRFC2889,
 
 		Summary: "Measures how fast a switch can learn new device addresses.",
 
@@ -1552,7 +1552,7 @@ func rfc2889Broadcast() TestHelp {
 		ID:       "broadcast",
 		Name:     "Broadcast Frame Handling Test",
 		Standard: "RFC 2889 Section 5.7",
-		Category: "RFC 2889",
+		Category: StandardRFC2889,
 
 		Summary: "Tests how the switch handles broadcast traffic.",
 
@@ -1625,7 +1625,7 @@ func rfc2889Congestion() TestHelp {
 		ID:       "congestion",
 		Name:     "Congestion Control Test",
 		Standard: "RFC 2889 Section 5.8",
-		Category: "RFC 2889",
+		Category: StandardRFC2889,
 
 		Summary: "Tests switch behavior when ports are oversubscribed.",
 
@@ -1707,8 +1707,8 @@ func rfc6349TCPThroughput() TestHelp {
 		testHelpMeta{
 			ID:       "tcp_throughput",
 			Name:     "TCP Throughput Test",
-			Standard: "RFC 6349",
-			Category: "RFC 6349",
+			Standard: StandardRFC6349,
+			Category: StandardRFC6349,
 		},
 		rfc6349TCPThroughputDescriptions(),
 		rfc6349TCPThroughputUsage(),
@@ -1767,27 +1767,27 @@ func rfc6349TCPThroughputDetails() testHelpDetails {
 		Tips:               nil,
 		CommonIssues:       nil,
 		RFCSection:         "",
-		SeeAlso:            []string{"path_analysis", "throughput"},
+		SeeAlso:            []string{"path_analysis", TestTypeThroughput},
 	}
 }
 
 func rfc6349TCPThroughputParameters() []Parameter {
 	return []Parameter{
 		{
-			Name:       "Duration",
-			Flag:       "--duration",
+			Name:       LabelDuration,
+			Flag:       FlagDuration,
 			Type:       "integer (seconds)",
 			Default:    "30",
 			Required:   false,
 			TechDesc:   "Test duration",
 			LaymanDesc: "How long to run the transfer test",
-			Example:    "--duration 60",
+			Example:    ExampleDuration60,
 		},
 		{
 			Name:       "Window Size",
 			Flag:       "--window",
 			Type:       "integer (KB) or 'auto'",
-			Default:    "auto",
+			Default:    ValueAuto,
 			Required:   false,
 			TechDesc:   "TCP window size (or auto-calculate from BDP)",
 			LaymanDesc: "TCP buffer size - 'auto' calculates optimal value",
@@ -1800,7 +1800,7 @@ func rfc6349TCPThroughputMetrics() []Metric {
 	return []Metric{
 		{
 			Name:       "TCP Throughput",
-			Unit:       "Mbps",
+			Unit:       UnitMbps,
 			GoodRange:  ">80% of link capacity",
 			BadMeaning: "Application performance will suffer",
 		},
@@ -1833,8 +1833,8 @@ func rfc6349PathAnalysis() TestHelp {
 	return TestHelp{
 		ID:       "path_analysis",
 		Name:     "Path Analysis Test",
-		Standard: "RFC 6349",
-		Category: "RFC 6349",
+		Standard: StandardRFC6349,
+		Category: StandardRFC6349,
 
 		Summary: "Analyzes what's limiting your network speed.",
 
@@ -1886,7 +1886,7 @@ Use this when downloads are slow and you want to know WHY, not just HOW slow.`,
 			},
 			{
 				Name:       "Bottleneck Bandwidth",
-				Unit:       "Mbps",
+				Unit:       UnitMbps,
 				GoodRange:  "Equal to expected path capacity",
 				BadMeaning: "A link is slower than expected",
 			},
@@ -1913,7 +1913,7 @@ Use this when downloads are slow and you want to know WHY, not just HOW slow.`,
 		CommonIssues: nil,
 
 		RFCSection: "",
-		SeeAlso:    []string{"tcp_throughput", "latency"},
+		SeeAlso:    []string{"tcp_throughput", TestTypeLatency},
 	}
 }
 
@@ -1926,7 +1926,7 @@ func y1731FrameDelay() TestHelp {
 		testHelpMeta{
 			ID:       "frame_delay",
 			Name:     "Frame Delay Measurement",
-			Standard: "ITU-T Y.1731",
+			Standard: StandardITUY1731,
 			Category: "Y.1731",
 		},
 		y1731FrameDelayDescriptions(),
@@ -1981,7 +1981,7 @@ func y1731FrameDelayDetails() testHelpDetails {
 		Tips:               nil,
 		CommonIssues:       nil,
 		RFCSection:         "",
-		SeeAlso:            []string{"latency", "y1731_frame_loss"},
+		SeeAlso:            []string{TestTypeLatency, "y1731_frame_loss"},
 	}
 }
 
@@ -2041,7 +2041,7 @@ func y1731FrameLoss() TestHelp {
 	return TestHelp{
 		ID:       "y1731_frame_loss",
 		Name:     "Frame Loss Measurement",
-		Standard: "ITU-T Y.1731",
+		Standard: StandardITUY1731,
 		Category: "Y.1731",
 
 		Summary: "Monitors packet loss on production carrier networks.",
@@ -2097,7 +2097,7 @@ Benefits:
 		CommonIssues: nil,
 
 		RFCSection: "",
-		SeeAlso:    []string{"frame_loss", "frame_delay"},
+		SeeAlso:    []string{TestTypeFrameLoss, "frame_delay"},
 	}
 }
 
@@ -2105,7 +2105,7 @@ func y1731SyntheticLoss() TestHelp {
 	return TestHelp{
 		ID:       "synthetic_loss",
 		Name:     "Synthetic Loss Measurement",
-		Standard: "ITU-T Y.1731",
+		Standard: StandardITUY1731,
 		Category: "Y.1731",
 
 		Summary: "Continuous reliability monitoring using test signals.",
@@ -2163,7 +2163,7 @@ func y1731Loopback() TestHelp {
 	return TestHelp{
 		ID:       "loopback",
 		Name:     "Loopback Test",
-		Standard: "ITU-T Y.1731",
+		Standard: StandardITUY1731,
 		Category: "Y.1731",
 
 		Summary: "Quick connectivity check using OAM loopback.",
@@ -2236,7 +2236,7 @@ func mefConfig() TestHelp {
 			ID:       "mef_config",
 			Name:     "MEF Service Configuration Test",
 			Standard: "MEF 14/48",
-			Category: "MEF",
+			Category: StandardMEF,
 		},
 		mefConfigDescriptions(),
 		mefConfigUsage(),
@@ -2291,14 +2291,14 @@ func mefConfigDetails() testHelpDetails {
 func mefConfigParameters() []Parameter {
 	return []Parameter{
 		{
-			Name:       "CIR",
-			Flag:       "--cir",
+			Name:       TermCIR,
+			Flag:       FlagCIR,
 			Type:       "integer (Mbps)",
 			Default:    "1000",
 			Required:   true,
-			TechDesc:   "Committed Information Rate",
+			TechDesc:   TermCIRFull,
 			LaymanDesc: "Guaranteed bandwidth",
-			Example:    "--cir 100",
+			Example:    ExampleCIR100,
 		},
 		{
 			Name:       "CoS",
@@ -2345,7 +2345,7 @@ func mefPerformance() TestHelp {
 		ID:       "mef_performance",
 		Name:     "MEF Performance Test",
 		Standard: "MEF 14/48",
-		Category: "MEF",
+		Category: StandardMEF,
 
 		Summary: "Extended MEF service quality validation.",
 
@@ -2371,14 +2371,14 @@ This catches problems that only show up after running for a while.`,
 
 		Parameters: []Parameter{
 			{
-				Name:       "Duration",
-				Flag:       "--duration",
+				Name:       LabelDuration,
+				Flag:       FlagDuration,
 				Type:       "integer (minutes)",
 				Default:    "15",
 				Required:   false,
 				TechDesc:   "Test duration",
 				LaymanDesc: "How long to run",
-				Example:    "--duration 60",
+				Example:    ExampleDuration60,
 			},
 		},
 
@@ -2408,7 +2408,7 @@ func mefFull() TestHelp {
 		ID:       "mef_full",
 		Name:     "MEF Full Test Suite",
 		Standard: "MEF 14/48",
-		Category: "MEF",
+		Category: StandardMEF,
 
 		Summary: "Complete MEF service validation - configuration plus performance.",
 
@@ -2462,7 +2462,7 @@ func tsnGateTiming() TestHelp {
 			ID:       "gate_timing",
 			Name:     "TSN Gate Timing Test",
 			Standard: "IEEE 802.1Qbv",
-			Category: "TSN",
+			Category: StandardTSN,
 		},
 		tsnGateTimingDescriptions(),
 		tsnGateTimingUsage(),
@@ -2588,7 +2588,7 @@ func tsnTrafficIsolation() TestHelp {
 			ID:       "traffic_isolation",
 			Name:     "TSN Traffic Class Isolation Test",
 			Standard: "IEEE 802.1Qbv/Qbu",
-			Category: "TSN",
+			Category: StandardTSN,
 		},
 		tsnTrafficIsolationDescriptions(),
 		tsnTrafficIsolationUsage(),
@@ -2697,7 +2697,7 @@ func tsnScheduledLatency() TestHelp {
 			ID:       "scheduled_latency",
 			Name:     "TSN Scheduled Latency Test",
 			Standard: "IEEE 802.1Qbv",
-			Category: "TSN",
+			Category: StandardTSN,
 		},
 		tsnScheduledLatencyDescriptions(),
 		tsnScheduledLatencyUsage(),
@@ -2808,7 +2808,7 @@ func tsnFull() TestHelp {
 		ID:       "tsn_full",
 		Name:     "TSN Full Validation Suite",
 		Standard: "IEEE 802.1Qbv/Qbu",
-		Category: "TSN",
+		Category: StandardTSN,
 
 		Summary: "Complete TSN network validation - all timing and isolation tests.",
 
@@ -2858,22 +2858,29 @@ into production.`,
 // GetAllCategories returns all test categories.
 func GetAllCategories() map[string]Category {
 	return map[string]Category{
-		"rfc2544": {
-			ID:       "rfc2544",
-			Name:     "RFC 2544",
+		CatRFC2544: {
+			ID:       CatRFC2544,
+			Name:     StandardRFC2544,
 			FullName: "Benchmarking Methodology for Network Interconnect Devices",
 			Summary:  "The standard tests for measuring raw network equipment performance.",
 			Description: `RFC 2544 defines benchmarking methodology for network devices.
 These tests measure fundamental performance characteristics: throughput, latency,
 frame loss, and burst handling. Use these tests for equipment validation and comparison.`,
-			Tests:     []string{"throughput", "latency", "frame_loss", "back_to_back", "system_recovery", "reset"},
+			Tests: []string{
+				TestTypeThroughput,
+				TestTypeLatency,
+				TestTypeFrameLoss,
+				"back_to_back",
+				"system_recovery",
+				"reset",
+			},
 			WhenToUse: "Equipment benchmarking, performance validation, comparing vendors",
-			Standard:  "RFC 2544",
-			SeeAlso:   []string{"y1564", "rfc2889"},
+			Standard:  StandardRFC2544,
+			SeeAlso:   []string{CatY1564, CatRFC2889},
 		},
-		"y1564": {
-			ID:       "y1564",
-			Name:     "Y.1564",
+		CatY1564: {
+			ID:       CatY1564,
+			Name:     StandardY1564,
 			FullName: "Ethernet Service Activation Test Methodology",
 			Summary:  "The carrier standard for turning up ethernet services.",
 			Description: `ITU-T Y.1564 defines the methodology for activating and validating
@@ -2881,12 +2888,12 @@ carrier ethernet services. These tests verify that a service meets its SLA param
 at progressive load levels and over extended duration.`,
 			Tests:     []string{"y1564_config", "y1564_performance", "y1564_full"},
 			WhenToUse: "Carrier service activation, SLA validation, service acceptance",
-			Standard:  "ITU-T Y.1564",
-			SeeAlso:   []string{"mef", "rfc2544"},
+			Standard:  StandardITUY1564,
+			SeeAlso:   []string{CatMEF, CatRFC2544},
 		},
-		"rfc2889": {
-			ID:       "rfc2889",
-			Name:     "RFC 2889",
+		CatRFC2889: {
+			ID:       CatRFC2889,
+			Name:     StandardRFC2889,
 			FullName: "Benchmarking Methodology for LAN Switching Devices",
 			Summary:  "Tests specifically for switch/bridge performance characteristics.",
 			Description: `RFC 2889 extends RFC 2544 for testing LAN switches. These tests
@@ -2894,12 +2901,12 @@ measure switch-specific characteristics like forwarding rate across multiple por
 MAC address table capacity, learning rate, and congestion handling.`,
 			Tests:     []string{"forwarding", "address_cache", "learning_rate", "broadcast", "congestion"},
 			WhenToUse: "Switch validation, data center planning, MAC table capacity verification",
-			Standard:  "RFC 2889",
-			SeeAlso:   []string{"rfc2544"},
+			Standard:  StandardRFC2889,
+			SeeAlso:   []string{CatRFC2544},
 		},
-		"rfc6349": {
-			ID:       "rfc6349",
-			Name:     "RFC 6349",
+		CatRFC6349: {
+			ID:       CatRFC6349,
+			Name:     StandardRFC6349,
 			FullName: "Framework for TCP Throughput Testing",
 			Summary:  "Tests that measure real TCP application performance.",
 			Description: `RFC 6349 provides methodology for testing TCP throughput, which
@@ -2907,11 +2914,11 @@ represents actual application performance. These tests measure achievable TCP th
 and help identify network factors affecting TCP performance.`,
 			Tests:     []string{"tcp_throughput", "path_analysis"},
 			WhenToUse: "Application performance testing, WAN optimization, TCP troubleshooting",
-			Standard:  "RFC 6349",
-			SeeAlso:   []string{"rfc2544"},
+			Standard:  StandardRFC6349,
+			SeeAlso:   []string{CatRFC2544},
 		},
-		"y1731": {
-			ID:       "y1731",
+		CatY1731: {
+			ID:       CatY1731,
 			Name:     "Y.1731",
 			FullName: "OAM Functions and Mechanisms for Ethernet Networks",
 			Summary:  "Operations, Administration, and Maintenance for carrier ethernet.",
@@ -2920,12 +2927,12 @@ ethernet services. These tools provide in-service monitoring capabilities includ
 delay measurement, loss measurement, and connectivity verification.`,
 			Tests:     []string{"frame_delay", "y1731_frame_loss", "synthetic_loss", "loopback"},
 			WhenToUse: "Production monitoring, SLA verification, fault isolation",
-			Standard:  "ITU-T Y.1731",
-			SeeAlso:   []string{"y1564", "mef"},
+			Standard:  StandardITUY1731,
+			SeeAlso:   []string{CatY1564, CatMEF},
 		},
-		"mef": {
-			ID:       "mef",
-			Name:     "MEF",
+		CatMEF: {
+			ID:       CatMEF,
+			Name:     StandardMEF,
 			FullName: "Metro Ethernet Forum Service Tests",
 			Summary:  "Industry standard tests for carrier ethernet services.",
 			Description: `MEF (Metro Ethernet Forum) defines service specifications and
@@ -2934,11 +2941,11 @@ MEF specifications including bandwidth profiles and Class of Service.`,
 			Tests:     []string{"mef_config", "mef_performance", "mef_full"},
 			WhenToUse: "MEF-certified service validation, multi-CoS testing, carrier acceptance",
 			Standard:  "MEF 14/48",
-			SeeAlso:   []string{"y1564", "y1731"},
+			SeeAlso:   []string{CatY1564, CatY1731},
 		},
-		"tsn": {
-			ID:       "tsn",
-			Name:     "TSN",
+		CatTSN: {
+			ID:       CatTSN,
+			Name:     StandardTSN,
 			FullName: "Time-Sensitive Networking",
 			Summary:  "Tests for deterministic, time-critical industrial networks.",
 			Description: `IEEE 802.1 Time-Sensitive Networking tests validate networks
@@ -2947,7 +2954,7 @@ isolation, and scheduled latency meet industrial automation requirements.`,
 			Tests:     []string{"gate_timing", "traffic_isolation", "scheduled_latency", "tsn_full"},
 			WhenToUse: "Industrial automation, automotive ethernet, deterministic networking",
 			Standard:  "IEEE 802.1Qbv/Qbu",
-			SeeAlso:   []string{"rfc2544"},
+			SeeAlso:   []string{CatRFC2544},
 		},
 	}
 }

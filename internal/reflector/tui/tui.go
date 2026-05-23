@@ -18,6 +18,10 @@ import (
 	"github.com/krisarmstrong/stem/internal/reflector/dataplane"
 )
 
+// FilterAll is the canonical "no filter" value for the reflector filter-active
+// dropdown and the predefined "all" profile.
+const FilterAll = "all"
+
 // Constants for TUI configuration and formatting.
 const (
 	statsFlexWeight      = 2 // Weight for stats panel in flex layout.
@@ -49,7 +53,7 @@ type FilterProfile struct {
 // GetPredefinedProfiles returns the built-in filter profiles.
 func GetPredefinedProfiles() []FilterProfile {
 	return []FilterProfile{
-		{Name: "all", Description: "All signatures (no filter)", ITO: true, RFC2544: true, Y1564: true, MSN: true},
+		{Name: FilterAll, Description: "All signatures (no filter)", ITO: true, RFC2544: true, Y1564: true, MSN: true},
 		{Name: "ito", Description: "ITO signatures only", ITO: true, RFC2544: false, Y1564: false, MSN: false},
 		{Name: "rfc2544", Description: "RFC 2544 signatures only", ITO: false, RFC2544: true, Y1564: false, MSN: false},
 		{Name: "y1564", Description: "Y.1564 signatures only", ITO: false, RFC2544: false, Y1564: true, MSN: false},
@@ -94,7 +98,7 @@ func New(dp *dataplane.Dataplane) *App {
 		stopOnce:       sync.Once{},
 		paused:         false,
 		pauseMu:        sync.Mutex{},
-		filterActive:   "all",
+		filterActive:   FilterAll,
 		currentProfile: GetPredefinedProfiles()[0], // Default to "all".
 		showExtHelp:    false,
 	}
@@ -376,7 +380,7 @@ func GenerateHeaderText(interfaceName string, filterActive string, paused bool) 
 	}
 
 	filterText := ""
-	if filterActive != "all" && filterActive != "" {
+	if filterActive != FilterAll && filterActive != "" {
 		filterText = fmt.Sprintf(" | Filter: [cyan]%s[white]", filterActive)
 	}
 
