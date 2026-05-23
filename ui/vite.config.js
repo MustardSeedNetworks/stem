@@ -32,32 +32,32 @@ import { fileURLToPath, URL } from 'node:url';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 export default defineConfig({
-    plugins: [react()],
-    resolve: {
-        alias: {
-            '@': fileURLToPath(new URL('./src', import.meta.url)),
-            '@locales': fileURLToPath(new URL('../internal/i18n/locales', import.meta.url)),
-        },
+  plugins: [react()],
+  resolve: {
+    alias: {
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+      '@locales': fileURLToPath(new URL('../internal/i18n/locales', import.meta.url)),
     },
-    server: {
-        port: 3000,
-        proxy: {
-            '/api': {
-                // Backend serves HTTPS on :8444 by default (Wave 1 task #81).
-                // For local dev with the self-signed cert we let the proxy
-                // accept it; secure:false is required for self-signed.
-                target: 'https://localhost:8444',
-                changeOrigin: true,
-                secure: false,
-            },
-        },
+  },
+  server: {
+    port: 3000,
+    proxy: {
+      '/api': {
+        // Backend serves HTTPS on :8444 by default (Wave 1 task #81).
+        // For local dev with the self-signed cert we let the proxy
+        // accept it; secure:false is required for self-signed.
+        target: 'https://localhost:8444',
+        changeOrigin: true,
+        secure: false,
+      },
     },
-    build: {
-        // Output directly into the Go embed directory — no copying or syncing.
-        // Canonical path shared with niac and seed: internal/api/ui/.
-        outDir: '../internal/api/ui',
-        sourcemap: true,
-        modulePreload: false,
-        cssCodeSplit: false,
-    },
+  },
+  build: {
+    // Output directly into the Go embed directory — no copying or syncing.
+    // Canonical path shared with niac and seed: internal/api/ui/.
+    outDir: '../internal/api/ui',
+    sourcemap: true,
+    modulePreload: false,
+    cssCodeSplit: false,
+  },
 });

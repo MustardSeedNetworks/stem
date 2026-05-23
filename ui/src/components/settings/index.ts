@@ -5,7 +5,6 @@
  * Follows Seed patterns for profile-based settings.
  */
 
-// biome-ignore lint/performance/noBarrelFile: Central export point for settings components
 export { InterfaceSection } from './InterfaceSection';
 
 // Section Components

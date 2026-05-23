@@ -138,5 +138,4 @@ i18n
 export default i18n;
 
 export type { TFunction } from 'i18next';
-// biome-ignore lint/performance/noBarrelFile: Re-exports are intentional for i18n module public API
 export { useTranslation } from 'react-i18next';
