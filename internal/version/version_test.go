@@ -129,7 +129,11 @@ func TestInfoMatchesGetters(t *testing.T) {
 		t.Errorf("Info()['buildTime'] = %q, want %q (GetBuildTime())", info["buildTime"], version.GetBuildTime())
 	}
 	if info["uiBuildHash"] != version.GetUIBuildHash() {
-		t.Errorf("Info()['uiBuildHash'] = %q, want %q (GetUIBuildHash())", info["uiBuildHash"], version.GetUIBuildHash())
+		t.Errorf(
+			"Info()['uiBuildHash'] = %q, want %q (GetUIBuildHash())",
+			info["uiBuildHash"],
+			version.GetUIBuildHash(),
+		)
 	}
 }
 

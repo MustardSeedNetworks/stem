@@ -1,6 +1,5 @@
 //go:build !cgo || !linux
 
-
 // Package dataplane provides CGO bindings to the C reflector dataplane.
 //
 // This file contains stub implementations for non-CGO or non-Linux builds.
