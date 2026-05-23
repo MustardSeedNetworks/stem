@@ -54,8 +54,8 @@ func getBandwidthTerms() map[string]GlossaryEntry {
 			Related:   []string{"bandwidth", "goodput"},
 		},
 		"cir": {
-			Term:      "CIR",
-			FullName:  "Committed Information Rate",
+			Term:      TermCIR,
+			FullName:  TermCIRFull,
 			TechDef:   "The guaranteed bandwidth specified in a service level agreement that the carrier commits to deliver",
 			LaymanDef: "The speed your ISP promises you'll always get, no matter what",
 			Related:   []string{"eir", "sla", "bandwidth"},
@@ -306,7 +306,7 @@ func getServiceTerms() map[string]GlossaryEntry {
 			Related:   []string{"mef", "y1564"},
 		},
 		"mef": {
-			Term:      "MEF",
+			Term:      StandardMEF,
 			FullName:  "Metro Ethernet Forum",
 			TechDef:   "Industry organization defining standards for carrier ethernet services",
 			LaymanDef: "The group that sets standards for professional ethernet services - their certification means it meets industry standards",
@@ -421,7 +421,7 @@ func getOAMTerms() map[string]GlossaryEntry {
 func getTSNTerms() map[string]GlossaryEntry {
 	return map[string]GlossaryEntry{
 		"tsn": {
-			Term:      "TSN",
+			Term:      StandardTSN,
 			FullName:  "Time-Sensitive Networking",
 			TechDef:   "IEEE 802.1 standards for deterministic, low-latency networking in industrial applications",
 			LaymanDef: "Special networking for factories and cars where timing must be EXACT - packets arrive at precise times",
@@ -543,36 +543,36 @@ func getCongestionTerms() map[string]GlossaryEntry {
 func getStandardsTerms() map[string]GlossaryEntry {
 	return map[string]GlossaryEntry{
 		"rfc2544": {
-			Term:      "RFC 2544",
+			Term:      StandardRFC2544,
 			FullName:  "Benchmarking Methodology for Network Interconnect Devices",
 			TechDef:   "IETF standard defining procedures for measuring network device performance",
 			LaymanDef: "The official rulebook for how to test network equipment performance",
 			Related:   []string{"rfc2889", "rfc6349"},
 		},
 		"rfc2889": {
-			Term:      "RFC 2889",
+			Term:      StandardRFC2889,
 			FullName:  "Benchmarking Methodology for LAN Switching Devices",
 			TechDef:   "IETF standard extending RFC 2544 for switch-specific testing",
 			LaymanDef: "Testing rules specifically for network switches",
 			Related:   []string{"rfc2544"},
 		},
 		"rfc6349": {
-			Term:      "RFC 6349",
+			Term:      StandardRFC6349,
 			FullName:  "Framework for TCP Throughput Testing",
 			TechDef:   "IETF standard for testing TCP performance considering protocol behavior",
 			LaymanDef: "Testing rules for measuring real application speeds (not just raw network speed)",
 			Related:   []string{"tcp", "rfc2544"},
 		},
 		"y1564": {
-			Term:      "Y.1564",
-			FullName:  "ITU-T Y.1564",
+			Term:      StandardY1564,
+			FullName:  StandardITUY1564,
 			TechDef:   "ITU standard for Ethernet Service Activation Test methodology",
 			LaymanDef: "The official test for verifying carrier ethernet service quality",
 			Related:   []string{"y1731", "mef"},
 		},
 		"y1731": {
 			Term:      "Y.1731",
-			FullName:  "ITU-T Y.1731",
+			FullName:  StandardITUY1731,
 			TechDef:   "ITU standard for OAM functions in Ethernet-based networks",
 			LaymanDef: "Standard for monitoring and maintaining carrier ethernet networks",
 			Related:   []string{"y1564", "oam"},
@@ -616,7 +616,7 @@ func GetGlossaryTermsByCategory() map[string][]string {
 		"OAM": {
 			"oam", "cfm", "mep", "mip",
 		},
-		"TSN": {
+		StandardTSN: {
 			"tsn", "tas", "gcl", "ptp",
 		},
 		"Network Layers": {
