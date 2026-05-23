@@ -56,6 +56,45 @@ const (
 	resultFail = "FAIL"
 )
 
+// Test-type wire identifiers. Match the executor's dispatch table; kept
+// here as untyped string consts so the CLI dispatch switch is readable
+// and grep-friendly.
+const (
+	testTypeThroughput     = "throughput"
+	testTypeLatency        = "latency"
+	testTypeFrameLoss      = "frame_loss"
+	testTypeBackToBack     = "back_to_back"
+	testTypeSystemRecovery = "system_recovery"
+	testTypeReset          = "reset"
+	testTypeY1564Config    = "y1564_config"
+	testTypeY1564          = "y1564"
+	testTypeY1564Perf      = "y1564_perf"
+	testTypeTSN            = "tsn"
+	testTypeMEF            = "mef"
+)
+
+// CLI flag strings repeated across help text + parsing.
+const (
+	flagDuration   = "--duration"
+	flagFrameSizes = "--frame-sizes"
+	flagCIR        = "--cir"
+)
+
+// Standard / acronym strings repeated in help text and tables.
+const (
+	standardRFC2544 = "RFC 2544"
+	standardRFC2889 = "RFC 2889"
+	standardRFC6349 = "RFC 6349"
+	standardY1564   = "Y.1564"
+	standardY1731   = "Y.1731"
+	standardITUY1564 = "ITU-T Y.1564"
+	standardITUY1731 = "ITU-T Y.1731"
+	standardMEF     = "MEF"
+	standardTSN     = "TSN"
+	termCIR         = "CIR"
+	termCIRFull     = "Committed Information Rate"
+)
+
 // Default values for test configuration.
 // Subcommand verbs. Hoisted out of the dispatch switch and per-subcommand
 // [flag.NewFlagSet] calls so the canonical spelling lives in one place.
@@ -623,8 +662,8 @@ func parseTestFlags(args []string) (*testCmdFlags, error) {
 	// Basic options.
 	iface := fs.String("interface", "", "Network interface")
 	fs.StringVar(iface, "i", "", "Network interface (shorthand)")
-	testTypes := fs.String("type", "throughput", "Test type(s), comma-separated")
-	fs.StringVar(testTypes, "t", "throughput", "Test type (shorthand)")
+	testTypes := fs.String("type", testTypeThroughput, "Test type(s), comma-separated")
+	fs.StringVar(testTypes, "t", testTypeThroughput, "Test type (shorthand)")
 	duration := fs.Int("duration", defaultTestDuration, "Test duration in seconds")
 	fs.IntVar(duration, "d", defaultTestDuration, "Test duration (shorthand)")
 	frameSizes := fs.String("frame-sizes", "64,128,256,512,1024,1280,1518", "Frame sizes")
@@ -874,21 +913,21 @@ func runTest(
 	duration int,
 ) (any, error) {
 	switch testType {
-	case "throughput":
+	case testTypeThroughput:
 		return runThroughputTest(ctx)
-	case "latency":
+	case testTypeLatency:
 		return runLatencyTest(ctx)
-	case "frame_loss":
+	case testTypeFrameLoss:
 		return runFrameLossTest(ctx)
-	case "back_to_back":
+	case testTypeBackToBack:
 		return runBackToBackTest(ctx)
-	case "system_recovery":
+	case testTypeSystemRecovery:
 		return runSystemRecoveryTest(ctx)
-	case "reset":
+	case testTypeReset:
 		return runResetTest(ctx)
 	case "y1564_config", "y1564":
 		return runY1564ConfigTest(ctx, cir, eir, fdThreshold, fdvThreshold, flrThreshold)
-	case "y1564_perf":
+	case testTypeY1564Perf:
 		return runY1564PerfTest(ctx, cir, eir, fdThreshold, fdvThreshold, flrThreshold, duration)
 	default:
 		return map[string]string{

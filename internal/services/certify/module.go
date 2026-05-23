@@ -20,41 +20,57 @@ const (
 	StandardRef = "RFC 2889/6349/TSN"
 )
 
+// Test type identifiers. Used as the canonical wire name in the API,
+// the registry, and the dispatcher.
+const (
+	TestRFC2889Forwarding = "rfc2889_forwarding"
+	TestRFC2889Caching    = "rfc2889_caching"
+	TestRFC2889Learning   = "rfc2889_learning"
+	TestRFC2889Broadcast  = "rfc2889_broadcast"
+	TestRFC2889Congestion = "rfc2889_congestion"
+	TestRFC6349Throughput = "rfc6349_throughput"
+	TestRFC6349Path       = "rfc6349_path"
+	TestTSNTiming         = "tsn_timing"
+	TestTSNIsolation      = "tsn_isolation"
+	TestTSNLatency        = "tsn_latency"
+	TestTSN               = "tsn"
+)
+
 func testTypes() []string {
 	return []string{
 		// RFC 2889 LAN Switch
-		"rfc2889_forwarding",
-		"rfc2889_caching",
-		"rfc2889_learning",
-		"rfc2889_broadcast",
-		"rfc2889_congestion",
+		TestRFC2889Forwarding,
+		TestRFC2889Caching,
+		TestRFC2889Learning,
+		TestRFC2889Broadcast,
+		TestRFC2889Congestion,
 		// RFC 6349 TCP
-		"rfc6349_throughput",
-		"rfc6349_path",
+		TestRFC6349Throughput,
+		TestRFC6349Path,
 		// TSN 802.1Qbv
-		"tsn_timing",
-		"tsn_isolation",
-		"tsn_latency",
-		"tsn",
+		TestTSNTiming,
+		TestTSNIsolation,
+		TestTSNLatency,
+		TestTSN,
 	}
 }
 
 func testDescriptions() map[string]string {
 	return map[string]string{
 		// RFC 2889
-		"rfc2889_forwarding": "RFC 2889 Forwarding rate test",
-		"rfc2889_caching":    "RFC 2889 Address caching capacity",
-		"rfc2889_learning":   "RFC 2889 Address learning rate",
-		"rfc2889_broadcast":  "RFC 2889 Broadcast forwarding",
-		"rfc2889_congestion": "RFC 2889 Congestion control",
+		TestRFC2889Forwarding: "RFC 2889 Forwarding rate test",
+		TestRFC2889Caching:    "RFC 2889 Address caching capacity",
+		TestRFC2889Learning:   "RFC 2889 Address learning rate",
+		TestRFC2889Broadcast:  "RFC 2889 Broadcast forwarding",
+		TestRFC2889Congestion: "RFC 2889 Congestion control",
 		// RFC 6349
-		"rfc6349_throughput": "RFC 6349 TCP throughput (BDP analysis)",
-		"rfc6349_path":       "RFC 6349 Path analysis (RTT/bandwidth)",
+		TestRFC6349Throughput: "RFC 6349 TCP throughput (BDP analysis)",
+		TestRFC6349Path:       "RFC 6349 Path analysis (RTT/bandwidth)",
 		// TSN
-		"tsn_timing":    "IEEE 802.1Qbv Gate timing accuracy",
-		"tsn_isolation": "IEEE 802.1Qbv Traffic class isolation",
-		"tsn_latency":   "IEEE 802.1Qbv Scheduled latency",
-		"tsn":           "IEEE 802.1Qbv Full TSN test suite",
+		TestTSNTiming:    "IEEE 802.1Qbv Gate timing accuracy",
+		TestTSNIsolation: "IEEE 802.1Qbv Traffic class isolation",
+		TestTSNLatency:   "IEEE 802.1Qbv Scheduled latency",
+		TestTSN:          "IEEE 802.1Qbv Full TSN test suite",
 	}
 }
 

@@ -98,29 +98,29 @@ func (e *Executor) Execute(testType string, cfg *modtypes.TestConfig) (*modtypes
 	var runErr error
 
 	switch testType {
-	case "rfc2889_forwarding":
+	case TestRFC2889Forwarding:
 		data, runErr = e.ctx.RunRFC2889ForwardingTest(buildRFC2889Config(cfg))
-	case "rfc2889_caching":
+	case TestRFC2889Caching:
 		data, runErr = e.ctx.RunRFC2889CachingTest(buildRFC2889Config(cfg))
-	case "rfc2889_learning":
+	case TestRFC2889Learning:
 		data, runErr = e.ctx.RunRFC2889LearningTest(buildRFC2889Config(cfg))
-	case "rfc2889_broadcast":
+	case TestRFC2889Broadcast:
 		data, runErr = e.ctx.RunRFC2889BroadcastTest(buildRFC2889Config(cfg))
-	case "rfc2889_congestion":
+	case TestRFC2889Congestion:
 		data, runErr = e.ctx.RunRFC2889CongestionTest(buildRFC2889Config(cfg))
 
-	case "rfc6349_throughput":
+	case TestRFC6349Throughput:
 		data, runErr = e.ctx.RunRFC6349ThroughputTest(buildRFC6349Config(cfg))
-	case "rfc6349_path":
+	case TestRFC6349Path:
 		data, runErr = e.ctx.RunRFC6349PathTest(buildRFC6349Config(cfg))
 
-	case "tsn_timing":
+	case TestTSNTiming:
 		data, runErr = e.ctx.RunTSNGateTimingTest(buildTSNConfig(cfg))
-	case "tsn_isolation":
+	case TestTSNIsolation:
 		data, runErr = e.ctx.RunTSNIsolationTest(buildTSNConfig(cfg))
-	case "tsn_latency":
+	case TestTSNLatency:
 		data, runErr = e.ctx.RunTSNLatencyTest(buildTSNConfig(cfg))
-	case "tsn":
+	case TestTSN:
 		data, runErr = e.ctx.RunTSNFullTest(buildTSNConfig(cfg))
 	default:
 		return nil, modtypes.ErrTestNotImplemented
