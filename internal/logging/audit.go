@@ -162,6 +162,39 @@ const (
 	AttemptCleanupInterval = 5 * time.Minute
 )
 
+// buildSecurityEventAttrs converts a [SecurityEvent] into the slog
+// key/value pair list used by LogSecurityEvent. Hoisted out so the
+// dispatch function stays under the cognitive-complexity gate.
+func buildSecurityEventAttrs(event *SecurityEvent) []any {
+	attrs := []any{
+		"audit", true,
+		"event_type", string(event.EventType),
+		"timestamp", event.Timestamp.Format(time.RFC3339),
+		"ip_address", event.IPAddress,
+		"user_agent", event.UserAgent,
+	}
+	for k, v := range map[string]string{
+		"user_id":            event.UserID,
+		"username":           event.Username,
+		"request_id":         event.RequestID,
+		"resource":           event.Resource,
+		"reason":             event.Reason,
+		"suspicious_type":    string(event.SuspiciousType),
+		"window_duration":    event.WindowDuration,
+		"result":             event.Result,
+		"reject_reason":      event.RejectReason,
+		"previous_algorithm": event.PreviousAlgorithm,
+	} {
+		if v != "" {
+			attrs = append(attrs, k, v)
+		}
+	}
+	if event.FailedAttempts > 0 {
+		attrs = append(attrs, "failed_attempts", event.FailedAttempts)
+	}
+	return attrs
+}
+
 // LogSecurityEvent logs a security event to the audit log.
 // The event is logged at INFO level with a structured format for easy parsing.
 func LogSecurityEvent(ctx context.Context, event *SecurityEvent) {
@@ -180,49 +213,7 @@ func LogSecurityEvent(ctx context.Context, event *SecurityEvent) {
 	}
 
 	logger := FromContext(ctx)
-
-	// Build log attributes.
-	attrs := []any{
-		"audit", true,
-		"event_type", string(event.EventType),
-		"timestamp", event.Timestamp.Format(time.RFC3339),
-		"ip_address", event.IPAddress,
-		"user_agent", event.UserAgent,
-	}
-
-	if event.UserID != "" {
-		attrs = append(attrs, "user_id", event.UserID)
-	}
-	if event.Username != "" {
-		attrs = append(attrs, "username", event.Username)
-	}
-	if event.RequestID != "" {
-		attrs = append(attrs, "request_id", event.RequestID)
-	}
-	if event.Resource != "" {
-		attrs = append(attrs, "resource", event.Resource)
-	}
-	if event.Reason != "" {
-		attrs = append(attrs, "reason", event.Reason)
-	}
-	if event.SuspiciousType != "" {
-		attrs = append(attrs, "suspicious_type", string(event.SuspiciousType))
-	}
-	if event.FailedAttempts > 0 {
-		attrs = append(attrs, "failed_attempts", event.FailedAttempts)
-	}
-	if event.WindowDuration != "" {
-		attrs = append(attrs, "window_duration", event.WindowDuration)
-	}
-	if event.Result != "" {
-		attrs = append(attrs, "result", event.Result)
-	}
-	if event.RejectReason != "" {
-		attrs = append(attrs, "reject_reason", event.RejectReason)
-	}
-	if event.PreviousAlgorithm != "" {
-		attrs = append(attrs, "previous_algorithm", event.PreviousAlgorithm)
-	}
+	attrs := buildSecurityEventAttrs(event)
 
 	// Log at appropriate level based on event type.
 	switch event.EventType {

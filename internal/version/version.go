@@ -2,7 +2,7 @@
 //
 // Values are populated in this order of precedence:
 //  1. -ldflags injected at build time (canonical for releases)
-//  2. runtime/debug.ReadBuildInfo() VCS settings (modules built locally)
+//  2. [runtime/debug.ReadBuildInfo] VCS settings (modules built locally)
 //  3. Compile-time defaults ("dev" / "unknown")
 //
 // ldflags example:
@@ -32,7 +32,7 @@ const (
 )
 
 // extractVersionFromBuildInfo pulls version/commit/buildTime out of a
-// debug.BuildInfo. Separated for testability with mock build info.
+// [debug.BuildInfo]. Separated for testability with mock build info.
 func extractVersionFromBuildInfo(info *debug.BuildInfo) (string, string, string) {
 	ver := defaultVersion
 	commit := unknownValue
@@ -69,7 +69,7 @@ func extractVersionFromBuildInfo(info *debug.BuildInfo) (string, string, string)
 }
 
 // getVersionInfo returns version/commit/buildTime, preferring ldflags over
-// debug.ReadBuildInfo over defaults.
+// [debug.ReadBuildInfo] over defaults.
 func getVersionInfo() (string, string, string) {
 	if Version != "" {
 		ver := Version

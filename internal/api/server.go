@@ -207,6 +207,21 @@ func getDataDir() string {
 	return dataDir
 }
 
+// serveFallbackUIPage handles "/" when the embedded UI sub-FS failed to
+// load. Hoisted out of the registration site to keep that block flat.
+func serveFallbackUIPage(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "text/html")
+	_, _ = w.Write([]byte(`<!DOCTYPE html>
+<html>
+<head><title>The Stem</title></head>
+<body>
+<h1>The Stem</h1>
+<p>WebUI not built. Run 'cd ui && npm install && npm run build' first.</p>
+<p>API available under <code>/api/v1/</code></p>
+</body>
+</html>`))
+}
+
 func NewServer(port int) (*Server, error) {
 	// Initialize license manager.
 	licMgr, err := license.NewManager()
@@ -548,43 +563,33 @@ func (s *Server) setupRoutes() {
 	staticFS, err := fs.Sub(staticFiles, "ui")
 	if err != nil {
 		logging.Warn("Could not load embedded UI", "error", err)
-		// Serve a simple fallback page.
-		s.mux.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
-			w.Header().Set("Content-Type", "text/html")
-			_, _ = w.Write([]byte(`<!DOCTYPE html>
-<html>
-<head><title>The Stem</title></head>
-<body>
-<h1>The Stem</h1>
-<p>WebUI not built. Run 'cd ui && npm install && npm run build' first.</p>
-<p>API available under <code>/api/v1/</code></p>
-</body>
-</html>`))
-		})
-	} else {
-		fileServer := http.FileServer(http.FS(staticFS))
-		// SPA fallback: serve index.html for any path that isn't an actual
-		// file in the embedded FS so client-side routes like /tests/benchmark
-		// survive a browser refresh / direct hit instead of 404ing. API +
-		// health + __version routes are registered above and match before
-		// this catch-all.
-		s.mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-			cleanPath := strings.TrimPrefix(r.URL.Path, "/")
-			if cleanPath != "" {
-				if _, statErr := fs.Stat(staticFS, cleanPath); statErr == nil {
-					fileServer.ServeHTTP(w, r)
-					return
-				}
-			}
-			indexBytes, readErr := fs.ReadFile(staticFS, "index.html")
-			if readErr != nil {
-				http.NotFound(w, r)
+		s.mux.HandleFunc("/", serveFallbackUIPage)
+		return
+	}
+	s.mux.HandleFunc("/", spaFallbackHandler(staticFS))
+}
+
+// spaFallbackHandler returns an HTTP handler that serves static files from
+// the embedded FS, falling back to index.html for unknown paths so client-
+// side routes survive a refresh.
+func spaFallbackHandler(staticFS fs.FS) http.HandlerFunc {
+	fileServer := http.FileServer(http.FS(staticFS))
+	return func(w http.ResponseWriter, r *http.Request) {
+		cleanPath := strings.TrimPrefix(r.URL.Path, "/")
+		if cleanPath != "" {
+			if _, statErr := fs.Stat(staticFS, cleanPath); statErr == nil {
+				fileServer.ServeHTTP(w, r)
 				return
 			}
-			w.Header().Set("Content-Type", "text/html; charset=utf-8")
-			w.Header().Set("Cache-Control", "no-cache")
-			_, _ = w.Write(indexBytes)
-		})
+		}
+		indexBytes, readErr := fs.ReadFile(staticFS, "index.html")
+		if readErr != nil {
+			http.NotFound(w, r)
+			return
+		}
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Header().Set("Cache-Control", "no-cache")
+		_, _ = w.Write(indexBytes)
 	}
 }
 

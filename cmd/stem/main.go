@@ -58,7 +58,7 @@ const (
 
 // Default values for test configuration.
 // Subcommand verbs. Hoisted out of the dispatch switch and per-subcommand
-// flag.NewFlagSet calls so the canonical spelling lives in one place.
+// [flag.NewFlagSet] calls so the canonical spelling lives in one place.
 const (
 	subReflect = "reflect"
 	subTest    = "test"

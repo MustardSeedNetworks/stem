@@ -169,6 +169,8 @@ func TestExecutorExecuteInvalidTestType(t *testing.T) {
 // Y.1731 test type against an in-memory dataplane mock. This validates
 // the executor's dispatch table (test type -> dataplane method) without
 // driving real C code.
+//
+//nolint:gocognit // table-driven test covering N executor paths; splitting would obscure the matrix
 func TestExecutorExecuteValidTestTypes(t *testing.T) {
 	validTypes := []string{
 		"y1731_delay",
@@ -359,6 +361,8 @@ func TestModuleEmbedsInExecutor(t *testing.T) {
 // TestExecutorResultStructure exercises both the success and failure
 // shapes of *modtypes.Result returned by Execute(). It uses a mock
 // dataplane so the test can deterministically trigger each path.
+//
+//nolint:gocognit // exercises all *modtypes.Result shape branches via mock dataplane
 func TestExecutorResultStructure(t *testing.T) {
 	cfg := &modtypes.TestConfig{
 		Interface: "eth0",

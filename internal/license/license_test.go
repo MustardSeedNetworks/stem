@@ -744,6 +744,7 @@ func TestGenerateLicenseKeyErrors(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			_, err := license.GenerateLicenseKey(tc.product, tc.serial, tc.tier)
 			if err == nil {
 				t.Errorf("Expected error containing %q", tc.wantErr)
