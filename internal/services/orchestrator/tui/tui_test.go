@@ -187,19 +187,39 @@ func TestTestTypeCount(t *testing.T) {
 	// We should have 27 test types total.
 	testTypes := []tui.TestType{
 		// RFC 2544 (6).
-		tui.TestThroughput, tui.TestLatency, tui.TestFrameLoss, tui.TestBackToBack, tui.TestSystemRecovery, tui.TestReset,
+		tui.TestThroughput,
+		tui.TestLatency,
+		tui.TestFrameLoss,
+		tui.TestBackToBack,
+		tui.TestSystemRecovery,
+		tui.TestReset,
 		// Y.1564 (3).
-		tui.TestY1564Config, tui.TestY1564Perf, tui.TestY1564Full,
+		tui.TestY1564Config,
+		tui.TestY1564Perf,
+		tui.TestY1564Full,
 		// RFC 2889 (5).
-		tui.TestRFC2889Forwarding, tui.TestRFC2889Caching, tui.TestRFC2889Learning, tui.TestRFC2889Broadcast, tui.TestRFC2889Congestion,
+		tui.TestRFC2889Forwarding,
+		tui.TestRFC2889Caching,
+		tui.TestRFC2889Learning,
+		tui.TestRFC2889Broadcast,
+		tui.TestRFC2889Congestion,
 		// RFC 6349 (2).
-		tui.TestRFC6349Throughput, tui.TestRFC6349Path,
+		tui.TestRFC6349Throughput,
+		tui.TestRFC6349Path,
 		// Y.1731 (4).
-		tui.TestY1731Delay, tui.TestY1731Loss, tui.TestY1731SLM, tui.TestY1731Loopback,
+		tui.TestY1731Delay,
+		tui.TestY1731Loss,
+		tui.TestY1731SLM,
+		tui.TestY1731Loopback,
 		// MEF (3).
-		tui.TestMEFConfig, tui.TestMEFPerf, tui.TestMEFFull,
+		tui.TestMEFConfig,
+		tui.TestMEFPerf,
+		tui.TestMEFFull,
 		// TSN (4).
-		tui.TestTSNTiming, tui.TestTSNIsolation, tui.TestTSNLatency, tui.TestTSNFull,
+		tui.TestTSNTiming,
+		tui.TestTSNIsolation,
+		tui.TestTSNLatency,
+		tui.TestTSNFull,
 	}
 
 	if len(testTypes) != 27 {

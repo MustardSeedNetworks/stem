@@ -303,7 +303,7 @@ func (m *CSRFManager) CSRFMiddleware(next http.Handler) http.Handler {
 		// GET /api/v1/auth/csrf-token after login to obtain the token.
 		err := m.ValidateToken(sessionID, token)
 		if err != nil {
-			m.logger.Warn("CSRF validation failed",
+			m.logger.WarnContext(r.Context(), "CSRF validation failed",
 				"path", r.URL.Path,
 				"method", r.Method,
 				"error", err)

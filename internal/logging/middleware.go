@@ -123,7 +123,7 @@ func Middleware(next http.Handler) http.Handler {
 			return
 		}
 
-		logger.Info("http request",
+		logger.InfoContext(r.Context(), "http request",
 			"method", r.Method,
 			"path", r.URL.Path,
 			"status", wrapped.status,
