@@ -284,12 +284,11 @@ func LicenseCommand() CommandHelp {
 		Name:    "license",
 		Summary: "Manage license activation",
 		Description: `The license command handles license activation and status.
-Seed Test Suite requires a valid license key for operation. The license
+Stem Professional requires a valid license key for operation. The license
 determines which features are available:
 
-• Reflector tier: Packet reflection only
-• TestSuite tier: Full test suite (RFC 2544, Y.1564, etc.)
-• Enterprise tier: All features plus API and multi-user support`,
+• Reflector tier: Packet reflection only (Free)
+• Professional tier: Full test suite (RFC 2544 / Y.1564 / Y.1731 / RFC 2889 / RFC 6349 / MEF / TSN) plus API access`,
 		Usage: "stem license [subcommand] [flags]",
 		Flags: []FlagHelp{
 			{
@@ -324,12 +323,12 @@ determines which features are available:
 			{
 				Desc:    "Activate a license",
 				Command: "stem license -k ABCD-1234-EFGH-5678",
-				Output:  "License activated: TestSuite tier",
+				Output:  "License activated: Professional tier",
 			},
 			{
 				Desc:    "Check license status",
 				Command: "stem license --status",
-				Output:  "License: TestSuite tier\nFeatures: reflector, rfc2544, y1564, ...",
+				Output:  "License: Professional tier\nFeatures: reflector, rfc2544, y1564, ...",
 			},
 		},
 		SeeAlso: []string{"version"},
@@ -341,15 +340,15 @@ func VersionCommand() CommandHelp {
 	return CommandHelp{
 		Name:    "version",
 		Summary: "Display version information",
-		Description: `Shows the current version of Seed Test Suite along with
-build information, license status, and available features.`,
+		Description: `Shows the current version of Stem along with build
+information, license status, and available features.`,
 		Usage: "stem version",
 		Flags: []FlagHelp{},
 		Examples: []Example{
 			{
 				Desc:    "Show version",
 				Command: "stem version",
-				Output:  "Seed Test Suite v1.0.0\nBuild: 2025-01-15\nLicense: TestSuite tier",
+				Output:  "Stem v1.0.0\nBuild: 2025-01-15\nLicense: Professional tier",
 			},
 		},
 		SeeAlso: []string{"license"},

@@ -1148,8 +1148,9 @@ func TestAllTiersActivation(t *testing.T) {
 		name    string
 	}{
 		{"1001", license.TierReflector, "Reflector"},
-		{"2001", license.TierTestSuite, "Test Suite"},
-		{"3001", license.TierEnterprise, "Enterprise"},
+		{"2001", license.TierProfessional, "Professional"},
+		// TierEnterprise is deprecated and reports as Professional.
+		{"3001", license.TierEnterprise, "Professional"},
 	}
 
 	for _, tc := range tiers {
@@ -1270,9 +1271,9 @@ func TestActivationMessage(t *testing.T) {
 
 	// Test license message.
 	mgr.Deactivate()
-	key, _ := license.GenerateLicenseKey("2001", "1234567", license.TierTestSuite)
+	key, _ := license.GenerateLicenseKey("2001", "1234567", license.TierProfessional)
 	licenseResult := mgr.Activate(key)
-	if !contains(licenseResult.Message, "Test Suite") {
+	if !contains(licenseResult.Message, "Professional") {
 		t.Errorf("License message should mention tier: %s", licenseResult.Message)
 	}
 }
