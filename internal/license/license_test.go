@@ -1270,3 +1270,73 @@ func TestValidateChecksumCaseSensitivity(t *testing.T) {
 		t.Error("Both uppercase and lowercase should validate")
 	}
 }
+
+// keygenVector is a (key, expected-validation) pair produced by the
+// canonical keygen tool.
+type keygenVector struct {
+	name     string
+	key      string
+	tier     license.Tier
+	product  string
+	serial   string
+	features []string
+}
+
+func assertKeygenVector(t *testing.T, v keygenVector) {
+	t.Helper()
+	info := license.ValidateLicenseKey(v.key)
+	if !info.Valid {
+		t.Fatalf("Valid = false, want true (err=%q)", info.ErrorMsg)
+	}
+	if info.Tier != v.tier {
+		t.Errorf("Tier = %v, want %v", info.Tier, v.tier)
+	}
+	if info.ProductCode != v.product {
+		t.Errorf("ProductCode = %q, want %q", info.ProductCode, v.product)
+	}
+	if info.Serial != v.serial {
+		t.Errorf("Serial = %q, want %q", info.Serial, v.serial)
+	}
+	if len(info.Features) != len(v.features) {
+		t.Errorf("Features count = %d, want %d (got %v)", len(info.Features), len(v.features), info.Features)
+	}
+	for _, f := range v.features {
+		if !info.HasFeature(f) {
+			t.Errorf("missing feature %q (got %v)", f, info.Features)
+		}
+	}
+}
+
+// TestKeygenContract pins the cross-tool cipher contract. Every key in
+// this table was produced by the canonical keygen tool
+// (msn-internal-tools/keygen) and must validate identically in every
+// product's license package (stem, seed, niac). If this test fails the
+// rotor cipher has drifted from keygen — DO NOT "fix" the assertions;
+// fix the cipher, or regenerate keygen + update all three products in
+// lockstep.
+//
+// Anchored to keygen v2.0.0 (2026-05-21).
+func TestKeygenContract(t *testing.T) {
+	t.Parallel()
+	vectors := []keygenVector{
+		{
+			name:    "stem-pro / serial ROUNDTR",
+			key:     "7C27-20MY-ZHXR-C95U",
+			tier:    license.TierProfessional,
+			product: "2001",
+			serial:  "ROUNDTR",
+			features: []string{
+				"reflector", "api", "mef", "multiuser",
+				"rfc2544", "rfc2889", "rfc6349", "tsn",
+				"y1564", "y1731",
+			},
+		},
+	}
+
+	for _, v := range vectors {
+		t.Run(v.name, func(t *testing.T) {
+			t.Parallel()
+			assertKeygenVector(t, v)
+		})
+	}
+}
