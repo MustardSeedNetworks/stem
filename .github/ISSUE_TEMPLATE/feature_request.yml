@@ -45,18 +45,22 @@ body:
       label: Area
       description: Which part of Stem would this affect?
       options:
-        - Auth / Setup
-        - Survey / Floorplan
-        - Discovery / Network
-        - Logging / Observability
-        - UI / UX
-        - Backend / API
-        - Frontend / UI
-        - Infra / CI/CD
-        - AI / ML
+        - API/Backend
+        - UI/Frontend
+        - Reflector
+        - Benchmark (RFC 2544)
+        - ServiceTest (Y.1564/MEF)
+        - TrafficGen
+        - Measure (Y.1731)
+        - Certify (RFC 2889/6349/TSN)
+        - TestMaster
+        - License
+        - C Dataplane (DPDK/AF_PACKET/AF_XDP)
+        - CLI
+        - Installation/Deployment
         - Documentation
-        - New Area
-        - Multiple Areas
+        - CI/CD Pipeline
+        - Other
     validations:
       required: true
 
