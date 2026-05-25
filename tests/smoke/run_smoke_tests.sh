@@ -190,7 +190,8 @@ assert_json_field() {
     local name="$4"
 
     TESTS_RUN=$((TESTS_RUN + 1))
-    local value=$(echo "$json" | grep -o "\"$field\"[[:space:]]*:[[:space:]]*\"[^\"]*\"" | sed 's/.*: *"\([^"]*\)".*/\1/' || echo "")
+    local value
+    value=$(echo "$json" | grep -o "\"$field\"[[:space:]]*:[[:space:]]*\"[^\"]*\"" | sed 's/.*: *"\([^"]*\)".*/\1/' || echo "")
 
     if [[ "$value" == "$expected" ]]; then
         log_pass "$name"
@@ -223,7 +224,8 @@ test_binary_and_build() {
 
     # Check binary size (should be at least 5MB with embedded UI)
     # Use -L to follow symlinks, try Linux stat first, then macOS stat
-    local size=$(stat -Lc%s "${STEM_BIN}" 2>/dev/null || stat -Lf%z "${STEM_BIN}" 2>/dev/null)
+    local size
+    size=$(stat -Lc%s "${STEM_BIN}" 2>/dev/null || stat -Lf%z "${STEM_BIN}" 2>/dev/null)
     run_test "Binary has embedded assets (>5MB)" \
         "test ${size:-0} -gt 5000000"
 }
@@ -239,7 +241,8 @@ test_version_and_branding() {
     run_test "Version command succeeds" \
         "${STEM_BIN} version"
 
-    local version_output=$("${STEM_BIN}" version 2>&1)
+    local version_output
+    version_output=$("${STEM_BIN}" version 2>&1)
 
     assert_contains "$version_output" "The Stem" "Branding shows 'The Stem'"
     assert_contains "$version_output" "2025" "Copyright year is 2025"
@@ -268,7 +271,8 @@ test_cli_help() {
     run_test "TUI help" "${STEM_BIN} tui --help"
 
     log_header "Help Content Verification"
-    local help_output=$("${STEM_BIN}" --help 2>&1)
+    local help_output
+    help_output=$("${STEM_BIN}" --help 2>&1)
 
     assert_contains "$help_output" "reflect" "Help mentions reflect command"
     assert_contains "$help_output" "test" "Help mentions test command"
@@ -289,7 +293,8 @@ test_test_types() {
     log_header "List Tests Command"
     run_test "list-tests command" "${STEM_BIN} list-tests"
 
-    local list_output=$("${STEM_BIN}" list-tests 2>&1)
+    local list_output
+    list_output=$("${STEM_BIN}" list-tests 2>&1)
 
     log_header "RFC 2544 Tests (6 required)"
     assert_contains "$list_output" "throughput" "RFC 2544 throughput test listed"
@@ -446,7 +451,8 @@ test_webui() {
     local BASE="http://localhost:${WEB_PORT}"
 
     log_header "API Health Endpoint"
-    local health=$(curl -s ${BASE}/api/v1/health)
+    local health
+    health=$(curl -s ${BASE}/api/v1/health)
 
     assert_json_field "$health" "status" "healthy" "Health status is 'healthy'"
     assert_json_field "$health" "product" "The Stem" "Product name is 'The Stem'"
@@ -540,17 +546,23 @@ test_network_stack() {
         return
     fi
 
-    local pre_rx=$(cat /sys/class/net/${VETH_TX}/statistics/rx_packets)
-    local pre_tx=$(cat /sys/class/net/${VETH_TX}/statistics/tx_packets)
+    local pre_rx
+    pre_rx=$(cat /sys/class/net/${VETH_TX}/statistics/rx_packets)
+    local pre_tx
+    pre_tx=$(cat /sys/class/net/${VETH_TX}/statistics/tx_packets)
 
     # Send test packets
     ping -c 20 -I ${VETH_TX} ${IP_RX} -W 1 >/dev/null 2>&1 || true
     sleep 1
 
-    local post_rx=$(cat /sys/class/net/${VETH_TX}/statistics/rx_packets)
-    local post_tx=$(cat /sys/class/net/${VETH_TX}/statistics/tx_packets)
-    local packets_rx=$((post_rx - pre_rx))
-    local packets_tx=$((post_tx - pre_tx))
+    local post_rx
+    post_rx=$(cat /sys/class/net/${VETH_TX}/statistics/rx_packets)
+    local post_tx
+    post_tx=$(cat /sys/class/net/${VETH_TX}/statistics/tx_packets)
+    local packets_rx
+    packets_rx=$((post_rx - pre_rx))
+    local packets_tx
+    packets_tx=$((post_tx - pre_tx))
 
     log_info "TX packets: $packets_tx, RX packets: $packets_rx"
 
@@ -592,7 +604,8 @@ test_license() {
     run_test "license --status command" \
         "${STEM_BIN} license --status 2>&1 | grep -qi 'license\|trial\|status'"
 
-    local status_output=$("${STEM_BIN}" license --status 2>&1)
+    local status_output
+    status_output=$("${STEM_BIN}" license --status 2>&1)
 
     assert_contains "$status_output" "Device ID" "License shows device ID"
     assert_contains "$status_output" "Platform" "License shows platform"
@@ -674,7 +687,7 @@ test_performance() {
     log_header "Rapid Start/Stop"
     if [[ "$REFLECTOR_AVAILABLE" == true ]]; then
         local start_stop_ok=true
-        for i in $(seq 1 5); do
+        for _ in $(seq 1 5); do
             ${STEM_BIN} reflect -i ${VETH_RX} --profile all >/dev/null 2>&1 &
             local pid=$!
             sleep 0.5
@@ -706,7 +719,7 @@ test_performance() {
     if kill -0 $WEB_PID 2>/dev/null; then
         # Hit API rapidly
         local request_ok=true
-        for i in $(seq 1 50); do
+        for _ in $(seq 1 50); do
             if ! curl -s -m 5 http://localhost:${WEB_PORT_ALT}/api/v1/health >/dev/null 2>&1; then
                 request_ok=false
                 break
@@ -723,9 +736,8 @@ test_performance() {
         fi
 
         # Concurrent requests
-        local concurrent_ok=true
         local curl_pids=""
-        for i in $(seq 1 10); do
+        for _ in $(seq 1 10); do
             curl -s -m 5 http://localhost:${WEB_PORT_ALT}/api/v1/health >/dev/null 2>&1 &
             curl_pids="$curl_pids $!"
         done
@@ -806,7 +818,8 @@ test_integration() {
         fi
 
         # Check stats endpoint reflects reflector data
-        local stats=$(curl -s http://localhost:${WEB_PORT}/api/v1/stats 2>/dev/null)
+        local stats
+        stats=$(curl -s http://localhost:${WEB_PORT}/api/v1/stats 2>/dev/null)
         TESTS_RUN=$((TESTS_RUN + 1))
         if echo "$stats" | grep -q "packetsReceived"; then
             log_pass "Stats endpoint returns packet data"
@@ -915,8 +928,10 @@ main() {
     test_signal_handling
 
     # Calculate elapsed time
-    local end_time=$(date +%s)
-    local elapsed=$((end_time - START_TIME))
+    local end_time
+    end_time=$(date +%s)
+    local elapsed
+    elapsed=$((end_time - START_TIME))
 
     # Summary
     echo ""
