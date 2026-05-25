@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.17.2](https://github.com/krisarmstrong/stem/compare/v0.17.1...v0.17.2) (2026-05-25)
+
+
+### Bug Fixes
+
+* **lint:** Clear gocognit, godoclint, nestif, tparallel ([#262](https://github.com/krisarmstrong/stem/issues/262)) ([19a2234](https://github.com/krisarmstrong/stem/commit/19a223489207abdcb3326a09190c9ef749301d7b))
+* **lint:** Extract test-type + standard-name consts (partial goconst cleanup) ([#263](https://github.com/krisarmstrong/stem/issues/263)) ([9bcb8aa](https://github.com/krisarmstrong/stem/commit/9bcb8aac7feb4b53b19b1cabe673781db5b90698))
+* **security:** Hardcode HTTPS-only auth, cipher overflow safety, fixture renames ([#1070](https://github.com/krisarmstrong/stem/issues/1070)) ([#260](https://github.com/krisarmstrong/stem/issues/260)) ([de2d166](https://github.com/krisarmstrong/stem/commit/de2d16677f25ac2a5fc1f9200a7f00703fcbec13))
+
 ## [0.17.1](https://github.com/krisarmstrong/stem/compare/v0.17.0...v0.17.1) (2026-05-22)
 
 
