@@ -30,10 +30,19 @@ import {
   useState,
 } from 'react';
 
-export type StemRole = 'reflector' | 'test_master';
+import {
+  DEFAULT_ROLE,
+  isStemRole,
+  type ModeUpdateResponse,
+  parseApiErrorBody,
+  parseModeUpdateResponse,
+  type StemRole,
+} from '@/schemas/role';
+
+export type { ModeUpdateResponse, StemRole };
+export { DEFAULT_ROLE };
 
 export const ROLE_STORAGE_KEY = 'stem-role';
-export const DEFAULT_ROLE: StemRole = 'reflector';
 export const ROLE_ENDPOINT = '/api/v1/mode';
 
 function readPersistedRole(): StemRole {
@@ -41,60 +50,18 @@ function readPersistedRole(): StemRole {
     return DEFAULT_ROLE;
   }
   const raw = window.localStorage.getItem(ROLE_STORAGE_KEY);
-  if (raw === 'reflector' || raw === 'test_master') {
-    return raw;
-  }
-  return DEFAULT_ROLE;
-}
-
-/**
- * Shape of the backend POST /api/v1/mode response. Mirrors the Go
- * ModeUpdateResponse in internal/api/types.go. Only `mode` is required
- * for the frontend to update local state.
- */
-interface ModeUpdateResponse {
-  status: string;
-  mode: StemRole;
-  previous: StemRole;
-}
-
-/**
- * Backend error response shape (mirrors HTTPErrorResponse in
- * internal/api/errors.go). Both message and error are optional from
- * the caller's point of view because some fallback paths only set one.
- */
-interface ApiErrorBody {
-  message?: string;
-  error?: string;
-}
-
-function isStemRole(value: unknown): value is StemRole {
-  return value === 'reflector' || value === 'test_master';
-}
-
-function isModeUpdateResponse(value: unknown): value is ModeUpdateResponse {
-  if (typeof value !== 'object' || value === null) {
-    return false;
-  }
-  const candidate = value as Record<string, unknown>;
-  return (
-    typeof candidate.status === 'string' &&
-    isStemRole(candidate.mode) &&
-    isStemRole(candidate.previous)
-  );
+  return isStemRole(raw) ? raw : DEFAULT_ROLE;
 }
 
 async function extractErrorMessage(response: Response, fallback: string): Promise<string> {
   try {
     const body: unknown = await response.json();
-    if (typeof body === 'object' && body !== null) {
-      const candidate = body as ApiErrorBody;
-      if (typeof candidate.message === 'string' && candidate.message.length > 0) {
-        return candidate.message;
-      }
-      if (typeof candidate.error === 'string' && candidate.error.length > 0) {
-        return candidate.error;
-      }
+    const parsed = parseApiErrorBody(body);
+    if (parsed?.message) {
+      return parsed.message;
+    }
+    if (parsed?.error) {
+      return parsed.error;
     }
   } catch {
     // Body was not JSON — fall through to the fallback.
@@ -144,13 +111,14 @@ async function requestModeSwitch(next: StemRole): Promise<SwitchResult> {
     return { kind: 'error', message: `Role switch failed: ${message}` };
   }
 
-  if (!isModeUpdateResponse(body)) {
+  const parsed = parseModeUpdateResponse(body);
+  if (!parsed.ok) {
     return { kind: 'error', message: 'Role switch failed: unexpected server response' };
   }
 
   // Trust the server's echoed mode rather than our local request —
   // handles the rare race where the server normalizes the value.
-  return { kind: 'ok', mode: body.mode };
+  return { kind: 'ok', mode: parsed.value.mode };
 }
 
 export interface RoleContextValue {
