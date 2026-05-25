@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { skipSetupWizard, TEST_CREDENTIALS } from './helpers/auth';
 
 // Opt out of the suite-wide authenticated storageState (from
 // e2e/global-setup.ts) so each test starts from a clean
@@ -7,13 +8,7 @@ test.use({ storageState: { cookies: [], origins: [] } });
 
 test.describe('Authentication', () => {
   test.beforeEach(async ({ page }) => {
-    await page.route('**/api/v1/setup/status', (route) => {
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ needsSetup: false }),
-      });
-    });
+    await skipSetupWizard(page);
   });
 
   test('should show login page', async ({ page }) => {
@@ -31,8 +26,8 @@ test.describe('Authentication', () => {
 
   test('should login with valid credentials', async ({ page }) => {
     await page.goto('/');
-    await page.getByLabel(/username/i).fill('admin');
-    await page.getByLabel(/password/i).fill('admin');
+    await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
+    await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
     await page.getByRole('button', { name: /sign in/i }).click();
     await expect(page.getByRole('button', { name: /logout/i })).toBeVisible();
   });
@@ -40,8 +35,8 @@ test.describe('Authentication', () => {
   test('should logout successfully', async ({ page }) => {
     // Login first
     await page.goto('/');
-    await page.getByLabel(/username/i).fill('admin');
-    await page.getByLabel(/password/i).fill('admin');
+    await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
+    await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
     await page.getByRole('button', { name: /sign in/i }).click();
 
     // Then logout
