@@ -58,9 +58,17 @@ export default defineConfig({
     // Output directly into the Go embed directory — no copying or syncing.
     // Canonical path shared with niac and seed: internal/api/ui/.
     outDir: '../internal/api/ui',
+    // emptyOutDir intentionally omitted: outDir is outside Vite's project
+    // root, so Vite defaults to false and preserves the tracked .gitkeep
+    // placeholder (CLAUDE.md mandate).
     sourcemap: true,
-    modulePreload: false,
-    cssCodeSplit: false,
+    // Modern browser target — matches niac. ES2022 covers all evergreen
+    // browsers from 2023+; we don't support IE/legacy Safari.
+    target: 'es2022',
+    // CSS code splitting: allow per-route CSS bundles for better caching.
+    cssCodeSplit: true,
+    // Module preload polyfill: not needed for evergreen browsers (ES2022 target).
+    modulePreload: { polyfill: false },
     // Never inline assets as data: URLs (Vite default is 4096 bytes). Required
     // because @fontsource-variable ships small metric-override shim fonts that
     // would otherwise be inlined and violate the production `font-src 'self'`
