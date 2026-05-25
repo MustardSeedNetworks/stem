@@ -1,33 +1,49 @@
 # Security Policy
 
-## Supported Versions
+## Supported versions
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 0.x.x   | :white_check_mark: |
+Until The Stem reaches 1.0, only the **latest released version** receives
+security fixes. Older 0.x versions are kept on the repo for reference but
+are not patched — upgrade to the current minor.
 
-## Reporting a Vulnerability
+| Version          | Supported           |
+| ---------------- | ------------------- |
+| Latest (`main`)  | :white_check_mark:  |
+| Older 0.x        | :x:                 |
+| Future 1.x       | :white_check_mark:  |
 
-We take security vulnerabilities seriously. If you discover a security issue, please report it responsibly.
+## Reporting a vulnerability
 
-### How to Report
+**Please do not open a public issue for a security vulnerability.**
 
-1. **Do NOT open a public issue** for security vulnerabilities
-2. Email security concerns to the maintainer
-3. Include:
-   - Description of the vulnerability
-   - Steps to reproduce
-   - Potential impact
-   - Suggested fix (if any)
+Use one of these private channels:
 
-### What to Expect
+1. **GitHub Security Advisories (preferred):**
+   <https://github.com/krisarmstrong/stem/security/advisories/new>.
+   Creates a private advisory visible only to maintainers and you, with
+   a built-in audit trail and CVE coordination workflow.
+2. **Email:** `kris.armstrong@icloud.com` with subject
+   `[STEM SECURITY]`.
 
-- **Acknowledgment** within 48 hours
-- **Initial assessment** within 7 days
-- **Resolution timeline** communicated based on severity
-- **Credit** in release notes (if desired)
+Include in your report:
 
-### Severity Levels
+- A description of the vulnerability and the affected component(s).
+- Steps to reproduce, ideally with a minimal proof-of-concept.
+- The version / commit you tested against.
+- The potential impact (e.g. unauthenticated RCE, info disclosure, DoS).
+- A suggested fix or mitigation, if you have one.
+
+## What to expect
+
+- **Acknowledgment** within 2 business days.
+- **Triage** with a severity assessment within 7 business days.
+- **Fix or mitigation** released within the target window for the
+  severity tier (see table below). We coordinate disclosure timing
+  with you for high-impact issues.
+- **Credit** in the resulting GitHub Security Advisory and release
+  notes, if you'd like it.
+
+### Severity levels
 
 | Level    | Description                         | Target Resolution |
 | -------- | ----------------------------------- | ----------------- |
@@ -36,60 +52,44 @@ We take security vulnerabilities seriously. If you discover a security issue, pl
 | Medium   | Limited impact vulnerabilities      | 30 days           |
 | Low      | Minor issues, hardening             | Next release      |
 
-## Security Best Practices
-
-When deploying The Stem:
-
-### Network Security
-
-- Deploy on isolated/management networks when possible
-- Use firewall rules to restrict access to the web interface
-- Consider VPN access for remote management
-
-### Authentication
-
-- Change default credentials immediately
-- Use strong passwords (12+ characters)
-- Rotate credentials periodically
-
-### HTTPS
-
-- Use valid TLS certificates in production
-- Self-signed certificates are acceptable for isolated networks
-
-### Updates
-
-- Keep The Stem updated to the latest version
-- Subscribe to release notifications
-- Review changelogs for security fixes
-
-## Security Features
-
-The Stem includes:
-
-- HTTPS support
-- Password authentication
-- Rate limiting on auth endpoints
-- Minimal attack surface (single binary)
-- No default open ports (except configured interface)
-
 ## Scope
 
-The following are in scope for security reports:
+In scope:
 
-- Authentication/authorization bypass
-- Remote code execution
-- Command injection
-- Sensitive data exposure
-- Privilege escalation
+- Code in this repository (Go backend, embedded React UI, CI workflows,
+  release pipeline).
+- Built artifacts published as part of a tagged GitHub release
+  (verifiable via the included `cosign` signatures and SBOM).
 
-The following are out of scope:
+Out of scope:
 
-- Denial of service (DoS)
-- Social engineering
-- Physical access attacks
-- Issues requiring root access already
+- Vulnerabilities in third-party dependencies — please report those
+  upstream. We track them via Dependabot and `govulncheck` and patch
+  on the next release.
+- Denial of service requiring sustained external traffic.
+- Social engineering or physical access attacks.
+- Self-inflicted misconfigurations (e.g. exposing the daemon to a
+  public network without an API token — the daemon explicitly warns
+  against this).
+
+## Hardening notes for operators
+
+- Use valid TLS certificates in production. Self-signed certs are
+  acceptable for isolated lab networks; `./stem install-ca` trusts the
+  generated cert system-wide for dev.
+- Set strong API tokens via env (`STEM_API_TOKEN`) when exposing the
+  web UI off-loopback. The daemon explicitly warns when bound to a
+  non-loopback address without a token.
+- Restrict the reflector / traffic-gen modules to controlled test
+  networks — they generate high-rate traffic that can saturate
+  production links.
+- Verify release artifacts with `cosign verify-blob` against the
+  `<file>.cosign.bundle` shipped with each release; each archive also
+  ships a CycloneDX SBOM.
+
 
 ## Acknowledgments
 
-We appreciate security researchers who help keep The Stem secure. Contributors will be acknowledged in release notes unless they prefer to remain anonymous.
+We appreciate security researchers who help keep The Stem secure.
+Contributors are credited in the resulting GitHub Security Advisory /
+release notes unless they prefer to remain anonymous.
