@@ -184,6 +184,14 @@ OIDC and shipped with SLSA-3 provenance + Syft SBOM.
 [Business Source License 1.1](LICENSE). The Stem converts to Apache-2.0 on
 the change date stated in the LICENSE file.
 
+## Security
+
+See [SECURITY.md](SECURITY.md) for the vulnerability-disclosure policy.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## Related projects
 
 The Stem is the performance-testing tool. Two sibling projects round out
