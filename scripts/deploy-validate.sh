@@ -11,7 +11,7 @@
 #
 # Examples:
 #   ./scripts/deploy-validate.sh v0.1.0 abc1234
-#   ./scripts/deploy-validate.sh v0.1.0 abc1234 niac-srv-ubuntu 8080
+#   ./scripts/deploy-validate.sh v0.1.0 abc1234 niac-srv-ubuntu 8444
 #
 # =============================================================================
 
@@ -26,8 +26,8 @@ NC='\033[0m'
 EXPECTED_VERSION="${1:-}"
 EXPECTED_COMMIT="${2:-}"
 HOST="${3:-localhost}"
-PORT="${4:-8080}"
-SCHEME="${STEM_VALIDATE_SCHEME:-http}"
+PORT="${4:-8444}"
+SCHEME="${STEM_VALIDATE_SCHEME:-https}"
 ENDPOINT="${SCHEME}://${HOST}:${PORT}/__version"
 MAX_RETRIES=5
 RETRY_DELAY=3
@@ -48,10 +48,10 @@ usage() {
     echo "  expected-version  The version string to expect (e.g., v0.1.0)"
     echo "  expected-commit   The short commit hash to expect (e.g., abc1234)"
     echo "  host              Target hostname (default: localhost)"
-    echo "  port              Target port (default: 8080)"
+    echo "  port              Target port (default: 8444)"
     echo ""
     echo "Environment:"
-    echo "  STEM_VALIDATE_SCHEME  http | https (default: http)"
+    echo "  STEM_VALIDATE_SCHEME  http | https (default: https)"
     exit 1
 }
 
