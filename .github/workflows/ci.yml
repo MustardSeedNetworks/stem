@@ -124,6 +124,9 @@ jobs:
           version: v2.12.1
           args: --timeout=5m --new-from-rev=HEAD~1
 
+      - name: Verify API schemas are up to date
+        run: ./scripts/check-schema-drift.sh
+
       - name: Run tests
         run: CGO_ENABLED=0 go test -v -coverprofile=coverage.out ./...
 
