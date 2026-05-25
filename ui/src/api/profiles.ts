@@ -22,12 +22,14 @@ const API_BASE = '/api/v1';
  * API error with status code and message.
  */
 export class ApiError extends Error {
-  constructor(
-    public status: number,
-    message: string,
-  ) {
+  // Explicit field declaration (no parameter property) to satisfy
+  // tsconfig.json:erasableSyntaxOnly.
+  public readonly status: number;
+
+  constructor(status: number, message: string) {
     super(message);
     this.name = 'ApiError';
+    this.status = status;
   }
 }
 
