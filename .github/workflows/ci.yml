@@ -639,12 +639,18 @@ jobs:
           VERSION=$(git describe --tags --always --dirty 2>/dev/null || echo "dev")
           COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
           BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          # UI build hash matches the Makefile recipe (md5 of all embedded UI files).
+          # Mandatory per CLAUDE.md Universal Build Contract — /__version must
+          # return a non-empty uiBuildHash to prove the UI was embedded.
+          UI_BUILD_HASH=$(find internal/api/ui -type f -exec md5sum {} \; 2>/dev/null | sort | md5sum 2>/dev/null | cut -d' ' -f1)
+          echo "UI_BUILD_HASH=${UI_BUILD_HASH}"
 
           go build -trimpath -buildvcs=false \
             -ldflags "-s -w \
               -X github.com/krisarmstrong/stem/internal/version.Version=${VERSION} \
               -X github.com/krisarmstrong/stem/internal/version.Commit=${COMMIT} \
-              -X github.com/krisarmstrong/stem/internal/version.BuildTime=${BUILD_TIME}" \
+              -X github.com/krisarmstrong/stem/internal/version.BuildTime=${BUILD_TIME} \
+              -X github.com/krisarmstrong/stem/internal/version.UIBuildHash=${UI_BUILD_HASH}" \
             -o bin/stem-${{ matrix.os }}-${{ matrix.arch }} \
             ./cmd/stem/
 
