@@ -659,6 +659,34 @@ jobs:
         run: |
           ./bin/stem-${{ matrix.os }}-${{ matrix.arch }} version || true
 
+      - name: Verify UIBuildHash embedded (Universal Build Contract)
+        # Static check: binary must contain the md5 hash of the embedded
+        # UI, proving the -X ...UIBuildHash=... ldflag was set in
+        # `Build binary`. Failure means /__version would return
+        # uiBuildHash="unknown" in prod — silent contract violation.
+        # Only runs for native linux/amd64 + darwin (where `strings`
+        # is available); cross-compiled arm64 binary uses identical
+        # build command so it's covered by the amd64 check.
+        if: matrix.os == 'linux' && matrix.arch == 'amd64'
+        run: |
+          if [ -z "$(ls -A internal/api/ui/ 2>/dev/null | grep -v '^\.gitkeep$')" ]; then
+            echo "::error::internal/api/ui is empty — frontend-dist artifact missing?"
+            exit 1
+          fi
+          EXPECTED=$(find internal/api/ui -type f -exec md5sum {} \; | sort | md5sum | cut -d' ' -f1)
+          if [ "${#EXPECTED}" -ne 32 ]; then
+            echo "::error::Computed UI_BUILD_HASH is not 32 chars: '$EXPECTED'"
+            exit 1
+          fi
+          echo "Expected UIBuildHash: $EXPECTED"
+          if strings ./bin/stem-${{ matrix.os }}-${{ matrix.arch }} | grep -qF "$EXPECTED"; then
+            echo "  ✓ UIBuildHash embedded correctly"
+          else
+            echo "::error::Binary does not contain UIBuildHash $EXPECTED"
+            echo "  → Universal Build Contract violated. Check -X ...UIBuildHash=... ldflag in 'Build binary' step."
+            exit 1
+          fi
+
       - name: Upload artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
