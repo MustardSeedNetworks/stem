@@ -229,8 +229,8 @@ type TestStartResponse struct {
 
 // AuthLoginRequest captures credentials supplied to /api/auth/login.
 type AuthLoginRequest struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Username string `json:"username" validate:"required"`
+	Password string `json:"password" validate:"required"`
 }
 
 // AuthLoginResponse returns the issued JWT tokens.
@@ -242,7 +242,7 @@ type AuthLoginResponse struct {
 
 // AuthRefreshRequest captures the refresh token for /api/auth/refresh.
 type AuthRefreshRequest struct {
-	RefreshToken string `json:"refreshToken"`
+	RefreshToken string `json:"refreshToken" validate:"required"`
 }
 
 // TestResultResponse for completed test results.
@@ -256,9 +256,10 @@ type TestResultResponse struct {
 	Data     any    `json:"data,omitempty"`
 }
 
-// ModeRequest for mode POST requests.
+// ModeRequest for mode POST requests. Valid values are mirrored from
+// the modeReflector / modeTestMaster constants above.
 type ModeRequest struct {
-	Mode string `json:"mode"`
+	Mode string `json:"mode" validate:"required,oneof=reflector test_master"`
 }
 
 // ReflectorConfig holds reflector-specific settings.
@@ -325,7 +326,7 @@ type LicenseStatus struct {
 
 // LicenseActivateRequest for license activation.
 type LicenseActivateRequest struct {
-	LicenseKey string `json:"licenseKey"`
+	LicenseKey string `json:"licenseKey" validate:"required"`
 }
 
 // LivenessResponse for Kubernetes liveness probe.
