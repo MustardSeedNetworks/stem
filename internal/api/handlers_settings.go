@@ -154,11 +154,15 @@ func (s *Server) handleModeUpdate(w http.ResponseWriter, r *http.Request) {
 	// No-op same-mode: short-circuit before tearing anything down.
 	// The audit trail still logs nothing because nothing changed.
 	if oldMode == req.Mode {
-		writeJSON(w, ModeUpdateResponse{
+		resp := ModeUpdateResponse{
 			Status:   "unchanged",
 			Mode:     req.Mode,
 			Previous: oldMode,
-		})
+		}
+		// Broadcast even on "unchanged" so a browser tab that missed
+		// the original change still gets a confirmation frame.
+		s.sseBroadcaster.Publish(SSEFrame{Type: "mode_changed", Payload: resp})
+		writeJSON(w, resp)
 		return
 	}
 
@@ -179,11 +183,15 @@ func (s *Server) handleModeUpdate(w http.ResponseWriter, r *http.Request) {
 		"caller_ip", logging.GetClientIP(r),
 	)
 
-	writeJSON(w, ModeUpdateResponse{
+	resp := ModeUpdateResponse{
 		Status:   "updated",
 		Mode:     req.Mode,
 		Previous: oldMode,
-	})
+	}
+	// Push to every connected SSE subscriber so other browser tabs /
+	// CLI watchers see the mode change in real time (#296).
+	s.sseBroadcaster.Publish(SSEFrame{Type: "mode_changed", Payload: resp})
+	writeJSON(w, resp)
 }
 
 // teardownForModeSwitch stops the running reflector (if any) and

@@ -1,0 +1,86 @@
+package api
+
+import (
+	"context"
+	"time"
+
+	"github.com/krisarmstrong/stem/internal/logging"
+)
+
+// reflectorStatsInterval is how often the reflector-stats publisher
+// computes and broadcasts a stats frame. 1Hz matches the polling
+// cadence the UI was using before this PR; the SSE channel just
+// removes the round-trip overhead and tightens the latency.
+const reflectorStatsInterval = time.Second
+
+// startReflectorStatsPublisher launches a goroutine that periodically
+// publishes the current reflector stats to all SSE subscribers.
+//
+// The goroutine is cheap when nobody's subscribed (it short-circuits
+// without computing stats), so it's always-on rather than gated by
+// subscriber count. The lifetime is tied to ctx so server shutdown
+// cleanly stops it.
+//
+// Only broadcasts when stats actually exist (i.e., reflector mode is
+// active and the executor is running). Subscribers in test-master
+// mode just receive heartbeats until the mode flips.
+func (s *Server) startReflectorStatsPublisher(ctx context.Context) {
+	go func() {
+		ticker := time.NewTicker(reflectorStatsInterval)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				s.broadcastReflectorStatsIfActive()
+			}
+		}
+	}()
+	logging.Debug("SSE reflector-stats publisher started",
+		"interval", reflectorStatsInterval.String())
+}
+
+// broadcastReflectorStatsIfActive reads current reflector stats and
+// publishes them as an SSE frame, but only when the reflector executor
+// is active. We skip the broadcast (no frame at all) when there's
+// nothing to report — subscribers see heartbeats only until reflector
+// mode is engaged.
+func (s *Server) broadcastReflectorStatsIfActive() {
+	s.statsMu.RLock()
+	exec := s.reflectorExec
+	elapsed := time.Since(s.startTime).Seconds()
+	s.statsMu.RUnlock()
+
+	if exec == nil {
+		return
+	}
+
+	stats := s.buildActiveReflectorStats(exec, elapsed)
+	s.sseBroadcaster.Publish(SSEFrame{
+		Type:    "reflector_stats",
+		Payload: stats,
+	})
+}
+
+// PublishTestProgress is the seam test runners call to push progress
+// updates over SSE. The payload shape is left to the caller so each
+// module (RFC 2544 throughput sweep, Y.1564 service test, etc.) can
+// emit its own progress structure without a central type that grows
+// fields for every test variant.
+//
+// Today this is exported for use by future test-runner integrations
+// (#296 follow-up); the function exists so the SSE wiring is complete
+// and the runners just need to call it once they're ready.
+func (s *Server) PublishTestProgress(testID string, progress any) {
+	if s.sseBroadcaster == nil {
+		return
+	}
+	s.sseBroadcaster.Publish(SSEFrame{
+		Type: "test_progress",
+		Payload: map[string]any{
+			"testId":   testID,
+			"progress": progress,
+		},
+	})
+}

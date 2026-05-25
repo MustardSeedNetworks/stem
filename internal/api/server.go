@@ -146,6 +146,7 @@ var staticFiles embed.FS
 type Server struct {
 	port                 int
 	mux                  *http.ServeMux
+	sseBroadcaster       *SSEBroadcaster // Fan-out for /api/v1/events subscribers; nil-safe via getSSE()
 	httpServer           *http.Server
 	stats                *Stats
 	statsMu              sync.RWMutex
@@ -264,6 +265,7 @@ func NewServer(port int) (*Server, error) {
 	s := &Server{}
 	s.port = port
 	s.mux = http.NewServeMux()
+	s.sseBroadcaster = NewSSEBroadcaster()
 	s.statsMu = sync.RWMutex{}
 	s.stats = &Stats{
 		PacketsReceived: 0,
@@ -498,6 +500,13 @@ func (s *Server) setupRoutes() {
 	// API v1 routes - Settings and Mode (rate limited).
 	s.handleRateLimited("/api/v1/settings", s.handleSettings, s.apiLimiter)
 	s.handleRateLimited("/api/v1/mode", s.handleMode, s.apiLimiter)
+
+	// Server-Sent Events stream for live UI updates (#296). Not rate-
+	// limited — connections are long-lived, intentionally one per
+	// browser-tab. Auth not required because mode-changed / reflector-
+	// stats frames are observational, not credential-bearing. If we
+	// ever publish privileged frames here, gate the subscribe path.
+	s.mux.HandleFunc("/api/v1/events", s.handleSSEEvents)
 
 	// API v1 routes - Test Execution (rate limited + auth).
 	s.handleAuthRateLimited("/api/v1/test/start", s.handleTestStart, s.apiLimiter)
@@ -757,6 +766,11 @@ func (s *Server) Run() error {
 	// Set up signal handling for graceful shutdown.
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer stop()
+
+	// SSE publishers (#296). Started after ctx is created so they die
+	// with the server on SIGINT/SIGTERM. The reflector-stats publisher
+	// is always-on but cheap when nobody's subscribed.
+	s.startReflectorStatsPublisher(ctx)
 
 	// Wrap with middleware stack: SecurityHeaders -> CORS -> APIVersion -> RequestID -> Logging -> CSRF -> Handler.
 	handler := securityHeadersMiddleware(
