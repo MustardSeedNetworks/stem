@@ -35,23 +35,26 @@ test.describe('Theme', () => {
       .not.toBe(initialDark);
   });
 
-  test('should apply correct colors in dark mode', async ({ page }) => {
-    await page.evaluate(() => {
-      document.documentElement.classList.add('dark');
-    });
-
+  test('applies a different background color in dark mode than in light mode', async ({ page }) => {
     const body = page.locator('body');
-    const bgColor = await body.evaluate((el) => getComputedStyle(el).backgroundColor);
-    expect(bgColor).toBeTruthy();
-  });
 
-  test('should apply correct colors in light mode', async ({ page }) => {
     await page.evaluate(() => {
       document.documentElement.classList.remove('dark');
     });
+    const lightBg = await body.evaluate((el: HTMLElement) => getComputedStyle(el).backgroundColor);
 
-    const body = page.locator('body');
-    const bgColor = await body.evaluate((el) => getComputedStyle(el).backgroundColor);
-    expect(bgColor).toBeTruthy();
+    await page.evaluate(() => {
+      document.documentElement.classList.add('dark');
+    });
+    const darkBg = await body.evaluate((el: HTMLElement) => getComputedStyle(el).backgroundColor);
+
+    // The actual theme tokens are intentionally not hard-coded here — the
+    // MSN brand token map (msn-docs-internal) is the source of truth and
+    // may evolve. What we DO assert is that light and dark produce a
+    // distinguishable background. A weak `toBeTruthy()` check accepted
+    // the same value in both modes, which would be a real bug.
+    expect(lightBg, 'light mode must produce a body background').toBeTruthy();
+    expect(darkBg, 'dark mode must produce a body background').toBeTruthy();
+    expect(darkBg, 'dark mode background must differ from light mode').not.toBe(lightBg);
   });
 });
