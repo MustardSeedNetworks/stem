@@ -51,32 +51,18 @@ export default defineConfig({
     storageState: AUTH_STORAGE_STATE,
   },
   projects: [
-    // Desktop browsers
+    // Per msn-docs-internal/05-Engineering/E2E_CONVENTIONS.md, only chromium
+    // (covers Chrome and Edge) and webkit (covers Safari) are supported.
+    // Firefox/mobile-chrome/mobile-safari/tablet were never run in CI and
+    // had no customer commitment behind them; deleted to stop the config
+    // from lying about what's actually tested.
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },
     {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
-    },
-    {
       name: 'webkit',
       use: { ...devices['Desktop Safari'] },
-    },
-    // Mobile viewports
-    {
-      name: 'mobile-chrome',
-      use: { ...devices['Pixel 5'] },
-    },
-    {
-      name: 'mobile-safari',
-      use: { ...devices['iPhone 12'] },
-    },
-    // Tablet viewport
-    {
-      name: 'tablet',
-      use: { ...devices['iPad (gen 7)'] },
     },
   ],
   // Run local dev server before tests if not in CI
