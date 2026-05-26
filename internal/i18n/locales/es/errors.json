@@ -41,7 +41,13 @@
     "expired": "Licencia expirada",
     "notActivated": "Licencia no activada",
     "activationFailed": "Error en la activacion de licencia",
-    "trialExpired": "Periodo de prueba expirado"
+    "trialExpired": "Periodo de prueba expirado",
+    "tierTooLow": "Esta función requiere el nivel {{tier}}",
+    "upgradeHint": "Inicia una prueba gratuita de {{tier}} de 14 días con `stem license trial`, o activa una clave {{tier}} con `stem license activate -k <CLAVE>`.",
+    "tierGateTooltip": "Requiere el nivel {{tier}}",
+    "featureUnavailable": "{{feature}} no está disponible en tu nivel actual",
+    "currentTier": "Nivel actual: {{tier}}",
+    "loading": "Verificando licencia…"
   },
   "validation": {
     "required": "{{field}} es requerido",
