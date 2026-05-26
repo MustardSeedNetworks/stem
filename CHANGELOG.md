@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.18.1](https://github.com/krisarmstrong/stem/compare/v0.18.0...v0.18.1) (2026-05-26)
+
+
+### Bug Fixes
+
+* **license:** add RWMutex to Manager for safe concurrent access ([#312](https://github.com/krisarmstrong/stem/issues/312)) ([cf8afe3](https://github.com/krisarmstrong/stem/commit/cf8afe3c1559833a57bcba858431517b824e560a))
+* **scripts:** clean up all shellcheck warnings + pin severity=warning ([#307](https://github.com/krisarmstrong/stem/issues/307)) ([43c2d62](https://github.com/krisarmstrong/stem/commit/43c2d62f64ffaad5636343adfa51568f53105a8b))
+
 ## [0.18.0](https://github.com/krisarmstrong/stem/compare/v0.17.2...v0.18.0) (2026-05-25)
 
 
