@@ -738,11 +738,13 @@ jobs:
         env:
           STEM_AUTH_USERNAME: admin
           STEM_AUTH_PASSWORD: admin
-          STEM_TLS_ENABLED: "false"
         run: |
+          # Backend is HTTPS-by-default since the Wave 1 TLS rollout (the
+          # legacy STEM_TLS_ENABLED env var was removed). Self-signed cert
+          # is auto-generated on first start.
           nohup ./bin/stem web -p 8444 > server.log 2>&1 &
           for i in {1..30}; do
-            if curl -sf http://localhost:8444/health/ready 2>/dev/null; then
+            if curl -skf https://localhost:8444/health/ready 2>/dev/null; then
               echo "Server ready"
               exit 0
             fi
@@ -755,7 +757,7 @@ jobs:
         uses: treosh/lighthouse-ci-action@3e7e23fb74242897f95c0ba9cabad3d0227b9b18 # v12.6.2
         with:
           urls: |
-            http://localhost:8444
+            https://localhost:8444
           uploadArtifacts: true
           temporaryPublicStorage: true
 
@@ -805,12 +807,15 @@ jobs:
         env:
           STEM_AUTH_USERNAME: admin
           STEM_AUTH_PASSWORD: admin
-          STEM_TLS_ENABLED: "false"
         run: |
+          # Backend is HTTPS-by-default since the Wave 1 TLS rollout. The
+          # legacy STEM_TLS_ENABLED env var was removed from the code; self-
+          # signed cert is auto-generated on first start. Use -k on curl
+          # probes; Playwright bypasses cert via PLAYWRIGHT_IGNORE_HTTPS_ERRORS.
           nohup ./bin/stem web -p 8444 > server.log 2>&1 &
           echo "Waiting for server to start..."
           for i in {1..30}; do
-            if curl -sf http://localhost:8444/health/ready 2>/dev/null; then
+            if curl -skf https://localhost:8444/health/ready 2>/dev/null; then
               echo "Server ready after $i attempts"
               exit 0
             fi
@@ -824,7 +829,8 @@ jobs:
       - name: Run Playwright E2E tests
         working-directory: ui
         env:
-          E2E_BASE_URL: http://localhost:8444
+          E2E_BASE_URL: https://localhost:8444
+          PLAYWRIGHT_IGNORE_HTTPS_ERRORS: "true"
         run: npx playwright test --project=chromium --reporter=html
 
       - name: Upload Playwright report
