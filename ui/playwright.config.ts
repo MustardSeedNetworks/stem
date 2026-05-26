@@ -43,7 +43,9 @@ export default defineConfig({
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'on-first-retry',
-    ignoreHTTPSErrors: true,
+    // Gated to local dev only. CI uses the auto-generated self-signed cert
+    // and must opt in via PLAYWRIGHT_IGNORE_HTTPS_ERRORS=true in the workflow.
+    ignoreHTTPSErrors: process.env.PLAYWRIGHT_IGNORE_HTTPS_ERRORS === 'true' || !process.env.CI,
     // Cookies + localStorage captured by global-setup. Specs that
     // need an unauthenticated context (auth.spec.ts, setup-wizard.spec.ts)
     // override with test.use({ storageState: { cookies: [], origins: [] } }).
