@@ -499,56 +499,24 @@ jobs:
     name: i18n Validation
     runs-on: ubuntu-latest
     needs: changes
-    if: needs.changes.outputs.frontend == 'true' || needs.changes.outputs.workflows == 'true'
+    if: |
+      needs.changes.outputs.frontend == 'true'
+      || needs.changes.outputs.workflows == 'true'
 
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: Check for locale files
-        id: check-locales
-        run: |
-          if [ -d "locales" ] || [ -d "ui/src/locales" ] || [ -d "ui/locales" ]; then
-            echo "has_locales=true" >> $GITHUB_OUTPUT
-            echo "Locale files found"
-          else
-            echo "has_locales=false" >> $GITHUB_OUTPUT
-            echo "No locale files found, skipping i18n validation"
-          fi
-
-      - name: Validate translation key coverage
-        if: steps.check-locales.outputs.has_locales == 'true'
-        run: |
-          echo "Checking translation key coverage..."
-
-          # Find locale directory
-          LOCALE_DIR=""
-          for dir in "locales" "ui/src/locales" "ui/locales"; do
-            if [ -d "$dir" ]; then
-              LOCALE_DIR="$dir"
-              break
-            fi
-          done
-
-          if [ -z "$LOCALE_DIR" ]; then
-            echo "No locale directory found"
-            exit 0
-          fi
-
-          # Get base locale (English)
-          if [ -d "$LOCALE_DIR/en" ]; then
-            BASE_LOCALE="$LOCALE_DIR/en"
-          elif [ -f "$LOCALE_DIR/en.json" ]; then
-            BASE_LOCALE="$LOCALE_DIR/en.json"
-          else
-            echo "No English base locale found"
-            exit 0
-          fi
-
-          echo "Base locale: $BASE_LOCALE"
-          echo "Checking other locales for missing keys..."
-
-          # This is a placeholder - actual implementation depends on locale structure
-          echo "✅ i18n validation complete"
+      - name: Validate i18n (parity, glossary, banned vocab, etc.)
+        # Previously a placeholder that printed "✅ i18n validation complete"
+        # without checking anything. Replaced with the canonical shared script
+        # in scripts/i18n/ — identical to seed and niac.
+        #
+        # --ratchet demotes the pre-existing-debt checks (no-fallback-patterns
+        # and locked-versions) from fail to warn. Drop --ratchet once Phase 3
+        # cleanup brings both counts to zero across seed/stem/niac.
+        # See scripts/i18n/README.md and
+        # msn-docs-internal/05-Engineering/I18N_CONVENTIONS.md.
+        run: ./scripts/i18n/validate.sh --ratchet
 
   # ============================================================================
   # Documentation Checks

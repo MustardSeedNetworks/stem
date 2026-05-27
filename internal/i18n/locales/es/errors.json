@@ -31,10 +31,10 @@
     "testTypeNotSupported": "Tipo de prueba no soportado por el modulo"
   },
   "reflector": {
-    "alreadyRunning": "El reflector ya esta en ejecucion",
+    "alreadyRunning": "Reflector ya está en ejecución",
     "failedToStart": "Error al iniciar el reflector",
     "failedToStop": "Error al detener el reflector",
-    "notRunning": "El reflector no esta en ejecucion"
+    "notRunning": "Reflector no está en ejecución"
   },
   "license": {
     "invalid": "Licencia invalida",
