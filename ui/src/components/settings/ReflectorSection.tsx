@@ -59,7 +59,7 @@ export function ReflectorSection({
       title={
         <div className="flex items-center gap-2">
           <Settings2 className="w-4 h-4" aria-hidden="true" />
-          <span>{t('settings.reflector.title', 'Reflector Profile')}</span>
+          <span>{t('settings:reflector.title', 'Reflector Profile')}</span>
         </div>
       }
       defaultOpen={true}

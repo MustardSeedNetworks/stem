@@ -61,7 +61,7 @@ export function Y1564Section({
       title={
         <div className="flex items-center gap-2">
           <Activity className="w-4 h-4" aria-hidden="true" />
-          <span>{t('settings.tests.y1564.title', 'Y.1564 / EtherSAM')}</span>
+          <span>{t('settings:tests.y1564.title', 'Y.1564 / EtherSAM')}</span>
           <span className="caption text-text-muted">({selectedCount}/3)</span>
         </div>
       }

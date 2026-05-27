@@ -122,12 +122,12 @@ export function SettingsDrawer({
         ref={drawerRef}
         role="dialog"
         aria-modal="true"
-        aria-label={t('settings.title', 'Settings')}
+        aria-label={t('settings:title', 'Settings')}
         className="fixed right-0 top-0 h-full w-96 max-w-full bg-surface-raised border-l border-surface-border z-50 overflow-y-auto"
       >
         {/* Header */}
         <div className="sticky top-0 bg-surface-raised border-b border-surface-border px-4 py-3 flex items-center justify-between">
-          <h2 className="heading-3 text-text-primary">{t('settings.title', 'Settings')}</h2>
+          <h2 className="heading-3 text-text-primary">{t('settings:title', 'Settings')}</h2>
           <button
             type="button"
             onClick={onClose}
@@ -242,13 +242,13 @@ function ViewToggle({ viewMode, onViewModeChange }: ViewToggleProps): React.Reac
         'mb-2',
       )}
     >
-      <span className="body-small text-text-muted">{t('settings.viewBy', 'View by')}:</span>
+      <span className="body-small text-text-muted">{t('settings:viewBy', 'View by')}:</span>
       <div className={cn('flex', radius.lg, 'overflow-hidden border border-surface-border')}>
         <button
           type="button"
           onClick={(): void => onViewModeChange('standard')}
           title={t(
-            'settings.viewStandardHint',
+            'settings:viewStandardHint',
             'Group settings by configuration section (mode, interface, thresholds)',
           )}
           className={cn(
@@ -259,13 +259,13 @@ function ViewToggle({ viewMode, onViewModeChange }: ViewToggleProps): React.Reac
           )}
         >
           <List className="w-3 h-3" aria-hidden="true" />
-          {t('settings.viewStandard', 'Standard')}
+          {t('settings:viewStandard', 'Standard')}
         </button>
         <button
           type="button"
           onClick={(): void => onViewModeChange('module')}
           title={t(
-            'settings.viewModuleHint',
+            'settings:viewModuleHint',
             'Group settings by test module (Benchmark, ServiceTest, TrafficGen, Measure, Certify)',
           )}
           className={cn(
@@ -276,7 +276,7 @@ function ViewToggle({ viewMode, onViewModeChange }: ViewToggleProps): React.Reac
           )}
         >
           <Grid className="w-3 h-3" aria-hidden="true" />
-          {t('settings.viewModule', 'Module')}
+          {t('settings:viewModule', 'Module')}
         </button>
       </div>
     </div>

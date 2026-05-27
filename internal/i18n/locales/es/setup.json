@@ -30,7 +30,8 @@
     "copy": "Copiar",
     "copied": "¡Copiado!",
     "settingUp": "Configurando...",
-    "completeSetup": "Completar Configuración"
+    "completeSetup": "Completar Configuración",
+    "copyTooltip": "Copiar al portapapeles"
   },
   "role": {
     "title": "Elija el rol de este stem",

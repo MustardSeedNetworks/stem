@@ -242,5 +242,7 @@
         "tooltip": "Generate multiple concurrent traffic streams with different parameters."
       }
     }
-  }
+  },
+  "viewModuleHint": "Group tests by the module they exercise (Reflector, Benchmark, ServiceTest, TrafficGen, Measure, Certify).",
+  "viewStandardHint": "Group tests by IETF/ITU-T/IEEE standard (RFC 2544, Y.1564, etc.)."
 }

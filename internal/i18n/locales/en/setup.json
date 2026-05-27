@@ -30,7 +30,8 @@
     "copy": "Copy",
     "copied": "Copied!",
     "settingUp": "Setting up...",
-    "completeSetup": "Complete Setup"
+    "completeSetup": "Complete Setup",
+    "copyTooltip": "Copy to clipboard"
   },
   "role": {
     "title": "Choose this stem's role",

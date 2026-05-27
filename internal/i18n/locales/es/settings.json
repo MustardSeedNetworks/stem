@@ -242,5 +242,7 @@
         "tooltip": "Generar multiples flujos de trafico concurrentes con diferentes parámetros."
       }
     }
-  }
+  },
+  "viewModuleHint": "Agrupar las pruebas por el módulo que ejercitan (Reflector, Benchmark, ServiceTest, TrafficGen, Measure, Certify).",
+  "viewStandardHint": "Agrupar las pruebas por estándar IETF/ITU-T/IEEE (RFC 2544, Y.1564, etc.)."
 }
