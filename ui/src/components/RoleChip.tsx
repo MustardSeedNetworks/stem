@@ -90,7 +90,7 @@ export const RoleChip: FC<RoleChipProps> = ({ className = '' }) => {
       : 'Any in-progress test will be cancelled. This stem will start as a Reflector.';
 
   return (
-    <div className={`inline-flex flex-col items-start gap-1 ${className}`}>
+    <div className={`inline-flex flex-col items-start gap-tight ${className}`}>
       <fieldset
         className="inline-flex items-center gap-0 rounded-lg border border-surface-border bg-surface-raised p-0.5"
         aria-label={t('role.label', 'Stem role')}
@@ -106,7 +106,7 @@ export const RoleChip: FC<RoleChipProps> = ({ className = '' }) => {
               type="button"
               onClick={() => handleClick(option.id)}
               disabled={isSwitchingRole}
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary disabled:opacity-60 disabled:cursor-not-allowed ${
+              className={`inline-flex items-center gap-1.5 px-2.5 py-compact rounded-md text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary disabled:opacity-60 disabled:cursor-not-allowed ${
                 active
                   ? 'bg-brand-primary text-text-inverse shadow-sm'
                   : 'text-text-muted hover:text-text-primary hover:bg-surface-hover'
@@ -133,7 +133,7 @@ export const RoleChip: FC<RoleChipProps> = ({ className = '' }) => {
         <div
           role="alert"
           data-testid="role-chip-error"
-          className="inline-flex items-center gap-2 rounded-md border border-status-error/40 bg-status-error/10 px-2 py-1 text-xs text-status-error"
+          className="inline-flex items-center gap-compact rounded-md border border-status-error/40 bg-status-error/10 px-cell py-compact text-xs text-status-error"
         >
           <span className="font-medium">{t('role.switchError.label', 'Role switch failed:')}</span>
           <span className="font-normal text-text-primary">{roleSwitchError}</span>

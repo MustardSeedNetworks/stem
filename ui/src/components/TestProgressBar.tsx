@@ -94,52 +94,48 @@ export function TestProgressBar({ progress }: TestProgressBarProps): ReactElemen
   switch (progress.status) {
     case 'starting':
       statusText = 'Starting...';
-      statusColor = 'text-[var(--color-status-info)]';
-      barColor = 'bg-[var(--color-status-info)]';
+      statusColor = 'text-status-info';
+      barColor = 'bg-status-info';
       break;
     case 'running':
       statusText = 'Running';
-      statusColor = 'text-[var(--color-status-success)]';
-      barColor = 'bg-[var(--color-brand-primary)]';
+      statusColor = 'text-status-success';
+      barColor = 'bg-brand-primary';
       break;
     case 'completed':
       statusText = 'Completed';
-      statusColor = 'text-[var(--color-status-success)]';
-      barColor = 'bg-[var(--color-status-success)]';
+      statusColor = 'text-status-success';
+      barColor = 'bg-status-success';
       break;
     case 'cancelled':
       statusText = 'Cancelled';
-      statusColor = 'text-[var(--color-status-warning)]';
-      barColor = 'bg-[var(--color-status-warning)]';
+      statusColor = 'text-status-warning';
+      barColor = 'bg-status-warning';
       break;
     case 'error':
       statusText = 'Error';
-      statusColor = 'text-[var(--color-status-error)]';
-      barColor = 'bg-[var(--color-status-error)]';
+      statusColor = 'text-status-error';
+      barColor = 'bg-status-error';
       break;
     default:
       statusText = 'Unknown';
-      statusColor = 'text-[var(--color-text-muted)]';
-      barColor = 'bg-[var(--color-text-muted)]';
+      statusColor = 'text-text-muted';
+      barColor = 'bg-text-muted';
   }
 
   const isActive = progress.status === 'running' || progress.status === 'starting';
 
   return (
-    <div className="card mb-6">
+    <div className="card mb-section">
       {/* Header */}
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          {isActive ? (
-            <Loader2 className="w-4 h-4 animate-spin text-[var(--color-brand-primary)]" />
-          ) : null}
-          <span className="font-medium text-[var(--color-text-primary)]">
-            {progress.currentTest}
-          </span>
+      <div className="flex-between mb-heading">
+        <div className="flex items-center gap-compact">
+          {isActive ? <Loader2 className="w-4 h-4 animate-spin text-brand-primary" /> : null}
+          <span className="font-medium text-text-primary">{progress.currentTest}</span>
           <span className={`text-sm ${statusColor}`}>({statusText})</span>
         </div>
-        <div className="flex items-center gap-3 text-sm text-[var(--color-text-muted)]">
-          <div className="flex items-center gap-1">
+        <div className="flex items-center gap-default text-sm text-text-muted">
+          <div className="flex items-center gap-tight">
             <Clock className="w-3 h-3" />
             <span>Elapsed: {formatTime(elapsedSeconds)}</span>
           </div>
@@ -150,7 +146,7 @@ export function TestProgressBar({ progress }: TestProgressBarProps): ReactElemen
       </div>
 
       {/* Progress Bar */}
-      <div className="relative h-3 rounded-full bg-[var(--color-surface-base)] overflow-hidden">
+      <div className="relative h-3 rounded-full bg-surface-base overflow-hidden">
         <div
           className={`absolute inset-y-0 left-0 rounded-full transition-all duration-300 ${barColor}`}
           style={{ width: `${Math.min(100, calculatedPercent)}%` }}
@@ -162,7 +158,7 @@ export function TestProgressBar({ progress }: TestProgressBarProps): ReactElemen
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-between mt-2 text-xs text-[var(--color-text-muted)]">
+      <div className="flex-between mt-inline text-xs text-text-muted">
         <div>{progress.currentStep ? <span>{progress.currentStep}</span> : null}</div>
         <div className="font-medium">{Math.round(calculatedPercent)}%</div>
       </div>

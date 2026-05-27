@@ -8,13 +8,13 @@ import { PageHeader } from '../ui/PageHeader';
 export function MeasurePage() {
   const { y1731Config, setY1731Config, selectedTests } = useAppContext();
   return (
-    <section className="space-y-6">
+    <section className="stack-xl">
       <Breadcrumbs />
       <PageHeader
         icon={Waves}
         title="Measure"
         description="Y.1731 OAM delay / loss / synthetic loss measurement."
-        iconColorClass="text-[var(--color-module-measure)]"
+        iconColorClass="text-module-measure"
       />
       <RoleGuard requires="test_master" moduleName="Measure">
         <Y1731ConfigForm

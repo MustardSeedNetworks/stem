@@ -181,10 +181,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       return (
         <Translation ns="common">
           {(t: TFunction<'common'>): ReactElement => (
-            <div
-              role="alert"
-              className="min-h-screen flex items-center justify-center bg-surface-base p-4"
-            >
+            <div role="alert" className="min-h-screen flex-center bg-surface-base pad">
               <div
                 className={cn(
                   'max-w-md w-full',
@@ -195,20 +192,12 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                 )}
               >
                 {/* Header with icon */}
-                <div className={cn('flex items-center', spacing.gap.default, 'mb-4')}>
-                  <div
-                    className={cn(
-                      'flex items-center justify-center',
-                      'h-10 w-10 rounded-full',
-                      status.bg.errorSoft,
-                    )}
-                  >
+                <div className={cn('flex items-center', spacing.gap.default, 'mb-content')}>
+                  <div className={cn('flex-center', 'h-10 w-10 rounded-full', status.bg.errorSoft)}>
                     <AlertIcon />
                   </div>
                   <div>
-                    <h2 className="text-lg font-semibold text-text-primary">
-                      {t('errorBoundary.title')}
-                    </h2>
+                    <h2 className="heading-3 text-text-primary">{t('errorBoundary.title')}</h2>
                     <p className="text-sm text-text-muted">{t('errorBoundary.defaultMessage')}</p>
                   </div>
                 </div>
@@ -217,15 +206,13 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                 {this.state.error ? (
                   <div
                     className={cn(
-                      'mb-4',
+                      'mb-content',
                       spacing.pad.sm,
                       radius.lg,
                       'bg-surface-base border border-surface-border',
                     )}
                   >
-                    <p className="text-sm font-medium text-text-primary mb-1">
-                      {t('errorBoundary.errorDetails')}
-                    </p>
+                    <p className="label mb-tight">{t('errorBoundary.errorDetails')}</p>
                     <p className={cn('text-sm font-mono break-all', status.text.error)}>
                       {this.state.error.message}
                     </p>
@@ -262,7 +249,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                 </div>
 
                 {/* Help text */}
-                <p className="mt-4 text-xs text-center text-text-muted">
+                <p className="mt-content text-xs text-center text-text-muted">
                   {t('errorBoundary.persistMessage')}
                 </p>
               </div>

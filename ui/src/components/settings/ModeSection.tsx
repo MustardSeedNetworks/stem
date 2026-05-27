@@ -43,7 +43,7 @@ export function ModeSection({
   return (
     <CollapsibleSection
       title={
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-compact">
           <Monitor className="w-4 h-4" aria-hidden="true" />
           <span>{t('settings:mode.title', 'Mode')}</span>
         </div>
@@ -51,12 +51,12 @@ export function ModeSection({
       defaultOpen={true}
       className={className}
     >
-      <div className="space-y-2">
+      <div className="stack-sm">
         {MODES.map((modeOption) => (
           <label
             key={modeOption.id}
             className={cn(
-              'flex items-center gap-3',
+              'flex items-center gap-default',
               spacing.pad.sm,
               radius.lg,
               'cursor-pointer hover:bg-surface-hover transition-colors',

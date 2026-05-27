@@ -126,7 +126,7 @@ export function SettingsDrawer({
         className="fixed right-0 top-0 h-full w-96 max-w-full bg-surface-raised border-l border-surface-border z-50 overflow-y-auto"
       >
         {/* Header */}
-        <div className="sticky top-0 bg-surface-raised border-b border-surface-border px-4 py-3 flex items-center justify-between">
+        <div className="sticky top-0 bg-surface-raised border-b border-surface-border px-4 py-row-lg flex-between">
           <h2 className="heading-3 text-text-primary">{t('settings:title', 'Settings')}</h2>
           <button
             type="button"
@@ -140,7 +140,7 @@ export function SettingsDrawer({
         </div>
 
         {/* Content */}
-        <div className={cn(spacing.pad.default, 'space-y-4')}>
+        <div className={cn(spacing.pad.default, 'stack-lg')}>
           {/* License Section */}
           <LicenseSection />
 
@@ -233,15 +233,7 @@ function ViewToggle({ viewMode, onViewModeChange }: ViewToggleProps): React.Reac
   const { t } = useTranslation();
 
   return (
-    <div
-      className={cn(
-        'flex items-center justify-between',
-        spacing.pad.sm,
-        'bg-surface-base',
-        radius.lg,
-        'mb-2',
-      )}
-    >
+    <div className={cn('flex-between', spacing.pad.sm, 'bg-surface-base', radius.lg, 'mb-2')}>
       <span className="body-small text-text-muted">{t('settings:viewBy', 'View by')}:</span>
       <div className={cn('flex', radius.lg, 'overflow-hidden border border-surface-border')}>
         <button
@@ -252,7 +244,7 @@ function ViewToggle({ viewMode, onViewModeChange }: ViewToggleProps): React.Reac
             'Group settings by configuration section (mode, interface, thresholds)',
           )}
           className={cn(
-            'flex items-center gap-1 px-3 py-1.5 caption',
+            'flex items-center gap-tight px-3 py-compact-md caption',
             viewMode === 'standard'
               ? 'bg-brand-primary text-text-inverse'
               : 'bg-surface-raised text-text-muted hover:bg-surface-hover',
@@ -269,7 +261,7 @@ function ViewToggle({ viewMode, onViewModeChange }: ViewToggleProps): React.Reac
             'Group settings by test module (Benchmark, ServiceTest, TrafficGen, Measure, Certify)',
           )}
           className={cn(
-            'flex items-center gap-1 px-3 py-1.5 caption',
+            'flex items-center gap-tight px-3 py-compact-md caption',
             viewMode === 'module'
               ? 'bg-brand-primary text-text-inverse'
               : 'bg-surface-raised text-text-muted hover:bg-surface-hover',

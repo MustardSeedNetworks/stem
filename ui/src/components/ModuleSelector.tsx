@@ -246,18 +246,13 @@ export function ModuleSelector({
   };
 
   if (loading) {
-    return (
-      <div className="text-center py-8 text-[var(--color-text-muted)]">Loading modules...</div>
-    );
+    return <div className="text-center py-8 text-text-muted">Loading modules...</div>;
   }
 
   return (
-    <div className="space-y-2">
+    <div className="stack-sm">
       {modules.map((mod) => (
-        <div
-          key={mod.name}
-          className="border border-[var(--color-surface-border)] rounded-lg overflow-hidden"
-        >
+        <div key={mod.name} className="border border-surface-border rounded-lg overflow-hidden">
           {/* Module Header */}
           <button
             type="button"
@@ -265,10 +260,10 @@ export function ModuleSelector({
             title={`${mod.description}. Click to ${expandedModule === mod.name ? 'collapse and hide' : 'expand and choose'} ${mod.tests.length} ${mod.standard} test${mod.tests.length === 1 ? '' : 's'}.`}
             aria-label={`${mod.displayName} module — ${expandedModule === mod.name ? 'collapse' : 'expand'} test list`}
             aria-expanded={expandedModule === mod.name}
-            className="w-full flex items-center justify-between p-3 hover:bg-[var(--color-surface-hover)] transition-colors"
+            className="w-full flex-between pad-sm hover:bg-surface-hover transition-colors"
             style={{ borderLeft: `4px solid ${mod.color}` }}
           >
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-default">
               <div
                 className="w-3 h-3 rounded-full"
                 style={{ backgroundColor: mod.color }}
@@ -276,11 +271,11 @@ export function ModuleSelector({
               />
               <div className="text-left">
                 <div className="font-medium text-sm">{mod.displayName}</div>
-                <div className="text-xs text-[var(--color-text-muted)]">{mod.standard}</div>
+                <div className="text-xs text-text-muted">{mod.standard}</div>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-[var(--color-text-muted)]">
+            <div className="flex items-center gap-compact">
+              <span className="text-xs text-text-muted">
                 {getSelectedCount(mod)}/{mod.tests.length}
               </span>
               <svg
@@ -302,30 +297,30 @@ export function ModuleSelector({
 
           {/* Module Tests */}
           {expandedModule === mod.name && (
-            <div className="border-t border-[var(--color-surface-border)] bg-[var(--color-surface-base)]">
+            <div className="border-t border-surface-border bg-surface-base">
               {/* Select All / Deselect All */}
-              <div className="flex justify-end gap-2 px-3 py-2 border-b border-[var(--color-surface-border)]">
+              <div className="flex justify-end gap-compact px-3 py-row border-b border-surface-border">
                 <button
                   type="button"
                   onClick={() => selectAllInModule(mod)}
                   title={`Select every test in ${mod.displayName} (${mod.tests.length} test${mod.tests.length === 1 ? '' : 's'})`}
-                  className="text-xs text-[var(--color-status-info)] hover:underline"
+                  className="text-xs text-status-info hover:underline"
                 >
                   Select All
                 </button>
-                <span className="text-[var(--color-text-muted)]">|</span>
+                <span className="text-text-muted">|</span>
                 <button
                   type="button"
                   onClick={() => deselectAllInModule(mod)}
                   title={`Clear all test selections in ${mod.displayName}`}
-                  className="text-xs text-[var(--color-text-muted)] hover:underline"
+                  className="text-xs text-text-muted hover:underline"
                 >
                   Deselect All
                 </button>
               </div>
 
               {/* Test List */}
-              <div className="p-2 space-y-1">
+              <div className="pad-xs stack-xs">
                 {mod.tests.map((testId) => {
                   const testInfo = testDescriptions[testId] || {
                     name: testId,
@@ -336,7 +331,7 @@ export function ModuleSelector({
                     <label
                       key={testId}
                       title={testInfo.tooltip}
-                      className="flex items-start gap-3 p-2 rounded-lg cursor-pointer hover:bg-[var(--color-surface-hover)]"
+                      className="flex items-start gap-default pad-xs rounded-lg cursor-pointer hover:bg-surface-hover"
                     >
                       <input
                         type="checkbox"
@@ -347,14 +342,12 @@ export function ModuleSelector({
                         style={{ accentColor: mod.color }}
                       />
                       <div className="flex-1">
-                        <div className="font-medium text-sm flex items-center gap-1">
+                        <div className="font-medium text-sm flex items-center gap-tight">
                           {testInfo.name}
                           <HelpIcon tooltip={testInfo.tooltip} />
                         </div>
                         {testInfo.desc ? (
-                          <div className="text-xs text-[var(--color-text-muted)]">
-                            {testInfo.desc}
-                          </div>
+                          <div className="text-xs text-text-muted">{testInfo.desc}</div>
                         ) : null}
                       </div>
                     </label>

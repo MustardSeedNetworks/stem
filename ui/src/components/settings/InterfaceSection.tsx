@@ -36,7 +36,7 @@ export function InterfaceSection({
   return (
     <CollapsibleSection
       title={
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-compact">
           <Network className="w-4 h-4" aria-hidden="true" />
           <span>{t('settings:interface.title', 'Interface')}</span>
         </div>
@@ -44,7 +44,7 @@ export function InterfaceSection({
       defaultOpen={true}
       className={className}
     >
-      <div className="space-y-3">
+      <div className="stack">
         <select
           value={selectedInterface}
           onChange={(e: React.ChangeEvent<HTMLSelectElement>): void =>
@@ -62,11 +62,11 @@ export function InterfaceSection({
         </select>
 
         {selectedDetails && (
-          <div className="caption text-text-muted space-y-1">
+          <div className="caption text-text-muted stack-xs">
             <div>
               {t('settings:interface.driver', 'Driver')}: {selectedDetails.driver}
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-compact">
               {selectedDetails.xdp === true && (
                 <span
                   className={cn(

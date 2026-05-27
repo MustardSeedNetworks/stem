@@ -58,17 +58,17 @@ function formatUptime(seconds: number): string {
 function getStatusClassName(status: Stats['testStatus']): string {
   switch (status) {
     case 'running':
-      return 'text-[var(--color-status-success)]';
+      return 'text-status-success';
     case 'error':
-      return 'text-[var(--color-status-error)]';
+      return 'text-status-error';
     case 'completed':
-      return 'text-[var(--color-status-info)]';
+      return 'text-status-info';
     case 'starting':
-      return 'text-[var(--color-status-info)]';
+      return 'text-status-info';
     case 'cancelled':
-      return 'text-[var(--color-status-warning)]';
+      return 'text-status-warning';
     default:
-      return 'text-[var(--color-text-muted)]';
+      return 'text-text-muted';
   }
 }
 
@@ -97,49 +97,46 @@ interface InterfaceDetailsProps {
 }
 
 function InterfaceDetails({ iface }: InterfaceDetailsProps): ReactElement {
-  const stateClassName =
-    iface.state === 'up'
-      ? 'text-[var(--color-status-success)]'
-      : 'text-[var(--color-status-error)]';
+  const stateClassName = iface.state === 'up' ? 'text-status-success' : 'text-status-error';
   return (
     <div className="card mb-2">
       <div className="card-header">
         <Wifi className="w-4 h-4" />
         Interface Details
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-comfortable text-sm">
         <div>
-          <div className="text-[var(--color-text-muted)]">Name</div>
+          <div className="text-text-muted">Name</div>
           <div className="font-medium">{iface.name}</div>
         </div>
         <div>
-          <div className="text-[var(--color-text-muted)]">MAC</div>
+          <div className="text-text-muted">MAC</div>
           <div className="font-mono">{iface.mac}</div>
         </div>
         <div>
-          <div className="text-[var(--color-text-muted)]">Speed</div>
+          <div className="text-text-muted">Speed</div>
           <div>
             {iface.speed} Mbps / {iface.duplex}
           </div>
         </div>
         <div>
-          <div className="text-[var(--color-text-muted)]">Driver</div>
+          <div className="text-text-muted">Driver</div>
           <div>{iface.driver}</div>
         </div>
         <div>
-          <div className="text-[var(--color-text-muted)]">State</div>
+          <div className="text-text-muted">State</div>
           <div className={stateClassName}>{iface.state}</div>
         </div>
         <div>
-          <div className="text-[var(--color-text-muted)]">XDP Support</div>
+          <div className="text-text-muted">XDP Support</div>
           <div>{iface.xdp ? 'Yes' : 'No'}</div>
         </div>
         <div>
-          <div className="text-[var(--color-text-muted)]">DPDK Support</div>
+          <div className="text-text-muted">DPDK Support</div>
           <div>{iface.dpdk ? 'Yes' : 'No'}</div>
         </div>
         <div>
-          <div className="text-[var(--color-text-muted)]">Score</div>
+          <div className="text-text-muted">Score</div>
           <div>{iface.score}</div>
         </div>
       </div>
@@ -159,7 +156,7 @@ function PlatformBanner({ reason, onSwitchToTestMaster }: PlatformBannerProps): 
   const { t } = useTranslation();
   return (
     <Alert status="warning" className="flex-wrap">
-      <div className="flex flex-1 flex-wrap items-center gap-3">
+      <div className="flex flex-1 flex-wrap items-center gap-default">
         <span className="flex-1 min-w-[16rem]">
           <strong className="font-semibold">
             {t('role.platform.bannerTitle', 'Reflector mode is not available on this platform.')}
@@ -168,7 +165,7 @@ function PlatformBanner({ reason, onSwitchToTestMaster }: PlatformBannerProps): 
             'role.platform.bannerBody',
             'macOS and Windows builds use the pure-Go networking stack, which supports Test Master mode but not the line-rate Reflector dataplane. Use the Linux build to act as a Reflector node, or switch this stem to Test Master mode.',
           )}
-          {reason ? <span className="ml-1 opacity-80">({reason})</span> : null}
+          {reason ? <span className="ml-tight opacity-80">({reason})</span> : null}
         </span>
         <Button variant="outline" tone="violet" size="sm" onClick={onSwitchToTestMaster}>
           {t('role.platform.switchToTestMaster', 'Switch to Test Master')}
@@ -190,11 +187,8 @@ function RunningStatus({ testStatus }: RunningStatusProps): ReactElement | null 
 
   if (running) {
     return (
-      <output className="status-badge success flex items-center gap-2">
-        <span
-          className="w-2 h-2 rounded-full bg-[var(--color-status-success)] animate-pulse"
-          aria-hidden="true"
-        />
+      <output className="status-badge success flex items-center gap-compact">
+        <span className="w-2 h-2 rounded-full bg-status-success animate-pulse" aria-hidden="true" />
         {testStatus === 'starting'
           ? t('status.starting', 'Starting')
           : t('status.running', 'Running')}
@@ -246,13 +240,13 @@ export function ReflectorPage(): ReactElement {
   };
 
   return (
-    <section className="space-y-6">
+    <section className="stack-xl">
       <Breadcrumbs />
       <PageHeader
         icon={Repeat}
         title="Reflector"
         description="Loopback reflector — bounces frames back to the test master for end-to-end measurement."
-        iconColorClass="text-[var(--color-module-reflector)]"
+        iconColorClass="text-module-reflector"
       />
 
       <RoleGuard requires="reflector">
@@ -261,7 +255,7 @@ export function ReflectorPage(): ReactElement {
         ) : null}
 
         {/* Control row: interface picker + start/stop + status */}
-        <div className="flex flex-wrap items-start gap-3">
+        <div className="flex flex-wrap items-start gap-default">
           <HeaderInterfaceSelector
             interfaces={interfaces}
             selectedInterface={selectedInterface}
@@ -315,7 +309,7 @@ export function ReflectorPage(): ReactElement {
 
           {reflectorStartError ? (
             <div
-              className="text-sm text-[var(--color-status-error)] flex items-center gap-2"
+              className="text-sm text-status-error flex items-center gap-compact"
               role="alert"
               aria-live="assertive"
             >
@@ -324,13 +318,17 @@ export function ReflectorPage(): ReactElement {
             </div>
           ) : null}
 
-          <div className="flex items-center gap-3 ml-auto" aria-live="polite" aria-atomic="true">
+          <div
+            className="flex items-center gap-default ml-auto"
+            aria-live="polite"
+            aria-atomic="true"
+          >
             <RunningStatus testStatus={stats.testStatus} />
           </div>
         </div>
 
         {/* Stats grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-comfortable">
           <StatsCard
             icon={<Activity className="w-4 h-4" />}
             title="Packets Received"

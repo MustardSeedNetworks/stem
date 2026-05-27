@@ -72,14 +72,14 @@ export const RoleGuard: FC<RoleGuardProps> = ({ requires, moduleName, children }
     <>
       <div
         role="status"
-        className="flex flex-wrap items-center gap-3 rounded-lg border border-status-warning/30 bg-status-warning/10 px-3 py-2 text-sm text-status-warning"
+        className="flex flex-wrap items-center gap-default rounded-lg border border-status-warning/30 bg-status-warning/10 px-3 py-row text-sm text-status-warning"
       >
         <AlertTriangle className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
         <span className="flex-1 text-text-primary">{bannerMessage}</span>
         <button
           type="button"
           onClick={handleSwitchClick}
-          className="inline-flex items-center gap-1 rounded-md border border-status-warning/40 bg-surface-raised px-2.5 py-1 text-xs font-medium text-text-primary hover:bg-surface-hover transition-colors"
+          className="inline-flex items-center gap-tight rounded-md border border-status-warning/40 bg-surface-raised px-2.5 py-compact text-xs font-medium text-text-primary hover:bg-surface-hover transition-colors"
         >
           {t('role.guard.switchAction', 'Switch role')}
         </button>

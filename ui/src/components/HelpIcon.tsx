@@ -59,12 +59,12 @@ export function HelpIcon({
         onMouseLeave={(): void => setShowTooltip(false)}
         onFocus={(): void => setShowTooltip(true)}
         onBlur={(): void => setShowTooltip(false)}
-        className="p-0.5 rounded-full hover:bg-[var(--color-surface-hover)] transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-primary)]/50"
+        className="p-0.5 rounded-full hover:bg-surface-hover transition-colors focus:outline-none focus:ring-2 focus:ring-brand-primary/50"
         title={onClick ? `${tooltip} (click for details)` : tooltip}
         aria-label={`Help: ${tooltip}`}
       >
         <HelpCircle
-          className={`${sizeClasses[size]} text-[var(--color-text-muted)] hover:text-[var(--color-brand-primary)] transition-colors`}
+          className={`${sizeClasses[size]} text-text-muted hover:text-brand-primary transition-colors`}
         />
       </button>
 
@@ -73,21 +73,21 @@ export function HelpIcon({
         <div
           ref={tooltipRef}
           role="tooltip"
-          className={`absolute z-50 px-2 py-1.5 text-xs bg-[var(--color-surface-raised)] border border-[var(--color-surface-border)] rounded-lg shadow-lg max-w-xs whitespace-normal text-[var(--color-text-secondary)] ${
+          className={`absolute z-50 px-cell py-compact-md text-xs bg-surface-raised border border-surface-border rounded-lg shadow-lg max-w-xs whitespace-normal text-text-secondary ${
             tooltipPosition === 'top'
               ? 'bottom-full mb-2 left-1/2 -translate-x-1/2'
-              : 'top-full mt-2 left-1/2 -translate-x-1/2'
+              : 'top-full mt-inline left-1/2 -translate-x-1/2'
           }`}
         >
           {tooltip}
           {onClick ? (
-            <span className="block text-[var(--color-brand-primary)] mt-1 text-[10px]">
+            <span className="block text-brand-primary mt-tight text-[10px]">
               Click for more details
             </span>
           ) : null}
           {/* Tooltip Arrow */}
           <div
-            className={`absolute w-2 h-2 bg-[var(--color-surface-raised)] border-[var(--color-surface-border)] rotate-45 ${
+            className={`absolute w-2 h-2 bg-surface-raised border-surface-border rotate-45 ${
               tooltipPosition === 'top'
                 ? 'top-full -mt-1 left-1/2 -translate-x-1/2 border-r border-b'
                 : 'bottom-full -mb-1 left-1/2 -translate-x-1/2 border-l border-t'

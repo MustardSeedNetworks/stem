@@ -98,7 +98,7 @@ function PasswordField({
           type={showPassword ? 'text' : 'password'}
           {...register}
           className={cn(
-            'w-full pl-10 pr-10',
+            'w-full pl-10 pr-icon',
             input.size.md,
             radius.xl,
             'border bg-surface-base text-text-primary',
@@ -119,10 +119,10 @@ function PasswordField({
         </button>
       </div>
       {helperText !== undefined && !hasError && (
-        <p className={cn('caption mt-1 text-text-muted')}>{helperText}</p>
+        <p className={cn('caption mt-tight text-text-muted')}>{helperText}</p>
       )}
       {hasError && fieldError?.message ? (
-        <p className={cn('caption mt-1', status.text.error)}>{fieldError.message}</p>
+        <p className={cn('caption mt-tight', status.text.error)}>{fieldError.message}</p>
       ) : null}
     </div>
   );
@@ -151,7 +151,7 @@ function InstructionsPanel({
       )}
     >
       <h3 className={cn('heading-4', spacing.margin.bottom.inline)}>{title}</h3>
-      <ol className="caption text-text-muted space-y-1 list-decimal list-inside">
+      <ol className="caption text-text-muted stack-xs list-decimal list-inside">
         {instructions.steps.map((step) => (
           <li key={step}>{step}</li>
         ))}
@@ -263,7 +263,7 @@ export function RecoveryForm({
 
   return (
     <div
-      className={cn('fixed inset-0 z-50 bg-black/60 backdrop-blur-sm', layout.flex.center, 'p-4')}
+      className={cn('fixed inset-0 z-50 bg-black/60 backdrop-blur-sm', layout.flex.center, 'pad')}
     >
       <div className="w-full max-w-md">
         {/* Header */}
@@ -294,7 +294,7 @@ export function RecoveryForm({
             )}
           >
             <Timer className={icon.size.sm} />
-            <span className="body-small ml-2">
+            <span className="body-small ml-inline">
               {t('timeRemaining')}: {formatTime(remainingTime)}
             </span>
           </div>
@@ -352,7 +352,7 @@ export function RecoveryForm({
               />
             </div>
             {errors.token ? (
-              <p className={cn('caption mt-1', status.text.error)}>{errors.token.message}</p>
+              <p className={cn('caption mt-tight', status.text.error)}>{errors.token.message}</p>
             ) : null}
           </div>
 
@@ -427,7 +427,7 @@ export function RecoveryForm({
             )}
           >
             <ArrowLeft className={icon.size.sm} />
-            <span className="ml-2">{t('buttons.backToLogin')}</span>
+            <span className="ml-inline">{t('buttons.backToLogin')}</span>
           </button>
         </form>
 

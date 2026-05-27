@@ -53,36 +53,36 @@ export function TotpSetupModal({ setup, onComplete, onCancel }: Props): ReactEle
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex-center bg-black/60 backdrop-blur-sm">
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="totp-setup-title"
-        className="w-full max-w-md rounded-3xl border border-surface-border bg-surface-raised p-6 shadow-2xl"
+        className="w-full max-w-md rounded-3xl border border-surface-border bg-surface-raised pad-lg shadow-2xl"
       >
-        <h2 id="totp-setup-title" className="text-lg font-semibold text-text-primary">
+        <h2 id="totp-setup-title" className="heading-3 text-text-primary">
           {t('mfa.setup.title')}
         </h2>
         <p className="text-sm text-text-muted">{t('mfa.setup.instructions')}</p>
 
-        <div className="mt-4 flex justify-center">
+        <div className="mt-content flex justify-center">
           <img
             src={`data:image/png;base64,${setup.qrCodePngBase64}`}
             alt="TOTP QR code"
             width={256}
             height={256}
-            className="rounded-lg border border-surface-border bg-white p-2"
+            className="rounded-lg border border-surface-border bg-white pad-xs"
           />
         </div>
 
-        <div className="mt-4">
+        <div className="mt-content">
           <p className="text-xs text-text-muted">{t('mfa.setup.secretLabel')}</p>
-          <code className="block mt-1 break-all rounded-lg bg-surface-base p-2 text-xs font-mono text-text-primary">
+          <code className="block mt-tight break-all rounded-lg bg-surface-base pad-xs text-xs font-mono text-text-primary">
             {setup.secret}
           </code>
         </div>
 
-        <form className="mt-4 space-y-4" onSubmit={handleSubmit(onSubmit)}>
+        <form className="mt-content stack-lg" onSubmit={handleSubmit(onSubmit)}>
           <div>
             <label htmlFor="totp-setup-code" className="text-xs font-semibold text-text-muted">
               {t('mfa.setup.codeLabel')}
@@ -94,16 +94,14 @@ export function TotpSetupModal({ setup, onComplete, onCancel }: Props): ReactEle
               pattern="[0-9]{6}"
               placeholder={t('mfa.setup.codePlaceholder')}
               {...register('code')}
-              className="mt-1 w-full rounded-xl border border-surface-border bg-surface-base px-3 py-2 text-sm font-mono tracking-widest"
+              className="mt-tight w-full rounded-xl border border-surface-border bg-surface-base px-3 py-row text-sm font-mono tracking-widest"
             />
             {errors.code ? (
-              <p className="mt-1 text-xs text-[var(--color-status-error)]">{errors.code.message}</p>
+              <p className="mt-tight text-xs text-status-error">{errors.code.message}</p>
             ) : null}
           </div>
-          {submitError ? (
-            <p className="text-xs text-[var(--color-status-error)]">{submitError}</p>
-          ) : null}
-          <div className="flex gap-2 justify-end">
+          {submitError ? <p className="text-xs text-status-error">{submitError}</p> : null}
+          <div className="flex gap-compact justify-end">
             <button type="button" className="btn btn-secondary" onClick={onCancel}>
               {t('mfa.setup.cancelButton')}
             </button>

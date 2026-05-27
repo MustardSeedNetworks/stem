@@ -112,12 +112,10 @@ interface ResultCardProps {
 }
 
 function ResultCard({ result, isExpanded, onToggle, onDelete }: ResultCardProps): ReactElement {
-  const statusColor = result.success
-    ? 'text-[var(--color-status-success)]'
-    : 'text-[var(--color-status-error)]';
+  const statusColor = result.success ? 'text-status-success' : 'text-status-error';
 
   return (
-    <div className="rounded-lg border border-[var(--color-surface-border)] bg-[var(--color-surface-base)] overflow-hidden">
+    <div className="rounded-lg border border-surface-border bg-surface-base overflow-hidden">
       {/* Summary Row */}
       <button
         type="button"
@@ -129,25 +127,25 @@ function ResultCard({ result, isExpanded, onToggle, onDelete }: ResultCardProps)
         }
         aria-label={isExpanded ? 'Collapse result details' : 'Expand result details'}
         aria-expanded={isExpanded}
-        className="w-full flex items-center justify-between p-3 hover:bg-[var(--color-surface-hover)] transition-colors text-left"
+        className="w-full flex-between pad-sm hover:bg-surface-hover transition-colors text-left"
       >
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-default">
           {isExpanded ? (
-            <ChevronDown className="w-4 h-4 text-[var(--color-text-muted)]" />
+            <ChevronDown className="w-4 h-4 text-text-muted" />
           ) : (
-            <ChevronRight className="w-4 h-4 text-[var(--color-text-muted)]" />
+            <ChevronRight className="w-4 h-4 text-text-muted" />
           )}
-          <Activity className="w-4 h-4 text-[var(--color-brand-primary)]" />
+          <Activity className="w-4 h-4 text-brand-primary" />
           <div>
-            <div className="font-medium text-[var(--color-text-primary)]">{result.testType}</div>
-            <div className="text-xs text-[var(--color-text-muted)]">{result.module}</div>
+            <div className="font-medium text-text-primary">{result.testType}</div>
+            <div className="text-xs text-text-muted">{result.module}</div>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-default">
           <span className={`text-sm font-medium ${statusColor}`}>
             {result.success ? 'PASS' : 'FAIL'}
           </span>
-          <div className="text-xs text-[var(--color-text-muted)] flex items-center gap-1">
+          <div className="text-xs text-text-muted flex items-center gap-tight">
             <Clock className="w-3 h-3" />
             {result.completedAt ? new Date(result.completedAt).toLocaleString() : 'N/A'}
           </div>
@@ -156,36 +154,34 @@ function ResultCard({ result, isExpanded, onToggle, onDelete }: ResultCardProps)
 
       {/* Expanded Details */}
       {isExpanded ? (
-        <div className="border-t border-[var(--color-surface-border)] p-4 space-y-4">
+        <div className="border-t border-surface-border pad stack-lg">
           {result.error ? (
-            <div className="p-3 rounded-lg bg-[var(--color-status-error)]/10 border border-[var(--color-status-error)]/20">
-              <div className="text-sm font-medium text-[var(--color-status-error)]">Error</div>
-              <div className="text-sm text-[var(--color-text-primary)]">{result.error}</div>
+            <div className="pad-sm rounded-lg bg-status-error/10 border border-status-error/20">
+              <div className="text-sm font-medium text-status-error">Error</div>
+              <div className="text-sm text-text-primary">{result.error}</div>
             </div>
           ) : null}
 
           {result.duration !== undefined && (
             <div className="text-sm">
-              <span className="text-[var(--color-text-muted)]">Duration: </span>
+              <span className="text-text-muted">Duration: </span>
               <span className="font-medium">{formatDuration(result.duration)}</span>
             </div>
           )}
 
           {result.metrics && Object.keys(result.metrics).length > 0 && (
             <div>
-              <div className="text-sm font-semibold text-[var(--color-text-muted)] mb-2">
-                Metrics
-              </div>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="text-sm font-semibold text-text-muted mb-2">Metrics</div>
+              <div className="grid grid-cols-2 gap-compact">
                 {Object.entries(result.metrics).map(([key, value]) => (
                   <div
                     key={key}
-                    className="p-2 rounded bg-[var(--color-surface-base)] border border-[var(--color-surface-border)]"
+                    className="pad-xs rounded bg-surface-base border border-surface-border"
                   >
-                    <div className="text-xs text-[var(--color-text-muted)] capitalize">
+                    <div className="text-xs text-text-muted capitalize">
                       {key.replace(/_/g, ' ')}
                     </div>
-                    <div className="font-medium text-[var(--color-text-primary)]">
+                    <div className="font-medium text-text-primary">
                       {typeof value === 'number' ? formatNumber(value) : String(value)}
                     </div>
                   </div>
@@ -194,7 +190,7 @@ function ResultCard({ result, isExpanded, onToggle, onDelete }: ResultCardProps)
             </div>
           )}
 
-          <div className="text-xs text-[var(--color-text-muted)] space-y-1">
+          <div className="text-xs text-text-muted stack-xs">
             {result.startedAt ? (
               <div>Started: {new Date(result.startedAt).toLocaleString()}</div>
             ) : null}
@@ -208,7 +204,7 @@ function ResultCard({ result, isExpanded, onToggle, onDelete }: ResultCardProps)
             onClick={onDelete}
             title="Permanently remove this result from history; cannot be undone"
             aria-label="Delete this test result from history"
-            className="btn btn-ghost text-[var(--color-status-error)] text-sm"
+            className="btn btn-ghost text-status-error text-sm"
           >
             <Trash2 className="w-3 h-3" />
             Delete
@@ -302,23 +298,21 @@ export function ResultHistory({
         role="dialog"
         aria-modal="true"
         aria-label="Test History"
-        className="relative h-full w-full max-w-lg bg-[var(--color-surface-raised)] shadow-xl overflow-hidden flex flex-col"
+        className="relative h-full w-full max-w-lg bg-surface-raised shadow-xl overflow-hidden flex flex-col"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--color-surface-border)]">
-          <div className="flex items-center gap-2">
-            <History className="w-5 h-5 text-[var(--color-brand-primary)]" />
-            <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">Test History</h2>
-            <span className="text-sm text-[var(--color-text-muted)]">
-              ({history.length} results)
-            </span>
+        <div className="flex-between px-6 py-4 border-b border-surface-border">
+          <div className="flex items-center gap-compact">
+            <History className="w-5 h-5 text-brand-primary" />
+            <h2 className="heading-3 text-text-primary">Test History</h2>
+            <span className="text-sm text-text-muted">({history.length} results)</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-compact">
             {history.length > 0 && (
               <button
                 type="button"
                 onClick={handleClearAll}
-                className="btn btn-ghost text-[var(--color-status-error)]"
+                className="btn btn-ghost text-status-error"
                 title={`Permanently delete all ${history.length} saved test result${history.length === 1 ? '' : 's'} from local storage; cannot be undone`}
                 aria-label="Clear all test history"
               >
@@ -339,10 +333,10 @@ export function ResultHistory({
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+        <div className="flex-1 overflow-y-auto pad stack">
           {history.length === 0 ? (
-            <div className="text-center py-12 text-[var(--color-text-muted)]">
-              <History className="w-12 h-12 mx-auto mb-4 opacity-50" />
+            <div className="text-center py-centered text-text-muted">
+              <History className="w-12 h-12 mx-auto mb-content opacity-50" />
               <p>No test history yet.</p>
               <p className="text-sm">Completed tests will appear here.</p>
             </div>

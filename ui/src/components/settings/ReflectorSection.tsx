@@ -57,7 +57,7 @@ export function ReflectorSection({
   return (
     <CollapsibleSection
       title={
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-compact">
           <Settings2 className="w-4 h-4" aria-hidden="true" />
           <span>{t('settings:reflector.title', 'Reflector Profile')}</span>
         </div>
@@ -65,12 +65,12 @@ export function ReflectorSection({
       defaultOpen={true}
       className={className}
     >
-      <div className="space-y-2">
+      <div className="stack-sm">
         {REFLECTOR_PROFILES.map((p) => (
           <label
             key={p.id}
             className={cn(
-              'flex items-center gap-3',
+              'flex items-center gap-default',
               spacing.pad.sm,
               radius.lg,
               'cursor-pointer hover:bg-surface-hover transition-colors',

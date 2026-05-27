@@ -175,12 +175,12 @@ function FrameSizeResultsTable({
       <table className="w-full text-xs">
         <thead>
           <tr className="text-text-muted border-b border-surface-border">
-            <th className="text-left py-2 pr-2 font-medium">Frame</th>
-            <th className="text-right py-2 px-2 font-medium">TX</th>
-            <th className="text-right py-2 px-2 font-medium">RX</th>
-            <th className="text-right py-2 px-2 font-medium">Loss</th>
-            <th className="text-right py-2 px-2 font-medium">Rate</th>
-            <th className="text-center py-2 pl-2 font-medium w-8">Status</th>
+            <th className="text-left py-row pr-2 font-medium">Frame</th>
+            <th className="text-right py-row px-cell font-medium">TX</th>
+            <th className="text-right py-row px-cell font-medium">RX</th>
+            <th className="text-right py-row px-cell font-medium">Loss</th>
+            <th className="text-right py-row px-cell font-medium">Rate</th>
+            <th className="text-center py-row pl-2 font-medium w-8">Status</th>
           </tr>
         </thead>
         <tbody>
@@ -192,18 +192,18 @@ function FrameSizeResultsTable({
                 result.status === 'running' && statusColor.bg.successSubtle,
               )}
             >
-              <td className="py-2 pr-2 font-mono font-medium text-text-primary">
+              <td className="py-row pr-2 font-mono font-medium text-text-primary">
                 {result.frameSize}B
               </td>
-              <td className="py-2 px-2 text-right font-mono text-text-secondary">
+              <td className="py-row px-cell text-right font-mono text-text-secondary">
                 {result.status === 'pending' ? '—' : formatNumber(result.txPackets ?? 0)}
               </td>
-              <td className="py-2 px-2 text-right font-mono text-text-secondary">
+              <td className="py-row px-cell text-right font-mono text-text-secondary">
                 {result.status === 'pending' ? '—' : formatNumber(result.rxPackets ?? 0)}
               </td>
               <td
                 className={cn(
-                  'py-2 px-2 text-right font-mono',
+                  'py-row px-cell text-right font-mono',
                   getLossColorClass(result.lossPercent ?? 0, result.status === 'pending'),
                 )}
               >
@@ -211,10 +211,10 @@ function FrameSizeResultsTable({
                   ? '\u2014'
                   : `${(result.lossPercent ?? 0).toFixed(2)}%`}
               </td>
-              <td className="py-2 px-2 text-right font-mono text-text-secondary">
+              <td className="py-row px-cell text-right font-mono text-text-secondary">
                 <RateCellContent result={result} />
               </td>
-              <td className="py-2 pl-2 text-center">
+              <td className="py-row pl-2 text-center">
                 {result.status === 'completed' && (
                   <Check className={cn('w-4 h-4 inline', statusColor.text.success)} />
                 )}
@@ -245,20 +245,20 @@ function FrameSizeResultsTable({
 /** Renders service flow results for Y.1564 style tests */
 function ServiceFlowResultsTable({ results }: { results: ServiceFlowResult[] }): ReactElement {
   return (
-    <div className="space-y-2">
+    <div className="stack-sm">
       {results.map((flow) => (
         <div
           key={flow.flowId}
           className={cn(
-            'p-2 rounded-lg border border-surface-border',
+            'pad-xs rounded-lg border border-surface-border',
             flow.status === 'running' && statusColor.bg.successSubtle,
           )}
         >
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-sm font-medium text-text-primary">{flow.flowName}</span>
+          <div className="flex-between mb-tight">
+            <span className="label">{flow.flowName}</span>
             <span
               className={cn(
-                'text-xs px-2 py-0.5 rounded-full',
+                'text-xs px-cell py-0.5 rounded-full',
                 flow.status === 'completed' && statusColor.badge.success,
                 flow.status === 'running' && statusColor.badge.info,
                 flow.status === 'pending' && 'bg-surface-base text-text-muted',
@@ -269,7 +269,7 @@ function ServiceFlowResultsTable({ results }: { results: ServiceFlowResult[] }):
             </span>
           </div>
           {flow.status !== 'pending' && (
-            <div className="grid grid-cols-4 gap-2 text-xs">
+            <div className="grid grid-cols-4 gap-compact text-xs">
               <div>
                 <div className="text-text-muted">CIR</div>
                 <div className="font-mono">
@@ -305,22 +305,20 @@ function ServiceFlowResultsTable({ results }: { results: ServiceFlowResult[] }):
 /** Renders OAM measurement results for Y.1731 style tests */
 function OamResultsTable({ results }: { results: OamMeasurementResult[] }): ReactElement {
   return (
-    <div className="space-y-2">
+    <div className="stack-sm">
       {results.map((measurement) => (
         <div
           key={measurement.measurementType}
           className={cn(
-            'p-2 rounded-lg border border-surface-border',
+            'pad-xs rounded-lg border border-surface-border',
             measurement.status === 'running' && statusColor.bg.successSubtle,
           )}
         >
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-sm font-medium text-text-primary">
-              {measurement.measurementType}
-            </span>
+          <div className="flex-between mb-tight">
+            <span className="label">{measurement.measurementType}</span>
             <span
               className={cn(
-                'text-xs px-2 py-0.5 rounded-full',
+                'text-xs px-cell py-0.5 rounded-full',
                 measurement.status === 'completed' && statusColor.badge.success,
                 measurement.status === 'running' && statusColor.badge.info,
                 measurement.status === 'pending' && 'bg-surface-base text-text-muted',
@@ -331,7 +329,7 @@ function OamResultsTable({ results }: { results: OamMeasurementResult[] }): Reac
             </span>
           </div>
           {measurement.status !== 'pending' && (
-            <div className="grid grid-cols-3 gap-2 text-xs">
+            <div className="grid grid-cols-3 gap-compact text-xs">
               <div>
                 <div className="text-text-muted">Delay (min/avg/max)</div>
                 <div className="font-mono">
@@ -371,7 +369,7 @@ function ModuleStatusIndicator({
     return (
       <div
         className={cn(
-          'flex items-center gap-2 px-3 py-1.5 rounded-full',
+          'flex items-center gap-compact px-3 py-compact-md rounded-full',
           statusColor.bg.successSoft,
         )}
       >
@@ -385,7 +383,10 @@ function ModuleStatusIndicator({
   if (status.status === 'completed') {
     return (
       <div
-        className={cn('flex items-center gap-2 px-3 py-1.5 rounded-full', statusColor.bg.infoSoft)}
+        className={cn(
+          'flex items-center gap-compact px-3 py-compact-md rounded-full',
+          statusColor.bg.infoSoft,
+        )}
       >
         <span className={cn('text-xs font-medium', statusColor.text.info)}>Completed</span>
       </div>
@@ -394,7 +395,10 @@ function ModuleStatusIndicator({
   if (status.status === 'error') {
     return (
       <div
-        className={cn('flex items-center gap-2 px-3 py-1.5 rounded-full', statusColor.bg.errorSoft)}
+        className={cn(
+          'flex items-center gap-compact px-3 py-compact-md rounded-full',
+          statusColor.bg.errorSoft,
+        )}
       >
         <span className={cn('text-xs font-medium', statusColor.text.error)}>
           Error{status.message ? `: ${status.message}` : ''}
@@ -431,7 +435,7 @@ function ModuleActionButton({
         title={t('card.stop.title', { name: config.displayName })}
         aria-label={t('card.stop.ariaLabel', { name: config.displayName })}
         className={cn(
-          'px-4 py-2 rounded-lg flex items-center gap-2 transition-colors',
+          'px-4 py-row rounded-lg flex items-center gap-compact transition-colors',
           statusColor.badge.error,
           statusColor.hover.errorStrong,
         )}
@@ -456,7 +460,7 @@ function ModuleActionButton({
       }
       aria-label={t('card.start.ariaLabel', { name: config.displayName })}
       className={cn(
-        'px-4 py-2 rounded-lg flex items-center gap-2 transition-colors',
+        'px-4 py-row rounded-lg flex items-center gap-compact transition-colors',
         enabledTestCount > 0
           ? 'bg-brand-primary text-white hover:bg-brand-primary'
           : 'bg-surface-base text-text-muted cursor-not-allowed',
@@ -505,7 +509,7 @@ function ModuleResultsSection({
         {results?.error ? (
           <div
             className={cn(
-              'mt-2 p-2 rounded-lg border',
+              'mt-inline pad-xs rounded-lg border',
               statusColor.bg.errorSoft,
               statusColor.border.errorSoft,
             )}
@@ -516,7 +520,7 @@ function ModuleResultsSection({
 
         {/* Duration */}
         {results?.duration !== undefined ? (
-          <div className="mt-2 text-xs text-text-muted">
+          <div className="mt-inline text-xs text-text-muted">
             Duration: {(results.duration / 1000).toFixed(1)}s
           </div>
         ) : null}
@@ -543,8 +547,8 @@ function ModuleExpandedContent({
   return (
     <div className="border-t border-surface-border">
       {/* Auto-start Toggle */}
-      <div className={cn(spacing.pad.sm, 'flex items-center justify-between bg-surface-base')}>
-        <div className="flex items-center gap-2">
+      <div className={cn(spacing.pad.sm, 'flex-between bg-surface-base')}>
+        <div className="flex items-center gap-compact">
           <RefreshCw className={cn(iconTokens.size.sm, 'text-text-muted')} />
           <span className="text-sm text-text-secondary">{t('card.section.autoStartLabel')}</span>
         </div>
@@ -578,13 +582,13 @@ function ModuleExpandedContent({
         <div className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">
           {t('card.section.tests')}
         </div>
-        <div className="space-y-1">
+        <div className="stack-xs">
           {config.tests.map((test) => (
             <label
               key={test.id}
               title={t('card.test.title', { description: test.description, name: test.name })}
               className={cn(
-                'flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors',
+                'flex items-center gap-default pad-xs rounded-lg cursor-pointer transition-colors',
                 'hover:bg-surface-hover',
                 test.enabled ? '' : 'opacity-60',
               )}
@@ -600,7 +604,7 @@ function ModuleExpandedContent({
                 style={{ accentColor: config.color }}
               />
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium text-text-primary">{test.name}</div>
+                <div className="label">{test.name}</div>
                 <div className="text-xs text-text-muted truncate">{test.description}</div>
               </div>
               {isRunning && status.currentTest === test.id && (
@@ -645,14 +649,14 @@ export function ModuleCard({
       }}
     >
       {/* Module Header */}
-      <div className={cn(spacing.pad.default, 'flex items-center justify-between')}>
-        <div className="flex items-center gap-3 flex-1">
+      <div className={cn(spacing.pad.default, 'flex-between')}>
+        <div className="flex items-center gap-default flex-1">
           {/* Enable Toggle */}
           <button
             type="button"
             onClick={(): void => onToggleModule(!config.enabled)}
             className={cn(
-              'w-8 h-8 rounded-lg flex items-center justify-center transition-colors',
+              'w-8 h-8 rounded-lg flex-center transition-colors',
               config.enabled ? statusColor.badge.successStrong : 'bg-surface-base text-text-muted',
             )}
             title={
@@ -677,13 +681,13 @@ export function ModuleCard({
 
           {/* Module Info */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-compact">
               <span
                 className="w-3 h-3 rounded-full flex-shrink-0"
                 style={{ backgroundColor: config.color }}
               />
               <h3 className="font-semibold text-text-primary truncate">{config.displayName}</h3>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-surface-base text-text-muted">
+              <span className="text-xs px-cell py-0.5 rounded-full bg-surface-base text-text-muted">
                 {config.standard}
               </span>
             </div>
@@ -700,13 +704,13 @@ export function ModuleCard({
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-compact">
           {/* Configure Button */}
           <button
             type="button"
             onClick={onConfigure}
             className={cn(
-              'p-2 rounded-lg transition-colors',
+              'pad-xs rounded-lg transition-colors',
               'text-text-muted hover:text-text-primary',
               'hover:bg-surface-hover',
             )}
@@ -730,7 +734,7 @@ export function ModuleCard({
             type="button"
             onClick={(): void => setExpanded(!expanded)}
             className={cn(
-              'p-2 rounded-lg transition-colors',
+              'pad-xs rounded-lg transition-colors',
               'text-text-muted hover:text-text-primary',
               'hover:bg-surface-hover',
             )}

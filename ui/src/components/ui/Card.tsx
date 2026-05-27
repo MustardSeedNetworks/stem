@@ -113,7 +113,7 @@ export function Card({
         card.base,
         card.variant.default,
         spacing.pad.sm,
-        'sm:p-4',
+        'sm:pad',
         // Fixed width for consistent card grid layout
         'w-full max-w-sm',
         'transition-all hover:border-brand-primary/40 touch-manipulation focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface-base outline-none',
@@ -145,7 +145,7 @@ export function Card({
           <StatusBadge status={status} size="md" />
         </div>
       </div>
-      <div className={cn(spacing.margin.top.inline, 'sm:mt-4')} aria-describedby={titleId}>
+      <div className={cn(spacing.margin.top.inline, 'sm:mt-content')} aria-describedby={titleId}>
         {children}
       </div>
     </div>

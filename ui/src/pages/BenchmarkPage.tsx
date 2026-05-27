@@ -8,13 +8,13 @@ import { PageHeader } from '../ui/PageHeader';
 export function BenchmarkPage() {
   const { rfc2544Config, setRFC2544Config, selectedTests } = useAppContext();
   return (
-    <section className="space-y-6">
+    <section className="stack-xl">
       <Breadcrumbs />
       <PageHeader
         icon={BarChart3}
         title="Benchmark"
         description="RFC 2544 throughput, latency, frame-loss, and back-to-back measurements."
-        iconColorClass="text-[var(--color-module-benchmark)]"
+        iconColorClass="text-module-benchmark"
       />
       <RoleGuard requires="test_master" moduleName="Benchmark">
         <RFC2544ConfigForm

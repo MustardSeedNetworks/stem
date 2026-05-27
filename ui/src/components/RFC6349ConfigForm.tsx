@@ -69,7 +69,7 @@ interface RFC6349ConfigFormProps {
 function FieldError({ message }: { message?: string }): ReactElement | null {
   if (!message) return null;
   return (
-    <div className="mt-1 text-xs text-[var(--color-status-danger)] flex items-center gap-1">
+    <div className="mt-tight text-xs text-status-danger flex items-center gap-tight">
       <AlertTriangle className="w-3 h-3" />
       {message}
     </div>
@@ -125,25 +125,22 @@ export function RFC6349ConfigForm({
   return (
     <CollapsibleSection
       title={
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-compact">
           <Activity className="w-4 h-4" />
           <span>RFC 6349 Configuration</span>
         </div>
       }
       defaultOpen={true}
     >
-      <div className="space-y-4">
-        <div className="space-y-3">
-          <div className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">
+      <div className="stack-lg">
+        <div className="stack">
+          <div className="text-xs font-semibold text-text-muted uppercase tracking-wide">
             Network Parameters
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 gap-default">
             <div>
-              <label
-                htmlFor="rfc6349-rate"
-                className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-              >
+              <label htmlFor="rfc6349-rate" className="flex items-center gap-tight label">
                 Target Rate (Mbps)
                 <HelpIcon tooltip="Target throughput rate for TCP testing." />
               </label>
@@ -152,16 +149,13 @@ export function RFC6349ConfigForm({
                 type="number"
                 step={1}
                 {...register('targetRateMbps', { valueAsNumber: true })}
-                className="mt-1 w-full"
+                className="mt-tight w-full"
               />
               <FieldError message={errors.targetRateMbps?.message} />
             </div>
 
             <div>
-              <label
-                htmlFor="rfc6349-minrtt"
-                className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-              >
+              <label htmlFor="rfc6349-minrtt" className="flex items-center gap-tight label">
                 Min RTT (ms)
                 <HelpIcon tooltip="Minimum expected round-trip time." />
               </label>
@@ -170,16 +164,13 @@ export function RFC6349ConfigForm({
                 type="number"
                 step={0.1}
                 {...register('minRTTMs', { valueAsNumber: true })}
-                className="mt-1 w-full"
+                className="mt-tight w-full"
               />
               <FieldError message={errors.minRTTMs?.message} />
             </div>
 
             <div>
-              <label
-                htmlFor="rfc6349-maxrtt"
-                className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-              >
+              <label htmlFor="rfc6349-maxrtt" className="flex items-center gap-tight label">
                 Max RTT (ms)
                 <HelpIcon tooltip="Maximum expected round-trip time." />
               </label>
@@ -188,24 +179,21 @@ export function RFC6349ConfigForm({
                 type="number"
                 step={0.1}
                 {...register('maxRTTMs', { valueAsNumber: true })}
-                className="mt-1 w-full"
+                className="mt-tight w-full"
               />
               <FieldError message={errors.maxRTTMs?.message} />
             </div>
           </div>
         </div>
 
-        <div className="space-y-3">
-          <div className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">
+        <div className="stack">
+          <div className="text-xs font-semibold text-text-muted uppercase tracking-wide">
             TCP Parameters
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-default">
             <div>
-              <label
-                htmlFor="rfc6349-rwnd"
-                className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-              >
+              <label htmlFor="rfc6349-rwnd" className="flex items-center gap-tight label">
                 RWND Size (bytes)
                 <HelpIcon tooltip="TCP Receive Window size. Should be >= BDP for optimal throughput." />
               </label>
@@ -214,23 +202,20 @@ export function RFC6349ConfigForm({
                 type="number"
                 step={1024}
                 {...register('rwndSize', { valueAsNumber: true })}
-                className="mt-1 w-full"
+                className="mt-tight w-full"
               />
               <FieldError message={errors.rwndSize?.message} />
             </div>
 
             <div>
-              <label
-                htmlFor="rfc6349-mss"
-                className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-              >
+              <label htmlFor="rfc6349-mss" className="flex items-center gap-tight label">
                 MSS
                 <HelpIcon tooltip="Maximum Segment Size for TCP." />
               </label>
               <select
                 id="rfc6349-mss"
                 {...register('mss', { valueAsNumber: true })}
-                className="mt-1 w-full"
+                className="mt-tight w-full"
               >
                 {MSS_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
@@ -242,12 +227,9 @@ export function RFC6349ConfigForm({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-default">
             <div>
-              <label
-                htmlFor="rfc6349-streams"
-                className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-              >
+              <label htmlFor="rfc6349-streams" className="flex items-center gap-tight label">
                 Parallel Streams
                 <HelpIcon tooltip="Number of parallel TCP connections." />
               </label>
@@ -256,23 +238,20 @@ export function RFC6349ConfigForm({
                 type="number"
                 step={1}
                 {...register('parallelStreams', { valueAsNumber: true })}
-                className="mt-1 w-full"
+                className="mt-tight w-full"
               />
               <FieldError message={errors.parallelStreams?.message} />
             </div>
 
             <div>
-              <label
-                htmlFor="rfc6349-mode"
-                className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-              >
+              <label htmlFor="rfc6349-mode" className="flex items-center gap-tight label">
                 Test Mode
                 <HelpIcon tooltip="Direction of throughput testing." />
               </label>
               <select
                 id="rfc6349-mode"
                 {...register('mode', { valueAsNumber: true })}
-                className="mt-1 w-full"
+                className="mt-tight w-full"
               >
                 {MODE_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
@@ -286,10 +265,7 @@ export function RFC6349ConfigForm({
         </div>
 
         <div>
-          <label
-            htmlFor="rfc6349-duration"
-            className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-          >
+          <label htmlFor="rfc6349-duration" className="flex items-center gap-tight label">
             Duration (s)
             <HelpIcon tooltip="Test duration in seconds." />
           </label>
@@ -298,24 +274,24 @@ export function RFC6349ConfigForm({
             type="number"
             step={1}
             {...register('duration', { valueAsNumber: true })}
-            className="mt-1 w-full"
+            className="mt-tight w-full"
           />
           <FieldError message={errors.duration?.message} />
         </div>
 
         {crossFieldError && (
-          <div className="p-2 rounded-lg bg-[var(--color-status-danger-subtle)] text-[var(--color-status-danger)] text-sm flex items-center gap-2">
+          <div className="pad-xs rounded-lg bg-status-danger-subtle text-status-danger text-sm flex items-center gap-compact">
             <AlertTriangle className="w-4 h-4" />
             {crossFieldError.message}
           </div>
         )}
 
-        <div className="p-3 rounded-lg bg-[var(--color-surface-base)] border border-[var(--color-surface-border)]">
-          <div className="flex items-center gap-2 text-sm font-medium text-[var(--color-text-primary)] mb-2">
+        <div className="pad-sm rounded-lg bg-surface-base border border-surface-border">
+          <div className="flex items-center gap-compact label mb-2">
             <Info className="w-4 h-4" />
             Test Summary
           </div>
-          <div className="text-xs text-[var(--color-text-muted)] space-y-1">
+          <div className="text-xs text-text-muted stack-xs">
             <div>
               Selected tests:{' '}
               {[hasThroughput && 'Throughput', hasBDP && 'BDP', hasEfficiency && 'Efficiency']
@@ -329,7 +305,7 @@ export function RFC6349ConfigForm({
             <div>
               BDP (calculated): {bdpFormatted}
               {rwndSize < bdp ? (
-                <span className="text-[var(--color-status-warning)] ml-2">RWND &lt; BDP</span>
+                <span className="text-status-warning ml-inline">RWND &lt; BDP</span>
               ) : null}
             </div>
             <div>

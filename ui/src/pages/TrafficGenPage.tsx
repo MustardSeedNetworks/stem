@@ -8,13 +8,13 @@ import { PageHeader } from '../ui/PageHeader';
 export function TrafficGenPage() {
   const { trafficGenConfig, setTrafficGenConfig, selectedTests } = useAppContext();
   return (
-    <section className="space-y-6">
+    <section className="stack-xl">
       <Breadcrumbs />
       <PageHeader
         icon={Zap}
         title="TrafficGen"
         description="Custom traffic generation — shape streams, drive load, and validate paths."
-        iconColorClass="text-[var(--color-module-trafficgen)]"
+        iconColorClass="text-module-trafficgen"
       />
       <RoleGuard requires="test_master" moduleName="TrafficGen">
         <TrafficGenConfigForm

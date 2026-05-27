@@ -8,13 +8,13 @@ import { PageHeader } from '../ui/PageHeader';
 export function ServiceTestPage() {
   const { y1564Config, setY1564Config, selectedTests } = useAppContext();
   return (
-    <section className="space-y-6">
+    <section className="stack-xl">
       <Breadcrumbs />
       <PageHeader
         icon={Settings2}
         title="ServiceTest"
         description="Y.1564 / MEF service activation and performance verification."
-        iconColorClass="text-[var(--color-module-servicetest)]"
+        iconColorClass="text-module-servicetest"
       />
       <RoleGuard requires="test_master" moduleName="ServiceTest">
         <Y1564ConfigForm

@@ -58,16 +58,16 @@ export function RFC6349Section({
   return (
     <CollapsibleSection
       title={
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-compact">
           <Activity className="w-4 h-4" aria-hidden="true" />
           <span>{t('settings:tests.rfc6349.title', 'RFC 6349 TCP')}</span>
           <span className="caption text-text-muted">({selectedCount}/2)</span>
         </div>
       }
     >
-      <div className="space-y-4">
+      <div className="stack-lg">
         {/* Test Selection */}
-        <div className="space-y-2">
+        <div className="stack-sm">
           {tests.map((test) => (
             <TestCheckbox
               key={test.id}
@@ -80,7 +80,7 @@ export function RFC6349Section({
 
         {/* Configuration Form */}
         {hasSelectedTests && (
-          <div className="border-t border-surface-border pt-4">
+          <div className="border-t border-surface-border pt-section">
             <RFC6349ConfigForm
               config={config}
               setConfig={onConfigChange}

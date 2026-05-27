@@ -72,7 +72,7 @@ interface TrafficGenConfigFormProps {
 function FieldError({ message }: { message?: string }): ReactElement | null {
   if (!message) return null;
   return (
-    <div className="mt-1 text-xs text-[var(--color-status-danger)] flex items-center gap-1">
+    <div className="mt-tight text-xs text-status-danger flex items-center gap-tight">
       <AlertTriangle className="w-3 h-3" />
       {message}
     </div>
@@ -128,31 +128,28 @@ export function TrafficGenConfigForm({
   return (
     <CollapsibleSection
       title={
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-compact">
           <Radio className="w-4 h-4" />
           <span>Traffic Generator Configuration</span>
         </div>
       }
       defaultOpen={true}
     >
-      <div className="space-y-4">
-        <div className="space-y-3">
-          <div className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">
+      <div className="stack-lg">
+        <div className="stack">
+          <div className="text-xs font-semibold text-text-muted uppercase tracking-wide">
             Traffic Parameters
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-default">
             <div>
-              <label
-                htmlFor="tgen-framesize"
-                className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-              >
+              <label htmlFor="tgen-framesize" className="flex items-center gap-tight label">
                 Frame Size
                 <HelpIcon tooltip="Ethernet frame size including FCS." />
               </label>
               <select
                 id="tgen-framesize"
                 {...register('frameSize', { valueAsNumber: true })}
-                className="mt-1 w-full"
+                className="mt-tight w-full"
               >
                 {FRAME_SIZE_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
@@ -164,14 +161,11 @@ export function TrafficGenConfigForm({
             </div>
 
             <div>
-              <label
-                htmlFor="tgen-rate"
-                className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-              >
+              <label htmlFor="tgen-rate" className="flex items-center gap-tight label">
                 Rate (% of line rate)
                 <HelpIcon tooltip="Traffic rate as percentage of interface line rate." />
               </label>
-              <div className="mt-1 flex gap-2">
+              <div className="mt-tight flex gap-compact">
                 <input
                   id="tgen-rate"
                   type="number"
@@ -181,7 +175,7 @@ export function TrafficGenConfigForm({
                 />
               </div>
               <FieldError message={errors.ratePct?.message} />
-              <div className="mt-1 flex gap-1 flex-wrap">
+              <div className="mt-tight flex gap-tight flex-wrap">
                 {RATE_PRESETS.map((preset) => (
                   <button
                     key={preset.value}
@@ -192,10 +186,10 @@ export function TrafficGenConfigForm({
                         shouldDirty: true,
                       })
                     }
-                    className={`text-xs px-2 py-0.5 rounded border ${
+                    className={`text-xs px-cell py-0.5 rounded border ${
                       ratePct === preset.value
-                        ? 'bg-[var(--color-brand-primary)] text-white border-[var(--color-brand-primary)]'
-                        : 'bg-[var(--color-surface-base)] border-[var(--color-surface-border)] text-[var(--color-text-muted)]'
+                        ? 'bg-brand-primary text-white border-brand-primary'
+                        : 'bg-surface-base border-surface-border text-text-muted'
                     }`}
                   >
                     {preset.label}
@@ -205,12 +199,9 @@ export function TrafficGenConfigForm({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-default">
             <div>
-              <label
-                htmlFor="tgen-duration"
-                className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-              >
+              <label htmlFor="tgen-duration" className="flex items-center gap-tight label">
                 Duration (s)
                 <HelpIcon tooltip="Traffic generation duration." />
               </label>
@@ -219,16 +210,13 @@ export function TrafficGenConfigForm({
                 type="number"
                 step={1}
                 {...register('duration', { valueAsNumber: true })}
-                className="mt-1 w-full"
+                className="mt-tight w-full"
               />
               <FieldError message={errors.duration?.message} />
             </div>
 
             <div>
-              <label
-                htmlFor="tgen-warmup"
-                className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-              >
+              <label htmlFor="tgen-warmup" className="flex items-center gap-tight label">
                 Warmup (s)
                 <HelpIcon tooltip="Warmup period before measurement." />
               </label>
@@ -237,7 +225,7 @@ export function TrafficGenConfigForm({
                 type="number"
                 step={1}
                 {...register('warmup', { valueAsNumber: true })}
-                className="mt-1 w-full"
+                className="mt-tight w-full"
               />
               <FieldError message={errors.warmup?.message} />
             </div>
@@ -245,15 +233,12 @@ export function TrafficGenConfigForm({
         </div>
 
         {hasMultiStream ? (
-          <div className="space-y-3">
-            <div className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">
+          <div className="stack">
+            <div className="text-xs font-semibold text-text-muted uppercase tracking-wide">
               Stream Configuration
             </div>
             <div>
-              <label
-                htmlFor="tgen-streamid"
-                className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-              >
+              <label htmlFor="tgen-streamid" className="flex items-center gap-tight label">
                 Stream ID
                 <HelpIcon tooltip="Unique identifier for this traffic stream." />
               </label>
@@ -262,7 +247,7 @@ export function TrafficGenConfigForm({
                 type="number"
                 step={1}
                 {...register('streamId', { valueAsNumber: true })}
-                className="mt-1 w-full"
+                className="mt-tight w-full"
               />
               <FieldError message={errors.streamId?.message} />
             </div>
@@ -270,34 +255,31 @@ export function TrafficGenConfigForm({
         ) : null}
 
         {hasBurst ? (
-          <div className="space-y-3">
-            <div className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">
+          <div className="stack">
+            <div className="text-xs font-semibold text-text-muted uppercase tracking-wide">
               Burst Mode
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-compact">
               <input
                 id="tgen-burstmode"
                 type="checkbox"
                 {...register('burstMode')}
                 aria-label="Enable burst mode traffic generation"
-                className="rounded border-[var(--color-surface-border)]"
+                className="rounded border-surface-border"
               />
               <label
                 htmlFor="tgen-burstmode"
                 title="Send frames in short bursts separated by idle gaps rather than at a continuous rate; useful for testing buffer behavior"
-                className="text-sm text-[var(--color-text-primary)]"
+                className="text-sm text-text-primary"
               >
                 Enable burst mode
               </label>
             </div>
 
             {burstMode ? (
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-default">
                 <div>
-                  <label
-                    htmlFor="tgen-burstsize"
-                    className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-                  >
+                  <label htmlFor="tgen-burstsize" className="flex items-center gap-tight label">
                     Burst Size (frames)
                     <HelpIcon tooltip="Number of frames per burst." />
                   </label>
@@ -306,15 +288,12 @@ export function TrafficGenConfigForm({
                     type="number"
                     step={1}
                     {...register('burstSize', { valueAsNumber: true })}
-                    className="mt-1 w-full"
+                    className="mt-tight w-full"
                   />
                   <FieldError message={errors.burstSize?.message} />
                 </div>
                 <div>
-                  <label
-                    htmlFor="tgen-ibg"
-                    className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-                  >
+                  <label htmlFor="tgen-ibg" className="flex items-center gap-tight label">
                     Inter-Burst Gap (µs)
                     <HelpIcon tooltip="Gap between bursts in microseconds." />
                   </label>
@@ -323,7 +302,7 @@ export function TrafficGenConfigForm({
                     type="number"
                     step={1}
                     {...register('interBurstGapUs', { valueAsNumber: true })}
-                    className="mt-1 w-full"
+                    className="mt-tight w-full"
                   />
                   <FieldError message={errors.interBurstGapUs?.message} />
                 </div>
@@ -332,16 +311,13 @@ export function TrafficGenConfigForm({
           </div>
         ) : null}
 
-        <div className="space-y-3">
-          <div className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">
+        <div className="stack">
+          <div className="text-xs font-semibold text-text-muted uppercase tracking-wide">
             VLAN Configuration
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-default">
             <div>
-              <label
-                htmlFor="tgen-vlanid"
-                className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-              >
+              <label htmlFor="tgen-vlanid" className="flex items-center gap-tight label">
                 VLAN ID
                 <HelpIcon tooltip="VLAN ID (0 = untagged)." />
               </label>
@@ -350,15 +326,12 @@ export function TrafficGenConfigForm({
                 type="number"
                 step={1}
                 {...register('vlanId', { valueAsNumber: true })}
-                className="mt-1 w-full"
+                className="mt-tight w-full"
               />
               <FieldError message={errors.vlanId?.message} />
             </div>
             <div>
-              <label
-                htmlFor="tgen-vlanpri"
-                className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-              >
+              <label htmlFor="tgen-vlanpri" className="flex items-center gap-tight label">
                 VLAN Priority
                 <HelpIcon tooltip="802.1p priority (0-7)." />
               </label>
@@ -368,23 +341,20 @@ export function TrafficGenConfigForm({
                 step={1}
                 disabled={vlanId === 0}
                 {...register('vlanPriority', { valueAsNumber: true })}
-                className="mt-1 w-full"
+                className="mt-tight w-full"
               />
               <FieldError message={errors.vlanPriority?.message} />
             </div>
           </div>
         </div>
 
-        <div className="space-y-3">
-          <div className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">
+        <div className="stack">
+          <div className="text-xs font-semibold text-text-muted uppercase tracking-wide">
             MAC Addresses (Optional)
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-default">
             <div>
-              <label
-                htmlFor="tgen-srcmac"
-                className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-              >
+              <label htmlFor="tgen-srcmac" className="flex items-center gap-tight label">
                 Source MAC
                 <HelpIcon tooltip="Source MAC address (leave empty for auto). Format: AA:BB:CC:DD:EE:FF." />
               </label>
@@ -393,15 +363,12 @@ export function TrafficGenConfigForm({
                 type="text"
                 placeholder="aa:bb:cc:dd:ee:ff"
                 {...register('srcMac')}
-                className="mt-1 w-full"
+                className="mt-tight w-full"
               />
               <FieldError message={errors.srcMac?.message} />
             </div>
             <div>
-              <label
-                htmlFor="tgen-dstmac"
-                className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-              >
+              <label htmlFor="tgen-dstmac" className="flex items-center gap-tight label">
                 Destination MAC
                 <HelpIcon tooltip="Destination MAC address (leave empty for broadcast). Format: AA:BB:CC:DD:EE:FF." />
               </label>
@@ -410,19 +377,19 @@ export function TrafficGenConfigForm({
                 type="text"
                 placeholder="aa:bb:cc:dd:ee:ff"
                 {...register('dstMac')}
-                className="mt-1 w-full"
+                className="mt-tight w-full"
               />
               <FieldError message={errors.dstMac?.message} />
             </div>
           </div>
         </div>
 
-        <div className="p-3 rounded-lg bg-[var(--color-surface-base)] border border-[var(--color-surface-border)]">
-          <div className="flex items-center gap-2 text-sm font-medium text-[var(--color-text-primary)] mb-2">
+        <div className="pad-sm rounded-lg bg-surface-base border border-surface-border">
+          <div className="flex items-center gap-compact label mb-2">
             <Info className="w-4 h-4" />
             Traffic Summary
           </div>
-          <div className="text-xs text-[var(--color-text-muted)] space-y-1">
+          <div className="text-xs text-text-muted stack-xs">
             <div>
               Selected tests:{' '}
               {[

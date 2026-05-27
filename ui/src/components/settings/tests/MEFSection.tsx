@@ -47,14 +47,14 @@ export function MEFSection({ selectedTests, onToggleTest }: TestSectionProps): R
   return (
     <CollapsibleSection
       title={
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-compact">
           <Settings2 className="w-4 h-4" aria-hidden="true" />
           <span>{t('settings:tests.mef.title', 'MEF Service')}</span>
           <span className="caption text-text-muted">({selectedCount}/3)</span>
         </div>
       }
     >
-      <div className="space-y-2">
+      <div className="stack-sm">
         {tests.map((test) => (
           <TestCheckbox
             key={test.id}

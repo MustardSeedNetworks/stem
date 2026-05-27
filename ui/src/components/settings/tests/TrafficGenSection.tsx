@@ -60,15 +60,15 @@ export function TrafficGenSection({
   return (
     <CollapsibleSection
       title={
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-compact">
           <Radio className="w-4 h-4" aria-hidden="true" />
           <span>{t('settings:tests.trafficgen.title', 'Traffic Generator')}</span>
         </div>
       }
     >
-      <div className="space-y-4">
+      <div className="stack-lg">
         {/* Test Selection */}
-        <div className="space-y-2">
+        <div className="stack-sm">
           {tests.map((test) => (
             <TestCheckbox
               key={test.id}
@@ -81,7 +81,7 @@ export function TrafficGenSection({
 
         {/* Configuration Form */}
         {hasSelectedTests && (
-          <div className="border-t border-surface-border pt-4">
+          <div className="border-t border-surface-border pt-section">
             <TrafficGenConfigForm
               config={config}
               setConfig={onConfigChange}
