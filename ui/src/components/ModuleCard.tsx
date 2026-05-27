@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import type { ReactElement } from 'react';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { cn, icon as iconTokens, spacing, status as statusColor } from '../styles/theme';
 
 export interface ModuleTest {
@@ -418,6 +419,7 @@ function ModuleActionButton({
   onStart: () => void;
   onStop: () => void;
 }): ReactElement | null {
+  const { t } = useTranslation('modules');
   if (!config.enabled) {
     return null;
   }
@@ -426,8 +428,8 @@ function ModuleActionButton({
       <button
         type="button"
         onClick={onStop}
-        title={`Stop the running ${config.displayName} test and discard incomplete results`}
-        aria-label={`Stop ${config.displayName} test`}
+        title={t('card.stop.title', { name: config.displayName })}
+        aria-label={t('card.stop.ariaLabel', { name: config.displayName })}
         className={cn(
           'px-4 py-2 rounded-lg flex items-center gap-2 transition-colors',
           statusColor.badge.error,
@@ -435,7 +437,7 @@ function ModuleActionButton({
         )}
       >
         <Square className="w-4 h-4" />
-        <span className="text-sm font-medium">Stop</span>
+        <span className="text-sm font-medium">{t('card.action.stopLabel')}</span>
       </button>
     );
   }
@@ -446,10 +448,13 @@ function ModuleActionButton({
       disabled={enabledTestCount === 0}
       title={
         enabledTestCount === 0
-          ? `Enable at least one ${config.displayName} test below to start`
-          : `Start the ${enabledTestCount} enabled ${config.displayName} test${enabledTestCount === 1 ? '' : 's'} using the current configuration`
+          ? t('card.start.titleEmpty', { name: config.displayName })
+          : t('card.start.titleEnabled', {
+              count: enabledTestCount,
+              name: config.displayName,
+            })
       }
-      aria-label={`Start ${config.displayName} tests`}
+      aria-label={t('card.start.ariaLabel', { name: config.displayName })}
       className={cn(
         'px-4 py-2 rounded-lg flex items-center gap-2 transition-colors',
         enabledTestCount > 0
@@ -458,7 +463,7 @@ function ModuleActionButton({
       )}
     >
       <Play className="w-4 h-4" />
-      <span className="text-sm font-medium">Start</span>
+      <span className="text-sm font-medium">{t('card.action.startLabel')}</span>
     </button>
   );
 }
@@ -471,11 +476,14 @@ function ModuleResultsSection({
   results: ModuleTestResults | null | undefined;
   config: ModuleConfig;
 }): ReactElement {
+  const { t } = useTranslation('modules');
   return (
     <div className="border-t border-surface-border bg-surface-base/50">
       <div className={spacing.pad.sm}>
         <div className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">
-          {results?.testType || 'Test'} Results
+          {results?.testType
+            ? `${results.testType} ${t('card.section.results')}`
+            : t('card.section.results')}
         </div>
 
         {/* Frame Size Results (RFC 2544 style) */}
@@ -531,23 +539,26 @@ function ModuleExpandedContent({
   onToggleAutoStart: (enabled: boolean) => void;
   onToggleTest: (testId: string, enabled: boolean) => void;
 }): ReactElement {
+  const { t } = useTranslation('modules');
   return (
     <div className="border-t border-surface-border">
       {/* Auto-start Toggle */}
       <div className={cn(spacing.pad.sm, 'flex items-center justify-between bg-surface-base')}>
         <div className="flex items-center gap-2">
           <RefreshCw className={cn(iconTokens.size.sm, 'text-text-muted')} />
-          <span className="text-sm text-text-secondary">Auto-start on link</span>
+          <span className="text-sm text-text-secondary">{t('card.section.autoStartLabel')}</span>
         </div>
         <button
           type="button"
           onClick={(): void => onToggleAutoStart(!config.autoStart)}
           title={
-            config.autoStart
-              ? 'Disable auto-start; tests will only run when manually started'
-              : 'Automatically run the enabled tests in this module whenever a link comes up on the test interface'
+            config.autoStart ? t('card.autoStart.titleEnabled') : t('card.autoStart.titleDisabled')
           }
-          aria-label={config.autoStart ? 'Disable auto-start on link' : 'Enable auto-start on link'}
+          aria-label={
+            config.autoStart
+              ? t('card.autoStart.ariaLabelEnabled')
+              : t('card.autoStart.ariaLabelDisabled')
+          }
           className={cn(
             'w-10 h-6 rounded-full relative transition-colors',
             config.autoStart ? 'bg-brand-primary' : 'bg-surface-border',
@@ -565,13 +576,13 @@ function ModuleExpandedContent({
       {/* Test List */}
       <div className={spacing.pad.sm}>
         <div className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">
-          Tests
+          {t('card.section.tests')}
         </div>
         <div className="space-y-1">
           {config.tests.map((test) => (
             <label
               key={test.id}
-              title={`${test.description} — toggle whether to include "${test.name}" when starting the module`}
+              title={t('card.test.title', { description: test.description, name: test.name })}
               className={cn(
                 'flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors',
                 'hover:bg-surface-hover',
@@ -584,7 +595,7 @@ function ModuleExpandedContent({
                 onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
                   onToggleTest(test.id, e.target.checked)
                 }
-                aria-label={`Include ${test.name} when running module`}
+                aria-label={t('card.test.ariaLabel', { name: test.name })}
                 className="w-4 h-4"
                 style={{ accentColor: config.color }}
               />
@@ -614,8 +625,9 @@ export function ModuleCard({
   onStop,
   onConfigure,
 }: ModuleCardProps): ReactElement {
+  const { t } = useTranslation('modules');
   const [expanded, setExpanded] = useState(false);
-  const enabledTestCount = config.tests.filter((t) => t.enabled).length;
+  const enabledTestCount = config.tests.filter((t2) => t2.enabled).length;
   const isRunning = status.status === 'running' || status.status === 'starting';
   const hasResults = checkHasResults(results);
   const showResults = isRunning || status.status === 'completed' || status.status === 'error';
@@ -645,13 +657,19 @@ export function ModuleCard({
             )}
             title={
               config.enabled
-                ? `Disable ${config.displayName} (${config.standard}); tests in this module will be skipped`
-                : `Enable ${config.displayName} (${config.standard}); allows running its tests`
+                ? t('card.module.titleEnabled', {
+                    name: config.displayName,
+                    standard: config.standard,
+                  })
+                : t('card.module.titleDisabled', {
+                    name: config.displayName,
+                    standard: config.standard,
+                  })
             }
             aria-label={
               config.enabled
-                ? `Disable ${config.displayName} module`
-                : `Enable ${config.displayName} module`
+                ? t('card.module.ariaLabelEnabled', { name: config.displayName })
+                : t('card.module.ariaLabelDisabled', { name: config.displayName })
             }
           >
             <Power className="w-4 h-4" />
@@ -670,7 +688,10 @@ export function ModuleCard({
               </span>
             </div>
             <p className="text-xs text-text-muted mt-0.5 truncate">
-              {enabledTestCount}/{config.tests.length} tests enabled
+              {t('card.module.testsEnabledCount', {
+                enabled: enabledTestCount,
+                total: config.tests.length,
+              })}
             </p>
           </div>
 
@@ -689,8 +710,8 @@ export function ModuleCard({
               'text-text-muted hover:text-text-primary',
               'hover:bg-surface-hover',
             )}
-            title={`Open the configuration drawer for ${config.displayName} (frame sizes, durations, thresholds)`}
-            aria-label={`Configure ${config.displayName}`}
+            title={t('card.configure.title', { name: config.displayName })}
+            aria-label={t('card.configure.ariaLabel', { name: config.displayName })}
           >
             <Settings2 className="w-4 h-4" />
           </button>
@@ -715,10 +736,12 @@ export function ModuleCard({
             )}
             title={
               expanded
-                ? `Collapse the ${config.displayName} card and hide test selection`
-                : `Expand the ${config.displayName} card to choose which tests to run and toggle auto-start`
+                ? t('card.expand.titleExpanded', { name: config.displayName })
+                : t('card.expand.titleCollapsed', { name: config.displayName })
             }
-            aria-label={expanded ? 'Collapse module card' : 'Expand module card'}
+            aria-label={
+              expanded ? t('card.expand.ariaLabelExpanded') : t('card.expand.ariaLabelCollapsed')
+            }
           >
             {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>
