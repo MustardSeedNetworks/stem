@@ -38,7 +38,7 @@ export function InterfaceSection({
       title={
         <div className="flex items-center gap-2">
           <Network className="w-4 h-4" aria-hidden="true" />
-          <span>{t('settings.interface.title', 'Interface')}</span>
+          <span>{t('settings:interface.title', 'Interface')}</span>
         </div>
       }
       defaultOpen={true}
@@ -51,7 +51,7 @@ export function InterfaceSection({
             onInterfaceChange(e.target.value)
           }
           className="w-full"
-          aria-label={t('settings.interface.select', 'Select network interface')}
+          aria-label={t('settings:interface.select', 'Select network interface')}
         >
           {interfaces.map((iface) => (
             <option key={iface.name} value={iface.name}>
@@ -64,7 +64,7 @@ export function InterfaceSection({
         {selectedDetails && (
           <div className="caption text-text-muted space-y-1">
             <div>
-              {t('settings.interface.driver', 'Driver')}: {selectedDetails.driver}
+              {t('settings:interface.driver', 'Driver')}: {selectedDetails.driver}
             </div>
             <div className="flex gap-2">
               {selectedDetails.xdp === true && (
@@ -88,7 +88,7 @@ export function InterfaceSection({
                     'font-medium',
                   )}
                 >
-                  {t('settings.interface.physical', 'Physical')}
+                  {t('settings:interface.physical', 'Physical')}
                 </span>
               )}
             </div>

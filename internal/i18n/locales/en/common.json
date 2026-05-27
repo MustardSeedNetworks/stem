@@ -46,7 +46,10 @@
     "starting": "Starting...",
     "completed": "Completed",
     "cancelled": "Cancelled",
-    "waiting": "Waiting"
+    "waiting": "Waiting",
+    "clickToReconnect": "Click to reconnect",
+    "tapToReconnect": "Tap to reconnect",
+    "tapToReconnectHint": "Reconnect to the stem backend"
   },
   "results": {
     "pass": "PASS",
@@ -108,7 +111,11 @@
     "switchToLightMode": "Switch to light mode",
     "switchToDarkMode": "Switch to dark mode",
     "selectInterface": "Select network interface",
-    "selectModule": "Select test module"
+    "selectModule": "Select test module",
+    "closeSettings": "Close settings",
+    "openHistory": "Open test history",
+    "refreshInterfaces": "Refresh interfaces",
+    "selectProfile": "Select profile"
   },
   "sections": {
     "modules": "Test Modules",
@@ -184,5 +191,25 @@
     "testCount_other": "Found {{count}} tests",
     "glossaryEntryCount_one": "{{count}} entry",
     "glossaryEntryCount_other": "{{count}} entries"
+  },
+  "interface": {
+    "networkInterfaces": "Network Interfaces",
+    "noInterfaces": "No interfaces found",
+    "select": "Select Interface"
+  },
+  "profile": {
+    "current": "Profile",
+    "manage": "Manage",
+    "noProfiles": "No profiles",
+    "select": "Select Profile"
+  },
+  "tooltips": {
+    "header": {
+      "refresh": "Rescan available network interfaces and reload current status",
+      "history": "Open the test history drawer to review past results, metrics, and errors",
+      "help": "Open the help drawer with test references, tutorials, and a glossary",
+      "settings": "Open the settings drawer to configure modules, interfaces, and thresholds",
+      "logout": "Sign out of the current session"
+    }
   }
 }

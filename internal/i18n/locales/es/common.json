@@ -46,7 +46,10 @@
     "starting": "Iniciando...",
     "completed": "Completado",
     "cancelled": "Cancelado",
-    "waiting": "Esperando"
+    "waiting": "Esperando",
+    "clickToReconnect": "Haga clic para reconectar",
+    "tapToReconnect": "Toque para reconectar",
+    "tapToReconnectHint": "Reconectar con el backend del stem"
   },
   "results": {
     "pass": "APROBADO",
@@ -108,7 +111,11 @@
     "switchToLightMode": "Cambiar a modo claro",
     "switchToDarkMode": "Cambiar a modo oscuro",
     "selectInterface": "Seleccionar interfaz de red",
-    "selectModule": "Seleccionar modulo de prueba"
+    "selectModule": "Seleccionar modulo de prueba",
+    "closeSettings": "Cerrar configuración",
+    "openHistory": "Abrir historial de pruebas",
+    "refreshInterfaces": "Actualizar interfaces",
+    "selectProfile": "Seleccionar perfil"
   },
   "sections": {
     "modules": "Modulos de Prueba",
@@ -184,5 +191,25 @@
     "testCount_other": "Se encontraron {{count}} pruebas",
     "glossaryEntryCount_one": "{{count}} entrada",
     "glossaryEntryCount_other": "{{count}} entradas"
+  },
+  "interface": {
+    "networkInterfaces": "Interfaces de red",
+    "noInterfaces": "No se encontraron interfaces",
+    "select": "Seleccionar interfaz"
+  },
+  "profile": {
+    "current": "Perfil",
+    "manage": "Gestionar",
+    "noProfiles": "Sin perfiles",
+    "select": "Seleccionar perfil"
+  },
+  "tooltips": {
+    "header": {
+      "refresh": "Volver a escanear las interfaces de red disponibles y recargar el estado actual",
+      "history": "Abrir el panel del historial de pruebas para revisar resultados, métricas y errores anteriores",
+      "help": "Abrir el panel de ayuda con referencias de pruebas, tutoriales y un glosario",
+      "settings": "Abrir el panel de configuración para configurar módulos, interfaces y umbrales",
+      "logout": "Cerrar la sesión actual"
+    }
   }
 }

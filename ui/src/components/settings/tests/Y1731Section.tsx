@@ -62,7 +62,7 @@ export function Y1731Section({
       title={
         <div className="flex items-center gap-2">
           <Radio className="w-4 h-4" aria-hidden="true" />
-          <span>{t('settings.tests.y1731.title', 'Y.1731 OAM')}</span>
+          <span>{t('settings:tests.y1731.title', 'Y.1731 OAM')}</span>
           <span className="caption text-text-muted">({selectedCount}/4)</span>
         </div>
       }

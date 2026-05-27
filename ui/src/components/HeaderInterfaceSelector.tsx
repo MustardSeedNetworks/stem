@@ -43,9 +43,9 @@ export function HeaderInterfaceSelector({
           onSelectInterface(e.target.value)
         }
         className="w-48"
-        aria-label={t('settings.interface.select', 'Select network interface')}
+        aria-label={t('settings:interface.select', 'Select network interface')}
       >
-        <option value="">{t('settings.interface.select', 'Select Interface')}</option>
+        <option value="">{t('settings:interface.select', 'Select Interface')}</option>
         {visibleInterfaces.map((iface) => (
           <option key={iface.name} value={iface.name}>
             {iface.name} ({iface.speed}Mbps)
@@ -59,7 +59,7 @@ export function HeaderInterfaceSelector({
           onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setShowAll(e.target.checked)}
           className="w-3 h-3 accent-brand-primary"
         />
-        <span>{t('settings.interface.showAll', 'Show all interfaces')}</span>
+        <span>{t('settings:interface.showAll', 'Show all interfaces')}</span>
       </label>
     </div>
   );
