@@ -50,10 +50,6 @@ interface HeaderBarProps {
   darkMode: boolean;
   onReconnect?: () => void;
   onToggleTheme: () => void;
-  onRefresh: () => void;
-  onHistoryOpen: () => void;
-  onHelpOpen: () => void;
-  onSettingsOpen: () => void;
   onLogout: () => void;
   interfaces?: NetworkInterface[];
   currentInterface?: string;
@@ -63,6 +59,14 @@ interface HeaderBarProps {
   onProfileSwitch?: (profileId: string) => Promise<boolean>;
   onProfileManage?: () => void;
   profilesLoading?: boolean;
+  /** @deprecated Use sidebar footer / page-level actions instead. Ignored. */
+  onRefresh?: () => void;
+  /** @deprecated History lives in the sidebar nav. Ignored. */
+  onHistoryOpen?: () => void;
+  /** @deprecated Help lives in the sidebar footer. Ignored. */
+  onHelpOpen?: () => void;
+  /** @deprecated Settings lives in the sidebar footer. Ignored. */
+  onSettingsOpen?: () => void;
 }
 
 // =============================================================================
@@ -169,44 +173,6 @@ function RefreshIcon({ className }: { className?: string }): ReactElement {
         strokeLinejoin="round"
         strokeWidth={2}
         d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-      />
-    </svg>
-  );
-}
-
-function HistoryIcon({ className }: { className?: string }): ReactElement {
-  return (
-    <svg
-      className={className}
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-      />
-    </svg>
-  );
-}
-
-function HelpIcon({ className }: { className?: string }): ReactElement {
-  return (
-    <svg
-      className={className}
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
       />
     </svg>
   );
@@ -360,6 +326,7 @@ interface ProfileDropdownProps {
   loading: boolean;
   onSelect: (id: string) => void;
   onManage?: () => void;
+  onLogout?: () => void;
 }
 
 function ProfileDropdown({
@@ -368,6 +335,7 @@ function ProfileDropdown({
   loading,
   onSelect,
   onManage,
+  onLogout,
 }: ProfileDropdownProps): ReactElement {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
@@ -462,6 +430,26 @@ function ProfileDropdown({
               >
                 <SettingsIcon className={iconTokens.size.sm} />
                 <span className="body-small font-medium">{t('profile.manage', 'Manage')}</span>
+              </button>
+            </div>
+          ) : null}
+          {onLogout ? (
+            <div className="border-t border-surface-border">
+              <button
+                type="button"
+                onClick={(): void => {
+                  setIsOpen(false);
+                  onLogout();
+                }}
+                className={cn(
+                  'w-full flex-center',
+                  spacing.gap.tight,
+                  spacing.pad.sm,
+                  'hover:bg-surface-hover text-status-error',
+                )}
+              >
+                <LogoutIcon className={iconTokens.size.sm} />
+                <span className="body-small font-medium">{t('buttons.logout', 'Logout')}</span>
               </button>
             </div>
           ) : null}
@@ -664,10 +652,6 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function HeaderBarCompon
   darkMode,
   onReconnect,
   onToggleTheme,
-  onRefresh,
-  onHistoryOpen,
-  onHelpOpen,
-  onSettingsOpen,
   onLogout,
   interfaces = [],
   currentInterface,
@@ -748,24 +732,14 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function HeaderBarCompon
           </button>
           <div className="min-w-0">
             <h1 className="heading-4 text-text-primary truncate">{t('app.title', 'The Stem')}</h1>
-            <p className="caption text-text-muted hidden xs:block">
-              {t('app.tagline', 'Mustard Seed Networks')}
-            </p>
           </div>
           <ConnectionBadge status={connectionStatus} />
         </div>
 
-        {/* Icon toolbar */}
+        {/* Right-slot: per-product context + theme toggle.
+         * Help/Settings live in the sidebar footer; Logout lives in the
+         * profile dropdown menu. Refresh/History are page-level concerns. */}
         <div className={cn('flex items-center', spacing.gap.tight)}>
-          {hasProfiles ? (
-            <ProfileDropdown
-              profiles={profiles}
-              activeProfile={activeProfile}
-              loading={profilesLoading}
-              onSelect={handleProfileSelect}
-              onManage={onProfileManage}
-            />
-          ) : null}
           {hasInterfaces ? (
             <InterfaceDropdown
               interfaces={interfaces}
@@ -773,67 +747,17 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function HeaderBarCompon
               onSelect={handleInterfaceSelect}
             />
           ) : null}
+          {hasProfiles ? (
+            <ProfileDropdown
+              profiles={profiles}
+              activeProfile={activeProfile}
+              loading={profilesLoading}
+              onSelect={handleProfileSelect}
+              onManage={onProfileManage}
+              onLogout={onLogout}
+            />
+          ) : null}
           <ThemeToggle darkMode={darkMode} onToggle={onToggleTheme} />
-          <button
-            type="button"
-            className={iconButtonClass}
-            onClick={onRefresh}
-            aria-label={t('accessibility.refreshInterfaces', 'Refresh interfaces')}
-            title={t(
-              'tooltips.header.refresh',
-              'Rescan available network interfaces and reload current status',
-            )}
-          >
-            <RefreshIcon className={iconTokens.size.md} />
-          </button>
-          <button
-            type="button"
-            className={iconButtonClass}
-            onClick={onHistoryOpen}
-            aria-label={t('accessibility.openHistory', 'Open test history')}
-            title={t(
-              'tooltips.header.history',
-              'Open the test history drawer to review past results, metrics, and errors',
-            )}
-          >
-            <HistoryIcon className={iconTokens.size.md} />
-          </button>
-          <button
-            type="button"
-            className={iconButtonClass}
-            onClick={onHelpOpen}
-            aria-label={t('accessibility.openHelp', 'Open help')}
-            title={t(
-              'tooltips.header.help',
-              'Open the help drawer with test references, tutorials, and a glossary',
-            )}
-          >
-            <HelpIcon className={iconTokens.size.md} />
-          </button>
-          <button
-            type="button"
-            className={iconButtonClass}
-            onClick={onSettingsOpen}
-            aria-label={t('accessibility.openSettings', 'Open settings')}
-            title={t(
-              'tooltips.header.settings',
-              'Open the settings drawer to configure modules, interfaces, and thresholds',
-            )}
-          >
-            <SettingsIcon className={iconTokens.size.md} />
-          </button>
-          <button
-            type="button"
-            className={iconButtonClass}
-            onClick={onLogout}
-            aria-label={t('buttons.logout', 'Logout')}
-            title={t(
-              'tooltips.header.logout',
-              'Sign out of the session and return to the login screen',
-            )}
-          >
-            <LogoutIcon className={iconTokens.size.md} />
-          </button>
         </div>
       </div>
 

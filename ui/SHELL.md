@@ -17,7 +17,47 @@ Each canonical file carries a header banner identifying it as such.
 
 | File | Why |
 |---|---|
-| `HeaderBar.tsx` | Too much per-product variance (stem has interface picker; seed has ethernet/wifi split + recommended-star + logo-color-as-status; niac has no real HeaderBar). Each repo owns its own; structural pattern is the same. |
+| `HeaderBar.tsx` | Too much per-product variance. Each repo owns its own; **the SHAPE is conventional** (see below). |
+
+## HeaderBar shape convention (per-product, not synced)
+
+Every product's `HeaderBar.tsx` follows the same three-slot layout, even
+though slot fills differ:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ [logo]  [product name]  [connection-status]   …   [right] │
+└─────────────────────────────────────────────────────────────┘
+   ◄────── LEFT ──────►   ◄ CENTER ►    ◄──── RIGHT ────►
+```
+
+- **LEFT**: brand mark (logo) + product name + live connection / session
+  status indicator. Always visible. The logo button doubles as a
+  reconnect trigger when the connection is down.
+- **CENTER**: empty today; reserved for breadcrumbs / page-level chrome.
+- **RIGHT**: per-product context selectors followed by the theme toggle.
+  Order: context first (left to right), theme toggle last.
+
+### What belongs in the right slot (per product)
+- **stem**: interface picker, profile dropdown (logout lives inside its
+  menu), theme toggle.
+- **seed**: ethernet picker, wifi picker (with recommended-interface
+  marker), profile dropdown (logout inside), theme toggle.
+- **niac**: theme toggle only (no profiles or interfaces in niac).
+
+### What does NOT belong in the header (universal)
+- **Settings** — lives in the sidebar footer.
+- **Help** — lives in the sidebar footer.
+- **Logout** — lives inside the profile dropdown menu (when a product
+  has profiles); otherwise can live in sidebar footer or a user menu.
+- **Refresh** — page-specific action; mount on the relevant page.
+- **History** — sidebar nav item (or page-level drawer trigger);
+  not a header concern.
+- **Marketing taglines / company name** — header is for app chrome only.
+
+### Banned vocabulary in headers
+Same as the global product rules: no "AI", no "Premium" tier, no
+deprecated tier names. See `CLAUDE.md` for the full list.
 
 ## Token contract
 
