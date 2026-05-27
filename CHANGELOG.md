@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.20.0](https://github.com/krisarmstrong/stem/compare/v0.19.0...v0.20.0) (2026-05-27)
+
+
+### Features
+
+* **api:** port seed's strict JSON decode helpers ([#320](https://github.com/krisarmstrong/stem/issues/320)) ([#322](https://github.com/krisarmstrong/stem/issues/322)) ([9499f86](https://github.com/krisarmstrong/stem/commit/9499f86612c168fad10c4110c581f4bd28415abf))
+* **forms:** adopt react-hook-form + valibot resolver, Y.1564 pilot ([#325](https://github.com/krisarmstrong/stem/issues/325)) ([#328](https://github.com/krisarmstrong/stem/issues/328)) ([bf7937a](https://github.com/krisarmstrong/stem/commit/bf7937aa0dfa062469e7ace706c3dbc2254c944c))
+* **forms:** adopt react-hook-form for MFA setup + disable ([#325](https://github.com/krisarmstrong/stem/issues/325)) ([#331](https://github.com/krisarmstrong/stem/issues/331)) ([92cffef](https://github.com/krisarmstrong/stem/commit/92cffef7240aad661ece2130fe8006f9670cab40))
+* **forms:** finish react-hook-form rollout — App.tsx auth + Recovery + Setup ([#332](https://github.com/krisarmstrong/stem/issues/332)) ([#333](https://github.com/krisarmstrong/stem/issues/333)) ([2afb218](https://github.com/krisarmstrong/stem/commit/2afb218a9a40e030cf89dd3c3b2b8f40d84ff1f0))
+* **forms:** sweep 6 remaining ConfigForms onto react-hook-form ([#325](https://github.com/krisarmstrong/stem/issues/325)) ([#330](https://github.com/krisarmstrong/stem/issues/330)) ([224b39d](https://github.com/krisarmstrong/stem/commit/224b39d5d5e4d7f873bdce2162db0502ee16e2e7))
+* **i18n:** add per-repo dynamic-prefixes allowlist for check-keys.py ([#335](https://github.com/krisarmstrong/stem/issues/335)) ([cd6a793](https://github.com/krisarmstrong/stem/commit/cd6a793e5faf13b5d4efc93d8c2b94de8564c9f5))
+* **i18n:** add useLocale hook + migrate HelpDrawer plurals ([#324](https://github.com/krisarmstrong/stem/issues/324)) ([771a07c](https://github.com/krisarmstrong/stem/commit/771a07c091b79223bef45d00b0987ec4ff8c394b))
+* **i18n:** extract ModuleCard a11y strings to locale keys ([#319](https://github.com/krisarmstrong/stem/issues/319)) ([56eacd5](https://github.com/krisarmstrong/stem/commit/56eacd59917218651c9d179067a7b2709ea2d3ee))
+* **i18n:** port check-keys.py + add phase 6 unit tests ([#327](https://github.com/krisarmstrong/stem/issues/327)) ([85a3382](https://github.com/krisarmstrong/stem/commit/85a3382a3597b893223fe9e0461a740919046fe8))
+
+
+### Bug Fixes
+
+* **auth:** remove t.Parallel from HIBP tests that mutate shared endpoint ([#315](https://github.com/krisarmstrong/stem/issues/315)) ([08ef121](https://github.com/krisarmstrong/stem/commit/08ef121f47546d52e846afb741e51f58ab32dee9))
+* **i18n-es:** normalize accents and add missing diacritics (107 fixes) ([#321](https://github.com/krisarmstrong/stem/issues/321)) ([c4e5870](https://github.com/krisarmstrong/stem/commit/c4e58708a596b760447656261849a23e7b494abd))
+* **i18n:** resolve 48 t() calls referencing missing EN locale keys ([#329](https://github.com/krisarmstrong/stem/issues/329)) ([b0232aa](https://github.com/krisarmstrong/stem/commit/b0232aaeee5362edd79c0dd3c42165a366b186bf))
+* **i18n:** update document.lang on locale change for a11y ([#316](https://github.com/krisarmstrong/stem/issues/316)) ([963bf12](https://github.com/krisarmstrong/stem/commit/963bf128daa57e09a00d2da4414604922a5d5ce2))
+
 ## [0.19.0](https://github.com/krisarmstrong/stem/compare/v0.18.1...v0.19.0) (2026-05-26)
 
 
