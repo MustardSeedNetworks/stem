@@ -1,0 +1,155 @@
+# Per-repo allowlist for check-keys.py. One prefix per line; comments
+# with #. Matches either a flat key (`section.field`) or namespace-
+# qualified form (`namespace:section.field`).
+#
+# Use when a JSON key is consumed via a dynamic lookup that the static
+# analyzer can't see — typically t(`prefix.${variable}.suffix`) or a
+# data-driven render path that reads from <ns>.json[<section>].
+#
+# Keys matching one of these prefixes won't be reported as "unused".
+# Keep this list narrow and document WHY each entry is here so a
+# future cleanup pass can confirm whether the dynamic path still
+# exists.
+
+# --- stem ---
+
+# settings.tests.* — TestsTab in SettingsDrawer renders 27 tests by
+# iterating over the test catalog and looking up
+# t(`settings:tests.${test.id}.title`) etc. The catalog lives in
+# src/data/test-catalog.ts and drives the dynamic lookup.
+settings:tests.
+
+# cli.json/* — Consumed by the Go CLI's --help output via stem's
+# locale-loader, NOT by the React TS frontend. The whole namespace
+# is data, not t() calls. Excluding all of cli.* from "unused" since
+# the frontend never references these keys directly.
+cli:categories.
+cli:commands.
+cli:tests.
+cli:flags.
+cli:license.
+cli:reflector.
+
+# params.json/* — Test parameter help text indexed by
+# t(`params:${standard}.${param.name}`) inside ParamHelpPanel. The
+# {standard} → params subtree mapping is data-driven.
+params:rfc2544.
+params:rfc2889.
+params:rfc6349.
+params:y1564.
+params:y1731.
+params:tsn.
+params:trafficgen.
+params:mef.
+
+# common.buttons.* / common.labels.* / common.status.* — intentional
+# UI primitive baseline. Stable EN+ES vocabulary that components may
+# reach for as the codebase grows.
+common:buttons.
+common:labels.
+common:status.
+
+# common.time.* / common.units.* — formatRelativeTime + per-unit
+# labels (Mbps/Gbps/ms/us/etc.) keyed off magnitude or unit name.
+common:time.
+common:units.
+
+# common.help.* — HelpDrawer consumes via render-prop callbacks and
+# search lookups that don't show as literal t() strings.
+common:help.
+
+# common.accessibility.* — aria-label values referenced by component
+# props rather than literal t() strings.
+common:accessibility.
+
+# common.plurals.* — i18next plural keys; consumer side calls
+# t('common:plurals.testCount', {count}) which the analyzer DOES see
+# as the bare 'testCount' form. The _one/_other suffixes are plural
+# variants the analyzer flags as "extras".
+common:plurals.
+
+# common.sections.* — sidebar/section headings rendered by
+# SidebarLayout via section.id → label mapping.
+common:sections.
+
+# common.prompts.* — modal/prompt copy keyed by interaction type.
+common:prompts.
+
+# common.role.* — Reflector/TestMaster role-switch banners reading
+# t(`common:role.${currentRole}.bannerTitle`) etc.
+common:role.
+
+# common.app.* — branding strings used in <title>, footer, manifest.
+common:app.
+
+# errors.<category>.* — error mapper indexes
+# t(`errors:<category>.${code}`) based on the daemon's error
+# classification.
+errors:auth.
+errors:license.
+errors:api.
+errors:network.
+errors:validation.
+errors:reflector.
+errors:test.
+
+# common.results.* — pass/fail/warning/info indicators rendered by
+# TestProgressBar + ResultRow via state-machine status → label map.
+common:results.
+
+# recovery.* / security.* / settings.* additional subtrees — these
+# multi-step flows resolve copy via current-step state rather than
+# literal t() lookups in the JSX.
+recovery:errors.
+recovery:securityNote
+recovery:subtitle
+recovery:timeRemaining
+recovery:title
+security:login.
+security:passkeys.
+security:subtitle
+security:title
+
+# settings.general.* / settings.advanced.* / settings.interface.* /
+# settings.license.* / settings.mode.* — Settings drawer subsections
+# rendered by reading a field schema and resolving labels via
+# t(`settings:${section}.${field}`).
+settings:general.
+settings:advanced.
+settings:interface.
+settings:license.
+settings:mode.
+settings:reflector.
+settings:sections.
+settings:testing.
+
+# modules.* — Module metadata (Reflector/Benchmark/ServiceTest/
+# TrafficGen/Measure/Certify) consumed by ModuleCard via
+# t(`modules:${module.id}.${field}`).
+modules:reflector.
+modules:benchmark.
+modules:servicetest.
+modules:trafficgen.
+modules:measure.
+modules:certify.
+
+# recovery.* — Account recovery flow reads field labels and step copy
+# via t(`recovery:${step}.${field}`).
+recovery:steps.
+recovery:flow.
+
+# security.* — MFA setup flow reads field labels via lookups indexed
+# by the current auth provider state.
+security:mfa.
+security:passkey.
+
+# setup.* — initial-setup flow consumes step copy via dynamic step ID.
+setup:steps.
+setup:errors.
+
+# settings.modules.* / settings.scopes.* / settings.standards.* —
+# SettingsDrawer renders module/scope/standard filters via
+# t(`settings:${field}.${id}`).
+settings:modules.
+settings:scopes.
+settings:standards.
