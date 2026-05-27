@@ -3,14 +3,22 @@
  * @description Guides users through the first-time setup process for The Stem application.
  */
 
+import { valibotResolver } from '@hookform/resolvers/valibot';
 import { Activity, Copy, Eye, EyeOff, Lock, Repeat, Target, Zap } from 'lucide-react';
-import type { FormEvent, ReactElement } from 'react';
+import type { ReactElement } from 'react';
 import { useEffect, useState } from 'react';
+import { type SubmitHandler, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { type StemRole, useRole } from '../../contexts/RoleContext';
+import { SetupWizardSchema } from '../../schemas/auth';
 
 /** Minimum password length (matches backend validation) */
 const MIN_PASSWORD_LENGTH = 12;
+
+interface SetupFormFields {
+  password: string;
+  confirmPassword: string;
+}
 
 /** Props for SetupWizard component */
 interface SetupWizardProps {
@@ -43,33 +51,41 @@ export function SetupWizard({
   const { role: currentRole, setRole } = useRole();
   const [selectedRole, setSelectedRole] = useState<StemRole>(currentRole);
   const [passwordMode, setPasswordMode] = useState<'generated' | 'custom'>('custom');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors, isSubmitting },
+  } = useForm<SetupFormFields>({
+    resolver: valibotResolver(SetupWizardSchema),
+    defaultValues: { password: '', confirmPassword: '' },
+    mode: 'onBlur',
+  });
 
   // Update password fields when switching to generated mode
   useEffect(() => {
     if (passwordMode === 'generated' && suggestedPassword) {
-      setPassword(suggestedPassword);
-      setConfirmPassword(suggestedPassword);
+      setValue('password', suggestedPassword, { shouldValidate: true, shouldDirty: true });
+      setValue('confirmPassword', suggestedPassword, { shouldValidate: true, shouldDirty: true });
     }
-  }, [passwordMode, suggestedPassword]);
+  }, [passwordMode, suggestedPassword, setValue]);
 
   const handlePasswordModeChange = (mode: 'generated' | 'custom'): void => {
     setPasswordMode(mode);
     if (mode === 'generated' && suggestedPassword) {
-      setPassword(suggestedPassword);
-      setConfirmPassword(suggestedPassword);
+      setValue('password', suggestedPassword, { shouldValidate: true, shouldDirty: true });
+      setValue('confirmPassword', suggestedPassword, { shouldValidate: true, shouldDirty: true });
       setShowPassword(true);
     } else {
-      setPassword('');
-      setConfirmPassword('');
+      setValue('password', '', { shouldValidate: false });
+      setValue('confirmPassword', '', { shouldValidate: false });
       setShowPassword(false);
     }
-    setError(null);
+    setSubmitError(null);
   };
 
   const handleCopyPassword = (): void => {
@@ -82,61 +98,45 @@ export function SetupWizard({
     }
   };
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
-    event.preventDefault();
-    setError(null);
-
-    if (password.length < MIN_PASSWORD_LENGTH) {
-      setError(t('errors.passwordTooShort', { count: MIN_PASSWORD_LENGTH }));
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setError(t('errors.passwordMismatch'));
-      return;
-    }
-
-    setIsSubmitting(true);
-
+  const onSubmit: SubmitHandler<SetupFormFields> = async ({ password }) => {
+    setSubmitError(null);
     try {
-      // Step 1: Complete setup (set password on server)
       const response = await fetch('/api/v1/setup/complete', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password, setupToken }),
       });
-
       if (!response.ok) {
         const data = await (response.json() as Promise<{
           error?: string;
           message?: string;
         }>);
-        setError(data.error ?? data.message ?? t('errors.setupFailed'));
+        setSubmitError(data.error ?? data.message ?? t('errors.setupFailed'));
         return;
       }
-
-      // Step 2: Persist the chosen role to RoleContext + localStorage.
+      // Persist the chosen role to RoleContext + localStorage.
       setRole(selectedRole);
-
-      // Step 3: Automatically log in with the new password
+      // Automatically log in with the new password.
       const loginSuccess = await onLogin(username, password);
-
       if (!loginSuccess) {
-        setError(t('errors.loginFailed'));
+        setSubmitError(t('errors.loginFailed'));
         onComplete();
         return;
       }
-
-      // Step 4: Setup complete and user is logged in
       onComplete();
     } catch {
-      setError(t('errors.networkError'));
-    } finally {
-      setIsSubmitting(false);
+      setSubmitError(t('errors.networkError'));
     }
   };
+
+  // Cross-field error (passwords don't match) from valibot v.check().
+  const rootErrors = errors.root;
+  const crossFieldError = rootErrors
+    ? Object.values(rootErrors).find(
+        (e): e is { message: string } =>
+          typeof e === 'object' && e !== null && 'message' in e && typeof e.message === 'string',
+      )
+    : undefined;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
@@ -154,7 +154,7 @@ export function SetupWizard({
 
         {/* Form */}
         <form
-          onSubmit={handleSubmit}
+          onSubmit={handleSubmit(onSubmit)}
           className="rounded-3xl border border-[var(--color-surface-border)] bg-[var(--color-surface-raised)] p-6 shadow-2xl"
         >
           {/* Username display */}
@@ -323,14 +323,9 @@ export function SetupWizard({
                   <input
                     id="setup-password"
                     type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                      setPassword(e.target.value)
-                    }
+                    {...register('password')}
                     className="w-full rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-base)] px-3 py-2 pr-10 text-sm text-[var(--color-text-primary)] focus:border-[var(--color-brand-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-primary)]/30"
                     placeholder={t('password.placeholder')}
-                    required={true}
-                    minLength={MIN_PASSWORD_LENGTH}
                   />
                   <button
                     type="button"
@@ -346,9 +341,15 @@ export function SetupWizard({
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
-                <p className="text-xs text-[var(--color-text-muted)] mt-1">
-                  {t('password.minLength', { count: MIN_PASSWORD_LENGTH })}
-                </p>
+                {errors.password ? (
+                  <p className="text-xs text-[var(--color-status-error)] mt-1">
+                    {errors.password.message}
+                  </p>
+                ) : (
+                  <p className="text-xs text-[var(--color-text-muted)] mt-1">
+                    {t('password.minLength', { count: MIN_PASSWORD_LENGTH })}
+                  </p>
+                )}
               </div>
 
               <div className="mb-6">
@@ -361,25 +362,36 @@ export function SetupWizard({
                 <input
                   id="setup-confirm-password"
                   type={showPassword ? 'text' : 'password'}
-                  value={confirmPassword}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                    setConfirmPassword(e.target.value)
-                  }
+                  {...register('confirmPassword')}
                   className="mt-1 w-full rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-base)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-[var(--color-brand-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-primary)]/30"
                   placeholder={t('password.confirm.placeholder')}
-                  required={true}
                 />
+                {errors.confirmPassword ? (
+                  <p className="text-xs text-[var(--color-status-error)] mt-1">
+                    {errors.confirmPassword.message}
+                  </p>
+                ) : null}
               </div>
             </>
           )}
 
-          {/* Error display */}
-          {error ? (
+          {/* Cross-field error (passwords don't match) */}
+          {crossFieldError ? (
             <div
               role="alert"
               className="mb-4 p-3 rounded-xl bg-[var(--color-status-error)]/10 border border-[var(--color-status-error)]/20 text-sm text-[var(--color-status-error)]"
             >
-              {error}
+              {crossFieldError.message}
+            </div>
+          ) : null}
+
+          {/* Submit error (network / server) */}
+          {submitError !== null ? (
+            <div
+              role="alert"
+              className="mb-4 p-3 rounded-xl bg-[var(--color-status-error)]/10 border border-[var(--color-status-error)]/20 text-sm text-[var(--color-status-error)]"
+            >
+              {submitError}
             </div>
           ) : null}
 

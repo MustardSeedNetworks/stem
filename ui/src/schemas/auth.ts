@@ -74,12 +74,35 @@ export const RecoveryEnterSchema = v.object({
 });
 
 /**
- * Setup wizard: initial-admin creation. Password confirmation is a
- * cross-field check; the resolver surfaces under formState.errors.root.
+ * Setup wizard: initial-admin creation. The wizard fixes the username
+ * (from setup status), so the schema only validates the password the
+ * user actually types. Password confirmation is a cross-field check;
+ * the resolver surfaces it under formState.errors.root.
  */
 export const SetupWizardSchema = v.pipe(
   v.object({
-    username: UsernameSchema,
+    password: v.pipe(
+      v.string('Password is required'),
+      v.minLength(12, 'Password must be at least 12 characters'),
+      v.maxLength(512, 'Password is too long'),
+    ),
+    confirmPassword: v.string(),
+  }),
+  v.check((c) => c.password === c.confirmPassword, 'Passwords do not match'),
+);
+
+/**
+ * Recovery completion: filesystem-token-based password reset. The
+ * operator writes the token to a file on the server, the user pastes
+ * the token here, then enters and confirms a new password.
+ */
+export const RecoveryCompleteSchema = v.pipe(
+  v.object({
+    token: v.pipe(
+      v.string('Recovery token is required'),
+      v.trim(),
+      v.minLength(1, 'Recovery token is required'),
+    ),
     password: v.pipe(
       v.string('Password is required'),
       v.minLength(12, 'Password must be at least 12 characters'),

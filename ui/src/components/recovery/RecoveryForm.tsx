@@ -1,12 +1,22 @@
 /**
  * @fileoverview Password Recovery Form Component
  * @description Allows admin to recover password using filesystem-based token.
+ *              Migrated to react-hook-form + valibot per #332. Schema lives
+ *              at src/schemas/auth.ts (RecoveryCompleteSchema).
  */
 
+import { valibotResolver } from '@hookform/resolvers/valibot';
 import { ArrowLeft, Eye, EyeOff, KeyRound, Lock, Timer } from 'lucide-react';
-import type { FormEvent, ReactElement } from 'react';
+import type { ReactElement } from 'react';
 import { useEffect, useState } from 'react';
+import {
+  type FieldError,
+  type SubmitHandler,
+  type UseFormRegisterReturn,
+  useForm,
+} from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
+import { RecoveryCompleteSchema } from '../../schemas/auth';
 import {
   alert,
   button,
@@ -18,9 +28,6 @@ import {
   spacing,
   status,
 } from '../../styles/theme';
-
-/** Minimum password length (matches backend validation) */
-const MIN_PASSWORD_LENGTH = 12;
 
 /** Props for RecoveryForm component */
 interface RecoveryFormProps {
@@ -42,37 +49,41 @@ interface RecoveryInstructions {
   steps: string[];
 }
 
-/** Props for PasswordInput sub-component */
-interface PasswordInputProps {
+interface RecoveryFormFields {
+  token: string;
+  password: string;
+  confirmPassword: string;
+}
+
+interface PasswordFieldProps {
   id: string;
   label: string;
-  value: string;
-  onChange: (value: string) => void;
+  placeholder: string;
+  register: UseFormRegisterReturn;
   showPassword: boolean;
   onToggleVisibility: () => void;
-  placeholder: string;
-  hasError: boolean;
   showPasswordLabel: string;
   hidePasswordLabel: string;
   helperText?: string;
-  errorText?: string;
+  fieldError?: FieldError;
 }
 
-/** Reusable password input with visibility toggle */
-function PasswordInput({
+/** Reusable password input with visibility toggle. Accepts react-hook-form's
+ * UseFormRegisterReturn so the parent can wire register('password') in one
+ * line and we get refs / onChange / onBlur for free. */
+function PasswordField({
   id,
   label,
-  value,
-  onChange,
+  placeholder,
+  register,
   showPassword,
   onToggleVisibility,
-  placeholder,
-  hasError,
   showPasswordLabel,
   hidePasswordLabel,
   helperText,
-  errorText,
-}: PasswordInputProps): ReactElement {
+  fieldError,
+}: PasswordFieldProps): ReactElement {
+  const hasError = Boolean(fieldError);
   return (
     <div>
       <label htmlFor={id} className={cn('label block', spacing.margin.bottom.inline)}>
@@ -85,8 +96,7 @@ function PasswordInput({
         <input
           id={id}
           type={showPassword ? 'text' : 'password'}
-          value={value}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange(e.target.value)}
+          {...register}
           className={cn(
             'w-full pl-10 pr-10',
             input.size.md,
@@ -97,7 +107,6 @@ function PasswordInput({
             hasError ? 'focus:border-status-error' : 'focus:border-brand-primary',
           )}
           placeholder={placeholder}
-          required={true}
         />
         <button
           type="button"
@@ -109,19 +118,16 @@ function PasswordInput({
           {showPassword ? <EyeOff className={icon.size.sm} /> : <Eye className={icon.size.sm} />}
         </button>
       </div>
-      {helperText !== undefined && (
-        <p className={cn('caption mt-1', hasError ? status.text.error : 'text-text-muted')}>
-          {helperText}
-        </p>
+      {helperText !== undefined && !hasError && (
+        <p className={cn('caption mt-1 text-text-muted')}>{helperText}</p>
       )}
-      {errorText !== undefined && hasError && (
-        <p className={cn('caption mt-1', status.text.error)}>{errorText}</p>
-      )}
+      {hasError && fieldError?.message ? (
+        <p className={cn('caption mt-1', status.text.error)}>{fieldError.message}</p>
+      ) : null}
     </div>
   );
 }
 
-/** Props for InstructionsPanel sub-component */
 interface InstructionsPanelProps {
   instructions: RecoveryInstructions;
   tokenFilePath: string;
@@ -129,7 +135,6 @@ interface InstructionsPanelProps {
   tokenFileLabel: string;
 }
 
-/** Instructions panel showing recovery steps */
 function InstructionsPanel({
   instructions,
   tokenFilePath,
@@ -160,12 +165,6 @@ function InstructionsPanel({
   );
 }
 
-/**
- * RecoveryForm Component
- *
- * Form for recovering admin password using filesystem access.
- * User must have SSH/filesystem access to read the recovery token.
- */
 export function RecoveryForm({
   onRecoveryComplete,
   onBackToLogin,
@@ -173,15 +172,21 @@ export function RecoveryForm({
   tokenFilePath = '',
 }: RecoveryFormProps): ReactElement {
   const { t } = useTranslation('recovery');
-  const [token, setToken] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [remainingTime, setRemainingTime] = useState(initialRemainingTime);
   const [instructions, setInstructions] = useState<RecoveryInstructions | null>(null);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<RecoveryFormFields>({
+    resolver: valibotResolver(RecoveryCompleteSchema),
+    defaultValues: { token: '', password: '', confirmPassword: '' },
+    mode: 'onBlur',
+  });
 
   // Fetch recovery instructions on mount
   useEffect(() => {
@@ -206,7 +211,6 @@ export function RecoveryForm({
     if (remainingTime <= 0) {
       return;
     }
-
     const interval = setInterval(() => {
       setRemainingTime((prev) => {
         if (prev <= 1) {
@@ -216,67 +220,46 @@ export function RecoveryForm({
         return prev - 1;
       });
     }, 1000);
-
     return () => clearInterval(interval);
   }, [remainingTime]);
 
-  // Format remaining time as MM:SS
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Password validation
-  const passwordValid = password.length >= MIN_PASSWORD_LENGTH;
-  const passwordsMatch = password === confirmPassword;
-  const canSubmit = token.trim() !== '' && passwordValid && passwordsMatch && !isSubmitting;
-
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
-    event.preventDefault();
-    setError(null);
-
-    if (!passwordValid) {
-      setError(t('errors.passwordTooShort', { count: MIN_PASSWORD_LENGTH }));
-      return;
-    }
-
-    if (!passwordsMatch) {
-      setError(t('errors.passwordMismatch'));
-      return;
-    }
-
-    setIsSubmitting(true);
-
+  const onSubmit: SubmitHandler<RecoveryFormFields> = async ({ token, password }) => {
+    setSubmitError(null);
     try {
       const response = await fetch('/api/v1/recovery/complete', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          token: token.trim(),
-          password,
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: token.trim(), password }),
       });
-
       const data = await (response.json() as Promise<{
         success?: boolean;
         message?: string;
         error?: string;
       }>);
-
       if (response.ok && data.success === true) {
         onRecoveryComplete();
       } else {
-        setError(data.message ?? data.error ?? t('errors.recoveryFailed'));
+        setSubmitError(data.message ?? data.error ?? t('errors.recoveryFailed'));
       }
     } catch {
-      setError(t('errors.networkError'));
-    } finally {
-      setIsSubmitting(false);
+      setSubmitError(t('errors.networkError'));
     }
   };
+
+  // Cross-field error (passwords don't match) from valibot v.check().
+  const rootErrors = errors.root;
+  const crossFieldError = rootErrors
+    ? Object.values(rootErrors).find(
+        (e): e is { message: string } =>
+          typeof e === 'object' && e !== null && 'message' in e && typeof e.message === 'string',
+      )
+    : undefined;
 
   return (
     <div
@@ -329,7 +312,7 @@ export function RecoveryForm({
 
         {/* Form */}
         <form
-          onSubmit={handleSubmit}
+          onSubmit={handleSubmit(onSubmit)}
           className={cn(
             'bg-surface-raised border border-surface-border shadow-2xl',
             radius.xl,
@@ -355,10 +338,7 @@ export function RecoveryForm({
               <input
                 id="recovery-token"
                 type="text"
-                value={token}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                  setToken(e.target.value)
-                }
+                {...register('token')}
                 className={cn(
                   'w-full pl-10',
                   input.size.md,
@@ -369,52 +349,58 @@ export function RecoveryForm({
                 placeholder={t('token.placeholder')}
                 autoComplete="off"
                 spellCheck={false}
-                required={true}
               />
             </div>
+            {errors.token ? (
+              <p className={cn('caption mt-1', status.text.error)}>{errors.token.message}</p>
+            ) : null}
           </div>
 
           {/* New Password Input */}
-          <PasswordInput
+          <PasswordField
             id="recovery-password"
             label={t('password.label')}
-            value={password}
-            onChange={setPassword}
+            register={register('password')}
             showPassword={showPassword}
             onToggleVisibility={() => setShowPassword(!showPassword)}
             placeholder={t('password.placeholder')}
-            hasError={password !== '' && !passwordValid}
             showPasswordLabel={t('buttons.showPassword')}
             hidePasswordLabel={t('buttons.hidePassword')}
-            helperText={t('password.minLength', { count: MIN_PASSWORD_LENGTH })}
+            helperText={t('password.minLength', { count: 12 })}
+            fieldError={errors.password}
           />
 
           {/* Confirm Password Input */}
-          <PasswordInput
+          <PasswordField
             id="recovery-confirm-password"
             label={t('password.confirmLabel')}
-            value={confirmPassword}
-            onChange={setConfirmPassword}
+            register={register('confirmPassword')}
             showPassword={showConfirmPassword}
             onToggleVisibility={() => setShowConfirmPassword(!showConfirmPassword)}
             placeholder={t('password.confirmPlaceholder')}
-            hasError={confirmPassword !== '' && !passwordsMatch}
             showPasswordLabel={t('buttons.showPassword')}
             hidePasswordLabel={t('buttons.hidePassword')}
-            errorText={t('errors.passwordMismatch')}
+            fieldError={errors.confirmPassword}
           />
 
-          {/* Error display */}
-          {error !== null && (
+          {/* Cross-field error (passwords don't match) */}
+          {crossFieldError && (
+            <div role="alert" className={cn(alert.base, alert.variant.error)}>
+              {crossFieldError.message}
+            </div>
+          )}
+
+          {/* Submit error (network / server) */}
+          {submitError !== null && (
             <div role="alert" aria-live="assertive" className={cn(alert.base, alert.variant.error)}>
-              {error}
+              {submitError}
             </div>
           )}
 
           {/* Submit button */}
           <button
             type="submit"
-            disabled={!canSubmit}
+            disabled={isSubmitting}
             className={cn(
               'w-full',
               button.size.md,
