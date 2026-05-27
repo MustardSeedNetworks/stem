@@ -1,5 +1,5 @@
 {
-  "title": "Configuracion",
+  "title": "Configuración",
   "sections": {
     "general": "General",
     "interface": "Interfaz",
@@ -16,7 +16,7 @@
   },
   "interface": {
     "defaultInterface": "Interfaz Predeterminada",
-    "autoSelect": "Seleccion automatica de interfaz",
+    "autoSelect": "Selección automática de interfaz",
     "title": "Interfaz",
     "select": "Seleccionar interfaz de red",
     "driver": "Driver",
@@ -44,7 +44,7 @@
     "dataPlane": "Plano de Datos"
   },
   "mode": {
-    "title": "Modo de Operacion",
+    "title": "Modo de Operación",
     "reflector": "Modo Reflector",
     "reflectorDesc": "Reflejar trafico recibido",
     "testMaster": "Modo Test Master",
@@ -67,8 +67,8 @@
       "title": "Pruebas RFC 2544",
       "throughput": {
         "name": "Rendimiento",
-        "desc": "Tasa maxima con 0% perdida",
-        "tooltip": "Encontrar la tasa maxima a la que el DUT puede reenviar tramas con cero perdida de paquetes usando busqueda binaria."
+        "desc": "Tasa máxima con 0% perdida",
+        "tooltip": "Encontrar la tasa máxima a la que el DUT puede reenviar tramas con cero perdida de paquetes usando busqueda binaria."
       },
       "latency": {
         "name": "Latencia",
@@ -83,7 +83,7 @@
       "backToBack": {
         "name": "Back-to-Back",
         "desc": "Capacidad de rafaga",
-        "tooltip": "Probar la capacidad maxima de rafaga - cuantas tramas a velocidad de linea antes de que ocurran perdidas."
+        "tooltip": "Probar la capacidad máxima de rafaga - cuantas tramas a velocidad de linea antes de que ocurran perdidas."
       },
       "systemRecovery": {
         "name": "Recuperacion del Sistema",
@@ -99,9 +99,9 @@
     "y1564": {
       "title": "Y.1564 / EtherSAM",
       "config": {
-        "name": "Prueba de Configuracion",
-        "desc": "Validacion de configuracion de servicio",
-        "tooltip": "Validar que la configuracion del servicio cumple con los parametros SLA antes del despliegue."
+        "name": "Prueba de Configuración",
+        "desc": "Validación de configuración de servicio",
+        "tooltip": "Validar que la configuración del servicio cumple con los parámetros SLA antes del despliegue."
       },
       "performance": {
         "name": "Prueba de Rendimiento",
@@ -111,7 +111,7 @@
       "full": {
         "name": "Prueba Completa",
         "desc": "Config + Rendimiento",
-        "tooltip": "Secuencia completa de prueba Y.1564: validacion de configuracion seguida de prueba de rendimiento."
+        "tooltip": "Secuencia completa de prueba Y.1564: validación de configuración seguida de prueba de rendimiento."
       }
     },
     "rfc2889": {
@@ -119,17 +119,17 @@
       "forwarding": {
         "name": "Tasa de Reenvio",
         "desc": "Rendimiento por puerto",
-        "tooltip": "Medir la tasa maxima de reenvio de tramas por puerto del switch."
+        "tooltip": "Medir la tasa máxima de reenvio de tramas por puerto del switch."
       },
       "caching": {
         "name": "Cache de Direcciones",
         "desc": "Capacidad de tabla MAC",
-        "tooltip": "Determinar el numero maximo de direcciones MAC que el switch puede almacenar en cache."
+        "tooltip": "Determinar el número máximo de direcciones MAC que el switch puede almacenar en cache."
       },
       "learning": {
         "name": "Aprendizaje de Direcciones",
         "desc": "Tasa de aprendizaje MAC",
-        "tooltip": "Medir que tan rapido el switch aprende nuevas direcciones MAC."
+        "tooltip": "Medir que tan rápido el switch aprende nuevas direcciones MAC."
       },
       "broadcast": {
         "name": "Latencia de Broadcast",
@@ -146,7 +146,7 @@
       "title": "Pruebas TCP RFC 6349",
       "capacity": {
         "name": "Capacidad TCP",
-        "desc": "Rendimiento TCP maximo",
+        "desc": "Rendimiento TCP máximo",
         "tooltip": "Medir el rendimiento TCP alcanzable considerando todas las degradaciones de la red."
       },
       "efficiency": {
@@ -155,9 +155,9 @@
         "tooltip": "Calcular la relacion entre la transferencia de datos utiles y el ancho de banda total consumido."
       },
       "path": {
-        "name": "Analisis de Ruta",
+        "name": "Análisis de Ruta",
         "desc": "RTT y cuello de botella",
-        "tooltip": "Analizar las caracteristicas de la ruta incluyendo RTT, BDP y ubicacion del cuello de botella."
+        "tooltip": "Analizar las características de la ruta incluyendo RTT, BDP y ubicacion del cuello de botella."
       }
     },
     "y1731": {
@@ -187,30 +187,30 @@
       "title": "Pruebas MEF",
       "config": {
         "name": "Config MEF",
-        "desc": "Configuracion de servicio",
-        "tooltip": "Validacion de configuracion de servicio compatible con MEF."
+        "desc": "Configuración de servicio",
+        "tooltip": "Validación de configuración de servicio compatible con MEF."
       },
       "performance": {
         "name": "Rendimiento MEF",
-        "desc": "Verificacion de SLA",
+        "desc": "Verificación de SLA",
         "tooltip": "Verificar que el servicio cumple con los objetivos de rendimiento SLA de MEF."
       },
       "full": {
         "name": "Prueba Completa",
         "desc": "Suite MEF completa",
-        "tooltip": "Prueba MEF completa incluyendo fases de configuracion y rendimiento."
+        "tooltip": "Prueba MEF completa incluyendo fases de configuración y rendimiento."
       }
     },
     "tsn": {
       "title": "TSN 802.1Qbv",
       "timing": {
         "name": "Temporizado de Compuertas",
-        "desc": "Verificacion de programacion de compuertas",
+        "desc": "Verificación de programacion de compuertas",
         "tooltip": "Verificar la precision de la programacion del Time-Aware Shaper."
       },
       "isolation": {
         "name": "Aislamiento de Trafico",
-        "desc": "Separacion de prioridades",
+        "desc": "Separación de prioridades",
         "tooltip": "Verificar el aislamiento de clases de trafico entre flujos programados y de mejor esfuerzo."
       },
       "latency": {
@@ -220,8 +220,8 @@
       },
       "full": {
         "name": "Suite Completa",
-        "desc": "Validacion TSN completa",
-        "tooltip": "Ejecutar todas las pruebas TSN para validar la configuracion de Time-Sensitive Networking."
+        "desc": "Validación TSN completa",
+        "tooltip": "Ejecutar todas las pruebas TSN para validar la configuración de Time-Sensitive Networking."
       }
     },
     "trafficgen": {
@@ -239,7 +239,7 @@
       "multistream": {
         "name": "Multi-Flujo",
         "desc": "Multiples flujos de trafico",
-        "tooltip": "Generar multiples flujos de trafico concurrentes con diferentes parametros."
+        "tooltip": "Generar multiples flujos de trafico concurrentes con diferentes parámetros."
       }
     }
   }
