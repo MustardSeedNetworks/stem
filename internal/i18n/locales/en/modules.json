@@ -1,4 +1,52 @@
 {
+  "card": {
+    "stop": {
+      "title": "Stop the running {{name}} test and discard incomplete results",
+      "ariaLabel": "Stop {{name}} test"
+    },
+    "start": {
+      "titleEmpty": "Enable at least one {{name}} test below to start",
+      "titleEnabled_one": "Start the {{count}} enabled {{name}} test using the current configuration",
+      "titleEnabled_other": "Start the {{count}} enabled {{name}} tests using the current configuration",
+      "ariaLabel": "Start {{name}} tests"
+    },
+    "autoStart": {
+      "titleEnabled": "Disable auto-start; tests will only run when manually started",
+      "titleDisabled": "Automatically run the enabled tests in this module whenever a link comes up on the test interface",
+      "ariaLabelEnabled": "Disable auto-start on link",
+      "ariaLabelDisabled": "Enable auto-start on link"
+    },
+    "test": {
+      "title": "{{description}} — toggle whether to include \"{{name}}\" when starting the module",
+      "ariaLabel": "Include {{name}} when running module"
+    },
+    "configure": {
+      "title": "Open the configuration drawer for {{name}} (frame sizes, durations, thresholds)",
+      "ariaLabel": "Configure {{name}}"
+    },
+    "module": {
+      "titleEnabled": "Disable {{name}} ({{standard}}); tests in this module will be skipped",
+      "titleDisabled": "Enable {{name}} ({{standard}}); allows running its tests",
+      "ariaLabelEnabled": "Disable {{name}} module",
+      "ariaLabelDisabled": "Enable {{name}} module",
+      "testsEnabledCount": "{{enabled}}/{{total}} tests enabled"
+    },
+    "expand": {
+      "titleExpanded": "Collapse the {{name}} card and hide test selection",
+      "titleCollapsed": "Expand the {{name}} card to choose which tests to run and toggle auto-start",
+      "ariaLabelExpanded": "Collapse module card",
+      "ariaLabelCollapsed": "Expand module card"
+    },
+    "section": {
+      "tests": "Tests",
+      "results": "Results",
+      "autoStartLabel": "Auto-start on link"
+    },
+    "action": {
+      "stopLabel": "Stop",
+      "startLabel": "Start"
+    }
+  },
   "reflector": {
     "title": "Reflector",
     "description": "Packet reflection for loopback testing",

@@ -1,4 +1,52 @@
 {
+  "card": {
+    "stop": {
+      "title": "Detener la prueba de {{name}} en curso y descartar los resultados incompletos",
+      "ariaLabel": "Detener prueba de {{name}}"
+    },
+    "start": {
+      "titleEmpty": "Habilite al menos una prueba de {{name}} a continuación para iniciar",
+      "titleEnabled_one": "Iniciar la {{count}} prueba habilitada de {{name}} con la configuración actual",
+      "titleEnabled_other": "Iniciar las {{count}} pruebas habilitadas de {{name}} con la configuración actual",
+      "ariaLabel": "Iniciar pruebas de {{name}}"
+    },
+    "autoStart": {
+      "titleEnabled": "Deshabilitar el inicio automático; las pruebas solo se ejecutarán al iniciarlas manualmente",
+      "titleDisabled": "Ejecutar automáticamente las pruebas habilitadas de este módulo cuando aparezca un enlace en la interfaz de prueba",
+      "ariaLabelEnabled": "Deshabilitar inicio automático al enlazar",
+      "ariaLabelDisabled": "Habilitar inicio automático al enlazar"
+    },
+    "test": {
+      "title": "{{description}} — alterne si desea incluir \"{{name}}\" al iniciar el módulo",
+      "ariaLabel": "Incluir {{name}} al ejecutar el módulo"
+    },
+    "configure": {
+      "title": "Abrir el panel de configuración de {{name}} (tamaños de trama, duraciones, umbrales)",
+      "ariaLabel": "Configurar {{name}}"
+    },
+    "module": {
+      "titleEnabled": "Deshabilitar {{name}} ({{standard}}); las pruebas de este módulo se omitirán",
+      "titleDisabled": "Habilitar {{name}} ({{standard}}); permite ejecutar sus pruebas",
+      "ariaLabelEnabled": "Deshabilitar módulo {{name}}",
+      "ariaLabelDisabled": "Habilitar módulo {{name}}",
+      "testsEnabledCount": "{{enabled}}/{{total}} pruebas habilitadas"
+    },
+    "expand": {
+      "titleExpanded": "Contraer la tarjeta de {{name}} y ocultar la selección de pruebas",
+      "titleCollapsed": "Expandir la tarjeta de {{name}} para elegir qué pruebas ejecutar y alternar el inicio automático",
+      "ariaLabelExpanded": "Contraer tarjeta del módulo",
+      "ariaLabelCollapsed": "Expandir tarjeta del módulo"
+    },
+    "section": {
+      "tests": "Pruebas",
+      "results": "Resultados",
+      "autoStartLabel": "Inicio automático al enlazar"
+    },
+    "action": {
+      "stopLabel": "Detener",
+      "startLabel": "Iniciar"
+    }
+  },
   "reflector": {
     "title": "Reflector",
     "description": "Reflexion de paquetes para pruebas de bucle",
