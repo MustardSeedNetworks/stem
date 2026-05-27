@@ -1,0 +1,31 @@
+# Glossary exception list — per-key allow-list for false positives in
+# the glossary-preservation check (validate.sh:check_glossary_preservation).
+#
+# Use when the English value uses a glossary term in a non-glossary
+# sense (e.g., "Measure packet loss..." uses "Measure" as the imperative
+# verb "to measure", not the Stem `Measure` module name). The Spanish
+# translation legitimately does NOT contain the term, so we mark the
+# key as a known exception.
+#
+# Format: one `namespace.key.path` per line (no .json extension on
+# namespace). Lines starting with # are comments.
+#
+# Adding an entry is a REVIEW gate — if you're tempted to allow-list a key,
+# first confirm with the translator/glossary owner that this is genuinely
+# a non-glossary use of the term. This file is per-repo; do not copy
+# entries from seed or niac.
+
+# --- "Measure" used as imperative verb "to measure" in RFC test
+#     tooltip descriptions ("Measure packet loss..."), NOT the Stem
+#     Measure module name.
+settings.tests.rfc2544.frameLoss.tooltip
+settings.tests.rfc2544.latency.tooltip
+settings.tests.rfc2544.reset.tooltip
+settings.tests.rfc2544.systemRecovery.tooltip
+settings.tests.rfc2889.broadcast.tooltip
+settings.tests.rfc2889.forwarding.tooltip
+settings.tests.rfc2889.learning.tooltip
+settings.tests.rfc6349.capacity.tooltip
+settings.tests.tsn.latency.tooltip
+settings.tests.y1731.delay.tooltip
+settings.tests.y1731.slm.tooltip
