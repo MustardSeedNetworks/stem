@@ -19,6 +19,7 @@ import {
   type LucideIcon,
   Menu,
   Settings,
+  Users,
   X,
 } from 'lucide-react';
 import { createElement, type FC, type ReactNode, useEffect, useState } from 'react';
@@ -44,9 +45,16 @@ interface SidebarLayoutProps {
   groups: SidebarNavGroup[];
   version?: string;
   children: ReactNode;
+  /**
+   * Drawer callbacks — all optional. Pass only the ones your product uses;
+   * the corresponding footer button only renders when its callback is provided.
+   * Stem typically uses help/settings/history; seed uses help/settings/profiles;
+   * niac uses help/settings. Add more here if a new product needs another drawer.
+   */
   onOpenHelp?: () => void;
   onOpenSettings?: () => void;
   onOpenHistory?: () => void;
+  onOpenProfiles?: () => void;
   topBar?: ReactNode;
 }
 
@@ -168,8 +176,29 @@ interface SidebarFooterProps {
   onOpenHelp?: () => void;
   onOpenSettings?: () => void;
   onOpenHistory?: () => void;
+  onOpenProfiles?: () => void;
   onExpand: () => void;
 }
+
+interface FullWidthDrawerButtonProps {
+  onClick: () => void;
+  icon: LucideIcon;
+  label: string;
+  title: string;
+}
+
+const FullWidthDrawerButton: FC<FullWidthDrawerButtonProps> = ({ onClick, icon, label, title }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className="w-full mb-heading flex items-center gap-compact px-3 py-row rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors text-sm font-medium"
+    title={title}
+    aria-label={title}
+  >
+    {createElement(icon, { className: `${iconSizes.md} flex-shrink-0` })}
+    <span>{label}</span>
+  </button>
+);
 
 const SidebarFooter: FC<SidebarFooterProps> = ({
   collapsed,
@@ -177,6 +206,7 @@ const SidebarFooter: FC<SidebarFooterProps> = ({
   onOpenHelp,
   onOpenSettings,
   onOpenHistory,
+  onOpenProfiles,
   onExpand,
 }) => (
   <div className={`px-3 py-4 border-t border-surface-border ${collapsed ? 'text-center' : ''}`}>
@@ -202,16 +232,21 @@ const SidebarFooter: FC<SidebarFooterProps> = ({
     </div>
 
     {onOpenHistory && !collapsed ? (
-      <button
-        type="button"
+      <FullWidthDrawerButton
         onClick={onOpenHistory}
-        className="w-full mb-heading flex items-center gap-compact px-3 py-row rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors text-sm font-medium"
+        icon={History}
+        label="History"
         title="Open test history"
-        aria-label="Open test history"
-      >
-        <History className={`${iconSizes.md} flex-shrink-0`} />
-        <span>History</span>
-      </button>
+      />
+    ) : null}
+
+    {onOpenProfiles && !collapsed ? (
+      <FullWidthDrawerButton
+        onClick={onOpenProfiles}
+        icon={Users}
+        label="Profiles"
+        title="Manage profiles"
+      />
     ) : null}
 
     {version ? (
@@ -245,6 +280,7 @@ interface SidebarBodyProps {
   onOpenHelp?: () => void;
   onOpenSettings?: () => void;
   onOpenHistory?: () => void;
+  onOpenProfiles?: () => void;
 }
 
 const SidebarBody: FC<SidebarBodyProps> = ({
@@ -258,6 +294,7 @@ const SidebarBody: FC<SidebarBodyProps> = ({
   onOpenHelp,
   onOpenSettings,
   onOpenHistory,
+  onOpenProfiles,
 }) => {
   const { t } = useTranslation();
   // group.label is either a plain display string ("Account") or an
@@ -297,6 +334,7 @@ const SidebarBody: FC<SidebarBodyProps> = ({
         onOpenHelp={onOpenHelp}
         onOpenSettings={onOpenSettings}
         onOpenHistory={onOpenHistory}
+        onOpenProfiles={onOpenProfiles}
         onExpand={onExpand}
       />
     </>
@@ -335,6 +373,7 @@ export const SidebarLayout: FC<SidebarLayoutProps> = ({
   onOpenHelp,
   onOpenSettings,
   onOpenHistory,
+  onOpenProfiles,
   topBar,
 }) => {
   const location = useLocation();
@@ -365,6 +404,7 @@ export const SidebarLayout: FC<SidebarLayoutProps> = ({
       onOpenHelp={onOpenHelp}
       onOpenSettings={onOpenSettings}
       onOpenHistory={onOpenHistory}
+      onOpenProfiles={onOpenProfiles}
     />
   );
 
