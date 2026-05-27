@@ -7,9 +7,12 @@
  * login flow, not this configuration page.
  */
 
+import { valibotResolver } from '@hookform/resolvers/valibot';
 import { Lock, ShieldCheck, ShieldOff } from 'lucide-react';
-import { type FormEvent, type ReactElement, useCallback, useEffect, useState } from 'react';
+import { type ReactElement, useCallback, useEffect, useState } from 'react';
+import { type SubmitHandler, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
+import { TotpDisableSchema } from '../../../schemas/auth';
 import {
   isMFARequired as _isMFARequired,
   fetchCsrfToken,
@@ -192,35 +195,39 @@ interface DisableTotpButtonProps {
   onDisabled: () => Promise<void>;
 }
 
+interface TotpDisableForm {
+  password: string;
+  code: string;
+}
+
 function DisableTotpButton({ onDisabled }: DisableTotpButtonProps): ReactElement {
   const { t } = useTranslation('security');
   const [open, setOpen] = useState(false);
-  const [password, setPassword] = useState('');
-  const [code, setCode] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const handleSubmit = useCallback(
-    async (event: FormEvent<HTMLFormElement>): Promise<void> => {
-      event.preventDefault();
-      setBusy(true);
-      setError(null);
-      try {
-        const csrf = await fetchCsrfToken();
-        await mfaApi.totpDisable(password, code, csrf);
-        setOpen(false);
-        setPassword('');
-        setCode('');
-        await onDisabled();
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : 'Failed to disable TOTP';
-        setError(msg);
-      } finally {
-        setBusy(false);
-      }
-    },
-    [code, onDisabled, password],
-  );
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<TotpDisableForm>({
+    resolver: valibotResolver(TotpDisableSchema),
+    defaultValues: { password: '', code: '' },
+    mode: 'onBlur',
+  });
+
+  const onSubmit: SubmitHandler<TotpDisableForm> = async ({ password, code }) => {
+    setSubmitError(null);
+    try {
+      const csrf = await fetchCsrfToken();
+      await mfaApi.totpDisable(password, code, csrf);
+      setOpen(false);
+      reset();
+      await onDisabled();
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : 'Failed to disable TOTP');
+    }
+  };
 
   if (!open) {
     return (
@@ -242,7 +249,7 @@ function DisableTotpButton({ onDisabled }: DisableTotpButtonProps): ReactElement
           {t('mfa.disable.title')}
         </h2>
         <p className="text-sm text-text-muted">{t('mfa.disable.instructions')}</p>
-        <form className="mt-4 space-y-4" onSubmit={handleSubmit}>
+        <form className="mt-4 space-y-4" onSubmit={handleSubmit(onSubmit)}>
           <div>
             <label
               htmlFor="totp-disable-password"
@@ -254,10 +261,14 @@ function DisableTotpButton({ onDisabled }: DisableTotpButtonProps): ReactElement
               id="totp-disable-password"
               type="password"
               autoComplete="current-password"
-              value={password}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+              {...register('password')}
               className="mt-1 w-full rounded-xl border border-surface-border bg-surface-base px-3 py-2 text-sm"
             />
+            {errors.password ? (
+              <p className="mt-1 text-xs text-[var(--color-status-error)]">
+                {errors.password.message}
+              </p>
+            ) : null}
           </div>
           <div>
             <label htmlFor="totp-disable-code" className="text-xs font-semibold text-text-muted">
@@ -268,18 +279,22 @@ function DisableTotpButton({ onDisabled }: DisableTotpButtonProps): ReactElement
               type="text"
               inputMode="numeric"
               pattern="[0-9]{6}"
-              value={code}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCode(e.target.value)}
+              {...register('code')}
               className="mt-1 w-full rounded-xl border border-surface-border bg-surface-base px-3 py-2 text-sm font-mono tracking-widest"
             />
+            {errors.code ? (
+              <p className="mt-1 text-xs text-[var(--color-status-error)]">{errors.code.message}</p>
+            ) : null}
           </div>
-          {error ? <p className="text-xs text-[var(--color-status-error)]">{error}</p> : null}
+          {submitError ? (
+            <p className="text-xs text-[var(--color-status-error)]">{submitError}</p>
+          ) : null}
           <div className="flex gap-2 justify-end">
             <button type="button" className="btn btn-secondary" onClick={() => setOpen(false)}>
               {t('mfa.disable.cancelButton')}
             </button>
-            <button type="submit" className="btn btn-primary" disabled={busy}>
-              {busy ? '...' : t('mfa.disable.confirmButton')}
+            <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+              {isSubmitting ? '...' : t('mfa.disable.confirmButton')}
             </button>
           </div>
         </form>
