@@ -4,10 +4,17 @@
  * Displays the QR PNG returned by /api/v1/auth/totp/setup along with
  * the base32 secret (for users who can't scan) and a code-input that
  * POSTs to /api/v1/auth/totp/verify on submit.
+ *
+ * Migrated to react-hook-form + valibot per #325. The schema lives at
+ * src/schemas/auth.ts (TotpSetupVerifySchema).
  */
 
-import { type FormEvent, type ReactElement, useCallback, useState } from 'react';
+import { valibotResolver } from '@hookform/resolvers/valibot';
+import type { ReactElement } from 'react';
+import { useState } from 'react';
+import { type SubmitHandler, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
+import { TotpSetupVerifySchema } from '../../../schemas/auth';
 import { fetchCsrfToken, mfaApi, type TotpSetupResponse } from './mfaApi';
 
 interface Props {
@@ -16,30 +23,34 @@ interface Props {
   onCancel: () => void;
 }
 
+interface TotpVerifyForm {
+  code: string;
+}
+
 export function TotpSetupModal({ setup, onComplete, onCancel }: Props): ReactElement {
   const { t } = useTranslation('security');
-  const [code, setCode] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const handleSubmit = useCallback(
-    async (event: FormEvent<HTMLFormElement>): Promise<void> => {
-      event.preventDefault();
-      setBusy(true);
-      setError(null);
-      try {
-        const csrf = await fetchCsrfToken();
-        await mfaApi.totpVerify(code, csrf);
-        await onComplete();
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : 'Verification failed';
-        setError(msg);
-      } finally {
-        setBusy(false);
-      }
-    },
-    [code, onComplete],
-  );
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<TotpVerifyForm>({
+    resolver: valibotResolver(TotpSetupVerifySchema),
+    defaultValues: { code: '' },
+    mode: 'onBlur',
+  });
+
+  const onSubmit: SubmitHandler<TotpVerifyForm> = async ({ code }) => {
+    setSubmitError(null);
+    try {
+      const csrf = await fetchCsrfToken();
+      await mfaApi.totpVerify(code, csrf);
+      await onComplete();
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : 'Verification failed');
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
@@ -71,7 +82,7 @@ export function TotpSetupModal({ setup, onComplete, onCancel }: Props): ReactEle
           </code>
         </div>
 
-        <form className="mt-4 space-y-4" onSubmit={handleSubmit}>
+        <form className="mt-4 space-y-4" onSubmit={handleSubmit(onSubmit)}>
           <div>
             <label htmlFor="totp-setup-code" className="text-xs font-semibold text-text-muted">
               {t('mfa.setup.codeLabel')}
@@ -82,18 +93,22 @@ export function TotpSetupModal({ setup, onComplete, onCancel }: Props): ReactEle
               inputMode="numeric"
               pattern="[0-9]{6}"
               placeholder={t('mfa.setup.codePlaceholder')}
-              value={code}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCode(e.target.value)}
+              {...register('code')}
               className="mt-1 w-full rounded-xl border border-surface-border bg-surface-base px-3 py-2 text-sm font-mono tracking-widest"
             />
+            {errors.code ? (
+              <p className="mt-1 text-xs text-[var(--color-status-error)]">{errors.code.message}</p>
+            ) : null}
           </div>
-          {error ? <p className="text-xs text-[var(--color-status-error)]">{error}</p> : null}
+          {submitError ? (
+            <p className="text-xs text-[var(--color-status-error)]">{submitError}</p>
+          ) : null}
           <div className="flex gap-2 justify-end">
             <button type="button" className="btn btn-secondary" onClick={onCancel}>
               {t('mfa.setup.cancelButton')}
             </button>
-            <button type="submit" className="btn btn-primary" disabled={busy}>
-              {busy ? '...' : t('mfa.setup.confirmButton')}
+            <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+              {isSubmitting ? '...' : t('mfa.setup.confirmButton')}
             </button>
           </div>
         </form>
