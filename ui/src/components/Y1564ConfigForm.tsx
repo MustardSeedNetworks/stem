@@ -3,11 +3,19 @@
  * @description Advanced configuration form for ITU-T Y.1564 / MEF Service Activation Testing.
  *              Allows users to configure service parameters including CIR, EIR, CBS, EBS,
  *              frame sizes, test duration, and VLAN settings.
+ *
+ * Forms-stack pilot (#325): this form is the first to migrate to
+ * react-hook-form + valibot. The schema lives at `src/schemas/configs.ts`
+ * and is plumbed in via the `useConfigForm` helper. Field-level errors
+ * render inline below each input; the cross-field rule (FDV ≤ FD) is
+ * shown at the form footer. The 6 remaining ConfigForms follow the
+ * same pattern — see issue #325 for the sweep.
  */
 
 import { AlertTriangle, Info, Settings2 } from 'lucide-react';
-import type React from 'react';
 import type { ReactElement } from 'react';
+import { useConfigForm } from '../forms/useConfigForm';
+import { Y1564ConfigSchema } from '../schemas/configs';
 import { CollapsibleSection } from './CollapsibleSection';
 import { HelpIcon } from './HelpIcon';
 
@@ -76,6 +84,17 @@ const FRAME_SIZE_OPTIONS: Array<{ value: number; label: string }> = [
   { value: 9000, label: '9000 B (jumbo)' },
 ];
 
+/** Field-level error display. Keeps JSX terse and consistent. */
+function FieldError({ message }: { message?: string }): ReactElement | null {
+  if (!message) return null;
+  return (
+    <div className="mt-1 text-xs text-[var(--color-status-danger)] flex items-center gap-1">
+      <AlertTriangle className="w-3 h-3" />
+      {message}
+    </div>
+  );
+}
+
 export function Y1564ConfigForm({
   config,
   setConfig,
@@ -83,27 +102,69 @@ export function Y1564ConfigForm({
 }: Y1564ConfigFormProps): ReactElement | null {
   const hasY1564Tests = selectedTests.some((t) => t.startsWith('y1564') || t.startsWith('mef'));
 
+  const form = useConfigForm<Y1564Config>({
+    schema: Y1564ConfigSchema,
+    config,
+    setConfig,
+  });
+
+  const {
+    register,
+    watch,
+    setValue,
+    formState: { errors },
+  } = form;
+
   if (!hasY1564Tests) {
     return null;
   }
 
-  const updateConfig = (updates: Partial<Y1564Config>): void => {
-    setConfig({ ...config, ...updates });
-  };
+  // Watched values for derived displays (frame-size checkboxes,
+  // summary panel, VLAN PCP conditional render). react-hook-form's
+  // watch keeps these in sync with the form's internal state.
+  const frameSizes = watch('frameSizes') ?? [];
+  const vlanId = watch('vlanId') ?? 0;
+  const cir = watch('cir') ?? 0;
+  const eir = watch('eir') ?? 0;
+  const flrThreshold = watch('flrThreshold') ?? 0;
+  const fdThreshold = watch('fdThreshold') ?? 0;
+  const fdvThreshold = watch('fdvThreshold') ?? 0;
+  const pcp = watch('pcp') ?? 0;
+  const configStepDuration = watch('configStepDuration') ?? 0;
+  const perfTestDuration = watch('perfTestDuration') ?? 0;
 
   const toggleFrameSize = (size: number): void => {
-    if (config.frameSizes.includes(size)) {
-      updateConfig({ frameSizes: config.frameSizes.filter((s) => s !== size) });
+    if (frameSizes.includes(size)) {
+      setValue(
+        'frameSizes',
+        frameSizes.filter((s) => s !== size),
+        { shouldValidate: true, shouldDirty: true },
+      );
     } else {
-      updateConfig({
-        frameSizes: [...config.frameSizes, size].sort((a, b) => a - b),
-      });
+      setValue(
+        'frameSizes',
+        [...frameSizes, size].sort((a, b) => a - b),
+        {
+          shouldValidate: true,
+          shouldDirty: true,
+        },
+      );
     }
   };
 
-  const isConfigTest: boolean = selectedTests.some((t) => t.includes('config'));
-  const isPerfTest: boolean = selectedTests.some((t) => t.includes('perf'));
-  const isFullTest: boolean = selectedTests.some((t) => t.includes('full'));
+  const isConfigTest = selectedTests.some((t) => t.includes('config'));
+  const isPerfTest = selectedTests.some((t) => t.includes('perf'));
+  const isFullTest = selectedTests.some((t) => t.includes('full'));
+
+  // Cross-field error (fdv > fd). valibot's v.check() surfaces under
+  // formState.errors.root.<unique-key>; we render the first one found.
+  const rootErrors = errors.root;
+  const crossFieldError = rootErrors
+    ? Object.values(rootErrors).find(
+        (e): e is { message: string } =>
+          typeof e === 'object' && e !== null && 'message' in e && typeof e.message === 'string',
+      )
+    : undefined;
 
   return (
     <CollapsibleSection
@@ -134,15 +195,11 @@ export function Y1564ConfigForm({
             <input
               id="y1564-cir"
               type="number"
-              min={1}
-              max={10000}
               step={1}
-              value={config.cir}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                updateConfig({ cir: Number(e.target.value) })
-              }
+              {...register('cir', { valueAsNumber: true })}
               className="mt-1 w-full"
             />
+            <FieldError message={errors.cir?.message} />
           </div>
 
           {/* EIR */}
@@ -157,15 +214,11 @@ export function Y1564ConfigForm({
             <input
               id="y1564-eir"
               type="number"
-              min={0}
-              max={10000}
               step={1}
-              value={config.eir}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                updateConfig({ eir: Number(e.target.value) })
-              }
+              {...register('eir', { valueAsNumber: true })}
               className="mt-1 w-full"
             />
+            <FieldError message={errors.eir?.message} />
           </div>
 
           {/* CBS */}
@@ -180,15 +233,11 @@ export function Y1564ConfigForm({
             <input
               id="y1564-cbs"
               type="number"
-              min={1}
-              max={1024}
               step={1}
-              value={config.cbs}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                updateConfig({ cbs: Number(e.target.value) })
-              }
+              {...register('cbs', { valueAsNumber: true })}
               className="mt-1 w-full"
             />
+            <FieldError message={errors.cbs?.message} />
           </div>
 
           {/* EBS */}
@@ -203,15 +252,11 @@ export function Y1564ConfigForm({
             <input
               id="y1564-ebs"
               type="number"
-              min={0}
-              max={1024}
               step={1}
-              value={config.ebs}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                updateConfig({ ebs: Number(e.target.value) })
-              }
+              {...register('ebs', { valueAsNumber: true })}
               className="mt-1 w-full"
             />
+            <FieldError message={errors.ebs?.message} />
           </div>
         </div>
 
@@ -233,15 +278,11 @@ export function Y1564ConfigForm({
             <input
               id="y1564-flr"
               type="number"
-              min={0}
-              max={100}
               step={0.001}
-              value={config.flrThreshold}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                updateConfig({ flrThreshold: Number(e.target.value) })
-              }
+              {...register('flrThreshold', { valueAsNumber: true })}
               className="mt-1 w-full"
             />
+            <FieldError message={errors.flrThreshold?.message} />
           </div>
 
           {/* Frame Delay */}
@@ -256,15 +297,11 @@ export function Y1564ConfigForm({
             <input
               id="y1564-fd"
               type="number"
-              min={1}
-              max={1000}
               step={1}
-              value={config.fdThreshold}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                updateConfig({ fdThreshold: Number(e.target.value) })
-              }
+              {...register('fdThreshold', { valueAsNumber: true })}
               className="mt-1 w-full"
             />
+            <FieldError message={errors.fdThreshold?.message} />
           </div>
 
           {/* Frame Delay Variation */}
@@ -279,15 +316,11 @@ export function Y1564ConfigForm({
             <input
               id="y1564-fdv"
               type="number"
-              min={1}
-              max={100}
               step={1}
-              value={config.fdvThreshold}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                updateConfig({ fdvThreshold: Number(e.target.value) })
-              }
+              {...register('fdvThreshold', { valueAsNumber: true })}
               className="mt-1 w-full"
             />
+            <FieldError message={errors.fdvThreshold?.message} />
           </div>
         </div>
 
@@ -306,7 +339,7 @@ export function Y1564ConfigForm({
               >
                 <input
                   type="checkbox"
-                  checked={config.frameSizes.includes(option.value)}
+                  checked={frameSizes.includes(option.value)}
                   onChange={() => toggleFrameSize(option.value)}
                   aria-label={`Test ${option.value}-byte frames`}
                   className="w-4 h-4 accent-[var(--color-brand-primary)]"
@@ -315,12 +348,7 @@ export function Y1564ConfigForm({
               </label>
             ))}
           </div>
-          {config.frameSizes.length === 0 && (
-            <div className="flex items-center gap-2 text-xs text-[var(--color-status-warning)]">
-              <AlertTriangle className="w-3 h-3" />
-              Select at least one frame size
-            </div>
-          )}
+          <FieldError message={errors.frameSizes?.message} />
         </div>
 
         {/* Test Duration */}
@@ -341,17 +369,13 @@ export function Y1564ConfigForm({
               <input
                 id="y1564-config-duration"
                 type="number"
-                min={5}
-                max={300}
                 step={1}
-                value={config.configStepDuration}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                  updateConfig({ configStepDuration: Number(e.target.value) })
-                }
+                {...register('configStepDuration', { valueAsNumber: true })}
                 className="mt-1 w-full"
               />
+              <FieldError message={errors.configStepDuration?.message} />
               <div className="text-xs text-[var(--color-text-muted)] mt-1">
-                Total config test: ~{config.configStepDuration * 4 * config.frameSizes.length}s
+                Total config test: ~{configStepDuration * 4 * frameSizes.length}s
               </div>
             </div>
           ) : null}
@@ -368,17 +392,13 @@ export function Y1564ConfigForm({
               <input
                 id="y1564-perf-duration"
                 type="number"
-                min={60}
-                max={86400}
                 step={60}
-                value={config.perfTestDuration}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                  updateConfig({ perfTestDuration: Number(e.target.value) })
-                }
+                {...register('perfTestDuration', { valueAsNumber: true })}
                 className="mt-1 w-full"
               />
+              <FieldError message={errors.perfTestDuration?.message} />
               <div className="text-xs text-[var(--color-text-muted)] mt-1">
-                = {Math.floor(config.perfTestDuration / 60)} minutes
+                = {Math.floor(perfTestDuration / 60)} minutes
               </div>
             </div>
           ) : null}
@@ -401,21 +421,17 @@ export function Y1564ConfigForm({
             <input
               id="y1564-vlan"
               type="number"
-              min={0}
-              max={4094}
               step={1}
-              value={config.vlanId}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                updateConfig({ vlanId: Number(e.target.value) })
-              }
+              {...register('vlanId', { valueAsNumber: true })}
               className="mt-1 w-full"
             />
-            {config.vlanId === 0 && (
+            <FieldError message={errors.vlanId?.message} />
+            {vlanId === 0 && (
               <div className="text-xs text-[var(--color-text-muted)] mt-1">Untagged traffic</div>
             )}
           </div>
 
-          {config.vlanId > 0 && (
+          {vlanId > 0 && (
             <div>
               <label
                 htmlFor="y1564-pcp"
@@ -426,10 +442,7 @@ export function Y1564ConfigForm({
               </label>
               <select
                 id="y1564-pcp"
-                value={config.pcp}
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>): void =>
-                  updateConfig({ pcp: Number(e.target.value) })
-                }
+                {...register('pcp', { valueAsNumber: true })}
                 className="mt-1 w-full"
               >
                 <option value={0}>0 - Best Effort (BE)</option>
@@ -441,6 +454,7 @@ export function Y1564ConfigForm({
                 <option value={6}>6 - Internetwork Control (IC)</option>
                 <option value={7}>7 - Network Control (NC)</option>
               </select>
+              <FieldError message={errors.pcp?.message} />
             </div>
           )}
 
@@ -451,10 +465,7 @@ export function Y1564ConfigForm({
           >
             <input
               type="checkbox"
-              checked={config.colorAware}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                updateConfig({ colorAware: e.target.checked })
-              }
+              {...register('colorAware')}
               aria-label="Enable color-aware Y.1564 testing"
               className="w-4 h-4 accent-[var(--color-brand-primary)]"
             />
@@ -470,6 +481,14 @@ export function Y1564ConfigForm({
           </label>
         </div>
 
+        {/* Cross-field error footer */}
+        {crossFieldError && (
+          <div className="p-2 rounded-lg bg-[var(--color-status-danger-subtle)] text-[var(--color-status-danger)] text-sm flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4" />
+            {crossFieldError.message}
+          </div>
+        )}
+
         {/* Summary */}
         <div className="p-3 rounded-lg bg-[var(--color-surface-base)] border border-[var(--color-surface-border)]">
           <div className="flex items-center gap-2 text-sm font-medium text-[var(--color-text-primary)] mb-2">
@@ -478,18 +497,17 @@ export function Y1564ConfigForm({
           </div>
           <div className="text-xs text-[var(--color-text-muted)] space-y-1">
             <div>
-              Service: {config.cir} Mbps CIR
-              {config.eir > 0 && ` + ${config.eir} Mbps EIR`}
+              Service: {cir} Mbps CIR
+              {eir > 0 && ` + ${eir} Mbps EIR`}
             </div>
-            <div>Frame sizes: {config.frameSizes.join(', ')} bytes</div>
+            <div>Frame sizes: {frameSizes.join(', ')} bytes</div>
             <div>
-              SLA: FLR≤{config.flrThreshold}%, FD≤{config.fdThreshold}ms, FDV≤
-              {config.fdvThreshold}
+              SLA: FLR≤{flrThreshold}%, FD≤{fdThreshold}ms, FDV≤{fdvThreshold}
               ms
             </div>
-            {config.vlanId > 0 && (
+            {vlanId > 0 && (
               <div>
-                VLAN {config.vlanId} / PCP {config.pcp}
+                VLAN {vlanId} / PCP {pcp}
               </div>
             )}
           </div>
