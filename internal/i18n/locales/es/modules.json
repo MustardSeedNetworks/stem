@@ -84,10 +84,10 @@
     "description": "Activacion de servicio ITU-T Y.1564 / MEF",
     "standard": "ITU-T Y.1564 / MEF",
     "testTypes": {
-      "y1564_config": "Configuracion Y.1564",
+      "y1564_config": "Configuración Y.1564",
       "y1564_perf": "Rendimiento Y.1564",
       "y1564": "Prueba Completa Y.1564",
-      "mef_config": "Configuracion MEF",
+      "mef_config": "Configuración MEF",
       "mef_perf": "Rendimiento MEF",
       "mef": "Prueba Completa MEF"
     }

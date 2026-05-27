@@ -13,7 +13,7 @@
     "web": {
       "name": "web",
       "summary": "Iniciar la interfaz web de Test Master",
-      "description": "Lanza la interfaz web grafica para configuracion y monitoreo de pruebas."
+      "description": "Lanza la interfaz web gráfica para configuración y monitoreo de pruebas."
     },
     "license": {
       "name": "license",
@@ -21,9 +21,9 @@
       "description": "Activar, desactivar o verificar el estado de la licencia."
     },
     "version": {
-      "name": "version",
-      "summary": "Mostrar informacion de version",
-      "description": "Muestra version, informacion de compilacion y estado de licencia."
+      "name": "versión",
+      "summary": "Mostrar información de versión",
+      "description": "Muestra versión, información de compilación y estado de licencia."
     },
     "help": {
       "name": "help",
@@ -44,11 +44,11 @@
   "flags": {
     "interface": {
       "name": "Interfaz de red",
-      "description": "Interfaz de red para transmision de paquetes (ej: eth0)"
+      "description": "Interfaz de red para transmisión de paquetes (ej: eth0)"
     },
     "port": {
-      "name": "Numero de puerto",
-      "description": "Numero de puerto TCP/UDP"
+      "name": "Número de puerto",
+      "description": "Número de puerto TCP/UDP"
     },
     "verbose": {
       "name": "Salida detallada",
@@ -63,8 +63,8 @@
       "description": "Archivo para guardar resultados"
     },
     "config": {
-      "name": "Archivo de configuracion",
-      "description": "Ruta al archivo de configuracion"
+      "name": "Archivo de configuración",
+      "description": "Ruta al archivo de configuración"
     }
   },
   "categories": {
@@ -112,7 +112,7 @@
   "tests": {
     "throughput": {
       "name": "Throughput Test",
-      "description": "Encuentra la velocidad maxima sin packet loss"
+      "description": "Encuentra la velocidad máxima sin packet loss"
     },
     "latency": {
       "name": "Latency Test",
@@ -132,7 +132,7 @@
     },
     "y1564Perf": {
       "name": "Y.1564 Performance Test",
-      "description": "Verificacion extendida de rendimiento"
+      "description": "Verificación extendida de rendimiento"
     },
     "frameDelay": {
       "name": "Frame Delay Test",

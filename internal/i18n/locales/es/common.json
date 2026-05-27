@@ -8,9 +8,9 @@
   "buttons": {
     "save": "Guardar",
     "cancel": "Cancelar",
-    "login": "Iniciar Sesion",
-    "logout": "Cerrar Sesion",
-    "loggingIn": "Iniciando sesion...",
+    "login": "Iniciar Sesión",
+    "logout": "Cerrar Sesión",
+    "loggingIn": "Iniciando sesión...",
     "start": "Iniciar",
     "stop": "Detener",
     "pause": "Pausar",
@@ -64,9 +64,9 @@
     "latency": "Latency",
     "jitter": "Jitter",
     "packetLoss": "Packet Loss",
-    "settings": "Configuracion",
+    "settings": "Configuración",
     "help": "Ayuda",
-    "version": "Version",
+    "version": "Versión",
     "license": "Licencia",
     "dashboard": "Panel de Control",
     "tests": "Pruebas",
@@ -104,7 +104,7 @@
   },
   "accessibility": {
     "openHelp": "Abrir ayuda",
-    "openSettings": "Abrir configuracion",
+    "openSettings": "Abrir configuración",
     "switchToLightMode": "Cambiar a modo claro",
     "switchToDarkMode": "Cambiar a modo oscuro",
     "selectInterface": "Seleccionar interfaz de red",
@@ -112,7 +112,7 @@
   },
   "sections": {
     "modules": "Modulos de Prueba",
-    "configuration": "Configuracion",
+    "configuration": "Configuración",
     "results": "Resultados",
     "system": "Sistema"
   },
@@ -126,14 +126,14 @@
     "usage": "Uso",
     "examples": "Ejemplos",
     "flags": "Opciones",
-    "seeAlso": "Ver Tambien",
-    "technical": "Descripcion Tecnica",
+    "seeAlso": "Ver También",
+    "technical": "Descripción Técnica",
     "simple": "Explicacion Simple",
     "whenUse": "Cuando Usar",
     "whenNot": "Cuando No Usar",
     "tips": "Consejos",
     "issues": "Problemas Comunes",
-    "params": "Parametros",
+    "params": "Parámetros",
     "metrics": "Metricas de Salida"
   },
   "errorBoundary": {
@@ -141,7 +141,7 @@
     "defaultMessage": "Ocurrio un error inesperado",
     "errorDetails": "Detalles del Error",
     "tryAgain": "Reintentar",
-    "reload": "Recargar Pagina",
+    "reload": "Recargar Página",
     "persistMessage": "Si este problema persiste, contacte a soporte."
   },
   "role": {
@@ -162,15 +162,15 @@
       }
     },
     "guard": {
-      "needTestMaster": "Este stem esta configurado actualmente como Reflector. Cambia a Test Master para ejecutar {{module}}.",
-      "needReflector": "Este stem esta configurado actualmente como Test Master. Cambia a Reflector para usar el reflector de loopback.",
+      "needTestMaster": "Este stem está configurado actualmente como Reflector. Cambia a Test Master para ejecutar {{module}}.",
+      "needReflector": "Este stem está configurado actualmente como Test Master. Cambia a Reflector para usar el reflector de loopback.",
       "switchAction": "Cambiar rol"
     },
     "platform": {
-      "bannerTitle": "El modo Reflector no esta disponible en esta plataforma.",
-      "bannerBody": "Las compilaciones para macOS y Windows usan la pila de red pura en Go, que soporta el modo Test Master pero no el dataplane de Reflector a velocidad de linea. Usa la compilacion para Linux para actuar como nodo Reflector, o cambia este stem al modo Test Master.",
+      "bannerTitle": "El modo Reflector no está disponible en esta plataforma.",
+      "bannerBody": "Las compilaciones para macOS y Windows usan la pila de red pura en Go, que soporta el modo Test Master pero no el dataplane de Reflector a velocidad de linea. Usa la compilación para Linux para actuar como nodo Reflector, o cambia este stem al modo Test Master.",
       "switchToTestMaster": "Cambiar a Test Master",
-      "startDisabledTooltip": "El modo Reflector no esta disponible en esta plataforma. Usa la compilacion para Linux para actuar como nodo Reflector."
+      "startDisabledTooltip": "El modo Reflector no está disponible en esta plataforma. Usa la compilación para Linux para actuar como nodo Reflector."
     },
     "switchError": {
       "label": "Fallo el cambio de rol:",

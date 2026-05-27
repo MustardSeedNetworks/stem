@@ -14,7 +14,7 @@
     },
     "maxLoss": {
       "name": "Max Loss",
-      "description": "Porcentaje maximo aceptable de frame loss"
+      "description": "Porcentaje máximo aceptable de frame loss"
     },
     "warmup": {
       "name": "Warmup",
@@ -22,7 +22,7 @@
     },
     "trials": {
       "name": "Trials",
-      "description": "Numero de iteraciones de prueba por punto"
+      "description": "Número de iteraciones de prueba por punto"
     },
     "stepSize": {
       "name": "Step Size",
@@ -116,7 +116,7 @@
     },
     "burstSize": {
       "name": "Burst Size",
-      "description": "Numero de frames por burst"
+      "description": "Número de frames por burst"
     },
     "interBurstGapUs": {
       "name": "Inter-Burst Gap",

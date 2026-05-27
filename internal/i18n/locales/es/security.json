@@ -1,27 +1,27 @@
 {
   "title": "Seguridad de la cuenta",
-  "subtitle": "Administre la autenticacion de dos factores y las llaves de acceso.",
+  "subtitle": "Administre la autenticación de dos factores y las llaves de acceso.",
   "mfa": {
-    "heading": "Autenticacion de dos factores",
+    "heading": "Autenticación de dos factores",
     "statusEnabled": "Activado",
     "statusDisabled": "Desactivado",
-    "description": "Agregue un segundo factor para proteger su cuenta del robo de contrasena.",
-    "enableButton": "Activar aplicacion de autenticacion",
-    "disableButton": "Desactivar aplicacion de autenticacion",
+    "description": "Agregue un segundo factor para proteger su cuenta del robo de contraseña.",
+    "enableButton": "Activar aplicación de autenticación",
+    "disableButton": "Desactivar aplicación de autenticación",
     "setup": {
-      "title": "Configurar aplicacion de autenticacion",
-      "instructions": "Escanee el codigo QR con su aplicacion de autenticacion y luego ingrese el codigo de 6 digitos que muestra.",
+      "title": "Configurar aplicación de autenticación",
+      "instructions": "Escanee el código QR con su aplicación de autenticación y luego ingrese el código de 6 dígitos que muestra.",
       "secretLabel": "Secreto (si no puede escanear):",
-      "codeLabel": "Codigo de verificacion",
+      "codeLabel": "Código de verificación",
       "codePlaceholder": "123456",
       "confirmButton": "Verificar y activar",
       "cancelButton": "Cancelar"
     },
     "disable": {
-      "title": "Desactivar autenticacion de dos factores",
-      "instructions": "Confirme su contrasena y un codigo actual para desactivar el segundo factor.",
-      "passwordLabel": "Contrasena actual",
-      "codeLabel": "Codigo actual",
+      "title": "Desactivar autenticación de dos factores",
+      "instructions": "Confirme su contraseña y un código actual para desactivar el segundo factor.",
+      "passwordLabel": "Contraseña actual",
+      "codeLabel": "Código actual",
       "confirmButton": "Desactivar",
       "cancelButton": "Cancelar"
     }
@@ -36,8 +36,8 @@
     "successMessage": "Llave de acceso registrada."
   },
   "login": {
-    "mfaTitle": "Autenticacion de dos factores",
-    "mfaPrompt": "Ingrese el codigo de su aplicacion de autenticacion.",
+    "mfaTitle": "Autenticación de dos factores",
+    "mfaPrompt": "Ingrese el código de su aplicación de autenticación.",
     "submitButton": "Verificar"
   }
 }
