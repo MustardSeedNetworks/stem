@@ -1,0 +1,4 @@
+# The Stem is an authenticated network performance testing tool — there
+# is no public content to index. Block all crawlers from the entire app.
+User-agent: *
+Disallow: /

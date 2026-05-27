@@ -139,7 +139,9 @@ export const PageHeader: FC<PageHeaderProps> = ({
         <div className="flex items-center gap-default">
           {icon ? createElement(icon, { className: `h-8 w-8 ${iconColorClass}` }) : null}
           <div>
-            <h1 className="heading-1 font-display">{title}</h1>
+            <h1 className="heading-1 font-display" data-testid="page-header-title">
+              {title}
+            </h1>
             {description ? <p className="body-small mt-tight max-w-2xl">{description}</p> : null}
           </div>
         </div>

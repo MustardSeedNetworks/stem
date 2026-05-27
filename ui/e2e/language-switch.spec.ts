@@ -43,7 +43,13 @@ test.describe('Language switching', () => {
 
     // EN marker: "Test Modules" comes from common.sections.modules in
     // en/common.json. Stable across UI shells.
-    await expect(page.getByText(/Test Modules/i).first()).toBeVisible();
+    //
+    // The canonical Sidebar renders the same body in both a mobile aside
+    // (`lg:hidden`) and a desktop aside (`hidden lg:flex`). At Playwright's
+    // default 1280px viewport the mobile aside is `display:none`, so
+    // `.first()` matches a hidden node. Use `.last()` to pick up the
+    // visible desktop aside.
+    await expect(page.getByText(/Test Modules/i).last()).toBeVisible();
   });
 
   test('flips to Spanish when localStorage is set to es', async ({ page }) => {
@@ -66,7 +72,8 @@ test.describe('Language switching', () => {
     // ES marker: common.sections.modules -> "Módulos de Prueba" per
     // es/common.json. Module names (Reflector, Benchmark, etc.) stay
     // English per the glossary, so they're not viable markers.
-    await expect(page.getByText(/M[oó]dulos de Prueba/i).first()).toBeVisible();
+    // See above for why `.last()` rather than `.first()`.
+    await expect(page.getByText(/M[oó]dulos de Prueba/i).last()).toBeVisible();
   });
 
   test('clears language preference when localStorage is removed', async ({ page }) => {
