@@ -267,21 +267,21 @@ const SidebarBody: FC<SidebarBodyProps> = ({
                 {translateLabel(group.label)}
               </h3>
             ) : null}
-          {collapsed ? <div className="h-px bg-surface-border mx-2 mb-2" /> : null}
-          <div className="stack-xs">
-            {group.items.map((item) => (
-              <NavItemButton
-                key={item.path}
-                item={item}
-                active={isActive(item.path)}
-                collapsed={collapsed}
-                onNavigate={onNavigate}
-              />
-            ))}
+            {collapsed ? <div className="h-px bg-surface-border mx-2 mb-2" /> : null}
+            <div className="stack-xs">
+              {group.items.map((item) => (
+                <NavItemButton
+                  key={item.path}
+                  item={item}
+                  active={isActive(item.path)}
+                  collapsed={collapsed}
+                  onNavigate={onNavigate}
+                />
+              ))}
+            </div>
           </div>
-        </div>
-      ))}
-    </nav>
+        ))}
+      </nav>
       <SidebarFooter
         collapsed={collapsed}
         version={version}

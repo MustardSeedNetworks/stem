@@ -19,7 +19,7 @@ vi.mock('react-i18next', () => ({
   useTranslation: vi.fn(),
 }));
 
-import { useTranslation } from 'react-i18next';
+import { type UseTranslationResponse, useTranslation } from 'react-i18next';
 import { useLocale } from './useLocale';
 
 const mockedUseTranslation = vi.mocked(useTranslation);
@@ -27,10 +27,8 @@ const mockedUseTranslation = vi.mocked(useTranslation);
 describe('useLocale', () => {
   function setLanguage(language: string) {
     mockedUseTranslation.mockReturnValue({
-      // biome-ignore lint/suspicious/noExplicitAny: minimal test stub
-      i18n: { language } as any,
-      // biome-ignore lint/suspicious/noExplicitAny: minimal test stub
-      t: ((key: string) => key) as any,
+      i18n: { language } as unknown as UseTranslationResponse<'translation'>['i18n'],
+      t: ((key: string) => key) as unknown as UseTranslationResponse<'translation'>['t'],
       ready: true,
     });
   }
