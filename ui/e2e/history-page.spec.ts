@@ -28,7 +28,11 @@ test.describe('History Page', () => {
   });
 
   test('should render either a result snapshot or an empty hint', async ({ page }) => {
-    const content = page.locator('text=/test.type|result|snapshot|history|open the.*drawer/i');
+    // Scope to the page's main content section — the sidebar also contains
+    // a "History" label which is hidden on mobile, so an unscoped
+    // .first() match races into the sidebar entry and times out.
+    const main = page.locator('main, section').first();
+    const content = main.locator('text=/test.type|result|snapshot|history|open the.*drawer/i');
     await expect(content.first()).toBeVisible({ timeout: 5000 });
   });
 });

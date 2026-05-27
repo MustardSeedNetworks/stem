@@ -1,10 +1,11 @@
 {
   "ci": {
     "collect": {
-      "url": ["http://localhost:8444/", "http://localhost:8444/reflector"],
+      "url": ["https://localhost:8444/", "https://localhost:8444/reflector"],
       "numberOfRuns": 3,
       "settings": {
-        "preset": "desktop"
+        "preset": "desktop",
+        "chromeFlags": "--ignore-certificate-errors --allow-insecure-localhost"
       }
     },
     "assert": {

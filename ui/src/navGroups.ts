@@ -24,7 +24,11 @@ export const navGroups: SidebarNavGroup[] = [
     items: [{ path: '/reflector', label: 'Reflector', icon: Repeat }],
   },
   {
-    label: 'Tests',
+    // Translated by Sidebar via t() — key resolves to "Test Modules" /
+    // "Módulos de Prueba" per common.sections.modules. Item labels stay
+    // English per the glossary (Reflector/Benchmark/etc. are product
+    // names, not translated).
+    label: 'common:sections.modules',
     items: [
       { path: '/tests/benchmark', label: 'Benchmark', icon: BarChart3 },
       { path: '/tests/servicetest', label: 'ServiceTest', icon: Settings2 },
