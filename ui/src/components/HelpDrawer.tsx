@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import type { ReactElement } from 'react';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   categories,
   type GlossaryEntry,
@@ -302,14 +303,14 @@ function TestsTab({
   onSelectTest: (test: TestHelp) => void;
   getCategoryIcon: (id: string) => ReactElement;
 }): ReactElement {
+  const { t } = useTranslation('common');
   const categoryOrder = ['rfc2544', 'y1564', 'rfc2889', 'rfc6349', 'y1731', 'mef', 'tsn'];
 
   if (filteredTests) {
     return (
       <div className="space-y-2">
         <p className="text-xs text-[var(--color-text-muted)] mb-3">
-          Found {filteredTests.length} test
-          {filteredTests.length !== 1 ? 's' : ''}
+          {t('plurals.testCount', { count: filteredTests.length })}
         </p>
         {filteredTests.map((test) => (
           <TestCard
@@ -742,6 +743,7 @@ function GlossaryTab({
   filteredGlossary: GlossaryEntry[] | null;
   simpleMode: boolean;
 }): ReactElement {
+  const { t } = useTranslation('common');
   const glossaryEntries = filteredGlossary || Object.values(glossary);
 
   // Group by category
@@ -765,8 +767,7 @@ function GlossaryTab({
       </p>
       {searchQuery ? (
         <p className="caption">
-          Found {glossaryEntries.length} term
-          {glossaryEntries.length !== 1 ? 's' : ''}
+          {t('plurals.glossaryEntryCount', { count: glossaryEntries.length })}
         </p>
       ) : null}
       {categoryNames.map((category) => (

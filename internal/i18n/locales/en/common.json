@@ -178,5 +178,11 @@
       "unsupported": "Reflector mode is not supported on this platform.",
       "network": "Could not reach the stem backend."
     }
+  },
+  "plurals": {
+    "testCount_one": "Found {{count}} test",
+    "testCount_other": "Found {{count}} tests",
+    "glossaryEntryCount_one": "{{count}} entry",
+    "glossaryEntryCount_other": "{{count}} entries"
   }
 }
