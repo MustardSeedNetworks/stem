@@ -104,25 +104,26 @@ func (b *SSEBroadcaster) unsubscribe(id uint64) {
 //   - "test_progress": payload is a per-test progress struct (TODO:
 //     once test runner exposes a progress channel)
 func (b *SSEBroadcaster) Publish(frame SSEFrame) int {
+	// Hold the read lock across the sends so unsubscribe (which takes
+	// the write lock to close the channel) can't race a "send on closed
+	// channel" panic with us. Sends here are non-blocking (select +
+	// default), so holding the read lock has bounded duration.
 	b.mu.RLock()
-	subs := make([]*sseSubscriber, 0, len(b.subs))
-	for _, s := range b.subs {
-		subs = append(subs, s)
-	}
-	b.mu.RUnlock()
-
 	var stalled []uint64
 	delivered := 0
-	for _, sub := range subs {
+	for _, sub := range b.subs {
 		select {
 		case sub.ch <- frame:
 			delivered++
 		default:
 			// Subscriber buffer is full — they're stalled. Drop them
-			// so the broadcaster stays non-blocking.
+			// after we release the read lock so the broadcaster stays
+			// non-blocking from the publisher's perspective.
 			stalled = append(stalled, sub.id)
 		}
 	}
+	b.mu.RUnlock()
+
 	for _, id := range stalled {
 		b.unsubscribe(id)
 	}

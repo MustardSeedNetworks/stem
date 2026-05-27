@@ -729,6 +729,10 @@ jobs:
         with:
           urls: |
             https://localhost:8444
+          # configPath picks up chromeFlags for self-signed cert handling
+          # — stem listens HTTPS-only post-Wave-1 with a dev mkcert cert
+          # that the CI runner doesn't trust by default.
+          configPath: ./.lighthouserc.json
           uploadArtifacts: true
           temporaryPublicStorage: true
 
