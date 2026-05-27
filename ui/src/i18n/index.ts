@@ -135,6 +135,18 @@ i18n
     // i18n initialization failure is non-recoverable, app will use fallback strings
   });
 
+// Keep the document's lang attribute in sync with the active locale.
+// Required for screen readers, search engines, browser spell-check, and
+// CSS :lang() selectors. Without this, the index.html `<html lang="en">`
+// stays English even after the user switches to Spanish — WCAG 3.1.1/3.1.2
+// violation. Per msn-docs-internal/05-Engineering/I18N_CONVENTIONS.md.
+if (typeof document !== 'undefined') {
+  document.documentElement.lang = i18n.language;
+  i18n.on('languageChanged', (lng) => {
+    document.documentElement.lang = lng;
+  });
+}
+
 export default i18n;
 
 export type { TFunction } from 'i18next';
