@@ -6,6 +6,7 @@
  * @license Proprietary
  */
 
+import { valibotResolver } from '@hookform/resolvers/valibot';
 import {
   Activity,
   AlertTriangle,
@@ -19,8 +20,9 @@ import {
   Wifi,
   WifiOff,
 } from 'lucide-react';
-import type { FormEvent, ReactElement } from 'react';
+import type { ReactElement } from 'react';
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { type SubmitHandler, useForm } from 'react-hook-form';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { HelpDrawer } from './components/HelpDrawer';
 import { ResultHistory } from './components/ResultHistory';
@@ -46,6 +48,7 @@ import { useFocusTrap } from './hooks/useFocusTrap';
 import { useTheme } from './hooks/useTheme';
 import { navGroups } from './navGroups';
 import { pages } from './pageRegistry';
+import { LoginSchema, MfaVerifySchema } from './schemas/auth';
 import {
   type InterfaceInfo,
   initialStats,
@@ -328,7 +331,18 @@ function AppContent(): ReactElement {
   // mfa_token and prompt for the second-factor code before flipping
   // isAuthenticated.
   const [mfaPending, setMfaPending] = useState<{ mfaToken: string; factor: string } | null>(null);
-  const [mfaCode, setMfaCode] = useState('');
+
+  // react-hook-form instances for login + MFA verify (#332).
+  const loginForm = useForm<{ username: string; password: string }>({
+    resolver: valibotResolver(LoginSchema),
+    defaultValues: { username: '', password: '' },
+    mode: 'onBlur',
+  });
+  const mfaForm = useForm<{ code: string }>({
+    resolver: valibotResolver(MfaVerifySchema),
+    defaultValues: { code: '' },
+    mode: 'onBlur',
+  });
   const [setupStatus, setSetupStatus] = useState<SetupStatus | null>(null);
   const [setupChecked, setSetupChecked] = useState(false);
   const [recoveryStatus, setRecoveryStatus] = useState<RecoveryStatus | null>(null);
@@ -336,8 +350,6 @@ function AppContent(): ReactElement {
   const [isStoppingTest, setIsStoppingTest] = useState(false);
   const [testStartError, setTestStartError] = useState<string | null>(null);
   const statsIntervalRef = useRef<number | null>(null);
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
   const [connected, setConnected] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
       return window.localStorage.getItem(AUTH_FLAG_KEY) === 'true';
@@ -583,9 +595,8 @@ function AppContent(): ReactElement {
     }
   }, [authFetch, handleStatusTransition]);
 
-  const handleLogin = useCallback(
-    async (event: FormEvent<HTMLFormElement>) => {
-      event.preventDefault();
+  const handleLogin: SubmitHandler<{ username: string; password: string }> = useCallback(
+    async ({ username, password }) => {
       setLoginLoading(true);
       setLoginError(null);
       try {
@@ -634,13 +645,12 @@ function AppContent(): ReactElement {
         setLoginLoading(false);
       }
     },
-    [password, username],
+    [],
   );
 
   // Wave 3 (#85): submit the MFA code captured by the MFA prompt.
-  const handleMFAVerify = useCallback(
-    async (event: FormEvent<HTMLFormElement>) => {
-      event.preventDefault();
+  const handleMFAVerify: SubmitHandler<{ code: string }> = useCallback(
+    async ({ code }) => {
       if (!mfaPending) {
         return;
       }
@@ -651,7 +661,7 @@ function AppContent(): ReactElement {
           method: 'POST',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ mfaToken: mfaPending.mfaToken, code: mfaCode }),
+          body: JSON.stringify({ mfaToken: mfaPending.mfaToken, code }),
         });
         if (!response.ok) {
           const text = (await response.text()) || 'Verification failed';
@@ -666,7 +676,7 @@ function AppContent(): ReactElement {
         setIsAuthenticated(true);
         window.localStorage.setItem(AUTH_FLAG_KEY, 'true');
         setMfaPending(null);
-        setMfaCode('');
+        mfaForm.reset();
         setLoginError(null);
         setConnected(true);
       } catch {
@@ -675,7 +685,7 @@ function AppContent(): ReactElement {
         setLoginLoading(false);
       }
     },
-    [mfaCode, mfaPending],
+    [mfaPending, mfaForm],
   );
 
   const handleStartTest = useCallback(async (): Promise<void> => {
@@ -1279,7 +1289,7 @@ function AppContent(): ReactElement {
                 Authenticate with your Stem credentials.
               </p>
               {mfaPending ? (
-                <form className="mt-6 space-y-4" onSubmit={handleMFAVerify}>
+                <form className="mt-6 space-y-4" onSubmit={mfaForm.handleSubmit(handleMFAVerify)}>
                   <p className="text-sm text-[var(--color-text-muted)]">
                     Enter the code from your authenticator app to continue.
                   </p>
@@ -1292,17 +1302,18 @@ function AppContent(): ReactElement {
                     </label>
                     <input
                       id="stem-login-mfa"
-                      name="mfa"
                       type="text"
                       inputMode="numeric"
                       pattern="[0-9]{6}"
                       autoComplete="one-time-code"
-                      value={mfaCode}
-                      onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                        setMfaCode(event.target.value)
-                      }
+                      {...mfaForm.register('code')}
                       className="mt-1 w-full rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-base)] px-3 py-2 text-sm font-mono tracking-widest text-[var(--color-text-primary)] focus:border-[var(--color-brand-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-primary)]/30"
                     />
+                    {mfaForm.formState.errors.code ? (
+                      <p className="mt-1 text-xs text-[var(--color-status-error)]">
+                        {mfaForm.formState.errors.code.message}
+                      </p>
+                    ) : null}
                   </div>
                   {loginError ? (
                     <p className="text-xs text-[var(--color-status-error)]">{loginError}</p>
@@ -1318,7 +1329,7 @@ function AppContent(): ReactElement {
                     type="button"
                     onClick={() => {
                       setMfaPending(null);
-                      setMfaCode('');
+                      mfaForm.reset();
                       setLoginError(null);
                     }}
                     className="w-full mt-2 text-sm text-[var(--color-text-muted)] hover:text-[var(--color-brand-primary)]"
@@ -1327,7 +1338,7 @@ function AppContent(): ReactElement {
                   </button>
                 </form>
               ) : (
-                <form className="mt-6 space-y-4" onSubmit={handleLogin}>
+                <form className="mt-6 space-y-4" onSubmit={loginForm.handleSubmit(handleLogin)}>
                   <div>
                     <label
                       htmlFor="stem-login-username"
@@ -1337,15 +1348,16 @@ function AppContent(): ReactElement {
                     </label>
                     <input
                       id="stem-login-username"
-                      name="username"
                       type="text"
                       autoComplete="username"
-                      value={username}
-                      onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                        setUsername(event.target.value)
-                      }
+                      {...loginForm.register('username')}
                       className="mt-1 w-full rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-base)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-[var(--color-brand-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-primary)]/30"
                     />
+                    {loginForm.formState.errors.username ? (
+                      <p className="mt-1 text-xs text-[var(--color-status-error)]">
+                        {loginForm.formState.errors.username.message}
+                      </p>
+                    ) : null}
                   </div>
                   <div>
                     <label
@@ -1356,15 +1368,16 @@ function AppContent(): ReactElement {
                     </label>
                     <input
                       id="stem-login-password"
-                      name="password"
                       type="password"
                       autoComplete="current-password"
-                      value={password}
-                      onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                        setPassword(event.target.value)
-                      }
+                      {...loginForm.register('password')}
                       className="mt-1 w-full rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-base)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-[var(--color-brand-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-primary)]/30"
                     />
+                    {loginForm.formState.errors.password ? (
+                      <p className="mt-1 text-xs text-[var(--color-status-error)]">
+                        {loginForm.formState.errors.password.message}
+                      </p>
+                    ) : null}
                   </div>
                   {loginError ? (
                     <p className="text-xs text-[var(--color-status-error)]">{loginError}</p>
