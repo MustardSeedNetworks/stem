@@ -157,8 +157,10 @@ check_no_fallback_patterns() {
   # Match t('key', '...something...') with single OR double quotes for both
   # arguments. Ignore: t(key) [single arg], t('key', { interpolation }) [object].
   # The interpolation form starts with { not a quote.
+  # Word-boundary `\bt\(` so identifiers ending in `t` (e.g.
+  # headers.set('Accept', 'application/json')) don't false-match.
   local hits
-  hits=$(grep -rnE "t\(\s*['\"][^'\"]+['\"]\s*,\s*['\"]" "$UI_SRC_DIR" \
+  hits=$(grep -rnE "\\bt\\(\\s*['\"][^'\"]+['\"]\\s*,\\s*['\"]" "$UI_SRC_DIR" \
     --include='*.ts' --include='*.tsx' 2>/dev/null \
     | grep -v "// allow-fallback") || true
 
@@ -379,6 +381,43 @@ check_hardcoded_jsx() {
 }
 
 # -----------------------------------------------------------------------------
+# Check: source-code t() calls have matching EN locale keys.
+# Delegates to scripts/i18n/check-keys.py, which performs the actual
+# cross-reference (regex + per-file useTranslation alias resolution).
+# -----------------------------------------------------------------------------
+check_key_usage() {
+  section "t() call ↔ EN locale key cross-reference"
+  local script="scripts/i18n/check-keys.py"
+  if [ ! -f "$script" ]; then
+    warn "$script not found; skipping (run on repos that ship check-keys.py)"
+    return
+  fi
+  if ! command -v python3 >/dev/null 2>&1; then
+    warn "python3 not found; skipping check-keys.py"
+    return
+  fi
+  # Propagate --ratchet so newly-added repos can absorb check-keys.py
+  # without an immediate cleanup burden. CI uses --ratchet via
+  # validate.sh's own --ratchet flag.
+  local args=()
+  [ "$RATCHET" -eq 1 ] && args=(--ratchet)
+  local out
+  if ! out=$(python3 "$script" "${args[@]}" 2>&1); then
+    fail "check-keys.py found t() calls referencing missing keys:"
+    echo "$out" | head -40 | sed 's/^/      /'
+    return
+  fi
+  # check-keys.py prints warnings to stdout but exits 0 for them.
+  # Surface them via warn() so the validator's WARNED counter tracks them.
+  if echo "$out" | grep -q "::warning::"; then
+    local wcount
+    wcount=$(echo "$out" | grep -c "^  [^✓]" || echo 0)
+    warn "$wcount unused EN locale key(s) (informational; not failing — too noisy until catch-up)"
+  fi
+  ok "every t() call resolves to an EN locale key (or all errors demoted under --ratchet)"
+}
+
+# -----------------------------------------------------------------------------
 # Check: locked package versions (matches I18N_CONVENTIONS.md)
 # -----------------------------------------------------------------------------
 check_locked_versions() {
@@ -448,6 +487,7 @@ run_check check_banned_vocab
 run_check check_glossary_preservation
 run_check check_interpolation_parity
 run_check check_plural_completeness
+run_check check_key_usage
 run_check check_locked_versions
 [ "$QUICK" -eq 0 ] && run_check check_hardcoded_jsx
 

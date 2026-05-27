@@ -29,7 +29,15 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
+      '@locales': fileURLToPath(new URL('../internal/i18n/locales', import.meta.url)),
     },
+    // Force module deduplication for i18next + react-i18next. Vitest's
+    // jsdom environment otherwise creates separate i18next instances
+    // when one is imported directly (`import i18next from 'i18next'`)
+    // vs through react-i18next's chain. That breaks the i18n hook
+    // tests because changeLanguage on the global instance doesn't
+    // propagate to the React-context-scoped instance.
+    dedupe: ['i18next', 'react-i18next', 'react', 'react-dom'],
   },
   test: {
     globals: true,
