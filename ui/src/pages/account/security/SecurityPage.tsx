@@ -109,7 +109,7 @@ export function SecurityPage(): ReactElement {
   }
 
   return (
-    <section className="space-y-6">
+    <section className="stack-xl">
       <header>
         <h1 className="text-2xl font-semibold text-text-primary">{t('title')}</h1>
         <p className="text-sm text-text-muted">{t('subtitle')}</p>
@@ -118,27 +118,27 @@ export function SecurityPage(): ReactElement {
       {error ? (
         <div
           role="alert"
-          className="rounded-lg border border-[var(--color-status-error)]/40 bg-[var(--color-status-error)]/10 p-3 text-sm text-[var(--color-status-error)]"
+          className="rounded-lg border border-status-error/40 bg-status-error/10 pad-sm text-sm text-status-error"
         >
           {error}
         </div>
       ) : null}
 
       {/* TOTP card */}
-      <section className="rounded-2xl border border-surface-border bg-surface-raised p-6 space-y-4">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-start gap-3">
+      <section className="rounded-2xl border border-surface-border bg-surface-raised pad-lg stack-lg">
+        <div className="flex items-start justify-between gap-comfortable">
+          <div className="flex items-start gap-default">
             {status?.totpEnabled ? (
-              <ShieldCheck className="w-5 h-5 text-[var(--color-status-success)] mt-0.5" />
+              <ShieldCheck className="w-5 h-5 text-status-success mt-0.5" />
             ) : (
               <ShieldOff className="w-5 h-5 text-text-muted mt-0.5" />
             )}
             <div>
-              <h2 className="text-lg font-semibold text-text-primary">{t('mfa.heading')}</h2>
+              <h2 className="heading-3 text-text-primary">{t('mfa.heading')}</h2>
               <p className="text-sm text-text-muted">
                 {status?.totpEnabled ? t('mfa.statusEnabled') : t('mfa.statusDisabled')}
               </p>
-              <p className="text-sm text-text-muted mt-2">{t('mfa.description')}</p>
+              <p className="text-sm text-text-muted mt-inline">{t('mfa.description')}</p>
             </div>
           </div>
           <div>
@@ -154,18 +154,18 @@ export function SecurityPage(): ReactElement {
       </section>
 
       {/* Passkeys card */}
-      <section className="rounded-2xl border border-surface-border bg-surface-raised p-6 space-y-4">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-start gap-3">
+      <section className="rounded-2xl border border-surface-border bg-surface-raised pad-lg stack-lg">
+        <div className="flex items-start justify-between gap-comfortable">
+          <div className="flex items-start gap-default">
             <Lock className="w-5 h-5 text-text-muted mt-0.5" />
             <div>
-              <h2 className="text-lg font-semibold text-text-primary">{t('passkeys.heading')}</h2>
+              <h2 className="heading-3 text-text-primary">{t('passkeys.heading')}</h2>
               <p className="text-sm text-text-muted">{t('passkeys.description')}</p>
-              <p className="text-xs text-text-muted mt-2">
+              <p className="text-xs text-text-muted mt-inline">
                 {t('passkeys.countLabel', { count: status?.webauthnCredentialCount ?? 0 })}
               </p>
               {passkeyMsg ? (
-                <p className="text-xs text-[var(--color-status-success)] mt-2">{passkeyMsg}</p>
+                <p className="text-xs text-status-success mt-inline">{passkeyMsg}</p>
               ) : null}
             </div>
           </div>
@@ -238,18 +238,18 @@ function DisableTotpButton({ onDisabled }: DisableTotpButtonProps): ReactElement
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex-center bg-black/60 backdrop-blur-sm">
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="totp-disable-title"
-        className="w-full max-w-md rounded-3xl border border-surface-border bg-surface-raised p-6 shadow-2xl"
+        className="w-full max-w-md rounded-3xl border border-surface-border bg-surface-raised pad-lg shadow-2xl"
       >
-        <h2 id="totp-disable-title" className="text-lg font-semibold text-text-primary">
+        <h2 id="totp-disable-title" className="heading-3 text-text-primary">
           {t('mfa.disable.title')}
         </h2>
         <p className="text-sm text-text-muted">{t('mfa.disable.instructions')}</p>
-        <form className="mt-4 space-y-4" onSubmit={handleSubmit(onSubmit)}>
+        <form className="mt-content stack-lg" onSubmit={handleSubmit(onSubmit)}>
           <div>
             <label
               htmlFor="totp-disable-password"
@@ -262,12 +262,10 @@ function DisableTotpButton({ onDisabled }: DisableTotpButtonProps): ReactElement
               type="password"
               autoComplete="current-password"
               {...register('password')}
-              className="mt-1 w-full rounded-xl border border-surface-border bg-surface-base px-3 py-2 text-sm"
+              className="mt-tight w-full rounded-xl border border-surface-border bg-surface-base px-3 py-row text-sm"
             />
             {errors.password ? (
-              <p className="mt-1 text-xs text-[var(--color-status-error)]">
-                {errors.password.message}
-              </p>
+              <p className="mt-tight text-xs text-status-error">{errors.password.message}</p>
             ) : null}
           </div>
           <div>
@@ -280,16 +278,14 @@ function DisableTotpButton({ onDisabled }: DisableTotpButtonProps): ReactElement
               inputMode="numeric"
               pattern="[0-9]{6}"
               {...register('code')}
-              className="mt-1 w-full rounded-xl border border-surface-border bg-surface-base px-3 py-2 text-sm font-mono tracking-widest"
+              className="mt-tight w-full rounded-xl border border-surface-border bg-surface-base px-3 py-row text-sm font-mono tracking-widest"
             />
             {errors.code ? (
-              <p className="mt-1 text-xs text-[var(--color-status-error)]">{errors.code.message}</p>
+              <p className="mt-tight text-xs text-status-error">{errors.code.message}</p>
             ) : null}
           </div>
-          {submitError ? (
-            <p className="text-xs text-[var(--color-status-error)]">{submitError}</p>
-          ) : null}
-          <div className="flex gap-2 justify-end">
+          {submitError ? <p className="text-xs text-status-error">{submitError}</p> : null}
+          <div className="flex gap-compact justify-end">
             <button type="button" className="btn btn-secondary" onClick={() => setOpen(false)}>
               {t('mfa.disable.cancelButton')}
             </button>

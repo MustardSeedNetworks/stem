@@ -60,16 +60,16 @@ export function Y1731Section({
   return (
     <CollapsibleSection
       title={
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-compact">
           <Radio className="w-4 h-4" aria-hidden="true" />
           <span>{t('settings:tests.y1731.title', 'Y.1731 OAM')}</span>
           <span className="caption text-text-muted">({selectedCount}/4)</span>
         </div>
       }
     >
-      <div className="space-y-4">
+      <div className="stack-lg">
         {/* Test Selection */}
-        <div className="space-y-2">
+        <div className="stack-sm">
           {tests.map((test) => (
             <TestCheckbox
               key={test.id}
@@ -82,7 +82,7 @@ export function Y1731Section({
 
         {/* Configuration Form */}
         {hasSelectedTests && (
-          <div className="border-t border-surface-border pt-4">
+          <div className="border-t border-surface-border pt-section">
             <Y1731ConfigForm
               config={config}
               setConfig={onConfigChange}

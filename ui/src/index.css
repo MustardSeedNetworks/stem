@@ -57,12 +57,24 @@
   --color-text-muted: var(--color-text-muted);
   --color-text-accent: var(--color-text-accent);
   --color-text-inverse: var(--color-text-inverse);
+  --color-text-disabled: var(--color-text-disabled);
+
+  /* Deeper surface — gradient terminus for the shared shell. */
+  --color-surface-deep: var(--color-surface-deep);
 
   /* Status Colors - INDUSTRY STANDARD (do not change) */
   --color-status-success: var(--color-status-success);
   --color-status-warning: var(--color-status-warning);
   --color-status-error: var(--color-status-error);
   --color-status-info: var(--color-status-info);
+
+  /* Log level colors (Syslog/RFC 5424) — constant across light/dark. */
+  --color-log-trace: var(--color-log-trace);
+  --color-log-debug: var(--color-log-debug);
+  --color-log-info: var(--color-log-info);
+  --color-log-warn: var(--color-log-warn);
+  --color-log-error: var(--color-log-error);
+  --color-log-fatal: var(--color-log-fatal);
 
   /* Module Colors - The Stem (unique to this project) */
   --color-module-reflector: var(--color-module-reflector);
@@ -71,6 +83,12 @@
   --color-module-trafficgen: var(--color-module-trafficgen);
   --color-module-measure: var(--color-module-measure);
   --color-module-certify: var(--color-module-certify);
+
+  /* Constant-across-modes utility colors.
+   *   scrim: backdrop for modals/drawers (apply opacity via /N, e.g. bg-scrim/60).
+   *   knob:  toggle thumbs, text on saturated brand bg — stays white in both modes. */
+  --color-scrim: var(--color-scrim);
+  --color-knob: var(--color-knob);
 }
 
 /* Source detection for Tailwind */
@@ -110,12 +128,28 @@
   --color-text-muted: #6b766f; /* Subtle botanical - tertiary text */
   --color-text-accent: #0d5fb0; /* Stem-600 (canonical) — links on light surfaces (AA) */
   --color-text-inverse: #ffffff; /* Pure White - text on colored backgrounds */
+  --color-text-disabled: #94a3b8; /* Disabled form fields, ghost text */
+
+  /* Deeper surface — gradient terminus for the shell. */
+  --color-surface-deep: #d9d2bd;
 
   /* Status Colors - canonical anchors, constant across modes (2026-05-22) */
   --color-status-success: #4caf50; /* Material green = seed-500 */
   --color-status-warning: #d4a017; /* Mustard = mustard-500 brand accent */
   --color-status-error: #ef4444; /* Coral red */
   --color-status-info: #1976d2; /* Material blue = stem-500 */
+
+  /* Log level colors (Syslog/RFC 5424) — constant across light/dark. */
+  --color-log-trace: #64748b;
+  --color-log-debug: #06b6d4;
+  --color-log-info: #3b82f6;
+  --color-log-warn: #f59e0b;
+  --color-log-error: #ef4444;
+  --color-log-fatal: #dc2626;
+
+  /* Constant-across-modes utility colors. */
+  --color-scrim: #000000;
+  --color-knob: #ffffff;
 
   /* Module Colors - The Stem specific */
   --color-module-reflector: #0891b2; /* Cyan - loopback/echo */
@@ -157,6 +191,10 @@
   --color-text-muted: #9aa297; /* Subtle botanical - tertiary text (AA vs surface) */
   --color-text-accent: #64b5f6; /* Stem-300 (canonical) — links on dark surfaces (AA) */
   --color-text-inverse: #1a2520; /* Card botanical - text on colored backgrounds */
+  --color-text-disabled: #6b766f; /* Subtle botanical — disabled fields */
+
+  /* Deeper surface for dark mode gradient terminus. */
+  --color-surface-deep: #080d0a;
 
   /* Status Colors - canonical anchors (same as light, constant by design) */
   --color-status-success: #4caf50;

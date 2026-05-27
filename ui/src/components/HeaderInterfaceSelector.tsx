@@ -36,7 +36,7 @@ export function HeaderInterfaceSelector({
   }, [interfaces, showAll]);
 
   return (
-    <div className={`flex flex-col gap-1 ${className}`}>
+    <div className={`flex flex-col gap-tight ${className}`}>
       <select
         value={selectedInterface}
         onChange={(e: React.ChangeEvent<HTMLSelectElement>): void =>

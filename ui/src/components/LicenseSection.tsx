@@ -42,7 +42,7 @@ interface LicenseStatusProps {
 
 function LicenseStatusBadge({ licenseInfo }: LicenseStatusProps): ReactElement {
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-compact">
       {licenseInfo.activated ? (
         <span className="status-badge success">
           <CheckCircle className="w-3 h-3" />
@@ -55,9 +55,7 @@ function LicenseStatusBadge({ licenseInfo }: LicenseStatusProps): ReactElement {
         </span>
       )}
       {licenseInfo.activated ? (
-        <span className="text-sm text-[var(--color-text-muted)]">
-          {tierNames[licenseInfo.tier] || 'Unknown'}
-        </span>
+        <span className="text-sm text-text-muted">{tierNames[licenseInfo.tier] || 'Unknown'}</span>
       ) : null}
     </div>
   );
@@ -69,27 +67,25 @@ function LicenseDetails({ licenseInfo }: LicenseStatusProps): ReactElement | nul
   }
 
   return (
-    <div className="bg-[var(--color-surface-hover)] rounded-md p-3 text-sm space-y-1">
+    <div className="bg-surface-hover rounded-md pad-sm text-sm stack-xs">
       <div className="flex justify-between">
-        <span className="text-[var(--color-text-muted)]">Tier</span>
+        <span className="text-text-muted">Tier</span>
         <span className="font-medium">{tierNames[licenseInfo.tier]}</span>
       </div>
       {licenseInfo.isTrialMode ? (
         <div className="flex justify-between">
-          <span className="text-[var(--color-text-muted)]">Days Remaining</span>
-          <span className="font-medium text-[var(--color-status-warning)]">
-            {licenseInfo.daysRemaining} days
-          </span>
+          <span className="text-text-muted">Days Remaining</span>
+          <span className="font-medium text-status-warning">{licenseInfo.daysRemaining} days</span>
         </div>
       ) : null}
       {!licenseInfo.isTrialMode && licenseInfo.expiresAt && (
         <div className="flex justify-between">
-          <span className="text-[var(--color-text-muted)]">Expires</span>
+          <span className="text-text-muted">Expires</span>
           <span className="font-medium">{formatDate(licenseInfo.expiresAt)}</span>
         </div>
       )}
       <div className="flex justify-between">
-        <span className="text-[var(--color-text-muted)]">Device ID</span>
+        <span className="text-text-muted">Device ID</span>
         <span className="font-mono text-xs">{licenseInfo.deviceHash.slice(0, 8)}...</span>
       </div>
     </div>
@@ -103,12 +99,12 @@ function LicenseFeatures({ licenseInfo }: LicenseStatusProps): ReactElement | nu
 
   return (
     <div>
-      <div className="text-sm text-[var(--color-text-muted)] mb-2">Enabled Features</div>
-      <div className="flex flex-wrap gap-1">
+      <div className="text-sm text-text-muted mb-2">Enabled Features</div>
+      <div className="flex flex-wrap gap-tight">
         {licenseInfo.features.map((feature) => (
           <span
             key={feature}
-            className="px-2 py-0.5 text-xs bg-brand-primary/10 text-brand-primary rounded-full"
+            className="px-cell py-0.5 text-xs bg-brand-primary/10 text-brand-primary rounded-full"
           >
             {feature}
           </span>
@@ -136,7 +132,7 @@ function ActivationForm({
   onStartTrial,
 }: ActivationFormProps): ReactElement {
   return (
-    <div className="border-t border-[var(--color-surface-border)] pt-4 space-y-3">
+    <div className="border-t border-surface-border pt-section stack">
       <div className="text-sm font-medium">Activate License</div>
 
       <div>
@@ -199,12 +195,12 @@ function MessageDisplay({ error, success }: MessageDisplayProps): ReactElement |
   return (
     <>
       {error ? (
-        <div className="text-sm text-[var(--color-status-error)] bg-red-500 bg-opacity-10 p-2 rounded">
+        <div className="text-sm text-status-error bg-red-500 bg-opacity-10 pad-xs rounded">
           {error}
         </div>
       ) : null}
       {success ? (
-        <div className="text-sm text-[var(--color-status-success)] bg-green-500 bg-opacity-10 p-2 rounded">
+        <div className="text-sm text-status-success bg-green-500 bg-opacity-10 pad-xs rounded">
           {success}
         </div>
       ) : null}
@@ -306,22 +302,22 @@ export function LicenseSection(): ReactElement {
   return (
     <CollapsibleSection
       title={
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-compact">
           <Key className="w-4 h-4" />
           <span>License</span>
         </div>
       }
       defaultOpen={true}
     >
-      <div className="space-y-4">
+      <div className="stack-lg">
         {licenseInfo ? (
-          <div className="space-y-3">
+          <div className="stack">
             <LicenseStatusBadge licenseInfo={licenseInfo} />
             <LicenseDetails licenseInfo={licenseInfo} />
             <LicenseFeatures licenseInfo={licenseInfo} />
           </div>
         ) : (
-          <div className="text-sm text-[var(--color-text-muted)]">Loading license status...</div>
+          <div className="text-sm text-text-muted">Loading license status...</div>
         )}
 
         {showActivationForm ? (

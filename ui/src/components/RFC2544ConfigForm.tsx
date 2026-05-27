@@ -63,7 +63,7 @@ const FRAME_SIZE_OPTIONS: Array<{ value: number; label: string }> = [
 function FieldError({ message }: { message?: string }): ReactElement | null {
   if (!message) return null;
   return (
-    <div className="mt-1 text-xs text-[var(--color-status-danger)] flex items-center gap-1">
+    <div className="mt-tight text-xs text-status-danger flex items-center gap-tight">
       <AlertTriangle className="w-3 h-3" />
       {message}
     </div>
@@ -127,18 +127,15 @@ export function RFC2544ConfigForm({
   const hasBackToBack = selectedTests.includes('rfc2544_back_to_back');
 
   return (
-    <div className="space-y-4">
+    <div className="stack-lg">
       {/* Test Duration */}
-      <div className="space-y-3">
-        <div className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">
+      <div className="stack">
+        <div className="text-xs font-semibold text-text-muted uppercase tracking-wide">
           Test Duration
         </div>
 
         <div>
-          <label
-            htmlFor="rfc2544-duration"
-            className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-          >
+          <label htmlFor="rfc2544-duration" className="flex items-center gap-tight label">
             Duration per Test (s)
             <HelpIcon tooltip="Duration for each test iteration. Longer durations provide more accurate results but take more time." />
           </label>
@@ -147,16 +144,13 @@ export function RFC2544ConfigForm({
             type="number"
             step={1}
             {...register('duration', { valueAsNumber: true })}
-            className="mt-1 w-full"
+            className="mt-tight w-full"
           />
           <FieldError message={errors.duration?.message} />
         </div>
 
         <div>
-          <label
-            htmlFor="rfc2544-warmup"
-            className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-          >
+          <label htmlFor="rfc2544-warmup" className="flex items-center gap-tight label">
             Warmup Duration (s)
             <HelpIcon tooltip="Time to stabilize traffic flow before starting measurements." />
           </label>
@@ -165,16 +159,13 @@ export function RFC2544ConfigForm({
             type="number"
             step={1}
             {...register('warmup', { valueAsNumber: true })}
-            className="mt-1 w-full"
+            className="mt-tight w-full"
           />
           <FieldError message={errors.warmup?.message} />
         </div>
 
         <div>
-          <label
-            htmlFor="rfc2544-trials"
-            className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-          >
+          <label htmlFor="rfc2544-trials" className="flex items-center gap-tight label">
             Number of Trials
             <HelpIcon tooltip="Number of times to repeat each test point. More trials improve statistical accuracy." />
           </label>
@@ -183,7 +174,7 @@ export function RFC2544ConfigForm({
             type="number"
             step={1}
             {...register('trials', { valueAsNumber: true })}
-            className="mt-1 w-full"
+            className="mt-tight w-full"
           />
           <FieldError message={errors.trials?.message} />
         </div>
@@ -191,16 +182,13 @@ export function RFC2544ConfigForm({
 
       {/* Throughput Test Parameters */}
       {hasThroughput ? (
-        <div className="space-y-3">
-          <div className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">
+        <div className="stack">
+          <div className="text-xs font-semibold text-text-muted uppercase tracking-wide">
             Throughput Test
           </div>
 
           <div>
-            <label
-              htmlFor="rfc2544-resolution"
-              className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-            >
+            <label htmlFor="rfc2544-resolution" className="flex items-center gap-tight label">
               Resolution (%)
               <HelpIcon tooltip="Binary search resolution. Default: 0.1%." />
             </label>
@@ -209,16 +197,13 @@ export function RFC2544ConfigForm({
               type="number"
               step={0.01}
               {...register('resolution', { valueAsNumber: true })}
-              className="mt-1 w-full"
+              className="mt-tight w-full"
             />
             <FieldError message={errors.resolution?.message} />
           </div>
 
           <div>
-            <label
-              htmlFor="rfc2544-maxloss"
-              className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-            >
+            <label htmlFor="rfc2544-maxloss" className="flex items-center gap-tight label">
               Max Acceptable Loss (%)
               <HelpIcon tooltip="Maximum frame loss considered acceptable. RFC 2544 specifies 0%." />
             </label>
@@ -227,7 +212,7 @@ export function RFC2544ConfigForm({
               type="number"
               step={0.001}
               {...register('maxLoss', { valueAsNumber: true })}
-              className="mt-1 w-full"
+              className="mt-tight w-full"
             />
             <FieldError message={errors.maxLoss?.message} />
           </div>
@@ -236,16 +221,13 @@ export function RFC2544ConfigForm({
 
       {/* Frame Loss Test Parameters */}
       {hasFrameLoss ? (
-        <div className="space-y-3">
-          <div className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">
+        <div className="stack">
+          <div className="text-xs font-semibold text-text-muted uppercase tracking-wide">
             Frame Loss Test
           </div>
 
           <div>
-            <label
-              htmlFor="rfc2544-stepsize"
-              className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-            >
+            <label htmlFor="rfc2544-stepsize" className="flex items-center gap-tight label">
               Step Size (%)
               <HelpIcon tooltip="Load increment step for frame loss rate measurement." />
             </label>
@@ -254,10 +236,10 @@ export function RFC2544ConfigForm({
               type="number"
               step={1}
               {...register('stepSize', { valueAsNumber: true })}
-              className="mt-1 w-full"
+              className="mt-tight w-full"
             />
             <FieldError message={errors.stepSize?.message} />
-            <div className="text-xs text-[var(--color-text-muted)] mt-1">
+            <div className="text-xs text-text-muted mt-tight">
               Tests at:{' '}
               {Array.from(
                 { length: Math.floor(100 / Math.max(1, stepSize)) + 1 },
@@ -269,26 +251,26 @@ export function RFC2544ConfigForm({
       ) : null}
 
       {/* Frame Sizes */}
-      <div className="space-y-2">
-        <div className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide flex items-center gap-1">
+      <div className="stack-sm">
+        <div className="text-xs font-semibold text-text-muted uppercase tracking-wide flex items-center gap-tight">
           Frame Sizes
           <HelpIcon tooltip="Select frame sizes to test. RFC 2544 specifies: 64, 128, 256, 512, 1024, 1280, 1518 bytes." />
         </div>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-compact">
           {FRAME_SIZE_OPTIONS.map((option) => (
             <label
               key={option.value}
               title={`Include ${option.value}-byte frames in the RFC 2544 sweep`}
-              className="flex items-center gap-2 p-2 rounded-lg cursor-pointer hover:bg-[var(--color-surface-hover)] text-sm"
+              className="flex items-center gap-compact pad-xs rounded-lg cursor-pointer hover:bg-surface-hover text-sm"
             >
               <input
                 type="checkbox"
                 checked={frameSizes.includes(option.value)}
                 onChange={() => toggleFrameSize(option.value)}
                 aria-label={`Test ${option.value}-byte frames`}
-                className="w-4 h-4 accent-[var(--color-brand-primary)]"
+                className="w-4 h-4 accent-brand-primary"
               />
-              <span className="text-[var(--color-text-primary)]">{option.label}</span>
+              <span className="text-text-primary">{option.label}</span>
             </label>
           ))}
         </div>
@@ -296,38 +278,38 @@ export function RFC2544ConfigForm({
       </div>
 
       {/* Advanced Options */}
-      <div className="space-y-3">
-        <div className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">
+      <div className="stack">
+        <div className="text-xs font-semibold text-text-muted uppercase tracking-wide">
           Advanced Options
         </div>
 
         <label
           title="Send and measure traffic in both directions simultaneously"
-          className="flex items-center gap-3 p-2 rounded-lg cursor-pointer hover:bg-[var(--color-surface-hover)]"
+          className="flex items-center gap-default pad-xs rounded-lg cursor-pointer hover:bg-surface-hover"
         >
           <input
             type="checkbox"
             {...register('bidirectional')}
             aria-label="Enable bidirectional testing"
-            className="w-4 h-4 accent-[var(--color-brand-primary)]"
+            className="w-4 h-4 accent-brand-primary"
           />
           <div>
-            <div className="font-medium text-sm flex items-center gap-1">
+            <div className="font-medium text-sm flex items-center gap-tight">
               Bidirectional Testing
               <HelpIcon tooltip="Run tests in both directions simultaneously." />
             </div>
-            <div className="text-xs text-[var(--color-text-muted)]">Test both TX and RX paths</div>
+            <div className="text-xs text-text-muted">Test both TX and RX paths</div>
           </div>
         </label>
       </div>
 
       {/* Test Summary */}
-      <div className="p-3 rounded-lg bg-[var(--color-surface-base)] border border-[var(--color-surface-border)]">
-        <div className="flex items-center gap-2 text-sm font-medium text-[var(--color-text-primary)] mb-2">
+      <div className="pad-sm rounded-lg bg-surface-base border border-surface-border">
+        <div className="flex items-center gap-compact label mb-2">
           <Info className="w-4 h-4" />
           Test Summary
         </div>
-        <div className="text-xs text-[var(--color-text-muted)] space-y-1">
+        <div className="text-xs text-text-muted stack-xs">
           <div>
             Selected tests:{' '}
             {[
@@ -352,7 +334,7 @@ export function RFC2544ConfigForm({
             </div>
           ) : null}
           {bidirectional ? <div>Mode: Bidirectional</div> : null}
-          <div className="pt-1 border-t border-[var(--color-surface-border)] mt-1">
+          <div className="pt-tight border-t border-surface-border mt-tight">
             Estimated time: ~
             {Math.ceil(
               ((duration + warmup) *

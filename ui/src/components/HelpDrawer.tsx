@@ -126,7 +126,7 @@ export function HelpDrawer({ isOpen, onClose }: HelpDrawerProps): ReactElement |
               type="button"
               onClick={onClose}
               className={cn(
-                'p-2 text-text-muted hover:text-text-primary transition-colors',
+                'pad-xs text-text-muted hover:text-text-primary transition-colors',
                 radius.lg,
                 'hover:bg-surface-hover',
               )}
@@ -138,13 +138,13 @@ export function HelpDrawer({ isOpen, onClose }: HelpDrawerProps): ReactElement |
           </div>
 
           {/* Tabs */}
-          <div className={cn('flex gap-1 bg-surface-base p-1', radius.lg)}>
+          <div className={cn('flex gap-tight bg-surface-base p-1', radius.lg)}>
             <button
               type="button"
               onClick={(): void => setActiveTab('tests')}
               title="Browse all 27 supported tests grouped by standard (RFC 2544, Y.1564, Y.1731, MEF, TSN)"
               className={cn(
-                'flex-1 px-3 py-2 text-sm font-medium transition-colors',
+                'flex-1 px-3 py-row text-sm font-medium transition-colors',
                 radius.md,
                 layout.inline.default,
                 'justify-center',
@@ -161,7 +161,7 @@ export function HelpDrawer({ isOpen, onClose }: HelpDrawerProps): ReactElement |
               onClick={(): void => setActiveTab('tutorials')}
               title="Step-by-step walkthroughs for common testing workflows"
               className={cn(
-                'flex-1 px-3 py-2 text-sm font-medium transition-colors',
+                'flex-1 px-3 py-row text-sm font-medium transition-colors',
                 radius.md,
                 layout.inline.default,
                 'justify-center',
@@ -178,7 +178,7 @@ export function HelpDrawer({ isOpen, onClose }: HelpDrawerProps): ReactElement |
               onClick={(): void => setActiveTab('glossary')}
               title="Reference dictionary of networking and test-engineering terms"
               className={cn(
-                'flex-1 px-3 py-2 text-sm font-medium transition-colors',
+                'flex-1 px-3 py-row text-sm font-medium transition-colors',
                 radius.md,
                 layout.inline.default,
                 'justify-center',
@@ -210,7 +210,7 @@ export function HelpDrawer({ isOpen, onClose }: HelpDrawerProps): ReactElement |
                   setSearchQuery(e.target.value)
                 }
                 className={cn(
-                  'w-full pl-9 pr-3 py-2 body-small',
+                  'w-full pl-9 pr-3 py-row body-small',
                   'bg-surface-base border border-surface-border text-text-primary',
                   'placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-brand-primary',
                   radius.lg,
@@ -221,7 +221,7 @@ export function HelpDrawer({ isOpen, onClose }: HelpDrawerProps): ReactElement |
               type="button"
               onClick={(): void => setSimpleMode(!simpleMode)}
               className={cn(
-                'px-3 py-2 text-xs font-medium transition-colors',
+                'px-3 py-row text-xs font-medium transition-colors',
                 radius.lg,
                 simpleMode
                   ? cn(status.bg.info, 'text-text-inverse')
@@ -308,8 +308,8 @@ function TestsTab({
 
   if (filteredTests) {
     return (
-      <div className="space-y-2">
-        <p className="text-xs text-[var(--color-text-muted)] mb-3">
+      <div className="stack-sm">
+        <p className="text-xs text-text-muted mb-heading">
           {t('plurals.testCount', { count: filteredTests.length })}
         </p>
         {filteredTests.map((test) => (
@@ -325,8 +325,8 @@ function TestsTab({
   }
 
   return (
-    <div className="space-y-4">
-      <p className="text-sm text-[var(--color-text-muted)]">
+    <div className="stack-lg">
+      <p className="text-sm text-text-muted">
         The Stem supports 27 tests across 7 standards. Click any test for detailed documentation.
       </p>
       {categoryOrder.map((catId) => {
@@ -340,16 +340,16 @@ function TestsTab({
           <CollapsibleSection
             key={catId}
             title={
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-compact">
                 {getCategoryIcon(catId)}
                 <span>{category.name}</span>
-                <span className="text-xs text-[var(--color-text-muted)]">({catTests.length})</span>
+                <span className="text-xs text-text-muted">({catTests.length})</span>
               </div>
             }
             defaultOpen={catId === 'rfc2544'}
           >
-            <div className="space-y-2">
-              <p className="text-xs text-[var(--color-text-muted)] mb-2">{category.summary}</p>
+            <div className="stack-sm">
+              <p className="text-xs text-text-muted mb-2">{category.summary}</p>
               {catTests.map((test) => (
                 <TestCard
                   key={test.id}
@@ -391,11 +391,13 @@ function TestCard({
         <div className="flex-1">
           <div className="font-medium body-small text-text-primary">{test.name}</div>
           <div className="caption mt-0.5">{test.standard}</div>
-          <p className="caption text-text-secondary mt-1 line-clamp-2">
+          <p className="caption text-text-secondary mt-tight line-clamp-2">
             {simpleMode ? test.laymanDesc.split('\n')[0] : test.summary}
           </p>
         </div>
-        <ChevronRight className={cn(iconTokens.size.sm, 'text-text-muted flex-shrink-0 mt-1')} />
+        <ChevronRight
+          className={cn(iconTokens.size.sm, 'text-text-muted flex-shrink-0 mt-tight')}
+        />
       </div>
     </button>
   );
@@ -476,10 +478,10 @@ function TestDetailView({
                     <span className={cn('caption', status.text.warning)}>required</span>
                   ) : null}
                 </div>
-                <p className="caption mt-1">
+                <p className="caption mt-tight">
                   Type: {param.type} | Default: {param.defaultValue}
                 </p>
-                <p className="body-small text-text-secondary mt-1">
+                <p className="body-small text-text-secondary mt-tight">
                   {simpleMode ? param.laymanDesc : param.techDesc}
                 </p>
               </div>
@@ -499,7 +501,9 @@ function TestDetailView({
                   <span className="font-medium body-small">{metric.name}</span>
                   <span className="caption">{metric.unit}</span>
                 </div>
-                <p className={cn('caption mt-1', status.text.success)}>Good: {metric.goodRange}</p>
+                <p className={cn('caption mt-tight', status.text.success)}>
+                  Good: {metric.goodRange}
+                </p>
                 <p className={cn('caption mt-0.5', status.text.warning)}>
                   Bad: {metric.badMeaning}
                 </p>
@@ -519,8 +523,10 @@ function TestDetailView({
                 key={example.command}
                 className={cn('bg-surface-base', radius.lg, spacing.pad.sm)}
               >
-                <p className="caption mb-1">{example.desc}</p>
-                <div className={cn(layout.flex.between, 'bg-surface-raised p-2', radius.default)}>
+                <p className="caption mb-tight">{example.desc}</p>
+                <div
+                  className={cn(layout.flex.between, 'bg-surface-raised pad-xs', radius.default)}
+                >
                   <code className="caption font-mono text-brand-primary">$ {example.command}</code>
                   <button
                     type="button"
@@ -562,13 +568,13 @@ function TestDetailView({
 
       {/* See Also */}
       {test.seeAlso.length > 0 ? (
-        <div className="pt-4 border-t border-surface-border">
+        <div className="pt-section border-t border-surface-border">
           <h4 className={cn('section-title', spacing.margin.bottom.inline)}>Related Tests</h4>
           <div className={layout.inline.wrap}>
             {test.seeAlso.map((related: string) => (
               <span
                 key={related}
-                className={cn('caption bg-surface-base px-2 py-1', radius.default)}
+                className={cn('caption bg-surface-base px-cell py-compact', radius.default)}
               >
                 {related}
               </span>
@@ -618,13 +624,13 @@ function TutorialsTab({
             <div className={cn(layout.flex.between, 'items-start')}>
               <div className="flex-1">
                 <div className="font-medium body-small text-text-primary">{tutorial.title}</div>
-                <div className={cn(layout.inline.default, 'mt-1')}>
+                <div className={cn(layout.inline.default, 'mt-tight')}>
                   <span className="caption">{tutorial.duration}</span>
                   <span className={cn('caption px-1.5 py-0.5 bg-surface-base', radius.default)}>
                     {tutorial.level}
                   </span>
                 </div>
-                <p className="caption text-text-secondary mt-2">{tutorial.description}</p>
+                <p className="caption text-text-secondary mt-inline">{tutorial.description}</p>
               </div>
               <ChevronRight className={cn(iconTokens.size.sm, 'text-text-muted flex-shrink-0')} />
             </div>
@@ -662,13 +668,13 @@ function TutorialDetailView({
       {/* Header */}
       <div>
         <h3 className="heading-3">{tutorial.title}</h3>
-        <div className={cn(layout.inline.default, 'mt-1')}>
+        <div className={cn(layout.inline.default, 'mt-tight')}>
           <span className="caption">{tutorial.duration}</span>
           <span className={cn('caption px-1.5 py-0.5 bg-surface-base', radius.default)}>
             {tutorial.level}
           </span>
         </div>
-        <p className="body-small text-text-secondary mt-2">{tutorial.description}</p>
+        <p className="body-small text-text-secondary mt-inline">{tutorial.description}</p>
       </div>
 
       {/* Steps */}
@@ -698,7 +704,7 @@ function TutorialDetailView({
             </p>
             {step.command ? (
               <div
-                className={cn(layout.flex.between, 'bg-surface-raised p-2 mb-2', radius.default)}
+                className={cn(layout.flex.between, 'bg-surface-raised pad-xs mb-2', radius.default)}
               >
                 <code className="caption font-mono text-brand-primary">$ {step.command}</code>
                 <button
@@ -717,12 +723,14 @@ function TutorialDetailView({
               </div>
             ) : null}
             {step.expected ? (
-              <div className={cn('caption bg-surface-raised p-2', radius.default)}>
+              <div className={cn('caption bg-surface-raised pad-xs', radius.default)}>
                 Expected: {step.expected}
               </div>
             ) : null}
             {step.tip ? (
-              <div className={cn(cn('mt-2 caption p-2', status.badge.info), radius.default)}>
+              <div
+                className={cn(cn('mt-inline caption pad-xs', status.badge.info), radius.default)}
+              >
                 Tip: {step.tip}
               </div>
             ) : null}
@@ -783,11 +791,11 @@ function GlossaryTab({
                   <span className="font-medium body-small text-text-primary">{entry.term}</span>
                   <span className="caption">{entry.fullName}</span>
                 </div>
-                <p className="body-small text-text-secondary mt-1">
+                <p className="body-small text-text-secondary mt-tight">
                   {simpleMode ? entry.laymanDef : entry.techDef}
                 </p>
                 {entry.related.length > 0 && (
-                  <div className={cn(layout.inline.tight, 'mt-2')}>
+                  <div className={cn(layout.inline.tight, 'mt-inline')}>
                     <span className="caption">Related:</span>
                     {entry.related.map((r: string) => (
                       <span key={r} className="caption text-brand-primary">

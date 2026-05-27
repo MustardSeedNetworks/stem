@@ -66,7 +66,7 @@ interface Y1731ConfigFormProps {
 function FieldError({ message }: { message?: string }): ReactElement | null {
   if (!message) return null;
   return (
-    <div className="mt-1 text-xs text-[var(--color-status-danger)] flex items-center gap-1">
+    <div className="mt-tight text-xs text-status-danger flex items-center gap-tight">
       <AlertTriangle className="w-3 h-3" />
       {message}
     </div>
@@ -114,25 +114,22 @@ export function Y1731ConfigForm({
   return (
     <CollapsibleSection
       title={
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-compact">
           <Gauge className="w-4 h-4" />
           <span>Y.1731 OAM Configuration</span>
         </div>
       }
       defaultOpen={true}
     >
-      <div className="space-y-4">
-        <div className="space-y-3">
-          <div className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">
+      <div className="stack-lg">
+        <div className="stack">
+          <div className="text-xs font-semibold text-text-muted uppercase tracking-wide">
             MEP/MEG Configuration
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 gap-default">
             <div>
-              <label
-                htmlFor="y1731-mepid"
-                className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-              >
+              <label htmlFor="y1731-mepid" className="flex items-center gap-tight label">
                 MEP ID
                 <HelpIcon tooltip="Maintenance End Point identifier (1-8191)." />
               </label>
@@ -141,16 +138,13 @@ export function Y1731ConfigForm({
                 type="number"
                 step={1}
                 {...register('mepId', { valueAsNumber: true })}
-                className="mt-1 w-full"
+                className="mt-tight w-full"
               />
               <FieldError message={errors.mepId?.message} />
             </div>
 
             <div>
-              <label
-                htmlFor="y1731-meglevel"
-                className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-              >
+              <label htmlFor="y1731-meglevel" className="flex items-center gap-tight label">
                 MEG Level
                 <HelpIcon tooltip="Maintenance Entity Group level (0-7). Higher = wider domain." />
               </label>
@@ -159,16 +153,13 @@ export function Y1731ConfigForm({
                 type="number"
                 step={1}
                 {...register('megLevel', { valueAsNumber: true })}
-                className="mt-1 w-full"
+                className="mt-tight w-full"
               />
               <FieldError message={errors.megLevel?.message} />
             </div>
 
             <div>
-              <label
-                htmlFor="y1731-megid"
-                className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-              >
+              <label htmlFor="y1731-megid" className="flex items-center gap-tight label">
                 MEG ID
                 <HelpIcon tooltip="Maintenance Entity Group identifier string." />
               </label>
@@ -177,31 +168,28 @@ export function Y1731ConfigForm({
                 type="text"
                 maxLength={45}
                 {...register('megId')}
-                className="mt-1 w-full"
+                className="mt-tight w-full"
               />
               <FieldError message={errors.megId?.message} />
             </div>
           </div>
         </div>
 
-        <div className="space-y-3">
-          <div className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">
+        <div className="stack">
+          <div className="text-xs font-semibold text-text-muted uppercase tracking-wide">
             OAM Parameters
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-default">
             <div>
-              <label
-                htmlFor="y1731-ccm"
-                className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-              >
+              <label htmlFor="y1731-ccm" className="flex items-center gap-tight label">
                 CCM Interval
                 <HelpIcon tooltip="Continuity Check Message interval per Y.1731." />
               </label>
               <select
                 id="y1731-ccm"
                 {...register('ccmInterval', { valueAsNumber: true })}
-                className="mt-1 w-full"
+                className="mt-tight w-full"
               >
                 {CCM_INTERVAL_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
@@ -213,10 +201,7 @@ export function Y1731ConfigForm({
             </div>
 
             <div>
-              <label
-                htmlFor="y1731-priority"
-                className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-              >
+              <label htmlFor="y1731-priority" className="flex items-center gap-tight label">
                 Priority
                 <HelpIcon tooltip="802.1p priority value (0-7). 6-7 typically for OAM." />
               </label>
@@ -225,48 +210,45 @@ export function Y1731ConfigForm({
                 type="number"
                 step={1}
                 {...register('priority', { valueAsNumber: true })}
-                className="mt-1 w-full"
+                className="mt-tight w-full"
               />
               <FieldError message={errors.priority?.message} />
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-compact">
             <input
               id="y1731-tagged"
               type="checkbox"
               {...register('priorityTagged')}
               aria-label="Use 802.1Q priority tagging on OAM frames"
-              className="rounded border-[var(--color-surface-border)]"
+              className="rounded border-surface-border"
             />
             <label
               htmlFor="y1731-tagged"
               title="Add an IEEE 802.1Q VLAN tag with the selected priority to all Y.1731 OAM frames"
-              className="text-sm text-[var(--color-text-primary)]"
+              className="text-sm text-text-primary"
             >
               Use priority tagging (802.1Q)
             </label>
           </div>
         </div>
 
-        <div className="space-y-3">
-          <div className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">
+        <div className="stack">
+          <div className="text-xs font-semibold text-text-muted uppercase tracking-wide">
             Measurement Parameters
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-default">
             <div>
-              <label
-                htmlFor="y1731-framesize"
-                className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-              >
+              <label htmlFor="y1731-framesize" className="flex items-center gap-tight label">
                 Frame Size
                 <HelpIcon tooltip="OAM frame size for measurements." />
               </label>
               <select
                 id="y1731-framesize"
                 {...register('frameSize', { valueAsNumber: true })}
-                className="mt-1 w-full"
+                className="mt-tight w-full"
               >
                 {FRAME_SIZE_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
@@ -278,10 +260,7 @@ export function Y1731ConfigForm({
             </div>
 
             <div>
-              <label
-                htmlFor="y1731-interval"
-                className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-              >
+              <label htmlFor="y1731-interval" className="flex items-center gap-tight label">
                 Measurement Interval (ms)
                 <HelpIcon tooltip="Interval between measurement probes." />
               </label>
@@ -290,18 +269,15 @@ export function Y1731ConfigForm({
                 type="number"
                 step={10}
                 {...register('intervalMs', { valueAsNumber: true })}
-                className="mt-1 w-full"
+                className="mt-tight w-full"
               />
               <FieldError message={errors.intervalMs?.message} />
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-default">
             <div>
-              <label
-                htmlFor="y1731-count"
-                className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-              >
+              <label htmlFor="y1731-count" className="flex items-center gap-tight label">
                 Frames per Interval
                 <HelpIcon tooltip="Number of measurement frames per interval." />
               </label>
@@ -310,16 +286,13 @@ export function Y1731ConfigForm({
                 type="number"
                 step={1}
                 {...register('count', { valueAsNumber: true })}
-                className="mt-1 w-full"
+                className="mt-tight w-full"
               />
               <FieldError message={errors.count?.message} />
             </div>
 
             <div>
-              <label
-                htmlFor="y1731-duration"
-                className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-              >
+              <label htmlFor="y1731-duration" className="flex items-center gap-tight label">
                 Duration (s)
                 <HelpIcon tooltip="Total measurement duration." />
               </label>
@@ -328,19 +301,19 @@ export function Y1731ConfigForm({
                 type="number"
                 step={1}
                 {...register('duration', { valueAsNumber: true })}
-                className="mt-1 w-full"
+                className="mt-tight w-full"
               />
               <FieldError message={errors.duration?.message} />
             </div>
           </div>
         </div>
 
-        <div className="p-3 rounded-lg bg-[var(--color-surface-base)] border border-[var(--color-surface-border)]">
-          <div className="flex items-center gap-2 text-sm font-medium text-[var(--color-text-primary)] mb-2">
+        <div className="pad-sm rounded-lg bg-surface-base border border-surface-border">
+          <div className="flex items-center gap-compact label mb-2">
             <Info className="w-4 h-4" />
             Test Summary
           </div>
-          <div className="text-xs text-[var(--color-text-muted)] space-y-1">
+          <div className="text-xs text-text-muted stack-xs">
             <div>
               Selected tests:{' '}
               {[

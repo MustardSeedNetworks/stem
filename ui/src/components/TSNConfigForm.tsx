@@ -77,7 +77,7 @@ function formatNs(ns: number): string {
 function FieldError({ message }: { message?: string }): ReactElement | null {
   if (!message) return null;
   return (
-    <div className="mt-1 text-xs text-[var(--color-status-danger)] flex items-center gap-1">
+    <div className="mt-tight text-xs text-status-danger flex items-center gap-tight">
       <AlertTriangle className="w-3 h-3" />
       {message}
     </div>
@@ -90,16 +90,13 @@ function TestParametersSection(): ReactElement {
     formState: { errors },
   } = useFormContext<TSNConfig>();
   return (
-    <div className="space-y-3">
-      <div className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">
+    <div className="stack">
+      <div className="text-xs font-semibold text-text-muted uppercase tracking-wide">
         Test Parameters
       </div>
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-default">
         <div>
-          <label
-            htmlFor="tsn-duration"
-            className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-          >
+          <label htmlFor="tsn-duration" className="flex items-center gap-tight label">
             Duration (s)
             <HelpIcon tooltip="Test duration in seconds." />
           </label>
@@ -108,15 +105,12 @@ function TestParametersSection(): ReactElement {
             type="number"
             step={1}
             {...register('duration', { valueAsNumber: true })}
-            className="mt-1 w-full"
+            className="mt-tight w-full"
           />
           <FieldError message={errors.duration?.message} />
         </div>
         <div>
-          <label
-            htmlFor="tsn-warmup"
-            className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-          >
+          <label htmlFor="tsn-warmup" className="flex items-center gap-tight label">
             Warmup (s)
             <HelpIcon tooltip="Warmup period for synchronization." />
           </label>
@@ -125,22 +119,19 @@ function TestParametersSection(): ReactElement {
             type="number"
             step={1}
             {...register('warmup', { valueAsNumber: true })}
-            className="mt-1 w-full"
+            className="mt-tight w-full"
           />
           <FieldError message={errors.warmup?.message} />
         </div>
         <div>
-          <label
-            htmlFor="tsn-framesize"
-            className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-          >
+          <label htmlFor="tsn-framesize" className="flex items-center gap-tight label">
             Frame Size
             <HelpIcon tooltip="Ethernet frame size for testing." />
           </label>
           <select
             id="tsn-framesize"
             {...register('frameSize', { valueAsNumber: true })}
-            className="mt-1 w-full"
+            className="mt-tight w-full"
           >
             {FRAME_SIZE_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -161,16 +152,13 @@ function TimingRequirementsSection(): ReactElement {
     formState: { errors },
   } = useFormContext<TSNConfig>();
   return (
-    <div className="space-y-3">
-      <div className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">
+    <div className="stack">
+      <div className="text-xs font-semibold text-text-muted uppercase tracking-wide">
         Timing Requirements
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-default">
         <div>
-          <label
-            htmlFor="tsn-maxlatency"
-            className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-          >
+          <label htmlFor="tsn-maxlatency" className="flex items-center gap-tight label">
             Max Latency (ns)
             <HelpIcon tooltip="Maximum acceptable end-to-end latency in nanoseconds." />
           </label>
@@ -179,15 +167,12 @@ function TimingRequirementsSection(): ReactElement {
             type="number"
             step={1000}
             {...register('maxLatencyNs', { valueAsNumber: true })}
-            className="mt-1 w-full"
+            className="mt-tight w-full"
           />
           <FieldError message={errors.maxLatencyNs?.message} />
         </div>
         <div>
-          <label
-            htmlFor="tsn-maxjitter"
-            className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-          >
+          <label htmlFor="tsn-maxjitter" className="flex items-center gap-tight label">
             Max Jitter (ns)
             <HelpIcon tooltip="Maximum acceptable jitter (PDV) in nanoseconds." />
           </label>
@@ -196,7 +181,7 @@ function TimingRequirementsSection(): ReactElement {
             type="number"
             step={1000}
             {...register('maxJitterNs', { valueAsNumber: true })}
-            className="mt-1 w-full"
+            className="mt-tight w-full"
           />
           <FieldError message={errors.maxJitterNs?.message} />
         </div>
@@ -213,39 +198,39 @@ function PTPConfigSection(): ReactElement {
   } = useFormContext<TSNConfig>();
   const ptpEnabled = watch('ptpEnabled');
   return (
-    <div className="space-y-3">
-      <div className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">
+    <div className="stack">
+      <div className="text-xs font-semibold text-text-muted uppercase tracking-wide">
         PTP Synchronization
       </div>
-      <div className="space-y-2">
-        <div className="flex items-center gap-2">
+      <div className="stack-sm">
+        <div className="flex items-center gap-compact">
           <input
             id="tsn-ptpenabled"
             type="checkbox"
             {...register('ptpEnabled')}
             aria-label="Enable IEEE 1588 PTP hardware timestamping"
-            className="rounded border-[var(--color-surface-border)]"
+            className="rounded border-surface-border"
           />
           <label
             htmlFor="tsn-ptpenabled"
             title="Use IEEE 1588 PTP hardware timestamps for sub-microsecond delay measurement; requires PTP-capable NIC"
-            className="text-sm text-[var(--color-text-primary)]"
+            className="text-sm text-text-primary"
           >
             Enable PTP timestamping (IEEE 1588)
           </label>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-compact">
           <input
             id="tsn-requiresync"
             type="checkbox"
             {...register('requirePTPSync')}
             aria-label="Require PTP synchronization before starting test"
-            className="rounded border-[var(--color-surface-border)]"
+            className="rounded border-surface-border"
           />
           <label
             htmlFor="tsn-requiresync"
             title="Block the test from starting until the local PTP clock has locked to the grandmaster within the configured tolerance"
-            className="text-sm text-[var(--color-text-primary)]"
+            className="text-sm text-text-primary"
           >
             Require PTP synchronization before test
           </label>
@@ -253,10 +238,7 @@ function PTPConfigSection(): ReactElement {
       </div>
       {ptpEnabled ? (
         <div>
-          <label
-            htmlFor="tsn-syncoffset"
-            className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-          >
+          <label htmlFor="tsn-syncoffset" className="flex items-center gap-tight label">
             Max Sync Offset (ns)
             <HelpIcon tooltip="Maximum acceptable PTP clock offset." />
           </label>
@@ -265,7 +247,7 @@ function PTPConfigSection(): ReactElement {
             type="number"
             step={1}
             {...register('maxSyncOffsetNs', { valueAsNumber: true })}
-            className="mt-1 w-full"
+            className="mt-tight w-full"
           />
           <FieldError message={errors.maxSyncOffsetNs?.message} />
         </div>
@@ -280,39 +262,36 @@ function SchedulingConfigSection(): ReactElement {
     formState: { errors },
   } = useFormContext<TSNConfig>();
   return (
-    <div className="space-y-3">
-      <div className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">
+    <div className="stack">
+      <div className="text-xs font-semibold text-text-muted uppercase tracking-wide">
         Traffic Scheduling (802.1Qbv)
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-compact">
         <input
           id="tsn-preemption"
           type="checkbox"
           {...register('preemptionEnabled')}
           aria-label="Enable IEEE 802.1Qbu frame preemption"
-          className="rounded border-[var(--color-surface-border)]"
+          className="rounded border-surface-border"
         />
         <label
           htmlFor="tsn-preemption"
           title="Allow express traffic to preempt in-flight preemptable frames per IEEE 802.1Qbu; reduces latency for critical traffic classes"
-          className="text-sm text-[var(--color-text-primary)]"
+          className="text-sm text-text-primary"
         >
           Enable frame preemption (802.1Qbu)
         </label>
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-default">
         <div>
-          <label
-            htmlFor="tsn-cycletime"
-            className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-          >
+          <label htmlFor="tsn-cycletime" className="flex items-center gap-tight label">
             Cycle Time
             <HelpIcon tooltip="Time-Aware Shaper cycle duration." />
           </label>
           <select
             id="tsn-cycletime"
             {...register('cycleTimeNs', { valueAsNumber: true })}
-            className="mt-1 w-full"
+            className="mt-tight w-full"
           >
             {CYCLE_TIME_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -323,10 +302,7 @@ function SchedulingConfigSection(): ReactElement {
           <FieldError message={errors.cycleTimeNs?.message} />
         </div>
         <div>
-          <label
-            htmlFor="tsn-trafficclass"
-            className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-          >
+          <label htmlFor="tsn-trafficclass" className="flex items-center gap-tight label">
             Traffic Class
             <HelpIcon tooltip="Traffic class for test frames (0-7)." />
           </label>
@@ -335,16 +311,13 @@ function SchedulingConfigSection(): ReactElement {
             type="number"
             step={1}
             {...register('trafficClass', { valueAsNumber: true })}
-            className="mt-1 w-full"
+            className="mt-tight w-full"
           />
           <FieldError message={errors.trafficClass?.message} />
         </div>
       </div>
       <div>
-        <label
-          htmlFor="tsn-numclasses"
-          className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-        >
+        <label htmlFor="tsn-numclasses" className="flex items-center gap-tight label">
           Number of Traffic Classes
           <HelpIcon tooltip="Total traffic classes configured (1-8)." />
         </label>
@@ -353,15 +326,12 @@ function SchedulingConfigSection(): ReactElement {
           type="number"
           step={1}
           {...register('numTrafficClasses', { valueAsNumber: true })}
-          className="mt-1 w-full"
+          className="mt-tight w-full"
         />
         <FieldError message={errors.numTrafficClasses?.message} />
       </div>
       <div>
-        <label
-          htmlFor="tsn-basetime"
-          className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-        >
+        <label htmlFor="tsn-basetime" className="flex items-center gap-tight label">
           Base Time (ns)
           <HelpIcon tooltip="Base time for gate schedule (ns since epoch). 0 = use current time." />
         </label>
@@ -370,7 +340,7 @@ function SchedulingConfigSection(): ReactElement {
           type="number"
           step={1}
           {...register('baseTimeNs', { valueAsNumber: true })}
-          className="mt-1 w-full"
+          className="mt-tight w-full"
         />
         <FieldError message={errors.baseTimeNs?.message} />
       </div>
@@ -403,12 +373,12 @@ function TestSummarySection({
     hasScheduling && 'Scheduling',
   ].filter(Boolean);
   return (
-    <div className="p-3 rounded-lg bg-[var(--color-surface-base)] border border-[var(--color-surface-border)]">
-      <div className="flex items-center gap-2 text-sm font-medium text-[var(--color-text-primary)] mb-2">
+    <div className="pad-sm rounded-lg bg-surface-base border border-surface-border">
+      <div className="flex items-center gap-compact label mb-2">
         <Info className="w-4 h-4" />
         Test Summary
       </div>
-      <div className="text-xs text-[var(--color-text-muted)] space-y-1">
+      <div className="text-xs text-text-muted stack-xs">
         <div>Selected tests: {selectedTestNames.join(', ')}</div>
         <div>Frame size: {v.frameSize} bytes</div>
         <div>
@@ -473,7 +443,7 @@ export function TSNConfigForm({
   return (
     <CollapsibleSection
       title={
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-compact">
           <Clock className="w-4 h-4" />
           <span>TSN Configuration</span>
         </div>
@@ -481,7 +451,7 @@ export function TSNConfigForm({
       defaultOpen={true}
     >
       <FormProvider {...form}>
-        <div className="space-y-4">
+        <div className="stack-lg">
           <TestParametersSection />
           <TimingRequirementsSection />
           <PTPConfigSection />
@@ -489,7 +459,7 @@ export function TSNConfigForm({
           {hasScheduling || hasPreemption ? <SchedulingConfigSection /> : null}
 
           {crossFieldError && (
-            <div className="p-2 rounded-lg bg-[var(--color-status-danger-subtle)] text-[var(--color-status-danger)] text-sm flex items-center gap-2">
+            <div className="pad-xs rounded-lg bg-status-danger-subtle text-status-danger text-sm flex items-center gap-compact">
               <AlertTriangle className="w-4 h-4" />
               {crossFieldError.message}
             </div>

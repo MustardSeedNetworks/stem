@@ -152,7 +152,7 @@ function TestResults({ testStatus, result }: TestResultsProps): ReactElement {
           <AlertTriangle className="w-4 h-4" />
           Test Results
         </div>
-        <div className="text-center py-12 text-[var(--color-text-muted)]">
+        <div className="text-center py-centered text-text-muted">
           <p>{message}</p>
         </div>
       </div>
@@ -160,9 +160,7 @@ function TestResults({ testStatus, result }: TestResultsProps): ReactElement {
   }
 
   // Show actual test results
-  const statusColor = result.success
-    ? 'text-[var(--color-status-success)]'
-    : 'text-[var(--color-status-error)]';
+  const statusColor = result.success ? 'text-status-success' : 'text-status-error';
 
   return (
     <div className="card">
@@ -172,19 +170,15 @@ function TestResults({ testStatus, result }: TestResultsProps): ReactElement {
       </div>
 
       {/* Test Header */}
-      <div className="flex items-center justify-between mb-4 pb-4 border-b border-[var(--color-surface-border)]">
+      <div className="flex-between mb-content pb-4 border-b border-surface-border">
         <div>
-          <div className="text-lg font-semibold text-[var(--color-text-primary)]">
-            {result.testType}
-          </div>
-          <div className="text-sm text-[var(--color-text-muted)]">Module: {result.module}</div>
+          <div className="heading-3 text-text-primary">{result.testType}</div>
+          <div className="text-sm text-text-muted">Module: {result.module}</div>
         </div>
         <div className="text-right">
-          <div className={`text-lg font-semibold ${statusColor}`}>
-            {result.success ? 'PASSED' : 'FAILED'}
-          </div>
+          <div className={`heading-3 ${statusColor}`}>{result.success ? 'PASSED' : 'FAILED'}</div>
           {result.duration !== undefined && (
-            <div className="text-sm text-[var(--color-text-muted)]">
+            <div className="text-sm text-text-muted">
               Duration: {formatDuration(result.duration)}
             </div>
           )}
@@ -193,26 +187,24 @@ function TestResults({ testStatus, result }: TestResultsProps): ReactElement {
 
       {/* Error Message */}
       {result.error ? (
-        <div className="mb-4 p-3 rounded-lg bg-[var(--color-status-error)]/10 border border-[var(--color-status-error)]/20">
-          <div className="text-sm font-medium text-[var(--color-status-error)]">Error</div>
-          <div className="text-sm text-[var(--color-text-primary)]">{result.error}</div>
+        <div className="mb-content pad-sm rounded-lg bg-status-error/10 border border-status-error/20">
+          <div className="text-sm font-medium text-status-error">Error</div>
+          <div className="text-sm text-text-primary">{result.error}</div>
         </div>
       ) : null}
 
       {/* Metrics Grid */}
       {result.metrics && Object.keys(result.metrics).length > 0 && (
-        <div className="mb-4">
-          <div className="text-sm font-semibold text-[var(--color-text-muted)] mb-2">Metrics</div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+        <div className="mb-content">
+          <div className="text-sm font-semibold text-text-muted mb-2">Metrics</div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-default">
             {Object.entries(result.metrics).map(([key, value]) => (
               <div
                 key={key}
-                className="p-3 rounded-lg bg-[var(--color-surface-base)] border border-[var(--color-surface-border)]"
+                className="pad-sm rounded-lg bg-surface-base border border-surface-border"
               >
-                <div className="text-xs text-[var(--color-text-muted)] capitalize">
-                  {key.replace(/_/g, ' ')}
-                </div>
-                <div className="text-lg font-semibold text-[var(--color-text-primary)]">
+                <div className="text-xs text-text-muted capitalize">{key.replace(/_/g, ' ')}</div>
+                <div className="heading-3 text-text-primary">
                   {typeof value === 'number' ? formatNumber(value) : String(value)}
                 </div>
               </div>
@@ -222,7 +214,7 @@ function TestResults({ testStatus, result }: TestResultsProps): ReactElement {
       )}
 
       {/* Timestamps */}
-      <div className="text-xs text-[var(--color-text-muted)] flex gap-4">
+      <div className="text-xs text-text-muted flex gap-comfortable">
         {result.startedAt ? (
           <span>Started: {new Date(result.startedAt).toLocaleString()}</span>
         ) : null}
@@ -1033,10 +1025,10 @@ function AppContent(): ReactElement {
   };
 
   const topBar = (
-    <div className="px-4 sm:px-6 lg:px-8 pt-6 pb-2 space-y-4">
+    <div className="px-4 sm:px-6 lg:px-8 pt-6 pb-inline stack-lg">
       {/* Top strip: connection status + role chip + theme/refresh/logout */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-default">
+        <div className="flex items-center gap-default">
           <div className={`status-badge ${connected ? 'success' : 'error'}`}>
             {connected ? (
               <>
@@ -1049,12 +1041,12 @@ function AppContent(): ReactElement {
             )}
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-compact">
           <RoleChip />
           <button
             type="button"
             onClick={toggleTheme}
-            className="p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover"
+            className="pad-xs rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover"
             title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
             aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
           >
@@ -1067,7 +1059,7 @@ function AppContent(): ReactElement {
           <button
             type="button"
             onClick={fetchInterfaces}
-            className="p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover"
+            className="pad-xs rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover"
             title="Refresh interfaces"
             aria-label="Refresh interfaces"
           >
@@ -1076,7 +1068,7 @@ function AppContent(): ReactElement {
           <button
             type="button"
             onClick={handleLogout}
-            className="p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover"
+            className="pad-xs rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover"
             title="Logout"
             aria-label="Logout"
             data-testid="logout-button"
@@ -1090,7 +1082,7 @@ function AppContent(): ReactElement {
           Reflector role drives Start/Stop from the Reflector page. The
           per-test-page Start/Stop is coming in Phase A.1 (#64). */}
       {mode === 'test_master' ? (
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-default">
           <select
             value={selectedInterface}
             onChange={(e: React.ChangeEvent<HTMLSelectElement>): void =>
@@ -1151,7 +1143,7 @@ function AppContent(): ReactElement {
 
           {testStartError ? (
             <div
-              className="text-sm text-[var(--color-status-error)] flex items-center gap-2"
+              className="text-sm text-status-error flex items-center gap-compact"
               role="alert"
               aria-live="assertive"
             >
@@ -1160,11 +1152,15 @@ function AppContent(): ReactElement {
             </div>
           ) : null}
 
-          <div className="flex items-center gap-3 ml-auto" aria-live="polite" aria-atomic="true">
+          <div
+            className="flex items-center gap-default ml-auto"
+            aria-live="polite"
+            aria-atomic="true"
+          >
             {stats.testStatus === 'running' || stats.testStatus === 'starting' ? (
-              <output className="status-badge success flex items-center gap-2">
+              <output className="status-badge success flex items-center gap-compact">
                 <span
-                  className="w-2 h-2 rounded-full bg-[var(--color-status-success)] animate-pulse"
+                  className="w-2 h-2 rounded-full bg-status-success animate-pulse"
                   aria-hidden="true"
                 />
                 {stats.testStatus === 'starting' ? 'Starting' : 'Running'}:{' '}
@@ -1270,33 +1266,31 @@ function AppContent(): ReactElement {
 
         {/* Login Modal - shown after setup complete or if setup not needed */}
         {!isAuthenticated && setupChecked && !setupStatus?.needsSetup && !showRecoveryForm ? (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex-center bg-black/60 backdrop-blur-sm">
             <div
               ref={loginModalRef}
               role="dialog"
               aria-modal="true"
               aria-labelledby="login-dialog-title"
-              className="w-full max-w-md rounded-3xl border border-[var(--color-surface-border)] bg-[var(--color-surface-raised)] p-6 shadow-2xl"
+              className="w-full max-w-md rounded-3xl border border-surface-border bg-surface-raised pad-lg shadow-2xl"
             >
               <h2
                 id="login-dialog-title"
-                className="flex items-center gap-2 text-lg font-semibold text-[var(--color-text-primary)]"
+                className="flex items-center gap-compact heading-3 text-text-primary"
               >
-                <Lock className="w-5 h-5 text-[var(--color-brand-primary)]" />
+                <Lock className="w-5 h-5 text-brand-primary" />
                 Sign in to continue
               </h2>
-              <p className="text-sm text-[var(--color-text-muted)]">
-                Authenticate with your Stem credentials.
-              </p>
+              <p className="text-sm text-text-muted">Authenticate with your Stem credentials.</p>
               {mfaPending ? (
-                <form className="mt-6 space-y-4" onSubmit={mfaForm.handleSubmit(handleMFAVerify)}>
-                  <p className="text-sm text-[var(--color-text-muted)]">
+                <form className="mt-6 stack-lg" onSubmit={mfaForm.handleSubmit(handleMFAVerify)}>
+                  <p className="text-sm text-text-muted">
                     Enter the code from your authenticator app to continue.
                   </p>
                   <div>
                     <label
                       htmlFor="stem-login-mfa"
-                      className="text-xs font-semibold text-[var(--color-text-muted)]"
+                      className="text-xs font-semibold text-text-muted"
                     >
                       Verification code
                     </label>
@@ -1307,17 +1301,15 @@ function AppContent(): ReactElement {
                       pattern="[0-9]{6}"
                       autoComplete="one-time-code"
                       {...mfaForm.register('code')}
-                      className="mt-1 w-full rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-base)] px-3 py-2 text-sm font-mono tracking-widest text-[var(--color-text-primary)] focus:border-[var(--color-brand-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-primary)]/30"
+                      className="mt-tight w-full rounded-xl border border-surface-border bg-surface-base px-3 py-row text-sm font-mono tracking-widest text-text-primary focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/30"
                     />
                     {mfaForm.formState.errors.code ? (
-                      <p className="mt-1 text-xs text-[var(--color-status-error)]">
+                      <p className="mt-tight text-xs text-status-error">
                         {mfaForm.formState.errors.code.message}
                       </p>
                     ) : null}
                   </div>
-                  {loginError ? (
-                    <p className="text-xs text-[var(--color-status-error)]">{loginError}</p>
-                  ) : null}
+                  {loginError ? <p className="text-xs text-status-error">{loginError}</p> : null}
                   <button
                     type="submit"
                     className="btn btn-primary w-full justify-center"
@@ -1332,17 +1324,17 @@ function AppContent(): ReactElement {
                       mfaForm.reset();
                       setLoginError(null);
                     }}
-                    className="w-full mt-2 text-sm text-[var(--color-text-muted)] hover:text-[var(--color-brand-primary)]"
+                    className="w-full mt-inline text-sm text-text-muted hover:text-brand-primary"
                   >
                     Use different account
                   </button>
                 </form>
               ) : (
-                <form className="mt-6 space-y-4" onSubmit={loginForm.handleSubmit(handleLogin)}>
+                <form className="mt-6 stack-lg" onSubmit={loginForm.handleSubmit(handleLogin)}>
                   <div>
                     <label
                       htmlFor="stem-login-username"
-                      className="text-xs font-semibold text-[var(--color-text-muted)]"
+                      className="text-xs font-semibold text-text-muted"
                     >
                       Username
                     </label>
@@ -1351,10 +1343,10 @@ function AppContent(): ReactElement {
                       type="text"
                       autoComplete="username"
                       {...loginForm.register('username')}
-                      className="mt-1 w-full rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-base)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-[var(--color-brand-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-primary)]/30"
+                      className="mt-tight w-full rounded-xl border border-surface-border bg-surface-base px-3 py-row text-sm text-text-primary focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/30"
                     />
                     {loginForm.formState.errors.username ? (
-                      <p className="mt-1 text-xs text-[var(--color-status-error)]">
+                      <p className="mt-tight text-xs text-status-error">
                         {loginForm.formState.errors.username.message}
                       </p>
                     ) : null}
@@ -1362,7 +1354,7 @@ function AppContent(): ReactElement {
                   <div>
                     <label
                       htmlFor="stem-login-password"
-                      className="text-xs font-semibold text-[var(--color-text-muted)]"
+                      className="text-xs font-semibold text-text-muted"
                     >
                       Password
                     </label>
@@ -1371,17 +1363,15 @@ function AppContent(): ReactElement {
                       type="password"
                       autoComplete="current-password"
                       {...loginForm.register('password')}
-                      className="mt-1 w-full rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-base)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-[var(--color-brand-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-primary)]/30"
+                      className="mt-tight w-full rounded-xl border border-surface-border bg-surface-base px-3 py-row text-sm text-text-primary focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/30"
                     />
                     {loginForm.formState.errors.password ? (
-                      <p className="mt-1 text-xs text-[var(--color-status-error)]">
+                      <p className="mt-tight text-xs text-status-error">
                         {loginForm.formState.errors.password.message}
                       </p>
                     ) : null}
                   </div>
-                  {loginError ? (
-                    <p className="text-xs text-[var(--color-status-error)]">{loginError}</p>
-                  ) : null}
+                  {loginError ? <p className="text-xs text-status-error">{loginError}</p> : null}
                   <button
                     type="submit"
                     className="btn btn-primary w-full justify-center"
@@ -1395,7 +1385,7 @@ function AppContent(): ReactElement {
                     <button
                       type="button"
                       onClick={() => setShowRecoveryForm(true)}
-                      className="w-full mt-4 text-sm text-[var(--color-text-muted)] hover:text-[var(--color-brand-primary)]"
+                      className="w-full mt-content text-sm text-text-muted hover:text-brand-primary"
                     >
                       Forgot password?
                     </button>

@@ -65,7 +65,7 @@ interface RFC2889ConfigFormProps {
 function FieldError({ message }: { message?: string }): ReactElement | null {
   if (!message) return null;
   return (
-    <div className="mt-1 text-xs text-[var(--color-status-danger)] flex items-center gap-1">
+    <div className="mt-tight text-xs text-status-danger flex items-center gap-tight">
       <AlertTriangle className="w-3 h-3" />
       {message}
     </div>
@@ -109,25 +109,22 @@ export function RFC2889ConfigForm({
   return (
     <CollapsibleSection
       title={
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-compact">
           <Network className="w-4 h-4" />
           <span>RFC 2889 Configuration</span>
         </div>
       }
       defaultOpen={true}
     >
-      <div className="space-y-4">
-        <div className="space-y-3">
-          <div className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">
+      <div className="stack-lg">
+        <div className="stack">
+          <div className="text-xs font-semibold text-text-muted uppercase tracking-wide">
             Test Parameters
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-default">
             <div>
-              <label
-                htmlFor="rfc2889-duration"
-                className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-              >
+              <label htmlFor="rfc2889-duration" className="flex items-center gap-tight label">
                 Duration (s)
                 <HelpIcon tooltip="Duration for each test iteration in seconds." />
               </label>
@@ -136,16 +133,13 @@ export function RFC2889ConfigForm({
                 type="number"
                 step={1}
                 {...register('duration', { valueAsNumber: true })}
-                className="mt-1 w-full"
+                className="mt-tight w-full"
               />
               <FieldError message={errors.duration?.message} />
             </div>
 
             <div>
-              <label
-                htmlFor="rfc2889-warmup"
-                className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-              >
+              <label htmlFor="rfc2889-warmup" className="flex items-center gap-tight label">
                 Warmup (s)
                 <HelpIcon tooltip="Warmup period before measurement begins." />
               </label>
@@ -154,7 +148,7 @@ export function RFC2889ConfigForm({
                 type="number"
                 step={1}
                 {...register('warmup', { valueAsNumber: true })}
-                className="mt-1 w-full"
+                className="mt-tight w-full"
               />
               <FieldError message={errors.warmup?.message} />
             </div>
@@ -162,17 +156,14 @@ export function RFC2889ConfigForm({
         </div>
 
         <div>
-          <label
-            htmlFor="rfc2889-framesize"
-            className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-          >
+          <label htmlFor="rfc2889-framesize" className="flex items-center gap-tight label">
             Frame Size
             <HelpIcon tooltip="Ethernet frame size for testing." />
           </label>
           <select
             id="rfc2889-framesize"
             {...register('frameSize', { valueAsNumber: true })}
-            className="mt-1 w-full"
+            className="mt-tight w-full"
           >
             {FRAME_SIZE_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -183,17 +174,14 @@ export function RFC2889ConfigForm({
           <FieldError message={errors.frameSize?.message} />
         </div>
 
-        <div className="space-y-3">
-          <div className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">
+        <div className="stack">
+          <div className="text-xs font-semibold text-text-muted uppercase tracking-wide">
             Switch Configuration
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-default">
             <div>
-              <label
-                htmlFor="rfc2889-portcount"
-                className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-              >
+              <label htmlFor="rfc2889-portcount" className="flex items-center gap-tight label">
                 Port Count
                 <HelpIcon tooltip="Number of switch ports to test." />
               </label>
@@ -202,23 +190,20 @@ export function RFC2889ConfigForm({
                 type="number"
                 step={1}
                 {...register('portCount', { valueAsNumber: true })}
-                className="mt-1 w-full"
+                className="mt-tight w-full"
               />
               <FieldError message={errors.portCount?.message} />
             </div>
 
             <div>
-              <label
-                htmlFor="rfc2889-pattern"
-                className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-              >
+              <label htmlFor="rfc2889-pattern" className="flex items-center gap-tight label">
                 Traffic Pattern
                 <HelpIcon tooltip="How traffic is distributed across ports." />
               </label>
               <select
                 id="rfc2889-pattern"
                 {...register('pattern', { valueAsNumber: true })}
-                className="mt-1 w-full"
+                className="mt-tight w-full"
               >
                 {PATTERN_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
@@ -233,10 +218,7 @@ export function RFC2889ConfigForm({
 
         {hasCaching || hasLearning ? (
           <div>
-            <label
-              htmlFor="rfc2889-addresscount"
-              className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-            >
+            <label htmlFor="rfc2889-addresscount" className="flex items-center gap-tight label">
               Address Count
               <HelpIcon tooltip="Number of MAC addresses for learning/caching tests. RFC 2889 recommends testing at 1, 10, 100, 1000, 10000 addresses." />
             </label>
@@ -245,17 +227,14 @@ export function RFC2889ConfigForm({
               type="number"
               step={1}
               {...register('addressCount', { valueAsNumber: true })}
-              className="mt-1 w-full"
+              className="mt-tight w-full"
             />
             <FieldError message={errors.addressCount?.message} />
           </div>
         ) : null}
 
         <div>
-          <label
-            htmlFor="rfc2889-loss"
-            className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-          >
+          <label htmlFor="rfc2889-loss" className="flex items-center gap-tight label">
             Acceptable Loss (%)
             <HelpIcon tooltip="Maximum acceptable frame loss percentage. RFC 2889 specifies 0%." />
           </label>
@@ -264,17 +243,17 @@ export function RFC2889ConfigForm({
             type="number"
             step={0.001}
             {...register('acceptableLoss', { valueAsNumber: true })}
-            className="mt-1 w-full"
+            className="mt-tight w-full"
           />
           <FieldError message={errors.acceptableLoss?.message} />
         </div>
 
-        <div className="p-3 rounded-lg bg-[var(--color-surface-base)] border border-[var(--color-surface-border)]">
-          <div className="flex items-center gap-2 text-sm font-medium text-[var(--color-text-primary)] mb-2">
+        <div className="pad-sm rounded-lg bg-surface-base border border-surface-border">
+          <div className="flex items-center gap-compact label mb-2">
             <Info className="w-4 h-4" />
             Test Summary
           </div>
-          <div className="text-xs text-[var(--color-text-muted)] space-y-1">
+          <div className="text-xs text-text-muted stack-xs">
             <div>
               Selected tests:{' '}
               {[

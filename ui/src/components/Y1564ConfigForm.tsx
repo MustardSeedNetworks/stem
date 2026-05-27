@@ -88,7 +88,7 @@ const FRAME_SIZE_OPTIONS: Array<{ value: number; label: string }> = [
 function FieldError({ message }: { message?: string }): ReactElement | null {
   if (!message) return null;
   return (
-    <div className="mt-1 text-xs text-[var(--color-status-danger)] flex items-center gap-1">
+    <div className="mt-tight text-xs text-status-danger flex items-center gap-tight">
       <AlertTriangle className="w-3 h-3" />
       {message}
     </div>
@@ -169,26 +169,23 @@ export function Y1564ConfigForm({
   return (
     <CollapsibleSection
       title={
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-compact">
           <Settings2 className="w-4 h-4" />
           <span>Y.1564 / MEF Configuration</span>
         </div>
       }
       defaultOpen={true}
     >
-      <div className="space-y-4">
+      <div className="stack-lg">
         {/* Bandwidth Configuration */}
-        <div className="space-y-3">
-          <div className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">
+        <div className="stack">
+          <div className="text-xs font-semibold text-text-muted uppercase tracking-wide">
             Bandwidth Parameters
           </div>
 
           {/* CIR */}
           <div>
-            <label
-              htmlFor="y1564-cir"
-              className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-            >
+            <label htmlFor="y1564-cir" className="flex items-center gap-tight label">
               CIR (Mbps)
               <HelpIcon tooltip="Committed Information Rate - the guaranteed bandwidth that the service will always provide." />
             </label>
@@ -197,17 +194,14 @@ export function Y1564ConfigForm({
               type="number"
               step={1}
               {...register('cir', { valueAsNumber: true })}
-              className="mt-1 w-full"
+              className="mt-tight w-full"
             />
             <FieldError message={errors.cir?.message} />
           </div>
 
           {/* EIR */}
           <div>
-            <label
-              htmlFor="y1564-eir"
-              className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-            >
+            <label htmlFor="y1564-eir" className="flex items-center gap-tight label">
               EIR (Mbps)
               <HelpIcon tooltip="Excess Information Rate - additional bandwidth available when network capacity permits (best-effort)." />
             </label>
@@ -216,17 +210,14 @@ export function Y1564ConfigForm({
               type="number"
               step={1}
               {...register('eir', { valueAsNumber: true })}
-              className="mt-1 w-full"
+              className="mt-tight w-full"
             />
             <FieldError message={errors.eir?.message} />
           </div>
 
           {/* CBS */}
           <div>
-            <label
-              htmlFor="y1564-cbs"
-              className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-            >
+            <label htmlFor="y1564-cbs" className="flex items-center gap-tight label">
               CBS (KB)
               <HelpIcon tooltip="Committed Burst Size - maximum burst of traffic allowed at CIR before excess marking." />
             </label>
@@ -235,17 +226,14 @@ export function Y1564ConfigForm({
               type="number"
               step={1}
               {...register('cbs', { valueAsNumber: true })}
-              className="mt-1 w-full"
+              className="mt-tight w-full"
             />
             <FieldError message={errors.cbs?.message} />
           </div>
 
           {/* EBS */}
           <div>
-            <label
-              htmlFor="y1564-ebs"
-              className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-            >
+            <label htmlFor="y1564-ebs" className="flex items-center gap-tight label">
               EBS (KB)
               <HelpIcon tooltip="Excess Burst Size - maximum burst of excess traffic (beyond CIR) that may be allowed." />
             </label>
@@ -254,24 +242,21 @@ export function Y1564ConfigForm({
               type="number"
               step={1}
               {...register('ebs', { valueAsNumber: true })}
-              className="mt-1 w-full"
+              className="mt-tight w-full"
             />
             <FieldError message={errors.ebs?.message} />
           </div>
         </div>
 
         {/* SLA Thresholds */}
-        <div className="space-y-3">
-          <div className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">
+        <div className="stack">
+          <div className="text-xs font-semibold text-text-muted uppercase tracking-wide">
             SLA Thresholds
           </div>
 
           {/* Frame Loss Ratio */}
           <div>
-            <label
-              htmlFor="y1564-flr"
-              className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-            >
+            <label htmlFor="y1564-flr" className="flex items-center gap-tight label">
               Max Frame Loss (%)
               <HelpIcon tooltip="Maximum acceptable Frame Loss Ratio (FLR). Typical SLA values: 0.01% to 0.1%." />
             </label>
@@ -280,17 +265,14 @@ export function Y1564ConfigForm({
               type="number"
               step={0.001}
               {...register('flrThreshold', { valueAsNumber: true })}
-              className="mt-1 w-full"
+              className="mt-tight w-full"
             />
             <FieldError message={errors.flrThreshold?.message} />
           </div>
 
           {/* Frame Delay */}
           <div>
-            <label
-              htmlFor="y1564-fd"
-              className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-            >
+            <label htmlFor="y1564-fd" className="flex items-center gap-tight label">
               Max Frame Delay (ms)
               <HelpIcon tooltip="Maximum acceptable one-way Frame Delay (FD). Typical values: 5-50ms depending on service class." />
             </label>
@@ -299,17 +281,14 @@ export function Y1564ConfigForm({
               type="number"
               step={1}
               {...register('fdThreshold', { valueAsNumber: true })}
-              className="mt-1 w-full"
+              className="mt-tight w-full"
             />
             <FieldError message={errors.fdThreshold?.message} />
           </div>
 
           {/* Frame Delay Variation */}
           <div>
-            <label
-              htmlFor="y1564-fdv"
-              className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-            >
+            <label htmlFor="y1564-fdv" className="flex items-center gap-tight label">
               Max Jitter (ms)
               <HelpIcon tooltip="Maximum acceptable Frame Delay Variation (FDV/jitter). Typical values: 2-10ms." />
             </label>
@@ -318,33 +297,33 @@ export function Y1564ConfigForm({
               type="number"
               step={1}
               {...register('fdvThreshold', { valueAsNumber: true })}
-              className="mt-1 w-full"
+              className="mt-tight w-full"
             />
             <FieldError message={errors.fdvThreshold?.message} />
           </div>
         </div>
 
         {/* Frame Sizes */}
-        <div className="space-y-2">
-          <div className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide flex items-center gap-1">
+        <div className="stack-sm">
+          <div className="text-xs font-semibold text-text-muted uppercase tracking-wide flex items-center gap-tight">
             Frame Sizes
             <HelpIcon tooltip="Select frame sizes to test. RFC 2544 recommends: 64, 128, 256, 512, 1024, 1280, 1518 bytes." />
           </div>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-compact">
             {FRAME_SIZE_OPTIONS.map((option) => (
               <label
                 key={option.value}
                 title={`Include ${option.value}-byte frames in the Y.1564 service activation sweep`}
-                className="flex items-center gap-2 p-2 rounded-lg cursor-pointer hover:bg-[var(--color-surface-hover)] text-sm"
+                className="flex items-center gap-compact pad-xs rounded-lg cursor-pointer hover:bg-surface-hover text-sm"
               >
                 <input
                   type="checkbox"
                   checked={frameSizes.includes(option.value)}
                   onChange={() => toggleFrameSize(option.value)}
                   aria-label={`Test ${option.value}-byte frames`}
-                  className="w-4 h-4 accent-[var(--color-brand-primary)]"
+                  className="w-4 h-4 accent-brand-primary"
                 />
-                <span className="text-[var(--color-text-primary)]">{option.label}</span>
+                <span className="text-text-primary">{option.label}</span>
               </label>
             ))}
           </div>
@@ -352,17 +331,14 @@ export function Y1564ConfigForm({
         </div>
 
         {/* Test Duration */}
-        <div className="space-y-3">
-          <div className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">
+        <div className="stack">
+          <div className="text-xs font-semibold text-text-muted uppercase tracking-wide">
             Test Duration
           </div>
 
           {isConfigTest || isFullTest ? (
             <div>
-              <label
-                htmlFor="y1564-config-duration"
-                className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-              >
+              <label htmlFor="y1564-config-duration" className="flex items-center gap-tight label">
                 Config Step Duration (s)
                 <HelpIcon tooltip="Duration for each step load (25%, 50%, 75%, 100% of CIR) during configuration test." />
               </label>
@@ -371,10 +347,10 @@ export function Y1564ConfigForm({
                 type="number"
                 step={1}
                 {...register('configStepDuration', { valueAsNumber: true })}
-                className="mt-1 w-full"
+                className="mt-tight w-full"
               />
               <FieldError message={errors.configStepDuration?.message} />
-              <div className="text-xs text-[var(--color-text-muted)] mt-1">
+              <div className="text-xs text-text-muted mt-tight">
                 Total config test: ~{configStepDuration * 4 * frameSizes.length}s
               </div>
             </div>
@@ -382,10 +358,7 @@ export function Y1564ConfigForm({
 
           {isPerfTest || isFullTest ? (
             <div>
-              <label
-                htmlFor="y1564-perf-duration"
-                className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-              >
+              <label htmlFor="y1564-perf-duration" className="flex items-center gap-tight label">
                 Performance Duration (s)
                 <HelpIcon tooltip="Duration of the sustained performance test at 100% CIR. Y.1564 recommends minimum 15 minutes (900s)." />
               </label>
@@ -394,10 +367,10 @@ export function Y1564ConfigForm({
                 type="number"
                 step={60}
                 {...register('perfTestDuration', { valueAsNumber: true })}
-                className="mt-1 w-full"
+                className="mt-tight w-full"
               />
               <FieldError message={errors.perfTestDuration?.message} />
-              <div className="text-xs text-[var(--color-text-muted)] mt-1">
+              <div className="text-xs text-text-muted mt-tight">
                 = {Math.floor(perfTestDuration / 60)} minutes
               </div>
             </div>
@@ -405,16 +378,13 @@ export function Y1564ConfigForm({
         </div>
 
         {/* VLAN Configuration */}
-        <div className="space-y-3">
-          <div className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">
+        <div className="stack">
+          <div className="text-xs font-semibold text-text-muted uppercase tracking-wide">
             VLAN Settings
           </div>
 
           <div>
-            <label
-              htmlFor="y1564-vlan"
-              className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-            >
+            <label htmlFor="y1564-vlan" className="flex items-center gap-tight label">
               VLAN ID
               <HelpIcon tooltip="VLAN tag for test traffic. Set to 0 for untagged traffic." />
             </label>
@@ -423,27 +393,24 @@ export function Y1564ConfigForm({
               type="number"
               step={1}
               {...register('vlanId', { valueAsNumber: true })}
-              className="mt-1 w-full"
+              className="mt-tight w-full"
             />
             <FieldError message={errors.vlanId?.message} />
             {vlanId === 0 && (
-              <div className="text-xs text-[var(--color-text-muted)] mt-1">Untagged traffic</div>
+              <div className="text-xs text-text-muted mt-tight">Untagged traffic</div>
             )}
           </div>
 
           {vlanId > 0 && (
             <div>
-              <label
-                htmlFor="y1564-pcp"
-                className="flex items-center gap-1 text-sm font-medium text-[var(--color-text-primary)]"
-              >
+              <label htmlFor="y1564-pcp" className="flex items-center gap-tight label">
                 Priority (PCP)
                 <HelpIcon tooltip="Priority Code Point (802.1p). 0=Best Effort, 7=Highest Priority." />
               </label>
               <select
                 id="y1564-pcp"
                 {...register('pcp', { valueAsNumber: true })}
-                className="mt-1 w-full"
+                className="mt-tight w-full"
               >
                 <option value={0}>0 - Best Effort (BE)</option>
                 <option value={1}>1 - Background (BK)</option>
@@ -461,41 +428,39 @@ export function Y1564ConfigForm({
           {/* Color-Aware Mode */}
           <label
             title="Send traffic as green (in-profile, conforms to CIR) and yellow (out-of-profile, conforms to EIR) and verify each color is treated correctly"
-            className="flex items-center gap-3 p-2 rounded-lg cursor-pointer hover:bg-[var(--color-surface-hover)]"
+            className="flex items-center gap-default pad-xs rounded-lg cursor-pointer hover:bg-surface-hover"
           >
             <input
               type="checkbox"
               {...register('colorAware')}
               aria-label="Enable color-aware Y.1564 testing"
-              className="w-4 h-4 accent-[var(--color-brand-primary)]"
+              className="w-4 h-4 accent-brand-primary"
             />
             <div>
-              <div className="font-medium text-sm flex items-center gap-1">
+              <div className="font-medium text-sm flex items-center gap-tight">
                 Color-Aware Mode
                 <HelpIcon tooltip="Enable dual-rate testing with green (CIR) and yellow (EIR) traffic classes." />
               </div>
-              <div className="text-xs text-[var(--color-text-muted)]">
-                Test green/yellow traffic separation
-              </div>
+              <div className="text-xs text-text-muted">Test green/yellow traffic separation</div>
             </div>
           </label>
         </div>
 
         {/* Cross-field error footer */}
         {crossFieldError && (
-          <div className="p-2 rounded-lg bg-[var(--color-status-danger-subtle)] text-[var(--color-status-danger)] text-sm flex items-center gap-2">
+          <div className="pad-xs rounded-lg bg-status-danger-subtle text-status-danger text-sm flex items-center gap-compact">
             <AlertTriangle className="w-4 h-4" />
             {crossFieldError.message}
           </div>
         )}
 
         {/* Summary */}
-        <div className="p-3 rounded-lg bg-[var(--color-surface-base)] border border-[var(--color-surface-border)]">
-          <div className="flex items-center gap-2 text-sm font-medium text-[var(--color-text-primary)] mb-2">
+        <div className="pad-sm rounded-lg bg-surface-base border border-surface-border">
+          <div className="flex items-center gap-compact label mb-2">
             <Info className="w-4 h-4" />
             Test Summary
           </div>
-          <div className="text-xs text-[var(--color-text-muted)] space-y-1">
+          <div className="text-xs text-text-muted stack-xs">
             <div>
               Service: {cir} Mbps CIR
               {eir > 0 && ` + ${eir} Mbps EIR`}

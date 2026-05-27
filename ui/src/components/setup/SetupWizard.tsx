@@ -139,42 +139,37 @@ export function SetupWizard({
     : undefined;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-50 flex-center bg-black/60 backdrop-blur-sm pad">
       <div className="w-full max-w-md">
         {/* Header */}
-        <div className="text-center mb-6">
-          <div className="w-16 h-16 mx-auto mb-4 flex items-center justify-center rounded-2xl bg-[var(--color-brand-primary)] text-white">
+        <div className="text-center mb-section">
+          <div className="w-16 h-16 mx-auto mb-content flex-center rounded-2xl bg-brand-primary text-white">
             <Activity className="w-8 h-8" />
           </div>
-          <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">
-            {t('welcome.title')}
-          </h1>
-          <p className="text-sm text-[var(--color-text-muted)] mt-1">{t('welcome.subtitle')}</p>
+          <h1 className="heading-1 text-text-primary">{t('welcome.title')}</h1>
+          <p className="text-sm text-text-muted mt-tight">{t('welcome.subtitle')}</p>
         </div>
 
         {/* Form */}
         <form
           onSubmit={handleSubmit(onSubmit)}
-          className="rounded-3xl border border-[var(--color-surface-border)] bg-[var(--color-surface-raised)] p-6 shadow-2xl"
+          className="rounded-3xl border border-surface-border bg-surface-raised pad-lg shadow-2xl"
         >
           {/* Username display */}
-          <div className="mb-6 p-3 rounded-xl bg-[var(--color-surface-base)] border border-[var(--color-surface-border)]">
-            <p className="text-sm text-[var(--color-text-muted)]">
-              {t('username.label')}{' '}
-              <strong className="text-[var(--color-text-primary)]">{username}</strong>
+          <div className="mb-section pad-sm rounded-xl bg-surface-base border border-surface-border">
+            <p className="text-sm text-text-muted">
+              {t('username.label')} <strong className="text-text-primary">{username}</strong>
             </p>
-            <p className="text-xs text-[var(--color-text-muted)] mt-1">
-              {t('username.description')}
-            </p>
+            <p className="text-xs text-text-muted mt-tight">{t('username.description')}</p>
           </div>
 
           {/* Role selection */}
-          <div className="mb-6 space-y-3">
+          <div className="mb-section stack">
             <div>
-              <p className="text-xs font-semibold text-[var(--color-text-muted)]">
+              <p className="text-xs font-semibold text-text-muted">
                 {t('role.title', "Choose this stem's role")}
               </p>
-              <p className="text-xs text-[var(--color-text-muted)] mt-1">
+              <p className="text-xs text-text-muted mt-tight">
                 {t(
                   'role.subtitle',
                   'Each stem instance runs as either a passive Reflector or an active Test Master. You can switch roles later from the header.',
@@ -182,21 +177,21 @@ export function SetupWizard({
               </p>
             </div>
 
-            <label className="flex items-start gap-3 p-3 rounded-xl border border-[var(--color-surface-border)] cursor-pointer hover:bg-[var(--color-surface-base)] transition-colors">
+            <label className="flex items-start gap-default pad-sm rounded-xl border border-surface-border cursor-pointer hover:bg-surface-base transition-colors">
               <input
                 type="radio"
                 name="stemRole"
                 value="reflector"
                 checked={selectedRole === 'reflector'}
                 onChange={() => setSelectedRole('reflector')}
-                className="mt-1 w-4 h-4 text-[var(--color-brand-primary)]"
+                className="mt-tight w-4 h-4 text-brand-primary"
               />
               <div>
-                <span className="text-sm font-medium text-[var(--color-text-primary)] flex items-center gap-2">
+                <span className="label flex items-center gap-compact">
                   <Repeat className="w-4 h-4" />
                   {t('role.reflector.title', 'Reflector')}
                 </span>
-                <p className="text-xs text-[var(--color-text-muted)] mt-1">
+                <p className="text-xs text-text-muted mt-tight">
                   {t(
                     'role.reflector.description',
                     'Passive loopback — bounces frames back to a Test Master for end-to-end measurement.',
@@ -205,21 +200,21 @@ export function SetupWizard({
               </div>
             </label>
 
-            <label className="flex items-start gap-3 p-3 rounded-xl border border-[var(--color-surface-border)] cursor-pointer hover:bg-[var(--color-surface-base)] transition-colors">
+            <label className="flex items-start gap-default pad-sm rounded-xl border border-surface-border cursor-pointer hover:bg-surface-base transition-colors">
               <input
                 type="radio"
                 name="stemRole"
                 value="test_master"
                 checked={selectedRole === 'test_master'}
                 onChange={() => setSelectedRole('test_master')}
-                className="mt-1 w-4 h-4 text-[var(--color-brand-primary)]"
+                className="mt-tight w-4 h-4 text-brand-primary"
               />
               <div>
-                <span className="text-sm font-medium text-[var(--color-text-primary)] flex items-center gap-2">
+                <span className="label flex items-center gap-compact">
                   <Target className="w-4 h-4" />
                   {t('role.testMaster.title', 'Test Master')}
                 </span>
-                <p className="text-xs text-[var(--color-text-muted)] mt-1">
+                <p className="text-xs text-text-muted mt-tight">
                   {t(
                     'role.testMaster.description',
                     'Active testing — runs RFC 2544, Y.1564, Y.1731, MEF, TSN, and traffic-generation modules.',
@@ -230,27 +225,25 @@ export function SetupWizard({
           </div>
 
           {/* Password mode selection */}
-          <div className="mb-6 space-y-3">
-            <p className="text-xs font-semibold text-[var(--color-text-muted)]">
-              {t('password.chooseMethod')}
-            </p>
+          <div className="mb-section stack">
+            <p className="text-xs font-semibold text-text-muted">{t('password.chooseMethod')}</p>
 
             {/* Custom password option */}
-            <label className="flex items-start gap-3 p-3 rounded-xl border border-[var(--color-surface-border)] cursor-pointer hover:bg-[var(--color-surface-base)] transition-colors">
+            <label className="flex items-start gap-default pad-sm rounded-xl border border-surface-border cursor-pointer hover:bg-surface-base transition-colors">
               <input
                 type="radio"
                 name="passwordMode"
                 value="custom"
                 checked={passwordMode === 'custom'}
                 onChange={() => handlePasswordModeChange('custom')}
-                className="mt-1 w-4 h-4 text-[var(--color-brand-primary)]"
+                className="mt-tight w-4 h-4 text-brand-primary"
               />
               <div>
-                <span className="text-sm font-medium text-[var(--color-text-primary)] flex items-center gap-2">
+                <span className="label flex items-center gap-compact">
                   <Lock className="w-4 h-4" />
                   {t('password.custom.title')}
                 </span>
-                <p className="text-xs text-[var(--color-text-muted)] mt-1">
+                <p className="text-xs text-text-muted mt-tight">
                   {t('password.custom.description')}
                 </p>
               </div>
@@ -258,33 +251,33 @@ export function SetupWizard({
 
             {/* Generated password option */}
             {suggestedPassword ? (
-              <label className="flex items-start gap-3 p-3 rounded-xl border border-[var(--color-surface-border)] cursor-pointer hover:bg-[var(--color-surface-base)] transition-colors">
+              <label className="flex items-start gap-default pad-sm rounded-xl border border-surface-border cursor-pointer hover:bg-surface-base transition-colors">
                 <input
                   type="radio"
                   name="passwordMode"
                   value="generated"
                   checked={passwordMode === 'generated'}
                   onChange={() => handlePasswordModeChange('generated')}
-                  className="mt-1 w-4 h-4 text-[var(--color-brand-primary)]"
+                  className="mt-tight w-4 h-4 text-brand-primary"
                 />
                 <div className="flex-1">
-                  <span className="text-sm font-medium text-[var(--color-text-primary)] flex items-center gap-2">
+                  <span className="label flex items-center gap-compact">
                     <Zap className="w-4 h-4" />
                     {t('password.generated.title')}
                   </span>
-                  <p className="text-xs text-[var(--color-text-muted)] mt-1">
+                  <p className="text-xs text-text-muted mt-tight">
                     {t('password.generated.description')}
                   </p>
                   {passwordMode === 'generated' ? (
-                    <div className="mt-3 p-2 rounded-lg bg-[var(--color-surface-sunken)] border border-[var(--color-surface-border)]">
-                      <div className="flex items-center gap-2">
-                        <code className="flex-1 font-mono text-xs text-[var(--color-brand-primary)] select-all break-all">
+                    <div className="mt-heading pad-xs rounded-lg bg-surface-sunken border border-surface-border">
+                      <div className="flex items-center gap-compact">
+                        <code className="flex-1 font-mono text-xs text-brand-primary select-all break-all">
                           {suggestedPassword}
                         </code>
                         <button
                           type="button"
                           onClick={handleCopyPassword}
-                          className="shrink-0 p-1.5 rounded-md text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-base)] border border-[var(--color-surface-border)]"
+                          className="shrink-0 p-1.5 rounded-md text-text-muted hover:text-text-primary hover:bg-surface-base border border-surface-border"
                           title={t(
                             'buttons.copyTooltip',
                             'Copy the generated password to the clipboard so you can save it in a password manager',
@@ -295,11 +288,11 @@ export function SetupWizard({
                         </button>
                       </div>
                       {copied ? (
-                        <p className="text-xs text-[var(--color-status-success)] mt-1">
+                        <p className="text-xs text-status-success mt-tight">
                           {t('buttons.copied')}
                         </p>
                       ) : null}
-                      <p className="text-xs text-[var(--color-status-warning)] mt-2">
+                      <p className="text-xs text-status-warning mt-inline">
                         {t('password.generated.saveWarning')}
                       </p>
                     </div>
@@ -312,25 +305,22 @@ export function SetupWizard({
           {/* Custom password fields */}
           {passwordMode === 'custom' && (
             <>
-              <div className="mb-4">
-                <label
-                  htmlFor="setup-password"
-                  className="text-xs font-semibold text-[var(--color-text-muted)]"
-                >
+              <div className="mb-content">
+                <label htmlFor="setup-password" className="text-xs font-semibold text-text-muted">
                   {t('password.label')}
                 </label>
-                <div className="relative mt-1">
+                <div className="relative mt-tight">
                   <input
                     id="setup-password"
                     type={showPassword ? 'text' : 'password'}
                     {...register('password')}
-                    className="w-full rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-base)] px-3 py-2 pr-10 text-sm text-[var(--color-text-primary)] focus:border-[var(--color-brand-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-primary)]/30"
+                    className="w-full rounded-xl border border-surface-border bg-surface-base px-3 py-row pr-icon text-sm text-text-primary focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/30"
                     placeholder={t('password.placeholder')}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
                     title={
                       showPassword
                         ? 'Hide the password (mask characters with dots)'
@@ -342,20 +332,18 @@ export function SetupWizard({
                   </button>
                 </div>
                 {errors.password ? (
-                  <p className="text-xs text-[var(--color-status-error)] mt-1">
-                    {errors.password.message}
-                  </p>
+                  <p className="text-xs text-status-error mt-tight">{errors.password.message}</p>
                 ) : (
-                  <p className="text-xs text-[var(--color-text-muted)] mt-1">
+                  <p className="text-xs text-text-muted mt-tight">
                     {t('password.minLength', { count: MIN_PASSWORD_LENGTH })}
                   </p>
                 )}
               </div>
 
-              <div className="mb-6">
+              <div className="mb-section">
                 <label
                   htmlFor="setup-confirm-password"
-                  className="text-xs font-semibold text-[var(--color-text-muted)]"
+                  className="text-xs font-semibold text-text-muted"
                 >
                   {t('password.confirm.label')}
                 </label>
@@ -363,11 +351,11 @@ export function SetupWizard({
                   id="setup-confirm-password"
                   type={showPassword ? 'text' : 'password'}
                   {...register('confirmPassword')}
-                  className="mt-1 w-full rounded-xl border border-[var(--color-surface-border)] bg-[var(--color-surface-base)] px-3 py-2 text-sm text-[var(--color-text-primary)] focus:border-[var(--color-brand-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-primary)]/30"
+                  className="mt-tight w-full rounded-xl border border-surface-border bg-surface-base px-3 py-row text-sm text-text-primary focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/30"
                   placeholder={t('password.confirm.placeholder')}
                 />
                 {errors.confirmPassword ? (
-                  <p className="text-xs text-[var(--color-status-error)] mt-1">
+                  <p className="text-xs text-status-error mt-tight">
                     {errors.confirmPassword.message}
                   </p>
                 ) : null}
@@ -379,7 +367,7 @@ export function SetupWizard({
           {crossFieldError ? (
             <div
               role="alert"
-              className="mb-4 p-3 rounded-xl bg-[var(--color-status-error)]/10 border border-[var(--color-status-error)]/20 text-sm text-[var(--color-status-error)]"
+              className="mb-content pad-sm rounded-xl bg-status-error/10 border border-status-error/20 text-sm text-status-error"
             >
               {crossFieldError.message}
             </div>
@@ -389,7 +377,7 @@ export function SetupWizard({
           {submitError !== null ? (
             <div
               role="alert"
-              className="mb-4 p-3 rounded-xl bg-[var(--color-status-error)]/10 border border-[var(--color-status-error)]/20 text-sm text-[var(--color-status-error)]"
+              className="mb-content pad-sm rounded-xl bg-status-error/10 border border-status-error/20 text-sm text-status-error"
             >
               {submitError}
             </div>
@@ -406,7 +394,7 @@ export function SetupWizard({
         </form>
 
         {/* Footer */}
-        <p className="text-xs text-[var(--color-text-muted)] text-center mt-4">
+        <p className="text-xs text-text-muted text-center mt-content">
           {t('footer.copyright', { year: new Date().getFullYear() })}
         </p>
       </div>

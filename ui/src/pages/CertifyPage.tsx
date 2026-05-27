@@ -19,13 +19,13 @@ export function CertifyPage() {
   } = useAppContext();
 
   return (
-    <section className="space-y-6">
+    <section className="stack-xl">
       <Breadcrumbs />
       <PageHeader
         icon={Award}
         title="Certify"
         description="RFC 2889 forwarding, RFC 6349 TCP throughput, and TSN time-sensitive networking certification."
-        iconColorClass="text-[var(--color-module-certify)]"
+        iconColorClass="text-module-certify"
       />
       <RoleGuard requires="test_master" moduleName="Certify">
         <RFC2889ConfigForm

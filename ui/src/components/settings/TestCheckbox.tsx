@@ -20,7 +20,7 @@ export function TestCheckbox({ test, checked, onChange }: TestCheckboxProps): Re
     <label
       title={test.tooltip}
       className={cn(
-        'flex items-start gap-3',
+        'flex items-start gap-default',
         spacing.pad.sm,
         radius.lg,
         'cursor-pointer hover:bg-surface-hover transition-colors',
@@ -34,7 +34,7 @@ export function TestCheckbox({ test, checked, onChange }: TestCheckboxProps): Re
         className="mt-0.5 w-4 h-4 accent-brand-primary"
       />
       <div className="flex-1">
-        <div className="body-small font-medium text-text-primary flex items-center gap-1">
+        <div className="body-small font-medium text-text-primary flex items-center gap-tight">
           {test.name}
           <HelpIcon tooltip={test.tooltip} />
         </div>

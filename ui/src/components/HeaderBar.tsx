@@ -410,7 +410,7 @@ function ProfileDropdown({
       {isOpen ? (
         <div
           className={cn(
-            'absolute top-full right-0 mt-1 w-56',
+            'absolute top-full right-0 mt-tight w-56',
             radius.lg,
             'border border-surface-border bg-surface-raised shadow-lg z-50 overflow-hidden',
           )}
@@ -435,7 +435,7 @@ function ProfileDropdown({
                     p.id === activeProfile?.id && 'bg-brand-primary/10',
                   )}
                 >
-                  <div className="flex items-center justify-between">
+                  <div className="flex-between">
                     <span className="body-small text-text-primary truncate">{p.name}</span>
                     {p.id === activeProfile?.id ? (
                       <CheckIcon className={cn(iconTokens.size.sm, 'text-brand-primary')} />
@@ -454,7 +454,7 @@ function ProfileDropdown({
                   onManage();
                 }}
                 className={cn(
-                  'w-full flex items-center justify-center',
+                  'w-full flex-center',
                   spacing.gap.tight,
                   spacing.pad.sm,
                   'hover:bg-surface-hover text-brand-primary',
@@ -520,7 +520,7 @@ function InterfaceDropdown({
       {isOpen ? (
         <div
           className={cn(
-            'absolute top-full right-0 mt-1 w-64',
+            'absolute top-full right-0 mt-tight w-64',
             radius.lg,
             'border border-surface-border bg-surface-raised shadow-lg z-50 overflow-hidden',
           )}
@@ -550,9 +550,9 @@ function InterfaceDropdown({
                     iface.name === currentInterface && 'bg-brand-primary/10',
                   )}
                 >
-                  <div className="flex items-center justify-between">
+                  <div className="flex-between">
                     <div className="stack-xs">
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-tight">
                         <span className="body-small text-text-primary font-medium">
                           {getFriendlyInterfaceName(iface.name, iface.type)}
                         </span>
@@ -719,7 +719,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function HeaderBarCompon
         className={cn(
           'mx-auto max-w-7xl',
           spacing.mainPadding.x,
-          'py-3',
+          'py-row-lg',
           layout.flex.between,
           spacing.gap.default,
         )}
