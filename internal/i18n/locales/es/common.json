@@ -178,5 +178,11 @@
       "unsupported": "El modo Reflector no es compatible con esta plataforma.",
       "network": "No se pudo conectar con el backend del stem."
     }
+  },
+  "plurals": {
+    "testCount_one": "Se encontró {{count}} prueba",
+    "testCount_other": "Se encontraron {{count}} pruebas",
+    "glossaryEntryCount_one": "{{count}} entrada",
+    "glossaryEntryCount_other": "{{count}} entradas"
   }
 }
