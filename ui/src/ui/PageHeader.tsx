@@ -2,9 +2,9 @@
  * PageHeader — page-level title bar with optional breadcrumbs, actions,
  * and a slide-out help panel.
  *
- * CANONICAL SHELL — owned by stem; seed and niac sync this file via
- * scripts/sync-shell.sh. Edits made downstream will be overwritten on
- * next sync. All colors/spacing reference theme tokens.
+ * Shared shell pattern — kept visually and behaviorally consistent across
+ * seed / stem / niac by convention; each repo owns this file independently
+ * (no master, no sync). All colors/spacing reference theme tokens.
  *
  * Usage:
  *   <PageHeader

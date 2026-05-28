@@ -1,17 +1,18 @@
-# Shared UI shell — canonical source contract
+# Shared UI shell — design conventions
 
-Stem owns the canonical implementation of the three-product shared shell.
-Seed and niac sync these files into their own repos via
-`scripts/sync-shell.sh`; downstream edits are overwritten on next sync.
+The three products (seed, stem, niac) share the same shell *look and
+behavior*, but **each repo owns its own implementation** — there is no
+master repo and no sync script. When you change one of these files, keep
+the others consistent by following the conventions here; ideally the
+implementations stay near-identical, differing only where the product
+genuinely differs (nav items, brand tokens, product content).
 
-## Canonical files (owned here)
+## Shared shell files (each repo owns its own copy)
 
 | File | Purpose |
 |---|---|
 | `ui/src/ui/Sidebar.tsx` | Persistent collapsible left navigation with mobile drawer, gradient active state, tri-color badges, hover prefetch, gradient page background. |
 | `ui/src/ui/PageHeader.tsx` | Page title bar with optional breadcrumbs, action area, and slide-out help panel. |
-
-Each canonical file carries a header banner identifying it as such.
 
 ## Files NOT shared
 
@@ -19,7 +20,7 @@ Each canonical file carries a header banner identifying it as such.
 |---|---|
 | `HeaderBar.tsx` | Too much per-product variance. Each repo owns its own; **the SHAPE is conventional** (see below). |
 
-## HeaderBar shape convention (per-product, not synced)
+## HeaderBar shape convention (per-product)
 
 Every product's `HeaderBar.tsx` follows the same three-slot layout, even
 though slot fills differ:
@@ -99,22 +100,17 @@ following tokens. Values are per-product; names are universal.
 - `react-router-dom` (for `useLocation`, `useNavigate`, `Link`)
 - `lucide-react` (icon library)
 
-## How seed/niac consume
+## Keeping the three repos consistent
 
-```bash
-# In seed or niac:
-make sync-shell    # copies canonical files from ../stem, formats, writes lock
-make verify-shell  # checks lock matches current files (run in CI)
-```
+There is no sync script and no master repo — each repo owns its copy of
+these files outright. When you change a shared shell file in one product:
 
-The synced files in seed/niac carry a banner identifying their stem source
-SHA. Editing them locally produces a CI failure on `verify-shell` until
-the changes either (a) are pushed upstream to stem and re-synced, or
-(b) are reverted.
+1. Apply the equivalent change to the other two repos (seed, stem, niac),
+   keeping the implementations near-identical.
+2. Preserve the conventions in this doc (HeaderBar shape, sidebar
+   structure, theme-token usage).
+3. Keep per-product differences only where they must exist — nav items,
+   brand tokens (`index.css`), and product-specific content.
 
-## Adding a new canonical file
-
-1. Land the new file in stem with the `// CANONICAL SHELL` banner.
-2. Update the table in this doc.
-3. Update `scripts/sync-shell.sh` in seed and niac to include it.
-4. Run `make sync-shell` downstream; commit the synced copy.
+If you add a new shared shell file, document it in the table above and add
+the equivalent file to all three repos.
