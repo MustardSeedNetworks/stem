@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.21.1](https://github.com/krisarmstrong/stem/compare/v0.21.0...v0.21.1) (2026-05-28)
+
+
+### Bug Fixes
+
+* **ui:** render sidebar product name from t('app.title'), not hardcoded ([#350](https://github.com/krisarmstrong/stem/issues/350)) ([446b639](https://github.com/krisarmstrong/stem/commit/446b6390f4353378d0b8b55c2d6721a39d1807b2))
+
 ## [0.21.0](https://github.com/krisarmstrong/stem/compare/v0.20.0...v0.21.0) (2026-05-28)
 
 
