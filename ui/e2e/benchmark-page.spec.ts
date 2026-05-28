@@ -33,6 +33,6 @@ test.describe('Benchmark Page', () => {
     const content = page.locator(
       'text=/throughput|latency|frame.loss|back.to.back|permission|role|access/i',
     );
-    await expect(content.first()).toBeVisible({ timeout: 5000 });
+    await expect(content.locator("visible=true").first()).toBeVisible({ timeout: 5000 });
   });
 });

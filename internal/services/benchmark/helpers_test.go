@@ -11,6 +11,22 @@ import (
 	"github.com/krisarmstrong/stem/internal/services/orchestrator/dataplane"
 )
 
+// skipRealDataplaneInShort skips tests that drive the real CGO dataplane via
+// dataplane.NewTestContext(). Under the stub build (CGO disabled) those calls
+// return ErrNotSupported, which is the path these tests are written for. Under
+// the CGO+linux build (the race-detector job) they exercise the real C
+// dataplane, which requires a NIC/privileges the CI runner lacks — the C
+// trials fail with -22 (EINVAL) and the uninitialized test context panics.
+// The race job runs `go test -short`, so honoring -short keeps these tests in
+// their intended stub mode in the normal (CGO-off) backend job while skipping
+// the hardware path in CI. Production runs on real hardware and is unaffected.
+func skipRealDataplaneInShort(t *testing.T) {
+	t.Helper()
+	if testing.Short() {
+		t.Skip("exercises the real CGO dataplane; requires NIC/hardware — skipped under -short")
+	}
+}
+
 // TestGetLoadLevels tests the getLoadLevels helper function.
 func TestGetLoadLevels(t *testing.T) {
 	exec := benchmark.NewExecutorWithContext(nil)
@@ -622,6 +638,7 @@ func TestConfigureContextWithWarmupHelper(t *testing.T) {
 // TestExecuteWithTestContext tests Execute with a valid test context.
 // This allows testing all the code paths in Execute without needing Linux/CGO.
 func TestExecuteWithTestContext(t *testing.T) {
+	skipRealDataplaneInShort(t)
 	// Use NewTestContext which returns a valid but non-functional context.
 	ctx := dataplane.NewTestContext()
 	exec := benchmark.NewExecutorWithContext(ctx)
@@ -732,6 +749,7 @@ func verifyFailureResult(t *testing.T, result *modtypes.Result, testType string)
 
 // TestExecuteWithTestContextFrameSize tests Execute with various frame sizes.
 func TestExecuteWithTestContextFrameSize(t *testing.T) {
+	skipRealDataplaneInShort(t)
 	ctx := dataplane.NewTestContext()
 	exec := benchmark.NewExecutorWithContext(ctx)
 	defer exec.Close()
@@ -754,6 +772,7 @@ func TestExecuteWithTestContextFrameSize(t *testing.T) {
 
 // TestExecuteWithTestContextDefaultBranch tests the default case in Execute switch.
 func TestExecuteWithTestContextDefaultBranch(t *testing.T) {
+	skipRealDataplaneInShort(t)
 	ctx := dataplane.NewTestContext()
 	exec := benchmark.NewExecutorWithContext(ctx)
 	defer exec.Close()
@@ -817,6 +836,7 @@ func TestExecutorSupportsExecutionWithTestContext(t *testing.T) {
 
 // TestConfigureContextWithTestContext tests configureContext with valid context.
 func TestConfigureContextWithTestContext(t *testing.T) {
+	skipRealDataplaneInShort(t)
 	ctx := dataplane.NewTestContext()
 	exec := benchmark.NewExecutorWithContext(ctx)
 	defer exec.Close()

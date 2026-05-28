@@ -32,6 +32,6 @@ test.describe('Certify Page', () => {
     const content = page.locator(
       'text=/rfc.2889|rfc.6349|tsn|forwarding|certification|permission|role|access/i',
     );
-    await expect(content.first()).toBeVisible({ timeout: 5000 });
+    await expect(content.locator("visible=true").first()).toBeVisible({ timeout: 5000 });
   });
 });
