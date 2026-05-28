@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.21.0](https://github.com/krisarmstrong/stem/compare/v0.20.0...v0.21.0) (2026-05-28)
+
+
+### Features
+
+* **ui:** canonical shell — modernize Sidebar + PageHeader (Phase 1) ([#339](https://github.com/krisarmstrong/stem/issues/339)) ([3983689](https://github.com/krisarmstrong/stem/commit/39836892a591fd847c615df8616a181fb22ddd6c))
+
+
+### Bug Fixes
+
+* **ci:** unblock main — race in sse, lighthouse cert, e2e selectors ([#345](https://github.com/krisarmstrong/stem/issues/345)) ([533f7f8](https://github.com/krisarmstrong/stem/commit/533f7f8de044cbf88222ea006ee47057d664d092))
+* **ci:** unblock stem main — PageHeader testid, E2E selector, robots.txt ([#347](https://github.com/krisarmstrong/stem/issues/347)) ([6a5de95](https://github.com/krisarmstrong/stem/commit/6a5de95ca0a18b1ea93be20e07cc09553b6b758f))
+
 ## [0.20.0](https://github.com/krisarmstrong/stem/compare/v0.19.0...v0.20.0) (2026-05-27)
 
 
