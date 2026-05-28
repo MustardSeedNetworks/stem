@@ -29,6 +29,6 @@ test.describe('TrafficGen Page', () => {
 
   test('should show role-gated content', async ({ page }) => {
     const content = page.locator('text=/traffic|stream|load|shape|permission|role|access/i');
-    await expect(content.first()).toBeVisible({ timeout: 5000 });
+    await expect(content.locator("visible=true").first()).toBeVisible({ timeout: 5000 });
   });
 });

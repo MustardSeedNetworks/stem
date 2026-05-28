@@ -31,6 +31,6 @@ test.describe('Measure Page', () => {
     const content = page.locator(
       'text=/y\\.1731|oam|delay|loss|measurement|permission|role|access/i',
     );
-    await expect(content.first()).toBeVisible({ timeout: 5000 });
+    await expect(content.locator("visible=true").first()).toBeVisible({ timeout: 5000 });
   });
 });
