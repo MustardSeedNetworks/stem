@@ -212,6 +212,13 @@ jobs:
       - name: Run tests with race detector
         env:
           CGO_ENABLED: '1'
+          # Go 1.26 enables the Green Tea GC by default. It crashes
+          # intermittently under `-race` + CGO (the dataplane bindings) with
+          # a fatal error inside mgcmark_greenteagc.go — a toolchain bug, not
+          # an application data race (no "DATA RACE" report). Pin the prior
+          # GC for this job so race results are deterministic. Remove once
+          # the upstream greentea+race+cgo crash is fixed.
+          GOEXPERIMENT: nogreenteagc
         run: go test -short -race ./...
 
   # ============================================================================

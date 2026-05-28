@@ -1189,59 +1189,72 @@ function AppContent(): ReactElement {
   return (
     <BrowserRouter>
       <AppContext.Provider value={appContextValue}>
-        <SidebarLayout
-          groups={navGroups}
-          version={buildVersion.version}
-          onOpenHelp={openHelp}
-          onOpenSettings={openSettings}
-          onOpenHistory={openHistory}
-          topBar={topBar}
-        >
-          <Suspense fallback={<PageLoader />}>
-            <Routes>
-              <Route path="/" element={<Navigate to="/reflector" replace={true} />} />
-              {pages.map((page) => (
-                <Route key={page.path} path={page.path} element={<page.component />} />
-              ))}
-              <Route path="*" element={<Navigate to="/reflector" replace={true} />} />
-            </Routes>
-          </Suspense>
+        {/* Only mount the authenticated shell once signed in. Rendering the
+            full SidebarLayout + lazy routes + live TestResults *behind* the
+            login modal was the dominant CLS source (Suspense fallback→page
+            swap and WebSocket-driven TestResults height changes shifting the
+            background). Unauthenticated users get a stable gradient backdrop
+            under the auth overlays — also avoids briefly exposing the app
+            shell and loading routes they can't access. */}
+        {isAuthenticated ? (
+          <>
+            <SidebarLayout
+              groups={navGroups}
+              version={buildVersion.version}
+              onOpenHelp={openHelp}
+              onOpenSettings={openSettings}
+              onOpenHistory={openHistory}
+              topBar={topBar}
+            >
+              <Suspense fallback={<PageLoader />}>
+                <Routes>
+                  <Route path="/" element={<Navigate to="/reflector" replace={true} />} />
+                  {pages.map((page) => (
+                    <Route key={page.path} path={page.path} element={<page.component />} />
+                  ))}
+                  <Route path="*" element={<Navigate to="/reflector" replace={true} />} />
+                </Routes>
+              </Suspense>
 
-          {/* Pinned below the routed page so test outcomes stay visible no
+              {/* Pinned below the routed page so test outcomes stay visible no
               matter which page is active. */}
-          <div className="mt-6">
-            <TestResults testStatus={stats.testStatus} result={testResult} />
-          </div>
-        </SidebarLayout>
+              <div className="mt-6">
+                <TestResults testStatus={stats.testStatus} result={testResult} />
+              </div>
+            </SidebarLayout>
 
-        <SettingsDrawer
-          isOpen={settingsOpen}
-          onClose={() => setSettingsOpen(false)}
-          selectedTests={selectedTests}
-          setSelectedTests={setSelectedTests}
-          rfc2544Config={rfc2544Config}
-          setRFC2544Config={setRFC2544Config}
-          rfc2889Config={rfc2889Config}
-          setRFC2889Config={setRFC2889Config}
-          rfc6349Config={rfc6349Config}
-          setRFC6349Config={setRFC6349Config}
-          y1564Config={y1564Config}
-          setY1564Config={setY1564Config}
-          y1731Config={y1731Config}
-          setY1731Config={setY1731Config}
-          tsnConfig={tsnConfig}
-          setTSNConfig={setTSNConfig}
-          trafficGenConfig={trafficGenConfig}
-          setTrafficGenConfig={setTrafficGenConfig}
-        />
+            <SettingsDrawer
+              isOpen={settingsOpen}
+              onClose={() => setSettingsOpen(false)}
+              selectedTests={selectedTests}
+              setSelectedTests={setSelectedTests}
+              rfc2544Config={rfc2544Config}
+              setRFC2544Config={setRFC2544Config}
+              rfc2889Config={rfc2889Config}
+              setRFC2889Config={setRFC2889Config}
+              rfc6349Config={rfc6349Config}
+              setRFC6349Config={setRFC6349Config}
+              y1564Config={y1564Config}
+              setY1564Config={setY1564Config}
+              y1731Config={y1731Config}
+              setY1731Config={setY1731Config}
+              tsnConfig={tsnConfig}
+              setTSNConfig={setTSNConfig}
+              trafficGenConfig={trafficGenConfig}
+              setTrafficGenConfig={setTrafficGenConfig}
+            />
 
-        <HelpDrawer isOpen={helpOpen} onClose={() => setHelpOpen(false)} />
+            <HelpDrawer isOpen={helpOpen} onClose={() => setHelpOpen(false)} />
 
-        <ResultHistory
-          isOpen={historyOpen}
-          onClose={() => setHistoryOpen(false)}
-          currentResult={testResult}
-        />
+            <ResultHistory
+              isOpen={historyOpen}
+              onClose={() => setHistoryOpen(false)}
+              currentResult={testResult}
+            />
+          </>
+        ) : (
+          <div className="min-h-screen bg-gradient-to-br from-surface-base via-surface-raised to-surface-deep" />
+        )}
 
         {/* Setup Wizard - shown before login if initial setup required */}
         {setupChecked && setupStatus?.needsSetup ? (
@@ -1266,7 +1279,7 @@ function AppContent(): ReactElement {
 
         {/* Login Modal - shown after setup complete or if setup not needed */}
         {!isAuthenticated && setupChecked && !setupStatus?.needsSetup && !showRecoveryForm ? (
-          <div className="fixed inset-0 z-50 flex-center bg-black/60 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex-center bg-scrim/60 backdrop-blur-sm">
             <div
               ref={loginModalRef}
               role="dialog"
@@ -1396,16 +1409,18 @@ function AppContent(): ReactElement {
           </div>
         ) : null}
 
-        {/* Command palette (⌘K / Ctrl+K) */}
-        <CommandPalette
-          groups={navGroups}
-          open={paletteOpen}
-          onOpenChange={setPaletteOpen}
-          onOpenSettings={openSettings}
-          onOpenHelp={openHelp}
-          onToggleTheme={toggleTheme}
-          isDark={isDark}
-        />
+        {/* Command palette (⌘K / Ctrl+K) — authenticated feature only */}
+        {isAuthenticated ? (
+          <CommandPalette
+            groups={navGroups}
+            open={paletteOpen}
+            onOpenChange={setPaletteOpen}
+            onOpenSettings={openSettings}
+            onOpenHelp={openHelp}
+            onToggleTheme={toggleTheme}
+            isDark={isDark}
+          />
+        ) : null}
       </AppContext.Provider>
     </BrowserRouter>
   );
