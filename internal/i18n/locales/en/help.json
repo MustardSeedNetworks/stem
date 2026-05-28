@@ -1,0 +1,57 @@
+{
+  "drawer": {
+    "title": "Help & Documentation",
+    "ariaLabel": "Help & Documentation",
+    "close": "Close help",
+    "closeTooltip": "Close the help drawer and return to the main view",
+    "searchPlaceholder": "Search {{tab}}..."
+  },
+  "tabs": {
+    "tests": "Tests",
+    "tutorials": "Tutorials",
+    "glossary": "Glossary",
+    "testsTooltip": "Browse all 27 supported tests grouped by standard (RFC 2544, Y.1564, Y.1731, MEF, TSN)",
+    "tutorialsTooltip": "Step-by-step walkthroughs for common testing workflows",
+    "glossaryTooltip": "Reference dictionary of networking and test-engineering terms"
+  },
+  "mode": {
+    "simple": "Simple",
+    "technical": "Technical",
+    "toggleToTechnical": "Switch to technical explanations with RFC details, packet structures, and engineering parameters",
+    "toggleToSimple": "Switch to plain-language explanations suitable for non-engineers",
+    "ariaToTechnical": "Switch to technical view",
+    "ariaToSimple": "Switch to simple view"
+  },
+  "tests": {
+    "intro": "The Stem supports 27 tests across 7 standards. Click any test for detailed documentation."
+  },
+  "tutorials": {
+    "intro": "Step-by-step guides to help you get started with network testing.",
+    "backToTutorials": "Back to Tutorials",
+    "expected": "Expected: {{value}}",
+    "tip": "Tip: {{value}}"
+  },
+  "glossary": {
+    "introSimple": "Network testing terminology explained simply.",
+    "introTechnical": "Network testing terminology explained technically.",
+    "related": "Related:"
+  },
+  "detail": {
+    "backToTests": "Back to Tests",
+    "descriptionSimple": "What This Test Does",
+    "descriptionTechnical": "Technical Description",
+    "whenToUse": "When to Use This Test",
+    "whenNotToUse": "When NOT to Use",
+    "parameters": "Parameters",
+    "parameterMeta": "Type: {{type}} | Default: {{default}}",
+    "required": "required",
+    "metrics": "Metrics",
+    "metricGood": "Good: {{value}}",
+    "metricBad": "Bad: {{value}}",
+    "examples": "Examples",
+    "tips": "Tips",
+    "relatedTests": "Related Tests",
+    "copyCommand": "Copy this command to the clipboard so you can paste it in a terminal",
+    "copyCommandAria": "Copy command to clipboard"
+  }
+}

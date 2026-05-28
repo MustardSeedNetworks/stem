@@ -1,0 +1,57 @@
+{
+  "drawer": {
+    "title": "Ayuda y Documentación",
+    "ariaLabel": "Ayuda y Documentación",
+    "close": "Cerrar ayuda",
+    "closeTooltip": "Cerrar el panel de ayuda y volver a la vista principal",
+    "searchPlaceholder": "Buscar {{tab}}..."
+  },
+  "tabs": {
+    "tests": "Pruebas",
+    "tutorials": "Tutoriales",
+    "glossary": "Glosario",
+    "testsTooltip": "Explore las 27 pruebas compatibles agrupadas por estándar (RFC 2544, Y.1564, Y.1731, MEF, TSN)",
+    "tutorialsTooltip": "Guías paso a paso para los flujos de prueba más comunes",
+    "glossaryTooltip": "Diccionario de referencia de términos de redes e ingeniería de pruebas"
+  },
+  "mode": {
+    "simple": "Sencillo",
+    "technical": "Técnico",
+    "toggleToTechnical": "Cambiar a explicaciones técnicas con detalles de RFC, estructuras de paquetes y parámetros de ingeniería",
+    "toggleToSimple": "Cambiar a explicaciones en lenguaje sencillo aptas para no ingenieros",
+    "ariaToTechnical": "Cambiar a vista técnica",
+    "ariaToSimple": "Cambiar a vista sencilla"
+  },
+  "tests": {
+    "intro": "The Stem admite 27 pruebas en 7 estándares. Haga clic en cualquier prueba para ver su documentación detallada."
+  },
+  "tutorials": {
+    "intro": "Guías paso a paso para ayudarle a comenzar con las pruebas de red.",
+    "backToTutorials": "Volver a Tutoriales",
+    "expected": "Esperado: {{value}}",
+    "tip": "Consejo: {{value}}"
+  },
+  "glossary": {
+    "introSimple": "Terminología de pruebas de red explicada de forma sencilla.",
+    "introTechnical": "Terminología de pruebas de red explicada de forma técnica.",
+    "related": "Relacionado:"
+  },
+  "detail": {
+    "backToTests": "Volver a Pruebas",
+    "descriptionSimple": "Qué hace esta prueba",
+    "descriptionTechnical": "Descripción técnica",
+    "whenToUse": "Cuándo usar esta prueba",
+    "whenNotToUse": "Cuándo NO usarla",
+    "parameters": "Parámetros",
+    "parameterMeta": "Tipo: {{type}} | Predeterminado: {{default}}",
+    "required": "obligatorio",
+    "metrics": "Métricas",
+    "metricGood": "Bueno: {{value}}",
+    "metricBad": "Malo: {{value}}",
+    "examples": "Ejemplos",
+    "tips": "Consejos",
+    "relatedTests": "Pruebas relacionadas",
+    "copyCommand": "Copie este comando al portapapeles para pegarlo en una terminal",
+    "copyCommandAria": "Copiar comando al portapapeles"
+  }
+}

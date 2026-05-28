@@ -26,6 +26,7 @@ describe('i18n configuration', () => {
       'setup',
       'cli',
       'params',
+      'help',
     ]);
   });
 

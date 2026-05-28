@@ -23,6 +23,7 @@
 import enCli from '@locales/en/cli.json';
 import enCommon from '@locales/en/common.json';
 import enErrors from '@locales/en/errors.json';
+import enHelp from '@locales/en/help.json';
 import enModules from '@locales/en/modules.json';
 import enParams from '@locales/en/params.json';
 import enRecovery from '@locales/en/recovery.json';
@@ -33,6 +34,7 @@ import enSetup from '@locales/en/setup.json';
 import esCli from '@locales/es/cli.json';
 import esCommon from '@locales/es/common.json';
 import esErrors from '@locales/es/errors.json';
+import esHelp from '@locales/es/help.json';
 import esModules from '@locales/es/modules.json';
 import esParams from '@locales/es/params.json';
 import esRecovery from '@locales/es/recovery.json';
@@ -66,6 +68,7 @@ export const namespaces = [
   'setup',
   'cli',
   'params',
+  'help',
 ] as const;
 
 export type Namespace = (typeof namespaces)[number];
@@ -89,6 +92,7 @@ const resources: Resource = {
     setup: enSetup,
     cli: enCli,
     params: enParams,
+    help: enHelp,
   },
   es: {
     common: esCommon,
@@ -100,6 +104,7 @@ const resources: Resource = {
     setup: esSetup,
     cli: esCli,
     params: esParams,
+    help: esHelp,
   },
 };
 
