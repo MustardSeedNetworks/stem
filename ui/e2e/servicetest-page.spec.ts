@@ -28,7 +28,13 @@ test.describe('ServiceTest Page', () => {
   });
 
   test('should show role-gated content', async ({ page }) => {
-    const content = page.locator('text=/y\\.1564|mef|service|activation|permission|role|access/i');
+    // The broad regex also matches the "ServiceTest" nav label, which is
+    // rendered in both the mobile aside (display:none at 1280px) and the
+    // desktop aside. `.first()` resolved to the hidden mobile instance.
+    // Scope to visible matches so we assert on real on-screen content.
+    const content = page
+      .locator('text=/y\\.1564|mef|service|activation|permission|role|access/i')
+      .locator('visible=true');
     await expect(content.first()).toBeVisible({ timeout: 5000 });
   });
 });
