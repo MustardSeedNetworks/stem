@@ -341,3 +341,28 @@ func TestGetUsername(t *testing.T) {
 		t.Errorf("GetUsername() = %q, want %q", got, "testadmin")
 	}
 }
+
+// TestFirstRun_PlaceholderHashRejectsAllPasswords locks the cross-repo
+// first-run invariant (#356): the shipped placeholder password hash is
+// NOT a usable default — no password authenticates against it, so a
+// fresh install forces the operator through setup. Mirrors the same
+// guarantee seed/niac make in their first-run flows.
+func TestFirstRun_PlaceholderHashRejectsAllPasswords(t *testing.T) {
+	// The placeholder marker baked into a fresh install. Kept as a
+	// literal here (the prefix const is unexported) — if this value
+	// ever changes, IsDefaultPasswordHash must change in lockstep, and
+	// this test will fail loudly if the two drift.
+	const placeholder = "$2a$10$default"
+
+	if !auth.IsDefaultPasswordHash(placeholder) {
+		t.Fatal("placeholder hash must be flagged as default → setup required")
+	}
+
+	for _, guess := range []string{"", "admin", "password", "changeme", "default", "stem"} {
+		ok, valid, _ := auth.VerifyPassword(placeholder, guess)
+		if ok || valid {
+			t.Errorf("placeholder hash authenticated password %q (ok=%v valid=%v) — usable default leaked",
+				guess, ok, valid)
+		}
+	}
+}

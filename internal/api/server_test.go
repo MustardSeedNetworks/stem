@@ -45,7 +45,7 @@ func setupTestServer(t testing.TB) *api.Server {
 	return s
 }
 
-func loginToken(t *testing.T, s *api.Server) string {
+func loginToken(t testing.TB, s *api.Server) string {
 	t.Helper()
 	body := bytes.NewBufferString(fmt.Sprintf(`{"username":"%s","password":"%s"}`, testUsername, testPassword))
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login", body)
@@ -67,6 +67,34 @@ func loginToken(t *testing.T, s *api.Server) string {
 		t.Fatalf("Login response missing token: %v", resp)
 	}
 	return token
+}
+
+// stampAuth attaches authentication to a test request targeting an
+// auth-gated endpoint (#340). It sets the Bearer header always, and for
+// unsafe methods (POST/PUT/DELETE/PATCH) also mints + attaches the CSRF
+// token for the session embedded in jwt. Safe methods skip CSRF, matching
+// the production CSRFMiddleware contract.
+//
+// Call loginToken(t, s) ONCE per test and reuse the jwt — the auth
+// rate limiter allows only AuthBurstLimit logins per window, so logging
+// in per-request inside a loop would trip 429s.
+func stampAuth(t testing.TB, s *api.Server, req *http.Request, jwt string) {
+	t.Helper()
+	req.Header.Set("Authorization", "Bearer "+jwt)
+	switch req.Method {
+	case http.MethodGet, http.MethodHead, http.MethodOptions, http.MethodTrace:
+		// Safe methods are exempt from CSRF.
+	default:
+		sessionID := api.SessionIDFromJWTForTest(jwt)
+		if sessionID == "" {
+			t.Fatalf("stampAuth: empty session ID from JWT")
+		}
+		csrfToken, err := s.CSRFManagerForTest().GetOrCreateToken(sessionID)
+		if err != nil {
+			t.Fatalf("stampAuth: GetOrCreateToken: %v", err)
+		}
+		req.Header.Set("X-Csrf-Token", csrfToken)
+	}
 }
 
 func TestHandleAuthLogin(t *testing.T) {
@@ -139,6 +167,7 @@ func TestHandleHealthMethodNotAllowed(t *testing.T) {
 func TestHandleInterfaces(t *testing.T) {
 	s := setupTestServer(t)
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/interfaces", nil)
+	stampAuth(t, s, req, loginToken(t, s))
 	w := httptest.NewRecorder()
 
 	s.ServeHTTP(w, req)
@@ -163,6 +192,7 @@ func TestHandleInterfaces(t *testing.T) {
 func TestHandleStats(t *testing.T) {
 	s := setupTestServer(t)
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/stats", nil)
+	stampAuth(t, s, req, loginToken(t, s))
 	w := httptest.NewRecorder()
 
 	s.ServeHTTP(w, req)
@@ -218,6 +248,7 @@ func TestHandleSettingsGet(t *testing.T) {
 	s := setupTestServer(t)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/settings", nil)
+	stampAuth(t, s, req, loginToken(t, s))
 	w := httptest.NewRecorder()
 
 	s.ServeHTTP(w, req)
@@ -245,6 +276,7 @@ func TestHandleSettingsPost(t *testing.T) {
 
 	body := bytes.NewBufferString(fmt.Sprintf(`{"interface": "%s"}`, testIface))
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/settings", body)
+	stampAuth(t, s, req, loginToken(t, s))
 	w := httptest.NewRecorder()
 
 	s.ServeHTTP(w, req)
@@ -260,6 +292,7 @@ func TestHandleSettingsInvalidInterface(t *testing.T) {
 	// Use an interface name that definitely doesn't exist.
 	body := bytes.NewBufferString(`{"interface": "nonexistent_interface_xyz123"}`)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/settings", body)
+	stampAuth(t, s, req, loginToken(t, s))
 	w := httptest.NewRecorder()
 
 	s.ServeHTTP(w, req)
@@ -274,6 +307,7 @@ func TestHandleSettingsInvalidJSON(t *testing.T) {
 
 	body := bytes.NewBufferString(`{invalid json}`)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/settings", body)
+	stampAuth(t, s, req, loginToken(t, s))
 	w := httptest.NewRecorder()
 
 	s.ServeHTTP(w, req)
@@ -287,6 +321,7 @@ func TestHandleModeGet(t *testing.T) {
 	s := setupTestServer(t)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/mode", nil)
+	stampAuth(t, s, req, loginToken(t, s))
 	w := httptest.NewRecorder()
 
 	s.ServeHTTP(w, req)
@@ -313,6 +348,7 @@ func TestHandleModePost(t *testing.T) {
 
 	body := bytes.NewBufferString(`{"mode": "` + testModeReflector + `"}`)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/mode", body)
+	stampAuth(t, s, req, loginToken(t, s))
 	w := httptest.NewRecorder()
 
 	s.ServeHTTP(w, req)
@@ -327,6 +363,7 @@ func TestHandleModePostInvalid(t *testing.T) {
 
 	body := bytes.NewBufferString(`{"mode": "invalid_mode"}`)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/mode", body)
+	stampAuth(t, s, req, loginToken(t, s))
 	w := httptest.NewRecorder()
 
 	s.ServeHTTP(w, req)
@@ -743,9 +780,14 @@ func BenchmarkHandleHealth(b *testing.B) {
 
 func BenchmarkHandleStats(b *testing.B) {
 	s := setupTestServer(b)
+	// /stats is auth-gated (#340). Log in once outside the loop so the
+	// benchmark measures the handler, not repeated logins (which would
+	// also trip the auth rate limiter).
+	jwt := loginToken(b, s)
 
 	for b.Loop() {
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/stats", nil)
+		req.Header.Set("Authorization", "Bearer "+jwt)
 		w := httptest.NewRecorder()
 		s.ServeHTTP(w, req)
 	}

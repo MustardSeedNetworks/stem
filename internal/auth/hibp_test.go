@@ -92,7 +92,6 @@ func TestCheckPasswordBreached_NotFound(t *testing.T) {
 // air-gapped escape hatch: when the HIBP API is unreachable we must
 // degrade to (false, 0, nil) so password changes still go through.
 func TestCheckPasswordBreached_NetworkFailure_DoesNotBlock(t *testing.T) {
-
 	// Point at a closed port — Dial will fail immediately.
 	withTestEndpoint(t, "http://127.0.0.1:1/")
 
@@ -120,7 +119,6 @@ func TestCheckPasswordBreached_NetworkFailure_DoesNotBlock(t *testing.T) {
 // TestCheckPasswordBreached_Server5xx_DoesNotBlock — non-2xx is treated
 // the same as a network failure (degrade-open).
 func TestCheckPasswordBreached_Server5xx_DoesNotBlock(t *testing.T) {
-
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		http.Error(w, "boom", http.StatusServiceUnavailable)
 	}))

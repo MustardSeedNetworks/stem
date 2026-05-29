@@ -478,7 +478,8 @@ func isValidIPOctet(s string) bool {
 func (s *Server) setupRoutes() {
 	// API v1 routes - Health and Status (no rate limiting for health checks).
 	s.handle("/api/v1/health", s.handleHealth)
-	s.handleRateLimited("/api/v1/stats", s.handleStats, s.apiLimiter)
+	// /stats exposes operational telemetry; require auth (#340).
+	s.handleAuthRateLimited("/api/v1/stats", s.handleStats, s.apiLimiter)
 
 	// Kubernetes health probes (not versioned - infrastructure endpoints).
 	s.handle("/health/live", s.handleHealthLive)
@@ -494,12 +495,15 @@ func (s *Server) setupRoutes() {
 	// CGO-less builds). See handlers_capabilities.go.
 	s.handle("/api/v1/capabilities", s.handleCapabilities)
 
-	// API v1 routes - Interfaces (rate limited).
-	s.handleRateLimited("/api/v1/interfaces", s.handleInterfaces, s.apiLimiter)
+	// API v1 routes - Interfaces (auth + rate limited #340 — discloses
+	// the host's network interface inventory).
+	s.handleAuthRateLimited("/api/v1/interfaces", s.handleInterfaces, s.apiLimiter)
 
-	// API v1 routes - Settings and Mode (rate limited).
-	s.handleRateLimited("/api/v1/settings", s.handleSettings, s.apiLimiter)
-	s.handleRateLimited("/api/v1/mode", s.handleMode, s.apiLimiter)
+	// API v1 routes - Settings and Mode (auth + rate limited #340).
+	// POST /settings writes config; POST /mode flips the operating role
+	// between Reflector and Test Master — both must require auth.
+	s.handleAuthRateLimited("/api/v1/settings", s.handleSettings, s.apiLimiter)
+	s.handleAuthRateLimited("/api/v1/mode", s.handleMode, s.apiLimiter)
 
 	// Server-Sent Events stream for live UI updates (#296). Not rate-
 	// limited — connections are long-lived, intentionally one per

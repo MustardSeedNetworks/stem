@@ -13,8 +13,8 @@ fi
 if [ ! -f "$CONFIG_DIR/environment" ]; then
     cat > "$CONFIG_DIR/environment" <<'EOF'
 # Stem environment variables
-# STEM_AUTH_USERNAME=admin
-# STEM_AUTH_PASSWORD=changeme
+# STEM_AUTH_USERNAME=<your-admin-username>
+# STEM_AUTH_PASSWORD=<choose-a-strong-unique-password>
 # STEM_JWT_SECRET=generate-a-secure-random-string
 # STEM_LICENSE_KEY=your-license-key
 EOF

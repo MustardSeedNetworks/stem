@@ -14,13 +14,15 @@ import (
 )
 
 // setupModeTestServer builds a server tuned for /api/v1/mode tests.
-// It uses [STEM_TEST_MODE]=1 for fast bcrypt and registers automatic
-// shutdown so per-test rate limiters do not leak goroutines.
+// It uses [STEM_TEST_MODE]=1 for fast bcrypt and the shared test
+// credentials so loginToken() can authenticate against it (#340 made
+// /api/v1/mode auth-gated). Registers automatic shutdown so per-test
+// rate limiters do not leak goroutines.
 func setupModeTestServer(t *testing.T) *api.Server {
 	t.Helper()
 	t.Setenv("STEM_TEST_MODE", "1")
-	t.Setenv("STEM_AUTH_USERNAME", "modeuser")
-	t.Setenv("STEM_AUTH_PASSWORD", "modepass123")
+	t.Setenv("STEM_AUTH_USERNAME", testUsername)
+	t.Setenv("STEM_AUTH_PASSWORD", testPassword)
 
 	s, err := api.NewServer(8444)
 	if err != nil {
@@ -30,13 +32,16 @@ func setupModeTestServer(t *testing.T) *api.Server {
 	return s
 }
 
-// postMode is a small helper that issues POST /api/v1/mode and returns
-// the decoded response. It always uses ServeHTTP so the middleware
-// stack (api-version header, CSRF skip path, etc.) matches production.
+// postMode issues an authenticated POST /api/v1/mode and returns the
+// decoded response. Since #340, /api/v1/mode requires auth + CSRF, so
+// this logs in and stamps both headers before calling ServeHTTP (which
+// routes through the full production middleware stack).
 func postMode(t *testing.T, s *api.Server, body string) (*httptest.ResponseRecorder, api.ModeUpdateResponse) {
 	t.Helper()
+	jwt := loginToken(t, s)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/mode", bytes.NewBufferString(body))
 	req.Header.Set("Content-Type", "application/json")
+	authorizeWithCSRF(t, s, req, jwt)
 	w := httptest.NewRecorder()
 	s.ServeHTTP(w, req)
 
@@ -110,9 +115,11 @@ func TestHandleMode_PostUnsupportedPlatformReturns403(t *testing.T) {
 		return false, "CGO + Linux required"
 	})
 
+	jwt := loginToken(t, s)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/mode",
 		bytes.NewBufferString(`{"mode":"reflector"}`))
 	req.Header.Set("Content-Type", "application/json")
+	authorizeWithCSRF(t, s, req, jwt)
 	w := httptest.NewRecorder()
 	s.ServeHTTP(w, req)
 
@@ -152,9 +159,11 @@ func TestHandleMode_PostUnsupportedDoesNotBlockTestMaster(t *testing.T) {
 func TestHandleMode_PostInvalidModeReturns400(t *testing.T) {
 	s := setupModeTestServer(t)
 
+	jwt := loginToken(t, s)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/mode",
 		bytes.NewBufferString(`{"mode":"banana"}`))
 	req.Header.Set("Content-Type", "application/json")
+	authorizeWithCSRF(t, s, req, jwt)
 	w := httptest.NewRecorder()
 	s.ServeHTTP(w, req)
 
@@ -163,12 +172,33 @@ func TestHandleMode_PostInvalidModeReturns400(t *testing.T) {
 	}
 }
 
+// TestHandleMode_RequiresAuth is the #340 regression test: POST
+// /api/v1/mode without any credentials must be rejected before the
+// handler runs. Prevents the unauthenticated mode-flip vector where a
+// LAN neighbor could hijack the operating role.
+func TestHandleMode_RequiresAuth(t *testing.T) {
+	s := setupModeTestServer(t)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/mode",
+		bytes.NewBufferString(`{"mode":"reflector"}`))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	s.ServeHTTP(w, req)
+
+	if w.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401 for unauthenticated mode change, got %d body=%q",
+			w.Code, w.Body.String())
+	}
+}
+
 // TestHandleMode_GetReturnsCurrentMode is a thin sanity check that the
 // GET branch is untouched by the new POST plumbing.
 func TestHandleMode_GetReturnsCurrentMode(t *testing.T) {
 	s := setupModeTestServer(t)
 
+	jwt := loginToken(t, s)
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/mode", nil)
+	req.Header.Set("Authorization", "Bearer "+jwt)
 	w := httptest.NewRecorder()
 	s.ServeHTTP(w, req)
 
