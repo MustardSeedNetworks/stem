@@ -66,12 +66,12 @@
     "rfc2544": {
       "title": "Pruebas RFC 2544",
       "throughput": {
-        "name": "Rendimiento",
+        "name": "Throughput",
         "desc": "Tasa máxima con 0% perdida",
         "tooltip": "Encontrar la tasa máxima a la que el DUT puede reenviar tramas con cero perdida de paquetes usando busqueda binaria."
       },
       "latency": {
-        "name": "Latencia",
+        "name": "Latency",
         "desc": "Tiempo de ida y vuelta",
         "tooltip": "Medir el retardo de paquetes de ida y vuelta a varias cargas y tamanos de trama."
       },
@@ -118,7 +118,7 @@
       "title": "Pruebas de Switch RFC 2889",
       "forwarding": {
         "name": "Tasa de Reenvio",
-        "desc": "Rendimiento por puerto",
+        "desc": "Throughput por puerto",
         "tooltip": "Medir la tasa máxima de reenvio de tramas por puerto del switch."
       },
       "caching": {
@@ -132,9 +132,9 @@
         "tooltip": "Medir que tan rápido el switch aprende nuevas direcciones MAC."
       },
       "broadcast": {
-        "name": "Latencia de Broadcast",
+        "name": "Latency de Broadcast",
         "desc": "Reenvio de broadcast",
-        "tooltip": "Medir la latencia para el reenvio de tramas broadcast a todos los puertos."
+        "tooltip": "Medir la latency para el reenvio de tramas broadcast a todos los puertos."
       },
       "congestion": {
         "name": "Control de Congestion",
@@ -146,8 +146,8 @@
       "title": "Pruebas TCP RFC 6349",
       "capacity": {
         "name": "Capacidad TCP",
-        "desc": "Rendimiento TCP máximo",
-        "tooltip": "Medir el rendimiento TCP alcanzable considerando todas las degradaciones de la red."
+        "desc": "Throughput TCP máximo",
+        "tooltip": "Medir el throughput TCP alcanzable considerando todas las degradaciones de la red."
       },
       "efficiency": {
         "name": "Eficiencia de Transferencia",
@@ -214,9 +214,9 @@
         "tooltip": "Verificar el aislamiento de clases de trafico entre flujos programados y de mejor esfuerzo."
       },
       "latency": {
-        "name": "Latencia Programada",
+        "name": "Latency Programada",
         "desc": "Retardo limitado",
-        "tooltip": "Medir la latencia del peor caso para clases de trafico programadas."
+        "tooltip": "Medir la latency del peor caso para clases de trafico programadas."
       },
       "full": {
         "name": "Suite Completa",
