@@ -285,7 +285,7 @@ export function ResultHistory({
       {/* Backdrop */}
       <button
         type="button"
-        className="absolute inset-0 bg-black/50 cursor-default"
+        className="absolute inset-0 bg-scrim/50 cursor-default"
         onClick={onClose}
         onKeyDown={handleBackdropKeyDown}
         title="Click outside to close the history drawer"

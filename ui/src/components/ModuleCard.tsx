@@ -462,7 +462,7 @@ function ModuleActionButton({
       className={cn(
         'px-4 py-row rounded-lg flex items-center gap-compact transition-colors',
         enabledTestCount > 0
-          ? 'bg-brand-primary text-white hover:bg-brand-primary'
+          ? 'bg-brand-primary text-on-brand hover:bg-brand-primary'
           : 'bg-surface-base text-text-muted cursor-not-allowed',
       )}
     >
@@ -570,7 +570,7 @@ function ModuleExpandedContent({
         >
           <span
             className={cn(
-              'absolute top-1 w-4 h-4 rounded-full bg-white transition-transform',
+              'absolute top-1 w-4 h-4 rounded-full bg-knob transition-transform',
               config.autoStart ? 'translate-x-5' : 'translate-x-1',
             )}
           />

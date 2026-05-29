@@ -111,7 +111,7 @@ export function SettingsDrawer({
       {/* Backdrop */}
       <button
         type="button"
-        className="fixed inset-0 bg-black/50 z-40 cursor-default"
+        className="fixed inset-0 bg-scrim/50 z-40 cursor-default"
         onClick={onClose}
         title={t('accessibility.closeSettings', 'Close settings drawer')}
         aria-label={t('accessibility.closeSettings', 'Close settings drawer')}

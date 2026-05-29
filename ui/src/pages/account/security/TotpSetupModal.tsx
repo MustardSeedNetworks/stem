@@ -53,7 +53,7 @@ export function TotpSetupModal({ setup, onComplete, onCancel }: Props): ReactEle
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex-center bg-black/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex-center bg-scrim/60 backdrop-blur-sm">
       <div
         role="dialog"
         aria-modal="true"
@@ -71,7 +71,7 @@ export function TotpSetupModal({ setup, onComplete, onCancel }: Props): ReactEle
             alt="TOTP QR code"
             width={256}
             height={256}
-            className="rounded-lg border border-surface-border bg-white pad-xs"
+            className="rounded-lg border border-surface-border bg-knob pad-xs"
           />
         </div>
 

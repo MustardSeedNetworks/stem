@@ -153,7 +153,7 @@ export function TestProgressBar({ progress }: TestProgressBarProps): ReactElemen
         />
         {/* Animated shine effect for active tests */}
         {isActive ? (
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-knob/20 to-transparent animate-shimmer" />
         ) : null}
       </div>
 

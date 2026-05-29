@@ -89,6 +89,12 @@
    *   knob:  toggle thumbs, text on saturated brand bg — stays white in both modes. */
   --color-scrim: var(--color-scrim);
   --color-knob: var(--color-knob);
+
+  /* On-color foregrounds — AA text/icon color on a filled brand/status surface.
+   * Constant across modes. Stem's brand/info/danger fills are saturated, so
+   * these are white. (Replaces bare text-white on colored buttons.) */
+  --color-on-brand: var(--color-on-brand);
+  --color-on-danger: var(--color-on-danger);
 }
 
 /* Source detection for Tailwind */
@@ -150,6 +156,8 @@
   /* Constant-across-modes utility colors. */
   --color-scrim: #000000;
   --color-knob: #ffffff;
+  --color-on-brand: #ffffff; /* white — AA on stem's blue brand/info fills */
+  --color-on-danger: #ffffff; /* white — AA on status-error fills */
 
   /* Module Colors - The Stem specific */
   --color-module-reflector: #0891b2; /* Cyan - loopback/echo */

@@ -263,7 +263,7 @@ export function RecoveryForm({
 
   return (
     <div
-      className={cn('fixed inset-0 z-50 bg-black/60 backdrop-blur-sm', layout.flex.center, 'pad')}
+      className={cn('fixed inset-0 z-50 bg-scrim/60 backdrop-blur-sm', layout.flex.center, 'pad')}
     >
       <div className="w-full max-w-md">
         {/* Header */}

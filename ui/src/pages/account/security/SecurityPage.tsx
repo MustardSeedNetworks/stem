@@ -238,7 +238,7 @@ function DisableTotpButton({ onDisabled }: DisableTotpButtonProps): ReactElement
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex-center bg-black/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex-center bg-scrim/60 backdrop-blur-sm">
       <div
         role="dialog"
         aria-modal="true"

@@ -139,11 +139,11 @@ export function SetupWizard({
     : undefined;
 
   return (
-    <div className="fixed inset-0 z-50 flex-center bg-black/60 backdrop-blur-sm pad">
+    <div className="fixed inset-0 z-50 flex-center bg-scrim/60 backdrop-blur-sm pad">
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-section">
-          <div className="w-16 h-16 mx-auto mb-content flex-center rounded-2xl bg-brand-primary text-white">
+          <div className="w-16 h-16 mx-auto mb-content flex-center rounded-2xl bg-brand-primary text-on-brand">
             <Activity className="w-8 h-8" />
           </div>
           <h1 className="heading-1 text-text-primary">{t('welcome.title')}</h1>

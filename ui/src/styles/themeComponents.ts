@@ -33,12 +33,12 @@ export const button = {
     // flips to dark in dark mode and fails AA against the constant blue
     // anchor. Opacity hover avoids the lighten-to-accent trap (stem-300
     // fails contrast against white text). Per Phase 7 of the 2026-05-22 audit.
-    primary: 'bg-brand-primary text-white hover:bg-brand-primary/90',
+    primary: 'bg-brand-primary text-on-brand hover:bg-brand-primary/90',
     secondary: 'border border-surface-border bg-surface-raised hover:bg-surface-hover',
     ghost: 'hover:bg-surface-hover',
     // Status danger/success buttons: align with brand-primary fix (constant
     // foreground rather than text-inverse mode-flip).
-    danger: 'bg-status-error text-white hover:bg-status-error/90',
+    danger: 'bg-status-error text-on-danger hover:bg-status-error/90',
     success: 'bg-status-success text-zinc-900 hover:bg-status-success/90',
   },
 

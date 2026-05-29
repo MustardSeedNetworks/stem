@@ -188,7 +188,7 @@ export function TrafficGenConfigForm({
                     }
                     className={`text-xs px-cell py-0.5 rounded border ${
                       ratePct === preset.value
-                        ? 'bg-brand-primary text-white border-brand-primary'
+                        ? 'bg-brand-primary text-on-brand border-brand-primary'
                         : 'bg-surface-base border-surface-border text-text-muted'
                     }`}
                   >
