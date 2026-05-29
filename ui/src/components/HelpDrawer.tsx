@@ -28,6 +28,7 @@ import type { ReactElement } from 'react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { searchGlossary, searchTests, type TestHelp, type Tutorial } from '../data/help-content';
+import { useBuildVersion } from '../hooks/useBuildVersion';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 import { cn, icon as iconTokens, layout, modal, radius, spacing, status } from '../styles/theme';
 import { GlossaryTab } from './help-drawer/GlossaryTab';
@@ -51,6 +52,7 @@ export function HelpDrawer({ isOpen, onClose }: HelpDrawerProps): ReactElement |
   const [selectedTest, setSelectedTest] = useState<TestHelp | null>(null);
   const [selectedTutorial, setSelectedTutorial] = useState<Tutorial | null>(null);
   const [copiedCommand, setCopiedCommand] = useState<string | null>(null);
+  const buildVersion = useBuildVersion();
   const drawerRef = useFocusTrap<HTMLDivElement>({
     isActive: isOpen,
     onEscape: onClose,
@@ -120,7 +122,16 @@ export function HelpDrawer({ isOpen, onClose }: HelpDrawerProps): ReactElement |
           <div className={cn(layout.flex.between, spacing.margin.bottom.heading)}>
             <div className={cn(layout.inline.default)}>
               <BookOpen className={cn(iconTokens.size.md, 'text-brand-primary')} />
-              <h2 className="heading-3">{t('drawer.title')}</h2>
+              <div>
+                <h2 className="heading-3">{t('drawer.title')}</h2>
+                <p
+                  className="caption text-text-muted"
+                  data-testid="help-drawer-version"
+                  title={`commit ${buildVersion.commit} · built ${buildVersion.buildTime}`}
+                >
+                  Stem v{buildVersion.version}
+                </p>
+              </div>
             </div>
             <button
               type="button"
