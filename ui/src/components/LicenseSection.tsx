@@ -195,12 +195,10 @@ function MessageDisplay({ error, success }: MessageDisplayProps): ReactElement |
   return (
     <>
       {error ? (
-        <div className="text-sm text-status-error bg-red-500 bg-opacity-10 pad-xs rounded">
-          {error}
-        </div>
+        <div className="text-sm text-status-error bg-status-error/10 pad-xs rounded">{error}</div>
       ) : null}
       {success ? (
-        <div className="text-sm text-status-success bg-green-500 bg-opacity-10 pad-xs rounded">
+        <div className="text-sm text-status-success bg-status-success/10 pad-xs rounded">
           {success}
         </div>
       ) : null}

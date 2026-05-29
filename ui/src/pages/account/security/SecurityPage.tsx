@@ -111,7 +111,7 @@ export function SecurityPage(): ReactElement {
   return (
     <section className="stack-xl">
       <header>
-        <h1 className="text-2xl font-semibold text-text-primary">{t('title')}</h1>
+        <h1 className="heading-1">{t('title')}</h1>
         <p className="text-sm text-text-muted">{t('subtitle')}</p>
       </header>
 

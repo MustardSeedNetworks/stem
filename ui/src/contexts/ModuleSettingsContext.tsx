@@ -29,7 +29,7 @@ const defaultModules: ModuleConfig[] = [
     name: 'reflector',
     displayName: 'Reflector',
     description: 'Packet reflection and loopback testing',
-    color: '#0891b2', // Cyan
+    color: 'var(--color-module-reflector)', // Cyan
     standard: 'Loopback',
     enabled: true,
     autoStart: false,
@@ -52,7 +52,7 @@ const defaultModules: ModuleConfig[] = [
     name: 'benchmark',
     displayName: 'Benchmark',
     description: 'RFC 2544 network benchmarking tests',
-    color: '#dc2626', // Red
+    color: 'var(--color-module-benchmark)', // Red
     standard: 'RFC 2544',
     enabled: true,
     autoStart: false,
@@ -99,7 +99,7 @@ const defaultModules: ModuleConfig[] = [
     name: 'servicetest',
     displayName: 'Service Test',
     description: 'ITU-T Y.1564 service activation testing',
-    color: '#ea580c', // Orange
+    color: 'var(--color-module-servicetest)', // Orange
     standard: 'Y.1564 / MEF',
     enabled: true,
     autoStart: false,
@@ -140,7 +140,7 @@ const defaultModules: ModuleConfig[] = [
     name: 'trafficgen',
     displayName: 'Traffic Gen',
     description: 'Custom traffic generation',
-    color: '#ca8a04', // Yellow
+    color: 'var(--color-module-trafficgen)', // Yellow
     standard: 'Custom',
     enabled: false,
     autoStart: false,
@@ -157,7 +157,7 @@ const defaultModules: ModuleConfig[] = [
     name: 'measure',
     displayName: 'Measure',
     description: 'ITU-T Y.1731 OAM measurements',
-    color: '#2563eb', // Blue
+    color: 'var(--color-module-measure)', // Blue
     standard: 'Y.1731',
     enabled: false,
     autoStart: false,
@@ -192,7 +192,7 @@ const defaultModules: ModuleConfig[] = [
     name: 'certify',
     displayName: 'Certify',
     description: 'Network certification tests',
-    color: '#16a34a', // Green
+    color: 'var(--color-module-certify)', // Green
     standard: 'RFC 2889/6349',
     enabled: false,
     autoStart: false,
