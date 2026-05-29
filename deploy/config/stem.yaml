@@ -4,11 +4,9 @@
 
 # Server settings
 server:
-  # HTTPS port for WebUI (will auto-increment if in use). TLS is on by
-  # default (Wave 1); set STEM_HTTP_ONLY=1 or pass --http to opt out.
+  # HTTPS port for WebUI (will auto-increment if in use). HTTPS-only —
+  # there is no HTTP listener; operators must use https:// explicitly.
   port: 8444
-  # HTTP-to-HTTPS 308 redirector port (companion to :8444 TLS).
-  http_redirect_port: 8043
   # Bind address (0.0.0.0 for all interfaces)
   bind_address: "0.0.0.0"
   # TLS certificate paths (optional, will generate self-signed if missing)

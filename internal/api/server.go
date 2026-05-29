@@ -96,14 +96,6 @@ const (
 	HTTPReadTimeout       = 30 * time.Second
 	HTTPWriteTimeout      = 30 * time.Second
 	HTTPIdleTimeout       = 120 * time.Second
-
-	// defaultHTTPRedirectPort is the plaintext port the HTTP→HTTPS 308
-	// redirector binds to when TLS is enabled (paired with 8444 over TLS).
-	defaultHTTPRedirectPort = 8043
-
-	// redirectReadWriteTimeoutSec is the read/write timeout for the
-	// redirect-only HTTP listener.
-	redirectReadWriteTimeoutSec = 10
 )
 
 // APIVersion is the current API version.
@@ -172,7 +164,6 @@ type Server struct {
 	recoveryTokenManager *auth.RecoveryTokenManager // Recovery token manager for password recovery
 	dataDir              string                     // Application data directory for recovery files
 	acmeChallengeServer  *http.Server               // HTTP-01 challenge server for ACME
-	redirectServer       *http.Server               // HTTP→HTTPS 308 redirect server (when TLS is enabled)
 	tlsFingerprint       tlsFingerprintCache        // Cached SHA-256 fingerprint of the active TLS cert (exposed via /__version)
 
 	// executorResolver maps a module name to a factory producing a
@@ -259,8 +250,9 @@ func NewServer(port int) (*Server, error) {
 	}
 
 	// HTTPS is required, unconditionally. Auth cookies hardcode Secure=true
-	// and browsers refuse them over plain HTTP. The HTTP listener exists
-	// only as a 308 redirector. No opt-out is supported.
+	// and browsers refuse them over plain HTTP. There is no HTTP listener
+	// at all — operators must use https://; typing the host without a
+	// scheme will get connection refused, by design.
 
 	s := &Server{}
 	s.port = port
@@ -792,9 +784,6 @@ func (s *Server) Run() error {
 		IdleTimeout:       HTTPIdleTimeout,
 	}
 
-	// Start HTTP→HTTPS 308 redirector (#83 companion). HTTPS is always on.
-	go s.startHTTPRedirect(defaultHTTPRedirectPort, actualPort)
-
 	// Start server in goroutine. HTTPS is required, no plaintext branch.
 	errChan := make(chan error, 1)
 	go func() {
@@ -913,14 +902,6 @@ func (s *Server) Shutdown() error {
 		logging.Info("Shutting down ACME challenge server...")
 		if err := s.acmeChallengeServer.Shutdown(ctx); err != nil {
 			logging.Error("Error shutting down ACME challenge server", "error", err)
-		}
-	}
-
-	// Shutdown HTTP→HTTPS redirect server if running.
-	if s.redirectServer != nil {
-		logging.Info("Shutting down HTTP→HTTPS redirect server...")
-		if err := s.redirectServer.Shutdown(ctx); err != nil {
-			logging.Error("Error shutting down redirect server", "error", err)
 		}
 	}
 

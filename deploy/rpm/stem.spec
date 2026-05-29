@@ -87,9 +87,8 @@ fi
 # Configure firewall if firewalld is running
 if systemctl is-active --quiet firewalld 2>/dev/null; then
     firewall-cmd --permanent --add-port=8444/tcp 2>/dev/null || true
-    firewall-cmd --permanent --add-port=8043/tcp 2>/dev/null || true
     firewall-cmd --reload 2>/dev/null || true
-    echo "Firewall configured for Stem service (ports 8444, 8043)"
+    echo "Firewall configured for Stem service (port 8444)"
 fi
 
 %systemd_post stem.service

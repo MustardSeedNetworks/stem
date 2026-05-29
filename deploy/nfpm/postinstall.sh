@@ -31,12 +31,10 @@ fi
 
 if command -v ufw >/dev/null 2>&1 && ufw status 2>/dev/null | grep -q "Status: active"; then
     ufw allow 8444/tcp comment 'Stem WebUI HTTPS' >/dev/null 2>&1 || true
-    ufw allow 8043/tcp comment 'Stem HTTP→HTTPS redirector' >/dev/null 2>&1 || true
 fi
 
 if command -v firewall-cmd >/dev/null 2>&1 && systemctl is-active --quiet firewalld 2>/dev/null; then
     firewall-cmd --permanent --add-port=8444/tcp >/dev/null 2>&1 || true
-    firewall-cmd --permanent --add-port=8043/tcp >/dev/null 2>&1 || true
     firewall-cmd --reload >/dev/null 2>&1 || true
 fi
 
