@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.23.0](https://github.com/krisarmstrong/stem/compare/v0.22.0...v0.23.0) (2026-05-29)
+
+
+### Features
+
+* **a11y:** axe-core test harness for the Button primitives ([#370](https://github.com/krisarmstrong/stem/issues/370)) ([991c92f](https://github.com/krisarmstrong/stem/commit/991c92f9fbf572a6d2278e1315a3995f0a1cb29b))
+* **cli:** help entries for tui/list-tests/install-ca + completeness test ([#371](https://github.com/krisarmstrong/stem/issues/371)) ([85d56a1](https://github.com/krisarmstrong/stem/commit/85d56a1b00ff71e5693906eecca4bfb866414b52))
+* **help:** surface version in HelpDrawer header (in-app About) ([#372](https://github.com/krisarmstrong/stem/issues/372)) ([86b76b5](https://github.com/krisarmstrong/stem/commit/86b76b5669d022b8dfe95a087d19421f727312f5))
+
 ## [0.22.0](https://github.com/krisarmstrong/stem/compare/v0.21.4...v0.22.0) (2026-05-29)
 
 
