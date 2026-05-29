@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.21.3](https://github.com/krisarmstrong/stem/compare/v0.21.2...v0.21.3) (2026-05-29)
+
+
+### Bug Fixes
+
+* **ui:** repair token-discipline guard and close white/black color leaks ([#361](https://github.com/krisarmstrong/stem/issues/361)) ([e33fd7f](https://github.com/krisarmstrong/stem/commit/e33fd7fe0df7067a0f35a0349a76c49ec870c884))
+
 ## [0.21.2](https://github.com/krisarmstrong/stem/compare/v0.21.1...v0.21.2) (2026-05-29)
 
 
