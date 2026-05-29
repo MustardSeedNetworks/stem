@@ -150,7 +150,7 @@ export function HelpDrawer({ isOpen, onClose }: HelpDrawerProps): ReactElement |
                 layout.inline.default,
                 'justify-center',
                 activeTab === 'tests'
-                  ? 'bg-brand-primary text-text-inverse'
+                  ? 'bg-brand-primary text-on-brand'
                   : 'text-text-muted hover:text-text-primary hover:bg-surface-hover',
               )}
             >
@@ -167,7 +167,7 @@ export function HelpDrawer({ isOpen, onClose }: HelpDrawerProps): ReactElement |
                 layout.inline.default,
                 'justify-center',
                 activeTab === 'tutorials'
-                  ? 'bg-brand-primary text-text-inverse'
+                  ? 'bg-brand-primary text-on-brand'
                   : 'text-text-muted hover:text-text-primary hover:bg-surface-hover',
               )}
             >
@@ -184,7 +184,7 @@ export function HelpDrawer({ isOpen, onClose }: HelpDrawerProps): ReactElement |
                 layout.inline.default,
                 'justify-center',
                 activeTab === 'glossary'
-                  ? 'bg-brand-primary text-text-inverse'
+                  ? 'bg-brand-primary text-on-brand'
                   : 'text-text-muted hover:text-text-primary hover:bg-surface-hover',
               )}
             >

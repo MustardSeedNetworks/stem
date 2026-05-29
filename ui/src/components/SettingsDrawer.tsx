@@ -250,7 +250,7 @@ function ViewToggle({ viewMode, onViewModeChange }: ViewToggleProps): React.Reac
           className={cn(
             'flex items-center gap-tight px-3 py-compact-md caption',
             viewMode === 'standard'
-              ? 'bg-brand-primary text-text-inverse'
+              ? 'bg-brand-primary text-on-brand'
               : 'bg-surface-raised text-text-muted hover:bg-surface-hover',
           )}
         >
@@ -267,7 +267,7 @@ function ViewToggle({ viewMode, onViewModeChange }: ViewToggleProps): React.Reac
           className={cn(
             'flex items-center gap-tight px-3 py-compact-md caption',
             viewMode === 'module'
-              ? 'bg-brand-primary text-text-inverse'
+              ? 'bg-brand-primary text-on-brand'
               : 'bg-surface-raised text-text-muted hover:bg-surface-hover',
           )}
         >

@@ -60,7 +60,7 @@ export function TutorialDetailView({
                 className={cn(
                   'w-6 h-6 text-xs font-medium',
                   radius.full,
-                  'bg-brand-primary text-text-inverse',
+                  'bg-brand-primary text-on-brand',
                   layout.flex.center,
                 )}
               >

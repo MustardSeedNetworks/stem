@@ -108,7 +108,7 @@ export const RoleChip: FC<RoleChipProps> = ({ className = '' }) => {
               disabled={isSwitchingRole}
               className={`inline-flex items-center gap-1.5 px-2.5 py-compact rounded-md text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary disabled:opacity-60 disabled:cursor-not-allowed ${
                 active
-                  ? 'bg-brand-primary text-text-inverse shadow-sm'
+                  ? 'bg-brand-primary text-on-brand shadow-sm'
                   : 'text-text-muted hover:text-text-primary hover:bg-surface-hover'
               }`}
               aria-pressed={active}

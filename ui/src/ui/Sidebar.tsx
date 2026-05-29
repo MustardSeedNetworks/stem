@@ -80,7 +80,7 @@ const NavItemButton: FC<NavItemButtonProps> = ({ item, active, collapsed, onNavi
     onMouseEnter={() => prefetchRoute(item.path)}
     className={`group flex items-center gap-default w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
       active
-        ? 'bg-gradient-to-r from-brand-primary/30 to-brand-primary/20 text-text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]'
+        ? 'bg-gradient-to-r from-brand-primary/30 to-brand-primary/20 text-text-primary shadow-edge-highlight'
         : 'text-text-muted hover:text-text-primary hover:bg-surface-hover'
     }`}
     title={collapsed ? item.label : undefined}
