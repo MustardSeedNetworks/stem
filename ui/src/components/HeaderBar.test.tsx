@@ -14,10 +14,6 @@ const defaultProps: Parameters<typeof HeaderBar>[0] = {
   connectionStatus: 'connected' as const,
   darkMode: false,
   onToggleTheme: vi.fn(),
-  onRefresh: vi.fn(),
-  onHistoryOpen: vi.fn(),
-  onHelpOpen: vi.fn(),
-  onSettingsOpen: vi.fn(),
   onLogout: vi.fn(),
 };
 
@@ -28,20 +24,16 @@ describe('HeaderBar', () => {
       expect(screen.getByText('The Stem')).toBeInTheDocument();
     });
 
-    it('renders tagline on larger screens', () => {
-      render(<HeaderBar {...defaultProps} />);
-      expect(screen.getByText('Mustard Seed Networks')).toBeInTheDocument();
-    });
-
-    it('renders all toolbar buttons', () => {
+    it('renders the theme toggle; refresh/history/help/settings are no longer in the header (#342)', () => {
       render(<HeaderBar {...defaultProps} />);
 
       expect(screen.getByRole('button', { name: /switch to dark mode/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /refresh interfaces/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /open test history/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /open help/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /open settings/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /logout/i })).toBeInTheDocument();
+      // These moved to the sidebar footer / page level and logout to the
+      // profile menu — the header was slimmed in #342.
+      expect(screen.queryByRole('button', { name: /refresh interfaces/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /open test history/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /open help/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /open settings/i })).not.toBeInTheDocument();
     });
   });
 
@@ -103,42 +95,19 @@ describe('HeaderBar', () => {
   });
 
   describe('button interactions', () => {
-    it('calls onRefresh when refresh clicked', () => {
-      const onRefresh = vi.fn();
-      render(<HeaderBar {...defaultProps} onRefresh={onRefresh} />);
-
-      fireEvent.click(screen.getByRole('button', { name: /refresh interfaces/i }));
-      expect(onRefresh).toHaveBeenCalled();
-    });
-
-    it('calls onHistoryOpen when history clicked', () => {
-      const onHistoryOpen = vi.fn();
-      render(<HeaderBar {...defaultProps} onHistoryOpen={onHistoryOpen} />);
-
-      fireEvent.click(screen.getByRole('button', { name: /open test history/i }));
-      expect(onHistoryOpen).toHaveBeenCalled();
-    });
-
-    it('calls onHelpOpen when help clicked', () => {
-      const onHelpOpen = vi.fn();
-      render(<HeaderBar {...defaultProps} onHelpOpen={onHelpOpen} />);
-
-      fireEvent.click(screen.getByRole('button', { name: /open help/i }));
-      expect(onHelpOpen).toHaveBeenCalled();
-    });
-
-    it('calls onSettingsOpen when settings clicked', () => {
-      const onSettingsOpen = vi.fn();
-      render(<HeaderBar {...defaultProps} onSettingsOpen={onSettingsOpen} />);
-
-      fireEvent.click(screen.getByRole('button', { name: /open settings/i }));
-      expect(onSettingsOpen).toHaveBeenCalled();
-    });
-
-    it('calls onLogout when logout clicked', () => {
+    it('calls onLogout from the profile menu', () => {
       const onLogout = vi.fn();
-      render(<HeaderBar {...defaultProps} onLogout={onLogout} />);
+      render(
+        <HeaderBar
+          {...defaultProps}
+          profiles={[{ id: '1', name: 'Default' }]}
+          onProfileSwitch={vi.fn()}
+          onLogout={onLogout}
+        />,
+      );
 
+      // Logout moved into the profile dropdown (#342).
+      fireEvent.click(screen.getByRole('button', { name: /select profile/i }));
       fireEvent.click(screen.getByRole('button', { name: /logout/i }));
       expect(onLogout).toHaveBeenCalled();
     });
