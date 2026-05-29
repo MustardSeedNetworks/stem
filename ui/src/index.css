@@ -438,6 +438,19 @@ body {
   }
 
   /* ========================================================================
+     Z-INDEX SCALE
+     ========================================================================
+     Named stacking levels — use instead of arbitrary z-[..] values.
+     Tailwind's z-50 remains the modal/drawer level; these sit above it.
+     ======================================================================== */
+  .z-overlay {
+    z-index: 60; /* command palette, transient overlays above modals */
+  }
+  .z-max {
+    z-index: 100; /* skip links, always-on-top affordances */
+  }
+
+  /* ========================================================================
      MARGIN UTILITIES
      ========================================================================
      Semantic margin utilities for consistent spacing.
