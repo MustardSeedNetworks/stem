@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.22.0](https://github.com/krisarmstrong/stem/compare/v0.21.4...v0.22.0) (2026-05-29)
+
+
+### Features
+
+* **i18n:** en/es key parity + DNT compliance test (stem) ([#373](https://github.com/krisarmstrong/stem/issues/373)) ([f36d954](https://github.com/krisarmstrong/stem/commit/f36d95410515398467e17f9d72c23bb5b2bde15b))
+
 ## [0.21.4](https://github.com/krisarmstrong/stem/compare/v0.21.3...v0.21.4) (2026-05-29)
 
 
