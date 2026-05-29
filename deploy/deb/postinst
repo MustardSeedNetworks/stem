@@ -93,8 +93,7 @@ fi
 if command -v ufw >/dev/null 2>&1; then
     if ufw status 2>/dev/null | grep -q "Status: active"; then
         ufw allow 8444/tcp comment 'Stem WebUI HTTPS' >/dev/null 2>&1 || true
-        ufw allow 8043/tcp comment 'Stem HTTP→HTTPS redirector' >/dev/null 2>&1 || true
-        echo "Firewall configured for Stem service (ports 8444, 8043)"
+        echo "Firewall configured for Stem service (port 8444)"
     fi
 fi
 
