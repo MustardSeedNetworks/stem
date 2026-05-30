@@ -18,32 +18,29 @@ test.describe('Help Drawer', () => {
     await page.goto('/');
   });
 
-  test('should have help button in header', async ({ page }) => {
-    const helpButton = page.getByRole('button', { name: /open help/i });
-    await expect(helpButton).toBeVisible();
+  test('should have help button in sidebar', async ({ page }) => {
+    await expect(page.getByTestId('sidebar-help-button')).toBeVisible();
   });
 
   test('should open help drawer when clicking help button', async ({ page }) => {
-    await page.getByRole('button', { name: /open help/i }).click();
-
-    const drawer = page.getByRole('dialog', { name: /help.*documentation/i });
-    await expect(drawer).toBeVisible();
+    await page.getByTestId('sidebar-help-button').click();
+    await expect(page.getByTestId('help-drawer')).toBeVisible();
   });
 
   test('should close help drawer when clicking close button', async ({ page }) => {
-    await page.getByRole('button', { name: /open help/i }).click();
+    await page.getByTestId('sidebar-help-button').click();
 
-    const drawer = page.getByRole('dialog', { name: /help.*documentation/i });
+    const drawer = page.getByTestId('help-drawer');
     await expect(drawer).toBeVisible();
 
-    await page.getByRole('button', { name: /close help/i }).click();
+    await page.getByTestId('help-drawer-close').click();
     await expect(drawer).not.toBeVisible();
   });
 
   test('should display help content', async ({ page }) => {
-    await page.getByRole('button', { name: /open help/i }).click();
+    await page.getByTestId('sidebar-help-button').click();
 
-    const drawer = page.getByRole('dialog', { name: /help.*documentation/i });
+    const drawer = page.getByTestId('help-drawer');
     await expect(drawer).toBeVisible();
 
     const text = await drawer.textContent();

@@ -13,34 +13,34 @@ test.describe('Authentication', () => {
 
   test('should show login page', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: /sign in/i })).toBeVisible();
+    await expect(page.getByTestId('login-title')).toBeVisible();
   });
 
   test('should show error for invalid credentials', async ({ page }) => {
     await page.goto('/');
-    await page.getByLabel(/username/i).fill('invalid');
-    await page.getByLabel(/password/i).fill('wrongpassword');
-    await page.getByRole('button', { name: /sign in/i }).click();
+    await page.getByTestId('login-username').fill('invalid');
+    await page.getByTestId('login-password').fill('wrongpassword');
+    await page.getByTestId('login-submit').click();
     await expect(page.getByText(/invalid|error|failed/i)).toBeVisible();
   });
 
   test('should login with valid credentials', async ({ page }) => {
     await page.goto('/');
-    await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
-    await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
-    await page.getByRole('button', { name: /sign in/i }).click();
-    await expect(page.getByRole('button', { name: /logout/i })).toBeVisible();
+    await page.getByTestId('login-username').fill(TEST_CREDENTIALS.username);
+    await page.getByTestId('login-password').fill(TEST_CREDENTIALS.password);
+    await page.getByTestId('login-submit').click();
+    await expect(page.locator('[data-testid="logout-button"]')).toBeVisible();
   });
 
   test('should logout successfully', async ({ page }) => {
     // Login first
     await page.goto('/');
-    await page.getByLabel(/username/i).fill(TEST_CREDENTIALS.username);
-    await page.getByLabel(/password/i).fill(TEST_CREDENTIALS.password);
-    await page.getByRole('button', { name: /sign in/i }).click();
+    await page.getByTestId('login-username').fill(TEST_CREDENTIALS.username);
+    await page.getByTestId('login-password').fill(TEST_CREDENTIALS.password);
+    await page.getByTestId('login-submit').click();
 
     // Then logout
     await page.click('[data-testid="logout-button"]');
-    await expect(page.getByRole('heading', { name: /sign in/i })).toBeVisible();
+    await expect(page.getByTestId('login-title')).toBeVisible();
   });
 });
