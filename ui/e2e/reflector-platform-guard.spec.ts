@@ -43,7 +43,7 @@ test.describe('Reflector page platform guard', () => {
     await expect(page.getByText(/CGO \+ Linux required/i)).toBeVisible();
 
     // The Switch to Test Master button is reachable inside the banner.
-    await expect(page.getByTestId('role-chip-test-master')).toBeVisible();
+    await expect(page.getByTestId('role-chip-test_master')).toBeVisible();
 
     // The Start button is disabled with the platform tooltip.
     const startButton = page.getByTestId('reflector-start-button');
