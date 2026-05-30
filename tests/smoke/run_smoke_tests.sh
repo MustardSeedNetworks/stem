@@ -49,7 +49,11 @@ REFLECTOR_AVAILABLE=false
 
 # Auth credentials and TLS config for WebUI smoke tests
 export STEM_AUTH_USERNAME="smoketest"
-: "${STEM_AUTH_PASSWORD:=$(openssl rand -base64 18)}"
+# gitleaks:allow — the right-hand side is a dynamic `openssl rand` call,
+# not a literal password. Push-event scans only diff the latest commit
+# and don't trip on this; workflow_dispatch scans the full history and
+# the hardcoded-password rule false-positives on the variable name.
+: "${STEM_AUTH_PASSWORD:=$(openssl rand -base64 18)}" # gitleaks:allow
 export STEM_AUTH_PASSWORD
 export STEM_TLS_ENABLED=false
 
