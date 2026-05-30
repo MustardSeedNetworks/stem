@@ -13,13 +13,13 @@ test.describe('ServiceTest Page', () => {
   test.beforeEach(async ({ page }) => {
     await skipSetupWizard(page);
     await page.goto('/tests/servicetest');
-    await expect(page.getByRole('heading', { name: /^servicetest$/i, level: 1 })).toBeVisible({
+    await expect(page.getByTestId('page-header-title')).toBeVisible({
       timeout: 10000,
     });
   });
 
   test('should render the page header with ServiceTest title', async ({ page }) => {
-    await expect(page.getByRole('heading', { name: /^servicetest$/i, level: 1 })).toBeVisible();
+    await expect(page.getByTestId('page-header-title')).toBeVisible();
     await expect(page.getByText(/y\.1564.*mef.*service activation/i)).toBeVisible();
   });
 

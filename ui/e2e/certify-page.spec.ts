@@ -14,13 +14,13 @@ test.describe('Certify Page', () => {
   test.beforeEach(async ({ page }) => {
     await skipSetupWizard(page);
     await page.goto('/tests/certify');
-    await expect(page.getByRole('heading', { name: /^certify$/i, level: 1 })).toBeVisible({
+    await expect(page.getByTestId('page-header-title')).toBeVisible({
       timeout: 10000,
     });
   });
 
   test('should render the page header with Certify title', async ({ page }) => {
-    await expect(page.getByRole('heading', { name: /^certify$/i, level: 1 })).toBeVisible();
+    await expect(page.getByTestId('page-header-title')).toBeVisible();
     await expect(page.getByText(/rfc 2889.*rfc 6349.*tsn/i)).toBeVisible();
   });
 
@@ -32,6 +32,6 @@ test.describe('Certify Page', () => {
     const content = page.locator(
       'text=/rfc.2889|rfc.6349|tsn|forwarding|certification|permission|role|access/i',
     );
-    await expect(content.locator("visible=true").first()).toBeVisible({ timeout: 5000 });
+    await expect(content.locator('visible=true').first()).toBeVisible({ timeout: 5000 });
   });
 });

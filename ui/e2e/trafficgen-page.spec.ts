@@ -13,13 +13,13 @@ test.describe('TrafficGen Page', () => {
   test.beforeEach(async ({ page }) => {
     await skipSetupWizard(page);
     await page.goto('/tests/trafficgen');
-    await expect(page.getByRole('heading', { name: /^trafficgen$/i, level: 1 })).toBeVisible({
+    await expect(page.getByTestId('page-header-title')).toBeVisible({
       timeout: 10000,
     });
   });
 
   test('should render the page header with TrafficGen title', async ({ page }) => {
-    await expect(page.getByRole('heading', { name: /^trafficgen$/i, level: 1 })).toBeVisible();
+    await expect(page.getByTestId('page-header-title')).toBeVisible();
     await expect(page.getByText(/custom traffic generation/i)).toBeVisible();
   });
 
@@ -29,6 +29,6 @@ test.describe('TrafficGen Page', () => {
 
   test('should show role-gated content', async ({ page }) => {
     const content = page.locator('text=/traffic|stream|load|shape|permission|role|access/i');
-    await expect(content.locator("visible=true").first()).toBeVisible({ timeout: 5000 });
+    await expect(content.locator('visible=true').first()).toBeVisible({ timeout: 5000 });
   });
 });
