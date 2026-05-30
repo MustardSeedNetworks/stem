@@ -53,7 +53,7 @@ test.describe('Responsive Design', () => {
   test('renders on mobile without horizontal overflow', async ({ page }) => {
     await page.setViewportSize(viewports.mobile);
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: /reflector/i })).toBeVisible();
+    await expect(page.getByTestId('page-header-title')).toBeVisible();
 
     await expectNoHorizontalOverflow(page);
     await expectTouchTargetsMeetMinimum(page);
@@ -62,14 +62,14 @@ test.describe('Responsive Design', () => {
   test('renders on tablet with primary heading visible', async ({ page }) => {
     await page.setViewportSize(viewports.tablet);
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: /reflector/i })).toBeVisible();
+    await expect(page.getByTestId('page-header-title')).toBeVisible();
     await expectTouchTargetsMeetMinimum(page);
   });
 
   test('renders on desktop with primary heading visible', async ({ page }) => {
     await page.setViewportSize(viewports.desktop);
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: /reflector/i })).toBeVisible();
+    await expect(page.getByTestId('page-header-title')).toBeVisible();
   });
 
   test('layout reflows from mobile to desktop without losing the primary heading', async ({
@@ -77,7 +77,7 @@ test.describe('Responsive Design', () => {
   }) => {
     await page.setViewportSize(viewports.mobile);
     await page.goto('/');
-    const heading = page.getByRole('heading', { name: /reflector/i });
+    const heading = page.getByTestId('page-header-title');
     await expect(heading).toBeVisible();
 
     await page.setViewportSize(viewports.desktop);
@@ -90,7 +90,7 @@ test.describe('Responsive Design', () => {
   test('mobile body text meets minimum readable size', async ({ page }) => {
     await page.setViewportSize(viewports.mobile);
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: /reflector/i })).toBeVisible();
+    await expect(page.getByTestId('page-header-title')).toBeVisible();
     await expectTouchTargetsMeetMinimum(page);
 
     // Sample up to 5 visible text elements; flag anything below the

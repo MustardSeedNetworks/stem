@@ -1045,6 +1045,7 @@ function AppContent(): ReactElement {
           <RoleChip />
           <button
             type="button"
+            data-testid="header-theme-toggle"
             onClick={toggleTheme}
             className="pad-xs rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover"
             title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
