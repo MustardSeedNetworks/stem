@@ -1324,7 +1324,11 @@ function AppContent(): ReactElement {
                       </p>
                     ) : null}
                   </div>
-                  {loginError ? <p className="text-xs text-status-error">{loginError}</p> : null}
+                  {loginError ? (
+                    <p role="alert" aria-live="assertive" className="text-xs text-status-error">
+                      {loginError}
+                    </p>
+                  ) : null}
                   <button
                     type="submit"
                     className="btn btn-primary w-full justify-center"
@@ -1388,7 +1392,11 @@ function AppContent(): ReactElement {
                       </p>
                     ) : null}
                   </div>
-                  {loginError ? <p className="text-xs text-status-error">{loginError}</p> : null}
+                  {loginError ? (
+                    <p role="alert" aria-live="assertive" className="text-xs text-status-error">
+                      {loginError}
+                    </p>
+                  ) : null}
                   <button
                     type="submit"
                     data-testid="login-submit"
