@@ -21,7 +21,10 @@ test.describe('Authentication', () => {
     await page.getByTestId('login-username').fill('invalid');
     await page.getByTestId('login-password').fill('wrongpassword');
     await page.getByTestId('login-submit').click();
-    await expect(page.getByText(/invalid|error|failed/i)).toBeVisible();
+    // role=alert is i18n-stable; the login error surface emits it
+    // natively. Previous /invalid|error|failed/i regex would miss
+    // under es locale ("invalido", "fallido", etc.).
+    await expect(page.getByRole('alert')).toBeVisible();
   });
 
   test('should login with valid credentials', async ({ page }) => {
