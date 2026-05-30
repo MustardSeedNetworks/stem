@@ -23,9 +23,9 @@ test.describe('Settings drawer module view', () => {
   });
 
   test('switches to module view and shows modules', async ({ page }) => {
-    await page.getByRole('button', { name: /open settings/i }).click();
+    await page.getByTestId('sidebar-settings-button').click();
 
-    const drawer = page.getByRole('dialog', { name: /settings/i });
+    const drawer = page.getByTestId('settings-drawer');
     await expect(drawer).toBeVisible();
 
     await drawer.getByRole('button', { name: 'Module', exact: true }).click();

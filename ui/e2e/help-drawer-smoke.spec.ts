@@ -27,7 +27,7 @@ test.describe('Help Drawer (smoke)', () => {
 
   test('opens, shows content, switches a tab, and closes', async ({ page }) => {
     // Open via the sidebar footer help button.
-    await page.getByRole('button', { name: /open help/i }).click();
+    await page.getByTestId('sidebar-help-button').click();
 
     const drawer = page.getByTestId('help-drawer');
     await expect(drawer).toBeVisible();
@@ -40,7 +40,7 @@ test.describe('Help Drawer (smoke)', () => {
     await expect(drawer.getByText(/RFC 2544/i).first()).toBeVisible();
 
     // Switch to the Glossary tab and confirm the view re-renders.
-    await drawer.getByRole('button', { name: /^glossary$/i }).click();
+    await drawer.getByTestId('help-drawer-tab-glossary').click();
     const glossaryText = await drawer.textContent();
     expect((glossaryText ?? '').length).toBeGreaterThan(100);
 

@@ -155,6 +155,7 @@ export function HelpDrawer({ isOpen, onClose }: HelpDrawerProps): ReactElement |
               type="button"
               onClick={(): void => setActiveTab('tests')}
               title={t('tabs.testsTooltip')}
+              data-testid="help-drawer-tab-tests"
               className={cn(
                 'flex-1 px-3 py-row text-sm font-medium transition-colors',
                 radius.md,
@@ -172,6 +173,7 @@ export function HelpDrawer({ isOpen, onClose }: HelpDrawerProps): ReactElement |
               type="button"
               onClick={(): void => setActiveTab('tutorials')}
               title={t('tabs.tutorialsTooltip')}
+              data-testid="help-drawer-tab-tutorials"
               className={cn(
                 'flex-1 px-3 py-row text-sm font-medium transition-colors',
                 radius.md,
@@ -189,6 +191,7 @@ export function HelpDrawer({ isOpen, onClose }: HelpDrawerProps): ReactElement |
               type="button"
               onClick={(): void => setActiveTab('glossary')}
               title={t('tabs.glossaryTooltip')}
+              data-testid="help-drawer-tab-glossary"
               className={cn(
                 'flex-1 px-3 py-row text-sm font-medium transition-colors',
                 radius.md,

@@ -49,7 +49,7 @@ test.describe('Dashboard', () => {
   });
 
   test('should have start/stop test buttons', async ({ page }) => {
-    const testButton = page.getByRole('button', { name: /start|stop/i });
+    const testButton = page.getByTestId('reflector-start-button');
     await expect(testButton.first()).toBeVisible();
   });
 });

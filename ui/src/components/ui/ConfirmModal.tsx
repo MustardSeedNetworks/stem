@@ -45,10 +45,10 @@ export const ConfirmModal: FC<ConfirmModalProps> = ({
       </div>
       <div className="text-text-secondary">{message}</div>
       <div className="flex justify-end gap-default pt-2">
-        <Button variant="outline" onClick={onCancel}>
+        <Button variant="outline" onClick={onCancel} data-testid="confirm-modal-cancel">
           {cancelLabel}
         </Button>
-        <Button tone={confirmTone} onClick={onConfirm}>
+        <Button tone={confirmTone} onClick={onConfirm} data-testid="confirm-modal-confirm">
           {confirmLabel}
         </Button>
       </div>
