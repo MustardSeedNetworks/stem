@@ -375,8 +375,10 @@ func TestHandleModePostInvalid(t *testing.T) {
 
 func TestHandleReflectorConfigGet(t *testing.T) {
 	s := setupTestServer(t)
+	token := loginToken(t, s)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/reflector/config", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
 	w := httptest.NewRecorder()
 
 	s.ServeHTTP(w, req)
@@ -397,6 +399,7 @@ func TestHandleReflectorConfigPost(t *testing.T) {
 
 	body := bytes.NewBufferString(`{"profile": "` + testProfileNetally + `", "portFilter": 9999}`)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/reflector/config", body)
+	authorizeWithCSRF(t, s, req, loginToken(t, s))
 	w := httptest.NewRecorder()
 
 	s.ServeHTTP(w, req)
@@ -411,6 +414,7 @@ func TestHandleReflectorConfigPostInvalidProfile(t *testing.T) {
 
 	body := bytes.NewBufferString(`{"profile": "invalid_profile"}`)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/reflector/config", body)
+	authorizeWithCSRF(t, s, req, loginToken(t, s))
 	w := httptest.NewRecorder()
 
 	s.ServeHTTP(w, req)
@@ -422,8 +426,10 @@ func TestHandleReflectorConfigPostInvalidProfile(t *testing.T) {
 
 func TestHandleReflectorStats(t *testing.T) {
 	s := setupTestServer(t)
+	token := loginToken(t, s)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/reflector/stats", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
 	w := httptest.NewRecorder()
 
 	s.ServeHTTP(w, req)

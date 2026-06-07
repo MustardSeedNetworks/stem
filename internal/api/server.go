@@ -551,9 +551,11 @@ func (s *Server) setupRoutes() {
 	s.handleRateLimited("/api/v1/recovery/complete", s.handleRecoveryComplete, s.authLimiter)
 	s.handleRateLimited("/api/v1/recovery/instructions", s.handleRecoveryInstructions, s.apiLimiter)
 
-	// API v1 routes - Reflector (rate limited).
-	s.mux.Handle("/api/v1/reflector/config", s.apiLimiter.Middleware(http.HandlerFunc(s.handleReflectorConfig)))
-	s.mux.Handle("/api/v1/reflector/stats", s.apiLimiter.Middleware(http.HandlerFunc(s.handleReflectorStats)))
+	// API v1 routes - Reflector (authenticated + rate limited).
+	// These reconfigure/inspect the dataplane, so they require a valid token —
+	// previously registered with only the rate limiter (unauthenticated).
+	s.handleAuthRateLimited("/api/v1/reflector/config", s.handleReflectorConfig, s.apiLimiter)
+	s.handleAuthRateLimited("/api/v1/reflector/stats", s.handleReflectorStats, s.apiLimiter)
 
 	// API v1 routes - License (rate limited).
 	s.handleRateLimited("/api/v1/license", s.handleLicense, s.apiLimiter)

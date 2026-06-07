@@ -30,7 +30,9 @@ func setupReflectorTestServer(t testing.TB) *api.Server {
 // getReflectorStatsResponse is a helper that fetches and decodes stats response.
 func getReflectorStatsResponse(t *testing.T, s *api.Server) map[string]any {
 	t.Helper()
+	token := getReflectorAuthToken(t, s)
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/reflector/stats", nil)
+	authorizeWithCSRF(t, s, req, token)
 	w := httptest.NewRecorder()
 
 	s.ServeHTTP(w, req)
@@ -129,12 +131,14 @@ func TestHandleReflectorStats_UptimeNonNegative(t *testing.T) {
 // TestHandleReflectorStatsMethodNotAllowed tests method restrictions.
 func TestHandleReflectorStatsMethodNotAllowed(t *testing.T) {
 	s := setupReflectorTestServer(t)
+	token := getReflectorAuthToken(t, s)
 
 	methods := []string{http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodPatch}
 
 	for _, method := range methods {
 		t.Run(method, func(t *testing.T) {
 			req := httptest.NewRequest(method, "/api/v1/reflector/stats", nil)
+			authorizeWithCSRF(t, s, req, token)
 			w := httptest.NewRecorder()
 
 			s.ServeHTTP(w, req)
@@ -149,9 +153,11 @@ func TestHandleReflectorStatsMethodNotAllowed(t *testing.T) {
 // TestHandleReflectorConfigMethodRouting tests config endpoint method routing.
 func TestHandleReflectorConfigMethodRouting(t *testing.T) {
 	s := setupReflectorTestServer(t)
+	token := getReflectorAuthToken(t, s)
 
 	t.Run("GET config returns config", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/reflector/config", nil)
+		req.Header.Set("Authorization", "Bearer "+token)
 		w := httptest.NewRecorder()
 
 		s.ServeHTTP(w, req)
@@ -177,6 +183,7 @@ func TestHandleReflectorConfigMethodRouting(t *testing.T) {
 
 	t.Run("PUT config method not allowed", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPut, "/api/v1/reflector/config", nil)
+		authorizeWithCSRF(t, s, req, token)
 		w := httptest.NewRecorder()
 
 		s.ServeHTTP(w, req)
@@ -188,6 +195,7 @@ func TestHandleReflectorConfigMethodRouting(t *testing.T) {
 
 	t.Run("DELETE config method not allowed", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodDelete, "/api/v1/reflector/config", nil)
+		authorizeWithCSRF(t, s, req, token)
 		w := httptest.NewRecorder()
 
 		s.ServeHTTP(w, req)
@@ -201,8 +209,10 @@ func TestHandleReflectorConfigMethodRouting(t *testing.T) {
 // TestHandleReflectorConfigDefaults tests default config values.
 func TestHandleReflectorConfigDefaults(t *testing.T) {
 	s := setupReflectorTestServer(t)
+	token := getReflectorAuthToken(t, s)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/reflector/config", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
 	w := httptest.NewRecorder()
 
 	s.ServeHTTP(w, req)
@@ -239,12 +249,14 @@ func TestHandleReflectorConfigDefaults(t *testing.T) {
 // TestReflectorEndpointsContentType tests content type headers.
 func TestReflectorEndpointsContentType(t *testing.T) {
 	s := setupReflectorTestServer(t)
+	token := getReflectorAuthToken(t, s)
 
 	endpoints := []string{"/api/v1/reflector/config", "/api/v1/reflector/stats"}
 
 	for _, endpoint := range endpoints {
 		t.Run(endpoint, func(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, endpoint, nil)
+			req.Header.Set("Authorization", "Bearer "+token)
 			w := httptest.NewRecorder()
 
 			s.ServeHTTP(w, req)
@@ -257,8 +269,10 @@ func TestReflectorEndpointsContentType(t *testing.T) {
 	}
 }
 
-// TestReflectorEndpointsNoAuth tests that reflector endpoints don't require auth.
-func TestReflectorEndpointsNoAuth(t *testing.T) {
+// TestReflectorEndpointsRequireAuth tests that reflector endpoints reject
+// unauthenticated requests — they reconfigure/inspect the dataplane and must
+// not be reachable without a valid token (previously they were open).
+func TestReflectorEndpointsRequireAuth(t *testing.T) {
 	s := setupReflectorTestServer(t)
 
 	endpoints := []string{"/api/v1/reflector/config", "/api/v1/reflector/stats"}
@@ -270,9 +284,9 @@ func TestReflectorEndpointsNoAuth(t *testing.T) {
 
 			s.ServeHTTP(w, req)
 
-			// Should not require auth for GET requests.
-			if w.Code == http.StatusUnauthorized {
-				t.Errorf("GET %s should not require authentication", endpoint)
+			// Unauthenticated access must now be rejected.
+			if w.Code != http.StatusUnauthorized {
+				t.Errorf("GET %s without auth: expected 401, got %d", endpoint, w.Code)
 			}
 		})
 	}
