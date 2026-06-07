@@ -234,6 +234,21 @@ linters:
           deny:
             - pkg: log$
               desc: Use log/slog instead, see https://go.dev/blog/slog
+        # Architectural direction: the module/service layer (internal/services)
+        # is the inward core. It must not depend on the web/API, auth, or
+        # license layers — those concerns are composed at the API layer.
+        # This codifies the dependency direction so a future upward import
+        # fails CI instead of silently coupling the layers.
+        "service-layer-inward-only":
+          files:
+            - "**/internal/services/**"
+          deny:
+            - pkg: github.com/krisarmstrong/stem/internal/api
+              desc: "service layer must not import the API/web layer — dependencies point inward; wire at internal/api"
+            - pkg: github.com/krisarmstrong/stem/internal/auth
+              desc: "service layer must not import auth — authentication is an API-layer concern"
+            - pkg: github.com/krisarmstrong/stem/internal/license
+              desc: "service layer must not import license — gate features at the API layer, not inside modules"
 
     embeddedstructfieldcheck:
       # Checks that sync.Mutex and sync.RWMutex are not used as embedded fields.
