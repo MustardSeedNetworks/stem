@@ -133,6 +133,9 @@ jobs:
       - name: Output-escaping / XSS gate (#343)
         run: ./scripts/check-output-escaping.sh
 
+      - name: Route-policy gate (capability registry)
+        run: ./scripts/check-route-policy.sh
+
       - name: Run tests
         run: CGO_ENABLED=0 go test -v -coverprofile=coverage.out ./...
 
