@@ -39,6 +39,9 @@ paths = [
     '''docs/NetAllyAirMapper/.*''',
     '''docs/.*\.md$''',
     '''configs/.*\.yaml$''',
+    # Smoke-test harness scripts use throwaway fixture credentials
+    # (e.g. a created-then-deleted test user), not real secrets.
+    '''tests/smoke/.*''',
     # Structured-logging field-name token map. The `const FieldPassword =
     # "password"` here is a slog dictionary KEY (RedactingHandler matches
     # this to redact log values), not a credential.
