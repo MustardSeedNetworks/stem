@@ -157,6 +157,7 @@ type Server struct {
 	apiLimiter           *RateLimiter               // Rate limiter for standard API endpoints (100/min)
 	tlsConfig            TLSConfig                  // TLS configuration for HTTPS
 	cookieConfig         auth.CookieConfig          // Cookie configuration for secure auth
+	corsAllowPrivate     bool                       // STEM_CORS_ALLOW_PRIVATE: reflect RFC1918 cross-origins (default off)
 	csrfManager          *auth.CSRFManager          // CSRF token manager for protection against CSRF attacks
 	setupTokenManager    *auth.SetupTokenManager    // Setup token manager for first-time setup security
 	setupComplete        bool                       // Whether initial setup has been completed
@@ -294,6 +295,7 @@ func NewServer(port int) (*Server, error) {
 		CertsDir: os.Getenv("STEM_TLS_CERTS_DIR"),
 	}
 	s.cookieConfig = auth.DefaultCookieConfig()
+	s.corsAllowPrivate = corsAllowPrivateEnabled()
 	s.csrfManager = auth.NewCSRFManager(logging.Get())
 	s.setupTokenManager = auth.NewSetupTokenManager()
 	s.setupComplete = false
@@ -302,6 +304,22 @@ func NewServer(port int) (*Server, error) {
 	s.dataDir = getDataDir()
 	s.setupRoutes()
 	return s, nil
+}
+
+// corsAllowPrivateEnabled reports whether the operator opted into reflecting
+// RFC1918 private-network origins via STEM_CORS_ALLOW_PRIVATE. Off by default:
+// pairing Allow-Credentials with an arbitrary reflected LAN origin is a
+// cross-origin CSRF-bypass vector, so cross-origin LAN access is opt-in.
+func corsAllowPrivateEnabled() bool {
+	switch strings.ToLower(strings.TrimSpace(os.Getenv("STEM_CORS_ALLOW_PRIVATE"))) {
+	case "1", "true", "yes", "on":
+		logging.Warn("CORS: STEM_CORS_ALLOW_PRIVATE enabled — reflecting RFC1918 " +
+			"private-network origins with credentials; any LAN origin may make " +
+			"credentialed cross-origin requests")
+		return true
+	default:
+		return false
+	}
 }
 
 // isLocalhostOrigin validates that the origin is actually localhost.
@@ -694,9 +712,13 @@ func (s *Server) auditAuthFailure(r *http.Request, err error) {
 	}
 }
 
-// corsMiddleware enforces CORS for API security.
-// Allows localhost origins and same-origin requests (browser accessing server's own address).
-func corsMiddleware(next http.Handler) http.Handler {
+// corsMiddleware enforces CORS for API security. By default it allows only
+// localhost and same-origin requests (normal UI access is same-origin).
+// RFC1918 private-network origins are reflected ONLY when the operator opts in
+// via STEM_CORS_ALLOW_PRIVATE — otherwise pairing Allow-Credentials with a
+// reflected arbitrary LAN origin lets a hostile LAN page drive credentialed
+// cross-origin requests (a CSRF-bypass vector).
+func (s *Server) corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		origin := r.Header.Get("Origin")
 
@@ -706,10 +728,13 @@ func corsMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		// Allow localhost, same-origin, or RFC 1918 private network origins.
-		// Same-origin: browser accessing server from server's actual IP (e.g., https://10.0.0.210:8444).
-		// RFC 1918: allows private network addresses (192.168.x.x, 10.x.x.x, 172.16-31.x.x).
-		if !isLocalhostOrigin(origin) && !isSameOrigin(origin, r.Host) && !isRFC1918Origin(origin) {
+		// Allow localhost and same-origin always; RFC1918 private-network
+		// origins only when the operator opts in (STEM_CORS_ALLOW_PRIVATE).
+		// Same-origin (browser accessing the server's own address, e.g.
+		// https://10.0.0.210:8444) is normal UI usage and always allowed.
+		allowed := isLocalhostOrigin(origin) || isSameOrigin(origin, r.Host) ||
+			(s.corsAllowPrivate && isRFC1918Origin(origin))
+		if !allowed {
 			http.Error(w, "CORS: origin not allowed", http.StatusForbidden)
 			return
 		}
@@ -772,7 +797,7 @@ func (s *Server) Run() error {
 
 	// Wrap with middleware stack: SecurityHeaders -> CORS -> APIVersion -> RequestID -> Logging -> CSRF -> Handler.
 	handler := securityHeadersMiddleware(
-		corsMiddleware(
+		s.corsMiddleware(
 			apiVersionMiddleware(
 				logging.RequestIDMiddleware(
 					logging.Middleware(
@@ -987,6 +1012,6 @@ func safeIntToUint16(v int) (uint16, bool) {
 // Applies the same middleware stack used in production (API versioning, CORS, CSRF).
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Apply middleware stack for consistent behavior in tests.
-	handler := corsMiddleware(apiVersionMiddleware(s.csrfManager.CSRFMiddleware(s.mux)))
+	handler := s.corsMiddleware(apiVersionMiddleware(s.csrfManager.CSRFMiddleware(s.mux)))
 	handler.ServeHTTP(w, r)
 }

@@ -181,13 +181,24 @@ func TestAuditAuthFailure(t *testing.T) {
 	})
 }
 
-// setupCorsTestHandler creates a handler and wraps it with corsMiddleware.
+// setupCorsTestHandler wraps a handler with corsMiddleware using a default
+// Server (STEM_CORS_ALLOW_PRIVATE off — RFC1918 cross-origins rejected).
 func setupCorsTestHandler() http.Handler {
+	return corsTestHandler(&Server{})
+}
+
+// setupCorsTestHandlerAllowPrivate wraps the handler with a Server that has
+// opted into reflecting RFC1918 private-network origins.
+func setupCorsTestHandlerAllowPrivate() http.Handler {
+	return corsTestHandler(&Server{corsAllowPrivate: true})
+}
+
+func corsTestHandler(s *Server) http.Handler {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("OK"))
 	})
-	return corsMiddleware(handler)
+	return s.corsMiddleware(handler)
 }
 
 // TestCorsMiddleware_NoOrigin tests corsMiddleware without an Origin header.
@@ -318,9 +329,10 @@ func TestCorsMiddleware_BypassAttemptBlocked(t *testing.T) {
 	}
 }
 
-// TestCorsMiddleware_RFC1918Origin tests corsMiddleware allows RFC 1918 private network origins.
+// TestCorsMiddleware_RFC1918Origin tests corsMiddleware reflects RFC 1918
+// private-network origins when the operator has opted in (corsAllowPrivate).
 func TestCorsMiddleware_RFC1918Origin(t *testing.T) {
-	wrapped := setupCorsTestHandler()
+	wrapped := setupCorsTestHandlerAllowPrivate()
 	tests := []struct {
 		name   string
 		origin string
@@ -347,6 +359,31 @@ func TestCorsMiddleware_RFC1918Origin(t *testing.T) {
 					tt.origin, w.Header().Get("Access-Control-Allow-Origin"))
 			}
 		})
+	}
+}
+
+// TestCorsMiddleware_RFC1918BlockedByDefault verifies RFC1918 cross-origins are
+// rejected unless the operator opts in via STEM_CORS_ALLOW_PRIVATE (the secure
+// default — credentialed reflection of arbitrary LAN origins is a CSRF vector).
+func TestCorsMiddleware_RFC1918BlockedByDefault(t *testing.T) {
+	wrapped := setupCorsTestHandler() // private off
+	for _, origin := range []string{
+		"http://192.168.1.100:8080",
+		"http://10.0.0.50:8080",
+		"http://172.16.0.1:8080",
+	} {
+		req := httptest.NewRequest(http.MethodGet, "/test", nil)
+		req.Header.Set("Origin", origin)
+		w := httptest.NewRecorder()
+
+		wrapped.ServeHTTP(w, req)
+
+		if w.Code != http.StatusForbidden {
+			t.Errorf("RFC1918 origin %s without STEM_CORS_ALLOW_PRIVATE: expected 403, got %d", origin, w.Code)
+		}
+		if got := w.Header().Get("Access-Control-Allow-Origin"); got != "" {
+			t.Errorf("RFC1918 origin %s: expected no ACAO header, got %q", origin, got)
+		}
 	}
 }
 
