@@ -1,5 +1,5 @@
 /*
- * Seed Test Suite - Test Documentation
+ * The Stem - Test Documentation
  *
  * Comprehensive documentation for all 27 test types across 7 categories.
  */

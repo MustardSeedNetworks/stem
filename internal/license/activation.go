@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 
-// Package license provides licensing functionality for Seed Test Suite.
+// Package license provides licensing functionality for The Stem.
 // It handles license key validation, device binding, trial mode, and secure storage.
 package license
 

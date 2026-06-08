@@ -1,5 +1,5 @@
 /*
- * Seed Test Suite - CLI Command Help
+ * The Stem - CLI Command Help
  *
  * Documentation for all CLI commands and their options.
  */
@@ -402,7 +402,7 @@ tests, and network testing concepts. You can get help on:
 func TutorialCommand() CommandHelp {
 	return CommandHelp{
 		Name:    "tutorial",
-		Summary: "Interactive tutorials for learning Seed Test Suite",
+		Summary: "Interactive tutorials for learning The Stem",
 		Description: `The tutorial command provides step-by-step guides for common
 tasks. Tutorials are designed for both beginners and experienced users who
 want to learn specific features.
