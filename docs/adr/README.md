@@ -10,5 +10,7 @@ survives the people and the diffs. Format mirrors the sibling repos (seed/niac).
 | [0002](0002-module-registry-single-source.md) | Single source of truth for module metadata + executor | Accepted |
 | [0003](0003-dependency-direction-depguard.md) | Dependency direction enforced by depguard | Accepted |
 | [0004](0004-auth-and-cors-posture.md) | Single-admin auth model + CORS posture | Accepted |
+| [0005](0005-background-component-lifecycle.md) | Background-component lifecycle holder | Accepted |
+| [0006](0006-at-rest-encryption-device-keyed.md) | At-rest encryption device-keyed; DEK/JWT separation N/A | Accepted |
 
 Status values: Proposed · Accepted · Amended · Superseded.
