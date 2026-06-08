@@ -40,3 +40,9 @@ const HibpPrefixLen = hibpPrefixLen
 // HibpUserAgent re-exports hibpUserAgent for tests that assert the
 // outgoing User-Agent header.
 const HibpUserAgent = hibpUserAgent
+
+// ExportIsCSRFExemptPath re-exports isCSRFExemptPath so the CSRF exempt-list
+// coverage gate (#341) can pin the policy from the external test package.
+func ExportIsCSRFExemptPath(path string) bool {
+	return isCSRFExemptPath(path)
+}
