@@ -56,10 +56,10 @@ builds:
       - -buildvcs=false
     ldflags: &ldflags
       - -s -w
-      - -X github.com/krisarmstrong/stem/internal/version.Version={{.Version}}
-      - -X github.com/krisarmstrong/stem/internal/version.Commit={{.Commit}}
-      - -X github.com/krisarmstrong/stem/internal/version.BuildTime={{.Date}}
-      - -X github.com/krisarmstrong/stem/internal/version.UIBuildHash={{.Env.UI_BUILD_HASH}}
+      - -X github.com/MustardSeedNetworks/stem/internal/version.Version={{.Version}}
+      - -X github.com/MustardSeedNetworks/stem/internal/version.Commit={{.Commit}}
+      - -X github.com/MustardSeedNetworks/stem/internal/version.BuildTime={{.Date}}
+      - -X github.com/MustardSeedNetworks/stem/internal/version.UIBuildHash={{.Env.UI_BUILD_HASH}}
 
   - id: stem-darwin
     main: ./cmd/stem
@@ -123,7 +123,7 @@ nfpms:
     ids: [stem-linux]
     package_name: stem
     vendor: Mustard Seed Networks
-    homepage: https://github.com/krisarmstrong/stem
+    homepage: https://github.com/MustardSeedNetworks/stem
     maintainer: Kris Armstrong <kris.armstrong@icloud.com>
     description: |
       The Stem - Network Performance Testing Tool by Mustard Seed Networks
@@ -224,7 +224,7 @@ signs:
 
 release:
   github:
-    owner: krisarmstrong
+    owner: MustardSeedNetworks
     name: stem
   replace_existing_artifacts: true
   draft: false

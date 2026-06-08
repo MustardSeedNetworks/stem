@@ -5,7 +5,7 @@ package auth_test
 import (
 	"testing"
 
-	"github.com/krisarmstrong/stem/internal/auth"
+	"github.com/MustardSeedNetworks/stem/internal/auth"
 )
 
 // TestEvaluatePasswordStrength_Weak asserts the score floor: a trivial

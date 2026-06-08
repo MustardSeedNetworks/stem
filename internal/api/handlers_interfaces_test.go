@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/krisarmstrong/stem/internal/api"
+	"github.com/MustardSeedNetworks/stem/internal/api"
 )
 
 // setupInterfacesTestServer creates a server for interface handler tests.

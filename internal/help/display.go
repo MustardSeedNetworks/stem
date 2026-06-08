@@ -13,7 +13,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/krisarmstrong/stem/internal/services"
+	"github.com/MustardSeedNetworks/stem/internal/services"
 )
 
 const (

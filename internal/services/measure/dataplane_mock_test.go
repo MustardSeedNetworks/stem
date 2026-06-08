@@ -5,8 +5,8 @@ package measure_test
 import (
 	"sync/atomic"
 
-	"github.com/krisarmstrong/stem/internal/services/measure"
-	"github.com/krisarmstrong/stem/internal/services/orchestrator/dataplane"
+	"github.com/MustardSeedNetworks/stem/internal/services/measure"
+	"github.com/MustardSeedNetworks/stem/internal/services/orchestrator/dataplane"
 )
 
 // mockY1731Dataplane is an in-memory implementation of

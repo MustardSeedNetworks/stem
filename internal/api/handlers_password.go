@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/krisarmstrong/stem/internal/auth"
-	"github.com/krisarmstrong/stem/internal/logging"
+	"github.com/MustardSeedNetworks/stem/internal/auth"
+	"github.com/MustardSeedNetworks/stem/internal/logging"
 )
 
 // detectHashAlgorithm returns a short tag identifying the hashing

@@ -5,8 +5,8 @@ package reflector_test
 import (
 	"testing"
 
-	reflectorDP "github.com/krisarmstrong/stem/internal/reflector/dataplane"
-	"github.com/krisarmstrong/stem/internal/services/reflector"
+	reflectorDP "github.com/MustardSeedNetworks/stem/internal/reflector/dataplane"
+	"github.com/MustardSeedNetworks/stem/internal/services/reflector"
 )
 
 // Test constants for executor tests.

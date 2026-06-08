@@ -2,7 +2,7 @@
 // directly from the Go types, so the wire contract documented in
 // docs/schemas/ stays in sync with internal/api/.
 //
-// Mirrors the pattern documented in ADR 0001 of krisarmstrong/niac-go
+// Mirrors the pattern documented in ADR 0001 of MustardSeedNetworks/niac-go
 // (docs/adr/0001-schema-generation-from-go-structs.md). Each top-level
 // DTO becomes its own schema file under docs/schemas/api/; clients and
 // future TypeScript codegen can consume them as a stable contract.
@@ -24,7 +24,7 @@ import (
 
 	"github.com/invopop/jsonschema"
 
-	"github.com/krisarmstrong/stem/internal/api"
+	"github.com/MustardSeedNetworks/stem/internal/api"
 )
 
 // schemaTarget pairs a Go DTO with the on-disk filename it should be
@@ -95,7 +95,7 @@ func main() {
 			target.title,
 		)
 		schema.ID = jsonschema.ID(fmt.Sprintf(
-			"https://raw.githubusercontent.com/krisarmstrong/stem/main/docs/schemas/api/%s",
+			"https://raw.githubusercontent.com/MustardSeedNetworks/stem/main/docs/schemas/api/%s",
 			target.filename,
 		))
 

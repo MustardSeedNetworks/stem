@@ -52,7 +52,7 @@
 
 ```bash
 # Download latest release
-curl -LO https://github.com/krisarmstrong/stem/releases/latest/download/stem-linux-amd64
+curl -LO https://github.com/MustardSeedNetworks/stem/releases/latest/download/stem-linux-amd64
 
 # Make executable
 chmod +x stem-linux-amd64
@@ -68,7 +68,7 @@ stem version
 
 ```bash
 # Clone repository
-git clone https://github.com/krisarmstrong/stem.git
+git clone https://github.com/MustardSeedNetworks/stem.git
 cd stem
 
 # Build UI
@@ -85,7 +85,7 @@ sudo cp bin/stem /usr/local/bin/
 
 ```bash
 # Pull image
-docker pull ghcr.io/krisarmstrong/stem:latest
+docker pull ghcr.io/mustardseednetworks/stem:latest
 
 # Run container
 docker run -d \
@@ -95,7 +95,7 @@ docker run -d \
   -e STEM_AUTH_USERNAME=admin \
   -e STEM_AUTH_PASSWORD=your-secure-password \
   -e STEM_JWT_SECRET=your-256-bit-secret \
-  ghcr.io/krisarmstrong/stem:latest web -p 8444
+  ghcr.io/mustardseednetworks/stem:latest web -p 8444
 ```
 
 ---
@@ -320,7 +320,7 @@ spec:
     spec:
       containers:
       - name: stem
-        image: ghcr.io/krisarmstrong/stem:latest
+        image: ghcr.io/mustardseednetworks/stem:latest
         ports:
         - containerPort: 8444
         env:
@@ -482,8 +482,8 @@ stem web -p 8444
 
 ### Support
 
-- GitHub Issues: https://github.com/krisarmstrong/stem/issues
-- Documentation: https://github.com/krisarmstrong/stem/docs
+- GitHub Issues: https://github.com/MustardSeedNetworks/stem/issues
+- Documentation: https://github.com/MustardSeedNetworks/stem/docs
 
 ---
 

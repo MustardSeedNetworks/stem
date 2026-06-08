@@ -5,8 +5,8 @@ package measure
 import (
 	"fmt"
 
-	"github.com/krisarmstrong/stem/internal/services/modtypes"
-	"github.com/krisarmstrong/stem/internal/services/orchestrator/dataplane"
+	"github.com/MustardSeedNetworks/stem/internal/services/modtypes"
+	"github.com/MustardSeedNetworks/stem/internal/services/orchestrator/dataplane"
 )
 
 // Executor wraps the Measure module with test execution capability.

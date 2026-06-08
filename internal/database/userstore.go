@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/krisarmstrong/stem/internal/auth"
+	"github.com/MustardSeedNetworks/stem/internal/auth"
 )
 
 // UserStoreAdapter adapts the database to the auth.UserStore interface.

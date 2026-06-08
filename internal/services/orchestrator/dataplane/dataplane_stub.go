@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/krisarmstrong/stem/internal/platform"
+	"github.com/MustardSeedNetworks/stem/internal/platform"
 )
 
 // TestType represents the type of test to execute.

@@ -19,7 +19,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/stem/internal/truststore"
+	"github.com/MustardSeedNetworks/stem/internal/truststore"
 )
 
 // makeFixtureCert writes a self-signed certificate PEM to a temp file and

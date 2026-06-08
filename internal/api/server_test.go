@@ -11,8 +11,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/krisarmstrong/stem/internal/api"
-	"github.com/krisarmstrong/stem/internal/netif"
+	"github.com/MustardSeedNetworks/stem/internal/api"
+	"github.com/MustardSeedNetworks/stem/internal/netif"
 )
 
 // Test constants for repeated strings.

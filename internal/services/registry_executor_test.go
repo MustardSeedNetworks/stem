@@ -5,7 +5,7 @@ package services_test
 import (
 	"testing"
 
-	"github.com/krisarmstrong/stem/internal/services"
+	"github.com/MustardSeedNetworks/stem/internal/services"
 )
 
 // TestRegistryExecutorFactories pins the single-source-of-truth invariant: every

@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/krisarmstrong/stem/internal/api"
+	"github.com/MustardSeedNetworks/stem/internal/api"
 )
 
 // setupModeTestServer builds a server tuned for /api/v1/mode tests.

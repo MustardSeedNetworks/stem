@@ -3,7 +3,7 @@ Version:    __VERSION__
 Release:    1%{?dist}
 Summary:    The Stem - Network Performance Testing Tool by Mustard Seed Networks
 License:    Proprietary
-URL:        https://github.com/krisarmstrong/stem
+URL:        https://github.com/MustardSeedNetworks/stem
 BuildArch:  __ARCHITECTURE__
 
 Requires:   systemd, libcap

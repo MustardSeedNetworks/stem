@@ -5,7 +5,7 @@ package services
 import (
 	"sync"
 
-	"github.com/krisarmstrong/stem/internal/services/modtypes"
+	"github.com/MustardSeedNetworks/stem/internal/services/modtypes"
 )
 
 // Registry provides lookup and management of all registered modules and their

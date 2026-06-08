@@ -98,7 +98,7 @@ endef
 
 # Go settings
 GO := go
-VERSION_PKG := github.com/krisarmstrong/stem/internal/version
+VERSION_PKG := github.com/MustardSeedNetworks/stem/internal/version
 
 # Embedded UI assets — Vite outputs here directly; Go //go:embed reads from here.
 EMBED_DIR := internal/api/ui
@@ -317,7 +317,7 @@ release: ## Create release (VERSION=vX.Y.Z required)
 			echo "Note: Upload binaries manually if gh release failed"; \
 	else \
 		echo "GitHub CLI not installed. Create release manually at:"; \
-		echo "https://github.com/krisarmstrong/stem/releases/new?tag=$(VERSION)"; \
+		echo "https://github.com/MustardSeedNetworks/stem/releases/new?tag=$(VERSION)"; \
 	fi
 	@echo ""
 	@printf "$(GREEN)╔══════════════════════════════════════════════════════════════════════════════╗$(RESET)\n"

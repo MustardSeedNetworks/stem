@@ -12,9 +12,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/stem/internal/api"
-	"github.com/krisarmstrong/stem/internal/netif"
-	"github.com/krisarmstrong/stem/internal/services/modtypes"
+	"github.com/MustardSeedNetworks/stem/internal/api"
+	"github.com/MustardSeedNetworks/stem/internal/netif"
+	"github.com/MustardSeedNetworks/stem/internal/services/modtypes"
 )
 
 // fakeAPIExecutor is a no-op testExecutor used to drive the Server's

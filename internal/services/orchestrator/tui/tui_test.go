@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/stem/internal/services/orchestrator/tui"
+	"github.com/MustardSeedNetworks/stem/internal/services/orchestrator/tui"
 )
 
 func TestTestTypeConstants(t *testing.T) {

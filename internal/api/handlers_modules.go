@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/krisarmstrong/stem/internal/services"
+	"github.com/MustardSeedNetworks/stem/internal/services"
 )
 
 // handleModules returns the list of all modules.

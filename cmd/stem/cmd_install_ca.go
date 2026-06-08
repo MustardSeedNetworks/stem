@@ -12,7 +12,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/krisarmstrong/stem/internal/truststore"
+	"github.com/MustardSeedNetworks/stem/internal/truststore"
 )
 
 const (

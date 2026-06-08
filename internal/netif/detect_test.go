@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/krisarmstrong/stem/internal/netif"
+	"github.com/MustardSeedNetworks/stem/internal/netif"
 )
 
 // TestCalculateScore tests the scoring system. Since calculateScore is not

@@ -39,7 +39,7 @@ ARG COMMIT=unknown
 ARG BUILD_DATE=unknown
 RUN UI_HASH=$(find internal/api/ui -type f -exec md5sum {} \; | sort | md5sum | cut -d' ' -f1) \
     && CGO_ENABLED=0 go build -trimpath -buildvcs=false \
-        -ldflags="-s -w -X github.com/krisarmstrong/stem/internal/version.Version=${VERSION} -X github.com/krisarmstrong/stem/internal/version.Commit=${COMMIT} -X github.com/krisarmstrong/stem/internal/version.BuildTime=${BUILD_DATE} -X github.com/krisarmstrong/stem/internal/version.UIBuildHash=${UI_HASH}" \
+        -ldflags="-s -w -X github.com/MustardSeedNetworks/stem/internal/version.Version=${VERSION} -X github.com/MustardSeedNetworks/stem/internal/version.Commit=${COMMIT} -X github.com/MustardSeedNetworks/stem/internal/version.BuildTime=${BUILD_DATE} -X github.com/MustardSeedNetworks/stem/internal/version.UIBuildHash=${UI_HASH}" \
         -o /out/stem ./cmd/stem
 
 # -----------------------------------------------------------------------------
@@ -70,7 +70,7 @@ EXPOSE 8444 8043
 ARG VERSION=dev
 ARG COMMIT=unknown
 LABEL org.opencontainers.image.title="stem" \
-      org.opencontainers.image.source="https://github.com/krisarmstrong/stem" \
+      org.opencontainers.image.source="https://github.com/MustardSeedNetworks/stem" \
       org.opencontainers.image.licenses="Proprietary" \
       org.opencontainers.image.version="${VERSION}" \
       org.opencontainers.image.revision="${COMMIT}"

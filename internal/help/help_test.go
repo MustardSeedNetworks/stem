@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/krisarmstrong/stem/internal/help"
+	"github.com/MustardSeedNetworks/stem/internal/help"
 )
 
 // assertNotEmpty is a test helper that checks a field is not empty.

@@ -5,8 +5,8 @@ package reflector
 import (
 	"fmt"
 
-	reflectorConfig "github.com/krisarmstrong/stem/internal/reflector/config"
-	reflectorDP "github.com/krisarmstrong/stem/internal/reflector/dataplane"
+	reflectorConfig "github.com/MustardSeedNetworks/stem/internal/reflector/config"
+	reflectorDP "github.com/MustardSeedNetworks/stem/internal/reflector/dataplane"
 )
 
 // Result is a generic operation result.

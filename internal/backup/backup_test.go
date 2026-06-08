@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/stem/internal/backup"
-	"github.com/krisarmstrong/stem/internal/database"
+	"github.com/MustardSeedNetworks/stem/internal/backup"
+	"github.com/MustardSeedNetworks/stem/internal/database"
 )
 
 func setupTestDB(t *testing.T) (*database.DB, func()) {

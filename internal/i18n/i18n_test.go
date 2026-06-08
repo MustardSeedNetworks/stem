@@ -7,7 +7,7 @@ package i18n_test
 import (
 	"testing"
 
-	"github.com/krisarmstrong/stem/internal/i18n"
+	"github.com/MustardSeedNetworks/stem/internal/i18n"
 )
 
 func TestT(t *testing.T) {

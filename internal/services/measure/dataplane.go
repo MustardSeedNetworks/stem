@@ -2,7 +2,7 @@
 
 package measure
 
-import "github.com/krisarmstrong/stem/internal/services/orchestrator/dataplane"
+import "github.com/MustardSeedNetworks/stem/internal/services/orchestrator/dataplane"
 
 // Y1731Dataplane is the narrow interface the Measure executor depends on.
 //

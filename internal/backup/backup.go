@@ -20,8 +20,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/krisarmstrong/stem/internal/database"
-	"github.com/krisarmstrong/stem/internal/logging"
+	"github.com/MustardSeedNetworks/stem/internal/database"
+	"github.com/MustardSeedNetworks/stem/internal/logging"
 )
 
 var (

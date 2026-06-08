@@ -1,6 +1,6 @@
 [Unit]
 Description=The Stem - Network Performance Testing
-Documentation=https://github.com/krisarmstrong/stem
+Documentation=https://github.com/MustardSeedNetworks/stem
 After=network-online.target
 Wants=network-online.target
 

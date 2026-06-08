@@ -10,8 +10,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/krisarmstrong/stem/internal/api"
-	"github.com/krisarmstrong/stem/internal/netif"
+	"github.com/MustardSeedNetworks/stem/internal/api"
+	"github.com/MustardSeedNetworks/stem/internal/netif"
 )
 
 // setupSettingsTestServer creates a server for settings handler tests.

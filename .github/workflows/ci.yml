@@ -695,10 +695,10 @@ jobs:
 
           go build -trimpath -buildvcs=false \
             -ldflags "-s -w \
-              -X github.com/krisarmstrong/stem/internal/version.Version=${VERSION} \
-              -X github.com/krisarmstrong/stem/internal/version.Commit=${COMMIT} \
-              -X github.com/krisarmstrong/stem/internal/version.BuildTime=${BUILD_TIME} \
-              -X github.com/krisarmstrong/stem/internal/version.UIBuildHash=${UI_BUILD_HASH}" \
+              -X github.com/MustardSeedNetworks/stem/internal/version.Version=${VERSION} \
+              -X github.com/MustardSeedNetworks/stem/internal/version.Commit=${COMMIT} \
+              -X github.com/MustardSeedNetworks/stem/internal/version.BuildTime=${BUILD_TIME} \
+              -X github.com/MustardSeedNetworks/stem/internal/version.UIBuildHash=${UI_BUILD_HASH}" \
             -o bin/stem-${{ matrix.os }}-${{ matrix.arch }} \
             ./cmd/stem/
 

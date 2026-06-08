@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/stem/internal/metrics"
+	"github.com/MustardSeedNetworks/stem/internal/metrics"
 )
 
 // -----------------------------------------------------------------------------

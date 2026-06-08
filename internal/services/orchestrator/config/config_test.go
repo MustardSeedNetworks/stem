@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/stem/internal/services/orchestrator/config"
+	"github.com/MustardSeedNetworks/stem/internal/services/orchestrator/config"
 )
 
 // Test constants for repeated strings.

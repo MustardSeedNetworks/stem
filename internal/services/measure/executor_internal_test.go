@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/krisarmstrong/stem/internal/services/modtypes"
+	"github.com/MustardSeedNetworks/stem/internal/services/modtypes"
 )
 
 // newTestExecutor creates an Executor for testing without a real dataplane.

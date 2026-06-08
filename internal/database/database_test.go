@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/krisarmstrong/stem/internal/database"
+	"github.com/MustardSeedNetworks/stem/internal/database"
 )
 
 // newTestDB creates a new database in a temp directory for testing.

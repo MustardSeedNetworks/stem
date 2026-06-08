@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/krisarmstrong/stem/internal/version"
+	"github.com/MustardSeedNetworks/stem/internal/version"
 )
 
 // handleHealth returns server health status.

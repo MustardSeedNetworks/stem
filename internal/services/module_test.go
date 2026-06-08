@@ -5,13 +5,13 @@ package services_test
 import (
 	"testing"
 
-	"github.com/krisarmstrong/stem/internal/services"
-	"github.com/krisarmstrong/stem/internal/services/benchmark"
-	"github.com/krisarmstrong/stem/internal/services/certify"
-	"github.com/krisarmstrong/stem/internal/services/measure"
-	"github.com/krisarmstrong/stem/internal/services/reflector"
-	"github.com/krisarmstrong/stem/internal/services/servicetest"
-	"github.com/krisarmstrong/stem/internal/services/trafficgen"
+	"github.com/MustardSeedNetworks/stem/internal/services"
+	"github.com/MustardSeedNetworks/stem/internal/services/benchmark"
+	"github.com/MustardSeedNetworks/stem/internal/services/certify"
+	"github.com/MustardSeedNetworks/stem/internal/services/measure"
+	"github.com/MustardSeedNetworks/stem/internal/services/reflector"
+	"github.com/MustardSeedNetworks/stem/internal/services/servicetest"
+	"github.com/MustardSeedNetworks/stem/internal/services/trafficgen"
 )
 
 // Module name constants for tests.

@@ -5,9 +5,9 @@ package api
 import (
 	"net/http"
 
-	"github.com/krisarmstrong/stem/internal/logging"
-	"github.com/krisarmstrong/stem/internal/netif"
-	reflectorDP "github.com/krisarmstrong/stem/internal/reflector/dataplane"
+	"github.com/MustardSeedNetworks/stem/internal/logging"
+	"github.com/MustardSeedNetworks/stem/internal/netif"
+	reflectorDP "github.com/MustardSeedNetworks/stem/internal/reflector/dataplane"
 )
 
 // reflectorAvailabilityFn is a swappable platform-capability probe so
