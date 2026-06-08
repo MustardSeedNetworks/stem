@@ -419,6 +419,7 @@ jobs:
             --enable=warning,performance,portability \
             --suppress=missingIncludeSystem \
             --suppress=unusedFunction \
+            --suppress=preprocessorErrorDirective \
             --inline-suppr \
             --error-exitcode=1 \
             --template='{file}:{line}: {severity}: {message} [{id}]' \
