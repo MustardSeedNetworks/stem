@@ -24,6 +24,13 @@
 #include <linux/if_ether.h> /* ETH_P_IP */
 #endif
 
+/* ETH_P_IP is the IPv4 EtherType (a fixed wire constant). On Linux it comes
+ * from <linux/if_ether.h>; define a fallback elsewhere so the parser compiles
+ * and is unit-/fuzz-testable on non-Linux hosts (macOS dev, portable CI). */
+#ifndef ETH_P_IP
+#define ETH_P_IP 0x0800
+#endif
+
 /* ============================================================================
  * Ethernet/IP/UDP Header Structures
  * ============================================================================ */
@@ -245,7 +252,14 @@ rfc2544_payload_t *custom_create_packet_template(uint8_t *buffer, uint32_t frame
  */
 bool custom_is_valid_response(const uint8_t *data, uint32_t len, const char *signature)
 {
-    if (!data || len < RFC2544_MIN_FRAME || !signature) {
+    /* Require the full payload, not just the 64-byte Ethernet minimum: the
+     * cast below addresses a 24-byte rfc2544_payload_t at offset 42, so a
+     * consumer trusting this validation reads through offset 66. Guarding on
+     * the literal RFC2544_MIN_FRAME (64) let a 64-/65-byte attacker frame
+     * through, leaving a 1-2 byte out-of-bounds read for downstream readers. */
+    const uint32_t min_len = (uint32_t)(sizeof(eth_header_t) + sizeof(ip_header_t) +
+                                        sizeof(udp_header_t) + sizeof(rfc2544_payload_t));
+    if (!data || len < min_len || !signature) {
         return false;
     }
 
@@ -344,7 +358,12 @@ void rfc2544_stamp_packet(rfc2544_payload_t *payload, uint32_t seq_num, uint64_t
  */
 bool rfc2544_is_valid_response(const uint8_t *data, uint32_t len)
 {
-    if (!data || len < RFC2544_MIN_FRAME) {
+    /* Full-payload bound (66), not the 64-byte Ethernet minimum: see the note
+     * in custom_is_valid_response. Prevents validating a frame too short to
+     * hold the rfc2544_payload_t that downstream readers dereference. */
+    const uint32_t min_len = (uint32_t)(sizeof(eth_header_t) + sizeof(ip_header_t) +
+                                        sizeof(udp_header_t) + sizeof(rfc2544_payload_t));
+    if (!data || len < min_len) {
         return false;
     }
 
@@ -716,7 +735,12 @@ void y1564_stamp_packet(y1564_payload_t *payload, uint32_t seq_num, uint64_t tim
  */
 bool y1564_is_valid_response(const uint8_t *data, uint32_t len)
 {
-    if (!data || len < Y1564_MIN_FRAME) {
+    /* Full-payload bound, not the 64-byte Ethernet minimum: the y1564_payload_t
+     * cast at offset 42 is read through by consumers; guarding on the literal
+     * Y1564_MIN_FRAME (64) admitted 64-/65-byte frames too short to hold it. */
+    const uint32_t min_len = (uint32_t)(sizeof(eth_header_t) + sizeof(ip_header_t) +
+                                        sizeof(udp_header_t) + sizeof(y1564_payload_t));
+    if (!data || len < min_len) {
         return false;
     }
 
