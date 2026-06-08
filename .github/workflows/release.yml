@@ -111,10 +111,11 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build-ui]
     container:
-      # Docker Hub tag scheme: <go-version>-<bundle-revision>. v1.26.2-3
-      # tracks Go 1.26.2 + goreleaser v2.15.4. Pinned for reproducibility;
-      # bump via dependabot when newer revs land.
-      image: goreleaser/goreleaser-cross:v1.26.2-3
+      # Docker Hub tag scheme: <go-version>-<goreleaser-version>. v1.26.3-v2.16.0
+      # tracks Go 1.26.3 + goreleaser v2.16.0. Pinned for reproducibility;
+      # bump via dependabot when newer revs land. Keep fresh so the image's
+      # baked libs don't drift from upstream (seed#1577).
+      image: goreleaser/goreleaser-cross:v1.26.3-v2.16.0
     outputs:
       # base64-encoded SHA-256 hashes of all release artifacts, formatted
       # for slsa-github-generator's base64-subjects input. Set only on a
