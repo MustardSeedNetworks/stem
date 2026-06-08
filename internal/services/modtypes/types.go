@@ -18,6 +18,19 @@ var (
 	ErrInvalidConfig = errors.New("invalid test configuration")
 )
 
+// Executor runs a module's tests against a live dataplane. Each executable
+// module owns its Executor; the factory is held in the module registry
+// (Registry.Factory) alongside the module's metadata, so a module is a single
+// source of truth rather than being split across a parallel map in the API
+// layer. Reflector has a different lifecycle and is not an Executor.
+type Executor interface {
+	Close()
+	Execute(testType string, cfg *TestConfig) (*Result, error)
+}
+
+// ExecutorFactory builds an Executor bound to a network interface.
+type ExecutorFactory func(iface string) (Executor, error)
+
 // Result is a generic test result returned by all module executors.
 type Result struct {
 	TestType   string `json:"testType"`

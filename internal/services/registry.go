@@ -4,13 +4,18 @@ package services
 
 import (
 	"sync"
+
+	"github.com/krisarmstrong/stem/internal/services/modtypes"
 )
 
-// Registry provides lookup and management of all registered modules.
+// Registry provides lookup and management of all registered modules and their
+// executor factories — the single source of truth for both module metadata and
+// (for executable modules) how to construct an executor.
 type Registry struct {
 	mu        sync.RWMutex
 	modules   map[string]Module
-	testIndex map[string]Module // testType -> module
+	testIndex map[string]Module                   // testType -> module
+	factories map[string]modtypes.ExecutorFactory // moduleName -> executor factory
 }
 
 // NewRegistry creates a new empty module registry.
@@ -19,7 +24,27 @@ func NewRegistry() *Registry {
 		mu:        sync.RWMutex{},
 		modules:   make(map[string]Module),
 		testIndex: make(map[string]Module),
+		factories: make(map[string]modtypes.ExecutorFactory),
 	}
+}
+
+// RegisterExecutable registers a module together with the factory that builds
+// its executor, so metadata and execution are declared in one place. Use
+// Register for modules with a non-standard execution lifecycle (e.g. reflector).
+func (r *Registry) RegisterExecutable(m Module, f modtypes.ExecutorFactory) {
+	r.Register(m)
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.factories[m.Name()] = f
+}
+
+// Factory returns the executor factory for a module, or (nil, false) if the
+// module is not registered or has no executor (e.g. reflector).
+func (r *Registry) Factory(name string) (modtypes.ExecutorFactory, bool) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	f, ok := r.factories[name]
+	return f, ok
 }
 
 // Register adds a module to the registry.

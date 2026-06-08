@@ -20,15 +20,10 @@ const (
 	statusCancelled = "cancelled"
 )
 
-// Module name constants.
-const (
-	moduleReflector   = "reflector"
-	moduleBenchmark   = "benchmark"
-	moduleServicetest = "servicetest"
-	moduleTrafficgen  = "trafficgen"
-	moduleMeasure     = "measure"
-	moduleCertify     = "certify"
-)
+// moduleReflector is the one module name the API layer special-cases (it has a
+// distinct lifecycle and is dispatched directly, not via the registry's executor
+// factory). The other module names live with their modules in internal/services.
+const moduleReflector = "reflector"
 
 // Operating mode constants.
 const (
