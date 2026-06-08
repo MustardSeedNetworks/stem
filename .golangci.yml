@@ -504,6 +504,15 @@ linters:
           - gosec
           - noctx
           - wrapcheck
+      # Ed25519 license-test signing helpers. Both signTestKey helpers return
+      # (string, error) as a drop-in for the removed GenerateLicenseKey
+      # signature, so the ~70 `key, err := signTestKey(...)` call sites compile
+      # unchanged; the error is structurally always nil, which `unparam` flags —
+      # the shape is intentional API parity, not a latent bug. (testpackage is
+      # avoided by the _internal_test.go filename convention, no exclusion needed.)
+      - path: 'internal/license/testsign_(external|internal)_test\.go'
+        linters:
+          - unparam
       # internal/truststore writes trust-anchor PEMs into the four OS-specific
       # CA directories (Debian/Ubuntu, RHEL/Fedora, Arch, openSUSE). The
       # destination is computed by detectLinuxStore from a hardcoded
