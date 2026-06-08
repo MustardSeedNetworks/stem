@@ -2,13 +2,13 @@
 # Stem Makefile
 # =============================================================================
 #
-# Build, test, and package automation for Stem network performance testing tool.
+# Local build, test, and development automation for Stem network performance testing tool.
 #
 # QUICK START
 # -----------
-#   make build          Build binary (UI + Go)
+#   make build          Build current-host binary (UI + Go)
 #   make test           Run all tests
-#   make verify         Full CI pipeline (lint, test, security, build)
+#   make verify         Full local verification (lint, test, security, build)
 #   make dev            Development mode instructions
 #   make help           Show all available targets
 #
@@ -21,7 +21,7 @@
 # REQUIREMENTS
 # ------------
 #   - Go 1.25+ (with CGO for certain features)
-#   - Node.js 25.2.1+ and npm
+#   - Node.js 26.2.0+ and npm
 #   - Linux (for C dataplane builds)
 #
 # =============================================================================
