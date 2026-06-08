@@ -2,20 +2,17 @@
 # Build Targets
 # =============================================================================
 #
-# All build-related targets for The Stem:
+# Local build targets for The Stem:
 #   - Frontend build (React/Vite)
-#   - Backend build (Go binary)
-#   - C dataplane (Linux only)
-#   - Cross-compilation (Linux via Docker)
-#   - Docker image builds
+#   - Backend build for the current host
+#   - C dataplane for the current host
+#
+# GitHub Actions owns cross-platform artifacts, provenance, and checksums.
 #
 # =============================================================================
 
-.PHONY: all ui ui-deps go quick clean schema \
-        build build-darwin build-linux \
-        c-build dataplane c-build-docker \
-        build-minimal build-xdp build-dpdk \
-        build-linux-docker \
+.PHONY: ui ui-deps go quick schema \
+        build c-build dataplane \
         ui-dev go-dev dev
 
 schema: ## Regenerate docs/schemas/api/*.json from internal/api Go DTOs
@@ -27,27 +24,22 @@ schema: ## Regenerate docs/schemas/api/*.json from internal/api Go DTOs
 # Main Build Targets
 # =============================================================================
 
-# Default: build everything
-all: ui go ## Build everything (UI + Go binary)
-	@echo ""
-	@echo "Build complete!"
-	@echo "  Binary: $(BINARY_NAME)"
-	@echo "  Version: $(VERSION)"
-
-# Build binary (creates symlink for convenience)
-build: go ## Build Go binary with symlink
-	mkdir -p bin
-	ln -sf $(notdir $(BINARY_NAME)) bin/stem 2>/dev/null || cp $(BINARY_NAME) bin/stem
+build: ui go ## Build current host binary with embedded UI
+	@echo "Build complete: $(BINARY_NAME)"
 
 # =============================================================================
 # Frontend Build
 # =============================================================================
 
 ui-deps: ## Install UI dependencies
-	@echo "Installing UI dependencies..."
-	cd ui && npm install
+	@if [ ! -d ui/node_modules ] || [ ui/package-lock.json -nt ui/node_modules/.package-lock.json ]; then \
+		echo "Installing UI dependencies..."; \
+		cd ui && npm ci; \
+	else \
+		echo "UI dependencies up to date"; \
+	fi
 
-ui: ui-deps ## Build React WebUI (output: internal/api/dist/)
+ui: ui-deps ## Build React WebUI (output: internal/api/ui/)
 	@echo "Building React WebUI..."
 	cd ui && npm run build
 
@@ -61,22 +53,10 @@ go: ## Build Go binary
 	$(GO) build $(GOFLAGS) -o $(BINARY_NAME) ./cmd/stem/
 	@echo "Built: $(BINARY_NAME)"
 
-quick: ## Quick build (Go only, assumes UI is already built)
+quick: ## Quick current-host Go rebuild (assumes UI is already built)
 	@echo "Quick build (Go only)..."
 	mkdir -p bin
 	$(GO) build $(GOFLAGS) -o $(BINARY_NAME) ./cmd/stem/
-
-build-darwin: ui ## Build for macOS (native architecture)
-	@echo "Building for macOS ($(shell uname -m))..."
-	mkdir -p bin
-	@CGO_ENABLED=0 $(GO) build $(GOFLAGS) -o bin/stem-darwin ./cmd/stem/
-	@echo "Built: bin/stem-darwin"
-
-build-linux: ui ## Build for Linux AMD64 (CGO_ENABLED=0, no DPDK)
-	@echo "Building for Linux AMD64 (pure Go)..."
-	mkdir -p bin
-	@GOOS=linux GOARCH=amd64 CGO_ENABLED=0 $(GO) build $(GOFLAGS) -o bin/stem-linux ./cmd/stem/
-	@echo "Built: bin/stem-linux"
 
 # =============================================================================
 # C Dataplane Build
@@ -109,80 +89,13 @@ else ifeq ($(UNAME),Darwin)
 	ar rcs build/libstem-common.a $(C_MACOS_SRCS:.c=.o)
 	@rm -f src/dataplane/common/*.o
 	@echo "Built: build/libstem-common.a (common code only)"
-	@echo "  Note: Network backends require Linux. Use 'make c-build-docker' for full build."
+	@echo "  Note: Network backends require Linux and are built by GitHub Actions for release artifacts."
 else
 	@echo "Dataplane requires Linux or macOS"
 endif
 
 # Alias for dataplane target
 c-build: dataplane ## Alias for dataplane
-
-# =============================================================================
-# C Dataplane Build Profiles (Linux only)
-# =============================================================================
-
-build-minimal: go ## AF_PACKET only (most compatible, no external deps)
-ifeq ($(UNAME),Linux)
-	@echo "Building C dataplane (AF_PACKET, minimal)..."
-	mkdir -p bin
-	$(CC) $(CFLAGS) -DAF_PACKET_MODE -o bin/stem-dataplane \
-		$(C_COMMON_SRCS) $(C_PACKET_SRCS) $(C_LDFLAGS)
-	@echo "Built: bin/stem-dataplane (AF_PACKET)"
-else
-	@echo "Dataplane requires Linux"
-endif
-
-build-xdp: go ## AF_XDP backend (good performance, needs libbpf)
-ifeq ($(UNAME),Linux)
-	@echo "Building C dataplane (AF_XDP)..."
-	mkdir -p bin
-	$(CC) $(CFLAGS) -DAF_XDP_MODE -o bin/stem-dataplane \
-		$(C_COMMON_SRCS) $(C_XDP_SRCS) $(C_LDFLAGS) -lbpf -lxdp
-	@echo "Built: bin/stem-dataplane (AF_XDP)"
-else
-	@echo "AF_XDP dataplane requires Linux"
-endif
-
-build-dpdk: go ## DPDK backend (max performance, needs DPDK SDK)
-ifeq ($(UNAME),Linux)
-	@echo "Building C dataplane (DPDK)..."
-	mkdir -p bin
-	$(CC) $(CFLAGS) $(shell pkg-config --cflags libdpdk 2>/dev/null) -DDPDK_MODE \
-		-o bin/stem-dataplane \
-		$(C_COMMON_SRCS) $(C_DPDK_SRCS) \
-		$(C_LDFLAGS) $(shell pkg-config --libs libdpdk 2>/dev/null)
-	@echo "Built: bin/stem-dataplane (DPDK)"
-else
-	@echo "DPDK dataplane requires Linux"
-endif
-
-# Build C code using Docker (cross-platform)
-c-build-docker: ## Build C code using Docker (cross-platform)
-	@echo "Building C dataplane in Docker..."
-	docker run --rm -v $(PWD):/src -w /src gcc:latest make c-build
-
-# =============================================================================
-# Cross-Platform Builds
-# =============================================================================
-
-# Build Linux binary via Docker (for cross-compilation from macOS)
-build-linux-docker: ## Build Linux binary using Docker (cross-platform)
-	@printf "$(BOLD)$(CYAN)Building Linux binary via Docker...$(RESET)\n"
-	docker run --rm \
-		-v $(PWD):/workspace \
-		-w /workspace \
-		-e GOOS=linux \
-		-e GOARCH=amd64 \
-		-e CGO_ENABLED=0 \
-		golang:1.25 \
-		go build -trimpath -buildvcs=false \
-			-ldflags "-s -w \
-				-X $(VERSION_PKG).semver=$(VERSION) \
-				-X $(VERSION_PKG).commit=$(COMMIT) \
-				-X $(VERSION_PKG).buildTime=$(BUILD_TIME)" \
-			-o bin/stem-linux-amd64 \
-			./cmd/stem/
-	@printf "$(GREEN)✓ Linux binary built: bin/stem-linux-amd64$(RESET)\n"
 
 # =============================================================================
 # Development Targets
@@ -202,16 +115,3 @@ dev: ## Development mode (show instructions)
 	@echo "Run in separate terminals:"
 	@echo "  make ui-dev    # React dev server"
 	@echo "  make go-dev    # Go backend"
-
-# =============================================================================
-# Cleanup
-# =============================================================================
-
-clean: ## Clean build artifacts
-	@echo "Cleaning..."
-	rm -rf bin/
-	rm -rf ui/dist/
-	rm -rf ui/node_modules/
-	rm -rf internal/web/dist/
-	rm -f coverage.out coverage.html
-	@echo "Clean complete"
