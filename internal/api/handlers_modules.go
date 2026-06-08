@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strings"
 
-	modules "github.com/krisarmstrong/stem/internal/services"
+	"github.com/krisarmstrong/stem/internal/services"
 )
 
 // handleModules returns the list of all modules.
@@ -17,7 +17,7 @@ func (s *Server) handleModules(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	moduleInfos := modules.GetAllModuleInfos()
+	moduleInfos := services.GetAllModuleInfos()
 	writeJSON(w, map[string]any{
 		"modules": moduleInfos,
 		"count":   len(moduleInfos),
@@ -42,7 +42,7 @@ func (s *Server) handleModuleByName(w http.ResponseWriter, r *http.Request) {
 	}
 
 	moduleName := parts[0]
-	module := modules.GetModule(moduleName)
+	module := services.GetModule(moduleName)
 
 	if module == nil {
 		http.Error(w, fmt.Sprintf("Module not found: %s", moduleName), http.StatusNotFound)
@@ -61,5 +61,5 @@ func (s *Server) handleModuleByName(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Return full module info.
-	writeJSON(w, modules.ToInfo(module))
+	writeJSON(w, services.ToInfo(module))
 }

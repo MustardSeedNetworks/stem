@@ -9,7 +9,7 @@ import (
 
 	"github.com/krisarmstrong/stem/internal/logging"
 	"github.com/krisarmstrong/stem/internal/netif"
-	modules "github.com/krisarmstrong/stem/internal/services"
+	"github.com/krisarmstrong/stem/internal/services"
 )
 
 var errTestAlreadyRunning = errors.New("test already running")
@@ -145,8 +145,8 @@ func (s *Server) handleTestResult(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (s *Server) resolveTestModule(testType string) (modules.Module, error) {
-	mod := modules.GetModuleForTest(testType)
+func (s *Server) resolveTestModule(testType string) (services.Module, error) {
+	mod := services.GetModuleForTest(testType)
 	if mod == nil {
 		return nil, fmt.Errorf("unknown test type: %s", testType)
 	}

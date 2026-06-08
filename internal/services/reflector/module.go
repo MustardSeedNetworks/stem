@@ -32,7 +32,7 @@ func testDescriptions() map[string]string {
 	}
 }
 
-// Module implements the modules.Module interface for packet reflection.
+// Module implements the services.Module interface for packet reflection.
 type Module struct{}
 
 // New creates a new Reflector module instance.

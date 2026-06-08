@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 
-package modules
+package services
 
 import (
 	"github.com/krisarmstrong/stem/internal/services/benchmark"

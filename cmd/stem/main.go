@@ -35,7 +35,7 @@ import (
 	reflectorConfig "github.com/krisarmstrong/stem/internal/reflector/config"
 	reflectorDP "github.com/krisarmstrong/stem/internal/reflector/dataplane"
 	reflectorTUI "github.com/krisarmstrong/stem/internal/reflector/tui"
-	modules "github.com/krisarmstrong/stem/internal/services"
+	"github.com/krisarmstrong/stem/internal/services"
 	testmasterDP "github.com/krisarmstrong/stem/internal/services/orchestrator/dataplane"
 	testmasterTUI "github.com/krisarmstrong/stem/internal/services/orchestrator/tui"
 	"github.com/krisarmstrong/stem/internal/version"
@@ -291,7 +291,7 @@ func listTestsCmd(args []string) {
 
 	if *jsonOutput {
 		// JSON output using modules.
-		moduleInfos := modules.GetAllModuleInfos()
+		moduleInfos := services.GetAllModuleInfos()
 		data, _ := json.MarshalIndent(map[string]any{
 			"modules": moduleInfos,
 			"count":   len(moduleInfos),
@@ -303,7 +303,7 @@ func listTestsCmd(args []string) {
 	_, _ = fmt.Fprintf(os.Stdout, "%s - Available Test Types by Module\n", ProductName)
 	_, _ = fmt.Fprintln(os.Stdout, strings.Repeat("=", bannerWidth))
 	hs := help.NewSystem()
-	allMods := modules.GetAllModules()
+	allMods := services.GetAllModules()
 	totalTests := 0
 
 	for _, mod := range allMods {
@@ -546,7 +546,7 @@ func printReflectorStartup(parsed *reflectCmdArgs) {
 // validateTestTypesList validates a list of test types.
 func validateTestTypesList(tests []string) bool {
 	for _, t := range tests {
-		if mod := modules.GetModuleForTest(t); mod == nil {
+		if mod := services.GetModuleForTest(t); mod == nil {
 			_, _ = fmt.Fprintf(os.Stdout, "Error: Unknown test type '%s'\n", t)
 			_, _ = fmt.Fprintln(os.Stdout, "Run 'stem list-tests' to see available tests")
 			return false

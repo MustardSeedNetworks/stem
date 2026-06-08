@@ -32,7 +32,7 @@ func testDescriptions() map[string]string {
 	}
 }
 
-// Module implements the modules.Module interface for traffic generation.
+// Module implements the services.Module interface for traffic generation.
 type Module struct{}
 
 // New creates a new TrafficGen module instance.

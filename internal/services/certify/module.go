@@ -74,7 +74,7 @@ func testDescriptions() map[string]string {
 	}
 }
 
-// Module implements the modules.Module interface for compliance certification.
+// Module implements the services.Module interface for compliance certification.
 type Module struct{}
 
 // New creates a new Certify module instance.

@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 
-// Package modules provides the module-oriented architecture layer for The Stem.
-// Modules (Benchmark, ServiceTest, TrafficGen, Measure, Certify) own workflows
-// and delegate to underlying subsystems (testmaster, reflector, dataplane).
-package modules
+// Package services provides the module-oriented capability layer for The Stem.
+// Modules (Benchmark, ServiceTest, TrafficGen, Measure, Certify, Reflector) own
+// workflows and delegate to underlying subsystems (orchestrator, reflector,
+// dataplane).
+package services
 
 // Module represents a testing module in The Stem.
 // Each module owns specific workflows and maps to underlying subsystems.

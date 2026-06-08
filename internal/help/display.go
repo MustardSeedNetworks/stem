@@ -13,7 +13,7 @@ import (
 	"sort"
 	"strings"
 
-	modules "github.com/krisarmstrong/stem/internal/services"
+	"github.com/krisarmstrong/stem/internal/services"
 )
 
 const (
@@ -457,7 +457,7 @@ func DisplayTestListByModuleTo(w io.Writer) {
 	printHeader(w, "Available Tests by Module")
 	_, _ = fmt.Fprintln(w)
 
-	allModules := modules.GetAllModules()
+	allModules := services.GetAllModules()
 	totalTests := 0
 	for _, m := range allModules {
 		totalTests += len(m.TestTypes())
@@ -473,7 +473,7 @@ func DisplayTestListByModuleTo(w io.Writer) {
 	hs := NewSystem()
 
 	for _, modName := range moduleOrder {
-		mod := modules.GetModule(modName)
+		mod := services.GetModule(modName)
 		if mod == nil {
 			continue
 		}
