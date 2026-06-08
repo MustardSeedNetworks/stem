@@ -167,6 +167,7 @@ type Server struct {
 	dataDir              string                     // Application data directory for recovery files
 	acmeChallengeServer  *http.Server               // HTTP-01 challenge server for ACME
 	tlsFingerprint       tlsFingerprintCache        // Cached SHA-256 fingerprint of the active TLS cert (exposed via /__version)
+	background           *BackgroundComponents      // Run-scoped long-lived goroutines (reflector-stats SSE publisher); ordered Start/Stop (background.go)
 
 	// executorResolver maps a module name to a factory producing a
 	// testExecutor. If nil, defaultExecutorFactory is used. Tests inject
@@ -765,10 +766,12 @@ func (s *Server) Run() error {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer stop()
 
-	// SSE publishers (#296). Started after ctx is created so they die
-	// with the server on SIGINT/SIGTERM. The reflector-stats publisher
-	// is always-on but cheap when nobody's subscribed.
-	s.startReflectorStatsPublisher(ctx)
+	// Background goroutines (#296). Started after ctx is created so they die
+	// with the server on SIGINT/SIGTERM; Shutdown also stops them explicitly
+	// and waits for them to exit. The reflector-stats publisher is always-on
+	// but cheap when nobody's subscribed.
+	s.background = newBackgroundComponents(s)
+	s.background.Start(ctx)
 
 	// Wrap with middleware stack: SecurityHeaders -> CORS -> APIVersion -> RequestID -> Logging -> CSRF -> Handler.
 	handler := securityHeadersMiddleware(
@@ -890,6 +893,13 @@ func (s *Server) Shutdown() error {
 	// Create shutdown context with timeout.
 	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer cancel()
+
+	// Stop Run-scoped background goroutines first and wait for them to exit,
+	// so the reflector-stats publisher stops reading the reflector executor
+	// before we tear it down below. No-op when Run was never called.
+	if s.background != nil {
+		s.background.Stop()
+	}
 
 	// Stop rate limiter cleanup goroutines.
 	if s.authLimiter != nil {

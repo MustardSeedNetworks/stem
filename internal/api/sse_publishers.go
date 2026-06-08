@@ -13,32 +13,30 @@ import (
 // removes the round-trip overhead and tightens the latency.
 const reflectorStatsInterval = time.Second
 
-// startReflectorStatsPublisher launches a goroutine that periodically
-// publishes the current reflector stats to all SSE subscribers.
+// runReflectorStatsPublisher periodically publishes the current reflector
+// stats to all SSE subscribers until ctx is cancelled. It blocks for the
+// lifetime of the publisher; [BackgroundComponents] owns the goroutine and
+// the cancellation/await (see background.go).
 //
-// The goroutine is cheap when nobody's subscribed (it short-circuits
-// without computing stats), so it's always-on rather than gated by
-// subscriber count. The lifetime is tied to ctx so server shutdown
-// cleanly stops it.
+// The loop is cheap when nobody's subscribed (it short-circuits without
+// computing stats), so it's always-on rather than gated by subscriber count.
 //
-// Only broadcasts when stats actually exist (i.e., reflector mode is
-// active and the executor is running). Subscribers in test-master
-// mode just receive heartbeats until the mode flips.
-func (s *Server) startReflectorStatsPublisher(ctx context.Context) {
-	go func() {
-		ticker := time.NewTicker(reflectorStatsInterval)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				s.broadcastReflectorStatsIfActive()
-			}
-		}
-	}()
+// Only broadcasts when stats actually exist (i.e., reflector mode is active
+// and the executor is running). Subscribers in test-master mode just receive
+// heartbeats until the mode flips.
+func (s *Server) runReflectorStatsPublisher(ctx context.Context) {
 	logging.Debug("SSE reflector-stats publisher started",
 		"interval", reflectorStatsInterval.String())
+	ticker := time.NewTicker(reflectorStatsInterval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			s.broadcastReflectorStatsIfActive()
+		}
+	}
 }
 
 // broadcastReflectorStatsIfActive reads current reflector stats and
