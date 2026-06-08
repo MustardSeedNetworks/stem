@@ -158,6 +158,7 @@ type Server struct {
 	tlsConfig            TLSConfig                  // TLS configuration for HTTPS
 	cookieConfig         auth.CookieConfig          // Cookie configuration for secure auth
 	corsAllowPrivate     bool                       // STEM_CORS_ALLOW_PRIVATE: reflect RFC1918 cross-origins (default off)
+	routeManifest        []route                    // capability registry: routes registered via register() (route.go)
 	csrfManager          *auth.CSRFManager          // CSRF token manager for protection against CSRF attacks
 	setupTokenManager    *auth.SetupTokenManager    // Setup token manager for first-time setup security
 	setupComplete        bool                       // Whether initial setup has been completed
@@ -486,103 +487,82 @@ func isValidIPOctet(s string) bool {
 
 // setupRoutes configures the HTTP routes.
 func (s *Server) setupRoutes() {
-	// API v1 routes - Health and Status (no rate limiting for health checks).
-	s.handle("/api/v1/health", s.handleHealth)
-	// /stats exposes operational telemetry; require auth (#340).
-	s.handleAuthRateLimited("/api/v1/stats", s.handleStats, s.apiLimiter)
+	// Infrastructure endpoints — unversioned / introspection. Intentionally
+	// registered directly (outside the capability registry); none are /api/.
+	s.handle("/__version", s.handleBuildVersion)             // build metadata (deploy validation)
+	s.handle("/health/live", s.handleHealthLive)             // k8s liveness probe
+	s.handle("/health/ready", s.handleHealthReady)           // k8s readiness probe
+	s.handle("/__capabilities", s.handleRoutePolicyManifest) // route-policy manifest (audit)
 
-	// Kubernetes health probes (not versioned - infrastructure endpoints).
-	s.handle("/health/live", s.handleHealthLive)
-	s.handle("/health/ready", s.handleHealthReady)
-
-	// Build metadata (universal contract — seed/stem/niac all expose this
-	// unauthenticated for deployment validation). Returns lowercase JSON
-	// keys: version, commit, buildTime, uiBuildHash.
-	s.handle("/__version", s.handleBuildVersion)
-
-	// Platform capabilities (unauthenticated by design — the UI calls
-	// this before login to gate features like the Reflector page on
-	// CGO-less builds). See handlers_capabilities.go.
-	s.handle("/api/v1/capabilities", s.handleCapabilities)
-
-	// API v1 routes - Interfaces (auth + rate limited #340 — discloses
-	// the host's network interface inventory).
-	s.handleAuthRateLimited("/api/v1/interfaces", s.handleInterfaces, s.apiLimiter)
-
-	// API v1 routes - Settings and Mode (auth + rate limited #340).
-	// POST /settings writes config; POST /mode flips the operating role
-	// between Reflector and Test Master — both must require auth.
-	s.handleAuthRateLimited("/api/v1/settings", s.handleSettings, s.apiLimiter)
-	s.handleAuthRateLimited("/api/v1/mode", s.handleMode, s.apiLimiter)
-
-	// Server-Sent Events stream for live UI updates (#296). Not rate-
-	// limited — connections are long-lived, intentionally one per
-	// browser-tab. Auth not required because mode-changed / reflector-
-	// stats frames are observational, not credential-bearing. If we
-	// ever publish privileged frames here, gate the subscribe path.
-	s.mux.HandleFunc("/api/v1/events", s.handleSSEEvents)
-
-	// API v1 routes - Test Execution (rate limited + auth).
-	s.handleAuthRateLimited("/api/v1/test/start", s.handleTestStart, s.apiLimiter)
-	s.handleAuthRateLimited("/api/v1/test/stop", s.handleTestStop, s.apiLimiter)
-	s.handleAuthRateLimited("/api/v1/test/result", s.handleTestResult, s.apiLimiter)
-
-	// API v1 routes - Authentication (strict rate limiting: 5/min).
-	// Wave 3 (#85): the login handler now consults MFA state and may
-	// return an mfa_required short-circuit instead of issuing tokens.
-	s.handleRateLimited("/api/v1/auth/login", s.loginWithMFAGate, s.authLimiter)
-	s.handleRateLimited("/api/v1/auth/logout", s.handleAuthLogout, s.apiLimiter)
-	s.handleRateLimited("/api/v1/auth/refresh", s.handleAuthRefresh, s.authLimiter)
-	// /api/v1/auth/csrf-token is the canonical path (Wave 1 #87 task);
-	// /api/v1/auth/csrf is kept as an alias for older clients.
-	s.handleAuthRateLimited("/api/v1/auth/csrf-token", s.handleAuthCSRF, s.apiLimiter)
-	s.handleAuthRateLimited("/api/v1/auth/csrf", s.handleAuthCSRF, s.apiLimiter)
-
-	// API v1 routes - Multi-Factor Authentication (Wave 3 #85).
-	// TOTP enrolment + management endpoints require auth (the user is
-	// modifying their own MFA settings). The login-finisher
-	// /api/v1/auth/login/totp does NOT require auth — it presents an
-	// mfa_token from the password stage as its proof of intent (and
-	// is CSRF-exempt for the same reason as /api/v1/auth/login).
-	s.handleAuthRateLimited("/api/v1/auth/totp/setup", s.handleTOTPSetup, s.authLimiter)
-	s.handleAuthRateLimited("/api/v1/auth/totp/verify", s.handleTOTPVerify, s.authLimiter)
-	s.handleAuthRateLimited("/api/v1/auth/totp/disable", s.handleTOTPDisable, s.authLimiter)
-	s.handleRateLimited("/api/v1/auth/login/totp", s.handleLoginTOTP, s.authLimiter)
-	s.handleAuthRateLimited("/api/v1/auth/mfa/status", s.handleMFAStatus, s.apiLimiter)
-	// WebAuthn (passkey) ceremonies. Register endpoints require auth.
-	// Login endpoints do not — the assertion itself proves identity.
-	s.handleAuthRateLimited("/api/v1/auth/webauthn/register/begin",
-		s.handleWebAuthnRegisterBegin, s.authLimiter)
-	s.handleAuthRateLimited("/api/v1/auth/webauthn/register/finish",
-		s.handleWebAuthnRegisterFinish, s.authLimiter)
-	s.handleRateLimited("/api/v1/auth/webauthn/login/begin",
-		s.handleWebAuthnLoginBegin, s.authLimiter)
-	s.handleRateLimited("/api/v1/auth/webauthn/login/finish",
-		s.handleWebAuthnLoginFinish, s.authLimiter)
-
-	// API v1 routes - Setup (rate limited, no auth - for first-time setup).
-	s.handleRateLimited("/api/v1/setup/status", s.handleSetupStatus, s.apiLimiter)
-	s.handleRateLimited("/api/v1/setup/complete", s.handleSetupComplete, s.authLimiter)
-
-	// API v1 routes - Password Recovery (rate limited, no auth - for recovery).
-	s.handleRateLimited("/api/v1/recovery/status", s.handleRecoveryStatus, s.apiLimiter)
-	s.handleRateLimited("/api/v1/recovery/complete", s.handleRecoveryComplete, s.authLimiter)
-	s.handleRateLimited("/api/v1/recovery/instructions", s.handleRecoveryInstructions, s.apiLimiter)
-
-	// API v1 routes - Reflector (authenticated + rate limited).
-	// These reconfigure/inspect the dataplane, so they require a valid token —
-	// previously registered with only the rate limiter (unauthenticated).
-	s.handleAuthRateLimited("/api/v1/reflector/config", s.handleReflectorConfig, s.apiLimiter)
-	s.handleAuthRateLimited("/api/v1/reflector/stats", s.handleReflectorStats, s.apiLimiter)
-
-	// API v1 routes - License (rate limited).
-	s.handleRateLimited("/api/v1/license", s.handleLicense, s.apiLimiter)
-	s.handleRateLimited("/api/v1/license/activate", s.handleLicenseActivate, s.apiLimiter)
-	s.handleRateLimited("/api/v1/license/trial", s.handleLicenseTrial, s.apiLimiter)
-
-	// API v1 routes - Modules (rate limited).
-	s.handleRateLimited("/api/v1/modules", s.handleModules, s.apiLimiter)
-	s.handleRateLimited("/api/v1/modules/", s.handleModuleByName, s.apiLimiter)
+	// Every API route goes through the capability registry (register), which
+	// composes its policy — rate limit, authentication — in one canonical order
+	// so a route cannot ship without it. scripts/check-route-policy.sh enforces
+	// that no "/api/" route bypasses register(). CSRF is global (CSRFMiddleware).
+	s.registerAll([]route{
+		// Health & status.
+		{path: "/api/v1/health", handler: s.handleHealth},                                  // public, no RL
+		{path: "/api/v1/stats", handler: s.handleStats, auth: true, limiter: s.apiLimiter}, // telemetry (#340)
+		// Platform capabilities — UI calls this pre-login to gate CGO-less builds.
+		{path: "/api/v1/capabilities", handler: s.handleCapabilities},
+		// Interfaces — discloses the host NIC inventory (#340).
+		{path: "/api/v1/interfaces", handler: s.handleInterfaces, auth: true, limiter: s.apiLimiter},
+		// Settings + mode — POST writes config / flips the operating role.
+		{path: "/api/v1/settings", handler: s.handleSettings, auth: true, limiter: s.apiLimiter},
+		{path: "/api/v1/mode", handler: s.handleMode, auth: true, limiter: s.apiLimiter},
+		// SSE stream — long-lived, unauthenticated (observational frames only).
+		// If privileged frames are ever published here, set auth: true.
+		{path: "/api/v1/events", handler: s.handleSSEEvents},
+		// Test execution.
+		{path: "/api/v1/test/start", handler: s.handleTestStart, auth: true, limiter: s.apiLimiter},
+		{path: "/api/v1/test/stop", handler: s.handleTestStop, auth: true, limiter: s.apiLimiter},
+		{path: "/api/v1/test/result", handler: s.handleTestResult, auth: true, limiter: s.apiLimiter},
+		// Authentication (strict 5/min authLimiter). Login/refresh are pre-session.
+		{path: "/api/v1/auth/login", handler: s.loginWithMFAGate, limiter: s.authLimiter},
+		{path: "/api/v1/auth/logout", handler: s.handleAuthLogout, limiter: s.apiLimiter},
+		{path: "/api/v1/auth/refresh", handler: s.handleAuthRefresh, limiter: s.authLimiter},
+		// /auth/csrf-token is canonical; /auth/csrf is a legacy alias.
+		{path: "/api/v1/auth/csrf-token", handler: s.handleAuthCSRF, auth: true, limiter: s.apiLimiter},
+		{path: "/api/v1/auth/csrf", handler: s.handleAuthCSRF, auth: true, limiter: s.apiLimiter},
+		// MFA — TOTP management requires auth; the login finisher does not (it
+		// presents an mfa_token from the password stage as proof of intent).
+		{path: "/api/v1/auth/totp/setup", handler: s.handleTOTPSetup, auth: true, limiter: s.authLimiter},
+		{path: "/api/v1/auth/totp/verify", handler: s.handleTOTPVerify, auth: true, limiter: s.authLimiter},
+		{path: "/api/v1/auth/totp/disable", handler: s.handleTOTPDisable, auth: true, limiter: s.authLimiter},
+		{path: "/api/v1/auth/login/totp", handler: s.handleLoginTOTP, limiter: s.authLimiter},
+		{path: "/api/v1/auth/mfa/status", handler: s.handleMFAStatus, auth: true, limiter: s.apiLimiter},
+		// WebAuthn — register requires auth; login does not (the assertion proves identity).
+		{
+			path:    "/api/v1/auth/webauthn/register/begin",
+			handler: s.handleWebAuthnRegisterBegin,
+			auth:    true,
+			limiter: s.authLimiter,
+		},
+		{
+			path:    "/api/v1/auth/webauthn/register/finish",
+			handler: s.handleWebAuthnRegisterFinish,
+			auth:    true,
+			limiter: s.authLimiter,
+		},
+		{path: "/api/v1/auth/webauthn/login/begin", handler: s.handleWebAuthnLoginBegin, limiter: s.authLimiter},
+		{path: "/api/v1/auth/webauthn/login/finish", handler: s.handleWebAuthnLoginFinish, limiter: s.authLimiter},
+		// First-time setup (pre-session, no auth).
+		{path: "/api/v1/setup/status", handler: s.handleSetupStatus, limiter: s.apiLimiter},
+		{path: "/api/v1/setup/complete", handler: s.handleSetupComplete, limiter: s.authLimiter},
+		// Password recovery (pre-session, no auth).
+		{path: "/api/v1/recovery/status", handler: s.handleRecoveryStatus, limiter: s.apiLimiter},
+		{path: "/api/v1/recovery/complete", handler: s.handleRecoveryComplete, limiter: s.authLimiter},
+		{path: "/api/v1/recovery/instructions", handler: s.handleRecoveryInstructions, limiter: s.apiLimiter},
+		// Reflector — reconfigures/inspects the dataplane, requires auth (#398).
+		{path: "/api/v1/reflector/config", handler: s.handleReflectorConfig, auth: true, limiter: s.apiLimiter},
+		{path: "/api/v1/reflector/stats", handler: s.handleReflectorStats, auth: true, limiter: s.apiLimiter},
+		// License (pre-session — status/activation before auth).
+		{path: "/api/v1/license", handler: s.handleLicense, limiter: s.apiLimiter},
+		{path: "/api/v1/license/activate", handler: s.handleLicenseActivate, limiter: s.apiLimiter},
+		{path: "/api/v1/license/trial", handler: s.handleLicenseTrial, limiter: s.apiLimiter},
+		// Modules (public catalog).
+		{path: "/api/v1/modules", handler: s.handleModules, limiter: s.apiLimiter},
+		{path: "/api/v1/modules/", handler: s.handleModuleByName, limiter: s.apiLimiter},
+	})
 
 	// Static files (embedded UI).
 	staticFS, err := fs.Sub(staticFiles, "ui")
@@ -618,16 +598,11 @@ func spaFallbackHandler(staticFS fs.FS) http.HandlerFunc {
 	}
 }
 
+// handle registers an infrastructure endpoint directly (no rate limit, no
+// auth) — used only for unversioned introspection routes (/__version,
+// /__capabilities, health probes). API routes go through register() (route.go).
 func (s *Server) handle(path string, handler http.HandlerFunc) {
 	s.mux.HandleFunc(path, handler)
-}
-
-func (s *Server) handleRateLimited(path string, handler http.HandlerFunc, rl *RateLimiter) {
-	s.mux.Handle(path, rl.Middleware(handler))
-}
-
-func (s *Server) handleAuthRateLimited(path string, handler http.HandlerFunc, rl *RateLimiter) {
-	s.mux.Handle(path, rl.Middleware(s.authMiddleware(handler)))
 }
 
 func (s *Server) authMiddleware(handler http.HandlerFunc) http.Handler {
