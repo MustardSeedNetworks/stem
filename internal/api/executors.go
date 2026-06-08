@@ -7,13 +7,9 @@ import (
 	"fmt"
 
 	"github.com/krisarmstrong/stem/internal/logging"
-	"github.com/krisarmstrong/stem/internal/services/benchmark"
-	"github.com/krisarmstrong/stem/internal/services/certify"
-	"github.com/krisarmstrong/stem/internal/services/measure"
+	"github.com/krisarmstrong/stem/internal/services"
 	"github.com/krisarmstrong/stem/internal/services/modtypes"
 	"github.com/krisarmstrong/stem/internal/services/reflector"
-	"github.com/krisarmstrong/stem/internal/services/servicetest"
-	"github.com/krisarmstrong/stem/internal/services/trafficgen"
 )
 
 // Default configuration constants for module tests.
@@ -22,33 +18,17 @@ const (
 	defaultDuration  = 60   // Default test duration (seconds).
 )
 
-// testExecutor is an interface for module executors that can run tests.
-type testExecutor interface {
-	Close()
-	Execute(testType string, cfg *modtypes.TestConfig) (*modtypes.Result, error)
-}
-
-// executorFactory creates a new executor for the given interface.
-type executorFactory func(iface string) (testExecutor, error)
-
-// defaultExecutorFactory returns the production executor factory for a
-// given module name. It wires each module's NewExecutor constructor,
-// which in turn opens a real dataplane context backed by cgo on Linux.
-//
-// Tests that need to drive executeTest without touching the real
-// dataplane should override Server.executorResolver with a factory that
-// returns a fake testExecutor.
-func defaultExecutorFactory(moduleName string) (executorFactory, bool) {
-	factories := map[string]executorFactory{
-		moduleBenchmark:   func(iface string) (testExecutor, error) { return benchmark.NewExecutor(iface) },
-		moduleServicetest: func(iface string) (testExecutor, error) { return servicetest.NewExecutor(iface) },
-		moduleTrafficgen:  func(iface string) (testExecutor, error) { return trafficgen.NewExecutor(iface) },
-		moduleMeasure:     func(iface string) (testExecutor, error) { return measure.NewExecutor(iface) },
-		moduleCertify:     func(iface string) (testExecutor, error) { return certify.NewExecutor(iface) },
-	}
-	factory, ok := factories[moduleName]
-	return factory, ok
-}
+// testExecutor and executorFactory are the API-layer aliases for the canonical
+// types in modtypes. The executor factories now live in the module registry
+// (services.Factory) instead of a parallel map here, so a module's metadata and
+// execution are a single source of truth (registered together in
+// services.buildDefaultRegistry). Tests override Server.executorResolver with a
+// factory returning a fake modtypes.Executor to drive executeTest without the
+// real cgo dataplane.
+type (
+	testExecutor    = modtypes.Executor
+	executorFactory = modtypes.ExecutorFactory
+)
 
 // executeTest runs the test via the appropriate module executor.
 func (s *Server) executeTest(moduleName, testType, iface string, config *TestConfig) error {
@@ -59,7 +39,7 @@ func (s *Server) executeTest(moduleName, testType, iface string, config *TestCon
 
 	resolver := s.executorResolver
 	if resolver == nil {
-		resolver = defaultExecutorFactory
+		resolver = services.Factory
 	}
 	factory, ok := resolver(moduleName)
 	if !ok {
