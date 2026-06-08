@@ -12,7 +12,7 @@ import (
 	"github.com/pquerna/otp"
 	"github.com/pquerna/otp/totp"
 
-	"github.com/krisarmstrong/stem/internal/auth"
+	"github.com/MustardSeedNetworks/stem/internal/auth"
 )
 
 // TestGenerateTOTPSecret_EnrollmentRoundtrip exercises the happy path:

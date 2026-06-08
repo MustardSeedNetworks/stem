@@ -16,7 +16,7 @@
 # Container configuration
 CONTAINER_IMAGE ?= stem
 CONTAINER_TAG ?= $(VERSION)
-CONTAINER_REGISTRY ?= ghcr.io/krisarmstrong
+CONTAINER_REGISTRY ?= ghcr.io/mustardseednetworks
 
 # =============================================================================
 # Main Container Targets
@@ -35,7 +35,7 @@ container-build: ## Build container image using Cloud Native Buildpacks
 		--builder paketobuildpacks/builder-jammy-base \
 		--trust-builder \
 		--env BP_GO_TARGETS="./cmd/stem" \
-		--env BP_GO_BUILD_LDFLAGS="-s -w -X github.com/krisarmstrong/stem/internal/version.Version=$(VERSION)"
+		--env BP_GO_BUILD_LDFLAGS="-s -w -X github.com/MustardSeedNetworks/stem/internal/version.Version=$(VERSION)"
 	@printf "$(GREEN)✓ Container built: $(CONTAINER_IMAGE):$(CONTAINER_TAG)$(RESET)\n"
 
 container-run: ## Run container locally

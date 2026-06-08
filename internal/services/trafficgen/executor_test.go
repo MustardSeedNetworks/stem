@@ -12,8 +12,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/krisarmstrong/stem/internal/services/modtypes"
-	"github.com/krisarmstrong/stem/internal/services/trafficgen"
+	"github.com/MustardSeedNetworks/stem/internal/services/modtypes"
+	"github.com/MustardSeedNetworks/stem/internal/services/trafficgen"
 )
 
 // TestNewExecutor verifies executor creation behavior.

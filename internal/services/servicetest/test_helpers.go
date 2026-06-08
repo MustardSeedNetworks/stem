@@ -3,8 +3,8 @@
 package servicetest
 
 import (
-	"github.com/krisarmstrong/stem/internal/services/modtypes"
-	"github.com/krisarmstrong/stem/internal/services/orchestrator/dataplane"
+	"github.com/MustardSeedNetworks/stem/internal/services/modtypes"
+	"github.com/MustardSeedNetworks/stem/internal/services/orchestrator/dataplane"
 )
 
 // BuildY1564ServiceForTest exposes service building for tests.

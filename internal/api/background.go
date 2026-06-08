@@ -6,7 +6,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/krisarmstrong/stem/internal/logging"
+	"github.com/MustardSeedNetworks/stem/internal/logging"
 )
 
 // BackgroundComponents owns the long-lived background goroutines attached to a

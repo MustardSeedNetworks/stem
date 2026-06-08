@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/krisarmstrong/stem/internal/services/measure"
-	"github.com/krisarmstrong/stem/internal/services/modtypes"
+	"github.com/MustardSeedNetworks/stem/internal/services/measure"
+	"github.com/MustardSeedNetworks/stem/internal/services/modtypes"
 )
 
 // TestNewExecutorPlatformError tests that NewExecutor returns an error on unsupported platforms.

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/krisarmstrong/stem/internal/platform"
+	"github.com/MustardSeedNetworks/stem/internal/platform"
 )
 
 func TestDetect(t *testing.T) {

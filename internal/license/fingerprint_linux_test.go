@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/krisarmstrong/stem/internal/license"
+	"github.com/MustardSeedNetworks/stem/internal/license"
 )
 
 func TestGenerateFingerprintLinux(t *testing.T) {

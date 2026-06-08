@@ -18,7 +18,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/stem/internal/auth"
+	"github.com/MustardSeedNetworks/stem/internal/auth"
 )
 
 // withTestEndpoint redirects HIBP API calls to a test URL for the

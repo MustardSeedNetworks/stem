@@ -20,7 +20,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/krisarmstrong/stem/internal/help"
+	"github.com/MustardSeedNetworks/stem/internal/help"
 )
 
 // canonicalVerbs lists the top-level CLI verbs cmd/stem/main.go dispatches

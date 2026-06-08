@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/stem/internal/license"
+	"github.com/MustardSeedNetworks/stem/internal/license"
 )
 
 // Test constants.

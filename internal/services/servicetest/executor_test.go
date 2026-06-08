@@ -7,9 +7,9 @@ import (
 	"math"
 	"testing"
 
-	"github.com/krisarmstrong/stem/internal/services/modtypes"
-	"github.com/krisarmstrong/stem/internal/services/orchestrator/dataplane"
-	"github.com/krisarmstrong/stem/internal/services/servicetest"
+	"github.com/MustardSeedNetworks/stem/internal/services/modtypes"
+	"github.com/MustardSeedNetworks/stem/internal/services/orchestrator/dataplane"
+	"github.com/MustardSeedNetworks/stem/internal/services/servicetest"
 )
 
 // TestNewExecutor tests the NewExecutor function.

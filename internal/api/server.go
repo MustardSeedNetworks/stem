@@ -82,12 +82,12 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/krisarmstrong/stem/internal/auth"
-	"github.com/krisarmstrong/stem/internal/license"
-	"github.com/krisarmstrong/stem/internal/logging"
-	"github.com/krisarmstrong/stem/internal/netif"
-	"github.com/krisarmstrong/stem/internal/services/reflector"
-	"github.com/krisarmstrong/stem/internal/version"
+	"github.com/MustardSeedNetworks/stem/internal/auth"
+	"github.com/MustardSeedNetworks/stem/internal/license"
+	"github.com/MustardSeedNetworks/stem/internal/logging"
+	"github.com/MustardSeedNetworks/stem/internal/netif"
+	"github.com/MustardSeedNetworks/stem/internal/services/reflector"
+	"github.com/MustardSeedNetworks/stem/internal/version"
 )
 
 // HTTP server timeout constants.

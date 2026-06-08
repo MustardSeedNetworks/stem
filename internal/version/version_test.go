@@ -15,7 +15,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/krisarmstrong/stem/internal/version"
+	"github.com/MustardSeedNetworks/stem/internal/version"
 )
 
 // ============================================================================

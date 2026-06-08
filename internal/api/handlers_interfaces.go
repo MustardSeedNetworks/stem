@@ -5,7 +5,7 @@ package api
 import (
 	"net/http"
 
-	"github.com/krisarmstrong/stem/internal/netif"
+	"github.com/MustardSeedNetworks/stem/internal/netif"
 )
 
 // handleInterfaces returns the list of network interfaces.

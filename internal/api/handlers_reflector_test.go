@@ -9,7 +9,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/krisarmstrong/stem/internal/api"
+	"github.com/MustardSeedNetworks/stem/internal/api"
 )
 
 // setupReflectorTestServer creates a server for reflector handler tests.

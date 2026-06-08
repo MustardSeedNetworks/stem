@@ -2,7 +2,7 @@
 
 package benchmark
 
-import "github.com/krisarmstrong/stem/internal/services/modtypes"
+import "github.com/MustardSeedNetworks/stem/internal/services/modtypes"
 
 // DefaultLoadLevelsForTest exposes default load levels for tests.
 func DefaultLoadLevelsForTest() []float64 {

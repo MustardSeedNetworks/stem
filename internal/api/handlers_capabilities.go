@@ -5,7 +5,7 @@ package api
 import (
 	"net/http"
 
-	reflectorDP "github.com/krisarmstrong/stem/internal/reflector/dataplane"
+	reflectorDP "github.com/MustardSeedNetworks/stem/internal/reflector/dataplane"
 )
 
 // CapabilityInfo describes whether a single stem capability is

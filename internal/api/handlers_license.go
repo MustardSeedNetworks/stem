@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/krisarmstrong/stem/internal/license"
+	"github.com/MustardSeedNetworks/stem/internal/license"
 )
 
 // handleLicense returns current license status.

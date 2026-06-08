@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/stem/internal/reflector/tui"
+	"github.com/MustardSeedNetworks/stem/internal/reflector/tui"
 )
 
 // =============================================================================

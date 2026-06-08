@@ -6,10 +6,10 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/krisarmstrong/stem/internal/logging"
-	"github.com/krisarmstrong/stem/internal/services"
-	"github.com/krisarmstrong/stem/internal/services/modtypes"
-	"github.com/krisarmstrong/stem/internal/services/reflector"
+	"github.com/MustardSeedNetworks/stem/internal/logging"
+	"github.com/MustardSeedNetworks/stem/internal/services"
+	"github.com/MustardSeedNetworks/stem/internal/services/modtypes"
+	"github.com/MustardSeedNetworks/stem/internal/services/reflector"
 )
 
 // Default configuration constants for module tests.

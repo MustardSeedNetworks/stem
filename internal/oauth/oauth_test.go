@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/krisarmstrong/stem/internal/oauth"
+	"github.com/MustardSeedNetworks/stem/internal/oauth"
 )
 
 // TestNewManager tests OAuth manager creation.

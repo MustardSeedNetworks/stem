@@ -7,7 +7,7 @@ import (
 
 	"golang.org/x/crypto/acme/autocert"
 
-	"github.com/krisarmstrong/stem/internal/auth"
+	"github.com/MustardSeedNetworks/stem/internal/auth"
 )
 
 // TestExecutor is the public alias for the unexported testExecutor

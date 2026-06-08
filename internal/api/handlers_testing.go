@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/krisarmstrong/stem/internal/logging"
-	"github.com/krisarmstrong/stem/internal/netif"
-	"github.com/krisarmstrong/stem/internal/services"
+	"github.com/MustardSeedNetworks/stem/internal/logging"
+	"github.com/MustardSeedNetworks/stem/internal/netif"
+	"github.com/MustardSeedNetworks/stem/internal/services"
 )
 
 var errTestAlreadyRunning = errors.New("test already running")

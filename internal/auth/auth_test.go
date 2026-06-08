@@ -11,7 +11,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 
-	"github.com/krisarmstrong/stem/internal/auth"
+	"github.com/MustardSeedNetworks/stem/internal/auth"
 )
 
 func TestNewManager(t *testing.T) {

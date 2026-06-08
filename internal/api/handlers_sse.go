@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/krisarmstrong/stem/internal/logging"
+	"github.com/MustardSeedNetworks/stem/internal/logging"
 )
 
 // handleSSEEvents serves the long-lived SSE stream at /api/v1/events.

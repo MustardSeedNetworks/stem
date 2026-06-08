@@ -12,7 +12,7 @@ import (
 
 	"github.com/pquerna/otp/totp"
 
-	"github.com/krisarmstrong/stem/internal/api"
+	"github.com/MustardSeedNetworks/stem/internal/api"
 )
 
 // TestTOTPSetup_RequiresAuth asserts that POST /api/v1/auth/totp/setup

@@ -30,8 +30,8 @@ import (
 
 	"github.com/go-webauthn/webauthn/protocol"
 
-	"github.com/krisarmstrong/stem/internal/auth"
-	"github.com/krisarmstrong/stem/internal/logging"
+	"github.com/MustardSeedNetworks/stem/internal/auth"
+	"github.com/MustardSeedNetworks/stem/internal/logging"
 )
 
 // MFA constants and request / response shapes. Kept private to api/

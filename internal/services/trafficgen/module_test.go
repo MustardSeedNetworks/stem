@@ -6,7 +6,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/krisarmstrong/stem/internal/services/trafficgen"
+	"github.com/MustardSeedNetworks/stem/internal/services/trafficgen"
 )
 
 // Test constants.

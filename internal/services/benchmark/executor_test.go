@@ -7,9 +7,9 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/krisarmstrong/stem/internal/services/benchmark"
-	"github.com/krisarmstrong/stem/internal/services/modtypes"
-	"github.com/krisarmstrong/stem/internal/services/orchestrator/dataplane"
+	"github.com/MustardSeedNetworks/stem/internal/services/benchmark"
+	"github.com/MustardSeedNetworks/stem/internal/services/modtypes"
+	"github.com/MustardSeedNetworks/stem/internal/services/orchestrator/dataplane"
 )
 
 // Test parameter extraction helpers (issue #24).

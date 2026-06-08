@@ -8,7 +8,7 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 
-	"github.com/krisarmstrong/stem/internal/reflector/dataplane"
+	"github.com/MustardSeedNetworks/stem/internal/reflector/dataplane"
 )
 
 // =============================================================================

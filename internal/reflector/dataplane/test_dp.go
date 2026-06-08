@@ -5,7 +5,7 @@ package main
 import (
 	"fmt"
 
-	reflectorDP "github.com/krisarmstrong/stem/internal/reflector/dataplane"
+	reflectorDP "github.com/MustardSeedNetworks/stem/internal/reflector/dataplane"
 )
 
 func main() {

@@ -7,7 +7,7 @@ package license_test
 import (
 	"testing"
 
-	"github.com/krisarmstrong/stem/internal/license"
+	"github.com/MustardSeedNetworks/stem/internal/license"
 )
 
 func TestGenerateFingerprintDarwin(t *testing.T) {

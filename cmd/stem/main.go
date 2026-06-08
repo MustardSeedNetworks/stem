@@ -28,17 +28,17 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/krisarmstrong/stem/internal/api"
-	"github.com/krisarmstrong/stem/internal/help"
-	"github.com/krisarmstrong/stem/internal/license"
-	"github.com/krisarmstrong/stem/internal/logging"
-	reflectorConfig "github.com/krisarmstrong/stem/internal/reflector/config"
-	reflectorDP "github.com/krisarmstrong/stem/internal/reflector/dataplane"
-	reflectorTUI "github.com/krisarmstrong/stem/internal/reflector/tui"
-	"github.com/krisarmstrong/stem/internal/services"
-	testmasterDP "github.com/krisarmstrong/stem/internal/services/orchestrator/dataplane"
-	testmasterTUI "github.com/krisarmstrong/stem/internal/services/orchestrator/tui"
-	"github.com/krisarmstrong/stem/internal/version"
+	"github.com/MustardSeedNetworks/stem/internal/api"
+	"github.com/MustardSeedNetworks/stem/internal/help"
+	"github.com/MustardSeedNetworks/stem/internal/license"
+	"github.com/MustardSeedNetworks/stem/internal/logging"
+	reflectorConfig "github.com/MustardSeedNetworks/stem/internal/reflector/config"
+	reflectorDP "github.com/MustardSeedNetworks/stem/internal/reflector/dataplane"
+	reflectorTUI "github.com/MustardSeedNetworks/stem/internal/reflector/tui"
+	"github.com/MustardSeedNetworks/stem/internal/services"
+	testmasterDP "github.com/MustardSeedNetworks/stem/internal/services/orchestrator/dataplane"
+	testmasterTUI "github.com/MustardSeedNetworks/stem/internal/services/orchestrator/tui"
+	"github.com/MustardSeedNetworks/stem/internal/version"
 )
 
 // CLI constants.

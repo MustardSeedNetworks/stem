@@ -7,8 +7,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/krisarmstrong/stem/internal/auth"
-	"github.com/krisarmstrong/stem/internal/logging"
+	"github.com/MustardSeedNetworks/stem/internal/auth"
+	"github.com/MustardSeedNetworks/stem/internal/logging"
 )
 
 const (

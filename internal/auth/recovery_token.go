@@ -15,7 +15,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/krisarmstrong/stem/internal/logging"
+	"github.com/MustardSeedNetworks/stem/internal/logging"
 )
 
 const (

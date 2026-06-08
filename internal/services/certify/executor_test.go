@@ -6,8 +6,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/krisarmstrong/stem/internal/services/certify"
-	"github.com/krisarmstrong/stem/internal/services/modtypes"
+	"github.com/MustardSeedNetworks/stem/internal/services/certify"
+	"github.com/MustardSeedNetworks/stem/internal/services/modtypes"
 )
 
 // TestNewExecutorWithContextExternal verifies executor creation with an existing context.

@@ -9,7 +9,7 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/krisarmstrong/stem/internal/api"
+	"github.com/MustardSeedNetworks/stem/internal/api"
 )
 
 // setupCapabilitiesTestServer mirrors setupHealthTestServer — same

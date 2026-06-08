@@ -9,7 +9,7 @@ package dataplane
 import (
 	"errors"
 
-	"github.com/krisarmstrong/stem/internal/reflector/config"
+	"github.com/MustardSeedNetworks/stem/internal/reflector/config"
 )
 
 // Stats holds reflector packet statistics.

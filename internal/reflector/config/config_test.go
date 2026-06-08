@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/krisarmstrong/stem/internal/reflector/config"
+	"github.com/MustardSeedNetworks/stem/internal/reflector/config"
 )
 
 // Test constants for repeated strings.

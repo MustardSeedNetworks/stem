@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/krisarmstrong/stem/internal/version"
+	"github.com/MustardSeedNetworks/stem/internal/version"
 )
 
 // Test constants for repeated strings.

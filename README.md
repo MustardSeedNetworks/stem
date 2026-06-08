@@ -2,12 +2,12 @@
 
 > RFC-compliant network performance testing — reflector, traffic generator, and certifier in one binary.
 
-[![CI](https://github.com/krisarmstrong/stem/actions/workflows/ci.yml/badge.svg)](https://github.com/krisarmstrong/stem/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/krisarmstrong/stem?logo=github)](https://github.com/krisarmstrong/stem/releases/latest)
-[![CodeQL](https://github.com/krisarmstrong/stem/actions/workflows/codeql.yml/badge.svg)](https://github.com/krisarmstrong/stem/actions/workflows/codeql.yml)
-[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/krisarmstrong/stem/badge)](https://scorecard.dev/viewer/?uri=github.com/krisarmstrong/stem)
-[![Go Reference](https://pkg.go.dev/badge/github.com/krisarmstrong/stem.svg)](https://pkg.go.dev/github.com/krisarmstrong/stem)
-[![Go Report Card](https://goreportcard.com/badge/github.com/krisarmstrong/stem)](https://goreportcard.com/report/github.com/krisarmstrong/stem)
+[![CI](https://github.com/MustardSeedNetworks/stem/actions/workflows/ci.yml/badge.svg)](https://github.com/MustardSeedNetworks/stem/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/MustardSeedNetworks/stem?logo=github)](https://github.com/MustardSeedNetworks/stem/releases/latest)
+[![CodeQL](https://github.com/MustardSeedNetworks/stem/actions/workflows/codeql.yml/badge.svg)](https://github.com/MustardSeedNetworks/stem/actions/workflows/codeql.yml)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/MustardSeedNetworks/stem/badge)](https://scorecard.dev/viewer/?uri=github.com/MustardSeedNetworks/stem)
+[![Go Reference](https://pkg.go.dev/badge/github.com/MustardSeedNetworks/stem.svg)](https://pkg.go.dev/github.com/MustardSeedNetworks/stem)
+[![Go Report Card](https://goreportcard.com/badge/github.com/MustardSeedNetworks/stem)](https://goreportcard.com/report/github.com/MustardSeedNetworks/stem)
 [![License: BSL 1.1](https://img.shields.io/badge/License-BSL%201.1-blue.svg)](LICENSE)
 
 The Stem is a network performance testing tool from **Mustard Seed Networks**.
@@ -46,7 +46,7 @@ the same install.
 
 ```bash
 # Install (Linux/macOS, requires Go 1.26+)
-git clone https://github.com/krisarmstrong/stem
+git clone https://github.com/MustardSeedNetworks/stem
 cd stem
 make build
 
@@ -197,5 +197,5 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 The Stem is the performance-testing tool. Two sibling projects round out
 the Mustard Seed Networks toolkit:
 
-- **[seed](https://github.com/krisarmstrong/seed)** — portable network diagnostic appliance
-- **[niac-go](https://github.com/krisarmstrong/niac-go)** — network device simulator
+- **[seed](https://github.com/MustardSeedNetworks/seed)** — portable network diagnostic appliance
+- **[niac-go](https://github.com/MustardSeedNetworks/niac-go)** — network device simulator

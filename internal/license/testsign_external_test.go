@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/krisarmstrong/stem/internal/license"
+	"github.com/MustardSeedNetworks/stem/internal/license"
 )
 
 // testSigningSeedB64 is a TEST-ONLY Ed25519 private seed, distinct from the

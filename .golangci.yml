@@ -43,7 +43,7 @@ formatters:
       # with the given prefixes are grouped after 3rd-party packages.
       # Default: []
       local-prefixes:
-        - github.com/krisarmstrong/stem
+        - github.com/MustardSeedNetworks/stem
 
     golines:
       # Target maximum line length.
@@ -243,11 +243,11 @@ linters:
           files:
             - "**/internal/services/**"
           deny:
-            - pkg: github.com/krisarmstrong/stem/internal/api
+            - pkg: github.com/MustardSeedNetworks/stem/internal/api
               desc: "service layer must not import the API/web layer — dependencies point inward; wire at internal/api"
-            - pkg: github.com/krisarmstrong/stem/internal/auth
+            - pkg: github.com/MustardSeedNetworks/stem/internal/auth
               desc: "service layer must not import auth — authentication is an API-layer concern"
-            - pkg: github.com/krisarmstrong/stem/internal/license
+            - pkg: github.com/MustardSeedNetworks/stem/internal/license
               desc: "service layer must not import license — gate features at the API layer, not inside modules"
 
     embeddedstructfieldcheck:

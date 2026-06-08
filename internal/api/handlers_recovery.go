@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/krisarmstrong/stem/internal/auth"
-	"github.com/krisarmstrong/stem/internal/logging"
+	"github.com/MustardSeedNetworks/stem/internal/auth"
+	"github.com/MustardSeedNetworks/stem/internal/logging"
 )
 
 // RecoveryStatusResponse represents the recovery mode status.

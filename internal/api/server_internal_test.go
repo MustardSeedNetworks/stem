@@ -12,8 +12,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/krisarmstrong/stem/internal/auth"
-	"github.com/krisarmstrong/stem/internal/netif"
+	"github.com/MustardSeedNetworks/stem/internal/auth"
+	"github.com/MustardSeedNetworks/stem/internal/netif"
 )
 
 // newTestServer creates a test server with automatic cleanup.

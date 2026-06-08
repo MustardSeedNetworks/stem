@@ -46,7 +46,7 @@ import (
 	"sync"
 	"unsafe"
 
-	"github.com/krisarmstrong/stem/internal/reflector/config"
+	"github.com/MustardSeedNetworks/stem/internal/reflector/config"
 )
 
 // Available reports whether the CGO + Linux reflector dataplane is

@@ -4,7 +4,7 @@ import (
 	"maps"
 	"net/http"
 
-	"github.com/krisarmstrong/stem/internal/version"
+	"github.com/MustardSeedNetworks/stem/internal/version"
 )
 
 // handleBuildVersion serves GET /__version with build metadata for deployment

@@ -35,7 +35,7 @@ endif
 # Project Info
 # =============================================================================
 PROJECT_NAME := stem
-MODULE_PATH := github.com/krisarmstrong/stem
+MODULE_PATH := github.com/MustardSeedNetworks/stem
 VERSION_PKG := $(MODULE_PATH)/internal/version
 
 # =============================================================================

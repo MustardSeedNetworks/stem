@@ -1,4 +1,4 @@
-module github.com/krisarmstrong/stem
+module github.com/MustardSeedNetworks/stem
 
 go 1.26.4
 
