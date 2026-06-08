@@ -12,5 +12,6 @@ survives the people and the diffs. Format mirrors the sibling repos (seed/niac).
 | [0004](0004-auth-and-cors-posture.md) | Single-admin auth model + CORS posture | Accepted |
 | [0005](0005-background-component-lifecycle.md) | Background-component lifecycle holder | Accepted |
 | [0006](0006-at-rest-encryption-device-keyed.md) | At-rest encryption device-keyed; DEK/JWT separation N/A | Accepted |
+| [0007](0007-ed25519-signed-licenses.md) | Ed25519-signed license tokens | Accepted |
 
 Status values: Proposed · Accepted · Amended · Superseded.

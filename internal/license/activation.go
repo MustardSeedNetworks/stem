@@ -76,14 +76,29 @@ type Manager struct {
 	state       *ActivationState
 	fingerprint *DeviceFingerprint
 	configDir   string
+	verifier    *Verifier // verifies signed license tokens; production key by default
 }
 
-// NewManager creates a new license manager.
+// NewManager creates a new license manager that verifies tokens against the
+// embedded production key.
 func NewManager() (*Manager, error) {
+	return newManager(mustVerifierFromB64(licensePublicKeyB64))
+}
+
+// NewManagerWithVerifier creates a license manager that verifies tokens against
+// the supplied Verifier instead of the embedded production key. It exists so
+// tests can activate tokens minted with an ephemeral key (the production
+// private key never ships); production code uses [NewManager].
+func NewManagerWithVerifier(v *Verifier) (*Manager, error) {
+	return newManager(v)
+}
+
+func newManager(v *Verifier) (*Manager, error) {
 	m := &Manager{
 		state:       nil,
 		fingerprint: nil,
 		configDir:   "",
+		verifier:    v,
 	}
 
 	// Get device fingerprint.
@@ -259,8 +274,8 @@ func (m *Manager) StartTrial() *ActivationResult {
 
 // Activate attempts to activate a license key.
 func (m *Manager) Activate(licenseKey string) *ActivationResult {
-	// Validate the license key offline.
-	info := ValidateLicenseKey(licenseKey)
+	// Validate the license key offline against this manager's verifier.
+	info := m.verifier.Validate(licenseKey)
 	if !info.Valid {
 		return &ActivationResult{
 			Success:       false,

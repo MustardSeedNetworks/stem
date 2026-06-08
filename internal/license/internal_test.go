@@ -3,6 +3,9 @@
 package license
 
 import (
+	"crypto/ed25519"
+	"encoding/base64"
+	"encoding/json"
 	"os"
 	"slices"
 	"strings"
@@ -42,152 +45,6 @@ func TestMaskStringEdgeCases(t *testing.T) {
 			t.Errorf("maskString(%q, %d) = %q, want %q",
 				tc.input, tc.show, result, tc.expected)
 		}
-	}
-}
-
-// TestToAlphanumericEdgeCases tests toAlphanumeric with edge cases.
-func TestToAlphanumericEdgeCases(t *testing.T) {
-	t.Parallel()
-	// Test values 0-9 return digits.
-	for i := range 10 {
-		result := toAlphanumeric(i)
-		expected := byte('0' + i)
-		if result != expected {
-			t.Errorf("toAlphanumeric(%d) = %c, want %c", i, result, expected)
-		}
-	}
-
-	// Test values 10-35 return letters.
-	for i := 10; i < 36; i++ {
-		result := toAlphanumeric(i)
-		expected := byte('A' + i - 10)
-		if result != expected {
-			t.Errorf("toAlphanumeric(%d) = %c, want %c", i, result, expected)
-		}
-	}
-}
-
-// TestFromAlphanumericEdgeCases tests fromAlphanumeric with all cases.
-func TestFromAlphanumericEdgeCases(t *testing.T) {
-	t.Parallel()
-	// Test digits.
-	for c := byte('0'); c <= '9'; c++ {
-		result := fromAlphanumeric(c)
-		expected := int(c - '0')
-		if result != expected {
-			t.Errorf("fromAlphanumeric(%c) = %d, want %d", c, result, expected)
-		}
-	}
-
-	// Test uppercase letters.
-	for c := byte('A'); c <= 'Z'; c++ {
-		result := fromAlphanumeric(c)
-		expected := int(c-'A') + 10
-		if result != expected {
-			t.Errorf("fromAlphanumeric(%c) = %d, want %d", c, result, expected)
-		}
-	}
-
-	// Test lowercase letters.
-	for c := byte('a'); c <= 'z'; c++ {
-		result := fromAlphanumeric(c)
-		expected := int(c-'a') + 10
-		if result != expected {
-			t.Errorf("fromAlphanumeric(%c) = %d, want %d", c, result, expected)
-		}
-	}
-
-	// Test non-alphanumeric characters return 0.
-	nonAlpha := []byte{'!', '@', '#', '$', ' ', '-', '_'}
-	for _, c := range nonAlpha {
-		result := fromAlphanumeric(c)
-		if result != 0 {
-			t.Errorf("fromAlphanumeric(%c) = %d, want 0", c, result)
-		}
-	}
-}
-
-// TestValidateKeyChecksumDirect tests validateKeyChecksum directly.
-func TestValidateKeyChecksumDirect(t *testing.T) {
-	t.Parallel()
-	// Create a valid key and verify checksum validation.
-	key, err := GenerateLicenseKey("2001", "1234567", TierProfessional)
-	if err != nil {
-		t.Fatalf("GenerateLicenseKey error: %v", err)
-	}
-
-	// Decode the key first (as ValidateLicenseKey does).
-	cipher := NewRotorCipher(cipherStartPos)
-	decoded := cipher.DecodeString(key)
-
-	// Checksum should be valid.
-	if !validateKeyChecksum(decoded) {
-		t.Error("Valid key should have valid checksum")
-	}
-
-	// Corrupt the key and verify checksum fails.
-	corrupted := "XX" + decoded[2:14] + "YY"
-	if validateKeyChecksum(corrupted) {
-		t.Error("Corrupted key should have invalid checksum")
-	}
-}
-
-// TestNormalizeKeyDirect tests normalizeKey directly.
-func TestNormalizeKeyDirect(t *testing.T) {
-	t.Parallel()
-	tests := []struct {
-		input    string
-		expected string
-	}{
-		{"ABCD-1234-EFGH-5678", "ABCD1234EFGH5678"},
-		{"abcd 1234 efgh 5678", "ABCD1234EFGH5678"},
-		{"abcd.1234.efgh.5678", "ABCD1234EFGH5678"},
-		{"ABCD1234EFGH5678", "ABCD1234EFGH5678"},
-		{"a-b.c d", "ABCD"},
-		{"", ""},
-	}
-
-	for _, tc := range tests {
-		result := normalizeKey(tc.input)
-		if result != tc.expected {
-			t.Errorf("normalizeKey(%q) = %q, want %q", tc.input, result, tc.expected)
-		}
-	}
-}
-
-// TestRotorCipherDecodeLowercase tests decoding lowercase letters.
-func TestRotorCipherDecodeLowercase(t *testing.T) {
-	t.Parallel()
-	// Encode and decode lowercase.
-	cipher := NewRotorCipher(0)
-	encoded := cipher.EncodeString("abcdefghijklmnopqrstuvwxyz")
-
-	cipher = NewRotorCipher(0)
-	decoded := cipher.DecodeString(encoded)
-
-	if decoded != "abcdefghijklmnopqrstuvwxyz" {
-		t.Errorf("Lowercase roundtrip failed: got %q", decoded)
-	}
-}
-
-// TestRotorCipherDecodeNonAlpha tests decoding non-alphanumeric chars.
-func TestRotorCipherDecodeNonAlpha(t *testing.T) {
-	t.Parallel()
-	cipher := NewRotorCipher(0)
-	// Non-alphanumeric should pass through unchanged.
-	result := cipher.Decode('-')
-	if result != '-' {
-		t.Errorf("Non-alpha char should pass through, got %c", result)
-	}
-
-	result = cipher.Decode('!')
-	if result != '!' {
-		t.Errorf("Non-alpha char should pass through, got %c", result)
-	}
-
-	result = cipher.Decode(' ')
-	if result != ' ' {
-		t.Errorf("Non-alpha char should pass through, got %c", result)
 	}
 }
 
@@ -366,16 +223,18 @@ func TestDeriveKey(t *testing.T) {
 	}
 }
 
-// TestValidateLicenseKeyInternalEdgeCases tests ValidateLicenseKey edge cases.
+// TestValidateLicenseKeyInternalEdgeCases tests Verifier.Validate edge cases.
 func TestValidateLicenseKeyInternalEdgeCases(t *testing.T) {
 	t.Parallel()
+	v := internalTestVerifier(t)
+
 	// Test Reflector tier key validation.
-	reflectorKey, err := GenerateLicenseKey("1001", "1234567", TierReflector)
+	reflectorKey, err := signTestKey(t, "1001", "1234567", TierReflector)
 	if err != nil {
-		t.Fatalf("GenerateLicenseKey error: %v", err)
+		t.Fatalf("signTestKey error: %v", err)
 	}
 
-	info := ValidateLicenseKey(reflectorKey)
+	info := v.Validate(reflectorKey)
 	if !info.Valid {
 		t.Errorf("Reflector key should be valid: %s", info.ErrorMsg)
 	}
@@ -386,27 +245,27 @@ func TestValidateLicenseKeyInternalEdgeCases(t *testing.T) {
 		t.Errorf("Reflector should have only 'reflector' feature, got %v", info.Features)
 	}
 
-	// Test TestSuite tier key validation.
-	testSuiteKey, err := GenerateLicenseKey("2001", "ABCDEFG", TierProfessional)
+	// Test Professional tier key validation.
+	testSuiteKey, err := signTestKey(t, "2001", "ABCDEFG", TierProfessional)
 	if err != nil {
-		t.Fatalf("GenerateLicenseKey error: %v", err)
+		t.Fatalf("signTestKey error: %v", err)
 	}
 
-	info = ValidateLicenseKey(testSuiteKey)
+	info = v.Validate(testSuiteKey)
 	if !info.Valid {
-		t.Errorf("TestSuite key should be valid: %s", info.ErrorMsg)
+		t.Errorf("Professional key should be valid: %s", info.ErrorMsg)
 	}
 	if info.Tier != TierProfessional {
-		t.Errorf("Expected TestSuite tier, got %v", info.Tier)
+		t.Errorf("Expected Professional tier, got %v", info.Tier)
 	}
 
 	// Test Enterprise tier key validation.
-	enterpriseKey, err := GenerateLicenseKey("3001", "XYZXYZX", TierEnterprise)
+	enterpriseKey, err := signTestKey(t, "3001", "XYZXYZX", TierEnterprise)
 	if err != nil {
-		t.Fatalf("GenerateLicenseKey error: %v", err)
+		t.Fatalf("signTestKey error: %v", err)
 	}
 
-	info = ValidateLicenseKey(enterpriseKey)
+	info = v.Validate(enterpriseKey)
 	if !info.Valid {
 		t.Errorf("Enterprise key should be valid: %s", info.ErrorMsg)
 	}
@@ -713,28 +572,30 @@ func TestDeactivateInternalEdgeCases(t *testing.T) {
 	}
 }
 
-// TestValidateLicenseKeyAllPaths tests all ValidateLicenseKey code paths.
+// TestValidateLicenseKeyAllPaths tests all Validate code paths.
 func TestValidateLicenseKeyAllPaths(t *testing.T) {
 	t.Parallel()
-	// Test empty key.
-	info := ValidateLicenseKey("")
+	v := internalTestVerifier(t)
+
+	// Test empty key — rejected with a generic invalid message.
+	info := v.Validate("")
 	if info.Valid {
 		t.Error("Empty key should not be valid")
 	}
-	if info.ErrorMsg != ErrLicenseKeyLength {
-		t.Errorf("Expected length error, got: %s", info.ErrorMsg)
+	if info.ErrorMsg == "" {
+		t.Error("Empty key should set a non-empty ErrorMsg")
 	}
 
-	// Test key with invalid characters.
-	info = ValidateLicenseKey("ABCD!@#$EFGH5678")
+	// Test garbage that resembles the old 16-char format.
+	info = v.Validate("ABCD!@#$EFGH5678")
 	if info.Valid {
-		t.Error("Key with special chars should not be valid")
+		t.Error("Garbage key should not be valid")
 	}
 
-	// Test key with invalid checksum.
-	info = ValidateLicenseKey("AAAAAAAAAAAAAAAA")
+	// Another garbage string.
+	info = v.Validate("AAAAAAAAAAAAAAAA")
 	if info.Valid {
-		t.Error("Key with invalid checksum should not be valid")
+		t.Error("Garbage key should not be valid")
 	}
 
 	// Generate valid keys for all tiers and verify validation.
@@ -748,8 +609,8 @@ func TestValidateLicenseKeyAllPaths(t *testing.T) {
 	}
 
 	for _, tc := range tiers {
-		key, _ := GenerateLicenseKey(tc.product, "ABCDEFG", tc.tier)
-		info = ValidateLicenseKey(key)
+		key, _ := signTestKey(t, tc.product, "ABCDEFG", tc.tier)
+		info = v.Validate(key)
 		if !info.Valid {
 			t.Errorf("Key for tier %v should be valid: %s", tc.tier, info.ErrorMsg)
 		}
@@ -795,9 +656,9 @@ func TestSaveStateCreatesDirectory(t *testing.T) {
 // TestActivateInternalEdgeCases tests Activate edge cases.
 func TestActivateInternalEdgeCases(t *testing.T) {
 	t.Parallel()
-	mgr, err := NewManager()
+	mgr, err := NewManagerWithVerifier(internalTestVerifier(t))
 	if err != nil {
-		t.Fatalf("NewManager error: %v", err)
+		t.Fatalf("NewManagerWithVerifier error: %v", err)
 	}
 
 	// Test with invalid key.
@@ -810,7 +671,7 @@ func TestActivateInternalEdgeCases(t *testing.T) {
 	}
 
 	// Test with valid key.
-	key, _ := GenerateLicenseKey("2001", "ABCDEFG", TierProfessional)
+	key, _ := signTestKey(t, "2001", "ABCDEFG", TierProfessional)
 	result = mgr.Activate(key)
 	if !result.Success {
 		t.Errorf("Valid key should activate: %s", result.Message)
@@ -1007,16 +868,16 @@ func TestStartTrialSaveError(t *testing.T) {
 // TestActivateSaveError tests Activate when save fails.
 func TestActivateSaveError(t *testing.T) {
 	t.Parallel()
-	mgr, err := NewManager()
+	mgr, err := NewManagerWithVerifier(internalTestVerifier(t))
 	if err != nil {
-		t.Fatalf("NewManager error: %v", err)
+		t.Fatalf("NewManagerWithVerifier error: %v", err)
 	}
 
 	// Set config dir to a non-writable path.
 	mgr.configDir = "/nonexistent/readonly/path"
 
 	// Generate valid key.
-	key, _ := GenerateLicenseKey("2001", "1234567", TierProfessional)
+	key, _ := signTestKey(t, "2001", "1234567", TierProfessional)
 
 	// Activate should fail because save fails.
 	result := mgr.Activate(key)
@@ -1066,14 +927,23 @@ func TestDeactivateRemoveError(t *testing.T) {
 	}
 }
 
-// TestValidateLicenseKeyUnknownProductCode tests unknown product code path.
+// TestValidateLicenseKeyUnknownProductCode verifies a signed token with an
+// unknown product code is rejected, and that all valid combos validate.
 func TestValidateLicenseKeyUnknownProductCode(t *testing.T) {
 	t.Parallel()
-	// We need to create a key that passes checksum validation but has an unknown product code.
-	// This requires crafting a specific key that will decode to have unknown product code.
-	// Since keys are encoded, this is complex. Let's test with all valid product codes covered.
+	v := internalTestVerifier(t)
 
-	// Test that all valid tier/product combinations work.
+	// A correctly signed token with an unknown product code must be rejected.
+	unknown := signLicenseTokenInternal(t, "9999", "1234567", TierReflector)
+	info := v.Validate(unknown)
+	if info.Valid {
+		t.Error("Token with unknown product code should not be valid")
+	}
+	if info.ErrorMsg == "" {
+		t.Error("Unknown product code should set a non-empty ErrorMsg")
+	}
+
+	// All valid tier/product combinations work.
 	validCombos := []struct {
 		product string
 		tier    Tier
@@ -1084,17 +954,40 @@ func TestValidateLicenseKeyUnknownProductCode(t *testing.T) {
 	}
 
 	for _, tc := range validCombos {
-		key, err := GenerateLicenseKey(tc.product, "TESTKEY", tc.tier)
+		key, err := signTestKey(t, tc.product, "TESTKEY", tc.tier)
 		if err != nil {
-			t.Errorf("GenerateLicenseKey failed for %s/%v: %v", tc.product, tc.tier, err)
+			t.Errorf("signTestKey failed for %s/%v: %v", tc.product, tc.tier, err)
 			continue
 		}
 
-		info := ValidateLicenseKey(key)
-		if !info.Valid {
-			t.Errorf("Key for %s/%v should be valid: %s", tc.product, tc.tier, info.ErrorMsg)
+		comboInfo := v.Validate(key)
+		if !comboInfo.Valid {
+			t.Errorf("Key for %s/%v should be valid: %s", tc.product, tc.tier, comboInfo.ErrorMsg)
 		}
 	}
+}
+
+// signLicenseTokenInternal mints an MSN1 token signed by the internal test key.
+// It mirrors testsign_test.go's signTestKey but allows arbitrary (possibly
+// mismatched) code/tier pairings so forgery and mismatch paths can be tested.
+func signLicenseTokenInternal(t *testing.T, code, serial string, tier Tier) string {
+	t.Helper()
+	payload := map[string]any{
+		"v":          1,
+		"product":    "stem",
+		"code":       code,
+		"serial":     serial,
+		"tier":       int(tier),
+		"maxDevices": 3,
+		"iat":        time.Now().Unix(),
+	}
+	b, err := json.Marshal(payload)
+	if err != nil {
+		t.Fatalf("marshal payload: %v", err)
+	}
+	sig := ed25519.Sign(internalTestSigningKey(t), b)
+	return "MSN1." + base64.RawURLEncoding.EncodeToString(b) +
+		"." + base64.RawURLEncoding.EncodeToString(sig)
 }
 
 // TestLoadStateReadAllError tests loadState when ReadAll fails.
@@ -1243,21 +1136,21 @@ func TestNewManagerLoadsExistingState(t *testing.T) {
 	t.Setenv("HOME", tmpDir)
 
 	// Create first manager and save state.
-	mgr1, err := NewManager()
+	mgr1, err := NewManagerWithVerifier(internalTestVerifier(t))
 	if err != nil {
-		t.Fatalf("First NewManager error: %v", err)
+		t.Fatalf("First NewManagerWithVerifier error: %v", err)
 	}
 
-	key, _ := GenerateLicenseKey("2001", "TESTKEY", TierProfessional)
+	key, _ := signTestKey(t, "2001", "TESTKEY", TierProfessional)
 	result := mgr1.Activate(key)
 	if !result.Success {
 		t.Fatalf("Activate failed: %s", result.Message)
 	}
 
 	// Create second manager - should load state.
-	mgr2, err := NewManager()
+	mgr2, err := NewManagerWithVerifier(internalTestVerifier(t))
 	if err != nil {
-		t.Fatalf("Second NewManager error: %v", err)
+		t.Fatalf("Second NewManagerWithVerifier error: %v", err)
 	}
 
 	// Verify state was loaded.
@@ -1296,169 +1189,82 @@ func TestGetPrimaryMACWithLoopback(t *testing.T) {
 	}
 }
 
-// TestValidateLicenseKeyWithLowercaseKey tests lowercase key normalization.
-func TestValidateLicenseKeyWithLowercaseKey(t *testing.T) {
+// TestValidateLicenseKeyProductCodeMismatch verifies that correctly signed
+// tokens whose product code does not match their tier are rejected with the
+// product-code-mismatch error. Replaces the old rotor-crafted Tier1/2/3 cases.
+func TestValidateLicenseKeyProductCodeMismatch(t *testing.T) {
 	t.Parallel()
-	// Generate a valid key.
-	key, err := GenerateLicenseKey("2001", "TESTKEY", TierProfessional)
-	if err != nil {
-		t.Fatalf("GenerateLicenseKey error: %v", err)
+	v := internalTestVerifier(t)
+
+	cases := []struct {
+		name string
+		code string
+		tier Tier
+	}{
+		{"pro-code with reflector tier", "2001", TierReflector},
+		{"reflector-code with pro tier", "1001", TierProfessional},
+		{"pro-code with enterprise tier", "2001", TierEnterprise},
 	}
 
-	// Convert to lowercase.
-	var lowerKeyBuilder strings.Builder
-	for _, c := range key {
-		if c >= 'A' && c <= 'Z' {
-			lowerKeyBuilder.WriteRune(c + 32)
-		} else {
-			lowerKeyBuilder.WriteRune(c)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			token := signLicenseTokenInternal(t, tc.code, "1234567", tc.tier)
+			info := v.Validate(token)
+			if info.Valid {
+				t.Error("Token with mismatched tier/product should not be valid")
+			}
+			if info.ErrorMsg != errProductCodeMismatch {
+				t.Errorf("Expected error %q, got %q", errProductCodeMismatch, info.ErrorMsg)
+			}
+		})
+	}
+}
+
+// TestValidateLicenseKeyInvalidTier verifies that a correctly signed token with
+// an out-of-range tier is rejected with the invalid-tier error.
+func TestValidateLicenseKeyInvalidTier(t *testing.T) {
+	t.Parallel()
+	v := internalTestVerifier(t)
+
+	for _, tier := range []Tier{TierInvalid, Tier(4), Tier(99)} {
+		token := signLicenseTokenInternal(t, "2001", "1234567", tier)
+		info := v.Validate(token)
+		if info.Valid {
+			t.Errorf("Token with tier %d should not be valid", tier)
+		}
+		if info.ErrorMsg != "Invalid license tier" {
+			t.Errorf("tier %d: expected 'Invalid license tier', got %q", tier, info.ErrorMsg)
 		}
 	}
-	lowerKey := lowerKeyBuilder.String()
-
-	// Should still validate.
-	info := ValidateLicenseKey(lowerKey)
-	if !info.Valid {
-		t.Errorf("Lowercase key should be valid: %s", info.ErrorMsg)
-	}
 }
 
-// TestValidateLicenseKeyProductCodeMismatchTier1 tests product code mismatch for Tier 1.
-func TestValidateLicenseKeyProductCodeMismatchTier1(t *testing.T) {
+// TestForgeryRejectedInternal verifies a token signed by an attacker key is
+// rejected by the production verifier (ValidateLicenseKey).
+func TestForgeryRejectedInternal(t *testing.T) {
 	t.Parallel()
-	// Create a Tier 1 key but with wrong product code (2001 instead of 1001).
-	// This requires crafting a key manually.
+	_, attackerPriv, err := ed25519.GenerateKey(nil)
+	if err != nil {
+		t.Fatalf("generate attacker key: %v", err)
+	}
+	payload := map[string]any{
+		"v": 1, "product": "stem", "code": "2001", "serial": "1234567",
+		"tier": int(TierProfessional), "maxDevices": 3, "iat": time.Now().Unix(),
+	}
+	b, err := json.Marshal(payload)
+	if err != nil {
+		t.Fatalf("marshal payload: %v", err)
+	}
+	sig := ed25519.Sign(attackerPriv, b)
+	forged := "MSN1." + base64.RawURLEncoding.EncodeToString(b) +
+		"." + base64.RawURLEncoding.EncodeToString(sig)
 
-	// Build a payload with mismatched tier/product.
-	payload := "2001" + "1234567" + "1" // Product 2001 with Tier 1
-	checksum := CalculateChecksum(payload)
-	fullKey := checksum[0:2] + payload + checksum
-
-	// Encode through rotor cipher.
-	cipher := NewRotorCipher(cipherStartPos)
-	encoded := cipher.EncodeString(fullKey)
-
-	// Validate - should fail with product code mismatch.
-	info := ValidateLicenseKey(encoded)
+	info := ValidateLicenseKey(forged)
 	if info.Valid {
-		t.Error("Key with mismatched tier/product should not be valid")
+		t.Error("Token signed by a non-production key must be rejected")
 	}
-	if info.ErrorMsg != errProductCodeMismatch {
-		t.Errorf("Expected error %q, got %q", errProductCodeMismatch, info.ErrorMsg)
-	}
-}
-
-// TestValidateLicenseKeyProductCodeMismatchTier2 tests product code mismatch for Tier 2.
-func TestValidateLicenseKeyProductCodeMismatchTier2(t *testing.T) {
-	t.Parallel()
-	// Product 1001 with Tier 2.
-	payload := "1001" + "1234567" + "2"
-	checksum := CalculateChecksum(payload)
-	fullKey := checksum[0:2] + payload + checksum
-
-	cipher := NewRotorCipher(cipherStartPos)
-	encoded := cipher.EncodeString(fullKey)
-
-	info := ValidateLicenseKey(encoded)
-	if info.Valid {
-		t.Error("Key with mismatched tier/product should not be valid")
-	}
-	if info.ErrorMsg != errProductCodeMismatch {
-		t.Errorf("Expected error %q, got %q", errProductCodeMismatch, info.ErrorMsg)
-	}
-}
-
-// TestValidateLicenseKeyProductCodeMismatchTier3 tests product code mismatch for Tier 3.
-func TestValidateLicenseKeyProductCodeMismatchTier3(t *testing.T) {
-	t.Parallel()
-	// Product 2001 with Tier 3.
-	payload := "2001" + "1234567" + "3"
-	checksum := CalculateChecksum(payload)
-	fullKey := checksum[0:2] + payload + checksum
-
-	cipher := NewRotorCipher(cipherStartPos)
-	encoded := cipher.EncodeString(fullKey)
-
-	info := ValidateLicenseKey(encoded)
-	if info.Valid {
-		t.Error("Key with mismatched tier/product should not be valid")
-	}
-	if info.ErrorMsg != errProductCodeMismatch {
-		t.Errorf("Expected error %q, got %q", errProductCodeMismatch, info.ErrorMsg)
-	}
-}
-
-// TestValidateLicenseKeyUnknownProductCodeInternal tests unknown product code.
-func TestValidateLicenseKeyUnknownProductCodeInternal(t *testing.T) {
-	t.Parallel()
-	// Product 9999 (unknown) with Tier 1.
-	payload := "9999" + "1234567" + "1"
-	checksum := CalculateChecksum(payload)
-	fullKey := checksum[0:2] + payload + checksum
-
-	cipher := NewRotorCipher(cipherStartPos)
-	encoded := cipher.EncodeString(fullKey)
-
-	info := ValidateLicenseKey(encoded)
-	if info.Valid {
-		t.Error("Key with unknown product code should not be valid")
-	}
-	if info.ErrorMsg != "Unknown product code" {
-		t.Errorf("Expected 'Unknown product code' error, got %q", info.ErrorMsg)
-	}
-}
-
-// TestValidateLicenseKeyInvalidTierCharacter tests invalid tier character.
-func TestValidateLicenseKeyInvalidTierCharacter(t *testing.T) {
-	t.Parallel()
-	// Product 2001 with invalid tier character '0'.
-	payload := "2001" + "1234567" + "0"
-	checksum := CalculateChecksum(payload)
-	fullKey := checksum[0:2] + payload + checksum
-
-	cipher := NewRotorCipher(cipherStartPos)
-	encoded := cipher.EncodeString(fullKey)
-
-	info := ValidateLicenseKey(encoded)
-	if info.Valid {
-		t.Error("Key with invalid tier character should not be valid")
-	}
-	if info.ErrorMsg != "Invalid license tier" {
-		t.Errorf("Expected 'Invalid license tier' error, got %q", info.ErrorMsg)
-	}
-}
-
-// TestValidateLicenseKeyInvalidTierCharacter4 tests tier character '4'.
-func TestValidateLicenseKeyInvalidTierCharacter4(t *testing.T) {
-	t.Parallel()
-	// Product 3001 with tier '4' (invalid).
-	payload := "3001" + "1234567" + "4"
-	checksum := CalculateChecksum(payload)
-	fullKey := checksum[0:2] + payload + checksum
-
-	cipher := NewRotorCipher(cipherStartPos)
-	encoded := cipher.EncodeString(fullKey)
-
-	info := ValidateLicenseKey(encoded)
-	if info.Valid {
-		t.Error("Key with tier '4' should not be valid")
-	}
-}
-
-// TestValidateLicenseKeyInvalidTierCharacterLetter tests tier character 'A'.
-func TestValidateLicenseKeyInvalidTierCharacterLetter(t *testing.T) {
-	t.Parallel()
-	// Product 2001 with tier 'A' (invalid).
-	payload := "2001" + "1234567" + "A"
-	checksum := CalculateChecksum(payload)
-	fullKey := checksum[0:2] + payload + checksum
-
-	cipher := NewRotorCipher(cipherStartPos)
-	encoded := cipher.EncodeString(fullKey)
-
-	info := ValidateLicenseKey(encoded)
-	if info.Valid {
-		t.Error("Key with tier 'A' should not be valid")
+	if info.ErrorMsg != ErrLicenseInvalid {
+		t.Errorf("forged token ErrorMsg = %q, want %q", info.ErrorMsg, ErrLicenseInvalid)
 	}
 }
 
@@ -2051,60 +1857,23 @@ func TestSaveStateCreateDirectoryError(t *testing.T) {
 	}
 }
 
-// TestValidateLicenseKeyWithFormattedKey tests key with dashes.
-func TestValidateLicenseKeyWithFormattedKey(t *testing.T) {
+// TestValidateLicenseKeyWithFormattedKeyTrim verifies FormatKey only trims
+// whitespace and the trimmed token still validates.
+func TestValidateLicenseKeyWithFormattedKeyTrim(t *testing.T) {
 	t.Parallel()
-	// Generate a valid key.
-	key, err := GenerateLicenseKey("2001", "TESTKEY", TierProfessional)
+	v := internalTestVerifier(t)
+	key, err := signTestKey(t, "2001", "TESTKEY", TierProfessional)
 	if err != nil {
-		t.Fatalf("GenerateLicenseKey error: %v", err)
+		t.Fatalf("signTestKey error: %v", err)
 	}
 
-	// Format it with dashes.
-	formattedKey := FormatKey(key)
-
-	// Should still validate.
-	info := ValidateLicenseKey(formattedKey)
+	formatted := FormatKey("  " + key + "\n")
+	if formatted != key {
+		t.Errorf("FormatKey should trim to original token, got %q", formatted)
+	}
+	info := v.Validate(formatted)
 	if !info.Valid {
-		t.Errorf("Formatted key should be valid: %s", info.ErrorMsg)
-	}
-}
-
-// TestValidateLicenseKeyWithSpaces tests key with spaces.
-func TestValidateLicenseKeyWithSpaces(t *testing.T) {
-	t.Parallel()
-	// Generate a valid key.
-	key, err := GenerateLicenseKey("2001", "TESTKEY", TierProfessional)
-	if err != nil {
-		t.Fatalf("GenerateLicenseKey error: %v", err)
-	}
-
-	// Add spaces.
-	spacedKey := key[:4] + " " + key[4:8] + " " + key[8:12] + " " + key[12:]
-
-	// Should still validate.
-	info := ValidateLicenseKey(spacedKey)
-	if !info.Valid {
-		t.Errorf("Key with spaces should be valid: %s", info.ErrorMsg)
-	}
-}
-
-// TestValidateLicenseKeyWithDots tests key with dots.
-func TestValidateLicenseKeyWithDots(t *testing.T) {
-	t.Parallel()
-	// Generate a valid key.
-	key, err := GenerateLicenseKey("2001", "TESTKEY", TierProfessional)
-	if err != nil {
-		t.Fatalf("GenerateLicenseKey error: %v", err)
-	}
-
-	// Add dots.
-	dottedKey := key[:4] + "." + key[4:8] + "." + key[8:12] + "." + key[12:]
-
-	// Should still validate.
-	info := ValidateLicenseKey(dottedKey)
-	if !info.Valid {
-		t.Errorf("Key with dots should be valid: %s", info.ErrorMsg)
+		t.Errorf("Trimmed token should be valid: %s", info.ErrorMsg)
 	}
 }
 
@@ -2113,15 +1882,15 @@ func TestMultipleActivationsAndDeactivations(t *testing.T) {
 	tmpDir := t.TempDir()
 	t.Setenv("HOME", tmpDir)
 
-	mgr, err := NewManager()
+	mgr, err := NewManagerWithVerifier(internalTestVerifier(t))
 	if err != nil {
-		t.Fatalf("NewManager error: %v", err)
+		t.Fatalf("NewManagerWithVerifier error: %v", err)
 	}
 
 	// Generate keys for each tier.
-	reflectorKey, _ := GenerateLicenseKey("1001", "REFKEY1", TierReflector)
-	testSuiteKey, _ := GenerateLicenseKey("2001", "TSTKEY1", TierProfessional)
-	enterpriseKey, _ := GenerateLicenseKey("3001", "ENTKEY1", TierEnterprise)
+	reflectorKey, _ := signTestKey(t, "1001", "REFKEY1", TierReflector)
+	testSuiteKey, _ := signTestKey(t, "2001", "TSTKEY1", TierProfessional)
+	enterpriseKey, _ := signTestKey(t, "3001", "ENTKEY1", TierEnterprise)
 
 	// Activate reflector.
 	result := mgr.Activate(reflectorKey)
@@ -2166,9 +1935,11 @@ func TestMultipleActivationsAndDeactivations(t *testing.T) {
 // TestInfoCanRunReflectorAndTests tests CanRunReflector and CanRunTests methods.
 func TestInfoCanRunReflectorAndTests(t *testing.T) {
 	t.Parallel()
+	v := internalTestVerifier(t)
+
 	// Test reflector tier.
-	reflectorKey, _ := GenerateLicenseKey("1001", "REFKEY1", TierReflector)
-	info := ValidateLicenseKey(reflectorKey)
+	reflectorKey, _ := signTestKey(t, "1001", "REFKEY1", TierReflector)
+	info := v.Validate(reflectorKey)
 	if !info.CanRunReflector() {
 		t.Error("Reflector tier should be able to run reflector")
 	}
@@ -2176,19 +1947,19 @@ func TestInfoCanRunReflectorAndTests(t *testing.T) {
 		t.Error("Reflector tier should NOT be able to run tests")
 	}
 
-	// Test suite tier.
-	testKey, _ := GenerateLicenseKey("2001", "TSTKEY1", TierProfessional)
-	info = ValidateLicenseKey(testKey)
+	// Professional tier.
+	testKey, _ := signTestKey(t, "2001", "TSTKEY1", TierProfessional)
+	info = v.Validate(testKey)
 	if !info.CanRunReflector() {
-		t.Error("TestSuite tier should be able to run reflector")
+		t.Error("Professional tier should be able to run reflector")
 	}
 	if !info.CanRunTests() {
-		t.Error("TestSuite tier should be able to run tests")
+		t.Error("Professional tier should be able to run tests")
 	}
 
 	// Enterprise tier.
-	entKey, _ := GenerateLicenseKey("3001", "ENTKEY1", TierEnterprise)
-	info = ValidateLicenseKey(entKey)
+	entKey, _ := signTestKey(t, "3001", "ENTKEY1", TierEnterprise)
+	info = v.Validate(entKey)
 	if !info.CanRunReflector() {
 		t.Error("Enterprise tier should be able to run reflector")
 	}
@@ -2209,9 +1980,11 @@ func TestInfoCanRunReflectorAndTests(t *testing.T) {
 // TestInfoHasFeature tests HasFeature method.
 func TestInfoHasFeature(t *testing.T) {
 	t.Parallel()
+	v := internalTestVerifier(t)
+
 	// Reflector tier.
-	reflectorKey, _ := GenerateLicenseKey("1001", "REFKEY1", TierReflector)
-	info := ValidateLicenseKey(reflectorKey)
+	reflectorKey, _ := signTestKey(t, "1001", "REFKEY1", TierReflector)
+	info := v.Validate(reflectorKey)
 	if !info.HasFeature("reflector") {
 		t.Error("Reflector tier should have 'reflector' feature")
 	}
@@ -2219,22 +1992,22 @@ func TestInfoHasFeature(t *testing.T) {
 		t.Error("Reflector tier should NOT have 'rfc2544' feature")
 	}
 
-	// Test suite tier.
-	testKey, _ := GenerateLicenseKey("2001", "TSTKEY1", TierProfessional)
-	info = ValidateLicenseKey(testKey)
+	// Professional tier.
+	testKey, _ := signTestKey(t, "2001", "TSTKEY1", TierProfessional)
+	info = v.Validate(testKey)
 	if !info.HasFeature("reflector") {
-		t.Error("TestSuite tier should have 'reflector' feature")
+		t.Error("Professional tier should have 'reflector' feature")
 	}
 	if !info.HasFeature("rfc2544") {
-		t.Error("TestSuite tier should have 'rfc2544' feature")
+		t.Error("Professional tier should have 'rfc2544' feature")
 	}
 	if !info.HasFeature("y1564") {
-		t.Error("TestSuite tier should have 'y1564' feature")
+		t.Error("Professional tier should have 'y1564' feature")
 	}
 
 	// Enterprise tier.
-	entKey, _ := GenerateLicenseKey("3001", "ENTKEY1", TierEnterprise)
-	info = ValidateLicenseKey(entKey)
+	entKey, _ := signTestKey(t, "3001", "ENTKEY1", TierEnterprise)
+	info = v.Validate(entKey)
 	if !info.HasFeature("api") {
 		t.Error("Enterprise tier should have 'api' feature")
 	}
@@ -2266,23 +2039,23 @@ func TestTierStringValues(t *testing.T) {
 	}
 }
 
-// TestFormatKeyVariousInputs tests FormatKey with various inputs.
+// TestFormatKeyVariousInputs tests FormatKey trims whitespace and otherwise
+// returns the token unchanged (tokens are display-ready; base64url content must
+// not be altered).
 func TestFormatKeyVariousInputs(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		input    string
 		expected string
 	}{
-		// Valid 16-char key.
-		{"ABCD1234EFGH5678", "ABCD-1234-EFGH-5678"},
-		// Key with dashes (normalized and re-formatted).
-		{"ABCD-1234-EFGH-5678", "ABCD-1234-EFGH-5678"},
-		// Lowercase (normalized to uppercase).
-		{"abcd1234efgh5678", "ABCD-1234-EFGH-5678"},
-		// Too short - returned as-is.
+		// Tokens are returned verbatim (no separator insertion).
+		{"ABCD1234EFGH5678", "ABCD1234EFGH5678"},
+		{"abcd1234efgh5678", "abcd1234efgh5678"},
+		// Surrounding whitespace is trimmed.
+		{"  ABCD1234EFGH5678  ", "ABCD1234EFGH5678"},
+		{"ABCD1234EFGH5678\n", "ABCD1234EFGH5678"},
+		// Short input returned as-is.
 		{"ABCD", "ABCD"},
-		// Too long - returned as-is (normalized).
-		{"ABCD1234EFGH56789ABC", "ABCD1234EFGH56789ABC"},
 		// Empty string.
 		{"", ""},
 	}
@@ -2688,40 +2461,6 @@ func TestDeriveKeyIsConsistentWithSameFingerprint(t *testing.T) {
 	}
 }
 
-// TestValidateLicenseKeyWithNormalization tests key normalization edge cases.
-func TestValidateLicenseKeyWithNormalization(t *testing.T) {
-	t.Parallel()
-	// Generate a valid key.
-	key, err := GenerateLicenseKey("2001", "TESTKEY", TierProfessional)
-	if err != nil {
-		t.Fatalf("GenerateLicenseKey error: %v", err)
-	}
-
-	// Test with various separators and case combinations.
-	variations := []string{
-		key,                  // Original.
-		strings.ToLower(key), // All lowercase.
-		key[:4] + "-" + key[4:8] + "-" + key[8:12] + "-" + key[12:], // With dashes.
-		key[:4] + " " + key[4:8] + " " + key[8:12] + " " + key[12:], // With spaces.
-		key[:4] + "." + key[4:8] + "." + key[8:12] + "." + key[12:], // With dots.
-		"  " + key + "  ",       // With leading/trailing spaces (normalized).
-		key[:8] + "-" + key[8:], // Partial dashes.
-	}
-
-	for i, variant := range variations {
-		// Normalize the variant first if it has extra whitespace.
-		normalized := normalizeKey(variant)
-		if len(normalized) != keyLength {
-			continue // Skip if normalization resulted in wrong length.
-		}
-
-		info := ValidateLicenseKey(variant)
-		if !info.Valid {
-			t.Errorf("Variation %d (%q) should be valid: %s", i, variant, info.ErrorMsg)
-		}
-	}
-}
-
 // TestEncryptProducesDifferentOutputsForSameInput tests nonce randomness.
 func TestEncryptProducesDifferentOutputsForSameInput(t *testing.T) {
 	t.Parallel()
@@ -2852,83 +2591,34 @@ func TestGenerateFingerprintConsistency(t *testing.T) {
 	}
 }
 
-// TestValidateLicenseKeyInvalidLength tests key validation with wrong length.
-func TestValidateLicenseKeyInvalidLength(t *testing.T) {
+// TestValidateLicenseKeyMalformedRejected verifies that strings which are not
+// well-formed MSN1 tokens (old 16-char formats, garbage, special chars) are
+// rejected with a non-empty error message.
+func TestValidateLicenseKeyMalformedRejected(t *testing.T) {
 	t.Parallel()
-	// Test keys that are too short after normalization.
-	shortKeys := []string{
+	malformed := []string{
 		"",
 		"A",
 		"AB",
-		"ABCDEFGH",        // 8 chars
-		"ABCDEFGHIJKLMNO", // 15 chars
+		"ABCDEFGH",           // legacy 8-char
+		"ABCDEFGHIJKLMNO",    // legacy 15-char
+		"ABCDEFGHIJKLMNOPQ",  // legacy 17-char
+		"ABCD!@#$EFGH5678",   // special chars
+		"abcd!@#$efgh5678",   // special chars lowercase
+		"ABCDEFGH12345678",   // legacy 16-char alphanumeric
+		"MSN1.onlytwo",       // wrong part count
+		"MSN1.notb64.notb64", // undecodable parts
+		"WRONG.payload.sig",  // wrong scheme
 	}
 
-	for _, key := range shortKeys {
+	for _, key := range malformed {
 		info := ValidateLicenseKey(key)
 		if info.Valid {
-			t.Errorf("Short key %q should not be valid", key)
+			t.Errorf("Malformed key %q should not be valid", key)
 		}
-		if info.ErrorMsg != ErrLicenseKeyLength {
-			t.Errorf("Expected length error for %q, got: %s", key, info.ErrorMsg)
+		if info.ErrorMsg == "" {
+			t.Errorf("Malformed key %q should set a non-empty ErrorMsg", key)
 		}
-	}
-
-	// Test keys that are too long after normalization.
-	longKeys := []string{
-		"ABCDEFGHIJKLMNOPQ",  // 17 chars
-		"ABCDEFGHIJKLMNOPQR", // 18 chars
-	}
-
-	for _, key := range longKeys {
-		info := ValidateLicenseKey(key)
-		if info.Valid {
-			t.Errorf("Long key %q should not be valid", key)
-		}
-	}
-}
-
-// TestValidateLicenseKeyInvalidCharacters tests key validation with special characters.
-func TestValidateLicenseKeyInvalidCharacters(t *testing.T) {
-	t.Parallel()
-	// Keys with special characters (after normalization still 16 chars).
-	invalidKeys := []string{
-		"ABCD!@#$EFGH5678", // Special chars
-		"ABCDEFGH12345678", // This is valid actually - just letters and numbers
-		"abcd!@#$efgh5678", // Special chars lowercase
-	}
-
-	for _, key := range invalidKeys {
-		info := ValidateLicenseKey(key)
-		if strings.ContainsAny(key, "!@#$%^&*()") {
-			if info.Valid {
-				t.Errorf("Key with special chars %q should not be valid", key)
-			}
-		}
-	}
-}
-
-// TestChecksumWithSpecialCases tests checksum calculation edge cases.
-func TestChecksumWithSpecialCases(t *testing.T) {
-	t.Parallel()
-	// Test checksum with all zeros.
-	checksum := CalculateChecksum("00000000000000")
-	if len(checksum) != 2 {
-		t.Errorf("Checksum should be 2 chars, got %d", len(checksum))
-	}
-
-	// Test checksum with all letters.
-	checksum = CalculateChecksum("AAAAAAAAAAAAAA")
-	if len(checksum) != 2 {
-		t.Errorf("Checksum should be 2 chars, got %d", len(checksum))
-	}
-
-	// Verify checksum validation works with calculated checksum.
-	payload := "TESTPAYLOAD123"
-	cs := CalculateChecksum(payload)
-	fullString := payload + cs
-	if !ValidateChecksum(fullString) {
-		t.Errorf("Checksum validation should succeed for %q", fullString)
 	}
 }
 
@@ -2953,37 +2643,38 @@ func TestSplitLinesWithCarriageReturn(t *testing.T) {
 	}
 }
 
-// TestActivateWithKeyNormalization tests Activate with various key formats.
-func TestActivateWithKeyNormalization(t *testing.T) {
+// TestActivateWithWhitespaceTrimmed verifies that a token wrapped in surrounding
+// whitespace still activates (Activate trims via the verifier), while an altered
+// token does not (base64url content must not be mutated).
+func TestActivateWithWhitespaceTrimmed(t *testing.T) {
 	tmpDir := t.TempDir()
 	t.Setenv("HOME", tmpDir)
 
-	mgr, err := NewManager()
+	mgr, err := NewManagerWithVerifier(internalTestVerifier(t))
 	if err != nil {
-		t.Fatalf("NewManager error: %v", err)
+		t.Fatalf("NewManagerWithVerifier error: %v", err)
 	}
 
-	// Generate a valid key.
-	key, err := GenerateLicenseKey("2001", "TESTKEY", TierProfessional)
+	key, err := signTestKey(t, "2001", "TESTKEY", TierProfessional)
 	if err != nil {
-		t.Fatalf("GenerateLicenseKey error: %v", err)
+		t.Fatalf("signTestKey error: %v", err)
 	}
 
-	// Test activation with lowercase key.
-	lowerKey := strings.ToLower(key)
-	result := mgr.Activate(lowerKey)
+	// Surrounding whitespace is trimmed and the token still activates.
+	result := mgr.Activate("  " + key + "\n")
 	if !result.Success {
-		t.Errorf("Lowercase key activation should succeed: %s", result.Message)
+		t.Errorf("Whitespace-wrapped token should activate: %s", result.Message)
 	}
 
-	// Deactivate for next test.
 	_ = mgr.Deactivate()
 
-	// Test activation with dashed key.
-	dashedKey := key[:4] + "-" + key[4:8] + "-" + key[8:12] + "-" + key[12:]
-	result = mgr.Activate(dashedKey)
-	if !result.Success {
-		t.Errorf("Dashed key activation should succeed: %s", result.Message)
+	// An altered token (lowercased base64url) must NOT activate.
+	altered := strings.ToLower(key)
+	if altered != key { // only meaningful if there were uppercase chars
+		result = mgr.Activate(altered)
+		if result.Success {
+			t.Error("Altered (lowercased) token must not activate")
+		}
 	}
 }
 
@@ -3053,14 +2744,15 @@ func TestValidateLicenseKeyWithAllTiers(t *testing.T) {
 		{"3001", TierEnterprise, "Professional"},
 	}
 
+	v := internalTestVerifier(t)
 	for _, tc := range tiers {
-		key, err := GenerateLicenseKey(tc.product, "ABCDEFG", tc.tier)
+		key, err := signTestKey(t, tc.product, "ABCDEFG", tc.tier)
 		if err != nil {
-			t.Errorf("GenerateLicenseKey failed for %s/%v: %v", tc.product, tc.tier, err)
+			t.Errorf("signTestKey failed for %s/%v: %v", tc.product, tc.tier, err)
 			continue
 		}
 
-		info := ValidateLicenseKey(key)
+		info := v.Validate(key)
 		if !info.Valid {
 			t.Errorf("Key for %s/%v should be valid: %s", tc.product, tc.tier, info.ErrorMsg)
 			continue
@@ -3068,27 +2760,6 @@ func TestValidateLicenseKeyWithAllTiers(t *testing.T) {
 
 		if info.Tier.String() != tc.expectedTier {
 			t.Errorf("Expected tier string %q, got %q", tc.expectedTier, info.Tier.String())
-		}
-	}
-}
-
-// TestNormalizeKeyWithMixedSeparators tests normalizeKey with mixed separators.
-func TestNormalizeKeyWithMixedSeparators(t *testing.T) {
-	t.Parallel()
-	tests := []struct {
-		input    string
-		expected string
-	}{
-		{"A-B.C D", "ABCD"},
-		{"A--B..C  D", "ABCD"},
-		{"-.-. ", ""},
-		{"abcd-EFGH.ijkl MNOP", "ABCDEFGHIJKLMNOP"},
-	}
-
-	for _, tc := range tests {
-		result := normalizeKey(tc.input)
-		if result != tc.expected {
-			t.Errorf("normalizeKey(%q) = %q, want %q", tc.input, result, tc.expected)
 		}
 	}
 }
@@ -3136,73 +2807,6 @@ func TestDeactivateWithNoLicense(t *testing.T) {
 	}
 }
 
-// TestFromAlphanumericBoundaryChars tests fromAlphanumeric with boundary characters.
-func TestFromAlphanumericBoundaryChars(t *testing.T) {
-	t.Parallel()
-	// Test boundary characters.
-	tests := []struct {
-		char     byte
-		expected int
-	}{
-		{'0', 0},
-		{'9', 9},
-		{'A', 10},
-		{'Z', 35},
-		{'a', 10},
-		{'z', 35},
-		{' ', 0},
-		{'!', 0},
-		{'-', 0},
-	}
-
-	for _, tc := range tests {
-		result := fromAlphanumeric(tc.char)
-		if result != tc.expected {
-			t.Errorf("fromAlphanumeric(%c) = %d, want %d", tc.char, result, tc.expected)
-		}
-	}
-}
-
-// TestToAlphanumericBoundaryValues tests toAlphanumeric with boundary values.
-func TestToAlphanumericBoundaryValues(t *testing.T) {
-	t.Parallel()
-	// Test boundary values.
-	tests := []struct {
-		value    int
-		expected byte
-	}{
-		{0, '0'},
-		{9, '9'},
-		{10, 'A'},
-		{35, 'Z'},
-	}
-
-	for _, tc := range tests {
-		result := toAlphanumeric(tc.value)
-		if result != tc.expected {
-			t.Errorf("toAlphanumeric(%d) = %c, want %c", tc.value, result, tc.expected)
-		}
-	}
-}
-
-// TestRotorCipherWithFullAlphabet tests cipher with all alphanumeric characters.
-func TestRotorCipherWithFullAlphabet(t *testing.T) {
-	t.Parallel()
-	fullAlphabet := "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-
-	for pos := range 36 {
-		cipher := NewRotorCipher(pos)
-		encoded := cipher.EncodeString(fullAlphabet)
-
-		cipher = NewRotorCipher(pos)
-		decoded := cipher.DecodeString(encoded)
-
-		if decoded != fullAlphabet {
-			t.Errorf("Position %d: roundtrip failed for full alphabet", pos)
-		}
-	}
-}
-
 // TestMaskStringWithEmptyInput tests maskString edge cases.
 func TestMaskStringWithEmptyInput(t *testing.T) {
 	t.Parallel()
@@ -3242,13 +2846,14 @@ func TestValidateLicenseKeyAllProductCodes(t *testing.T) {
 		{"3001", TierEnterprise},
 	}
 
+	v := internalTestVerifier(t)
 	for _, tc := range testCases {
-		key, err := GenerateLicenseKey(tc.product, "TESTSER", tc.tier)
+		key, err := signTestKey(t, tc.product, "TESTSER", tc.tier)
 		if err != nil {
-			t.Fatalf("GenerateLicenseKey(%s, TESTSER, %d) error: %v", tc.product, tc.tier, err)
+			t.Fatalf("signTestKey(%s, TESTSER, %d) error: %v", tc.product, tc.tier, err)
 		}
 
-		info := ValidateLicenseKey(key)
+		info := v.Validate(key)
 		if !info.Valid {
 			t.Errorf("Key for %s should be valid: %s", tc.product, info.ErrorMsg)
 		}
@@ -3265,12 +2870,12 @@ func TestValidateLicenseKeyAllProductCodes(t *testing.T) {
 func TestValidateLicenseKeyEnterpriseTier(t *testing.T) {
 	t.Parallel()
 	// Generate an Enterprise tier key.
-	key, err := GenerateLicenseKey("3001", "ZZZZZZA", TierEnterprise)
+	key, err := signTestKey(t, "3001", "ZZZZZZA", TierEnterprise)
 	if err != nil {
-		t.Fatalf("GenerateLicenseKey error: %v", err)
+		t.Fatalf("signTestKey error: %v", err)
 	}
 
-	info := ValidateLicenseKey(key)
+	info := internalTestVerifier(t).Validate(key)
 	if !info.Valid {
 		t.Errorf("Enterprise key should be valid: %s", info.ErrorMsg)
 	}

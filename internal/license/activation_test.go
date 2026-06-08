@@ -15,16 +15,24 @@ import (
 
 // Test constants.
 const (
-	configDirPerm  = 0o700
-	minTrialDays   = 13
-	maxTrialDays   = 14
-	minHashLen     = 8
-	minStringLen   = 20
-	expectedKeyLen = 16
-	checksumLen    = 2
+	configDirPerm   = 0o700
+	minTrialDays    = 13
+	maxTrialDays    = 14
+	minHashLen      = 8
+	minStringLen    = 20
+	expectedHashLen = 16
 )
 
-// setupTestManager creates a manager with a temporary config directory.
+// newTestManager creates a license manager backed by the TEST verifier so that
+// tokens minted with signTestKey activate. It uses a fresh temp config dir.
+func newTestManager(t *testing.T) (*license.Manager, error) {
+	t.Helper()
+	return license.NewManagerWithVerifier(testVerifier(t))
+}
+
+// setupTestManager creates a manager with a temporary config directory. The
+// manager verifies tokens against the TEST signing key so signTestKey tokens
+// activate.
 func setupTestManager(t *testing.T) *license.Manager {
 	t.Helper()
 	tmpDir := t.TempDir()
@@ -36,9 +44,9 @@ func setupTestManager(t *testing.T) *license.Manager {
 		t.Fatalf("Failed to create config dir: %v", err)
 	}
 
-	mgr, err := license.NewManager()
+	mgr, err := newTestManager(t)
 	if err != nil {
-		t.Fatalf("NewManager() error: %v", err)
+		t.Fatalf("NewManagerWithVerifier() error: %v", err)
 	}
 	return mgr
 }
@@ -123,9 +131,9 @@ func TestManagerActivate(t *testing.T) {
 	mgr := setupTestManager(t)
 
 	// Generate a valid key for TestSuite tier.
-	key, err := license.GenerateLicenseKey("2001", "1234567", license.TierProfessional)
+	key, err := signTestKey(t, "2001", "1234567", license.TierProfessional)
 	if err != nil {
-		t.Fatalf("GenerateLicenseKey() error: %v", err)
+		t.Fatalf("signTestKey() error: %v", err)
 	}
 
 	result := mgr.Activate(key)
@@ -245,7 +253,7 @@ func TestDeviceFingerprintHash(t *testing.T) {
 	}
 
 	hash := fp.Hash()
-	if len(hash) != expectedKeyLen {
+	if len(hash) != expectedHashLen {
 		t.Errorf("Expected 16-char hash, got %d chars", len(hash))
 	}
 
@@ -253,89 +261,6 @@ func TestDeviceFingerprintHash(t *testing.T) {
 	hash2 := fp.Hash()
 	if hash != hash2 {
 		t.Error("Hash should be deterministic")
-	}
-}
-
-func TestRotorCipherEncodeDecode(t *testing.T) {
-	t.Parallel()
-	// Test roundtrip encoding/decoding.
-	testCases := []struct {
-		input    string
-		startPos int
-	}{
-		{"HELLO", 0},
-		{"12345", 7},
-		{"ABCD1234", 15},
-		{"test123", 25},
-	}
-
-	for _, tc := range testCases {
-		encoder := license.NewRotorCipher(tc.startPos)
-		encoded := encoder.EncodeString(tc.input)
-
-		decoder := license.NewRotorCipher(tc.startPos)
-		decoded := decoder.DecodeString(encoded)
-
-		if decoded != tc.input {
-			t.Errorf("Roundtrip failed: input=%q, encoded=%q, decoded=%q", tc.input, encoded, decoded)
-		}
-	}
-}
-
-func TestRotorCipherNonAlpha(t *testing.T) {
-	t.Parallel()
-	cipher := license.NewRotorCipher(0)
-	// Non-alphanumeric characters should pass through unchanged.
-	input := "TEST-123!"
-	encoded := cipher.EncodeString(input)
-
-	const dashPos = 4
-	const bangPos = 8
-	if encoded[dashPos] != '-' || encoded[bangPos] != '!' {
-		t.Error("Non-alphanumeric characters should pass through")
-	}
-}
-
-func TestCalculateChecksumDeterministic(t *testing.T) {
-	t.Parallel()
-	// Checksum should be consistent.
-	cs1 := license.CalculateChecksum("HELLO")
-	cs2 := license.CalculateChecksum("HELLO")
-	if cs1 != cs2 {
-		t.Error("Checksum should be deterministic")
-	}
-
-	// Different inputs should (usually) produce different checksums.
-	cs3 := license.CalculateChecksum("WORLD")
-	if cs1 == cs3 {
-		t.Log("Warning: collision detected (rare but possible)")
-	}
-
-	// Checksum should be 2 characters.
-	if len(cs1) != checksumLen {
-		t.Errorf("Checksum should be 2 chars, got %d", len(cs1))
-	}
-}
-
-func TestValidateChecksumRoundtrip(t *testing.T) {
-	t.Parallel()
-	// Generate valid checksum.
-	payload := "TEST1234"
-	checksum := license.CalculateChecksum(payload)
-	valid := payload + checksum
-
-	if !license.ValidateChecksum(valid) {
-		t.Error("Valid checksum should validate")
-	}
-
-	// Invalid checksum.
-	if license.ValidateChecksum(payload + "XX") {
-		t.Error("Invalid checksum should not validate")
-	}
-
-	// Too short.
-	if license.ValidateChecksum("AB") {
-		t.Error("Too short string should not validate")
 	}
 }
 
@@ -362,9 +287,9 @@ func TestManagerActivateExpiredLicense(t *testing.T) {
 	mgr := setupTestManager(t)
 
 	// Activate with a valid key first.
-	key, err := license.GenerateLicenseKey("2001", "1234567", license.TierProfessional)
+	key, err := signTestKey(t, "2001", "1234567", license.TierProfessional)
 	if err != nil {
-		t.Fatalf("GenerateLicenseKey() error: %v", err)
+		t.Fatalf("signTestKey() error: %v", err)
 	}
 
 	result := mgr.Activate(key)
@@ -392,9 +317,9 @@ func TestTrialDaysRemainingNotTrial(t *testing.T) {
 	mgr := setupTestManager(t)
 
 	// Activate with full license (not trial).
-	key, err := license.GenerateLicenseKey("2001", "1234567", license.TierProfessional)
+	key, err := signTestKey(t, "2001", "1234567", license.TierProfessional)
 	if err != nil {
-		t.Fatalf("GenerateLicenseKey() error: %v", err)
+		t.Fatalf("signTestKey() error: %v", err)
 	}
 
 	mgr.Activate(key)
@@ -418,9 +343,9 @@ func TestStartTrialAlreadyActivated(t *testing.T) {
 	mgr := setupTestManager(t)
 
 	// Activate with full license.
-	key, err := license.GenerateLicenseKey("2001", "1234567", license.TierProfessional)
+	key, err := signTestKey(t, "2001", "1234567", license.TierProfessional)
 	if err != nil {
-		t.Fatalf("GenerateLicenseKey() error: %v", err)
+		t.Fatalf("signTestKey() error: %v", err)
 	}
 
 	mgr.Activate(key)
@@ -432,36 +357,13 @@ func TestStartTrialAlreadyActivated(t *testing.T) {
 	}
 }
 
-func TestGenerateLicenseKeyAllTiers(t *testing.T) {
-	t.Parallel()
-	tiers := []struct {
-		product string
-		tier    license.Tier
-	}{
-		{"1001", license.TierReflector},
-		{"2001", license.TierProfessional},
-		{"3001", license.TierEnterprise},
-	}
-
-	for _, tc := range tiers {
-		key, err := license.GenerateLicenseKey(tc.product, "ABCDEFG", tc.tier)
-		if err != nil {
-			t.Errorf("GenerateLicenseKey(%s, %d) error: %v", tc.product, tc.tier, err)
-			continue
-		}
-		if len(key) != expectedKeyLen {
-			t.Errorf("Expected 16-char key, got %d chars", len(key))
-		}
-	}
-}
-
 func TestNeedsCheckInAfterActivation(t *testing.T) {
 	mgr := setupTestManager(t)
 
 	// Activate with a valid key.
-	key, err := license.GenerateLicenseKey("2001", "1234567", license.TierProfessional)
+	key, err := signTestKey(t, "2001", "1234567", license.TierProfessional)
 	if err != nil {
-		t.Fatalf("GenerateLicenseKey() error: %v", err)
+		t.Fatalf("signTestKey() error: %v", err)
 	}
 
 	result := mgr.Activate(key)
@@ -498,7 +400,7 @@ func TestEncryptDecrypt(t *testing.T) {
 		t.Fatalf("Failed to create config dir: %v", err)
 	}
 
-	mgr2, err := license.NewManager()
+	mgr2, err := newTestManager(t)
 	if err != nil {
 		t.Fatalf("NewManager() error: %v", err)
 	}
@@ -611,7 +513,7 @@ func TestActivateThenDeactivateThenActivate(t *testing.T) {
 	mgr := setupTestManager(t)
 
 	// First activation.
-	key1, _ := license.GenerateLicenseKey("2001", "1234567", license.TierProfessional)
+	key1, _ := signTestKey(t, "2001", "1234567", license.TierProfessional)
 	result1 := mgr.Activate(key1)
 	if !result1.Success {
 		t.Fatalf("First Activate() failed: %s", result1.Message)
@@ -632,7 +534,7 @@ func TestActivateThenDeactivateThenActivate(t *testing.T) {
 	}
 
 	// Second activation with different key.
-	key2, _ := license.GenerateLicenseKey("2001", "7654321", license.TierProfessional)
+	key2, _ := signTestKey(t, "2001", "7654321", license.TierProfessional)
 	result2 := mgr.Activate(key2)
 	if !result2.Success {
 		t.Errorf("Second Activate() failed: %s", result2.Message)
@@ -648,9 +550,9 @@ func TestIsActivatedExpiredLicense(t *testing.T) {
 	mgr := setupTestManager(t)
 
 	// Activate with a valid key.
-	key, err := license.GenerateLicenseKey("2001", "1234567", license.TierProfessional)
+	key, err := signTestKey(t, "2001", "1234567", license.TierProfessional)
 	if err != nil {
-		t.Fatalf("GenerateLicenseKey() error: %v", err)
+		t.Fatalf("signTestKey() error: %v", err)
 	}
 
 	result := mgr.Activate(key)
@@ -685,7 +587,7 @@ func TestIsActivatedDeviceHashMismatch(t *testing.T) {
 	mgr := setupTestManager(t)
 
 	// Activate first.
-	key, _ := license.GenerateLicenseKey("2001", "1234567", license.TierProfessional)
+	key, _ := signTestKey(t, "2001", "1234567", license.TierProfessional)
 	mgr.Activate(key)
 
 	// Get fingerprint to verify device binding is working.
@@ -756,7 +658,7 @@ func TestTrialAfterFullLicenseActivation(t *testing.T) {
 	mgr := setupTestManager(t)
 
 	// Activate with full license.
-	key, _ := license.GenerateLicenseKey("2001", "1234567", license.TierProfessional)
+	key, _ := signTestKey(t, "2001", "1234567", license.TierProfessional)
 	result := mgr.Activate(key)
 	if !result.Success {
 		t.Fatalf("Activate() failed: %s", result.Message)
@@ -794,19 +696,19 @@ func TestStatePersistedAndReloaded(t *testing.T) {
 	}
 
 	// Create first manager and activate.
-	mgr1, err := license.NewManager()
+	mgr1, err := newTestManager(t)
 	if err != nil {
 		t.Fatalf("NewManager() error: %v", err)
 	}
 
-	key, _ := license.GenerateLicenseKey("2001", "1234567", license.TierProfessional)
+	key, _ := signTestKey(t, "2001", "1234567", license.TierProfessional)
 	result := mgr1.Activate(key)
 	if !result.Success {
 		t.Fatalf("Activate() failed: %s", result.Message)
 	}
 
 	// Create second manager - should load persisted state.
-	mgr2, err := license.NewManager()
+	mgr2, err := newTestManager(t)
 	if err != nil {
 		t.Fatalf("Second NewManager() error: %v", err)
 	}
@@ -839,7 +741,7 @@ func TestTrialPersistedAndReloaded(t *testing.T) {
 	}
 
 	// Create first manager and start trial.
-	mgr1, err := license.NewManager()
+	mgr1, err := newTestManager(t)
 	if err != nil {
 		t.Fatalf("NewManager() error: %v", err)
 	}
@@ -850,7 +752,7 @@ func TestTrialPersistedAndReloaded(t *testing.T) {
 	}
 
 	// Create second manager - should load persisted trial state.
-	mgr2, err := license.NewManager()
+	mgr2, err := newTestManager(t)
 	if err != nil {
 		t.Fatalf("Second NewManager() error: %v", err)
 	}
@@ -894,7 +796,7 @@ func TestLoadStateWithCorruptedFile(t *testing.T) {
 	}
 
 	// Create manager - should handle corrupted file gracefully.
-	mgr, err := license.NewManager()
+	mgr, err := newTestManager(t)
 	if err != nil {
 		t.Fatalf("NewManager() should not fail on corrupted license: %v", err)
 	}
@@ -925,7 +827,7 @@ func TestLoadStateWithInvalidJSON(t *testing.T) {
 	}
 
 	// Create manager - should handle invalid file gracefully.
-	mgr, err := license.NewManager()
+	mgr, err := newTestManager(t)
 	if err != nil {
 		t.Fatalf("NewManager() should not fail on invalid license: %v", err)
 	}
@@ -981,7 +883,7 @@ func TestNeedsCheckInAfterInterval(t *testing.T) {
 	// Deactivate and activate with full license.
 	mgr.Deactivate()
 
-	key, _ := license.GenerateLicenseKey("2001", "1234567", license.TierProfessional)
+	key, _ := signTestKey(t, "2001", "1234567", license.TierProfessional)
 	mgr.Activate(key)
 
 	// Right after activation - no check-in needed.
@@ -1009,7 +911,7 @@ func TestActivationResultFields(t *testing.T) {
 	// Deactivate and test full license result.
 	mgr.Deactivate()
 
-	key, _ := license.GenerateLicenseKey("3001", "1234567", license.TierEnterprise)
+	key, _ := signTestKey(t, "3001", "1234567", license.TierEnterprise)
 	licenseResult := mgr.Activate(key)
 
 	if !licenseResult.Success {
@@ -1030,7 +932,7 @@ func TestActivationResultFields(t *testing.T) {
 func TestActivationStateFields(t *testing.T) {
 	mgr := setupTestManager(t)
 
-	key, _ := license.GenerateLicenseKey("2001", "1234567", license.TierProfessional)
+	key, _ := signTestKey(t, "2001", "1234567", license.TierProfessional)
 	mgr.Activate(key)
 
 	state := mgr.GetState()
@@ -1111,13 +1013,13 @@ func TestDeactivateRemovesFile(t *testing.T) {
 		t.Fatalf("Failed to create config dir: %v", err)
 	}
 
-	mgr, err := license.NewManager()
+	mgr, err := newTestManager(t)
 	if err != nil {
 		t.Fatalf("NewManager() error: %v", err)
 	}
 
 	// Activate to create file.
-	key, _ := license.GenerateLicenseKey("2001", "1234567", license.TierProfessional)
+	key, _ := signTestKey(t, "2001", "1234567", license.TierProfessional)
 	mgr.Activate(key)
 
 	// Verify file exists.
@@ -1157,9 +1059,9 @@ func TestAllTiersActivation(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			mgr := setupTestManager(t)
 
-			key, err := license.GenerateLicenseKey(tc.product, "1234567", tc.tier)
+			key, err := signTestKey(t, tc.product, "1234567", tc.tier)
 			if err != nil {
-				t.Fatalf("GenerateLicenseKey() error: %v", err)
+				t.Fatalf("signTestKey() error: %v", err)
 			}
 
 			result := mgr.Activate(key)
@@ -1209,7 +1111,7 @@ func TestActivateReplacesExistingLicense(t *testing.T) {
 	mgr := setupTestManager(t)
 
 	// Activate with first key.
-	key1, _ := license.GenerateLicenseKey("1001", "1234567", license.TierReflector)
+	key1, _ := signTestKey(t, "1001", "1234567", license.TierReflector)
 	result1 := mgr.Activate(key1)
 	if !result1.Success {
 		t.Fatalf("First Activate() failed: %s", result1.Message)
@@ -1220,7 +1122,7 @@ func TestActivateReplacesExistingLicense(t *testing.T) {
 	}
 
 	// Activate with second key (different tier).
-	key2, _ := license.GenerateLicenseKey("2001", "7654321", license.TierProfessional)
+	key2, _ := signTestKey(t, "2001", "7654321", license.TierProfessional)
 	result2 := mgr.Activate(key2)
 	if !result2.Success {
 		t.Fatalf("Second Activate() failed: %s", result2.Message)
@@ -1243,7 +1145,7 @@ func TestNewManagerWithFallbackHomeDir(t *testing.T) {
 	t.Setenv("HOME", "/nonexistent/path/that/does/not/exist")
 
 	// Creating manager should still work (falls back to /tmp).
-	mgr, err := license.NewManager()
+	mgr, err := newTestManager(t)
 	if err != nil {
 		t.Fatalf("NewManager() should not fail with bad HOME: %v", err)
 	}
@@ -1271,7 +1173,7 @@ func TestActivationMessage(t *testing.T) {
 
 	// Test license message.
 	mgr.Deactivate()
-	key, _ := license.GenerateLicenseKey("2001", "1234567", license.TierProfessional)
+	key, _ := signTestKey(t, "2001", "1234567", license.TierProfessional)
 	licenseResult := mgr.Activate(key)
 	if !contains(licenseResult.Message, "Professional") {
 		t.Errorf("License message should mention tier: %s", licenseResult.Message)
@@ -1323,7 +1225,7 @@ func TestDeactivateIdempotent(t *testing.T) {
 	mgr := setupTestManager(t)
 
 	// Activate first.
-	key, _ := license.GenerateLicenseKey("2001", "1234567", license.TierProfessional)
+	key, _ := signTestKey(t, "2001", "1234567", license.TierProfessional)
 	mgr.Activate(key)
 
 	// Deactivate multiple times - should not error.
@@ -1370,7 +1272,7 @@ func TestLoadStateMissingFile(t *testing.T) {
 	t.Setenv("HOME", tmpDir)
 
 	// Don't create any license file.
-	mgr, err := license.NewManager()
+	mgr, err := newTestManager(t)
 	if err != nil {
 		t.Fatalf("NewManager() error: %v", err)
 	}
@@ -1403,7 +1305,7 @@ func TestLoadStateWithTooShortCiphertext(t *testing.T) {
 	}
 
 	// Create manager - should handle invalid ciphertext gracefully.
-	mgr, err := license.NewManager()
+	mgr, err := newTestManager(t)
 	if err != nil {
 		t.Fatalf("NewManager() should not fail: %v", err)
 	}
@@ -1426,12 +1328,12 @@ func TestEncryptDecryptRoundtrip(t *testing.T) {
 	}
 
 	// Create manager and activate.
-	mgr1, err := license.NewManager()
+	mgr1, err := newTestManager(t)
 	if err != nil {
 		t.Fatalf("NewManager() error: %v", err)
 	}
 
-	key, _ := license.GenerateLicenseKey("3001", "ENCRYPT", license.TierEnterprise)
+	key, _ := signTestKey(t, "3001", "ENCRYPT", license.TierEnterprise)
 	mgr1.Activate(key)
 
 	state1 := mgr1.GetState()
@@ -1440,7 +1342,7 @@ func TestEncryptDecryptRoundtrip(t *testing.T) {
 	}
 
 	// Create second manager to verify roundtrip.
-	mgr2, err := license.NewManager()
+	mgr2, err := newTestManager(t)
 	if err != nil {
 		t.Fatalf("Second NewManager() error: %v", err)
 	}
@@ -1495,7 +1397,7 @@ func TestMultipleActivationCycles(t *testing.T) {
 
 	for i := range 5 {
 		// Activate.
-		key, _ := license.GenerateLicenseKey("2001", "123456"+strconv.Itoa(i), license.TierProfessional)
+		key, _ := signTestKey(t, "2001", "123456"+strconv.Itoa(i), license.TierProfessional)
 		result := mgr.Activate(key)
 		if !result.Success {
 			t.Fatalf("Cycle %d: Activate() failed: %s", i+1, result.Message)
@@ -1522,7 +1424,7 @@ func TestActivationWithDifferentKeys(t *testing.T) {
 	mgr := setupTestManager(t)
 
 	// Activate with Reflector.
-	key1, _ := license.GenerateLicenseKey("1001", "1234567", license.TierReflector)
+	key1, _ := signTestKey(t, "1001", "1234567", license.TierReflector)
 	result1 := mgr.Activate(key1)
 	if !result1.Success {
 		t.Fatalf("First activation failed: %s", result1.Message)
@@ -1532,7 +1434,7 @@ func TestActivationWithDifferentKeys(t *testing.T) {
 	}
 
 	// Upgrade to TestSuite (without deactivating).
-	key2, _ := license.GenerateLicenseKey("2001", "2345678", license.TierProfessional)
+	key2, _ := signTestKey(t, "2001", "2345678", license.TierProfessional)
 	result2 := mgr.Activate(key2)
 	if !result2.Success {
 		t.Fatalf("Second activation failed: %s", result2.Message)
@@ -1542,7 +1444,7 @@ func TestActivationWithDifferentKeys(t *testing.T) {
 	}
 
 	// Upgrade to Enterprise.
-	key3, _ := license.GenerateLicenseKey("3001", "3456789", license.TierEnterprise)
+	key3, _ := signTestKey(t, "3001", "3456789", license.TierEnterprise)
 	result3 := mgr.Activate(key3)
 	if !result3.Success {
 		t.Fatalf("Third activation failed: %s", result3.Message)
@@ -1577,7 +1479,7 @@ func TestLoadStateOpenError(t *testing.T) {
 	}
 
 	// Create manager - should handle open error gracefully.
-	mgr, err := license.NewManager()
+	mgr, err := newTestManager(t)
 	if err != nil {
 		t.Fatalf("NewManager() should not fail on open error: %v", err)
 	}
@@ -1593,7 +1495,7 @@ func TestStateExpiresAtIsSet(t *testing.T) {
 	mgr := setupTestManager(t)
 
 	// Activate.
-	key, _ := license.GenerateLicenseKey("2001", "1234567", license.TierProfessional)
+	key, _ := signTestKey(t, "2001", "1234567", license.TierProfessional)
 	mgr.Activate(key)
 
 	state := mgr.GetState()
@@ -1623,7 +1525,7 @@ func TestActivatedAtIsSet(t *testing.T) {
 	time.Sleep(1 * time.Millisecond)
 
 	// Activate.
-	key, _ := license.GenerateLicenseKey("2001", "1234567", license.TierProfessional)
+	key, _ := signTestKey(t, "2001", "1234567", license.TierProfessional)
 	mgr.Activate(key)
 
 	time.Sleep(1 * time.Millisecond)
@@ -1645,7 +1547,7 @@ func TestActivatedAtIsSet(t *testing.T) {
 func TestReflectorTierFeatures(t *testing.T) {
 	mgr := setupTestManager(t)
 
-	key, _ := license.GenerateLicenseKey("1001", "1234567", license.TierReflector)
+	key, _ := signTestKey(t, "1001", "1234567", license.TierReflector)
 	mgr.Activate(key)
 
 	state := mgr.GetState()
@@ -1667,7 +1569,7 @@ func TestReflectorTierFeatures(t *testing.T) {
 func TestEnterpriseTierFeatures(t *testing.T) {
 	mgr := setupTestManager(t)
 
-	key, _ := license.GenerateLicenseKey("3001", "1234567", license.TierEnterprise)
+	key, _ := signTestKey(t, "3001", "1234567", license.TierEnterprise)
 	mgr.Activate(key)
 
 	state := mgr.GetState()
@@ -1700,7 +1602,7 @@ func TestCheckInTier(t *testing.T) {
 	mgr := setupTestManager(t)
 
 	// Activate with Enterprise.
-	key, _ := license.GenerateLicenseKey("3001", "1234567", license.TierEnterprise)
+	key, _ := signTestKey(t, "3001", "1234567", license.TierEnterprise)
 	mgr.Activate(key)
 
 	// Check in.
@@ -1719,7 +1621,7 @@ func TestCheckInTier(t *testing.T) {
 func TestActivationStateCompleteFields(t *testing.T) {
 	mgr := setupTestManager(t)
 
-	key, _ := license.GenerateLicenseKey("1001", "REFLCT1", license.TierReflector)
+	key, _ := signTestKey(t, "1001", "REFLCT1", license.TierReflector)
 	result := mgr.Activate(key)
 
 	if !result.Success {
@@ -1760,7 +1662,7 @@ func TestActivationStateCompleteFields(t *testing.T) {
 func TestReflectorTierActivation(t *testing.T) {
 	mgr := setupTestManager(t)
 
-	key, _ := license.GenerateLicenseKey("1001", "RFLCTR1", license.TierReflector)
+	key, _ := signTestKey(t, "1001", "RFLCTR1", license.TierReflector)
 	result := mgr.Activate(key)
 
 	if !result.Success {
