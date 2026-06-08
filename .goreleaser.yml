@@ -9,7 +9,7 @@
 # the same release tooling.
 #
 # Covers natively:
-#   - Multi-arch builds (linux/darwin/windows × amd64/arm64)
+#   - Multi-arch builds (linux/windows × amd64/arm64; darwin arm64 only)
 #   - Archives (.tar.gz, .zip), Linux packages (.deb, .rpm) via nfpm
 #   - ldflags injection (Version, Commit, BuildTime, UIBuildHash) into
 #     internal/version — the canonical contract shared with seed and niac
@@ -67,7 +67,8 @@ builds:
     env:
       - CGO_ENABLED=0
     goos: [darwin]
-    goarch: [amd64, arm64]
+    # Intel macOS (amd64) support dropped fleet-wide 2026-06-08 — Apple Silicon only.
+    goarch: [arm64]
     flags:
       - -trimpath
       - -buildvcs=false
