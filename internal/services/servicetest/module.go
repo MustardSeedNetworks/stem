@@ -44,7 +44,7 @@ func testDescriptions() map[string]string {
 	}
 }
 
-// Module implements the modules.Module interface for service activation testing.
+// Module implements the services.Module interface for service activation testing.
 type Module struct{}
 
 // New creates a new ServiceTest module instance.

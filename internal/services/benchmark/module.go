@@ -42,7 +42,7 @@ func testDescriptions() map[string]string {
 	}
 }
 
-// Module implements the modules.Module interface for RFC 2544 benchmarking.
+// Module implements the services.Module interface for RFC 2544 benchmarking.
 type Module struct{}
 
 // New creates a new Benchmark module instance.

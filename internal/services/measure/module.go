@@ -38,7 +38,7 @@ func testDescriptions() map[string]string {
 	}
 }
 
-// Module implements the modules.Module interface for Y.1731 OAM testing.
+// Module implements the services.Module interface for Y.1731 OAM testing.
 type Module struct{}
 
 // New creates a new Measure module instance.

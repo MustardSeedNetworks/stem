@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 
-package modules_test
+package services_test
 
 import (
 	"testing"
 
-	modules "github.com/krisarmstrong/stem/internal/services"
+	"github.com/krisarmstrong/stem/internal/services"
 	"github.com/krisarmstrong/stem/internal/services/benchmark"
 	"github.com/krisarmstrong/stem/internal/services/certify"
 	"github.com/krisarmstrong/stem/internal/services/measure"
@@ -28,7 +28,7 @@ const (
 )
 
 func TestRegistry(t *testing.T) {
-	reg := modules.NewRegistry()
+	reg := services.NewRegistry()
 
 	// Register a module.
 	bm := benchmark.New()
@@ -62,7 +62,7 @@ func TestRegistry(t *testing.T) {
 
 func TestDefaultRegistry(t *testing.T) {
 	// Test that default registry has all 6 modules.
-	mods := modules.DefaultRegistry().AllModules()
+	mods := services.DefaultRegistry().AllModules()
 	if len(mods) != expectedModuleCount {
 		t.Errorf("DefaultRegistry has %d modules, want %d", len(mods), expectedModuleCount)
 	}
@@ -73,7 +73,7 @@ func TestDefaultRegistry(t *testing.T) {
 		testModuleTrafficGen, testModuleMeasure, testModuleCertify,
 	}
 	for _, name := range names {
-		if m := modules.DefaultRegistry().Get(name); m == nil {
+		if m := services.DefaultRegistry().Get(name); m == nil {
 			t.Errorf("DefaultRegistry.Get(%q) returned nil", name)
 		}
 	}
@@ -205,7 +205,7 @@ func TestCertifyModule(t *testing.T) {
 
 func TestToInfo(t *testing.T) {
 	m := benchmark.New()
-	info := modules.ToInfo(m)
+	info := services.ToInfo(m)
 
 	if info.Name != testModuleBenchmark {
 		t.Errorf("info.Name = %q, want 'benchmark'", info.Name)
@@ -224,31 +224,31 @@ func TestToInfo(t *testing.T) {
 
 func TestGetModuleForTest(t *testing.T) {
 	// RFC 2544 tests -> benchmark.
-	if m := modules.GetModuleForTest("rfc2544_throughput"); m == nil || m.Name() != testModuleBenchmark {
+	if m := services.GetModuleForTest("rfc2544_throughput"); m == nil || m.Name() != testModuleBenchmark {
 		t.Error("rfc2544_throughput should map to benchmark module")
 	}
 
 	// Y.1564 tests -> servicetest.
-	if m := modules.GetModuleForTest("y1564_config"); m == nil || m.Name() != testModuleServiceTest {
+	if m := services.GetModuleForTest("y1564_config"); m == nil || m.Name() != testModuleServiceTest {
 		t.Error("y1564_config should map to servicetest module")
 	}
 
 	// Y.1731 tests -> measure.
-	if m := modules.GetModuleForTest("y1731_delay"); m == nil || m.Name() != testModuleMeasure {
+	if m := services.GetModuleForTest("y1731_delay"); m == nil || m.Name() != testModuleMeasure {
 		t.Error("y1731_delay should map to measure module")
 	}
 
 	// RFC 2889/6349/TSN tests -> certify.
-	if m := modules.GetModuleForTest("rfc2889_forwarding"); m == nil || m.Name() != testModuleCertify {
+	if m := services.GetModuleForTest("rfc2889_forwarding"); m == nil || m.Name() != testModuleCertify {
 		t.Error("rfc2889_forwarding should map to certify module")
 	}
-	if m := modules.GetModuleForTest("rfc6349_throughput"); m == nil || m.Name() != testModuleCertify {
+	if m := services.GetModuleForTest("rfc6349_throughput"); m == nil || m.Name() != testModuleCertify {
 		t.Error("rfc6349_throughput should map to certify module")
 	}
 }
 
 func TestAllModuleInfos(t *testing.T) {
-	infos := modules.GetAllModuleInfos()
+	infos := services.GetAllModuleInfos()
 	if len(infos) != expectedModuleCount {
 		t.Errorf("GetAllModuleInfos() returned %d infos, want %d", len(infos), expectedModuleCount)
 	}
@@ -256,18 +256,18 @@ func TestAllModuleInfos(t *testing.T) {
 
 func TestGetModuleForReflect(t *testing.T) {
 	// reflect -> reflector module (not trafficgen).
-	if m := modules.GetModuleForTest("reflect"); m == nil || m.Name() != testModuleReflector {
+	if m := services.GetModuleForTest("reflect"); m == nil || m.Name() != testModuleReflector {
 		t.Error("reflect should map to reflector module")
 	}
 
 	// custom_stream -> trafficgen module.
-	if m := modules.GetModuleForTest("custom_stream"); m == nil || m.Name() != testModuleTrafficGen {
+	if m := services.GetModuleForTest("custom_stream"); m == nil || m.Name() != testModuleTrafficGen {
 		t.Error("custom_stream should map to trafficgen module")
 	}
 }
 
 func TestRegistryEdgeCases(t *testing.T) {
-	reg := modules.NewRegistry()
+	reg := services.NewRegistry()
 
 	// Registering nil should not panic (defensive).
 	// Attempting to get from empty registry.
@@ -289,7 +289,7 @@ func TestRegistryEdgeCases(t *testing.T) {
 }
 
 func TestAllModulesOrdering(t *testing.T) {
-	mods := modules.DefaultRegistry().AllModules()
+	mods := services.DefaultRegistry().AllModules()
 	if len(mods) != expectedModuleCount {
 		t.Fatalf("Expected %d modules, got %d", expectedModuleCount, len(mods))
 	}
@@ -313,7 +313,7 @@ func TestAllModulesOrdering(t *testing.T) {
 
 func TestModuleColors(t *testing.T) {
 	// Verify each module has a unique, valid hex color.
-	mods := modules.DefaultRegistry().AllModules()
+	mods := services.DefaultRegistry().AllModules()
 	colors := make(map[string]string)
 
 	for _, m := range mods {
@@ -338,7 +338,7 @@ func TestModuleColors(t *testing.T) {
 	}
 
 	for name, expectedColor := range expectedColors {
-		m := modules.DefaultRegistry().Get(name)
+		m := services.DefaultRegistry().Get(name)
 		if m == nil {
 			t.Errorf("Module %s not found", name)
 			continue
@@ -367,7 +367,7 @@ func TestModuleCanRunNegativeCases(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		m := modules.DefaultRegistry().Get(tc.moduleName)
+		m := services.DefaultRegistry().Get(tc.moduleName)
 		if m == nil {
 			t.Errorf("Module %s not found", tc.moduleName)
 			continue
@@ -400,7 +400,7 @@ func TestAllTestTypesHaveModules(t *testing.T) {
 	}
 
 	for _, tt := range testTypes {
-		m := modules.GetModuleForTest(tt)
+		m := services.GetModuleForTest(tt)
 		if m == nil {
 			t.Errorf("Test type %q has no module mapping", tt)
 		}
@@ -409,9 +409,9 @@ func TestAllTestTypesHaveModules(t *testing.T) {
 
 func TestToInfoComplete(t *testing.T) {
 	// Test ToInfo for all modules.
-	mods := modules.DefaultRegistry().AllModules()
+	mods := services.DefaultRegistry().AllModules()
 	for _, m := range mods {
-		info := modules.ToInfo(m)
+		info := services.ToInfo(m)
 
 		if info.Name != m.Name() {
 			t.Errorf("ToInfo(%s).Name mismatch", m.Name())
@@ -437,7 +437,7 @@ func TestToInfoComplete(t *testing.T) {
 
 func TestTotalTestCount(t *testing.T) {
 	// Count all tests across all modules.
-	total := modules.DefaultRegistry().TestCount()
+	total := services.DefaultRegistry().TestCount()
 
 	// Expected: 1 (reflector) + 6 (benchmark) + 6 (servicetest) + 1 (trafficgen) + 4 (measure) + 11 (certify) = 29.
 	if total != expectedTestCount {
@@ -454,7 +454,7 @@ func TestGetModule(t *testing.T) {
 	}
 
 	for _, name := range moduleNames {
-		m := modules.GetModule(name)
+		m := services.GetModule(name)
 		if m == nil {
 			t.Errorf("GetModule(%q) returned nil", name)
 			continue
@@ -465,19 +465,19 @@ func TestGetModule(t *testing.T) {
 	}
 
 	// Test non-existent module.
-	if m := modules.GetModule("nonexistent"); m != nil {
+	if m := services.GetModule("nonexistent"); m != nil {
 		t.Error("GetModule('nonexistent') should return nil")
 	}
 
 	// Test empty string.
-	if m := modules.GetModule(""); m != nil {
+	if m := services.GetModule(""); m != nil {
 		t.Error("GetModule('') should return nil")
 	}
 }
 
 // TestGetAllModules tests the GetAllModules convenience function.
 func TestGetAllModules(t *testing.T) {
-	mods := modules.GetAllModules()
+	mods := services.GetAllModules()
 
 	if len(mods) != expectedModuleCount {
 		t.Errorf("GetAllModules() returned %d modules, want %d", len(mods), expectedModuleCount)
@@ -502,7 +502,7 @@ func TestGetAllModules(t *testing.T) {
 
 // TestAllTestTypes tests the AllTestTypes method.
 func TestAllTestTypes(t *testing.T) {
-	types := modules.DefaultRegistry().AllTestTypes()
+	types := services.DefaultRegistry().AllTestTypes()
 
 	if len(types) != expectedTestCount {
 		t.Errorf("AllTestTypes() returned %d types, want %d", len(types), expectedTestCount)
@@ -541,10 +541,10 @@ func TestAllTestTypes(t *testing.T) {
 
 // TestAllTestTypesModuleMapping tests that test types map to correct modules.
 func TestAllTestTypesModuleMapping(t *testing.T) {
-	types := modules.DefaultRegistry().AllTestTypes()
+	types := services.DefaultRegistry().AllTestTypes()
 
 	// Create a map for easier lookup.
-	typeMap := make(map[string]modules.TestType)
+	typeMap := make(map[string]services.TestType)
 	for _, tt := range types {
 		typeMap[tt.Name] = tt
 	}
@@ -576,7 +576,7 @@ func TestAllTestTypesModuleMapping(t *testing.T) {
 
 // TestTestTypeStruct tests TestType struct fields.
 func TestTestTypeStruct(t *testing.T) {
-	tt := modules.TestType{
+	tt := services.TestType{
 		Name:        "test_name",
 		Description: "test description",
 		Standard:    "RFC 2544",
@@ -599,7 +599,7 @@ func TestTestTypeStruct(t *testing.T) {
 
 // TestModuleInfoStruct tests ModuleInfo struct fields.
 func TestModuleInfoStruct(t *testing.T) {
-	info := modules.ModuleInfo{
+	info := services.ModuleInfo{
 		Name:        "test_module",
 		DisplayName: "Test Module",
 		Description: "A test module",
@@ -639,13 +639,13 @@ func TestRegistryConcurrency(t *testing.T) {
 	for range goroutines {
 		go func() {
 			// Multiple concurrent reads.
-			_ = modules.GetModule(testModuleBenchmark)
-			_ = modules.GetAllModules()
-			_ = modules.DefaultRegistry().AllTestTypes()
-			_ = modules.DefaultRegistry().TestCount()
-			_ = modules.DefaultRegistry().ModuleCount()
-			_ = modules.GetModuleForTest("rfc2544_throughput")
-			_ = modules.GetAllModuleInfos()
+			_ = services.GetModule(testModuleBenchmark)
+			_ = services.GetAllModules()
+			_ = services.DefaultRegistry().AllTestTypes()
+			_ = services.DefaultRegistry().TestCount()
+			_ = services.DefaultRegistry().ModuleCount()
+			_ = services.GetModuleForTest("rfc2544_throughput")
+			_ = services.GetAllModuleInfos()
 			done <- true
 		}()
 	}
