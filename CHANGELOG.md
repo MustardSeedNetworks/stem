@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.23.1](https://github.com/krisarmstrong/stem/compare/v0.23.0...v0.23.1) (2026-05-30)
+
+
+### Bug Fixes
+
+* **e2e:** role-chip-test_master uses underscore not hyphen ([#388](https://github.com/krisarmstrong/stem/issues/388)) ([8a3e683](https://github.com/krisarmstrong/stem/commit/8a3e6833b0c56a7dbd67f841373c061d5a85c5e9))
+* **smoke:** annotate STEM_AUTH_PASSWORD assignment as gitleaks:allow ([#389](https://github.com/krisarmstrong/stem/issues/389)) ([579774e](https://github.com/krisarmstrong/stem/commit/579774ebc81bb196f1da381f9ba7904831d7ccb8))
+* **ui:** add role=alert to stem login error display ([#385](https://github.com/krisarmstrong/stem/issues/385)) ([d4a76a7](https://github.com/krisarmstrong/stem/commit/d4a76a7b8124ebc0cc2fe3ef68a2c4acc3a483cb))
+* **ui:** drop sidebar-*-button testids on the mobile aside copy ([#381](https://github.com/krisarmstrong/stem/issues/381)) ([b91ce7e](https://github.com/krisarmstrong/stem/commit/b91ce7e9d425ab964bfcb57083c6c3ee88e69d9b))
+
 ## [0.23.0](https://github.com/krisarmstrong/stem/compare/v0.22.0...v0.23.0) (2026-05-29)
 
 
