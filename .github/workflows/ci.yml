@@ -384,6 +384,51 @@ jobs:
           fi
 
   # ============================================================================
+  # Dataplane Safety — BLOCKING memory-safety gate for the C packet parser
+  # ============================================================================
+  # The dataplane parser is the one place attacker-controlled bytes meet C.
+  # Unlike the advisory c-lint job above, this gate FAILS the build on:
+  #   - any ASAN/UBSan finding in the parser unit tests,
+  #   - a cppcheck warning-class issue in packet.c (scoped: tree-wide style
+  #     findings stay advisory in c-lint),
+  #   - any crash discovered by a bounded libFuzzer run of the parser.
+  dataplane-safety:
+    name: Dataplane Safety (ASAN + fuzz)
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.c == 'true' || needs.changes.outputs.workflows == 'true'
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Install clang-18 + libFuzzer + cppcheck
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-18 cppcheck
+          # compiler-rt provides the libFuzzer + sanitizer runtimes.
+          sudo apt-get install -y libclang-rt-18-dev || true
+          sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-18 100
+          clang --version
+
+      - name: Packet-parser tests under ASAN/UBSan (blocking)
+        run: make c-test-asan CC=clang
+
+      - name: cppcheck gate on the parser (blocking, warning-class)
+        run: |
+          cppcheck \
+            --std=c23 --language=c \
+            --enable=warning,performance,portability \
+            --suppress=missingIncludeSystem \
+            --suppress=unusedFunction \
+            --inline-suppr \
+            --error-exitcode=1 \
+            --template='{file}:{line}: {severity}: {message} [{id}]' \
+            -I include \
+            src/dataplane/common/packet.c
+
+      - name: Fuzz the packet parser (blocking on crash)
+        run: make c-fuzz FUZZ_CC=clang FUZZ_SECONDS=120
+
+  # ============================================================================
   # Security Scanning
   # ============================================================================
   security:
@@ -876,6 +921,7 @@ jobs:
       - race
       - frontend
       - c-lint
+      - dataplane-safety
       - security
       - quality
       - i18n

@@ -13,7 +13,7 @@
 # =============================================================================
 
 .PHONY: test test-all test-backend test-backend-quiet test-frontend test-frontend-quiet \
-        test-coverage test-coverage-html c-test smoke-test \
+        test-coverage test-coverage-html c-test c-test-asan c-fuzz smoke-test \
         test-e2e test-e2e-ui test-e2e-install
 
 # =============================================================================
@@ -104,19 +104,49 @@ ifeq ($(UNAME),Linux)
 	mkdir -p bin
 	$(CC) $(CFLAGS) -o bin/test_pacing tests/c/test_pacing.c $(C_PACING_SRCS) $(C_LDFLAGS)
 	$(CC) $(CFLAGS) -o bin/test_protocols tests/c/test_protocols.c $(C_PROTO_SRCS) $(C_LDFLAGS)
+	$(CC) $(CFLAGS) -o bin/test_packet_parse tests/c/test_packet_parse.c src/dataplane/common/packet.c $(C_LDFLAGS)
 	@echo "Running C tests..."
 	./bin/test_pacing
 	./bin/test_protocols
+	./bin/test_packet_parse
 else ifeq ($(UNAME),Darwin)
 	@echo "Building C tests (common code only, macOS)..."
 	mkdir -p bin
 	$(CC) $(CFLAGS) -DSTUB_PLATFORM -o bin/test_pacing tests/c/test_pacing.c $(C_PACING_SRCS) $(C_LDFLAGS)
+	$(CC) $(CFLAGS) -DSTUB_PLATFORM -o bin/test_packet_parse tests/c/test_packet_parse.c src/dataplane/common/packet.c $(C_LDFLAGS)
 	@echo "Running C tests..."
 	./bin/test_pacing
+	./bin/test_packet_parse
 	@echo "Note: Protocol tests require Linux networking APIs"
 else
 	@echo "C tests require Linux or macOS"
 endif
+
+# Sanitizer flags for the safety targets: drop -O3/-march=native, add ASAN +
+# UBSan and debug frames. The dataplane parser is the one place attacker bytes
+# meet C, so it gets an explicit memory-safety gate.
+C_SAN_CFLAGS := -D_GNU_SOURCE -D_DEFAULT_SOURCE -std=c23 -Wall -Wextra -Wpedantic \
+                -g -O1 -fno-omit-frame-pointer -fsanitize=address,undefined -Iinclude
+FUZZ_CC ?= clang
+FUZZ_SECONDS ?= 60
+
+c-test-asan: ## Build + run the dataplane parser tests under AddressSanitizer/UBSan
+	@echo "Building packet-parser tests under ASAN/UBSan..."
+	mkdir -p bin
+	$(CC) $(C_SAN_CFLAGS) -o bin/test_packet_parse_asan \
+		tests/c/test_packet_parse.c src/dataplane/common/packet.c -pthread -lm
+	@echo "Running packet-parser tests (ASAN)..."
+	ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=halt_on_error=1 ./bin/test_packet_parse_asan
+
+c-fuzz: ## Fuzz the dataplane packet parser under libFuzzer+ASAN (FUZZ_SECONDS=60)
+	@command -v $(FUZZ_CC) >/dev/null 2>&1 || { echo "$(FUZZ_CC) (clang) required for libFuzzer"; exit 1; }
+	@echo "Building libFuzzer harness..."
+	mkdir -p bin
+	$(FUZZ_CC) -D_GNU_SOURCE -std=c23 -g -O1 -fno-omit-frame-pointer \
+		-fsanitize=fuzzer,address,undefined -Iinclude \
+		-o bin/fuzz_packet tests/c/fuzz_packet.c src/dataplane/common/packet.c
+	@echo "Fuzzing packet parser for $(FUZZ_SECONDS)s..."
+	ASAN_OPTIONS=detect_leaks=0 ./bin/fuzz_packet -max_total_time=$(FUZZ_SECONDS) -print_final_stats=1
 
 smoke-test: ## Run smoke tests (requires root, Linux only)
 ifeq ($(UNAME),Linux)
