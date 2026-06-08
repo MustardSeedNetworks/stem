@@ -1,5 +1,5 @@
 /*
- * Seed Test Suite - Tutorials
+ * The Stem - Tutorials
  *
  * Step-by-step guides for common tasks.
  */
@@ -32,7 +32,7 @@ func QuickstartTutorial() Tutorial {
 				Content: `Before running tests, make sure you have:
 • Two network interfaces (one for testing, one for management)
 • OR a remote reflector device
-• Seed Test Suite installed and licensed
+• The Stem installed and licensed
 
 Check your interfaces:`,
 				Command:  "ip link show",
@@ -151,7 +151,7 @@ Access it at:`,
 Create /etc/systemd/system/stem-reflector.service:
 
 [Unit]
-Description=Seed Test Suite Reflector
+Description=The Stem Reflector
 After=network.target
 
 [Service]

@@ -1,5 +1,5 @@
 /*
- * Seed Test Suite - Unified Help System
+ * The Stem - Unified Help System
  *
  * This package provides help content for both CLI and WebUI.
  * All test explanations include both technical and layman-friendly descriptions.

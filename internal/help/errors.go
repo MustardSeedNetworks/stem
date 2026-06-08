@@ -1,5 +1,5 @@
 /*
- * Seed Test Suite - Error Messages
+ * The Stem - Error Messages
  *
  * Enhanced error messages with context, causes, and solutions.
  */
