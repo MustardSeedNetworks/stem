@@ -29,6 +29,10 @@ type route struct {
 	// methods, when non-empty, gates the route to these HTTP methods (405 + an
 	// Allow header otherwise). Empty preserves the handler's own method dispatch.
 	methods []string
+	// maxBodyBytes caps the request body (DoS guard) via http.MaxBytesReader,
+	// applied before the handler reads. 0 means the default (maxRequestBodySize).
+	// Set explicitly only for a route that must accept a larger or tighter body.
+	maxBodyBytes int64
 	// auth requires a valid token (authMiddleware) before the handler runs.
 	auth bool
 	// limiter is the rate limiter the route is wrapped in — s.authLimiter for
@@ -50,15 +54,29 @@ func (s *Server) methodGate(allowed []string, next http.HandlerFunc) http.Handle
 	}
 }
 
+// bodyLimited caps the request body before the handler reads it.
+func bodyLimited(limit int64, next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		r.Body = http.MaxBytesReader(w, r.Body, limit)
+		next(w, r)
+	}
+}
+
 // register installs rt on the mux, composing middleware in ONE canonical order
-// for every route: rateLimit (outermost) → auth → methodGate → handler. Composing
-// here rather than at each call site makes the policy declarative and uniform,
-// records it in the manifest for /__capabilities, and is the single choke point
-// the route-policy CI gate enforces.
+// for every route: rateLimit (outermost) → auth → methodGate → bodyLimit →
+// handler (body cap closest to the handler so r.Body is capped before any read).
+// Composing here rather than at each call site makes the policy declarative and
+// uniform, records it in the manifest for /__capabilities, and is the single
+// choke point the route-policy CI gate enforces.
 func (s *Server) register(rt route) {
+	if rt.maxBodyBytes == 0 {
+		rt.maxBodyBytes = maxRequestBodySize
+	}
 	s.routeManifest = append(s.routeManifest, rt)
 
 	h := rt.handler
+	// bodyLimit innermost so r.Body is capped before the handler reads.
+	h = bodyLimited(rt.maxBodyBytes, h)
 	if len(rt.methods) > 0 {
 		h = s.methodGate(rt.methods, h)
 	}
@@ -83,10 +101,11 @@ func (s *Server) registerAll(routes []route) {
 // routePolicyView is the JSON projection of a route's policy for the
 // /__capabilities manifest (the handler func itself is not exposed).
 type routePolicyView struct {
-	Path        string   `json:"path"`
-	Methods     []string `json:"methods,omitempty"`
-	Auth        bool     `json:"auth"`
-	RateLimited bool     `json:"rateLimited"`
+	Path         string   `json:"path"`
+	Methods      []string `json:"methods,omitempty"`
+	MaxBodyBytes int64    `json:"maxBodyBytes,omitempty"`
+	Auth         bool     `json:"auth"`
+	RateLimited  bool     `json:"rateLimited"`
 }
 
 // handleRoutePolicyManifest serves the route-policy manifest: every route
@@ -102,10 +121,11 @@ func (s *Server) handleRoutePolicyManifest(w http.ResponseWriter, r *http.Reques
 	views := make([]routePolicyView, 0, len(s.routeManifest))
 	for _, rt := range s.routeManifest {
 		views = append(views, routePolicyView{
-			Path:        rt.path,
-			Methods:     rt.methods,
-			Auth:        rt.auth,
-			RateLimited: rt.limiter != nil,
+			Path:         rt.path,
+			Methods:      rt.methods,
+			MaxBodyBytes: rt.maxBodyBytes,
+			Auth:         rt.auth,
+			RateLimited:  rt.limiter != nil,
 		})
 	}
 	writeJSON(w, views)

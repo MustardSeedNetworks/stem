@@ -33,9 +33,10 @@ func TestRoutePolicyManifest(t *testing.T) {
 	}
 
 	var views []struct {
-		Path        string `json:"path"`
-		Auth        bool   `json:"auth"`
-		RateLimited bool   `json:"rateLimited"`
+		Path         string `json:"path"`
+		MaxBodyBytes int64  `json:"maxBodyBytes"`
+		Auth         bool   `json:"auth"`
+		RateLimited  bool   `json:"rateLimited"`
 	}
 	if decErr := json.Unmarshal(w.Body.Bytes(), &views); decErr != nil {
 		t.Fatalf("decode manifest: %v", decErr)
@@ -47,6 +48,13 @@ func TestRoutePolicyManifest(t *testing.T) {
 	authByPath := make(map[string]bool, len(views))
 	for _, v := range views {
 		authByPath[v.Path] = v.Auth
+		// Body-size limit is declarative and authoritative: register() applies
+		// the default (maxRequestBodySize) to every route that doesn't override
+		// it, so no route is left with an uncapped body. A 0 here means a route
+		// shipped without going through register()'s body-limit composition.
+		if v.MaxBodyBytes <= 0 {
+			t.Errorf("route %q has no maxBodyBytes in the manifest — body limit must be declarative", v.Path)
+		}
 	}
 
 	// Spot-check the recorded policy: the reflector reconfig endpoint requires
