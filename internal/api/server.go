@@ -520,6 +520,9 @@ func (s *Server) setupRoutes() {
 		// Authentication (strict 5/min authLimiter). Login/refresh are pre-session.
 		{path: "/api/v1/auth/login", handler: s.loginWithMFAGate, limiter: s.authLimiter},
 		{path: "/api/v1/auth/logout", handler: s.handleAuthLogout, limiter: s.apiLimiter},
+		// refresh skips active CSRF when the access token has expired (its normal
+		// case, so sessionID is empty); SameSite=Strict cookies block the browser
+		// CSRF vector — accepted defense-in-depth edge, see ADR-0009.
 		{path: "/api/v1/auth/refresh", handler: s.handleAuthRefresh, limiter: s.authLimiter},
 		// /auth/csrf-token is canonical; /auth/csrf is a legacy alias.
 		{path: "/api/v1/auth/csrf-token", handler: s.handleAuthCSRF, auth: true, limiter: s.apiLimiter},
@@ -559,6 +562,8 @@ func (s *Server) setupRoutes() {
 		// License (pre-session — status/activation before auth).
 		{path: "/api/v1/license", handler: s.handleLicense, limiter: s.apiLimiter},
 		{path: "/api/v1/license/activate", handler: s.handleLicenseActivate, limiter: s.apiLimiter},
+		// trial activation is pre-session/self-serve (no account yet), so CSRF is
+		// skipped; accepted as-is — low abuse impact, SameSite-protected (ADR-0009).
 		{path: "/api/v1/license/trial", handler: s.handleLicenseTrial, limiter: s.apiLimiter},
 		// Modules (public catalog).
 		{path: "/api/v1/modules", handler: s.handleModules, limiter: s.apiLimiter},
