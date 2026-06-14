@@ -42,8 +42,12 @@ else
   exit 2
 fi
 
-# Definition sites and tests.
-EXCLUDE_RE='\.(test|spec|stories|mock)\.(ts|tsx):|/styles/|/constants/'
+# Definition sites and tests. styles/ holds design-primitive definitions
+# (theme/themeColors/themeLayout/themeSpacing/themeTypography) that legitimately
+# carry raw values — those stay excluded. themeComponents.ts is the exception:
+# it COMPOSES utility classes, so it must be gated (this is how the
+# text-zinc-900 escape slipped through under the old blanket /styles/ exclude).
+EXCLUDE_RE='\.(test|spec|stories|mock)\.(ts|tsx):|/styles/theme\.ts:|/styles/themeColors\.ts:|/styles/themeLayout\.ts:|/styles/themeSpacing\.ts:|/styles/themeTypography\.ts:|/constants/'
 
 FAIL_COUNT=0
 
