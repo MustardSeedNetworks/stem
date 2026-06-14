@@ -92,9 +92,11 @@
 
   /* On-color foregrounds — AA text/icon color on a filled brand/status surface.
    * Constant across modes. Stem's brand/info/danger fills are saturated, so
-   * these are white. (Replaces bare text-white on colored buttons.) */
+   * those are white; the lighter success-green fill needs dark text instead.
+   * (Replaces bare text-white / text-zinc-900 on colored buttons.) */
   --color-on-brand: var(--color-on-brand);
   --color-on-danger: var(--color-on-danger);
+  --color-on-success: var(--color-on-success);
 }
 
 /* Source detection for Tailwind */
@@ -158,6 +160,7 @@
   --color-knob: #ffffff;
   --color-on-brand: #ffffff; /* white — AA on stem's blue brand/info fills */
   --color-on-danger: #ffffff; /* white — AA on status-error fills */
+  --color-on-success: #1a2520; /* dark — AA (~6.2:1) on status-success #4caf50; white fails (~2.7:1) */
 
   /* Module Colors - The Stem specific */
   --color-module-reflector: #0891b2; /* Cyan - loopback/echo */

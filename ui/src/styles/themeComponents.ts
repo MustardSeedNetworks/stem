@@ -29,7 +29,7 @@ export const button = {
   base: 'inline-flex items-center justify-center gap-2 rounded font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary disabled:opacity-50 disabled:cursor-not-allowed',
 
   variant: {
-    // Stem anchor is stem-500 (#1976d2) — needs WHITE text. text-text-inverse
+    // Stem anchor is stem-500 (brand-primary) — needs WHITE text. text-text-inverse
     // flips to dark in dark mode and fails AA against the constant blue
     // anchor. Opacity hover avoids the lighten-to-accent trap (stem-300
     // fails contrast against white text). Per Phase 7 of the 2026-05-22 audit.
@@ -39,7 +39,7 @@ export const button = {
     // Status danger/success buttons: align with brand-primary fix (constant
     // foreground rather than text-inverse mode-flip).
     danger: 'bg-status-error text-on-danger hover:bg-status-error/90',
-    success: 'bg-status-success text-zinc-900 hover:bg-status-success/90',
+    success: 'bg-status-success text-on-success hover:bg-status-success/90',
   },
 
   size: {
@@ -106,7 +106,7 @@ export const alert = {
  */
 export const modal = {
   overlay: 'fixed inset-0 z-50 flex items-center justify-center p-4',
-  backdrop: 'absolute inset-0 bg-black/50 backdrop-blur-sm',
+  backdrop: 'absolute inset-0 bg-scrim/50 backdrop-blur-sm',
   content:
     'bg-surface-raised border border-surface-border rounded-lg shadow-xl max-h-[85vh] overflow-y-auto',
 
