@@ -121,7 +121,8 @@
     "modules": "Modulos de Prueba",
     "configuration": "Configuración",
     "results": "Resultados",
-    "system": "Sistema"
+    "system": "Sistema",
+    "account": "Cuenta"
   },
   "prompts": {
     "continue": "Presione Enter para continuar...",
