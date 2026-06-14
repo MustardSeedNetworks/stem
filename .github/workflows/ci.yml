@@ -139,6 +139,9 @@ jobs:
       - name: JSON wire-casing gate — camelCase ratchet
         run: ./scripts/check-json-casing.sh
 
+      - name: File-size gate (warn mode, W0c fleet UI plan)
+        run: ./scripts/check-file-size.sh
+
       - name: Run tests
         run: CGO_ENABLED=0 go test -v -coverprofile=coverage.out ./...
 
