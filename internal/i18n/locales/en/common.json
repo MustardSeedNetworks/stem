@@ -121,7 +121,8 @@
     "modules": "Test Modules",
     "configuration": "Configuration",
     "results": "Results",
-    "system": "System"
+    "system": "System",
+    "account": "Account"
   },
   "prompts": {
     "continue": "Press Enter to continue...",

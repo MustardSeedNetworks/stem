@@ -42,7 +42,9 @@ export const navGroups: SidebarNavGroup[] = [
     items: [{ path: '/history', label: 'History', icon: History }],
   },
   {
-    label: 'Account',
+    // Translated by Sidebar via t() — key resolves to "Account" / "Cuenta"
+    // per common.sections.account. (Item label "Security" stays as-is.)
+    label: 'common:sections.account',
     items: [{ path: '/account/security', label: 'Security', icon: ShieldCheck }],
   },
 ];
