@@ -7,6 +7,7 @@
  */
 
 import { valibotResolver } from '@hookform/resolvers/valibot';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Activity,
   AlertTriangle,
@@ -356,7 +357,6 @@ function AppContent(): ReactElement {
   });
   const [stats, setStats] = useState<Stats>(initialStats);
   const [testResult, setTestResult] = useState<TestResult | null>(null);
-  const [interfaces, setInterfaces] = useState<InterfaceInfo[]>([]);
   const [selectedInterface, setSelectedInterface] = useState<string>('');
   // The Stem instance role drives the legacy `mode` state. RoleContext
   // persists the choice to localStorage and is mutated by the header
@@ -400,18 +400,26 @@ function AppContent(): ReactElement {
   // Track test progress
   const testProgress = useTestProgress(stats.testStatus, stats.currentTest, expectedDuration);
 
-  const expireSession = useCallback((message = 'Session expired. Please sign in again.') => {
-    // Clear polling interval to prevent continued API calls
-    if (statsIntervalRef.current !== null) {
-      clearInterval(statsIntervalRef.current);
-      statsIntervalRef.current = null;
-    }
-    setIsAuthenticated(false);
-    setConnected(false);
-    setLoginError(message);
-    // Clear auth flag from storage (cookies cleared by server on logout)
-    window.localStorage.removeItem(AUTH_FLAG_KEY);
-  }, []);
+  const queryClient = useQueryClient();
+
+  const expireSession = useCallback(
+    (message = 'Session expired. Please sign in again.') => {
+      // Clear polling interval to prevent continued API calls
+      if (statsIntervalRef.current !== null) {
+        clearInterval(statsIntervalRef.current);
+        statsIntervalRef.current = null;
+      }
+      setIsAuthenticated(false);
+      setConnected(false);
+      setLoginError(message);
+      // Clear auth flag from storage (cookies cleared by server on logout)
+      window.localStorage.removeItem(AUTH_FLAG_KEY);
+      // Drop all cached server data so a stale response (e.g. interfaces) can
+      // never be replayed into the next session on this browser.
+      queryClient.clear();
+    },
+    [queryClient],
+  );
 
   // Token refresh function - attempts to get a new access token using refresh cookie
   const refreshAccessToken = useCallback(async (): Promise<boolean> => {
@@ -499,11 +507,19 @@ function AppContent(): ReactElement {
     });
   }, []);
 
-  const fetchInterfaces = useCallback(async () => {
-    if (!isAuthenticated) {
-      return;
-    }
-    try {
+  // Interfaces are a React Query read. Connection + best-interface selection
+  // are driven off the query result below (see the interface effects). The
+  // queryFn closes over authFetch (declared above); retry is disabled to match
+  // the previous single-attempt fetch semantics.
+  const {
+    data: interfacesData,
+    refetch: refetchInterfaces,
+    error: interfacesError,
+  } = useQuery({
+    queryKey: ['interfaces'],
+    enabled: isAuthenticated,
+    retry: false,
+    queryFn: async (): Promise<InterfaceInfo[]> => {
       const response = await authFetch('/api/v1/interfaces');
       if (!response.ok) {
         throw new Error('Failed to load interfaces');
@@ -512,17 +528,10 @@ function AppContent(): ReactElement {
       if (!isValidInterfaceArray(data)) {
         throw new Error('Invalid interface data received from server');
       }
-      setInterfaces(data);
-      selectBestInterface(data);
-      setConnected(true);
-    } catch (error) {
-      const err = error instanceof Error ? error : new Error('Unknown error');
-      if (err.message === 'Unauthorized') {
-        return;
-      }
-      setConnected(false);
-    }
-  }, [authFetch, isAuthenticated, selectBestInterface]);
+      return data;
+    },
+  });
+  const interfaces = interfacesData ?? [];
 
   // Fetch test result when test completes
   const fetchTestResult = useCallback(async () => {
@@ -806,6 +815,9 @@ function AppContent(): ReactElement {
     setConnected(false);
     setLoginError(null);
     window.localStorage.removeItem(AUTH_FLAG_KEY);
+    // Drop all cached server data so a stale response (e.g. interfaces) can
+    // never be replayed into the next session on this browser.
+    queryClient.clear();
     // Reset stats
     setStats({
       packetsReceived: 0,
@@ -818,7 +830,7 @@ function AppContent(): ReactElement {
       testStatus: 'idle',
       currentTest: null,
     });
-  }, []);
+  }, [queryClient]);
 
   // Check setup and recovery status on mount (before authentication check)
   useEffect(() => {
@@ -946,12 +958,22 @@ function AppContent(): ReactElement {
     }
   }, [mode]);
 
-  // Fetch interfaces on mount
+  // Drive interface auto-selection + connection state off the interfaces query.
+  // (The query itself fetches on mount and whenever isAuthenticated flips true.)
   useEffect(() => {
-    fetchInterfaces().catch(() => {
-      // Errors already handled inside fetchInterfaces
-    });
-  }, [fetchInterfaces]);
+    if (interfacesData) {
+      selectBestInterface(interfacesData);
+      setConnected(true);
+    }
+  }, [interfacesData, selectBestInterface]);
+
+  // A genuine load failure drops the connection; an auth lapse does not (the
+  // auth flow owns that transition), matching the previous fetch's behavior.
+  useEffect(() => {
+    if (interfacesError && interfacesError.message !== 'Unauthorized') {
+      setConnected(false);
+    }
+  }, [interfacesError]);
 
   // Poll stats when connected - uses ref for proper cleanup on session expire
   useEffect(() => {
@@ -1065,7 +1087,11 @@ function AppContent(): ReactElement {
           </button>
           <button
             type="button"
-            onClick={fetchInterfaces}
+            onClick={() => {
+              refetchInterfaces().catch(() => {
+                // Connection state is reconciled by the interface effects.
+              });
+            }}
             className="pad-xs rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover"
             title="Refresh interfaces"
             aria-label="Refresh interfaces"
