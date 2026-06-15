@@ -16,6 +16,20 @@
  * - Uses theme tokens for consistent styling
  */
 
+import {
+  Activity,
+  Check,
+  EthernetPort,
+  Loader2,
+  LogOut,
+  Moon,
+  RefreshCw,
+  Settings,
+  Sun,
+  User,
+  Wifi,
+  WifiOff,
+} from 'lucide-react';
 import { memo, type ReactElement, useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -59,231 +73,6 @@ interface HeaderBarProps {
   onProfileSwitch?: (profileId: string) => Promise<boolean>;
   onProfileManage?: () => void;
   profilesLoading?: boolean;
-  /** @deprecated Use sidebar footer / page-level actions instead. Ignored. */
-  onRefresh?: () => void;
-  /** @deprecated History lives in the sidebar nav. Ignored. */
-  onHistoryOpen?: () => void;
-  /** @deprecated Help lives in the sidebar footer. Ignored. */
-  onHelpOpen?: () => void;
-  /** @deprecated Settings lives in the sidebar footer. Ignored. */
-  onSettingsOpen?: () => void;
-}
-
-// =============================================================================
-// Icons
-// =============================================================================
-
-function ActivityIcon({ className }: { className?: string }): ReactElement {
-  return (
-    <svg
-      className={className}
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-    >
-      <polyline
-        points="22 12 18 12 15 21 9 3 6 12 2 12"
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function WifiIcon({ className }: { className?: string }): ReactElement {
-  return (
-    <svg
-      className={className}
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"
-      />
-    </svg>
-  );
-}
-
-function WifiOffIcon({ className }: { className?: string }): ReactElement {
-  return (
-    <svg
-      className={className}
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-    >
-      <line
-        x1="1"
-        y1="1"
-        x2="23"
-        y2="23"
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M16.72 11.06A10.94 10.94 0 0119 12.55M5 12.55a10.94 10.94 0 015.17-2.39M10.71 5.05A16 16 0 0122.58 9M1.42 9a15.91 15.91 0 014.7-2.88M8.53 16.11a6 6 0 016.95 0M12 20h.01"
-      />
-    </svg>
-  );
-}
-
-function SunIcon({ className }: { className?: string }): ReactElement {
-  return (
-    <svg className={className} fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-      <path
-        fillRule="evenodd"
-        d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"
-        clipRule="evenodd"
-      />
-    </svg>
-  );
-}
-
-function MoonIcon({ className }: { className?: string }): ReactElement {
-  return (
-    <svg className={className} fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-      <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
-    </svg>
-  );
-}
-
-function RefreshIcon({ className }: { className?: string }): ReactElement {
-  return (
-    <svg
-      className={className}
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-      />
-    </svg>
-  );
-}
-
-function SettingsIcon({ className }: { className?: string }): ReactElement {
-  return (
-    <svg
-      className={className}
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-      />
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-      />
-    </svg>
-  );
-}
-
-function LogoutIcon({ className }: { className?: string }): ReactElement {
-  return (
-    <svg
-      className={className}
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-      />
-    </svg>
-  );
-}
-
-function UserIcon({ className }: { className?: string }): ReactElement {
-  return (
-    <svg
-      className={className}
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-      />
-    </svg>
-  );
-}
-
-function EthernetIcon({ className }: { className?: string }): ReactElement {
-  return (
-    <svg
-      className={className}
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M8 4h8v4H8zM6 8h12v10a2 2 0 01-2 2H8a2 2 0 01-2-2V8zM9 12v4M12 12v4M15 12v4"
-      />
-    </svg>
-  );
-}
-
-function CheckIcon({ className }: { className?: string }): ReactElement {
-  return (
-    <svg className={className} fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-    </svg>
-  );
-}
-
-function SpinnerIcon({ className }: { className?: string }): ReactElement {
-  return (
-    <svg
-      className={cn(className, 'animate-spin')}
-      fill="none"
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-    >
-      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-      <path
-        className="opacity-75"
-        fill="currentColor"
-        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-      />
-    </svg>
-  );
 }
 
 // =============================================================================
@@ -370,9 +159,9 @@ function ProfileDropdown({
         }
       >
         {loading ? (
-          <SpinnerIcon className={iconTokens.size.md} />
+          <Loader2 className={cn(iconTokens.size.md, 'animate-spin')} />
         ) : (
-          <UserIcon className={iconTokens.size.md} />
+          <User className={iconTokens.size.md} />
         )}
       </button>
       {isOpen ? (
@@ -406,7 +195,7 @@ function ProfileDropdown({
                   <div className="flex-between">
                     <span className="body-small text-text-primary truncate">{p.name}</span>
                     {p.id === activeProfile?.id ? (
-                      <CheckIcon className={cn(iconTokens.size.sm, 'text-brand-primary')} />
+                      <Check className={cn(iconTokens.size.sm, 'text-brand-primary')} />
                     ) : null}
                   </div>
                 </button>
@@ -428,7 +217,7 @@ function ProfileDropdown({
                   'hover:bg-surface-hover text-brand-primary',
                 )}
               >
-                <SettingsIcon className={iconTokens.size.sm} />
+                <Settings className={iconTokens.size.sm} />
                 <span className="body-small font-medium">{t('profile.manage', 'Manage')}</span>
               </button>
             </div>
@@ -448,7 +237,7 @@ function ProfileDropdown({
                   'hover:bg-surface-hover text-status-error',
                 )}
               >
-                <LogoutIcon className={iconTokens.size.sm} />
+                <LogOut className={iconTokens.size.sm} />
                 <span className="body-small font-medium">{t('buttons.logout', 'Logout')}</span>
               </button>
             </div>
@@ -503,7 +292,7 @@ function InterfaceDropdown({
         aria-label={t('accessibility.selectInterface', 'Select interface')}
         title={currentInterface || t('interface.select', 'Select Interface')}
       >
-        <EthernetIcon className={iconTokens.size.md} />
+        <EthernetPort className={iconTokens.size.md} />
       </button>
       {isOpen ? (
         <div
@@ -545,7 +334,7 @@ function InterfaceDropdown({
                           {getFriendlyInterfaceName(iface.name, iface.type)}
                         </span>
                         {iface.type === 'wifi' && (
-                          <WifiIcon className={cn(iconTokens.size.xs, 'text-text-muted')} />
+                          <Wifi className={cn(iconTokens.size.xs, 'text-text-muted')} />
                         )}
                       </div>
                       <span
@@ -560,9 +349,7 @@ function InterfaceDropdown({
                       </span>
                     </div>
                     {iface.name === currentInterface ? (
-                      <CheckIcon
-                        className={cn(iconTokens.size.sm, 'text-brand-primary shrink-0')}
-                      />
+                      <Check className={cn(iconTokens.size.sm, 'text-brand-primary shrink-0')} />
                     ) : null}
                   </div>
                 </button>
@@ -596,14 +383,14 @@ function ConnectionBadge({ status }: ConnectionBadgeProps): ReactElement {
     >
       {isConnected ? (
         <>
-          <WifiIcon className={iconTokens.size.xs} />
+          <Wifi className={iconTokens.size.xs} />
           <span className="caption font-medium hidden sm:inline">
             {t('status.connected', 'Connected')}
           </span>
         </>
       ) : (
         <>
-          <WifiOffIcon className={cn(iconTokens.size.xs, isConnecting && 'animate-pulse')} />
+          <WifiOff className={cn(iconTokens.size.xs, isConnecting && 'animate-pulse')} />
           <span className="caption font-medium hidden sm:inline">
             {isConnecting
               ? t('status.connecting', 'Connecting...')
@@ -634,11 +421,7 @@ function ThemeToggle({ darkMode, onToggle }: ThemeToggleProps): ReactElement {
       aria-label={label}
       title={label}
     >
-      {darkMode ? (
-        <SunIcon className={iconTokens.size.md} />
-      ) : (
-        <MoonIcon className={iconTokens.size.md} />
-      )}
+      {darkMode ? <Sun className={iconTokens.size.md} /> : <Moon className={iconTokens.size.md} />}
     </button>
   );
 }
@@ -727,7 +510,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function HeaderBarCompon
                 !isConnected && 'group-hover:opacity-80',
               )}
             >
-              <ActivityIcon className={cn(iconTokens.size.md, isConnecting && 'animate-pulse')} />
+              <Activity className={cn(iconTokens.size.md, isConnecting && 'animate-pulse')} />
             </div>
           </button>
           <div className="min-w-0">
@@ -790,7 +573,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = memo(function HeaderBarCompon
           >
             {isConnecting ? (
               <>
-                <RefreshIcon className={cn(iconTokens.size.sm, 'animate-spin')} />
+                <RefreshCw className={cn(iconTokens.size.sm, 'animate-spin')} />
                 {t('status.connecting', 'Connecting...')}
               </>
             ) : (
