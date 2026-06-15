@@ -168,7 +168,7 @@
   --color-module-servicetest: #ea580c; /* Orange - Y.1564/MEF */
   --color-module-trafficgen: #ca8a04; /* Yellow - Traffic Gen */
   --color-module-measure: #2563eb; /* Blue - Y.1731 OAM */
-  --color-module-certify: #16a34a; /* Green - RFC 2889/6349/TSN */
+  --color-module-certify: #7c3aed; /* Violet - RFC 2889/6349/TSN (distinct from status-success green) */
 
   /* Gauge/Progress Colors (for SVG) */
   --gauge-amber: #d97706;
@@ -219,7 +219,7 @@
   --color-module-servicetest: #fb923c; /* Lighter Orange */
   --color-module-trafficgen: #fbbf24; /* Lighter Yellow */
   --color-module-measure: #60a5fa; /* Lighter Blue */
-  --color-module-certify: #4ade80; /* Lighter Green */
+  --color-module-certify: #a78bfa; /* Lighter Violet */
 
   /* Gauge/Progress Colors (for SVG) */
   --gauge-amber: #fbbf24;
