@@ -192,7 +192,7 @@ const defaultModules: ModuleConfig[] = [
     name: 'certify',
     displayName: 'Certify',
     description: 'Network certification tests',
-    color: 'var(--color-module-certify)', // Green
+    color: 'var(--color-module-certify)', // Violet
     standard: 'RFC 2889/6349',
     enabled: false,
     autoStart: false,
