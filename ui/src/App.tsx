@@ -27,20 +27,19 @@ import { type SubmitHandler, useForm } from 'react-hook-form';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { HelpDrawer } from './components/HelpDrawer';
 import { ResultHistory } from './components/ResultHistory';
-import { defaultRFC2544Config, type RFC2544Config } from './components/RFC2544ConfigForm';
-import { defaultRFC2889Config, type RFC2889Config } from './components/RFC2889ConfigForm';
-import { defaultRFC6349Config, type RFC6349Config } from './components/RFC6349ConfigForm';
+import type { RFC2544Config } from './components/RFC2544ConfigForm';
+import type { RFC2889Config } from './components/RFC2889ConfigForm';
+import type { RFC6349Config } from './components/RFC6349ConfigForm';
 import { RoleChip } from './components/RoleChip';
 import { RecoveryForm } from './components/recovery/RecoveryForm';
 import { SettingsDrawer } from './components/SettingsDrawer';
-import type { ReflectorProfile } from './components/settings/types';
 import { SetupWizard } from './components/setup/SetupWizard';
 import { TestProgressBar, useTestProgress } from './components/TestProgressBar';
-import { defaultTrafficGenConfig, type TrafficGenConfig } from './components/TrafficGenConfigForm';
-import { defaultTSNConfig, type TSNConfig } from './components/TSNConfigForm';
+import type { TrafficGenConfig } from './components/TrafficGenConfigForm';
+import type { TSNConfig } from './components/TSNConfigForm';
 import { CommandPalette } from './components/ui/CommandPalette';
-import { defaultY1564Config, type Y1564Config } from './components/Y1564ConfigForm';
-import { defaultY1731Config, type Y1731Config } from './components/Y1731ConfigForm';
+import type { Y1564Config } from './components/Y1564ConfigForm';
+import type { Y1731Config } from './components/Y1731ConfigForm';
 import { AppContext, type AppContextValue } from './contexts/AppContext';
 import { ModuleSettingsProvider, useModuleSettings } from './contexts/ModuleSettingsContext';
 import { RoleProvider, useRole } from './contexts/RoleContext';
@@ -51,6 +50,7 @@ import { navGroups } from './navGroups';
 import { pages } from './pageRegistry';
 import { LoginSchema, MfaVerifySchema } from './schemas/auth';
 import { useShellStore } from './stores/shell-store';
+import { useTestStore } from './stores/test-store';
 import {
   type InterfaceInfo,
   initialStats,
@@ -346,8 +346,6 @@ function AppContent(): ReactElement {
   const [setupChecked, setSetupChecked] = useState(false);
   const [recoveryStatus, setRecoveryStatus] = useState<RecoveryStatus | null>(null);
   const [showRecoveryForm, setShowRecoveryForm] = useState(false);
-  const [isStoppingTest, setIsStoppingTest] = useState(false);
-  const [testStartError, setTestStartError] = useState<string | null>(null);
   const [connected, setConnected] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
       return window.localStorage.getItem(AUTH_FLAG_KEY) === 'true';
@@ -360,22 +358,35 @@ function AppContent(): ReactElement {
   // persists the choice to localStorage and is mutated by the header
   // RoleChip and per-page RoleGuard.
   const { role: mode } = useRole();
-  const [selectedTests, setSelectedTests] = useState<string[]>([
-    'rfc2544_throughput',
-    'rfc2544_latency',
-    'rfc2544_frame_loss',
-    'rfc2544_back_to_back',
-  ]);
-  const [reflectorProfile, setReflectorProfile] = useState<ReflectorProfile>('all');
-  const [isStartingTest, setIsStartingTest] = useState(false);
-  const [rfc2544Config, setRFC2544Config] = useState<RFC2544Config>(defaultRFC2544Config);
-  const [rfc2889Config, setRFC2889Config] = useState<RFC2889Config>(defaultRFC2889Config);
-  const [rfc6349Config, setRFC6349Config] = useState<RFC6349Config>(defaultRFC6349Config);
-  const [y1564Config, setY1564Config] = useState<Y1564Config>(defaultY1564Config);
-  const [y1731Config, setY1731Config] = useState<Y1731Config>(defaultY1731Config);
-  const [tsnConfig, setTSNConfig] = useState<TSNConfig>(defaultTSNConfig);
-  const [trafficGenConfig, setTrafficGenConfig] =
-    useState<TrafficGenConfig>(defaultTrafficGenConfig);
+  // Test-execution config + run state lives in the test-store. Its setters are
+  // useState-compatible (accept a value or an updater), so every call site
+  // below — config forms and the selected-tests toggles — is unchanged.
+  const {
+    selectedTests,
+    setSelectedTests,
+    reflectorProfile,
+    setReflectorProfile,
+    isStartingTest,
+    setIsStartingTest,
+    isStoppingTest,
+    setIsStoppingTest,
+    testStartError,
+    setTestStartError,
+    rfc2544Config,
+    setRFC2544Config,
+    rfc2889Config,
+    setRFC2889Config,
+    rfc6349Config,
+    setRFC6349Config,
+    y1564Config,
+    setY1564Config,
+    y1731Config,
+    setY1731Config,
+    tsnConfig,
+    setTSNConfig,
+    trafficGenConfig,
+    setTrafficGenConfig,
+  } = useTestStore();
 
   // Focus trap for login modal (no onEscape - user must authenticate)
   const loginModalRef = useFocusTrap<HTMLDivElement>({
