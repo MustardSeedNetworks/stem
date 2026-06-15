@@ -88,7 +88,11 @@ export const useTestStore = create<TestStore>()(
       setSelectedTests: (u) =>
         set((s) => ({ selectedTests: resolve(u, s.selectedTests) }), false, 'setSelectedTests'),
       setReflectorProfile: (u) =>
-        set((s) => ({ reflectorProfile: resolve(u, s.reflectorProfile) }), false, 'setReflectorProfile'),
+        set(
+          (s) => ({ reflectorProfile: resolve(u, s.reflectorProfile) }),
+          false,
+          'setReflectorProfile',
+        ),
       setIsStartingTest: (u) =>
         set((s) => ({ isStartingTest: resolve(u, s.isStartingTest) }), false, 'setIsStartingTest'),
       setIsStoppingTest: (u) =>
@@ -105,9 +109,14 @@ export const useTestStore = create<TestStore>()(
         set((s) => ({ y1564Config: resolve(u, s.y1564Config) }), false, 'setY1564Config'),
       setY1731Config: (u) =>
         set((s) => ({ y1731Config: resolve(u, s.y1731Config) }), false, 'setY1731Config'),
-      setTSNConfig: (u) => set((s) => ({ tsnConfig: resolve(u, s.tsnConfig) }), false, 'setTSNConfig'),
+      setTSNConfig: (u) =>
+        set((s) => ({ tsnConfig: resolve(u, s.tsnConfig) }), false, 'setTSNConfig'),
       setTrafficGenConfig: (u) =>
-        set((s) => ({ trafficGenConfig: resolve(u, s.trafficGenConfig) }), false, 'setTrafficGenConfig'),
+        set(
+          (s) => ({ trafficGenConfig: resolve(u, s.trafficGenConfig) }),
+          false,
+          'setTrafficGenConfig',
+        ),
     }),
     { name: 'test-store' },
   ),
