@@ -5,11 +5,13 @@
 
 import '@fontsource-variable/inter';
 import '@fontsource-variable/jetbrains-mono';
+import { QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { initThemeFromStorage } from './hooks/useTheme';
+import { getQueryClient } from './lib/queryClient';
 import './index.css';
 
 // Initialize i18n before rendering
@@ -24,7 +26,9 @@ if (rootElement) {
   ReactDOM.createRoot(rootElement).render(
     <React.StrictMode>
       <ErrorBoundary>
-        <App />
+        <QueryClientProvider client={getQueryClient()}>
+          <App />
+        </QueryClientProvider>
       </ErrorBoundary>
     </React.StrictMode>,
   );
