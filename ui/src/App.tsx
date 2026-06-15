@@ -348,14 +348,12 @@ function AppContent(): ReactElement {
   const [showRecoveryForm, setShowRecoveryForm] = useState(false);
   const [isStoppingTest, setIsStoppingTest] = useState(false);
   const [testStartError, setTestStartError] = useState<string | null>(null);
-  const statsIntervalRef = useRef<number | null>(null);
   const [connected, setConnected] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
       return window.localStorage.getItem(AUTH_FLAG_KEY) === 'true';
     }
     return false;
   });
-  const [stats, setStats] = useState<Stats>(initialStats);
   const [testResult, setTestResult] = useState<TestResult | null>(null);
   const [selectedInterface, setSelectedInterface] = useState<string>('');
   // The Stem instance role drives the legacy `mode` state. RoleContext
@@ -390,25 +388,10 @@ function AppContent(): ReactElement {
   // via ModuleSettingsProvider mounted around App).
   useModuleSettings();
 
-  // Calculate expected test duration based on config
-  const expectedDuration =
-    (rfc2544Config.duration + rfc2544Config.warmup) *
-    rfc2544Config.trials *
-    rfc2544Config.frameSizes.length *
-    selectedTests.filter((t) => t.startsWith('rfc2544')).length;
-
-  // Track test progress
-  const testProgress = useTestProgress(stats.testStatus, stats.currentTest, expectedDuration);
-
   const queryClient = useQueryClient();
 
   const expireSession = useCallback(
     (message = 'Session expired. Please sign in again.') => {
-      // Clear polling interval to prevent continued API calls
-      if (statsIntervalRef.current !== null) {
-        clearInterval(statsIntervalRef.current);
-        statsIntervalRef.current = null;
-      }
       setIsAuthenticated(false);
       setConnected(false);
       setLoginError(message);
@@ -575,8 +558,18 @@ function AppContent(): ReactElement {
     [fetchTestResult],
   );
 
-  const fetchStats = useCallback(async () => {
-    try {
+  // Stats are polled via React Query while connected (1s interval, in the
+  // background too — matching the previous setInterval). retry:false +
+  // staleTime:0 keep the cadence single-shot-per-tick and always fresh; the
+  // status-transition side-effect runs off the data below.
+  const { data: statsData } = useQuery({
+    queryKey: ['stats'],
+    enabled: connected,
+    refetchInterval: 1000,
+    refetchIntervalInBackground: true,
+    staleTime: 0,
+    retry: false,
+    queryFn: async (): Promise<Stats> => {
       const response = await authFetch('/api/v1/stats');
       if (!response.ok) {
         throw new Error('Failed to refresh stats');
@@ -585,22 +578,20 @@ function AppContent(): ReactElement {
       if (!isValidStats(data)) {
         throw new Error('Invalid stats data received from server');
       }
-      const newStats = mapStatsPayload(data as Partial<Stats>);
-      setStats(newStats);
-      handleStatusTransition(prevTestStatus.current, newStats.testStatus);
-    } catch (error) {
-      if ((error as Error).message === 'Unauthorized') {
-        return;
-      }
-      logWarn('Stats polling failed', {
-        component: 'App',
-        action: 'fetchStats',
-        additionalData: {
-          error: error instanceof Error ? error.message : String(error),
-        },
-      });
-    }
-  }, [authFetch, handleStatusTransition]);
+      return mapStatsPayload(data as Partial<Stats>);
+    },
+  });
+  const stats = statsData ?? initialStats;
+
+  // Calculate expected test duration based on config.
+  const expectedDuration =
+    (rfc2544Config.duration + rfc2544Config.warmup) *
+    rfc2544Config.trials *
+    rfc2544Config.frameSizes.length *
+    selectedTests.filter((t) => t.startsWith('rfc2544')).length;
+
+  // Track test progress.
+  const testProgress = useTestProgress(stats.testStatus, stats.currentTest, expectedDuration);
 
   const handleLogin: SubmitHandler<{ username: string; password: string }> = useCallback(
     async ({ username, password }) => {
@@ -816,20 +807,9 @@ function AppContent(): ReactElement {
     setLoginError(null);
     window.localStorage.removeItem(AUTH_FLAG_KEY);
     // Drop all cached server data so a stale response (e.g. interfaces) can
-    // never be replayed into the next session on this browser.
+    // never be replayed into the next session on this browser. This also resets
+    // stats to initialStats (the stats query has no data once cleared).
     queryClient.clear();
-    // Reset stats
-    setStats({
-      packetsReceived: 0,
-      packetsSent: 0,
-      bytesReceived: 0,
-      bytesSent: 0,
-      currentPps: 0,
-      currentMbps: 0,
-      uptime: 0,
-      testStatus: 'idle',
-      currentTest: null,
-    });
   }, [queryClient]);
 
   // Check setup and recovery status on mount (before authentication check)
@@ -975,32 +955,14 @@ function AppContent(): ReactElement {
     }
   }, [interfacesError]);
 
-  // Poll stats when connected - uses ref for proper cleanup on session expire
+  // Each new stats payload drives the test-status state machine (detect
+  // start/complete transitions, fetch the result on completion). The polling
+  // itself is owned by the stats query's refetchInterval above.
   useEffect(() => {
-    if (!connected) {
-      // Clear any existing interval when disconnected
-      if (statsIntervalRef.current !== null) {
-        clearInterval(statsIntervalRef.current);
-        statsIntervalRef.current = null;
-      }
-      return;
+    if (statsData) {
+      handleStatusTransition(prevTestStatus.current, statsData.testStatus);
     }
-
-    const triggerFetchStats = (): void => {
-      fetchStats().catch(() => {
-        // Errors already logged inside fetchStats
-      });
-    };
-    statsIntervalRef.current = window.setInterval(triggerFetchStats, 1000);
-    triggerFetchStats();
-
-    return () => {
-      if (statsIntervalRef.current !== null) {
-        clearInterval(statsIntervalRef.current);
-        statsIntervalRef.current = null;
-      }
-    };
-  }, [connected, fetchStats]);
+  }, [statsData, handleStatusTransition]);
 
   const openHelp = (): void => {
     setHelpOpen(true);
