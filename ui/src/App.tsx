@@ -49,6 +49,7 @@ import { useTheme } from './hooks/useTheme';
 import { navGroups } from './navGroups';
 import { pages } from './pageRegistry';
 import { LoginSchema, MfaVerifySchema } from './schemas/auth';
+import { useShellStore } from './stores/shell-store';
 import {
   type InterfaceInfo,
   initialStats,
@@ -304,10 +305,15 @@ function buildTestConfig(
 
 // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: AppContent orchestrates auth, test state, dark mode, and the routed shell — the topBar JSX adds one branch over the existing 40 threshold; planned to extract into a TopBar component in the follow-up Phase A.1 commit.
 function AppContent(): ReactElement {
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [helpOpen, setHelpOpen] = useState(false);
-  const [historyOpen, setHistoryOpen] = useState(false);
-  const [paletteOpen, setPaletteOpen] = useState(false);
+  // Shell UI state (drawers + command palette) lives in the shell-store.
+  const settingsOpen = useShellStore((s) => s.settingsOpen);
+  const setSettingsOpen = useShellStore((s) => s.setSettingsOpen);
+  const helpOpen = useShellStore((s) => s.helpOpen);
+  const setHelpOpen = useShellStore((s) => s.setHelpOpen);
+  const historyOpen = useShellStore((s) => s.historyOpen);
+  const setHistoryOpen = useShellStore((s) => s.setHistoryOpen);
+  const paletteOpen = useShellStore((s) => s.paletteOpen);
+  const setPaletteOpen = useShellStore((s) => s.setPaletteOpen);
   const { isDark, toggleTheme } = useTheme();
   const buildVersion = useBuildVersion();
   // Track authentication state (tokens are in httpOnly cookies, inaccessible to JS)
