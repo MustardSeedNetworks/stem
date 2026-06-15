@@ -7,7 +7,7 @@
  */
 
 import { valibotResolver } from '@hookform/resolvers/valibot';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Activity,
   AlertTriangle,
@@ -400,18 +400,26 @@ function AppContent(): ReactElement {
   // Track test progress
   const testProgress = useTestProgress(stats.testStatus, stats.currentTest, expectedDuration);
 
-  const expireSession = useCallback((message = 'Session expired. Please sign in again.') => {
-    // Clear polling interval to prevent continued API calls
-    if (statsIntervalRef.current !== null) {
-      clearInterval(statsIntervalRef.current);
-      statsIntervalRef.current = null;
-    }
-    setIsAuthenticated(false);
-    setConnected(false);
-    setLoginError(message);
-    // Clear auth flag from storage (cookies cleared by server on logout)
-    window.localStorage.removeItem(AUTH_FLAG_KEY);
-  }, []);
+  const queryClient = useQueryClient();
+
+  const expireSession = useCallback(
+    (message = 'Session expired. Please sign in again.') => {
+      // Clear polling interval to prevent continued API calls
+      if (statsIntervalRef.current !== null) {
+        clearInterval(statsIntervalRef.current);
+        statsIntervalRef.current = null;
+      }
+      setIsAuthenticated(false);
+      setConnected(false);
+      setLoginError(message);
+      // Clear auth flag from storage (cookies cleared by server on logout)
+      window.localStorage.removeItem(AUTH_FLAG_KEY);
+      // Drop all cached server data so a stale response (e.g. interfaces) can
+      // never be replayed into the next session on this browser.
+      queryClient.clear();
+    },
+    [queryClient],
+  );
 
   // Token refresh function - attempts to get a new access token using refresh cookie
   const refreshAccessToken = useCallback(async (): Promise<boolean> => {
@@ -807,6 +815,9 @@ function AppContent(): ReactElement {
     setConnected(false);
     setLoginError(null);
     window.localStorage.removeItem(AUTH_FLAG_KEY);
+    // Drop all cached server data so a stale response (e.g. interfaces) can
+    // never be replayed into the next session on this browser.
+    queryClient.clear();
     // Reset stats
     setStats({
       packetsReceived: 0,
@@ -819,7 +830,7 @@ function AppContent(): ReactElement {
       testStatus: 'idle',
       currentTest: null,
     });
-  }, []);
+  }, [queryClient]);
 
   // Check setup and recovery status on mount (before authentication check)
   useEffect(() => {
