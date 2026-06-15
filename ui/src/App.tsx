@@ -7,7 +7,7 @@
  */
 
 import { valibotResolver } from '@hookform/resolvers/valibot';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import {
   Activity,
   AlertTriangle,
@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import type { ReactElement } from 'react';
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
-import { type SubmitHandler, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { HelpDrawer } from './components/HelpDrawer';
 import { ResultHistory } from './components/ResultHistory';
@@ -49,12 +49,12 @@ import { useTheme } from './hooks/useTheme';
 import { navGroups } from './navGroups';
 import { pages } from './pageRegistry';
 import { LoginSchema, MfaVerifySchema } from './schemas/auth';
+import { authFetch, useAuthStore } from './stores/auth-store';
 import { useShellStore } from './stores/shell-store';
 import { useTestStore } from './stores/test-store';
 import {
   type InterfaceInfo,
   initialStats,
-  isValidAuthResponse,
   isValidInterfaceArray,
   isValidStats,
   type Stats,
@@ -63,26 +63,6 @@ import {
 import { PageLoader } from './ui/PageLoader';
 import { SidebarLayout } from './ui/Sidebar';
 import { logError, logWarn } from './utils/logger';
-
-// Note: Tokens are now stored in httpOnly cookies set by the backend.
-// localStorage is no longer used for token storage (security improvement).
-// We only track if the user is authenticated via a simple boolean flag.
-const AUTH_FLAG_KEY = 'stem-authenticated';
-
-/** Setup status response from /api/v1/setup/status */
-interface SetupStatus {
-  needsSetup: boolean;
-  username?: string;
-  suggestedPassword?: string;
-  setupToken?: string;
-}
-
-/** Recovery status response from /api/v1/recovery/status */
-interface RecoveryStatus {
-  active: boolean;
-  remainingTime?: number;
-  instructions?: string;
-}
 
 function formatNumber(num: number): string {
   if (num >= 1e9) {
@@ -317,19 +297,19 @@ function AppContent(): ReactElement {
   const setPaletteOpen = useShellStore((s) => s.setPaletteOpen);
   const { isDark, toggleTheme } = useTheme();
   const buildVersion = useBuildVersion();
-  // Track authentication state (tokens are in httpOnly cookies, inaccessible to JS)
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      return window.localStorage.getItem(AUTH_FLAG_KEY) === 'true';
-    }
-    return false;
-  });
-  const [loginLoading, setLoginLoading] = useState(false);
-  const [loginError, setLoginError] = useState<string | null>(null);
-  // Wave 3 (#85): when login returns mfaRequired, we hold the
-  // mfa_token and prompt for the second-factor code before flipping
-  // isAuthenticated.
-  const [mfaPending, setMfaPending] = useState<{ mfaToken: string; factor: string } | null>(null);
+  // Authentication state + flows live in the auth-store (tokens are in httpOnly
+  // cookies, inaccessible to JS; the store mirrors a boolean flag to
+  // localStorage). Render reads state via selectors; handlers call store
+  // actions via useAuthStore.getState().
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const loginLoading = useAuthStore((s) => s.loginLoading);
+  const loginError = useAuthStore((s) => s.loginError);
+  const mfaPending = useAuthStore((s) => s.mfaPending);
+  const setupStatus = useAuthStore((s) => s.setupStatus);
+  const setupChecked = useAuthStore((s) => s.setupChecked);
+  const recoveryStatus = useAuthStore((s) => s.recoveryStatus);
+  const showRecoveryForm = useAuthStore((s) => s.showRecoveryForm);
+  const setShowRecoveryForm = useAuthStore((s) => s.setShowRecoveryForm);
 
   // react-hook-form instances for login + MFA verify (#332).
   const loginForm = useForm<{ username: string; password: string }>({
@@ -342,16 +322,12 @@ function AppContent(): ReactElement {
     defaultValues: { code: '' },
     mode: 'onBlur',
   });
-  const [setupStatus, setSetupStatus] = useState<SetupStatus | null>(null);
-  const [setupChecked, setSetupChecked] = useState(false);
-  const [recoveryStatus, setRecoveryStatus] = useState<RecoveryStatus | null>(null);
-  const [showRecoveryForm, setShowRecoveryForm] = useState(false);
-  const [connected, setConnected] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      return window.localStorage.getItem(AUTH_FLAG_KEY) === 'true';
-    }
-    return false;
-  });
+  // `connected` (interfaces reachable) is App-local: seeded from the persisted
+  // auth flag to avoid a "Disconnected" flash on reload, then reconciled off
+  // the interfaces query (success → true) and the auth flag (signed out → false).
+  const [connected, setConnected] = useState<boolean>(
+    () => useAuthStore.getState().isAuthenticated,
+  );
   const [testResult, setTestResult] = useState<TestResult | null>(null);
   const [selectedInterface, setSelectedInterface] = useState<string>('');
   // The Stem instance role drives the legacy `mode` state. RoleContext
@@ -399,93 +375,9 @@ function AppContent(): ReactElement {
   // via ModuleSettingsProvider mounted around App).
   useModuleSettings();
 
-  const queryClient = useQueryClient();
-
-  const expireSession = useCallback(
-    (message = 'Session expired. Please sign in again.') => {
-      setIsAuthenticated(false);
-      setConnected(false);
-      setLoginError(message);
-      // Clear auth flag from storage (cookies cleared by server on logout)
-      window.localStorage.removeItem(AUTH_FLAG_KEY);
-      // Drop all cached server data so a stale response (e.g. interfaces) can
-      // never be replayed into the next session on this browser.
-      queryClient.clear();
-    },
-    [queryClient],
-  );
-
-  // Token refresh function - attempts to get a new access token using refresh cookie
-  const refreshAccessToken = useCallback(async (): Promise<boolean> => {
-    try {
-      // Refresh token is in httpOnly cookie, sent automatically with credentials
-      const response = await fetch('/api/v1/auth/refresh', {
-        method: 'POST',
-        credentials: 'include', // Include cookies in request
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}), // Empty body, refresh token is in cookie
-      });
-
-      if (!response.ok) {
-        return false;
-      }
-
-      // New access token is set in httpOnly cookie by server
-      return true;
-    } catch {
-      return false;
-    }
-  }, []);
-
-  // Helper: Make an authenticated request with headers
-  const makeAuthRequest = useCallback(
-    async (input: RequestInfo, init: RequestInit, headers: Headers): Promise<Response> =>
-      fetch(input, { ...init, headers, credentials: 'include' }),
-    [],
-  );
-
-  // Helper: Handle 401 unauthorized response with retry
-  const handle401Retry = useCallback(
-    async (input: RequestInfo, init: RequestInit, headers: Headers): Promise<Response | null> => {
-      const refreshed = await refreshAccessToken();
-      if (!refreshed) {
-        return null;
-      }
-      const retryResponse = await makeAuthRequest(input, init, headers);
-      return retryResponse.ok ? retryResponse : null;
-    },
-    [makeAuthRequest, refreshAccessToken],
-  );
-
-  const authFetch = useCallback(
-    async (input: RequestInfo, init: RequestInit = {}) => {
-      if (!isAuthenticated) {
-        throw new Error('Not authenticated');
-      }
-      const headers = new Headers(init.headers || {});
-      if (init.body && !(init.body instanceof FormData) && !headers.has('Content-Type')) {
-        headers.set('Content-Type', 'application/json');
-      }
-
-      const response = await makeAuthRequest(input, init, headers);
-
-      if (response.status === 401) {
-        const retryResponse = await handle401Retry(input, init, headers);
-        if (retryResponse) {
-          return retryResponse;
-        }
-        expireSession();
-        throw new Error('Unauthorized');
-      }
-
-      if (response.status === 403) {
-        expireSession('Access forbidden. Please sign in again.');
-        throw new Error('Forbidden');
-      }
-      return response;
-    },
-    [expireSession, handle401Retry, isAuthenticated, makeAuthRequest],
-  );
+  // The authenticated-fetch primitive + session-expiry/refresh logic live in
+  // the auth-store (module-level `authFetch`), so React Query queryFns can call
+  // it without closing over a component callback.
 
   // Helper: Select best interface by score or keep current
   const selectBestInterface = useCallback((interfaceData: InterfaceInfo[]): void => {
@@ -513,8 +405,8 @@ function AppContent(): ReactElement {
     queryKey: ['interfaces'],
     enabled: isAuthenticated,
     retry: false,
-    queryFn: async (): Promise<InterfaceInfo[]> => {
-      const response = await authFetch('/api/v1/interfaces');
+    queryFn: async ({ signal }): Promise<InterfaceInfo[]> => {
+      const response = await authFetch('/api/v1/interfaces', { signal });
       if (!response.ok) {
         throw new Error('Failed to load interfaces');
       }
@@ -548,7 +440,7 @@ function AppContent(): ReactElement {
         },
       });
     }
-  }, [authFetch]);
+  }, []);
 
   // Track previous test status to detect transitions
   const prevTestStatus = useRef<string>('idle');
@@ -580,8 +472,8 @@ function AppContent(): ReactElement {
     refetchIntervalInBackground: true,
     staleTime: 0,
     retry: false,
-    queryFn: async (): Promise<Stats> => {
-      const response = await authFetch('/api/v1/stats');
+    queryFn: async ({ signal }): Promise<Stats> => {
+      const response = await authFetch('/api/v1/stats', { signal });
       if (!response.ok) {
         throw new Error('Failed to refresh stats');
       }
@@ -604,97 +496,24 @@ function AppContent(): ReactElement {
   // Track test progress.
   const testProgress = useTestProgress(stats.testStatus, stats.currentTest, expectedDuration);
 
-  const handleLogin: SubmitHandler<{ username: string; password: string }> = useCallback(
-    async ({ username, password }) => {
-      setLoginLoading(true);
-      setLoginError(null);
-      try {
-        const response = await fetch('/api/v1/auth/login', {
-          method: 'POST',
-          credentials: 'include', // Allow server to set cookies
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password }),
-        });
-        if (!response.ok) {
-          const text = (await (response.text() as Promise<string>)) || 'Authentication failed';
-          setLoginError(text);
-          setConnected(false);
-          return;
-        }
-        const data = (await response.json()) as
-          | { mfaRequired: true; mfaToken: string; factor: string }
-          | unknown;
-        // Wave 3 (#85): if MFA is required, hold the mfa_token and
-        // show the code prompt. The user will POST to
-        // /api/v1/auth/login/totp to complete.
-        if (
-          typeof data === 'object' &&
-          data !== null &&
-          (data as { mfaRequired?: unknown }).mfaRequired === true
-        ) {
-          const mfaData = data as { mfaRequired: true; mfaToken: string; factor: string };
-          setMfaPending({ mfaToken: mfaData.mfaToken, factor: mfaData.factor });
-          return;
-        }
-        if (!isValidAuthResponse(data)) {
-          setLoginError('Authentication failed');
-          setConnected(false);
-          return;
-        }
-        // Tokens are now in httpOnly cookies set by server
-        // Just mark as authenticated
-        setIsAuthenticated(true);
-        window.localStorage.setItem(AUTH_FLAG_KEY, 'true');
-        setLoginError(null);
-        setConnected(true);
-      } catch {
-        setLoginError('Unable to reach authentication server.');
-        setConnected(false);
-      } finally {
-        setLoginLoading(false);
-      }
-    },
-    [],
-  );
+  // Login + MFA submit handlers dispatch to the auth-store. The store owns
+  // loginLoading / loginError / mfaPending / isAuthenticated, so the JSX reacts.
+  const handleLogin = useCallback((values: { username: string; password: string }): void => {
+    void useAuthStore.getState().login(values.username, values.password);
+  }, []);
 
-  // Wave 3 (#85): submit the MFA code captured by the MFA prompt.
-  const handleMFAVerify: SubmitHandler<{ code: string }> = useCallback(
-    async ({ code }) => {
-      if (!mfaPending) {
-        return;
-      }
-      setLoginLoading(true);
-      setLoginError(null);
-      try {
-        const response = await fetch('/api/v1/auth/login/totp', {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ mfaToken: mfaPending.mfaToken, code }),
+  const handleMFAVerify = useCallback(
+    (values: { code: string }): void => {
+      void useAuthStore
+        .getState()
+        .verifyMfa(values.code)
+        .then((result) => {
+          if (result.status === 'ok') {
+            mfaForm.reset();
+          }
         });
-        if (!response.ok) {
-          const text = (await response.text()) || 'Verification failed';
-          setLoginError(text);
-          return;
-        }
-        const data = (await response.json()) as unknown;
-        if (!isValidAuthResponse(data)) {
-          setLoginError('Verification failed');
-          return;
-        }
-        setIsAuthenticated(true);
-        window.localStorage.setItem(AUTH_FLAG_KEY, 'true');
-        setMfaPending(null);
-        mfaForm.reset();
-        setLoginError(null);
-        setConnected(true);
-      } catch {
-        setLoginError('Unable to reach verification endpoint.');
-      } finally {
-        setLoginLoading(false);
-      }
     },
-    [mfaPending, mfaForm],
+    [mfaForm],
   );
 
   const handleStartTest = useCallback(async (): Promise<void> => {
@@ -747,7 +566,6 @@ function AppContent(): ReactElement {
       setIsStartingTest(false);
     }
   }, [
-    authFetch,
     mode,
     reflectorProfile,
     isAuthenticated,
@@ -780,7 +598,7 @@ function AppContent(): ReactElement {
     } finally {
       setIsStoppingTest(false);
     }
-  }, [authFetch, isAuthenticated]);
+  }, [isAuthenticated]);
 
   // Frame-size result initialization (previously used by per-module Start
   // buttons) returns alongside the Phase A.1 follow-up that wires each
@@ -794,137 +612,41 @@ function AppContent(): ReactElement {
   // helpers will return in a follow-up commit when each test page wires
   // its own Start/Stop button.
 
-  // Logout handler - clears auth state and calls server to clear cookies
-  const handleLogout = useCallback(async () => {
-    try {
-      // Call server to clear cookies and revoke token
-      await fetch('/api/v1/auth/logout', {
-        method: 'POST',
-        credentials: 'include',
-      });
-    } catch (error) {
-      // Log but proceed with local cleanup - user is logging out regardless
-      logWarn('Logout API call failed', {
-        component: 'App',
-        action: 'handleLogout',
-        additionalData: {
-          error: error instanceof Error ? error.message : String(error),
-        },
-      });
-    }
-    // Clear auth state
-    setIsAuthenticated(false);
-    setConnected(false);
-    setLoginError(null);
-    window.localStorage.removeItem(AUTH_FLAG_KEY);
-    // Drop all cached server data so a stale response (e.g. interfaces) can
-    // never be replayed into the next session on this browser. This also resets
-    // stats to initialStats (the stats query has no data once cleared).
-    queryClient.clear();
-  }, [queryClient]);
-
-  // Check setup and recovery status on mount (before authentication check)
-  useEffect(() => {
-    const checkStatuses = async (): Promise<void> => {
-      try {
-        // Check setup status
-        const setupResponse = await fetch('/api/v1/setup/status', {
-          method: 'GET',
-          credentials: 'include',
-        });
-        if (setupResponse.ok) {
-          const data = await (setupResponse.json() as Promise<SetupStatus>);
-          setSetupStatus(data);
-        }
-
-        // Check recovery status
-        const recoveryResponse = await fetch('/api/v1/recovery/status', {
-          method: 'GET',
-          credentials: 'include',
-        });
-        if (recoveryResponse.ok) {
-          const data = await (recoveryResponse.json() as Promise<RecoveryStatus>);
-          setRecoveryStatus(data);
-        }
-      } catch (error) {
-        // Log but continue - status check failure shouldn't block the app
-        logWarn('Failed to check status', {
-          component: 'App',
-          action: 'checkStatuses',
-          additionalData: {
-            error: error instanceof Error ? error.message : String(error),
-          },
-        });
-      } finally {
-        setSetupChecked(true);
-      }
-    };
-    checkStatuses().catch(() => {
-      // Errors already logged inside checkStatuses
-    });
+  // Logout: the store calls the server, clears the auth flag, and
+  // cancel-then-clears the React Query cache (connected follows isAuthenticated).
+  const handleLogout = useCallback((): void => {
+    void useAuthStore.getState().logout();
   }, []);
 
-  // Login helper function (shared by login form and setup wizard)
-  const performLogin = useCallback(
-    async (loginUsername: string, loginPassword: string): Promise<boolean> => {
-      try {
-        const response = await fetch('/api/v1/auth/login', {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            username: loginUsername,
-            password: loginPassword,
-          }),
-        });
-        if (!response.ok) {
-          return false;
-        }
-        const data = await (response.json() as Promise<unknown>);
-        if (!isValidAuthResponse(data)) {
-          return false;
-        }
-        setIsAuthenticated(true);
-        window.localStorage.setItem(AUTH_FLAG_KEY, 'true');
-        setConnected(true);
-        return true;
-      } catch {
-        return false;
-      }
-    },
+  // Check setup + recovery status on mount (store action; before auth check).
+  useEffect(() => {
+    void useAuthStore.getState().checkStatuses();
+  }, []);
+
+  // Silent login used by the setup wizard once it provisions an admin.
+  const handleSetupLogin = useCallback(
+    (username: string, password: string): Promise<boolean> =>
+      useAuthStore.getState().performLogin(username, password),
     [],
   );
 
-  // Handle setup completion
+  // Setup/recovery completion + back-to-login dispatch to the auth-store.
   const handleSetupComplete = useCallback(() => {
-    // Clear setup status so we don't show wizard again
-    setSetupStatus(null);
+    useAuthStore.getState().setSetupStatus(null);
   }, []);
 
-  // Handle recovery completion
   const handleRecoveryComplete = useCallback(() => {
-    // Clear recovery status and form
+    const { setRecoveryStatus, setShowRecoveryForm, setLoginError } = useAuthStore.getState();
     setRecoveryStatus(null);
     setShowRecoveryForm(false);
     setLoginError('Password has been reset. Please sign in with your new password.');
   }, []);
 
-  // Handle back to login from recovery
   const handleBackToLogin = useCallback(() => {
-    setShowRecoveryForm(false);
+    useAuthStore.getState().setShowRecoveryForm(false);
   }, []);
 
-  // Sync auth flag with localStorage
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-    if (isAuthenticated) {
-      window.localStorage.setItem(AUTH_FLAG_KEY, 'true');
-    } else {
-      window.localStorage.removeItem(AUTH_FLAG_KEY);
-    }
-  }, [isAuthenticated]);
+  // The auth-store owns the localStorage auth flag now (no component sync).
 
   // Dark mode managed by useTheme(); persists to localStorage.
 
@@ -948,6 +670,14 @@ function AppContent(): ReactElement {
       });
     }
   }, [mode]);
+
+  // Signing out (store flips isAuthenticated false on logout/expiry) drops the
+  // connection indicator; the interfaces query owns the reconnect (→ true) side.
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setConnected(false);
+    }
+  }, [isAuthenticated]);
 
   // Drive interface auto-selection + connection state off the interfaces query.
   // (The query itself fetches on mount and whenever isAuthenticated flips true.)
@@ -1266,7 +996,7 @@ function AppContent(): ReactElement {
         {setupChecked && setupStatus?.needsSetup ? (
           <SetupWizard
             onComplete={handleSetupComplete}
-            onLogin={performLogin}
+            onLogin={handleSetupLogin}
             suggestedPassword={setupStatus.suggestedPassword}
             username={setupStatus.username}
             setupToken={setupStatus.setupToken}
@@ -1344,9 +1074,8 @@ function AppContent(): ReactElement {
                   <button
                     type="button"
                     onClick={() => {
-                      setMfaPending(null);
+                      useAuthStore.getState().cancelMfa();
                       mfaForm.reset();
-                      setLoginError(null);
                     }}
                     className="w-full mt-inline text-sm text-text-muted hover:text-brand-primary"
                   >

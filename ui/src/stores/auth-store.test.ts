@@ -83,6 +83,16 @@ describe('auth-store: login / MFA', () => {
     expect(useAuthStore.getState().isAuthenticated).toBe(true);
     expect(useAuthStore.getState().mfaPending).toBeNull();
   });
+
+  it('cancelMfa drops the pending challenge and clears the error', () => {
+    useAuthStore.setState({
+      mfaPending: { mfaToken: 'tok', factor: 'totp' },
+      loginError: 'previous error',
+    });
+    useAuthStore.getState().cancelMfa();
+    expect(useAuthStore.getState().mfaPending).toBeNull();
+    expect(useAuthStore.getState().loginError).toBeNull();
+  });
 });
 
 describe('auth-store: teardown purges the query cache', () => {

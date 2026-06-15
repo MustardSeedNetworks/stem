@@ -115,6 +115,8 @@ interface AuthActions {
   login: (username: string, password: string) => Promise<LoginResult>;
   /** Complete an MFA challenge with a TOTP code. */
   verifyMfa: (code: string) => Promise<LoginResult>;
+  /** Abandon an in-progress MFA challenge ("Use different account"). */
+  cancelMfa: () => void;
   /**
    * Silent login used by the setup wizard once it has provisioned an admin.
    * Returns true on success. Does not surface loginError/loginLoading.
@@ -264,6 +266,8 @@ export const useAuthStore = create<AuthStore>()(
       expireSession: (message = 'Session expired. Please sign in again.'): void => {
         tearDownSession(set, message);
       },
+
+      cancelMfa: () => set({ mfaPending: null, loginError: null }, false, 'cancelMfa'),
 
       setLoginError: (message) => set({ loginError: message }, false, 'setLoginError'),
       setSetupStatus: (status) => set({ setupStatus: status }, false, 'setSetupStatus'),
