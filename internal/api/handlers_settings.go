@@ -5,6 +5,7 @@ package api
 import (
 	"net/http"
 
+	"github.com/MustardSeedNetworks/stem/internal/api/sse"
 	"github.com/MustardSeedNetworks/stem/internal/logging"
 	"github.com/MustardSeedNetworks/stem/internal/netif"
 	reflectorDP "github.com/MustardSeedNetworks/stem/internal/reflector/dataplane"
@@ -161,7 +162,7 @@ func (s *Server) handleModeUpdate(w http.ResponseWriter, r *http.Request) {
 		}
 		// Broadcast even on "unchanged" so a browser tab that missed
 		// the original change still gets a confirmation frame.
-		s.sseBroadcaster.Publish(SSEFrame{Type: "mode_changed", Payload: resp})
+		s.sseBroadcaster.Publish(sse.Frame{Type: "mode_changed", Payload: resp})
 		writeJSON(w, resp)
 		return
 	}
@@ -190,7 +191,7 @@ func (s *Server) handleModeUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 	// Push to every connected SSE subscriber so other browser tabs /
 	// CLI watchers see the mode change in real time (#296).
-	s.sseBroadcaster.Publish(SSEFrame{Type: "mode_changed", Payload: resp})
+	s.sseBroadcaster.Publish(sse.Frame{Type: "mode_changed", Payload: resp})
 	writeJSON(w, resp)
 }
 

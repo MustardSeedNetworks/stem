@@ -6,6 +6,8 @@ import (
 	"context"
 	"testing"
 	"time"
+
+	"github.com/MustardSeedNetworks/stem/internal/api/sse"
 )
 
 // TestBackgroundComponentsStartStop verifies the holder starts its goroutine
@@ -15,7 +17,7 @@ import (
 func TestBackgroundComponentsStartStop(t *testing.T) {
 	t.Parallel()
 
-	s := &Server{sseBroadcaster: NewSSEBroadcaster()}
+	s := &Server{sseBroadcaster: sse.New()}
 	bg := newBackgroundComponents(s)
 
 	bg.Start(context.Background())
@@ -46,7 +48,7 @@ func TestBackgroundComponentsStopBeforeStart(t *testing.T) {
 func TestBackgroundComponentsStopIdempotent(t *testing.T) {
 	t.Parallel()
 
-	s := &Server{sseBroadcaster: NewSSEBroadcaster()}
+	s := &Server{sseBroadcaster: sse.New()}
 	bg := newBackgroundComponents(s)
 	bg.Start(context.Background())
 	bg.Stop()
@@ -59,7 +61,7 @@ func TestBackgroundComponentsStopIdempotent(t *testing.T) {
 func TestBackgroundComponentsCtxCancelStops(t *testing.T) {
 	t.Parallel()
 
-	s := &Server{sseBroadcaster: NewSSEBroadcaster()}
+	s := &Server{sseBroadcaster: sse.New()}
 	bg := newBackgroundComponents(s)
 
 	ctx, cancel := context.WithCancel(context.Background())

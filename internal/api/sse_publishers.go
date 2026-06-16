@@ -1,14 +1,17 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 package api
 
 import (
 	"context"
 	"time"
 
+	"github.com/MustardSeedNetworks/stem/internal/api/sse"
 	"github.com/MustardSeedNetworks/stem/internal/logging"
 )
 
 // reflectorStatsInterval is how often the reflector-stats publisher
-// computes and broadcasts a stats frame. 1Hz matches the polling
+// computes and broadcasts a stats frame. 1 Hz matches the polling
 // cadence the UI was using before this PR; the SSE channel just
 // removes the round-trip overhead and tightens the latency.
 const reflectorStatsInterval = time.Second
@@ -55,7 +58,7 @@ func (s *Server) broadcastReflectorStatsIfActive() {
 	}
 
 	stats := s.buildActiveReflectorStats(exec, elapsed)
-	s.sseBroadcaster.Publish(SSEFrame{
+	s.sseBroadcaster.Publish(sse.Frame{
 		Type:    "reflector_stats",
 		Payload: stats,
 	})
@@ -74,7 +77,7 @@ func (s *Server) PublishTestProgress(testID string, progress any) {
 	if s.sseBroadcaster == nil {
 		return
 	}
-	s.sseBroadcaster.Publish(SSEFrame{
+	s.sseBroadcaster.Publish(sse.Frame{
 		Type: "test_progress",
 		Payload: map[string]any{
 			"testId":   testID,
