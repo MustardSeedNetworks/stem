@@ -1,6 +1,20 @@
 // SPDX-License-Identifier: BUSL-1.1
 
-package api
+// Package tlsutil provisions and configures the TLS material the api transport
+// layer serves: self-signed certificate generation, ACME/Let's Encrypt manager
+// construction, the secure [tls.Config] template, and the active-cert
+// fingerprint cache.
+//
+// It is a leaf of internal/api (ADR-0011): it depends only on the standard
+// library, golang.org/x/crypto (ACME), and internal/logging — never on the api
+// transport layer itself. The boundary is enforced by depguard
+// (api-tlsutil-isolated) so a future accidental upward import fails CI rather
+// than silently coupling the leaf back into the transport layer.
+//
+// The HTTP serving lifecycle (binding the listener, the ACME HTTP-01 challenge
+// server, /__version response assembly) lives in the api transport layer and
+// calls into this package via the exported constructors.
+package tlsutil
 
 import (
 	"crypto/rand"
@@ -21,17 +35,19 @@ import (
 	"github.com/MustardSeedNetworks/stem/internal/logging"
 )
 
-// TLS configuration constants.
+// TLS provisioning constants.
 const (
-	rsaKeyBits          = 4096
-	certValidYears      = 1
-	defaultCertsDir     = "certs"
+	rsaKeyBits     = 4096
+	certValidYears = 1
+
+	// DefaultCertsDir is the directory self-signed certificates are written to
+	// and read from when [Config.CertsDir] is empty. Exported so the api layer
+	// can resolve the active cert path for fingerprinting without duplicating
+	// the literal.
+	DefaultCertsDir = "certs"
+
 	defaultACMECacheDir = "certs/acme"
 	serialNumberBitSize = 128
-	refreshMultiplier   = 24 // Refresh token lasts 24x longer than access token
-
-	// acmeReadHeaderTimeoutSec is the timeout for reading ACME challenge request headers.
-	acmeReadHeaderTimeoutSec = 10
 
 	// privateKeyFileMode is the umask-restricted mode for new TLS key files
 	// (owner read/write only, no group/other access).
@@ -60,8 +76,8 @@ type ACMEConfig struct {
 	Staging bool
 }
 
-// TLSConfig holds TLS configuration options.
-type TLSConfig struct {
+// Config holds TLS configuration options for the server.
+type Config struct {
 	// Enabled enables HTTPS mode.
 	Enabled bool
 
@@ -82,29 +98,29 @@ type TLSConfig struct {
 	ACME ACMEConfig
 }
 
-// DefaultTLSConfig returns secure TLS defaults with auto-generated certificates.
-func DefaultTLSConfig() TLSConfig {
-	return TLSConfig{
+// DefaultConfig returns secure TLS defaults with auto-generated certificates.
+func DefaultConfig() Config {
+	return Config{
 		Enabled:  true,
 		CertFile: "",
 		KeyFile:  "",
-		CertsDir: defaultCertsDir,
+		CertsDir: DefaultCertsDir,
 	}
 }
 
-// createTLSConfig creates a [tls.Config] with secure settings.
+// ServerConfig creates a [tls.Config] with secure settings.
 // Uses TLS 1.3 minimum for best security.
-func createTLSConfig() *tls.Config {
+func ServerConfig() *tls.Config {
 	return &tls.Config{
 		MinVersion: tls.VersionTLS13,
 	}
 }
 
-// ensureSelfSignedCert generates a self-signed certificate if needed.
+// EnsureSelfSignedCert generates a self-signed certificate if needed.
 // Returns paths to the certificate and key files.
-func ensureSelfSignedCert(certsDir string) (string, string, error) {
+func EnsureSelfSignedCert(certsDir string) (string, string, error) {
 	if certsDir == "" {
-		certsDir = defaultCertsDir
+		certsDir = DefaultCertsDir
 	}
 
 	// Sanitize directory path to prevent directory traversal.
@@ -253,9 +269,9 @@ func writePrivateKey(root *os.Root, keyFile string, privateKey *rsa.PrivateKey) 
 	return nil
 }
 
-// createACMEManager creates an autocert.Manager for Let's Encrypt certificate management.
+// NewACMEManager creates an autocert.Manager for Let's Encrypt certificate management.
 // Ported from Seed project for automatic certificate management.
-func createACMEManager(config ACMEConfig) (*autocert.Manager, error) {
+func NewACMEManager(config ACMEConfig) (*autocert.Manager, error) {
 	cacheDir := config.CacheDir
 	if cacheDir == "" {
 		cacheDir = defaultACMECacheDir
@@ -283,8 +299,8 @@ func createACMEManager(config ACMEConfig) (*autocert.Manager, error) {
 	return manager, nil
 }
 
-// createACMETLSConfig creates a TLS config using the ACME manager.
-func createACMETLSConfig(manager *autocert.Manager) *tls.Config {
+// ACMETLSConfig creates a TLS config using the ACME manager.
+func ACMETLSConfig(manager *autocert.Manager) *tls.Config {
 	tlsConfig := manager.TLSConfig()
 	tlsConfig.MinVersion = tls.VersionTLS13
 	return tlsConfig

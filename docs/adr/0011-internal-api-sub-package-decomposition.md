@@ -33,7 +33,8 @@ The api transport layer wires leaves at construction time; no leaf knows about
 | Slice | Package | PR |
 |-------|---------|-----|
 | Rate limiter | `internal/api/ratelimit` | #451 |
-| SSE broadcaster | `internal/api/sse` | this ADR |
+| SSE broadcaster | `internal/api/sse` | #452 |
+| TLS utilities | `internal/api/tlsutil` | this ADR |
 
 ### SSE slice (this ADR)
 
@@ -47,17 +48,39 @@ reference it without duplicating the value; the api-layer file (`sse.go`)
 re-derives its own constant from the same numeric literal to avoid an import
 dependency in the other direction.
 
+### TLS slice (this ADR)
+
+`internal/api/tlsutil` holds the TLS material provisioning: the `Config`/
+`ACMEConfig` settings structs, `ServerConfig` (the TLS 1.3 [tls.Config]
+template), `EnsureSelfSignedCert` (self-signed cert generation), the ACME
+manager constructors (`NewACMEManager`, `ACMETLSConfig`), and the
+`FingerprintCache` (active-cert SHA-256 fingerprint, exposed via `/__version`).
+It depends only on the standard library, `golang.org/x/crypto` (ACME), and
+`internal/logging`.
+
+The HTTP serving lifecycle stays in `internal/api`: `startTLS`/`startTLSWithACME`
+(listener binding + the port-80 HTTP-01 challenge server) and the two `Server`
+methods that bridge the cache to the request path — `activeCertPath` (resolves
+the served cert path mirroring `startTLS`'s priority order) and
+`tlsFingerprintForResponse`. `DefaultCertsDir` is exported so the api layer
+resolves the self-signed default path without duplicating the literal.
+
+Two constants that lived in the old `tls.go` const block but are unrelated to
+TLS were rehomed to the api layer rather than dragged into the leaf:
+`refreshMultiplier` (auth cookie lifetime → `handlers_auth.go`) and
+`acmeReadHeaderTimeoutSec` (transport-layer challenge-server timeout →
+`server.go`).
+
 ### Future slices (candidates)
 
 | Concern | Notes |
 |---------|-------|
-| TLS utilities | `ensureSelfSignedCert`, `createTLSConfig`, ACME helpers |
 | CORS logic | RFC 1918 origin validation |
 
 ## Consequences
 
 - The leaf boundary is statically enforced by depguard (`api-sse-isolated`,
-  `api-ratelimit-isolated` rules in `.golangci.yml`).
+  `api-ratelimit-isolated`, `api-tlsutil-isolated` rules in `.golangci.yml`).
 - `go vet` + `golangci-lint` catch upward imports at CI time.
 - `internal/api` package size decreases incrementally with each slice.
 - No behaviour change: endpoints, event types, and publish sites are identical.

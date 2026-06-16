@@ -77,6 +77,7 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strings"
 	"sync"
 	"syscall"
@@ -84,6 +85,7 @@ import (
 
 	"github.com/MustardSeedNetworks/stem/internal/api/ratelimit"
 	"github.com/MustardSeedNetworks/stem/internal/api/sse"
+	"github.com/MustardSeedNetworks/stem/internal/api/tlsutil"
 	"github.com/MustardSeedNetworks/stem/internal/auth"
 	"github.com/MustardSeedNetworks/stem/internal/license"
 	"github.com/MustardSeedNetworks/stem/internal/logging"
@@ -157,7 +159,7 @@ type Server struct {
 	currentModule        string
 	authLimiter          *ratelimit.RateLimiter     // Rate limiter for auth endpoints (5/min)
 	apiLimiter           *ratelimit.RateLimiter     // Rate limiter for standard API endpoints (100/min)
-	tlsConfig            TLSConfig                  // TLS configuration for HTTPS
+	tlsConfig            tlsutil.Config             // TLS configuration for HTTPS
 	cookieConfig         auth.CookieConfig          // Cookie configuration for secure auth
 	corsAllowPrivate     bool                       // STEM_CORS_ALLOW_PRIVATE: reflect RFC1918 cross-origins (default off)
 	routeManifest        []route                    // capability registry: routes registered via register() (route.go)
@@ -168,7 +170,7 @@ type Server struct {
 	recoveryTokenManager *auth.RecoveryTokenManager // Recovery token manager for password recovery
 	dataDir              string                     // Application data directory for recovery files
 	acmeChallengeServer  *http.Server               // HTTP-01 challenge server for ACME
-	tlsFingerprint       tlsFingerprintCache        // Cached SHA-256 fingerprint of the active TLS cert (exposed via /__version)
+	tlsFingerprint       tlsutil.FingerprintCache   // Cached SHA-256 fingerprint of the active TLS cert (exposed via /__version)
 	background           *BackgroundComponents      // Run-scoped long-lived goroutines (reflector-stats SSE publisher); ordered Start/Stop (background.go)
 
 	// executorResolver maps a module name to a factory producing a
@@ -292,7 +294,7 @@ func NewServer(port int) (*Server, error) {
 	s.currentModule = ""
 	s.authLimiter = ratelimit.NewAuthRateLimiter()
 	s.apiLimiter = ratelimit.NewAPIRateLimiter()
-	s.tlsConfig = TLSConfig{
+	s.tlsConfig = tlsutil.Config{
 		Enabled:  true,
 		CertFile: os.Getenv("STEM_TLS_CERT"),
 		KeyFile:  os.Getenv("STEM_TLS_KEY"),
@@ -814,6 +816,10 @@ func (s *Server) Run() error {
 	}
 }
 
+// acmeReadHeaderTimeoutSec is the timeout for reading ACME HTTP-01 challenge
+// request headers on the port-80 challenge server.
+const acmeReadHeaderTimeoutSec = 10
+
 // startTLS starts the server with TLS encryption on the already-bound
 // listener. Priority order: ACME → manual certificates → self-signed.
 func (s *Server) startTLS(ln net.Listener) error {
@@ -832,14 +838,14 @@ func (s *Server) startTLS(ln net.Listener) error {
 	// Priority 3: Self-signed certificate (fallback)
 	if certFile == "" || keyFile == "" {
 		var err error
-		certFile, keyFile, err = ensureSelfSignedCert(s.tlsConfig.CertsDir)
+		certFile, keyFile, err = tlsutil.EnsureSelfSignedCert(s.tlsConfig.CertsDir)
 		if err != nil {
 			return fmt.Errorf("failed to generate self-signed certificate: %w", err)
 		}
 	}
 
 	// Configure TLS 1.3 minimum.
-	s.httpServer.TLSConfig = createTLSConfig()
+	s.httpServer.TLSConfig = tlsutil.ServerConfig()
 
 	logging.Info("Starting HTTPS server",
 		"addr", s.httpServer.Addr,
@@ -858,13 +864,13 @@ func (s *Server) startTLS(ln net.Listener) error {
 // on the already-bound listener. Ported from Seed project for automatic
 // certificate management.
 func (s *Server) startTLSWithACME(ln net.Listener) error {
-	manager, err := createACMEManager(s.tlsConfig.ACME)
+	manager, err := tlsutil.NewACMEManager(s.tlsConfig.ACME)
 	if err != nil {
 		return fmt.Errorf("create ACME manager: %w", err)
 	}
 
 	// Configure TLS with ACME
-	s.httpServer.TLSConfig = createACMETLSConfig(manager)
+	s.httpServer.TLSConfig = tlsutil.ACMETLSConfig(manager)
 
 	logging.Info("Starting HTTPS server with ACME",
 		"addr", s.httpServer.Addr,
@@ -890,6 +896,46 @@ func (s *Server) startTLSWithACME(ln net.Listener) error {
 		return fmt.Errorf("https server with ACME: %w", listenErr)
 	}
 	return nil
+}
+
+// activeCertPath returns the cert file path the server will use, or "" if the
+// server is running in HTTP mode. Mirrors the priority order of startTLS so
+// /__version reports the same cert that is actually served.
+func (s *Server) activeCertPath() string {
+	if !s.tlsConfig.Enabled {
+		return ""
+	}
+	if s.tlsConfig.ACME.Enabled {
+		// ACME certs live in the autocert cache; they are not a single
+		// stable file path we can fingerprint here. Return empty rather
+		// than guessing.
+		return ""
+	}
+	if s.tlsConfig.CertFile != "" {
+		return s.tlsConfig.CertFile
+	}
+	// Fall back to the self-signed default path used by EnsureSelfSignedCert.
+	certsDir := s.tlsConfig.CertsDir
+	if certsDir == "" {
+		certsDir = tlsutil.DefaultCertsDir
+	}
+	return filepath.Join(certsDir, "server.crt")
+}
+
+// tlsFingerprintForResponse returns the cached fingerprint (computing it on
+// first call). Errors are swallowed and reported as an empty string so
+// /__version always returns a stable shape even if the cert is missing or
+// unreadable; an empty value is a signal to the operator to investigate.
+func (s *Server) tlsFingerprintForResponse() string {
+	path := s.activeCertPath()
+	if path == "" {
+		return ""
+	}
+	fp, err := s.tlsFingerprint.Get(path)
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(fp)
 }
 
 // Shutdown gracefully shuts down the server.

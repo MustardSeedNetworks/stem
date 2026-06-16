@@ -10,6 +10,11 @@ import (
 	"github.com/MustardSeedNetworks/stem/internal/logging"
 )
 
+// refreshMultiplier sets how much longer the refresh-token cookie lives than
+// the access token: the refresh cookie expires after sessionDuration *
+// refreshMultiplier. Shared by the login, refresh, and MFA auth handlers.
+const refreshMultiplier = 24 // Refresh token lasts 24x longer than access token
+
 // handleAuthLogin issues JWT tokens for valid credentials.
 // Sets httpOnly cookies for browser auth and returns tokens for API clients.
 //

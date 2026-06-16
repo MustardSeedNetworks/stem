@@ -277,6 +277,20 @@ linters:
           deny:
             - pkg: github.com/MustardSeedNetworks/stem/internal/api
               desc: "sse is a leaf — the broadcaster engine must not import the api transport layer; wire at the api layer"
+        # tlsutil is a leaf of internal/api (ADR-0011): it depends only on
+        # stdlib, golang.org/x/crypto (ACME), and internal/logging — never on
+        # the api transport layer itself. This depguard rule enforces that
+        # boundary so a future accidental upward import fails CI rather than
+        # silently coupling the leaf back into the transport layer.
+        # Test files are excluded: the _test.go external package imports the
+        # leaf itself, which is expected.
+        "api-tlsutil-isolated":
+          files:
+            - "**/internal/api/tlsutil/**"
+            - "!$test"
+          deny:
+            - pkg: github.com/MustardSeedNetworks/stem/internal/api
+              desc: "tlsutil is a leaf — cert provisioning, ACME, and TLS config take no api types, so it never imports the api transport layer"
 
     embeddedstructfieldcheck:
       # Checks that sync.Mutex and sync.RWMutex are not used as embedded fields.
