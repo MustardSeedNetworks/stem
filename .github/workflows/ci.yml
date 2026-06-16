@@ -136,6 +136,12 @@ jobs:
       - name: Route-policy gate (capability registry)
         run: ./scripts/check-route-policy.sh
 
+      - name: JSON wire-casing gate — camelCase ratchet
+        run: ./scripts/check-json-casing.sh
+
+      - name: File-size gate (STRICT — W5.5 bookend, fleet-wide Go + TS red flags)
+        run: STRICT=1 ./scripts/check-file-size.sh
+
       - name: Run tests
         run: CGO_ENABLED=0 go test -v -coverprofile=coverage.out ./...
 
