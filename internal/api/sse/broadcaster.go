@@ -12,6 +12,7 @@ package sse
 
 import (
 	"encoding/json"
+	"slices"
 	"sync"
 )
 
@@ -37,11 +38,6 @@ type Frame struct {
 	Payload any    `json:"payload"`
 }
 
-// frameOverhead is the byte count of the SSE wire-format wrapper
-// ("data: " prefix + "\n\n" suffix) added in [Frame.Encode].
-// Constant so the pre-allocation doesn't trip mnd.
-const frameOverhead = len("data: ") + len("\n\n")
-
 // Encode renders a frame in SSE wire format: a "data:" line followed by the
 // JSON-encoded frame and a terminating blank line. The JSON is always single-
 // line (marshalled by [json.Marshal] with no indent), which satisfies the SSE
@@ -53,11 +49,10 @@ func (f Frame) Encode() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	out := make([]byte, 0, len(data)+frameOverhead)
-	out = append(out, "data: "...)
-	out = append(out, data...)
-	out = append(out, '\n', '\n')
-	return out, nil
+	// slices.Concat sizes the result internally (with its own overflow guard),
+	// so there is no hand-rolled make-capacity arithmetic for a static analyzer
+	// to flag as a potential allocation-size overflow.
+	return slices.Concat([]byte("data: "), data, []byte("\n\n")), nil
 }
 
 // subscriber owns one connected client's outbound channel. Buffered so a
