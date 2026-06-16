@@ -147,7 +147,11 @@ func TestInfoMatchesGetters(t *testing.T) {
 		t.Errorf("Info()['buildTime'] = %q, want %q (GetBuildTime())", info["buildTime"], version.GetBuildTime())
 	}
 	if info["releaseTrain"] != version.GetReleaseTrain() {
-		t.Errorf("Info()['releaseTrain'] = %q, want %q (GetReleaseTrain())", info["releaseTrain"], version.GetReleaseTrain())
+		t.Errorf(
+			"Info()['releaseTrain'] = %q, want %q (GetReleaseTrain())",
+			info["releaseTrain"],
+			version.GetReleaseTrain(),
+		)
 	}
 	if info["uiBuildHash"] != version.GetUIBuildHash() {
 		t.Errorf(
