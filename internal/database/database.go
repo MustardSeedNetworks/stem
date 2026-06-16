@@ -71,9 +71,6 @@ type DB struct {
 	sessions    *SessionRepository
 }
 
-// Database is an alias for DB for backwards compatibility.
-type Database = DB
-
 // Config holds database configuration options.
 type Config struct {
 	// Path to the SQLite database file
@@ -428,31 +425,16 @@ func (db *DB) CreateTestResult(ctx context.Context, result *TestResult) error {
 	return err
 }
 
-// SaveTestResult saves a test result (alias for CreateTestResult).
-func (db *DB) SaveTestResult(ctx context.Context, result *TestResult) error {
-	return db.CreateTestResult(ctx, result)
-}
-
 // CreateAuditLog creates an audit log entry (convenience method for backup restore).
 func (db *DB) CreateAuditLog(ctx context.Context, entry *AuditLogEntry) error {
 	_, err := db.AuditLog().Log(ctx, entry)
 	return err
 }
 
-// SaveAuditLog saves an audit log entry (alias for CreateAuditLog).
-func (db *DB) SaveAuditLog(ctx context.Context, entry *AuditLogEntry) error {
-	return db.CreateAuditLog(ctx, entry)
-}
-
 // BlacklistSession adds a session to the blacklist (convenience method for backup restore).
 func (db *DB) BlacklistSession(ctx context.Context, session *Session) error {
 	_, err := db.Sessions().Blacklist(ctx, session)
 	return err
-}
-
-// SaveSession saves a session (alias for BlacklistSession).
-func (db *DB) SaveSession(ctx context.Context, session *Session) error {
-	return db.BlacklistSession(ctx, session)
 }
 
 // Exec executes a query without returning any rows.

@@ -318,12 +318,12 @@ func TestAuthLoginResponse(t *testing.T) {
 	}
 }
 
-// TestHandleAuthCSRF tests the GET /api/v1/auth/csrf endpoint.
+// TestHandleAuthCSRF tests the GET /api/v1/auth/csrf-token endpoint.
 func TestHandleAuthCSRF(t *testing.T) {
 	t.Run("requires authentication", func(t *testing.T) {
 		s := setupAuthTestServer(t)
 
-		req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/csrf", nil)
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/csrf-token", nil)
 		w := httptest.NewRecorder()
 
 		s.ServeHTTP(w, req)
@@ -338,7 +338,7 @@ func TestHandleAuthCSRF(t *testing.T) {
 		s := setupAuthTestServer(t)
 		token, _ := getAuthToken(t, s)
 
-		req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/csrf", nil)
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/csrf-token", nil)
 		req.Header.Set("Authorization", "Bearer "+token)
 		w := httptest.NewRecorder()
 
@@ -365,7 +365,7 @@ func TestHandleAuthCSRF(t *testing.T) {
 		s := setupAuthTestServer(t)
 		token, _ := getAuthToken(t, s)
 
-		req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/csrf", nil)
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/csrf-token", nil)
 		authorizeWithCSRF(t, s, req, token)
 		w := httptest.NewRecorder()
 
@@ -380,7 +380,7 @@ func TestHandleAuthCSRF(t *testing.T) {
 		s := setupAuthTestServer(t)
 		token, _ := getAuthToken(t, s)
 
-		req := httptest.NewRequest(http.MethodPut, "/api/v1/auth/csrf", nil)
+		req := httptest.NewRequest(http.MethodPut, "/api/v1/auth/csrf-token", nil)
 		authorizeWithCSRF(t, s, req, token)
 		w := httptest.NewRecorder()
 
@@ -395,7 +395,7 @@ func TestHandleAuthCSRF(t *testing.T) {
 		s := setupAuthTestServer(t)
 		token, _ := getAuthToken(t, s)
 
-		req := httptest.NewRequest(http.MethodDelete, "/api/v1/auth/csrf", nil)
+		req := httptest.NewRequest(http.MethodDelete, "/api/v1/auth/csrf-token", nil)
 		authorizeWithCSRF(t, s, req, token)
 		w := httptest.NewRecorder()
 
@@ -409,7 +409,7 @@ func TestHandleAuthCSRF(t *testing.T) {
 	t.Run("invalid token", func(t *testing.T) {
 		s := setupAuthTestServer(t)
 
-		req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/csrf", nil)
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/csrf-token", nil)
 		req.Header.Set("Authorization", "Bearer invalid-token-string")
 		w := httptest.NewRecorder()
 
@@ -424,7 +424,7 @@ func TestHandleAuthCSRF(t *testing.T) {
 		s := setupAuthTestServer(t)
 		token, _ := getAuthToken(t, s)
 
-		req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/csrf", nil)
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/csrf-token", nil)
 		req.Header.Set("Authorization", "Bearer "+token)
 		w := httptest.NewRecorder()
 
@@ -563,7 +563,7 @@ func TestAuthRoutesRegistered(t *testing.T) {
 		{"/api/v1/auth/login", http.MethodPost},
 		{"/api/v1/auth/logout", http.MethodPost},
 		{"/api/v1/auth/refresh", http.MethodPost},
-		{"/api/v1/auth/csrf", http.MethodGet},
+		{"/api/v1/auth/csrf-token", http.MethodGet},
 		{"/api/v1/auth/csrf-token", http.MethodGet},
 	}
 
@@ -606,7 +606,7 @@ func BenchmarkHandleAuthCSRF(b *testing.B) {
 	b.ResetTimer()
 
 	for b.Loop() {
-		req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/csrf", nil)
+		req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/csrf-token", nil)
 		req.Header.Set("Authorization", "Bearer "+token)
 		w := httptest.NewRecorder()
 		s.ServeHTTP(w, req)
