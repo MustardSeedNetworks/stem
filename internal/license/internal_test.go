@@ -259,18 +259,18 @@ func TestValidateLicenseKeyInternalEdgeCases(t *testing.T) {
 		t.Errorf("Expected Professional tier, got %v", info.Tier)
 	}
 
-	// Test Enterprise tier key validation.
-	enterpriseKey, err := signTestKey(t, "3001", "XYZXYZX", TierEnterprise)
+	// Test Enterprise tier key validation — tier 3 is retired; tokens must be REJECTED.
+	enterpriseKey, err := signTestKey(t, "3001", "XYZXYZX", Tier(3))
 	if err != nil {
 		t.Fatalf("signTestKey error: %v", err)
 	}
 
 	info = v.Validate(enterpriseKey)
-	if !info.Valid {
-		t.Errorf("Enterprise key should be valid: %s", info.ErrorMsg)
+	if info.Valid {
+		t.Error("Enterprise (tier 3) key must be rejected after retirement")
 	}
-	if info.Tier != TierEnterprise {
-		t.Errorf("Expected Enterprise tier, got %v", info.Tier)
+	if info.ErrorMsg != "Invalid license tier" {
+		t.Errorf("Enterprise key should fail with 'Invalid license tier', got %q", info.ErrorMsg)
 	}
 }
 
@@ -500,7 +500,7 @@ func TestStartTrialInternalEdgeCases(t *testing.T) {
 	mgr.state = &ActivationState{
 		LicenseKey:      "",
 		DeviceHash:      mgr.fingerprint.Hash(),
-		Tier:            TierEnterprise,
+		Tier:            TierProfessional,
 		ActivatedAt:     timeZero(),
 		LastValidatedAt: timeZero(),
 		ExpiresAt:       timeNow().AddDate(1, 0, 0),
@@ -515,8 +515,8 @@ func TestStartTrialInternalEdgeCases(t *testing.T) {
 	if result.IsTrialMode {
 		t.Error("StartTrial with existing license should not be trial mode")
 	}
-	if result.Tier != TierEnterprise {
-		t.Errorf("Expected Enterprise tier, got %v", result.Tier)
+	if result.Tier != TierProfessional {
+		t.Errorf("Expected Professional tier, got %v", result.Tier)
 	}
 
 	// Test with expired trial.
@@ -598,14 +598,14 @@ func TestValidateLicenseKeyAllPaths(t *testing.T) {
 		t.Error("Garbage key should not be valid")
 	}
 
-	// Generate valid keys for all tiers and verify validation.
+	// Generate valid keys for current tiers and verify validation.
+	// Enterprise (tier 3 / "3001") is retired and tested separately below.
 	tiers := []struct {
 		product string
 		tier    Tier
 	}{
 		{"1001", TierReflector},
 		{"2001", TierProfessional},
-		{"3001", TierEnterprise},
 	}
 
 	for _, tc := range tiers {
@@ -620,6 +620,16 @@ func TestValidateLicenseKeyAllPaths(t *testing.T) {
 		if info.ProductCode != tc.product {
 			t.Errorf("Expected product %s, got %s", tc.product, info.ProductCode)
 		}
+	}
+
+	// Enterprise tier (3 / "3001") is retired: tokens must be REJECTED.
+	enterpriseKey, _ := signTestKey(t, "3001", "ABCDEFG", Tier(3))
+	info = v.Validate(enterpriseKey)
+	if info.Valid {
+		t.Error("Enterprise (tier 3) key must be rejected after retirement")
+	}
+	if info.ErrorMsg != "Invalid license tier" {
+		t.Errorf("Enterprise key error = %q, want 'Invalid license tier'", info.ErrorMsg)
 	}
 }
 
@@ -943,14 +953,14 @@ func TestValidateLicenseKeyUnknownProductCode(t *testing.T) {
 		t.Error("Unknown product code should set a non-empty ErrorMsg")
 	}
 
-	// All valid tier/product combinations work.
+	// All valid tier/product combinations work. Enterprise (tier 3 / "3001") is
+	// retired and rejected — it is NOT in this list.
 	validCombos := []struct {
 		product string
 		tier    Tier
 	}{
 		{"1001", TierReflector},
 		{"2001", TierProfessional},
-		{"3001", TierEnterprise},
 	}
 
 	for _, tc := range validCombos {
@@ -963,6 +973,17 @@ func TestValidateLicenseKeyUnknownProductCode(t *testing.T) {
 		comboInfo := v.Validate(key)
 		if !comboInfo.Valid {
 			t.Errorf("Key for %s/%v should be valid: %s", tc.product, tc.tier, comboInfo.ErrorMsg)
+		}
+	}
+
+	// "3001" / tier 3 (retired Enterprise) is now rejected.
+	retiredKey, err := signTestKey(t, "3001", "TESTKEY", Tier(3))
+	if err != nil {
+		t.Errorf("signTestKey failed for 3001/Enterprise: %v", err)
+	} else {
+		retiredInfo := v.Validate(retiredKey)
+		if retiredInfo.Valid {
+			t.Error("Retired Enterprise token (3001/tier 3) must be rejected")
 		}
 	}
 }
@@ -1197,13 +1218,16 @@ func TestValidateLicenseKeyProductCodeMismatch(t *testing.T) {
 	v := internalTestVerifier(t)
 
 	cases := []struct {
-		name string
-		code string
-		tier Tier
+		name    string
+		code    string
+		tier    Tier
+		wantErr string
 	}{
-		{"pro-code with reflector tier", "2001", TierReflector},
-		{"reflector-code with pro tier", "1001", TierProfessional},
-		{"pro-code with enterprise tier", "2001", TierEnterprise},
+		{"pro-code with reflector tier", "2001", TierReflector, errProductCodeMismatch},
+		{"reflector-code with pro tier", "1001", TierProfessional, errProductCodeMismatch},
+		// Tier 3 is retired: the validator rejects it as "Invalid license tier"
+		// before it reaches the product-code-mismatch check.
+		{"pro-code with retired enterprise tier", "2001", Tier(3), "Invalid license tier"},
 	}
 
 	for _, tc := range cases {
@@ -1214,8 +1238,8 @@ func TestValidateLicenseKeyProductCodeMismatch(t *testing.T) {
 			if info.Valid {
 				t.Error("Token with mismatched tier/product should not be valid")
 			}
-			if info.ErrorMsg != errProductCodeMismatch {
-				t.Errorf("Expected error %q, got %q", errProductCodeMismatch, info.ErrorMsg)
+			if info.ErrorMsg != tc.wantErr {
+				t.Errorf("Expected error %q, got %q", tc.wantErr, info.ErrorMsg)
 			}
 		})
 	}
@@ -1535,7 +1559,7 @@ func TestActivationStateFields(t *testing.T) {
 	state := &ActivationState{
 		LicenseKey:      "TESTKEY",
 		DeviceHash:      "HASH123",
-		Tier:            TierEnterprise,
+		Tier:            TierProfessional,
 		ActivatedAt:     time.Now(),
 		LastValidatedAt: time.Now(),
 		ExpiresAt:       time.Now().AddDate(1, 0, 0),
@@ -1551,7 +1575,7 @@ func TestActivationStateFields(t *testing.T) {
 	if state.DeviceHash != "HASH123" {
 		t.Error("DeviceHash mismatch")
 	}
-	if state.Tier != TierEnterprise {
+	if state.Tier != TierProfessional {
 		t.Error("Tier mismatch")
 	}
 	if state.ActivatedAt.IsZero() {
@@ -1887,10 +1911,11 @@ func TestMultipleActivationsAndDeactivations(t *testing.T) {
 		t.Fatalf("NewManagerWithVerifier error: %v", err)
 	}
 
-	// Generate keys for each tier.
+	// Generate keys for each active tier.
 	reflectorKey, _ := signTestKey(t, "1001", "REFKEY1", TierReflector)
 	testSuiteKey, _ := signTestKey(t, "2001", "TSTKEY1", TierProfessional)
-	enterpriseKey, _ := signTestKey(t, "3001", "ENTKEY1", TierEnterprise)
+	// Enterprise (tier 3 / "3001") is retired: minted token must be rejected.
+	enterpriseKey, _ := signTestKey(t, "3001", "ENTKEY1", Tier(3))
 
 	// Activate reflector.
 	result := mgr.Activate(reflectorKey)
@@ -1922,13 +1947,13 @@ func TestMultipleActivationsAndDeactivations(t *testing.T) {
 		t.Errorf("Deactivate error: %v", err)
 	}
 
-	// Activate enterprise.
+	// Enterprise tier is retired: activation must FAIL (token rejected).
 	result = mgr.Activate(enterpriseKey)
-	if !result.Success {
-		t.Errorf("Enterprise activation failed: %s", result.Message)
+	if result.Success {
+		t.Error("Enterprise (tier 3) activation must be rejected after retirement")
 	}
-	if result.Tier != TierEnterprise {
-		t.Errorf("Expected Enterprise tier, got %v", result.Tier)
+	if result.Tier != TierInvalid {
+		t.Errorf("Rejected Enterprise activation should have TierInvalid, got %v", result.Tier)
 	}
 }
 
@@ -1957,14 +1982,14 @@ func TestInfoCanRunReflectorAndTests(t *testing.T) {
 		t.Error("Professional tier should be able to run tests")
 	}
 
-	// Enterprise tier.
-	entKey, _ := signTestKey(t, "3001", "ENTKEY1", TierEnterprise)
+	// Enterprise tier (retired): token must be rejected; neither method returns true.
+	entKey, _ := signTestKey(t, "3001", "ENTKEY1", Tier(3))
 	info = v.Validate(entKey)
-	if !info.CanRunReflector() {
-		t.Error("Enterprise tier should be able to run reflector")
+	if info.CanRunReflector() {
+		t.Error("Rejected Enterprise token must not CanRunReflector")
 	}
-	if !info.CanRunTests() {
-		t.Error("Enterprise tier should be able to run tests")
+	if info.CanRunTests() {
+		t.Error("Rejected Enterprise token must not CanRunTests")
 	}
 
 	// Invalid key.
@@ -2005,14 +2030,17 @@ func TestInfoHasFeature(t *testing.T) {
 		t.Error("Professional tier should have 'y1564' feature")
 	}
 
-	// Enterprise tier.
-	entKey, _ := signTestKey(t, "3001", "ENTKEY1", TierEnterprise)
+	// Enterprise tier (retired): token must be rejected; no features granted.
+	entKey, _ := signTestKey(t, "3001", "ENTKEY1", Tier(3))
 	info = v.Validate(entKey)
-	if !info.HasFeature("api") {
-		t.Error("Enterprise tier should have 'api' feature")
+	if info.Valid {
+		t.Error("Retired Enterprise token must be rejected")
 	}
-	if !info.HasFeature("multiuser") {
-		t.Error("Enterprise tier should have 'multiuser' feature")
+	if info.HasFeature("api") {
+		t.Error("Rejected Enterprise token must not have 'api' feature")
+	}
+	if info.HasFeature("multiuser") {
+		t.Error("Rejected Enterprise token must not have 'multiuser' feature")
 	}
 }
 
@@ -2026,9 +2054,9 @@ func TestTierStringValues(t *testing.T) {
 		{TierInvalid, "Invalid"},
 		{TierReflector, "Reflector"},
 		{TierProfessional, "Professional"},
-		// TierEnterprise is deprecated and folded into Professional.
-		{TierEnterprise, "Professional"},
-		{Tier(99), "Invalid"}, // Unknown tier should return "Invalid".
+		// Tier 3 (retired Enterprise) and any out-of-range value falls through to "Invalid".
+		{Tier(3), "Invalid"},
+		{Tier(99), "Invalid"},
 	}
 
 	for _, tc := range tests {
@@ -2327,7 +2355,7 @@ func TestSaveStateAndLoadRoundtrip(t *testing.T) {
 	mgr1.state = &ActivationState{
 		LicenseKey:      "TESTLICENSEKEY12",
 		DeviceHash:      mgr1.fingerprint.Hash(),
-		Tier:            TierEnterprise,
+		Tier:            TierProfessional,
 		ActivatedAt:     now,
 		LastValidatedAt: now.Add(-time.Hour),
 		ExpiresAt:       now.AddDate(1, 0, 0),
@@ -2357,7 +2385,7 @@ func TestSaveStateAndLoadRoundtrip(t *testing.T) {
 	if mgr2.state.LicenseKey != "TESTLICENSEKEY12" {
 		t.Errorf("LicenseKey mismatch: %s", mgr2.state.LicenseKey)
 	}
-	if mgr2.state.Tier != TierEnterprise {
+	if mgr2.state.Tier != TierProfessional {
 		t.Errorf("Tier mismatch: %v", mgr2.state.Tier)
 	}
 	if mgr2.state.IsTrialMode {
@@ -2739,9 +2767,6 @@ func TestValidateLicenseKeyWithAllTiers(t *testing.T) {
 	}{
 		{"1001", TierReflector, "Reflector"},
 		{"2001", TierProfessional, "Professional"},
-		// TierEnterprise (3) is deprecated; existing keys still validate
-		// and report as Professional per LICENSE_STRATEGY 2026-05-19.
-		{"3001", TierEnterprise, "Professional"},
 	}
 
 	v := internalTestVerifier(t)
@@ -2761,6 +2786,16 @@ func TestValidateLicenseKeyWithAllTiers(t *testing.T) {
 		if info.Tier.String() != tc.expectedTier {
 			t.Errorf("Expected tier string %q, got %q", tc.expectedTier, info.Tier.String())
 		}
+	}
+
+	// Enterprise (tier 3 / "3001") is retired: token must be REJECTED.
+	enterpriseKey, _ := signTestKey(t, "3001", "ABCDEFG", Tier(3))
+	enterpriseInfo := v.Validate(enterpriseKey)
+	if enterpriseInfo.Valid {
+		t.Error("TestEnterpriseTierRejected: Enterprise (tier 3) token must be rejected")
+	}
+	if enterpriseInfo.ErrorMsg != "Invalid license tier" {
+		t.Errorf("Enterprise rejection ErrorMsg = %q, want 'Invalid license tier'", enterpriseInfo.ErrorMsg)
 	}
 }
 
@@ -2834,16 +2869,16 @@ func TestMaskStringWithEmptyInput(t *testing.T) {
 }
 
 // TestValidateLicenseKeyAllProductCodes tests validation of all product code types.
+// Enterprise (code "3001" / tier 3) is retired and must be REJECTED.
 func TestValidateLicenseKeyAllProductCodes(t *testing.T) {
 	t.Parallel()
-	// Test all three valid product codes with their corresponding tiers.
+	// Active product codes with their corresponding tiers.
 	testCases := []struct {
 		product string
 		tier    Tier
 	}{
 		{"1001", TierReflector},
 		{"2001", TierProfessional},
-		{"3001", TierEnterprise},
 	}
 
 	v := internalTestVerifier(t)
@@ -2864,33 +2899,43 @@ func TestValidateLicenseKeyAllProductCodes(t *testing.T) {
 			t.Errorf("Tier mismatch: expected %d, got %d", tc.tier, info.Tier)
 		}
 	}
+
+	// "3001" / tier 3 (retired Enterprise) must be rejected.
+	retiredKey, err := signTestKey(t, "3001", "TESTSER", Tier(3))
+	if err != nil {
+		t.Fatalf("signTestKey(3001, TESTSER, 3) error: %v", err)
+	}
+	retiredInfo := v.Validate(retiredKey)
+	if retiredInfo.Valid {
+		t.Error("Retired Enterprise product code '3001' must be rejected")
+	}
+	if retiredInfo.ErrorMsg != "Invalid license tier" {
+		t.Errorf("Retired Enterprise error = %q, want 'Invalid license tier'", retiredInfo.ErrorMsg)
+	}
 }
 
-// TestValidateLicenseKeyEnterpriseTier tests Enterprise tier specifically.
-func TestValidateLicenseKeyEnterpriseTier(t *testing.T) {
+// TestEnterpriseTierRejected guards the Enterprise tier retirement. A token
+// presenting tier 3 or product code "3001" must be REJECTED — no grandfathering.
+func TestEnterpriseTierRejected(t *testing.T) {
 	t.Parallel()
-	// Generate an Enterprise tier key.
-	key, err := signTestKey(t, "3001", "ZZZZZZA", TierEnterprise)
+	key, err := signTestKey(t, "3001", "ZZZZZZA", Tier(3))
 	if err != nil {
 		t.Fatalf("signTestKey error: %v", err)
 	}
 
 	info := internalTestVerifier(t).Validate(key)
-	if !info.Valid {
-		t.Errorf("Enterprise key should be valid: %s", info.ErrorMsg)
+	if info.Valid {
+		t.Error("Enterprise (tier 3) key must be rejected after retirement")
 	}
-	if info.Tier != TierEnterprise {
-		t.Errorf("Tier should be Enterprise, got %d", info.Tier)
+	if info.ErrorMsg != "Invalid license tier" {
+		t.Errorf("Enterprise rejection ErrorMsg = %q, want 'Invalid license tier'", info.ErrorMsg)
 	}
-	if info.ProductCode != "3001" {
-		t.Errorf("ProductCode should be 3001, got %s", info.ProductCode)
+	// No features should be granted.
+	if hasFeature(info.Features, "api") {
+		t.Error("Rejected Enterprise must not have 'api' feature")
 	}
-	// Enterprise should have api and multiuser features.
-	if !hasFeature(info.Features, "api") {
-		t.Error("Enterprise should have api feature")
-	}
-	if !hasFeature(info.Features, "multiuser") {
-		t.Error("Enterprise should have multiuser feature")
+	if hasFeature(info.Features, "multiuser") {
+		t.Error("Rejected Enterprise must not have 'multiuser' feature")
 	}
 }
 

@@ -36,10 +36,8 @@ MSN1.<base64url(payload)>.<base64url(signature)>
 
 `Verifier.Validate` checks the signature **before** interpreting any field, then
 enforces scheme, payload version, `product == "stem"`, tier, product-code/tier
-pairing (1001→Reflector, 2001→Professional, 3001→Enterprise), and expiry.
-Tier→feature mapping stays **in-binary**, so a signed token only grants features
-this build defines; deprecated Enterprise tokens keep validating and grant Pro
-features.
+pairing (1001→Reflector, 2001→Professional), and expiry. Tier→feature mapping
+stays **in-binary**, so a signed token only grants features this build defines.
 
 - The binary embeds only the base64 Ed25519 **public** key
   (`licensePublicKeyB64`). The private key lives solely in the keygen tool.
@@ -56,9 +54,18 @@ features.
 - Validation stays fully offline — no network, no phone-home.
 - Tokens are longer (~200 chars) than the old 16-char key; they are copy/paste
   artifacts, and `FormatKey` no longer strips characters (base64url uses `-`/`_`).
-- The `TierProfessional`/`TierTestSuite` alias and the 1001/2001/3001 product
-  codes are preserved on the wire; only the carrier (signature vs. checksum)
-  changed.
+- Valid product codes are 1001 (Reflector) and 2001 (Professional). The wire
+  values are preserved across the signature migration.
+
+### Amendment 2026-06-16 — Enterprise tier retired
+
+The `TierEnterprise` SKU (tier 3 / product code 3001) and the deprecated
+`TierTestSuite` alias are **removed entirely**, per LICENSE_STRATEGY (Enterprise
+is not a SKU; it was folded into Professional) and the pre-v1 no-grandfathering
+rule. A token presenting tier 3 or product code 3001 is now **rejected** (it
+falls through to "Invalid license tier" / product-code mismatch) — previously
+such tokens were grandfathered to Professional features. The keygen tool must no
+longer mint 3001 (cross-repo follow-up in msn-internal-tools/keygen).
 - The embedded public key is a **pre-launch** key generated for this change; it
   must be rotated via keygen before GA (regenerate the key + the contract vectors
   together).

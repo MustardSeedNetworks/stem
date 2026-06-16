@@ -163,8 +163,7 @@ Contact sales for renewal options.`,
 			Cause:   "Your license does not include this feature",
 			Solution: `Available tiers:
   - Reflector: Packet reflection only
-  - TestSuite: Full test suite (RFC 2544, Y.1564, etc.)
-  - Enterprise: All features + API + multi-user
+  - Professional: Full test suite (RFC 2544, Y.1564, etc.) + API + multi-user
 
 Upgrade at: https://mustardseednetworks.com
 

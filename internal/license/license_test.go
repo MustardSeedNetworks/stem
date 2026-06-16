@@ -47,10 +47,9 @@ func TestTierString(t *testing.T) {
 	}{
 		{license.TierReflector, "Reflector"},
 		{license.TierProfessional, "Professional"},
-		// TierEnterprise is deprecated and folded into Professional —
-		// its String() now reports "Professional" to match.
-		{license.TierEnterprise, "Professional"},
 		{license.TierInvalid, "Invalid"},
+		// Tier 3 (retired Enterprise) and any out-of-range value falls through to "Invalid".
+		{license.Tier(3), "Invalid"},
 	}
 
 	for _, tc := range testCases {
@@ -157,23 +156,6 @@ func TestInfoCanRunReflector(t *testing.T) {
 		{
 			&license.Info{
 				Key:         "",
-				Valid:       true,
-				Tier:        license.TierEnterprise,
-				ProductCode: "",
-				Serial:      "",
-				Activated:   false,
-				ActivatedAt: time.Time{},
-				ExpiresAt:   time.Time{},
-				DeviceHash:  "",
-				MaxDevices:  0,
-				Features:    nil,
-				ErrorMsg:    "",
-			},
-			true,
-		},
-		{
-			&license.Info{
-				Key:         "",
 				Valid:       false,
 				Tier:        license.TierReflector,
 				ProductCode: "",
@@ -257,23 +239,6 @@ func TestInfoCanRunTests(t *testing.T) {
 		{
 			&license.Info{
 				Key:         "",
-				Valid:       true,
-				Tier:        license.TierEnterprise,
-				ProductCode: "",
-				Serial:      "",
-				Activated:   false,
-				ActivatedAt: time.Time{},
-				ExpiresAt:   time.Time{},
-				DeviceHash:  "",
-				MaxDevices:  0,
-				Features:    nil,
-				ErrorMsg:    "",
-			},
-			true,
-		},
-		{
-			&license.Info{
-				Key:         "",
 				Valid:       false,
 				Tier:        license.TierProfessional,
 				ProductCode: "",
@@ -324,38 +289,29 @@ func TestDeviceFingerprint(t *testing.T) {
 	}
 }
 
-// TestValidateLicenseKeyEnterprise tests validation of an Enterprise-tier token.
-func TestValidateLicenseKeyEnterprise(t *testing.T) {
+// TestEnterpriseTierRejected guards the Enterprise tier retirement. A token
+// presenting tier 3 or product code "3001" must be REJECTED — no grandfathering.
+func TestEnterpriseTierRejected(t *testing.T) {
 	t.Parallel()
-	key, err := signTestKey(t, "3001", "1234567", license.TierEnterprise)
+	key, err := signTestKey(t, "3001", "1234567", license.Tier(3))
 	if err != nil {
 		t.Fatalf("signTestKey() error: %v", err)
 	}
 
 	info := testVerifier(t).Validate(key)
-	if !info.Valid {
-		t.Errorf("Enterprise key should be valid: %s", info.ErrorMsg)
+	if info.Valid {
+		t.Error("Enterprise (tier 3) key must be rejected after retirement")
 	}
-	if info.Tier != license.TierEnterprise {
-		t.Errorf("Expected TierEnterprise, got %v", info.Tier)
-	}
-
-	// Enterprise grants the Pro feature set.
-	if !info.HasFeature("api") {
-		t.Error("Enterprise should have api feature")
-	}
-	if !info.HasFeature("multiuser") {
-		t.Error("Enterprise should have multiuser feature")
+	if info.ErrorMsg != "Invalid license tier" {
+		t.Errorf("Enterprise rejection ErrorMsg = %q, want 'Invalid license tier'", info.ErrorMsg)
 	}
 
-	// FormatKey only trims whitespace; the trimmed token still validates.
-	formatted := license.FormatKey("  " + key + "\n")
-	if formatted != key {
-		t.Errorf("FormatKey should trim to %q, got %q", key, formatted)
+	// No features should be granted.
+	if info.HasFeature("api") {
+		t.Error("Rejected Enterprise must not have 'api' feature")
 	}
-	infoFormatted := testVerifier(t).Validate(formatted)
-	if !infoFormatted.Valid {
-		t.Error("Trimmed token should validate")
+	if info.HasFeature("multiuser") {
+		t.Error("Rejected Enterprise must not have 'multiuser' feature")
 	}
 }
 
@@ -379,6 +335,8 @@ func TestValidateLicenseKeyProductCodeMismatch(t *testing.T) {
 
 // TestValidateLicenseKeyProductVariants verifies each valid product-code/tier
 // pairing validates and is mapped to the right tier/code/serial.
+// Enterprise (code "3001" / tier 3) is retired and is tested separately
+// by TestEnterpriseTierRejected.
 func TestValidateLicenseKeyProductVariants(t *testing.T) {
 	t.Parallel()
 	tiers := []struct {
@@ -387,7 +345,6 @@ func TestValidateLicenseKeyProductVariants(t *testing.T) {
 	}{
 		{"1001", license.TierReflector},
 		{"2001", license.TierProfessional},
-		{"3001", license.TierEnterprise},
 	}
 
 	for _, tc := range tiers {
@@ -490,11 +447,9 @@ func TestInfoMethods(t *testing.T) {
 		{false, license.TierInvalid, false, false},
 		{false, license.TierReflector, false, false},
 		{false, license.TierProfessional, false, false},
-		{false, license.TierEnterprise, false, false},
 		{true, license.TierInvalid, false, false},
 		{true, license.TierReflector, true, false},
 		{true, license.TierProfessional, true, true},
-		{true, license.TierEnterprise, true, true},
 	}
 
 	for _, tc := range testCases {
@@ -661,6 +616,10 @@ func assertProdVector(t *testing.T, v prodVector) {
 // product's license package (stem, seed, niac). If this test fails, the
 // embedded public key has drifted from keygen's private key — DO NOT "fix" the
 // assertions; regenerate keygen and update all three products in lockstep.
+//
+// Enterprise (tier 3 / "3001") was retired on 2026-06-16. Its production vector
+// is pinned separately below to assert it is NOW REJECTED — confirming that
+// existing Enterprise tokens are not grandfathered.
 func TestKeygenContract(t *testing.T) {
 	t.Parallel()
 	proFeatures := []string{
@@ -685,14 +644,6 @@ func TestKeygenContract(t *testing.T) {
 			serial:   "1234567",
 			features: proFeatures,
 		},
-		{
-			name:     "stem-enterprise / serial 1234567",
-			key:      prodStemEnterpriseVector,
-			tier:     license.TierEnterprise,
-			product:  "3001",
-			serial:   "1234567",
-			features: proFeatures,
-		},
 	}
 
 	for _, v := range vectors {
@@ -701,4 +652,16 @@ func TestKeygenContract(t *testing.T) {
 			assertProdVector(t, v)
 		})
 	}
+
+	// Enterprise production vector must now be REJECTED (tier 3 retired 2026-06-16).
+	t.Run("stem-enterprise / serial 1234567 — rejected after retirement", func(t *testing.T) {
+		t.Parallel()
+		info := license.ValidateLicenseKey(prodStemEnterpriseVector)
+		if info.Valid {
+			t.Error("Enterprise prod vector must be rejected after retirement")
+		}
+		if info.ErrorMsg != "Invalid license tier" {
+			t.Errorf("Enterprise rejection ErrorMsg = %q, want 'Invalid license tier'", info.ErrorMsg)
+		}
+	})
 }
