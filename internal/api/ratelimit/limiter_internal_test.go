@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 
-package api
+package ratelimit
 
 import (
 	"net/http"
@@ -19,81 +19,21 @@ func TestTrimSpace(t *testing.T) {
 		input string
 		want  string
 	}{
-		{
-			name:  "no whitespace",
-			input: "hello",
-			want:  "hello",
-		},
-		{
-			name:  "leading spaces",
-			input: "   hello",
-			want:  "hello",
-		},
-		{
-			name:  "trailing spaces",
-			input: "hello   ",
-			want:  "hello",
-		},
-		{
-			name:  "both sides spaces",
-			input: "   hello   ",
-			want:  "hello",
-		},
-		{
-			name:  "leading tabs",
-			input: "\t\thello",
-			want:  "hello",
-		},
-		{
-			name:  "trailing tabs",
-			input: "hello\t\t",
-			want:  "hello",
-		},
-		{
-			name:  "mixed whitespace",
-			input: " \t hello \t ",
-			want:  "hello",
-		},
-		{
-			name:  "empty string",
-			input: "",
-			want:  "",
-		},
-		{
-			name:  "only spaces",
-			input: "     ",
-			want:  "",
-		},
-		{
-			name:  "only tabs",
-			input: "\t\t\t",
-			want:  "",
-		},
-		{
-			name:  "single character",
-			input: "a",
-			want:  "a",
-		},
-		{
-			name:  "single character with spaces",
-			input: "  a  ",
-			want:  "a",
-		},
-		{
-			name:  "internal spaces preserved",
-			input: "  hello world  ",
-			want:  "hello world",
-		},
-		{
-			name:  "internal tabs preserved",
-			input: "\thello\tworld\t",
-			want:  "hello\tworld",
-		},
-		{
-			name:  "IP address with spaces",
-			input: "  192.168.1.1  ",
-			want:  "192.168.1.1",
-		},
+		{name: "no whitespace", input: "hello", want: "hello"},
+		{name: "leading spaces", input: "   hello", want: "hello"},
+		{name: "trailing spaces", input: "hello   ", want: "hello"},
+		{name: "both sides spaces", input: "   hello   ", want: "hello"},
+		{name: "leading tabs", input: "\t\thello", want: "hello"},
+		{name: "trailing tabs", input: "hello\t\t", want: "hello"},
+		{name: "mixed whitespace", input: " \t hello \t ", want: "hello"},
+		{name: "empty string", input: "", want: ""},
+		{name: "only spaces", input: "     ", want: ""},
+		{name: "only tabs", input: "\t\t\t", want: ""},
+		{name: "single character", input: "a", want: "a"},
+		{name: "single character with spaces", input: "  a  ", want: "a"},
+		{name: "internal spaces preserved", input: "  hello world  ", want: "hello world"},
+		{name: "internal tabs preserved", input: "\thello\tworld\t", want: "hello\tworld"},
+		{name: "IP address with spaces", input: "  192.168.1.1  ", want: "192.168.1.1"},
 	}
 
 	for _, tt := range tests {
@@ -271,8 +211,8 @@ func TestCleanup(t *testing.T) {
 	})
 }
 
-// TestGetClientIP tests the getClientIP function.
-func TestGetClientIP(t *testing.T) {
+// TestClientIPInternal tests the ClientIP function via white-box path.
+func TestClientIPInternal(t *testing.T) {
 	tests := []struct {
 		name       string
 		remoteAddr string
@@ -389,9 +329,9 @@ func TestGetClientIP(t *testing.T) {
 				req.Header.Set("X-Real-IP", tt.xri)
 			}
 
-			got := getClientIP(req)
+			got := ClientIP(req)
 			if got != tt.want {
-				t.Errorf("getClientIP() = %q, want %q", got, tt.want)
+				t.Errorf("ClientIP() = %q, want %q", got, tt.want)
 			}
 		})
 	}

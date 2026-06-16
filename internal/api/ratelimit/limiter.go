@@ -1,6 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 
-package api
+// Package ratelimit provides per-IP request rate limiting and the HTTP
+// middleware used by the API transport layer. It is a leaf of internal/api
+// (ADR-0003): it depends only on the standard library,
+// golang.org/x/time/rate, and internal/logging — never on the api package
+// itself, so the boundary is enforced by depguard.
+package ratelimit
 
 import (
 	"net"
@@ -41,9 +46,9 @@ const (
 	// When max visitors is exceeded, new IPs share a limiter that is 10x stricter.
 	globalRateDivisor = 10
 
-	// capacityThresholdHigh is 80% capacity - triggers moderate cleanup.
+	// capacityThresholdHigh is 80% capacity — triggers moderate cleanup.
 	capacityThresholdHigh = 80
-	// capacityThresholdCritical is 90% capacity - triggers aggressive cleanup.
+	// capacityThresholdCritical is 90% capacity — triggers aggressive cleanup.
 	capacityThresholdCritical = 90
 	// percentDivisor is used for percentage calculations.
 	percentDivisor = 100
@@ -227,7 +232,7 @@ func (rl *RateLimiter) Stop() {
 // Responds with 429 Too Many Requests when the limit is exceeded.
 func (rl *RateLimiter) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ip := getClientIP(r)
+		ip := ClientIP(r)
 
 		if !rl.Allow(ip) {
 			logging.Warn("Rate limit exceeded",
@@ -248,7 +253,7 @@ func (rl *RateLimiter) Middleware(next http.Handler) http.Handler {
 	})
 }
 
-// getClientIP extracts the client IP from the request.
+// ClientIP extracts the client IP from the request.
 //
 // SECURITY: X-Forwarded-For and X-Real-IP headers are only honored when the
 // immediate TCP peer (RemoteAddr) is a loopback address. This means a
@@ -262,7 +267,7 @@ func (rl *RateLimiter) Middleware(next http.Handler) http.Handler {
 // For deployments behind a non-loopback reverse proxy, a trusted-proxy
 // CIDR configuration is needed (filed as a followup, see
 // docs/security/AUTH_AUDIT_2026-05-19.md).
-func getClientIP(r *http.Request) string {
+func ClientIP(r *http.Request) string {
 	remoteIP, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		// RemoteAddr might not have a port.

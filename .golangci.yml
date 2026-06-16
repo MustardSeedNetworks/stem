@@ -249,6 +249,20 @@ linters:
               desc: "service layer must not import auth — authentication is an API-layer concern"
             - pkg: github.com/MustardSeedNetworks/stem/internal/license
               desc: "service layer must not import license — gate features at the API layer, not inside modules"
+        # ratelimit is a leaf of internal/api (ADR-0003): it depends only on
+        # stdlib, golang.org/x/time/rate, and internal/logging — never on the
+        # api transport layer itself. This depguard rule enforces that boundary
+        # so a future accidental upward import fails CI rather than silently
+        # coupling the leaf back into the transport layer.
+        # Test files (limiter_test.go / limiter_internal_test.go) are excluded:
+        # the _test.go external package imports the leaf itself, which is fine.
+        "api-ratelimit-isolated":
+          files:
+            - "**/internal/api/ratelimit/**"
+            - "!$test"
+          deny:
+            - pkg: github.com/MustardSeedNetworks/stem/internal/api
+              desc: "ratelimit is a leaf — per-IP limiter takes injected dependencies, so it never imports the api transport layer"
 
     embeddedstructfieldcheck:
       # Checks that sync.Mutex and sync.RWMutex are not used as embedded fields.

@@ -15,6 +15,8 @@ import (
 	"net/http"
 	"slices"
 	"strings"
+
+	"github.com/MustardSeedNetworks/stem/internal/api/ratelimit"
 )
 
 // route declares an API route and its per-route policy. CSRF is enforced
@@ -38,7 +40,7 @@ type route struct {
 	// limiter is the rate limiter the route is wrapped in — s.authLimiter for
 	// auth-sensitive endpoints (5/min), s.apiLimiter for the rest. nil = none
 	// (long-lived SSE / unauthenticated introspection).
-	limiter *RateLimiter
+	limiter *ratelimit.RateLimiter
 }
 
 // methodGate rejects any method outside allowed with 405 + an Allow header.

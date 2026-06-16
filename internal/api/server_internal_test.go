@@ -12,6 +12,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/MustardSeedNetworks/stem/internal/api/ratelimit"
 	"github.com/MustardSeedNetworks/stem/internal/auth"
 	"github.com/MustardSeedNetworks/stem/internal/netif"
 )
@@ -2739,7 +2740,7 @@ func TestHandleAuthRefreshWithCookie(t *testing.T) {
 
 // TestRateLimiterGetLimiter tests GetLimiter functionality.
 func TestRateLimiterGetLimiter(t *testing.T) {
-	limiter := NewRateLimiter(10, 5)
+	limiter := ratelimit.NewRateLimiter(10, 5)
 
 	// Get limiter for same IP twice.
 	l1 := limiter.GetLimiter("192.168.1.1")

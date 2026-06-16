@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/MustardSeedNetworks/stem/internal/api/ratelimit"
 	"github.com/MustardSeedNetworks/stem/internal/auth"
 	"github.com/MustardSeedNetworks/stem/internal/logging"
 )
@@ -76,7 +77,7 @@ func (s *Server) handleRecoveryStatus(w http.ResponseWriter, r *http.Request) {
 // handleRecoveryComplete processes password recovery with a valid token.
 // Requires a valid recovery token that was written to the filesystem.
 func (s *Server) handleRecoveryComplete(w http.ResponseWriter, r *http.Request) {
-	clientIP := getClientIP(r)
+	clientIP := ratelimit.ClientIP(r)
 
 	if r.Method != http.MethodPost {
 		WriteMethodNotAllowed(w)

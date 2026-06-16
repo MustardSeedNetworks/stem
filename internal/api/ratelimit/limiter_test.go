@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: BUSL-1.1
 
-package api_test
+// Black-box tests for the ratelimit package. Uses only the exported API.
+// White-box tests (internal helpers) live in limiter_internal_test.go.
+package ratelimit_test
 
 import (
 	"net/http"
@@ -9,11 +11,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/MustardSeedNetworks/stem/internal/api"
+	"github.com/MustardSeedNetworks/stem/internal/api/ratelimit"
 )
 
 func TestNewRateLimiter(t *testing.T) {
-	rl := api.NewRateLimiter(1, 1)
+	rl := ratelimit.NewRateLimiter(1, 1)
 	defer rl.Stop()
 
 	if rl == nil {
@@ -22,7 +24,7 @@ func TestNewRateLimiter(t *testing.T) {
 }
 
 func TestNewAuthRateLimiter(t *testing.T) {
-	rl := api.NewAuthRateLimiter()
+	rl := ratelimit.NewAuthRateLimiter()
 	defer rl.Stop()
 
 	if rl == nil {
@@ -31,7 +33,7 @@ func TestNewAuthRateLimiter(t *testing.T) {
 }
 
 func TestNewAPIRateLimiter(t *testing.T) {
-	rl := api.NewAPIRateLimiter()
+	rl := ratelimit.NewAPIRateLimiter()
 	defer rl.Stop()
 
 	if rl == nil {
@@ -40,7 +42,7 @@ func TestNewAPIRateLimiter(t *testing.T) {
 }
 
 func TestRateLimiterGetLimiter(t *testing.T) {
-	rl := api.NewRateLimiter(1, 1)
+	rl := ratelimit.NewRateLimiter(1, 1)
 	defer rl.Stop()
 
 	// Get limiter for an IP.
@@ -64,7 +66,7 @@ func TestRateLimiterGetLimiter(t *testing.T) {
 
 func TestRateLimiterAllow(t *testing.T) {
 	// Create a rate limiter that allows 2 requests with burst of 2.
-	rl := api.NewRateLimiter(2, 2)
+	rl := ratelimit.NewRateLimiter(2, 2)
 	defer rl.Stop()
 
 	ip := "10.0.0.1"
@@ -85,7 +87,7 @@ func TestRateLimiterAllow(t *testing.T) {
 
 func TestRateLimiterAllowDifferentIPs(t *testing.T) {
 	// Create a rate limiter with burst of 1.
-	rl := api.NewRateLimiter(1, 1)
+	rl := ratelimit.NewRateLimiter(1, 1)
 	defer rl.Stop()
 
 	ip1 := "10.0.0.1"
@@ -110,7 +112,7 @@ func TestRateLimiterAllowDifferentIPs(t *testing.T) {
 
 func TestRateLimiterMiddleware(t *testing.T) {
 	// Create a rate limiter with burst of 2.
-	rl := api.NewRateLimiter(2, 2)
+	rl := ratelimit.NewRateLimiter(2, 2)
 	defer rl.Stop()
 
 	// Create a simple handler.
@@ -154,7 +156,7 @@ func TestRateLimiterMiddleware(t *testing.T) {
 
 func TestRateLimiterMiddlewareXForwardedFor(t *testing.T) {
 	// Create a rate limiter with burst of 1.
-	rl := api.NewRateLimiter(1, 1)
+	rl := ratelimit.NewRateLimiter(1, 1)
 	defer rl.Stop()
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
@@ -190,7 +192,7 @@ func TestRateLimiterMiddlewareXForwardedFor(t *testing.T) {
 
 func TestRateLimiterMiddlewareXRealIP(t *testing.T) {
 	// Create a rate limiter with burst of 1.
-	rl := api.NewRateLimiter(1, 1)
+	rl := ratelimit.NewRateLimiter(1, 1)
 	defer rl.Stop()
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
@@ -228,7 +230,7 @@ func TestRateLimiterConcurrency(t *testing.T) {
 	t.Parallel()
 
 	// Create a rate limiter with high burst to avoid rate limiting during test.
-	rl := api.NewRateLimiter(1000, 1000)
+	rl := ratelimit.NewRateLimiter(1000, 1000)
 	defer rl.Stop()
 
 	var wg sync.WaitGroup
@@ -253,7 +255,7 @@ func TestRateLimiterConcurrency(t *testing.T) {
 func TestRateLimiterStop(t *testing.T) {
 	t.Parallel()
 
-	rl := api.NewRateLimiter(1, 1)
+	rl := ratelimit.NewRateLimiter(1, 1)
 
 	// Stop should not panic.
 	rl.Stop()
@@ -263,7 +265,7 @@ func TestRateLimiterStop(t *testing.T) {
 }
 
 func TestAuthRateLimiterLimits(t *testing.T) {
-	rl := api.NewAuthRateLimiter()
+	rl := ratelimit.NewAuthRateLimiter()
 	defer rl.Stop()
 
 	ip := "10.0.0.100"
@@ -282,7 +284,7 @@ func TestAuthRateLimiterLimits(t *testing.T) {
 }
 
 func TestAPIRateLimiterLimits(t *testing.T) {
-	rl := api.NewAPIRateLimiter()
+	rl := ratelimit.NewAPIRateLimiter()
 	defer rl.Stop()
 
 	ip := "10.0.0.200"
@@ -302,7 +304,7 @@ func TestAPIRateLimiterLimits(t *testing.T) {
 
 // Benchmark tests.
 func BenchmarkRateLimiterAllow(b *testing.B) {
-	rl := api.NewRateLimiter(1000000, 1000000) // High limit to avoid rate limiting.
+	rl := ratelimit.NewRateLimiter(1000000, 1000000) // High limit to avoid rate limiting.
 	defer rl.Stop()
 
 	for b.Loop() {
@@ -311,7 +313,7 @@ func BenchmarkRateLimiterAllow(b *testing.B) {
 }
 
 func BenchmarkRateLimiterMiddleware(b *testing.B) {
-	rl := api.NewRateLimiter(1000000, 1000000)
+	rl := ratelimit.NewRateLimiter(1000000, 1000000)
 	defer rl.Stop()
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
