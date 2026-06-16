@@ -3,8 +3,8 @@
  * @description Aggregates all test partials and provides search/lookup helpers.
  */
 
-import type { TestHelp } from '../types';
 import { categories } from '../categories';
+import type { TestHelp } from '../types';
 import { customTests } from './custom';
 import { mefTests } from './mef';
 import { rfc2544Tests } from './rfc2544';
