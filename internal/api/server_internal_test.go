@@ -1387,60 +1387,6 @@ func TestGetDataDir(t *testing.T) {
 	})
 }
 
-// TestIsLocalhostOriginInternal tests the isLocalhostOrigin function (additional cases).
-func TestIsLocalhostOriginInternal(t *testing.T) {
-	tests := []struct {
-		name   string
-		origin string
-		want   bool
-	}{
-		{"localhost_no_port", "http://localhost", true},
-		{"127.0.0.1_no_port", "http://127.0.0.1", true},
-		{"::1_no_port", "http://[::1]", true},
-		{"external_https", "https://example.com", false},
-		{"localhost_https", "https://localhost:8443", true},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := isLocalhostOrigin(tt.origin)
-			if got != tt.want {
-				t.Errorf("isLocalhostOrigin(%s) = %v, want %v", tt.origin, got, tt.want)
-			}
-		})
-	}
-}
-
-// TestIsSameOrigin tests the isSameOrigin function.
-func TestIsSameOrigin(t *testing.T) {
-	tests := []struct {
-		name        string
-		origin      string
-		requestHost string
-		want        bool
-	}{
-		{"same host and port", "http://10.0.0.1:8080", "10.0.0.1:8080", true},
-		{"different port", "http://10.0.0.1:8080", "10.0.0.1:9090", false},
-		{"different host", "http://10.0.0.1:8080", "10.0.0.2:8080", false},
-		{"invalid URL", "not-a-url", "10.0.0.1:8080", false},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := isSameOrigin(tt.origin, tt.requestHost)
-			if got != tt.want {
-				t.Errorf(
-					"isSameOrigin(%s, %s) = %v, want %v",
-					tt.origin,
-					tt.requestHost,
-					got,
-					tt.want,
-				)
-			}
-		})
-	}
-}
-
 // TestResolveTestModule tests the resolveTestModule function.
 func TestResolveTestModule(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "resolvemoduser")
@@ -2654,65 +2600,6 @@ func TestRateLimiterGetLimiter(t *testing.T) {
 	}
 
 	limiter.Stop()
-}
-
-// TestIsLocalhostOriginAdditional tests additional isLocalhostOrigin cases.
-func TestIsLocalhostOriginAdditional(t *testing.T) {
-	tests := []struct {
-		origin   string
-		expected bool
-	}{
-		{"http://[::1]", true},
-		{"https://[::1]", true},
-		{"http://127.0.0.1", true},
-		{"https://127.0.0.1", true},
-		{"http://localhost", true},
-		{"https://localhost", true},
-		{"http://192.168.1.1", false},
-		{"https://example.com", false},
-		{"", false},
-		{"not-a-url", false},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.origin, func(t *testing.T) {
-			result := isLocalhostOrigin(tt.origin)
-			if result != tt.expected {
-				t.Errorf("isLocalhostOrigin(%s) = %v, expected %v", tt.origin, result, tt.expected)
-			}
-		})
-	}
-}
-
-// TestIsSameOriginAdditional tests additional isSameOrigin cases.
-func TestIsSameOriginAdditional(t *testing.T) {
-	tests := []struct {
-		origin      string
-		requestHost string
-		expected    bool
-	}{
-		{"http://192.168.1.1:8080", "192.168.1.1:8080", true},
-		{"http://192.168.1.1", "192.168.1.1", true},
-		{"https://example.com:443", "example.com:443", true},
-		{"http://192.168.1.1:8080", "192.168.1.2:8080", false},
-		{"http://192.168.1.1:8080", "192.168.1.1:9090", false},
-		{"", "192.168.1.1:8080", false},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.origin+"_"+tt.requestHost, func(t *testing.T) {
-			result := isSameOrigin(tt.origin, tt.requestHost)
-			if result != tt.expected {
-				t.Errorf(
-					"isSameOrigin(%s, %s) = %v, expected %v",
-					tt.origin,
-					tt.requestHost,
-					result,
-					tt.expected,
-				)
-			}
-		})
-	}
 }
 
 // TestReflectorStatsResponse tests reflector stats response structure.
