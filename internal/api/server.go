@@ -82,6 +82,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/MustardSeedNetworks/stem/internal/api/ratelimit"
 	"github.com/MustardSeedNetworks/stem/internal/auth"
 	"github.com/MustardSeedNetworks/stem/internal/license"
 	"github.com/MustardSeedNetworks/stem/internal/logging"
@@ -153,8 +154,8 @@ type Server struct {
 	licenseManager       *license.Manager
 	authManager          *auth.Manager
 	currentModule        string
-	authLimiter          *RateLimiter               // Rate limiter for auth endpoints (5/min)
-	apiLimiter           *RateLimiter               // Rate limiter for standard API endpoints (100/min)
+	authLimiter          *ratelimit.RateLimiter     // Rate limiter for auth endpoints (5/min)
+	apiLimiter           *ratelimit.RateLimiter     // Rate limiter for standard API endpoints (100/min)
 	tlsConfig            TLSConfig                  // TLS configuration for HTTPS
 	cookieConfig         auth.CookieConfig          // Cookie configuration for secure auth
 	corsAllowPrivate     bool                       // STEM_CORS_ALLOW_PRIVATE: reflect RFC1918 cross-origins (default off)
@@ -288,8 +289,8 @@ func NewServer(port int) (*Server, error) {
 	s.licenseManager = licMgr
 	s.authManager = authMgr
 	s.currentModule = ""
-	s.authLimiter = NewAuthRateLimiter()
-	s.apiLimiter = NewAPIRateLimiter()
+	s.authLimiter = ratelimit.NewAuthRateLimiter()
+	s.apiLimiter = ratelimit.NewAPIRateLimiter()
 	s.tlsConfig = TLSConfig{
 		Enabled:  true,
 		CertFile: os.Getenv("STEM_TLS_CERT"),
