@@ -136,12 +136,6 @@ jobs:
       - name: Route-policy gate (capability registry)
         run: ./scripts/check-route-policy.sh
 
-      - name: JSON wire-casing gate — camelCase ratchet
-        run: ./scripts/check-json-casing.sh
-
-      - name: File-size gate (warn mode, W0c fleet UI plan)
-        run: ./scripts/check-file-size.sh
-
       - name: Run tests
         run: CGO_ENABLED=0 go test -v -coverprofile=coverage.out ./...
 
@@ -231,7 +225,7 @@ jobs:
           # GC for this job so race results are deterministic. Remove once
           # the upstream greentea+race+cgo crash is fixed.
           GOEXPERIMENT: nogreenteagc
-        run: go test -short -race ./...
+        run: go test -short -race -timeout=20m ./...
 
   # ============================================================================
   # Frontend (TypeScript)

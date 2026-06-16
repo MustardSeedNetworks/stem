@@ -1,19 +1,19 @@
-name: Task
-description: Track maintenance, refactoring, dependency, CI, or documentation work for Stem
-title: "Chore: "
-labels: ["type: chore", "status: needs-triage"]
+name: Epic
+description: Track a larger body of related work for Stem
+title: "Epic: "
+labels: ["type: epic", "status: needs-triage"]
 body:
   - type: textarea
-    id: summary
+    id: outcome
     attributes:
-      label: Summary
-      description: What work needs to be done?
+      label: Outcome
+      description: What strategic or user-visible outcome does this epic deliver?
     validations:
       required: true
   - type: dropdown
     id: area
     attributes:
-      label: Area
+      label: Primary Area
       options:
         - area: api
         - area: benchmark
@@ -32,31 +32,37 @@ body:
         - area: traffic-generator
     validations:
       required: true
-  - type: dropdown
-    id: priority
+  - type: textarea
+    id: scope
     attributes:
-      label: Priority
-      options:
-        - priority: critical
-        - priority: high
-        - priority: medium
-        - priority: low
+      label: Scope
+      description: What is in scope and out of scope?
+      placeholder: |
+        In scope:
+        - ...
+
+        Out of scope:
+        - ...
     validations:
       required: true
   - type: textarea
+    id: child_issues
+    attributes:
+      label: Child Issues
+      description: Link issues as they are created.
+      placeholder: |
+        - [ ] #...
+        - [ ] #...
+  - type: textarea
     id: acceptance
     attributes:
-      label: Acceptance Criteria
+      label: Epic Completion Criteria
       placeholder: |
         - [ ] ...
         - [ ] ...
     validations:
       required: true
   - type: textarea
-    id: notes
+    id: risks
     attributes:
-      label: Technical Notes
-  - type: textarea
-    id: related
-    attributes:
-      label: Related Issues or Pull Requests
+      label: Risks and Dependencies
