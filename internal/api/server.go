@@ -83,6 +83,7 @@ import (
 	"time"
 
 	"github.com/MustardSeedNetworks/stem/internal/api/ratelimit"
+	"github.com/MustardSeedNetworks/stem/internal/api/sse"
 	"github.com/MustardSeedNetworks/stem/internal/auth"
 	"github.com/MustardSeedNetworks/stem/internal/license"
 	"github.com/MustardSeedNetworks/stem/internal/logging"
@@ -139,7 +140,7 @@ var staticFiles embed.FS
 type Server struct {
 	port                 int
 	mux                  *http.ServeMux
-	sseBroadcaster       *SSEBroadcaster // Fan-out for /api/v1/events subscribers; nil-safe via getSSE()
+	sseBroadcaster       *sse.Broadcaster // Fan-out for /api/v1/events subscribers; nil when SSE not available.
 	httpServer           *http.Server
 	stats                *Stats
 	statsMu              sync.RWMutex
@@ -261,7 +262,7 @@ func NewServer(port int) (*Server, error) {
 	s := &Server{}
 	s.port = port
 	s.mux = http.NewServeMux()
-	s.sseBroadcaster = NewSSEBroadcaster()
+	s.sseBroadcaster = sse.New()
 	s.statsMu = sync.RWMutex{}
 	s.stats = &Stats{
 		PacketsReceived: 0,

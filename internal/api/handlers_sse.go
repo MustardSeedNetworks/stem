@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 package api
 
 import (
@@ -10,7 +12,7 @@ import (
 
 // handleSSEEvents serves the long-lived SSE stream at /api/v1/events.
 //
-// Wire protocol: each frame is one JSON object preceded by `data: ` and
+// Wire protocol: each frame is one JSON object preceded by "data: " and
 // followed by a blank line. Periodic SSE-comment heartbeats keep
 // intermediaries (load balancers, reverse proxies) from idling the
 // connection — they discard comments so the UI never sees them.
