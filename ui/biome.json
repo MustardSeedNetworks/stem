@@ -72,7 +72,12 @@
         "noArrayIndexKey": "off",
         "noConsole": {
           "level": "error",
-          "options": { "allow": ["warn", "error"] }
+          "options": {
+            "allow": [
+              "warn",
+              "error"
+            ]
+          }
         },
         "noEmptyBlockStatements": "off",
         "noReactSpecificProps": "off",
@@ -90,7 +95,9 @@
       "complexity": {
         "noExcessiveCognitiveComplexity": {
           "level": "error",
-          "options": { "maxAllowedComplexity": 40 }
+          "options": {
+            "maxAllowedComplexity": 40
+          }
         },
         "useArrayFind": "error"
       },
@@ -109,12 +116,23 @@
   },
   "overrides": [
     {
-      "includes": ["tests/load/**/*.js"],
-      "linter": { "enabled": false },
-      "formatter": { "enabled": false }
+      "includes": [
+        "tests/load/**/*.js"
+      ],
+      "linter": {
+        "enabled": false
+      },
+      "formatter": {
+        "enabled": false
+      }
     },
     {
-      "includes": ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx"],
+      "includes": [
+        "**/*.test.ts",
+        "**/*.test.tsx",
+        "**/*.spec.ts",
+        "**/*.spec.tsx"
+      ],
       "linter": {
         "rules": {
           "suspicious": {
@@ -128,44 +146,72 @@
       }
     },
     {
-      "includes": ["**/e2e/**/*.ts", "**/e2e/**/*.spec.ts"],
+      "includes": [
+        "**/e2e/**/*.ts",
+        "**/e2e/**/*.spec.ts"
+      ],
       "linter": {
         "rules": {
-          "nursery": { "useAwaitThenable": "off" },
-          "suspicious": { "noSkippedTests": "off" }
+          "nursery": {
+            "useAwaitThenable": "off"
+          },
+          "suspicious": {
+            "noSkippedTests": "off"
+          }
         }
       }
     },
     {
-      "includes": ["**/*.stories.ts", "**/*.stories.tsx"],
+      "includes": [
+        "**/*.stories.ts",
+        "**/*.stories.tsx"
+      ],
       "linter": {
         "rules": {
           "nursery": {},
-          "suspicious": { "noShadow": "off" }
+          "suspicious": {
+            "noShadow": "off"
+          }
         }
       }
     },
     {
-      "includes": ["**/scripts/**", "**/cli/**"],
+      "includes": [
+        "**/scripts/**",
+        "**/cli/**"
+      ],
       "linter": {
         "rules": {
-          "suspicious": { "noConsole": "off" }
+          "suspicious": {
+            "noConsole": "off"
+          }
         }
       }
     },
     {
-      "includes": ["next.config.js", "next.config.mjs", "vite.config.ts", "vitest.config.ts"],
+      "includes": [
+        "next.config.js",
+        "next.config.mjs",
+        "vite.config.ts",
+        "vitest.config.ts"
+      ],
       "linter": {
         "rules": {
-          "style": { "noDefaultExport": "off" }
+          "style": {
+            "noDefaultExport": "off"
+          }
         }
       }
     },
     {
-      "includes": ["**/api/index.ts"],
+      "includes": [
+        "**/api/index.ts"
+      ],
       "linter": {
         "rules": {
-          "performance": { "noBarrelFile": "off" }
+          "performance": {
+            "noBarrelFile": "off"
+          }
         }
       }
     },
@@ -192,15 +238,25 @@
       ],
       "linter": {
         "rules": {
-          "style": { "useFilenamingConvention": "off" }
+          "style": {
+            "useFilenamingConvention": "off"
+          }
         }
       }
     },
     {
-      "includes": ["**/index.ts", "**/index.tsx", "**/DiffViewer.tsx"],
+      "includes": [
+        "**/index.ts",
+        "**/index.tsx",
+        "**/DiffViewer.tsx",
+        "**/help-content.ts"
+      ],
       "linter": {
         "rules": {
-          "performance": { "noBarrelFile": "off", "noReExportAll": "off" }
+          "performance": {
+            "noBarrelFile": "off",
+            "noReExportAll": "off"
+          }
         }
       }
     }
