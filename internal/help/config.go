@@ -321,7 +321,7 @@ func licenseConfig() ConfigSection {
 				Type:       TypeString,
 				Default:    "",
 				EnvVar:     "STEM_LICENSE_KEY",
-				TechDesc:   "License key in format XXXX-XXXX-XXXX-XXXX. Determines available features (Reflector, TestSuite, Enterprise tiers).",
+				TechDesc:   "License key in format XXXX-XXXX-XXXX-XXXX. Determines available features (Reflector, Professional tiers).",
 				LaymanDesc: "Your license key from Mustard Seed Networks. Controls which features are available.",
 				Example:    "key: \"ABCD-1234-EFGH-5678\"",
 			},

@@ -908,23 +908,34 @@ func TestActivationResultFields(t *testing.T) {
 		t.Error("Trial result IsTrialMode should be true")
 	}
 
-	// Deactivate and test full license result.
+	// Deactivate and test full license result with a Professional key.
 	mgr.Deactivate()
 
-	key, _ := signTestKey(t, "3001", "1234567", license.TierEnterprise)
+	key, _ := signTestKey(t, "2001", "1234567", license.TierProfessional)
 	licenseResult := mgr.Activate(key)
 
 	if !licenseResult.Success {
 		t.Fatalf("Activate() failed: %s", licenseResult.Message)
 	}
-	if licenseResult.Tier != license.TierEnterprise {
-		t.Errorf("License tier should be TierEnterprise, got %v", licenseResult.Tier)
+	if licenseResult.Tier != license.TierProfessional {
+		t.Errorf("License tier should be TierProfessional, got %v", licenseResult.Tier)
 	}
 	if licenseResult.IsTrialMode {
 		t.Error("License result IsTrialMode should be false")
 	}
 	if licenseResult.DaysRemaining != 365 {
 		t.Errorf("License days remaining should be 365, got %d", licenseResult.DaysRemaining)
+	}
+
+	// Enterprise (tier 3 / "3001") is retired: activation must FAIL.
+	mgr.Deactivate()
+	enterpriseKey, _ := signTestKey(t, "3001", "1234567", license.Tier(3))
+	enterpriseResult := mgr.Activate(enterpriseKey)
+	if enterpriseResult.Success {
+		t.Error("Enterprise (tier 3) activation must be rejected after retirement")
+	}
+	if enterpriseResult.Tier != license.TierInvalid {
+		t.Errorf("Rejected Enterprise activation should have TierInvalid, got %v", enterpriseResult.Tier)
 	}
 }
 
@@ -1042,7 +1053,9 @@ func TestDeactivateRemovesFile(t *testing.T) {
 	}
 }
 
-// TestAllTiersActivation tests activation with all tier types.
+// TestAllTiersActivation tests activation with all active tier types.
+// Enterprise (tier 3 / "3001") is retired and tested separately by
+// TestEnterpriseTierActivationRejected.
 func TestAllTiersActivation(t *testing.T) {
 	tiers := []struct {
 		product string
@@ -1051,8 +1064,6 @@ func TestAllTiersActivation(t *testing.T) {
 	}{
 		{"1001", license.TierReflector, "Reflector"},
 		{"2001", license.TierProfessional, "Professional"},
-		// TierEnterprise is deprecated and reports as Professional.
-		{"3001", license.TierEnterprise, "Professional"},
 	}
 
 	for _, tc := range tiers {
@@ -1082,6 +1093,25 @@ func TestAllTiersActivation(t *testing.T) {
 				t.Errorf("State tier should be %v, got %v", tc.tier, state.Tier)
 			}
 		})
+	}
+}
+
+// TestEnterpriseTierActivationRejected guards the Enterprise tier retirement.
+// Activation with a tier-3 / "3001" token must fail.
+func TestEnterpriseTierActivationRejected(t *testing.T) {
+	mgr := setupTestManager(t)
+
+	key, err := signTestKey(t, "3001", "1234567", license.Tier(3))
+	if err != nil {
+		t.Fatalf("signTestKey() error: %v", err)
+	}
+
+	result := mgr.Activate(key)
+	if result.Success {
+		t.Error("Enterprise (tier 3) activation must be rejected after retirement")
+	}
+	if mgr.IsActivated() {
+		t.Error("Manager must not be activated by a rejected Enterprise token")
 	}
 }
 
@@ -1333,7 +1363,7 @@ func TestEncryptDecryptRoundtrip(t *testing.T) {
 		t.Fatalf("NewManager() error: %v", err)
 	}
 
-	key, _ := signTestKey(t, "3001", "ENCRYPT", license.TierEnterprise)
+	key, _ := signTestKey(t, "2001", "ENCRYPT", license.TierProfessional)
 	mgr1.Activate(key)
 
 	state1 := mgr1.GetState()
@@ -1443,20 +1473,26 @@ func TestActivationWithDifferentKeys(t *testing.T) {
 		t.Errorf("Expected TestSuite tier, got %v", result2.Tier)
 	}
 
-	// Upgrade to Enterprise.
-	key3, _ := signTestKey(t, "3001", "3456789", license.TierEnterprise)
+	// Enterprise (tier 3 / "3001") is retired: activation attempt must FAIL;
+	// the existing Professional state must remain unchanged.
+	key3, _ := signTestKey(t, "3001", "3456789", license.Tier(3))
 	result3 := mgr.Activate(key3)
-	if !result3.Success {
-		t.Fatalf("Third activation failed: %s", result3.Message)
-	}
-	if result3.Tier != license.TierEnterprise {
-		t.Errorf("Expected Enterprise tier, got %v", result3.Tier)
+	if result3.Success {
+		t.Error("Enterprise (tier 3) activation must be rejected after retirement")
 	}
 
-	// Verify final state.
+	// Manager should still be activated with the previous Professional key.
+	if !mgr.IsActivated() {
+		t.Error("Manager should still be activated with the previous Professional key")
+	}
+
+	// Verify final state still reflects Professional.
 	state := mgr.GetState()
-	if state.Tier != license.TierEnterprise {
-		t.Errorf("Final state should be Enterprise, got %v", state.Tier)
+	if state == nil {
+		t.Fatal("State should not be nil after rejected Enterprise activation")
+	}
+	if state.Tier != license.TierProfessional {
+		t.Errorf("Final state should be Professional (Enterprise was rejected), got %v", state.Tier)
 	}
 }
 
@@ -1565,35 +1601,28 @@ func TestReflectorTierFeatures(t *testing.T) {
 	}
 }
 
-// TestEnterpriseTierFeatures tests that Enterprise tier has correct features.
-func TestEnterpriseTierFeatures(t *testing.T) {
+// TestEnterpriseTierRejectedNoFeatures guards the Enterprise tier retirement.
+// A tier-3 / "3001" token must be rejected: no state is persisted, no features granted.
+func TestEnterpriseTierRejectedNoFeatures(t *testing.T) {
 	mgr := setupTestManager(t)
 
-	key, _ := signTestKey(t, "3001", "1234567", license.TierEnterprise)
-	mgr.Activate(key)
+	key, _ := signTestKey(t, "3001", "1234567", license.Tier(3))
+	result := mgr.Activate(key)
 
+	if result.Success {
+		t.Error("Enterprise (tier 3) activation must be rejected after retirement")
+	}
+
+	// No state should be persisted on rejection.
 	state := mgr.GetState()
-	if state == nil {
-		t.Fatal("State should not be nil")
-	}
-
-	// Enterprise should have api and multiuser features.
-	hasAPI := false
-	hasMultiuser := false
-	for _, f := range state.Features {
-		if f == "api" {
-			hasAPI = true
+	if state != nil {
+		if state.Features != nil {
+			for _, f := range state.Features {
+				if f == "api" || f == "multiuser" {
+					t.Errorf("Rejected Enterprise must not grant feature %q", f)
+				}
+			}
 		}
-		if f == "multiuser" {
-			hasMultiuser = true
-		}
-	}
-
-	if !hasAPI {
-		t.Error("Enterprise should have 'api' feature")
-	}
-	if !hasMultiuser {
-		t.Error("Enterprise should have 'multiuser' feature")
 	}
 }
 
@@ -1601,8 +1630,8 @@ func TestEnterpriseTierFeatures(t *testing.T) {
 func TestCheckInTier(t *testing.T) {
 	mgr := setupTestManager(t)
 
-	// Activate with Enterprise.
-	key, _ := signTestKey(t, "3001", "1234567", license.TierEnterprise)
+	// Activate with Professional.
+	key, _ := signTestKey(t, "2001", "1234567", license.TierProfessional)
 	mgr.Activate(key)
 
 	// Check in.
@@ -1612,8 +1641,8 @@ func TestCheckInTier(t *testing.T) {
 	}
 
 	// Tier should be returned.
-	if result.Tier != license.TierEnterprise {
-		t.Errorf("CheckIn tier should be Enterprise, got %v", result.Tier)
+	if result.Tier != license.TierProfessional {
+		t.Errorf("CheckIn tier should be Professional, got %v", result.Tier)
 	}
 }
 
