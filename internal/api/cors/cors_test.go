@@ -1,8 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 
-package api
+package cors_test
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/MustardSeedNetworks/stem/internal/api/cors"
+)
 
 func TestIsLocalhostOrigin(t *testing.T) {
 	tests := []struct {
@@ -104,9 +108,98 @@ func TestIsLocalhostOrigin(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := isLocalhostOrigin(tt.origin)
+			got := cors.IsLocalhostOrigin(tt.origin)
 			if got != tt.want {
-				t.Errorf("isLocalhostOrigin(%q) = %v, want %v", tt.origin, got, tt.want)
+				t.Errorf("IsLocalhostOrigin(%q) = %v, want %v", tt.origin, got, tt.want)
+			}
+		})
+	}
+}
+
+// TestIsLocalhostOriginAdditional tests additional IsLocalhostOrigin cases.
+func TestIsLocalhostOriginAdditional(t *testing.T) {
+	tests := []struct {
+		origin   string
+		expected bool
+	}{
+		{"http://[::1]", true},
+		{"https://[::1]", true},
+		{"http://127.0.0.1", true},
+		{"https://127.0.0.1", true},
+		{"http://localhost", true},
+		{"https://localhost", true},
+		{"http://192.168.1.1", false},
+		{"https://example.com", false},
+		{"", false},
+		{"not-a-url", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.origin, func(t *testing.T) {
+			result := cors.IsLocalhostOrigin(tt.origin)
+			if result != tt.expected {
+				t.Errorf("IsLocalhostOrigin(%s) = %v, expected %v", tt.origin, result, tt.expected)
+			}
+		})
+	}
+}
+
+// TestIsSameOrigin tests the IsSameOrigin function.
+func TestIsSameOrigin(t *testing.T) {
+	tests := []struct {
+		name        string
+		origin      string
+		requestHost string
+		want        bool
+	}{
+		{"same host and port", "http://10.0.0.1:8080", "10.0.0.1:8080", true},
+		{"different port", "http://10.0.0.1:8080", "10.0.0.1:9090", false},
+		{"different host", "http://10.0.0.1:8080", "10.0.0.2:8080", false},
+		{"invalid URL", "not-a-url", "10.0.0.1:8080", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := cors.IsSameOrigin(tt.origin, tt.requestHost)
+			if got != tt.want {
+				t.Errorf(
+					"IsSameOrigin(%s, %s) = %v, want %v",
+					tt.origin,
+					tt.requestHost,
+					got,
+					tt.want,
+				)
+			}
+		})
+	}
+}
+
+// TestIsSameOriginAdditional tests additional IsSameOrigin cases.
+func TestIsSameOriginAdditional(t *testing.T) {
+	tests := []struct {
+		origin      string
+		requestHost string
+		expected    bool
+	}{
+		{"http://192.168.1.1:8080", "192.168.1.1:8080", true},
+		{"http://192.168.1.1", "192.168.1.1", true},
+		{"https://example.com:443", "example.com:443", true},
+		{"http://192.168.1.1:8080", "192.168.1.2:8080", false},
+		{"http://192.168.1.1:8080", "192.168.1.1:9090", false},
+		{"", "192.168.1.1:8080", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.origin+"_"+tt.requestHost, func(t *testing.T) {
+			result := cors.IsSameOrigin(tt.origin, tt.requestHost)
+			if result != tt.expected {
+				t.Errorf(
+					"IsSameOrigin(%s, %s) = %v, expected %v",
+					tt.origin,
+					tt.requestHost,
+					result,
+					tt.expected,
+				)
 			}
 		})
 	}
@@ -226,7 +319,7 @@ func TestIsRFC1918Origin(t *testing.T) {
 			want:   false,
 		},
 
-		// Localhost should NOT be matched by RFC 1918 (handled by isLocalhostOrigin).
+		// Localhost should NOT be matched by RFC 1918 (handled by IsLocalhostOrigin).
 		{
 			name:   "localhost not RFC 1918",
 			origin: "http://localhost",
@@ -273,114 +366,9 @@ func TestIsRFC1918Origin(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := isRFC1918Origin(tt.origin)
+			got := cors.IsRFC1918Origin(tt.origin)
 			if got != tt.want {
-				t.Errorf("isRFC1918Origin(%q) = %v, want %v", tt.origin, got, tt.want)
-			}
-		})
-	}
-}
-
-// TestIsPrivateNetworkAddress tests the private network address validation helper.
-func TestIsPrivateNetworkAddress(t *testing.T) {
-	tests := []struct {
-		name string
-		host string
-		want bool
-	}{
-		// Class C.
-		{"class C valid", "192.168.1.1", true},
-		{"class C zero", "192.168.0.0", true},
-		{"class C max", "192.168.255.255", true},
-
-		// Class A.
-		{"class A valid", "10.0.0.1", true},
-		{"class A zero", "10.0.0.0", true},
-		{"class A max", "10.255.255.255", true},
-
-		// Class B.
-		{"class B 172.16", "172.16.0.1", true},
-		{"class B 172.31", "172.31.255.255", true},
-		{"class B 172.20", "172.20.100.50", true},
-
-		// Invalid.
-		{"class B 172.15 invalid", "172.15.0.1", false},
-		{"class B 172.32 invalid", "172.32.0.1", false},
-		{"public IP", "8.8.8.8", false},
-		{"localhost", "127.0.0.1", false},
-		{"localhost name", "localhost", false},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := isPrivateNetworkAddress(tt.host)
-			if got != tt.want {
-				t.Errorf("isPrivateNetworkAddress(%q) = %v, want %v", tt.host, got, tt.want)
-			}
-		})
-	}
-}
-
-// TestIsValidIPOctet tests the IP octet validation helper.
-func TestIsValidIPOctet(t *testing.T) {
-	tests := []struct {
-		name  string
-		octet string
-		want  bool
-	}{
-		{"zero", "0", true},
-		{"single digit", "5", true},
-		{"double digit", "42", true},
-		{"triple digit", "255", true},
-		{"max valid", "255", true},
-		{"min valid", "0", true},
-
-		// Invalid.
-		{"too large", "256", false},
-		{"way too large", "999", false},
-		{"empty", "", false},
-		{"negative", "-1", false},
-		{"letters", "abc", false},
-		{"mixed", "12a", false},
-		{"too long", "1234", false},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := isValidIPOctet(tt.octet)
-			if got != tt.want {
-				t.Errorf("isValidIPOctet(%q) = %v, want %v", tt.octet, got, tt.want)
-			}
-		})
-	}
-}
-
-// TestParseOctetInRange tests the octet parsing with range validation.
-func TestParseOctetInRange(t *testing.T) {
-	tests := []struct {
-		name   string
-		s      string
-		minVal int
-		maxVal int
-		want   int
-		wantOk bool
-	}{
-		{"in range", "20", 16, 31, 20, true},
-		{"at min", "16", 16, 31, 16, true},
-		{"at max", "31", 16, 31, 31, true},
-		{"below min", "15", 16, 31, 15, false},
-		{"above max", "32", 16, 31, 32, false},
-		{"empty string", "", 0, 255, 0, false},
-		{"invalid chars", "abc", 0, 255, 0, false},
-		{"too long", "1234", 0, 255, 0, false},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, ok := parseOctetInRange(tt.s, tt.minVal, tt.maxVal)
-			if got != tt.want || ok != tt.wantOk {
-				t.Errorf("parseOctetInRange(%q, %d, %d) = (%d, %v), want (%d, %v)",
-					tt.s, tt.minVal, tt.maxVal, got, ok, tt.want, tt.wantOk)
+				t.Errorf("IsRFC1918Origin(%q) = %v, want %v", tt.origin, got, tt.want)
 			}
 		})
 	}

@@ -291,6 +291,20 @@ linters:
           deny:
             - pkg: github.com/MustardSeedNetworks/stem/internal/api
               desc: "tlsutil is a leaf — cert provisioning, ACME, and TLS config take no api types, so it never imports the api transport layer"
+        # cors is a leaf of internal/api (ADR-0011): the origin-classification
+        # logic (localhost / same-origin / RFC1918) depends only on stdlib
+        # (net/url, strings) — never on the api transport layer itself. This
+        # depguard rule enforces that boundary so a future accidental upward
+        # import fails CI rather than silently coupling the leaf back into the
+        # transport layer. Test files are excluded: the _test.go external
+        # package imports the leaf itself, which is expected.
+        "api-cors-isolated":
+          files:
+            - "**/internal/api/cors/**"
+            - "!$test"
+          deny:
+            - pkg: github.com/MustardSeedNetworks/stem/internal/api
+              desc: "cors is a leaf — origin classification takes plain strings, so it never imports the api transport layer; wire the middleware at the api layer"
 
     embeddedstructfieldcheck:
       # Checks that sync.Mutex and sync.RWMutex are not used as embedded fields.

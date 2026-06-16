@@ -34,7 +34,8 @@ The api transport layer wires leaves at construction time; no leaf knows about
 |-------|---------|-----|
 | Rate limiter | `internal/api/ratelimit` | #451 |
 | SSE broadcaster | `internal/api/sse` | #452 |
-| TLS utilities | `internal/api/tlsutil` | this ADR |
+| TLS utilities | `internal/api/tlsutil` | #453 |
+| CORS origin classification | `internal/api/cors` | this ADR |
 
 ### SSE slice (this ADR)
 
@@ -71,16 +72,29 @@ TLS were rehomed to the api layer rather than dragged into the leaf:
 `acmeReadHeaderTimeoutSec` (transport-layer challenge-server timeout →
 `server.go`).
 
+### CORS slice (this ADR)
+
+`internal/api/cors` holds the Origin-header classification used by the CORS
+policy: `IsLocalhostOrigin`, `IsSameOrigin`, and `IsRFC1918Origin` (with the
+strict, complete-IP-structure validation that rejects bypass tricks like
+`localhost.evil.com` and `192.168.1.1.evil.com`). It depends only on stdlib
+(`net/url`, `strings`).
+
+The HTTP middleware that consumes the classifiers (`corsMiddleware`), the opt-in
+env read (`corsAllowPrivateEnabled`, which logs the credentialed-LAN-origin
+warning), and the response-header wiring stay in `internal/api`.
+
 ### Future slices (candidates)
 
 | Concern | Notes |
 |---------|-------|
-| CORS logic | RFC 1918 origin validation |
+| Handler grouping | the 15 `handlers_*.go` are Server-coupled transport code, not stdlib leaves — needs a naming/grouping decision rather than the leaf recipe |
 
 ## Consequences
 
 - The leaf boundary is statically enforced by depguard (`api-sse-isolated`,
-  `api-ratelimit-isolated`, `api-tlsutil-isolated` rules in `.golangci.yml`).
+  `api-ratelimit-isolated`, `api-tlsutil-isolated`, `api-cors-isolated` rules in
+  `.golangci.yml`).
 - `go vet` + `golangci-lint` catch upward imports at CI time.
 - `internal/api` package size decreases incrementally with each slice.
 - No behaviour change: endpoints, event types, and publish sites are identical.
