@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 
-package api
+package tlsutil
 
-// tls_fingerprint.go computes and caches the SHA-256 fingerprint of the
-// active TLS certificate. The fingerprint is exposed via /__version as
-// `tlsFingerprint` so operators can verify the cert their browser sees
-// matches the one the server is serving (matters for self-signed certs
-// installed via `stem install-ca`).
+// fingerprint.go computes and caches the SHA-256 fingerprint of the active TLS
+// certificate. The fingerprint is exposed via /__version as `tlsFingerprint`
+// so operators can verify the cert their browser sees matches the one the
+// server is serving (matters for self-signed certs installed via
+// `stem install-ca`).
 //
 // Lifted from the seed project (internal/api/tls_fingerprint.go); keep in sync.
 
@@ -17,8 +17,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
-	"strings"
 	"sync"
 )
 
@@ -33,12 +31,14 @@ var errEmptyCertPath = errors.New("no certificate configured")
 // contain a CERTIFICATE block.
 var errNoCertificateBlock = errors.New("no CERTIFICATE block in PEM data")
 
-// tlsFingerprintCache caches the active TLS certificate fingerprint so
-// repeated /__version calls do not re-read disk. The cache key is the
-// cert file path; this lets the cache stay valid across a server's
-// lifetime (cert file is not rotated at runtime — a restart picks up a
-// new fingerprint via cache miss on a different path or first access).
-type tlsFingerprintCache struct {
+// FingerprintCache caches the active TLS certificate fingerprint so repeated
+// /__version calls do not re-read disk. The cache key is the cert file path;
+// this lets the cache stay valid across a server's lifetime (cert file is not
+// rotated at runtime — a restart picks up a new fingerprint via cache miss on a
+// different path or first access).
+//
+// The zero value is ready to use.
+type FingerprintCache struct {
 	mu          sync.RWMutex
 	path        string
 	fingerprint string
@@ -47,7 +47,7 @@ type tlsFingerprintCache struct {
 // Get returns the fingerprint for the given cert file path, computing
 // and caching it on first access. An empty path returns an empty
 // fingerprint without error (HTTP mode is a supported configuration).
-func (c *tlsFingerprintCache) Get(path string) (string, error) {
+func (c *FingerprintCache) Get(path string) (string, error) {
 	if path == "" {
 		return "", nil
 	}
@@ -80,7 +80,7 @@ func computeCertFingerprint(path string) (string, error) {
 	if path == "" {
 		return "", errEmptyCertPath
 	}
-	// #nosec G304 -- path is server-controlled (TLSConfig.CertFile or the
+	// #nosec G304 -- path is server-controlled (Config.CertFile or the
 	// self-signed default at certs/server.crt), not user input.
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -128,44 +128,4 @@ func formatFingerprint(digest []byte) string {
 		out = append(out, hex[b>>4], hex[b&0x0f])
 	}
 	return string(out)
-}
-
-// activeCertPath returns the cert file path the server will use, or "" if
-// the server is running in HTTP mode. Mirrors the priority order of
-// startTLS so /__version reports the same cert that is actually served.
-func (s *Server) activeCertPath() string {
-	if !s.tlsConfig.Enabled {
-		return ""
-	}
-	if s.tlsConfig.ACME.Enabled {
-		// ACME certs live in the autocert cache; they are not a single
-		// stable file path we can fingerprint here. Return empty rather
-		// than guessing.
-		return ""
-	}
-	if s.tlsConfig.CertFile != "" {
-		return s.tlsConfig.CertFile
-	}
-	// Fall back to the self-signed default path used by ensureSelfSignedCert.
-	certsDir := s.tlsConfig.CertsDir
-	if certsDir == "" {
-		certsDir = defaultCertsDir
-	}
-	return filepath.Join(certsDir, "server.crt")
-}
-
-// tlsFingerprintForResponse returns the cached fingerprint (computing it
-// on first call). Errors are swallowed and reported as an empty string so
-// /__version always returns a stable shape even if the cert is missing or
-// unreadable; an empty value is a signal to the operator to investigate.
-func (s *Server) tlsFingerprintForResponse() string {
-	path := s.activeCertPath()
-	if path == "" {
-		return ""
-	}
-	fp, err := s.tlsFingerprint.Get(path)
-	if err != nil {
-		return ""
-	}
-	return strings.TrimSpace(fp)
 }

@@ -9,7 +9,6 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 
 	"github.com/MustardSeedNetworks/stem/internal/api/ratelimit"
@@ -919,108 +918,6 @@ func TestSecurityHeadersMiddleware_AllHeaders(t *testing.T) {
 		if w.Header().Get(header) == "" {
 			t.Errorf("Expected header '%s' to be set", header)
 		}
-	}
-}
-
-// TestDefaultTLSConfig tests the DefaultTLSConfig function.
-func TestDefaultTLSConfig(t *testing.T) {
-	config := DefaultTLSConfig()
-
-	if !config.Enabled {
-		t.Error("Expected TLS to be enabled by default")
-	}
-	if config.CertFile != "" {
-		t.Errorf("Expected empty CertFile, got '%s'", config.CertFile)
-	}
-	if config.KeyFile != "" {
-		t.Errorf("Expected empty KeyFile, got '%s'", config.KeyFile)
-	}
-	if config.CertsDir != defaultCertsDir {
-		t.Errorf("Expected CertsDir '%s', got '%s'", defaultCertsDir, config.CertsDir)
-	}
-}
-
-// TestCreateTLSConfig tests the createTLSConfig function.
-func TestCreateTLSConfig(t *testing.T) {
-	config := createTLSConfig()
-
-	if config == nil {
-		t.Fatal("Expected non-nil TLS config")
-	}
-
-	if config.MinVersion != tls.VersionTLS13 {
-		t.Errorf("Expected TLS 1.3 min version, got %d", config.MinVersion)
-	}
-}
-
-// TestEnsureSelfSignedCert tests the ensureSelfSignedCert function.
-func TestEnsureSelfSignedCert(t *testing.T) {
-	// Create a temporary directory for test certificates.
-	tempDir := t.TempDir()
-
-	t.Run("generate new certificates", func(t *testing.T) {
-		certFile, keyFile, err := ensureSelfSignedCert(tempDir)
-		if err != nil {
-			t.Fatalf("ensureSelfSignedCert() error: %v", err)
-		}
-
-		if certFile == "" {
-			t.Error("Expected non-empty certFile")
-		}
-		if keyFile == "" {
-			t.Error("Expected non-empty keyFile")
-		}
-
-		// Verify files exist.
-		_, certStatErr := os.Stat(certFile)
-		if certStatErr != nil {
-			t.Errorf("Certificate file does not exist: %v", certStatErr)
-		}
-		_, keyStatErr := os.Stat(keyFile)
-		if keyStatErr != nil {
-			t.Errorf("Key file does not exist: %v", keyStatErr)
-		}
-	})
-
-	t.Run("use existing certificates", func(t *testing.T) {
-		// Should reuse existing certificates.
-		certFile, keyFile, err := ensureSelfSignedCert(tempDir)
-		if err != nil {
-			t.Fatalf("ensureSelfSignedCert() error: %v", err)
-		}
-
-		if certFile == "" || keyFile == "" {
-			t.Error("Expected non-empty certificate paths")
-		}
-	})
-
-	t.Run("empty certs dir defaults to default", func(t *testing.T) {
-		// This would use the default certs dir.
-		// Skip if we don't want to pollute the filesystem.
-		t.Skip("Skipping to avoid creating files in default location")
-	})
-}
-
-// TestTLSConfigStruct tests the TLSConfig struct.
-func TestTLSConfigStruct(t *testing.T) {
-	config := TLSConfig{
-		Enabled:  true,
-		CertFile: "/path/to/cert.pem",
-		KeyFile:  "/path/to/key.pem",
-		CertsDir: "/path/to/certs",
-	}
-
-	if !config.Enabled {
-		t.Error("Expected Enabled to be true")
-	}
-	if config.CertFile != "/path/to/cert.pem" {
-		t.Errorf("Unexpected CertFile: %s", config.CertFile)
-	}
-	if config.KeyFile != "/path/to/key.pem" {
-		t.Errorf("Unexpected KeyFile: %s", config.KeyFile)
-	}
-	if config.CertsDir != "/path/to/certs" {
-		t.Errorf("Unexpected CertsDir: %s", config.CertsDir)
 	}
 }
 
@@ -2852,42 +2749,6 @@ func TestReflectorStatsResponse(t *testing.T) {
 		if !containsStr(body, field) {
 			t.Errorf("Expected response to contain '%s'", field)
 		}
-	}
-}
-
-// TestEnsureSelfSignedCertExistingFiles tests ensureSelfSignedCert with existing files.
-func TestEnsureSelfSignedCertExistingFiles(t *testing.T) {
-	tempDir := t.TempDir()
-
-	// First call - generate.
-	certFile, keyFile, err := ensureSelfSignedCert(tempDir)
-	if err != nil {
-		t.Fatalf("First call error: %v", err)
-	}
-
-	// Get file info.
-	certInfo, _ := os.Stat(certFile)
-	keyInfo, _ := os.Stat(keyFile)
-
-	// Second call - should reuse.
-	certFile2, keyFile2, err := ensureSelfSignedCert(tempDir)
-	if err != nil {
-		t.Fatalf("Second call error: %v", err)
-	}
-
-	if certFile != certFile2 || keyFile != keyFile2 {
-		t.Error("Expected same paths on second call")
-	}
-
-	// Files should not have changed.
-	certInfo2, _ := os.Stat(certFile)
-	keyInfo2, _ := os.Stat(keyFile)
-
-	if certInfo.ModTime() != certInfo2.ModTime() {
-		t.Error("Cert file should not have been regenerated")
-	}
-	if keyInfo.ModTime() != keyInfo2.ModTime() {
-		t.Error("Key file should not have been regenerated")
 	}
 }
 
