@@ -19,8 +19,10 @@ Product codes:
   1001: Stem Reflector  (tier 1)
   2001: Stem Professional (tier 2). Was "Test Suite"; renamed per
         LICENSE_STRATEGY 2026-05-19. Wire value preserved.
-  3001: Stem Enterprise (tier 3, deprecated). Folded into Professional;
-        existing tokens continue to validate and grant Pro features.
+
+  Enterprise (code 3001 / tier 3) was retired entirely on 2026-06-16. It is
+  no longer a SKU, the keygen no longer mints it, and a token presenting
+  tier 3 or product code 3001 is now REJECTED — no grandfathering (pre-v1).
 */
 
 const (
@@ -35,7 +37,6 @@ const (
 const (
 	codeReflector    = "1001"
 	codeProfessional = "2001"
-	codeEnterprise   = "3001"
 )
 
 // licensePublicKeyB64 is the standard-base64 Ed25519 public key that verifies
@@ -58,18 +59,6 @@ const (
 	// Y.1564 / Y.1731 / RFC 2889 / RFC 6349 / MEF / TSN) plus the
 	// reflector and API access.
 	TierProfessional Tier = 2
-	// TierEnterprise is deprecated as a SKU per LICENSE_STRATEGY
-	// 2026-05-19 (folded into Professional). The constant is retained so
-	// previously issued Enterprise tokens keep validating; they now grant
-	// the same features as Professional.
-	TierEnterprise Tier = 3
-
-	// TierTestSuite is a deprecated alias for TierProfessional, kept so
-	// external callers that referenced the old name still compile.
-	// New code MUST use TierProfessional.
-	//
-	// Deprecated: use TierProfessional.
-	TierTestSuite = TierProfessional
 )
 
 // Error messages.
@@ -89,8 +78,6 @@ func (t Tier) String() string {
 	case TierReflector:
 		return "Reflector"
 	case TierProfessional:
-		return "Professional"
-	case TierEnterprise:
 		return "Professional"
 	}
 	return "Invalid"
@@ -156,9 +143,6 @@ func (v *Verifier) Validate(key string) *Info {
 	case int(TierProfessional):
 		info.Tier = TierProfessional
 		info.Features = proFeatures()
-	case int(TierEnterprise):
-		info.Tier = TierEnterprise
-		info.Features = proFeatures()
 	default:
 		info.ErrorMsg = "Invalid license tier"
 		return info
@@ -193,8 +177,6 @@ func productCodeMatchesTier(code string, tier Tier) bool {
 		return tier == TierReflector
 	case codeProfessional:
 		return tier == TierProfessional
-	case codeEnterprise:
-		return tier == TierEnterprise
 	default:
 		return false
 	}
@@ -225,8 +207,7 @@ func (li *Info) CanRunTests() bool {
 }
 
 // proFeatures returns the feature list granted to TierProfessional.
-// TierEnterprise (deprecated) now grants the same set per LICENSE_STRATEGY
-// 2026-05-19. Listed alphabetically after reflector.
+// Listed alphabetically after reflector.
 func proFeatures() []string {
 	return []string{
 		"reflector",
