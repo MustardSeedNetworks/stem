@@ -524,9 +524,7 @@ func (s *Server) setupRoutes() {
 		// case, so sessionID is empty); SameSite=Strict cookies block the browser
 		// CSRF vector — accepted defense-in-depth edge, see ADR-0009.
 		{path: "/api/v1/auth/refresh", handler: s.handleAuthRefresh, limiter: s.authLimiter},
-		// /auth/csrf-token is canonical; /auth/csrf is a legacy alias.
 		{path: "/api/v1/auth/csrf-token", handler: s.handleAuthCSRF, auth: true, limiter: s.apiLimiter},
-		{path: "/api/v1/auth/csrf", handler: s.handleAuthCSRF, auth: true, limiter: s.apiLimiter},
 		// MFA — TOTP management requires auth; the login finisher does not (it
 		// presents an mfa_token from the password stage as proof of intent).
 		{path: "/api/v1/auth/totp/setup", handler: s.handleTOTPSetup, auth: true, limiter: s.authLimiter},

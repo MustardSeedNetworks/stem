@@ -94,7 +94,7 @@ func DefaultExportOptions() *ExportOptions {
 
 // Export creates a backup of the database to the specified file.
 // Returns the number of records exported.
-func Export(ctx context.Context, db *database.Database, outputPath string, opts *ExportOptions) (int, error) {
+func Export(ctx context.Context, db *database.DB, outputPath string, opts *ExportOptions) (int, error) {
 	if opts == nil {
 		opts = DefaultExportOptions()
 	}
@@ -184,7 +184,7 @@ func Export(ctx context.Context, db *database.Database, outputPath string, opts 
 }
 
 // ExportToWriter writes backup data to an [io.Writer].
-func ExportToWriter(ctx context.Context, db *database.Database, w io.Writer, opts *ExportOptions) (int, error) {
+func ExportToWriter(ctx context.Context, db *database.DB, w io.Writer, opts *ExportOptions) (int, error) {
 	if opts == nil {
 		opts = DefaultExportOptions()
 	}
@@ -276,7 +276,7 @@ func DefaultImportOptions() *ImportOptions {
 
 // Import restores data from a backup file.
 // Returns the number of records imported.
-func Import(ctx context.Context, db *database.Database, inputPath string, opts *ImportOptions) (int, error) {
+func Import(ctx context.Context, db *database.DB, inputPath string, opts *ImportOptions) (int, error) {
 	if opts == nil {
 		opts = DefaultImportOptions()
 	}
@@ -296,7 +296,7 @@ func Import(ctx context.Context, db *database.Database, inputPath string, opts *
 }
 
 // ImportFromReader restores data from an [io.Reader].
-func ImportFromReader(ctx context.Context, db *database.Database, r io.Reader, opts *ImportOptions) (int, error) {
+func ImportFromReader(ctx context.Context, db *database.DB, r io.Reader, opts *ImportOptions) (int, error) {
 	if opts == nil {
 		opts = DefaultImportOptions()
 	}
@@ -311,7 +311,7 @@ func ImportFromReader(ctx context.Context, db *database.Database, r io.Reader, o
 	return importFromData(ctx, db, data, opts)
 }
 
-func importFromData(ctx context.Context, db *database.Database, data []byte, opts *ImportOptions) (int, error) {
+func importFromData(ctx context.Context, db *database.DB, data []byte, opts *ImportOptions) (int, error) {
 	backup, parseErr := parseBackup(data)
 	if parseErr != nil {
 		return 0, parseErr
@@ -343,7 +343,7 @@ func parseBackup(data []byte) (*Data, error) {
 	return &backup, nil
 }
 
-func importTestRuns(ctx context.Context, db *database.Database, runs []database.TestRun, skip bool) int {
+func importTestRuns(ctx context.Context, db *database.DB, runs []database.TestRun, skip bool) int {
 	if skip || len(runs) == 0 {
 		return 0
 	}
@@ -362,7 +362,7 @@ func importTestRuns(ctx context.Context, db *database.Database, runs []database.
 	return count
 }
 
-func importTestResults(ctx context.Context, db *database.Database, results []database.TestResult, skip bool) int {
+func importTestResults(ctx context.Context, db *database.DB, results []database.TestResult, skip bool) int {
 	if skip || len(results) == 0 {
 		return 0
 	}
@@ -371,7 +371,7 @@ func importTestResults(ctx context.Context, db *database.Database, results []dat
 	for i := range results {
 		result := &results[i]
 		result.ID = 0
-		saveErr := db.SaveTestResult(ctx, result)
+		saveErr := db.CreateTestResult(ctx, result)
 		if saveErr != nil {
 			logging.Warn("Failed to import test result", "error", saveErr)
 			continue
@@ -382,7 +382,7 @@ func importTestResults(ctx context.Context, db *database.Database, results []dat
 	return count
 }
 
-func importAuditLogs(ctx context.Context, db *database.Database, logs []database.AuditLogEntry, skip bool) int {
+func importAuditLogs(ctx context.Context, db *database.DB, logs []database.AuditLogEntry, skip bool) int {
 	if skip || len(logs) == 0 {
 		return 0
 	}
@@ -391,7 +391,7 @@ func importAuditLogs(ctx context.Context, db *database.Database, logs []database
 	for i := range logs {
 		entry := &logs[i]
 		entry.ID = 0
-		saveErr := db.SaveAuditLog(ctx, entry)
+		saveErr := db.CreateAuditLog(ctx, entry)
 		if saveErr != nil {
 			logging.Warn("Failed to import audit log", "error", saveErr)
 			continue
@@ -402,7 +402,7 @@ func importAuditLogs(ctx context.Context, db *database.Database, logs []database
 	return count
 }
 
-func importSessions(ctx context.Context, db *database.Database, sessions []database.Session, skip bool) int {
+func importSessions(ctx context.Context, db *database.DB, sessions []database.Session, skip bool) int {
 	if skip || len(sessions) == 0 {
 		return 0
 	}
@@ -414,7 +414,7 @@ func importSessions(ctx context.Context, db *database.Database, sessions []datab
 		if !session.ExpiresAt.After(now) {
 			continue
 		}
-		saveErr := db.SaveSession(ctx, session)
+		saveErr := db.BlacklistSession(ctx, session)
 		if saveErr != nil {
 			logging.Warn("Failed to import session", "error", saveErr)
 			continue
