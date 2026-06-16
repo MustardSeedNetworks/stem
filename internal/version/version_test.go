@@ -47,6 +47,12 @@ func TestDefaultUIBuildHashValue(t *testing.T) {
 	}
 }
 
+func TestDefaultReleaseTrainValue(t *testing.T) {
+	if version.GetReleaseTrain() == "" {
+		t.Error("GetReleaseTrain is empty, expected a default value")
+	}
+}
+
 // ============================================================================
 // Info Function Tests
 // ============================================================================
@@ -95,6 +101,18 @@ func TestInfoContainsBuildTimeKey(t *testing.T) {
 	}
 }
 
+func TestInfoContainsReleaseTrainKey(t *testing.T) {
+	info := version.Info()
+
+	releaseTrain, ok := info["releaseTrain"]
+	if !ok {
+		t.Error("Info() map missing 'releaseTrain' key")
+	}
+	if releaseTrain == "" {
+		t.Error("Info() 'releaseTrain' value is empty")
+	}
+}
+
 func TestInfoContainsUIBuildHashKey(t *testing.T) {
 	info := version.Info()
 
@@ -110,7 +128,7 @@ func TestInfoContainsUIBuildHashKey(t *testing.T) {
 func TestInfoMapSize(t *testing.T) {
 	info := version.Info()
 
-	expectedSize := 4
+	expectedSize := 5
 	if len(info) != expectedSize {
 		t.Errorf("Info() returned map with %d keys, want %d", len(info), expectedSize)
 	}
@@ -127,6 +145,13 @@ func TestInfoMatchesGetters(t *testing.T) {
 	}
 	if info["buildTime"] != version.GetBuildTime() {
 		t.Errorf("Info()['buildTime'] = %q, want %q (GetBuildTime())", info["buildTime"], version.GetBuildTime())
+	}
+	if info["releaseTrain"] != version.GetReleaseTrain() {
+		t.Errorf(
+			"Info()['releaseTrain'] = %q, want %q (GetReleaseTrain())",
+			info["releaseTrain"],
+			version.GetReleaseTrain(),
+		)
 	}
 	if info["uiBuildHash"] != version.GetUIBuildHash() {
 		t.Errorf(
@@ -363,7 +388,7 @@ func TestInfoWithLongValues(t *testing.T) {
 func TestInfoKeysAreJSONSafe(t *testing.T) {
 	info := version.Info()
 
-	expectedKeys := []string{"version", "commit", "buildTime", "uiBuildHash"}
+	expectedKeys := []string{"version", "commit", "buildTime", "releaseTrain", "uiBuildHash"}
 
 	for _, key := range expectedKeys {
 		if _, ok := info[key]; !ok {
