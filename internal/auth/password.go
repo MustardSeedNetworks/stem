@@ -38,9 +38,9 @@ const (
 	argon2Version = argon2.Version
 
 	// argon2TestMemoryKiB is the reduced Argon2id memory cost used when
-	// STEM_TEST_MODE is set (8 MiB instead of 64 MiB) so the test suite
-	// finishes in milliseconds. Production binaries never see this.
-	argon2TestMemoryKiB = 8 * 1024
+	// STEM_TEST_MODE is set so the test suite can instantiate many auth
+	// managers under the race detector. Production binaries never see this.
+	argon2TestMemoryKiB = 64
 )
 
 // Password validation constants.
