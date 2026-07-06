@@ -22,6 +22,11 @@ else
     PLATFORM := unknown
 endif
 
+# Only auto-detect from the host when GOARCH isn't already set (env var or
+# `make GOARCH=... quick`) — CI cross-compiles by exporting GOARCH per matrix
+# leg, and an unconditional `:=` here would silently clobber that with the
+# runner's own architecture.
+ifndef GOARCH
 ARCH := $(shell uname -m)
 ifeq ($(ARCH),x86_64)
     GOARCH := amd64
@@ -29,6 +34,7 @@ else ifeq ($(ARCH),arm64)
     GOARCH := arm64
 else ifeq ($(ARCH),aarch64)
     GOARCH := arm64
+endif
 endif
 
 # =============================================================================

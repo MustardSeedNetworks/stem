@@ -59,7 +59,13 @@ test-backend-quiet:
 	@PKGS=$$(go list ./... | grep -v '/ui$$'); \
 	PKG_COUNT=$$(echo "$$PKGS" | wc -l | tr -d ' '); \
 	printf "   Testing $$PKG_COUNT packages...\n"; \
-	$(GO) test -race -parallel 8 -coverprofile=coverage.out $$PKGS 2>&1 | grep -E "^(ok|FAIL|---)" || true
+	OUTPUT=$$($(GO) test -race -parallel 8 -coverprofile=coverage.out $$PKGS 2>&1); \
+	STATUS=$$?; \
+	echo "$$OUTPUT" | grep -E "^(ok|FAIL|---)"; \
+	if [ $$STATUS -ne 0 ]; then \
+		echo "$$OUTPUT"; \
+		exit $$STATUS; \
+	fi
 	@if [ -f coverage.out ]; then \
 		COV=$$(go tool cover -func=coverage.out | grep total | awk '{print $$3}'); \
 		printf "   📊 Coverage: %s\n" "$$COV"; \
@@ -79,7 +85,12 @@ test-frontend: ## Run frontend tests with progress
 test-frontend-quiet:
 	@STORY_COUNT=$$(find ui/src -name "*.test.ts" -o -name "*.test.tsx" 2>/dev/null | wc -l | tr -d ' '); \
 	printf "   Running $$STORY_COUNT test files...\n"
-	@cd ui && npm test 2>&1 | grep -E "(PASS|FAIL|Tests:)" || true
+	@cd ui && OUTPUT=$$(npm test 2>&1); STATUS=$$?; \
+	echo "$$OUTPUT" | grep -E "(PASS|FAIL|Tests:)"; \
+	if [ $$STATUS -ne 0 ]; then \
+		echo "$$OUTPUT"; \
+		exit $$STATUS; \
+	fi
 
 # =============================================================================
 # Coverage Reports

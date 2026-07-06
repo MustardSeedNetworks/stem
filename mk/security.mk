@@ -38,24 +38,26 @@ security: ## Run all security scans
 security-backend: ## Run Go security scans
 	@printf "$(BOLD)🔒 Running Go security scans...$(RESET)\n"
 	$(call timer-start,security-backend)
-	@printf "  [1/3] Running govulncheck...\n"
-	@if command -v govulncheck >/dev/null 2>&1; then \
-		govulncheck ./... || true; \
+	@FAILED=0; \
+	printf "  [1/3] Running govulncheck...\n"; \
+	if command -v govulncheck >/dev/null 2>&1; then \
+		govulncheck ./... || FAILED=1; \
 	else \
 		printf "$(YELLOW)    ⚠ govulncheck not installed (run: make tools-go)$(RESET)\n"; \
-	fi
-	@printf "  [2/3] Running gosec...\n"
-	@if command -v gosec >/dev/null 2>&1; then \
-		gosec -quiet ./... || true; \
+	fi; \
+	printf "  [2/3] Running gosec...\n"; \
+	if command -v gosec >/dev/null 2>&1; then \
+		gosec -quiet ./... || FAILED=1; \
 	else \
 		printf "$(YELLOW)    ⚠ gosec not installed (run: make tools-go)$(RESET)\n"; \
-	fi
-	@printf "  [3/3] Running staticcheck...\n"
-	@if command -v staticcheck >/dev/null 2>&1; then \
-		staticcheck ./... || true; \
+	fi; \
+	printf "  [3/3] Running staticcheck...\n"; \
+	if command -v staticcheck >/dev/null 2>&1; then \
+		staticcheck ./... || FAILED=1; \
 	else \
 		printf "$(YELLOW)    ⚠ staticcheck not installed (run: make tools-go)$(RESET)\n"; \
-	fi
+	fi; \
+	if [ $$FAILED -ne 0 ]; then exit 1; fi
 	$(call timer-end,security-backend,Go security scan)
 
 security-backend-quiet:
@@ -63,26 +65,36 @@ security-backend-quiet:
 		go install golang.org/x/vuln/cmd/govulncheck@latest; \
 	fi
 	@printf "   Scanning Go dependencies...\n"
-	@govulncheck ./... 2>&1 | grep -E "(Vulnerability|No vulnerabilities)" | head -5 || printf "   No vulnerabilities found\n"
+	@OUTPUT=$$(govulncheck ./... 2>&1); STATUS=$$?; \
+	echo "$$OUTPUT" | grep -E "(Vulnerability|No vulnerabilities)" | head -5; \
+	if [ $$STATUS -ne 0 ]; then \
+		echo "$$OUTPUT"; \
+		exit $$STATUS; \
+	fi
 
 security-frontend: ## Run npm security audit
 	@printf "$(BOLD)🔒 Running npm security audit...$(RESET)\n"
 	$(call timer-start,security-frontend)
-	cd ui && npm audit --audit-level=high || true
+	cd ui && npm audit --audit-level=high
 	$(call timer-end,security-frontend,npm security audit)
 
 security-frontend-quiet:
 	@printf "   Auditing npm packages...\n"
-	@cd ui && npm audit --audit-level=high 2>&1 | grep -E "(found|vulnerabilities)" | head -3 || printf "   No vulnerabilities found\n"
+	@cd ui && OUTPUT=$$(npm audit --audit-level=high 2>&1); STATUS=$$?; \
+	echo "$$OUTPUT" | grep -E "(found|vulnerabilities)" | head -3; \
+	if [ $$STATUS -ne 0 ]; then \
+		echo "$$OUTPUT"; \
+		exit $$STATUS; \
+	fi
 
 security-secrets: ## Scan for secrets in codebase
 	@printf "$(BOLD)🔒 Scanning for secrets (gitleaks)...$(RESET)\n"
 	$(call timer-start,security-secrets)
 	@if command -v gitleaks >/dev/null 2>&1; then \
 		if [ -f .gitleaks.toml ]; then \
-			gitleaks detect --source . --config .gitleaks.toml --verbose || true; \
+			gitleaks detect --source . --config .gitleaks.toml --verbose; \
 		else \
-			gitleaks detect --source . --verbose || true; \
+			gitleaks detect --source . --verbose; \
 		fi; \
 	else \
 		printf "$(YELLOW)⚠ gitleaks not installed (run: make tools-go)$(RESET)\n"; \
@@ -97,9 +109,15 @@ security-secrets-quiet:
 	fi; \
 	printf "   Scanning for secrets...\n"; \
 	if [ -f .gitleaks.toml ]; then \
-		$$GITLEAKS detect --source . --config .gitleaks.toml 2>&1 | grep -E "(leaks found|no leaks)" || printf "   No secrets found\n"; \
+		OUTPUT=$$($$GITLEAKS detect --source . --config .gitleaks.toml 2>&1); \
 	else \
-		$$GITLEAKS detect --source . 2>&1 | grep -E "(leaks found|no leaks)" || printf "   No secrets found\n"; \
+		OUTPUT=$$($$GITLEAKS detect --source . 2>&1); \
+	fi; \
+	STATUS=$$?; \
+	echo "$$OUTPUT" | grep -E "(leaks found|no leaks)"; \
+	if [ $$STATUS -ne 0 ]; then \
+		echo "$$OUTPUT"; \
+		exit $$STATUS; \
 	fi
 
 security-trivy: ## Run Trivy vulnerability scan
