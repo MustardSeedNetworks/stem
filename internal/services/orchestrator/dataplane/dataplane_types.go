@@ -228,14 +228,14 @@ type RFC2889CongestionResult struct {
 // RFC 6349 configuration and results
 
 type RFC6349Config struct {
-	TargetRateMbps float64
-	MinRTTMs       float64
-	MaxRTTMs       float64
-	RWNDSize       uint32
-	DurationSec    uint32
+	TargetRateMbps  float64
+	MinRTTMs        float64
+	MaxRTTMs        float64
+	RWNDSize        uint32
+	DurationSec     uint32
 	ParallelStreams uint32
-	MSS            uint32
-	Mode           uint32
+	MSS             uint32
+	Mode            uint32
 }
 
 type RFC6349Result struct {
