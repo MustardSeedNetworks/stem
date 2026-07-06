@@ -17,12 +17,14 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Least-privilege default: every job gets read-only contents unless it
+# specifically needs more (granted at the job level below). None of these
+# jobs comment on or annotate PRs via the GitHub API, so pull-requests/checks
+# write were unused broad grants — only the `security` job's SARIF upload
+# needs security-events:write (+ actions:read, required for private repos
+# per github/codeql-action/upload-sarif's docs; niac hit this exact gap).
 permissions:
-  actions: read
   contents: read
-  pull-requests: write
-  checks: write
-  security-events: write
 
 jobs:
   # ============================================================================
@@ -441,6 +443,10 @@ jobs:
     name: Security Scanning
     runs-on: ubuntu-latest
     # Always runs — security checks are non-negotiable on every PR.
+    permissions:
+      contents: read
+      security-events: write # upload-sarif (gosec + Trivy)
+      actions: read # required alongside security-events:write on private repos
 
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
@@ -639,6 +645,14 @@ jobs:
     # isn't bound until after the strategy expands). All matrix rows run
     # on every PR; per-arch arches are fast enough that the savings weren't
     # worth a workaround.
+    #
+    # macOS runners are 10x the minute multiplier of ubuntu-latest and are
+    # NOT built here on PRs — darwin/amd64 (Intel) is dropped fleet-wide,
+    # and darwin/arm64's real release binary is produced by goreleaser in
+    # release.yml (unchanged). Since stem is CGO_ENABLED=0 (pure Go), the
+    # darwin/arm64 build cross-compiles trivially on ubuntu; the dedicated
+    # darwin-compile-check job below verifies it still compiles without
+    # paying for a macOS runner on every PR.
     if: |
       always() &&
       needs.frontend.result == 'success' &&
@@ -657,18 +671,6 @@ jobs:
             arch: arm64
             runner: ubuntu-latest
             goos: linux
-            goarch: arm64
-            required: false
-          - os: darwin
-            arch: amd64
-            runner: macos-latest
-            goos: darwin
-            goarch: amd64
-            required: false
-          - os: darwin
-            arch: arm64
-            runner: macos-latest
-            goos: darwin
             goarch: arm64
             required: false
     steps:
@@ -746,6 +748,44 @@ jobs:
           name: stem-${{ matrix.os }}-${{ matrix.arch }}
           path: bin/stem-${{ matrix.os }}-${{ matrix.arch }}
           retention-days: 7
+
+  # ============================================================================
+  # Darwin compile check — verifies the release target still cross-compiles
+  # ============================================================================
+  # macOS runners cost 10x the ubuntu-latest minute multiplier, so darwin
+  # binaries are no longer built on PRs at all (see the `build` job comment
+  # above). stem is CGO_ENABLED=0 (pure Go), so GOOS=darwin GOARCH=arm64
+  # cross-compiles cleanly on ubuntu-latest — this job is a cheap compile-only
+  # smoke check that the darwin/arm64 target hasn't broken, without paying for
+  # a macOS runner. The actual signed darwin/arm64 release binary is still
+  # produced by goreleaser in release.yml, unchanged. darwin/amd64 (Intel) is
+  # dropped fleet-wide and is not checked here.
+  darwin-compile-check:
+    name: Darwin compile check (arm64)
+    runs-on: ubuntu-latest
+    needs: [changes, backend, frontend]
+    if: |
+      always() &&
+      needs.frontend.result == 'success' &&
+      (needs.backend.result == 'success' || needs.backend.result == 'skipped')
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - name: Set up Go
+        uses: ./.github/actions/setup-go
+
+      - name: Download frontend build
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: frontend-dist
+          path: internal/api/ui/
+
+      - name: Cross-compile for darwin/arm64 (no macOS runner needed)
+        env:
+          GOOS: darwin
+          GOARCH: arm64
+          CGO_ENABLED: '0'
+        run: go build -trimpath -o /dev/null ./cmd/stem/
 
   # ============================================================================
   # Lighthouse Performance Audit
@@ -933,6 +973,7 @@ jobs:
       - i18n
       - docs
       - build
+      - darwin-compile-check
     if: always()
     steps:
       - name: Verify upstream results
