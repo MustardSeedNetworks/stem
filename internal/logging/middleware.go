@@ -152,6 +152,17 @@ func (w *responseWriter) WriteHeader(code int) {
 }
 
 // Write calls the underlying Write and sets status to 200 if not already set.
+//
+// CodeQL go/reflected-xss (alert #99): false positive. Every HTTP response
+// body in this app passes through this single Write call, so CodeQL's
+// taint tracker reports it as a generic sink for any handler that ever
+// echoes request data. The traced flow is handleModuleByName (path segment
+// from r.URL.Path) -> writeJSON in internal/api/server.go, which sets
+// Content-Type: application/json and serializes through encoding/json
+// (HTML-escaped by default, and not interpreted as HTML by any client).
+// There is no code path here that writes user input into an HTML
+// response; see scripts/check-output-escaping.sh for the repo-wide gate
+// that keeps it that way.
 func (w *responseWriter) Write(b []byte) (int, error) {
 	if !w.wroteHeader {
 		w.WriteHeader(http.StatusOK)

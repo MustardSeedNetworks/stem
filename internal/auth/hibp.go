@@ -106,6 +106,13 @@ func CheckPasswordBreached(ctx context.Context, password string) (bool, int, err
 		return false, 0, nil
 	}
 
+	// CodeQL go/weak-sensitive-data-hashing (alert #100): false positive.
+	// This SHA-1 digest is never stored, compared for auth, or used as a
+	// password hash — it exists only to build the k-anonymity range query
+	// (first 5 hex chars) that the HIBP Pwned Passwords API mandates. The
+	// full hash never leaves this function, and the API's protocol is
+	// fixed to SHA-1; a "stronger" hash would simply not match HIBP's
+	// corpus. See https://haveibeenpwned.com/API/v3#PwnedPasswords.
 	hash := sha1.Sum([]byte(password)) //nolint:gosec // HIBP requires SHA-1.
 	hex := strings.ToUpper(hex.EncodeToString(hash[:]))
 	if len(hex) != hibpPrefixLen+hibpSuffixLen {
