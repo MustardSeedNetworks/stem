@@ -12,9 +12,8 @@
 3. [Configuration](#configuration)
 4. [Running The Stem](#running-the-stem)
 5. [Production Deployment](#production-deployment)
-6. [Kubernetes Deployment](#kubernetes-deployment)
-7. [Monitoring](#monitoring)
-8. [Troubleshooting](#troubleshooting)
+6. [Monitoring](#monitoring)
+7. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -79,23 +78,6 @@ make build
 
 # Install
 sudo cp bin/stem /usr/local/bin/
-```
-
-### Option 3: Docker
-
-```bash
-# Pull image
-docker pull ghcr.io/mustardseednetworks/stem:latest
-
-# Run container
-docker run -d \
-  --name stem \
-  --network host \
-  --cap-add NET_ADMIN \
-  -e STEM_AUTH_USERNAME=admin \
-  -e STEM_AUTH_PASSWORD=your-secure-password \
-  -e STEM_JWT_SECRET=your-256-bit-secret \
-  ghcr.io/mustardseednetworks/stem:latest web -p 8444
 ```
 
 ---
@@ -293,99 +275,6 @@ server {
         proxy_read_timeout 86400;
     }
 }
-```
-
----
-
-## Kubernetes Deployment
-
-### Deployment
-
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: stem
-  labels:
-    app: stem
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: stem
-  template:
-    metadata:
-      labels:
-        app: stem
-    spec:
-      containers:
-      - name: stem
-        image: ghcr.io/mustardseednetworks/stem:latest
-        ports:
-        - containerPort: 8444
-        env:
-        - name: STEM_AUTH_USERNAME
-          valueFrom:
-            secretKeyRef:
-              name: stem-secrets
-              key: username
-        - name: STEM_AUTH_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: stem-secrets
-              key: password
-        - name: STEM_JWT_SECRET
-          valueFrom:
-            secretKeyRef:
-              name: stem-secrets
-              key: jwt-secret
-        securityContext:
-          capabilities:
-            add: ["NET_ADMIN", "NET_RAW"]
-        livenessProbe:
-          httpGet:
-            path: /health/live
-            port: 8444
-          initialDelaySeconds: 5
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /health/ready
-            port: 8444
-          initialDelaySeconds: 5
-          periodSeconds: 5
-        resources:
-          requests:
-            memory: "256Mi"
-            cpu: "250m"
-          limits:
-            memory: "1Gi"
-            cpu: "1000m"
-```
-
-### Service
-
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: stem
-spec:
-  selector:
-    app: stem
-  ports:
-  - port: 80
-    targetPort: 8444
-  type: ClusterIP
-```
-
-### Secret
-
-```bash
-kubectl create secret generic stem-secrets \
-  --from-literal=username=admin \
-  --from-literal=password="$(openssl rand -base64 32)" \
-  --from-literal=jwt-secret="$(openssl rand -base64 32)"
 ```
 
 ---

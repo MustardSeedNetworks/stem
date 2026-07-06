@@ -175,9 +175,9 @@ Most write endpoints require a JWT issued by `/api/auth/login`.
 
 Conventional commits drive [release-please](https://github.com/googleapis/release-please).
 Release tags trigger `release.yml` which cross-builds binaries
-(linux/macOS/windows × amd64/arm64), `.deb`, `.rpm`, macOS `.pkg`, Windows
-`.zip`, and a multi-arch container image — all signed via cosign keyless
-OIDC and shipped with SLSA-3 provenance + Syft SBOM.
+(linux/macOS/windows × amd64/arm64), `.deb`, `.rpm`, macOS `.pkg`, and Windows
+`.zip` — all signed via cosign keyless OIDC and shipped with SLSA-3
+provenance + Syft SBOM.
 
 ## License
 
