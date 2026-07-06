@@ -113,6 +113,7 @@ func CheckPasswordBreached(ctx context.Context, password string) (bool, int, err
 	// full hash never leaves this function, and the API's protocol is
 	// fixed to SHA-1; a "stronger" hash would simply not match HIBP's
 	// corpus. See https://haveibeenpwned.com/API/v3#PwnedPasswords.
+	// nosemgrep: go.lang.security.audit.crypto.use_of_weak_crypto.use-of-sha1 -- HIBP k-anonymity API mandates SHA-1, same rationale as the #nolint
 	hash := sha1.Sum([]byte(password)) //nolint:gosec // HIBP requires SHA-1.
 	hex := strings.ToUpper(hex.EncodeToString(hash[:]))
 	if len(hex) != hibpPrefixLen+hibpSuffixLen {
