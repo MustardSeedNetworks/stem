@@ -13,7 +13,7 @@
 # =============================================================================
 
 .PHONY: lint lint-go lint-c lint-frontend lint-frontend-quiet lint-md \
-        fmt fmt-go fmt-c fmt-frontend fix fix-all
+        fmt fmt-go fmt-c fmt-frontend fmt-check fix fix-all
 
 # =============================================================================
 # Linting
@@ -27,7 +27,7 @@ lint-go: ## Run Go linter (golangci-lint)
 	@GOLANGCI_LINT="$$(go env GOPATH)/bin/golangci-lint"; \
 	if [ ! -f "$$GOLANGCI_LINT" ]; then \
 		printf "📦 Installing golangci-lint v2...\n"; \
-		go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.1; \
+		go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.2; \
 	fi; \
 	$$GOLANGCI_LINT run --allow-parallel-runners ./...
 	@printf "$(GREEN)✓ Go lint passed$(RESET)\n"
@@ -40,7 +40,12 @@ lint-frontend: ## Run frontend linter (Biome)
 lint-frontend-quiet:
 	@FILE_COUNT=$$(find ui/src -name "*.ts" -o -name "*.tsx" 2>/dev/null | wc -l | tr -d ' '); \
 	printf "   Checking $$FILE_COUNT files...\n"
-	@cd ui && npx @biomejs/biome check src/ 2>&1 | tail -5 || true
+	@cd ui && OUTPUT=$$(npx @biomejs/biome check src/ 2>&1); STATUS=$$?; \
+	echo "$$OUTPUT" | tail -5; \
+	if [ $$STATUS -ne 0 ]; then \
+		echo "$$OUTPUT"; \
+		exit $$STATUS; \
+	fi
 
 lint-c: ## Run C linter (clang-tidy, Linux only)
 ifeq ($(UNAME),Linux)
@@ -96,6 +101,30 @@ fmt-frontend: ## Format frontend code with Biome
 	@cd ui && npx @biomejs/biome format --write src/
 	@printf "$(GREEN)✓ Frontend code formatted$(RESET)\n"
 
+fmt-check: ## Check all formatting (Go + frontend) without fixing
+	@printf "$(BOLD)🔍 Checking formatting...$(RESET)\n"
+	@FAILED=0; \
+	printf "Checking Go formatting...\n"; \
+	GOFMT_FILES="$$(gofmt -l -s .)"; \
+	if [ -n "$$GOFMT_FILES" ]; then \
+		printf "$(RED)✗ Go files need formatting:$(RESET)\n"; \
+		printf '%s\n' "$$GOFMT_FILES"; \
+		FAILED=1; \
+	else \
+		printf "$(GREEN)✓ Go formatting OK$(RESET)\n"; \
+	fi; \
+	printf "Checking frontend formatting (Biome)...\n"; \
+	if (cd ui && npx @biomejs/biome format src/); then \
+		printf "$(GREEN)✓ Frontend formatting OK$(RESET)\n"; \
+	else \
+		FAILED=1; \
+	fi; \
+	if [ $$FAILED -ne 0 ]; then \
+		printf "\n$(YELLOW)Run 'make fmt' to fix formatting issues$(RESET)\n"; \
+		exit 1; \
+	fi
+	@printf "$(GREEN)✓ All formatting checks passed$(RESET)\n"
+
 fmt-c: ## Format C code (Linux only)
 ifeq ($(UNAME),Linux)
 	@printf "$(BOLD)🔧 Formatting C code...$(RESET)\n"
@@ -117,7 +146,7 @@ fix: ## Auto-fix Go and frontend linting issues
 	@printf "$(BOLD)🔧 Auto-fixing code...$(RESET)\n"
 	@GOLANGCI_LINT="$$(go env GOPATH)/bin/golangci-lint"; \
 	if [ ! -f "$$GOLANGCI_LINT" ]; then \
-		go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.1; \
+		go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.2; \
 	fi; \
 	$$GOLANGCI_LINT run --fix ./...
 	@gofmt -w -s .
