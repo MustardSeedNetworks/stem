@@ -28,6 +28,7 @@ func (c *Context) SetFrameSize(frameSize uint32) {
 	defer c.mu.Unlock()
 	c.frameSize = frameSize
 }
+
 // RunThroughputTestCLI runs throughput test and returns CLI-friendly result
 func (c *Context) RunThroughputTest() (*ThroughputResultCLI, error) {
 	results, err := c.runThroughputTestInternal(c.frameSize)
@@ -107,4 +108,3 @@ func (c *Context) RunBackToBackTest(initialBurst uint64, trials uint32) (*BackTo
 		Trials:          result.Trials,
 	}, nil
 }
-
