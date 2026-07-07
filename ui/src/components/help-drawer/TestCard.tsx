@@ -7,7 +7,7 @@
 
 import { ChevronRight } from 'lucide-react';
 import type { ReactElement } from 'react';
-import type { TestHelp } from '../../data/help-content';
+import type { TestHelp } from '../../data/help/types';
 import { cn, icon as iconTokens, layout, radius, spacing } from '../../styles/theme';
 
 interface TestCardProps {

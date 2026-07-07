@@ -8,7 +8,9 @@
 
 import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
-import { categories, getTestsByCategory, type TestHelp } from '../../data/help-content';
+import { categories } from '../../data/help/categories';
+import { getTestsByCategory } from '../../data/help/tests';
+import type { TestHelp } from '../../data/help/types';
 import { CollapsibleSection } from '../CollapsibleSection';
 import { TestCard } from './TestCard';
 
