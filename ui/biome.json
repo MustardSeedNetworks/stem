@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.5.0/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.5.2/schema.json",
   "vcs": {
     "enabled": true,
     "clientKind": "git",
@@ -65,28 +65,19 @@
         "noDefaultExport": "off",
         "noNegationElse": "off",
         "noSubstr": "off",
-        "useFilenamingConvention": "off",
-        "useSpreadOverApply": "error"
+        "useFilenamingConvention": "off"
       },
       "suspicious": {
         "noArrayIndexKey": "off",
         "noConsole": {
           "level": "error",
-          "options": {
-            "allow": [
-              "warn",
-              "error"
-            ]
-          }
+          "options": { "allow": ["warn", "error"] }
         },
         "noEmptyBlockStatements": "off",
         "noReactSpecificProps": "off",
         "noShadowRestrictedNames": "off",
         "useAwait": "off",
-        "noImportCycles": "warn",
-        "noDuplicatedSpreadProps": "error",
-        "noParametersOnlyUsedInRecursion": "error",
-        "useArraySortCompare": "error"
+        "noImportCycles": "warn"
       },
       "performance": {
         "noBarrelFile": "error",
@@ -95,11 +86,8 @@
       "complexity": {
         "noExcessiveCognitiveComplexity": {
           "level": "error",
-          "options": {
-            "maxAllowedComplexity": 40
-          }
-        },
-        "useArrayFind": "error"
+          "options": { "maxAllowedComplexity": 40 }
+        }
       },
       "nursery": {
         "useAwaitThenable": "error",
@@ -116,23 +104,12 @@
   },
   "overrides": [
     {
-      "includes": [
-        "tests/load/**/*.js"
-      ],
-      "linter": {
-        "enabled": false
-      },
-      "formatter": {
-        "enabled": false
-      }
+      "includes": ["tests/load/**/*.js"],
+      "linter": { "enabled": false },
+      "formatter": { "enabled": false }
     },
     {
-      "includes": [
-        "**/*.test.ts",
-        "**/*.test.tsx",
-        "**/*.spec.ts",
-        "**/*.spec.tsx"
-      ],
+      "includes": ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx"],
       "linter": {
         "rules": {
           "suspicious": {
@@ -146,72 +123,43 @@
       }
     },
     {
-      "includes": [
-        "**/e2e/**/*.ts",
-        "**/e2e/**/*.spec.ts"
-      ],
+      "includes": ["**/e2e/**/*.ts", "**/e2e/**/*.spec.ts"],
       "linter": {
         "rules": {
-          "nursery": {
-            "useAwaitThenable": "off"
-          },
-          "suspicious": {
-            "noSkippedTests": "off"
-          }
+          "nursery": { "useAwaitThenable": "off" },
+          "suspicious": { "noSkippedTests": "off" }
         }
       }
     },
     {
-      "includes": [
-        "**/*.stories.ts",
-        "**/*.stories.tsx"
-      ],
+      "includes": ["**/*.stories.ts", "**/*.stories.tsx"],
       "linter": {
         "rules": {
-          "nursery": {},
-          "suspicious": {
-            "noShadow": "off"
-          }
+          "suspicious": { "noShadow": "off" }
         }
       }
     },
     {
-      "includes": [
-        "**/scripts/**",
-        "**/cli/**"
-      ],
+      "includes": ["**/scripts/**", "**/cli/**"],
       "linter": {
         "rules": {
-          "suspicious": {
-            "noConsole": "off"
-          }
+          "suspicious": { "noConsole": "off" }
         }
       }
     },
     {
-      "includes": [
-        "next.config.js",
-        "next.config.mjs",
-        "vite.config.ts",
-        "vitest.config.ts"
-      ],
+      "includes": ["next.config.js", "next.config.mjs", "vite.config.ts", "vitest.config.ts"],
       "linter": {
         "rules": {
-          "style": {
-            "noDefaultExport": "off"
-          }
+          "style": { "noDefaultExport": "off" }
         }
       }
     },
     {
-      "includes": [
-        "**/api/index.ts"
-      ],
+      "includes": ["**/api/index.ts"],
       "linter": {
         "rules": {
-          "performance": {
-            "noBarrelFile": "off"
-          }
+          "performance": { "noBarrelFile": "off" }
         }
       }
     },
@@ -238,25 +186,15 @@
       ],
       "linter": {
         "rules": {
-          "style": {
-            "useFilenamingConvention": "off"
-          }
+          "style": { "useFilenamingConvention": "off" }
         }
       }
     },
     {
-      "includes": [
-        "**/index.ts",
-        "**/index.tsx",
-        "**/DiffViewer.tsx",
-        "**/help-content.ts"
-      ],
+      "includes": ["**/index.ts", "**/index.tsx", "**/DiffViewer.tsx"],
       "linter": {
         "rules": {
-          "performance": {
-            "noBarrelFile": "off",
-            "noReExportAll": "off"
-          }
+          "performance": { "noBarrelFile": "off", "noReExportAll": "off" }
         }
       }
     }

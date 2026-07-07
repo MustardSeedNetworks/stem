@@ -9,7 +9,8 @@
 import { ChevronRight } from 'lucide-react';
 import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
-import { type Tutorial, tutorials } from '../../data/help-content';
+import { tutorials } from '../../data/help/tutorials';
+import type { Tutorial } from '../../data/help/types';
 import { cn, icon as iconTokens, layout, radius, spacing } from '../../styles/theme';
 
 interface TutorialsTabProps {

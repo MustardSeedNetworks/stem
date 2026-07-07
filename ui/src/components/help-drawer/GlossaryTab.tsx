@@ -9,7 +9,8 @@
 
 import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
-import { type GlossaryEntry, glossary } from '../../data/help-content';
+import { glossary } from '../../data/help/glossary';
+import type { GlossaryEntry } from '../../data/help/types';
 import { cn, layout, radius, spacing } from '../../styles/theme';
 import { CollapsibleSection } from '../CollapsibleSection';
 

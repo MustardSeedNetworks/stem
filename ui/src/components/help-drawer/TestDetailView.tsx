@@ -10,7 +10,7 @@
 import { ChevronRight } from 'lucide-react';
 import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { TestHelp } from '../../data/help-content';
+import type { TestHelp } from '../../data/help/types';
 import { cn, icon as iconTokens, layout, radius, spacing, status } from '../../styles/theme';
 import { CopyCommandButton } from './CopyCommandButton';
 

@@ -8,7 +8,7 @@
  *              under ./help-drawer/. Framing/chrome strings are localized via
  *              the `help` i18n namespace; the help content corpus itself
  *              (per-test descriptions, glossary entries, tutorial bodies)
- *              stays English in the data file (src/data/help-content.ts).
+ *              stays English in the data/help corpus.
  */
 
 import {
@@ -27,7 +27,9 @@ import {
 import type { ReactElement } from 'react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { searchGlossary, searchTests, type TestHelp, type Tutorial } from '../data/help-content';
+import { searchGlossary } from '../data/help/glossary';
+import { searchTests } from '../data/help/tests';
+import type { TestHelp, Tutorial } from '../data/help/types';
 import { useBuildVersion } from '../hooks/useBuildVersion';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 import { cn, icon as iconTokens, layout, modal, radius, spacing, status } from '../styles/theme';

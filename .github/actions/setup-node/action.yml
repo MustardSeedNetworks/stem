@@ -4,11 +4,15 @@ inputs:
   node-version:
     description: 'Node.js version'
     required: false
-    default: '26.2.0'
+    default: '26.4.0'
   working-directory:
     description: 'Working directory for npm'
     required: false
     default: 'ui'
+  npm-version:
+    description: 'npm version'
+    required: false
+    default: '11.18.0'
 runs:
   using: composite
   steps:
@@ -18,3 +22,8 @@ runs:
         node-version: ${{ inputs.node-version }}
         cache: npm
         cache-dependency-path: ${{ inputs.working-directory }}/package-lock.json
+    - name: Set up npm
+      shell: bash
+      env:
+        NPM_VERSION: ${{ inputs.npm-version }}
+      run: npm install -g "npm@${NPM_VERSION}"

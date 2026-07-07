@@ -78,9 +78,12 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
-          node-version: "26.3.0"
+          node-version: "26.4.0"
           cache: npm
           cache-dependency-path: ui/package-lock.json
+
+      - name: Set up npm
+        run: npm install -g npm@11.18.0
 
       - name: Build UI
         run: |
@@ -111,11 +114,11 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build-ui]
     container:
-      # Docker Hub tag scheme: <go-version>-<goreleaser-version>. v1.26.3-v2.16.0
-      # tracks Go 1.26.3 + goreleaser v2.16.0. Pinned for reproducibility;
+      # Docker Hub tag scheme: <go-version>-<goreleaser-version>. v1.26.4
+      # tracks Go 1.26.4 + goreleaser v2.17.0. Pinned for reproducibility;
       # bump via dependabot when newer revs land. Keep fresh so the image's
       # baked libs don't drift from upstream (seed#1577).
-      image: goreleaser/goreleaser-cross:v1.26.3-v2.16.0
+      image: goreleaser/goreleaser-cross:v1.26.4
     outputs:
       # base64-encoded SHA-256 hashes of all release artifacts, formatted
       # for slsa-github-generator's base64-subjects input. Set only on a
