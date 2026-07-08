@@ -8,7 +8,7 @@
 
 | Layer | Technology |
 |-------|------------|
-| Backend | Go 1.26.4 |
+| Backend | Go 1.26.5 |
 | Frontend | React 19, TypeScript 6 |
 | Styling | Tailwind CSS v4 |
 | Data Plane | C23 (DPDK / AF_PACKET / AF_XDP), Linux |
