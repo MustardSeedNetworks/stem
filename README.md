@@ -146,7 +146,7 @@ stem license trial
 | `make pkg` | macOS `.pkg` |
 | `make quick` | Backend-only dev iteration (do **not** ship) |
 
-Verified versions: **Go 1.26.4**, Node.js 26.4.0, golangci-lint v2.12.2,
+Verified versions: **Go 1.26.5**, Node.js 26.4.0, golangci-lint v2.12.2,
 DPDK 25.11.2 LTS (optional, Linux).
 
 ## REST API (selected)
