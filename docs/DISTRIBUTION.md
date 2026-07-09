@@ -111,9 +111,9 @@ make container-push
 **Single source of truth:** Git tags
 
 ```bash
-git tag v1.0.0          # Creates version
+git tag v0.24.0          # Creates version
 make build              # Embeds version via ldflags
-./bin/stem --version    # Shows v1.0.0
+./bin/stem --version    # Shows v0.24.0
 ```
 
 - `package.json` version is `0.0.0` (ignored, real version from API)
