@@ -147,6 +147,9 @@ jobs:
           # in the release container). Rotate together on upgrade.
           SYFT_VERSION: "1.46.0"
           SYFT_SHA256: "d654f678b709eb53c393d38519d5ed7d2e57205529404018614cfefa0fb2b5ca"
+        # Container run steps default to `sh` (dash), which rejects
+        # `set -o pipefail`; force bash (present in goreleaser-cross).
+        shell: bash
         run: |
           set -euo pipefail
           curl -sSfL -o syft.tar.gz \
