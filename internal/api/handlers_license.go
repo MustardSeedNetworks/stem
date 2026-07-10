@@ -65,13 +65,13 @@ func (s *Server) handleLicense(w http.ResponseWriter, r *http.Request) {
 		activated := s.licenseManager.IsActivated()
 		message := "License expired or invalid"
 		if activated {
-			message = fmt.Sprintf("Licensed: %s", state.Tier)
+			message = fmt.Sprintf("Licensed: %s", license.Tier(state.Tier))
 		}
 		status = LicenseStatus{
 			Activated:     activated,
 			IsTrialMode:   false,
-			Tier:          int(state.Tier),
-			TierName:      state.Tier.String(),
+			Tier:          state.Tier,
+			TierName:      license.Tier(state.Tier).String(),
 			DaysRemaining: 0,
 			Features:      state.Features,
 			DeviceHash:    fp.Hash(),

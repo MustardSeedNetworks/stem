@@ -30,14 +30,14 @@ func displayLicenseStatus(mgr *license.Manager) {
 		remaining := mgr.TrialDaysRemaining()
 		_, _ = fmt.Fprintln(os.Stdout, "Status:    Trial Mode")
 		_, _ = fmt.Fprintf(os.Stdout, "Days Left: %d\n", remaining)
-		_, _ = fmt.Fprintf(os.Stdout, "Tier:      %s (full access during trial)\n", state.Tier)
+		_, _ = fmt.Fprintf(os.Stdout, "Tier:      %s (full access during trial)\n", license.Tier(state.Tier))
 		if remaining <= trialWarningDays {
 			_, _ = fmt.Fprintln(os.Stdout, "\nWarning: Trial ending soon!")
 			_, _ = fmt.Fprintln(os.Stdout, "Activate a license to continue using The Stem")
 		}
 	default:
 		_, _ = fmt.Fprintln(os.Stdout, "Status:    Licensed")
-		_, _ = fmt.Fprintf(os.Stdout, "Tier:      %s\n", state.Tier)
+		_, _ = fmt.Fprintf(os.Stdout, "Tier:      %s\n", license.Tier(state.Tier))
 		_, _ = fmt.Fprintf(os.Stdout, "Key:       %s\n", license.FormatKey(state.LicenseKey))
 		_, _ = fmt.Fprintf(os.Stdout, "Expires:   %s\n", state.ExpiresAt.Format("2006-01-02"))
 	}
@@ -77,7 +77,7 @@ func licenseCmd(args []string) {
 		result := mgr.Activate(*activate)
 		if result.Success {
 			_, _ = fmt.Fprintf(os.Stdout, "Success: %s\n", result.Message)
-			_, _ = fmt.Fprintf(os.Stdout, "Tier: %s\n", result.Tier)
+			_, _ = fmt.Fprintf(os.Stdout, "Tier: %s\n", license.Tier(result.Tier))
 		} else {
 			_, _ = fmt.Fprintf(os.Stdout, "Error: %s\n", result.Message)
 			os.Exit(1)
