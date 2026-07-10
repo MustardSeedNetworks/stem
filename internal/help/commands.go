@@ -351,7 +351,7 @@ information, license status, and available features.`,
 			{
 				Desc:    "Show version",
 				Command: "stem version",
-				Output:  "Stem v1.0.0\nBuild: 2025-01-15\nLicense: Professional tier",
+				Output:  "Stem v0.23.0\nBuild: 2026-05-29\nLicense: Professional tier",
 			},
 		},
 		SeeAlso: []string{"license"},
