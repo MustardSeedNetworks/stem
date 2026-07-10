@@ -525,30 +525,31 @@ func TestHandleAuthCSRFToken_LoginRotatesToken(t *testing.T) {
 	s := setupAuthTestServer(t)
 
 	first, _ := getAuthToken(t, s)
-	_ = fetchCSRFToken(t, s, first)
+	firstToken := fetchCSRFToken(t, s, first)
 
 	firstSessionID := api.SessionIDFromJWTForTest(first)
 	if firstSessionID == "" {
-		t.Fatal("expected non-empty session ID from JWT payload")
+		t.Fatal("expected non-empty session ID from JWT")
 	}
-	if !s.CSRFManagerForTest().HasToken(firstSessionID) {
-		t.Fatal("first session should have a CSRF token after fetch")
+	// After fetching, the first session has a usable CSRF token.
+	if err := s.CSRFManagerForTest().ValidateToken(firstSessionID, firstToken); err != nil {
+		t.Fatalf("first session should have a valid CSRF token after fetch: %v", err)
 	}
 
-	// Log in a second time. handleAuthLogin revokes the CSRF token for
-	// whichever session ID the new JWT decodes to. We verify the new
-	// session does NOT inherit a pre-existing token.
+	// Log in a second time. handleAuthLogin revokes the CSRF token for the
+	// new session ID, so the new session must start without a usable token:
+	// distinct from the first session, and rejecting the first session's
+	// token (per-session isolation).
 	second, _ := getAuthToken(t, s)
 	secondSessionID := api.SessionIDFromJWTForTest(second)
 	if secondSessionID == "" {
-		t.Fatal("expected non-empty session ID from second JWT payload")
+		t.Fatal("expected non-empty session ID from second JWT")
 	}
-	if s.CSRFManagerForTest().HasToken(secondSessionID) {
-		t.Errorf(
-			"second session must start without a CSRF token (rotation broken); "+
-				"session ID %q already has one",
-			secondSessionID,
-		)
+	if secondSessionID == firstSessionID {
+		t.Fatal("two logins must yield distinct session IDs")
+	}
+	if err := s.CSRFManagerForTest().ValidateToken(secondSessionID, firstToken); err == nil {
+		t.Error("second session must not accept the first session's CSRF token")
 	}
 }
 

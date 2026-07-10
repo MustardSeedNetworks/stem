@@ -9,7 +9,8 @@ import (
 	"net/http/httptest"
 	"os"
 	"testing"
-	"time"
+
+	"github.com/MustardSeedNetworks/foundation/pkg/csrf"
 
 	"github.com/MustardSeedNetworks/stem/internal/auth"
 )
@@ -20,44 +21,36 @@ func newTestLogger() *slog.Logger {
 	return slog.New(slog.NewTextHandler(os.Stderr, opts))
 }
 
+// cookieValue builds the JWT-shaped access-token cookie value the middleware
+// reads. The CSRF session key is sha256(cookieValue) (foundation.SessionKey),
+// so a test that wants the middleware to accept a token must mint it under that
+// same derived key — see sessionKeyFor.
+func cookieValue(payload string) string {
+	return "header." + payload + ".signature"
+}
+
+// sessionKeyFor returns the CSRF session key the middleware derives for a
+// request carrying cookieValue(payload) — i.e. what GetSessionIDFromRequest
+// returns. Tests mint tokens under this key so validation matches.
+func sessionKeyFor(payload string) string {
+	return csrf.SessionKey(cookieValue(payload))
+}
+
 func TestNewCSRFManager(t *testing.T) {
 	manager := auth.NewCSRFManager(newTestLogger())
 	if manager == nil {
 		t.Fatal("NewCSRFManager returned nil")
 	}
+	defer manager.Stop()
 
-	if manager.TokenCount() != 0 {
-		t.Fatal("tokens map should be empty")
-	}
-
-	// Clean up
-	manager.Stop()
-}
-
-func TestCSRFManagerCleanupStopsOnContextCancel(t *testing.T) {
-	manager := auth.NewCSRFManager(newTestLogger())
-
-	// Generate a token to ensure the manager is working
-	token, err := manager.GenerateToken("test-session")
+	// A fresh manager mints and validates a token — the behavioral proxy for
+	// "initialized correctly" now that the store lives in foundation.
+	tok, err := manager.GenerateToken("session")
 	if err != nil {
-		t.Fatalf("failed to generate token: %v", err)
+		t.Fatalf("generate: %v", err)
 	}
-	if token == "" {
-		t.Fatal("expected non-empty token")
-	}
-
-	// Stop the manager
-	manager.Stop()
-
-	// Give the goroutine a moment to stop
-	time.Sleep(100 * time.Millisecond)
-
-	// Verify context is canceled
-	select {
-	case <-manager.CtxDone():
-		// Expected - context is canceled
-	default:
-		t.Fatal("context should be canceled after Stop()")
+	if valErr := manager.ValidateToken("session", tok); valErr != nil {
+		t.Errorf("fresh manager failed to validate its own token: %v", valErr)
 	}
 }
 
@@ -67,28 +60,25 @@ func TestCSRFManagerGenerateAndValidate(t *testing.T) {
 
 	sessionID := "test-session"
 
-	// Generate a token
 	token, err := manager.GenerateToken(sessionID)
 	if err != nil {
 		t.Fatalf("failed to generate token: %v", err)
 	}
 
-	// Validate the token
-	validateErr := manager.ValidateToken(sessionID, token)
-	if validateErr != nil {
+	if validateErr := manager.ValidateToken(sessionID, token); validateErr != nil {
 		t.Errorf("failed to validate token: %v", validateErr)
 	}
 
-	// Validate with wrong session ID
-	wrongSessionErr := manager.ValidateToken("wrong-session", token)
-	if !errors.Is(wrongSessionErr, auth.ErrCSRFTokenInvalid) {
-		t.Errorf("expected ErrCSRFTokenInvalid, got %v", wrongSessionErr)
+	if wrongSessionErr := manager.ValidateToken("wrong-session", token); !errors.Is(
+		wrongSessionErr, csrf.ErrTokenInvalid,
+	) {
+		t.Errorf("expected ErrTokenInvalid, got %v", wrongSessionErr)
 	}
 
-	// Validate with wrong token
-	wrongTokenErr := manager.ValidateToken(sessionID, "wrong-token")
-	if !errors.Is(wrongTokenErr, auth.ErrCSRFTokenInvalid) {
-		t.Errorf("expected ErrCSRFTokenInvalid, got %v", wrongTokenErr)
+	if wrongTokenErr := manager.ValidateToken(sessionID, "wrong-token"); !errors.Is(
+		wrongTokenErr, csrf.ErrTokenInvalid,
+	) {
+		t.Errorf("expected ErrTokenInvalid, got %v", wrongTokenErr)
 	}
 }
 
@@ -97,17 +87,14 @@ func TestCSRFManagerEmptyToken(t *testing.T) {
 	defer manager.Stop()
 
 	sessionID := "test-session"
-
-	// Generate a token
-	_, err := manager.GenerateToken(sessionID)
-	if err != nil {
+	if _, err := manager.GenerateToken(sessionID); err != nil {
 		t.Fatalf("failed to generate token: %v", err)
 	}
 
-	// Validate with empty token
-	emptyTokenErr := manager.ValidateToken(sessionID, "")
-	if !errors.Is(emptyTokenErr, auth.ErrCSRFTokenMissing) {
-		t.Errorf("expected ErrCSRFTokenMissing, got %v", emptyTokenErr)
+	if emptyTokenErr := manager.ValidateToken(sessionID, ""); !errors.Is(
+		emptyTokenErr, csrf.ErrTokenMissing,
+	) {
+		t.Errorf("expected ErrTokenMissing, got %v", emptyTokenErr)
 	}
 }
 
@@ -116,26 +103,43 @@ func TestCSRFManagerRevokeToken(t *testing.T) {
 	defer manager.Stop()
 
 	sessionID := "test-session"
-
-	// Generate a token
 	token, err := manager.GenerateToken(sessionID)
 	if err != nil {
 		t.Fatalf("failed to generate token: %v", err)
 	}
-
-	// Validate should succeed
-	validateErr := manager.ValidateToken(sessionID, token)
-	if validateErr != nil {
+	if validateErr := manager.ValidateToken(sessionID, token); validateErr != nil {
 		t.Errorf("failed to validate token: %v", validateErr)
 	}
 
-	// Revoke the token
 	manager.RevokeToken(sessionID)
 
-	// Validate should fail
-	revokedErr := manager.ValidateToken(sessionID, token)
-	if !errors.Is(revokedErr, auth.ErrCSRFTokenInvalid) {
-		t.Errorf("expected ErrCSRFTokenInvalid after revoke, got %v", revokedErr)
+	if revokedErr := manager.ValidateToken(sessionID, token); !errors.Is(
+		revokedErr, csrf.ErrTokenInvalid,
+	) {
+		t.Errorf("expected ErrTokenInvalid after revoke, got %v", revokedErr)
+	}
+}
+
+// TestGetSessionIDFromRequest_HashedKeying pins the security-invariant change:
+// the CSRF session key is now sha256(bearer) (foundation's SessionKey), not the
+// raw JWT payload segment. Both a header bearer and a cookie hash to a
+// non-plaintext 64-char key, and a request with no token yields "".
+func TestGetSessionIDFromRequest_HashedKeying(t *testing.T) {
+	bearer := "header.payload-segment.signature"
+	r := httptest.NewRequest(http.MethodPost, "/api/v1/x", nil)
+	r.Header.Set("Authorization", "Bearer "+bearer)
+
+	key := auth.GetSessionIDFromRequest(r)
+	if key == "payload-segment" || key == bearer {
+		t.Errorf("session key must not be the raw token/payload segment (got %q)", key)
+	}
+	if len(key) != 64 { // sha256 hex
+		t.Errorf("session key len = %d, want 64 (sha256 hex)", len(key))
+	}
+
+	empty := httptest.NewRequest(http.MethodPost, "/api/v1/x", nil)
+	if k := auth.GetSessionIDFromRequest(empty); k != "" {
+		t.Errorf("no-token request should yield empty key, got %q", k)
 	}
 }
 
@@ -177,7 +181,6 @@ func TestCSRFMiddlewareNonAPIPath(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
-	// Non-API paths should skip CSRF
 	req := httptest.NewRequest(http.MethodPost, "/static/file.js", nil)
 	w := httptest.NewRecorder()
 
@@ -201,13 +204,14 @@ func TestCSRFMiddlewareExemptEndpoints(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
-	// Only login is exempted pre-session; harvest/logs/client is exempt
-	// because it runs before auth; SSO callbacks are exempt because the
-	// IdP provides its own proof-of-intent. (See csrfExemptPaths /
-	// csrfExemptPrefixes in csrf.go.)
+	// Pre-session / IdP-callback endpoints that cannot carry a CSRF token
+	// (see isCSRFExemptPath in csrf.go).
 	exemptPaths := []string{
 		"/api/v1/auth/login",
 		"/api/v1/harvest/logs/client",
+		"/api/v1/auth/login/totp",
+		"/api/v1/auth/webauthn/login/begin",
+		"/api/v1/auth/webauthn/login/finish",
 		"/api/v1/sso/google/callback",
 		"/api/v1/sso/saml/acs",
 	}
@@ -230,19 +234,16 @@ func TestCSRFMiddlewareExemptEndpoints(t *testing.T) {
 
 // TestCSRFMiddlewareFailClosedPreviouslyExempt asserts that endpoints
 // removed from the exempt list (#87) now require a valid CSRF token on
-// state-changing methods. Failure mode: an authenticated session with
-// an existing CSRF token submits POST/PUT/PATCH/DELETE without the
-// X-Csrf-Token header → 403.
+// state-changing methods: an authenticated session with an existing CSRF
+// token submitting POST/PUT/PATCH/DELETE without the X-Csrf-Token header → 403.
 func TestCSRFMiddlewareFailClosedPreviouslyExempt(t *testing.T) {
 	manager := auth.NewCSRFManager(newTestLogger())
 	defer manager.Stop()
 
-	// Mint a CSRF token for the session so HasToken returns true and the
-	// missing-header path is taken (rather than the "no token ever
-	// minted" path, which used to short-circuit but now also fails
-	// closed via ValidateToken).
-	sessionID := "eyJ1c2VybmFtZSI6ImFkbWluIn0"
-	if _, err := manager.GenerateToken(sessionID); err != nil {
+	// Mint a token under the key the middleware will derive for this cookie,
+	// so the request reaches the missing-header branch (not "never minted").
+	payload := "eyJ1c2VybmFtZSI6ImFkbWluIn0"
+	if _, err := manager.GenerateToken(sessionKeyFor(payload)); err != nil {
 		t.Fatalf("failed to generate token: %v", err)
 	}
 
@@ -250,37 +251,24 @@ func TestCSRFMiddlewareFailClosedPreviouslyExempt(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
-	// These paths used to be exempted (#87). They are now CSRF-protected
-	// like any other state-changing API endpoint.
 	formerlyExemptPaths := []string{
 		"/api/v1/auth/refresh",
 		"/api/v1/auth/logout",
 		"/api/v1/setup/complete",
 	}
-	methods := []string{
-		http.MethodPost,
-		http.MethodPut,
-		http.MethodPatch,
-		http.MethodDelete,
-	}
+	methods := []string{http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete}
 
 	for _, path := range formerlyExemptPaths {
 		for _, method := range methods {
 			req := httptest.NewRequest(method, path, nil)
-			req.AddCookie(&http.Cookie{
-				Name:  auth.CookieNameAccess,
-				Value: "header." + sessionID + ".signature",
-			})
+			req.AddCookie(&http.Cookie{Name: auth.CookieNameAccess, Value: cookieValue(payload)})
 			// Intentionally no X-Csrf-Token header.
 			w := httptest.NewRecorder()
 
 			handler.ServeHTTP(w, req)
 
 			if w.Code != http.StatusForbidden {
-				t.Errorf(
-					"%s %s without CSRF token: expected 403, got %d",
-					method, path, w.Code,
-				)
+				t.Errorf("%s %s without CSRF token: expected 403, got %d", method, path, w.Code)
 			}
 		}
 	}
@@ -296,15 +284,13 @@ func TestCSRFMiddlewareMissingSessionID(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
-	// POST to protected endpoint without session cookie
-	// CSRF middleware should pass through - let auth middleware handle authentication
+	// No session cookie: CSRF middleware passes through — auth middleware
+	// handles the authentication check.
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/test/start", nil)
 	w := httptest.NewRecorder()
 
 	handler.ServeHTTP(w, req)
 
-	// Request should pass through since no session = no CSRF protection needed
-	// Auth middleware will handle authentication check
 	if !called {
 		t.Error("handler should be called when no session (auth handles authentication)")
 	}
@@ -317,12 +303,8 @@ func TestCSRFMiddlewareMissingToken(t *testing.T) {
 	manager := auth.NewCSRFManager(newTestLogger())
 	defer manager.Stop()
 
-	// Create a mock JWT cookie (header.payload.signature format)
-	sessionID := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
-
-	// Generate a CSRF token for this session
-	_, err := manager.GenerateToken(sessionID)
-	if err != nil {
+	payload := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
+	if _, err := manager.GenerateToken(sessionKeyFor(payload)); err != nil {
 		t.Fatalf("failed to generate token: %v", err)
 	}
 
@@ -332,12 +314,8 @@ func TestCSRFMiddlewareMissingToken(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
-	// POST with session cookie but no CSRF token header
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/test/start", nil)
-	req.AddCookie(&http.Cookie{
-		Name:  auth.CookieNameAccess,
-		Value: "header." + sessionID + ".signature",
-	})
+	req.AddCookie(&http.Cookie{Name: auth.CookieNameAccess, Value: cookieValue(payload)})
 	w := httptest.NewRecorder()
 
 	handler.ServeHTTP(w, req)
@@ -354,11 +332,9 @@ func TestCSRFMiddlewareValidToken(t *testing.T) {
 	manager := auth.NewCSRFManager(newTestLogger())
 	defer manager.Stop()
 
-	// Create a mock JWT payload (this will be used as session ID)
-	sessionID := "eyJ1c2VybmFtZSI6ImFkbWluIn0"
-
-	// Generate a CSRF token for this session
-	csrfToken, err := manager.GenerateToken(sessionID)
+	payload := "eyJ1c2VybmFtZSI6ImFkbWluIn0"
+	// Mint under the middleware-derived key so validation matches.
+	csrfToken, err := manager.GenerateToken(sessionKeyFor(payload))
 	if err != nil {
 		t.Fatalf("failed to generate token: %v", err)
 	}
@@ -369,12 +345,8 @@ func TestCSRFMiddlewareValidToken(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
-	// POST with both session cookie and CSRF token header
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/test/start", nil)
-	req.AddCookie(&http.Cookie{
-		Name:  auth.CookieNameAccess,
-		Value: "header." + sessionID + ".signature",
-	})
+	req.AddCookie(&http.Cookie{Name: auth.CookieNameAccess, Value: cookieValue(payload)})
 	req.Header.Set(auth.CSRFHeaderName, csrfToken)
 	w := httptest.NewRecorder()
 
@@ -392,11 +364,8 @@ func TestCSRFMiddlewareInvalidToken(t *testing.T) {
 	manager := auth.NewCSRFManager(newTestLogger())
 	defer manager.Stop()
 
-	sessionID := "eyJ1c2VybmFtZSI6ImFkbWluIn0"
-
-	// Generate a CSRF token for this session
-	_, err := manager.GenerateToken(sessionID)
-	if err != nil {
+	payload := "eyJ1c2VybmFtZSI6ImFkbWluIn0"
+	if _, err := manager.GenerateToken(sessionKeyFor(payload)); err != nil {
 		t.Fatalf("failed to generate token: %v", err)
 	}
 
@@ -406,12 +375,8 @@ func TestCSRFMiddlewareInvalidToken(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	}))
 
-	// POST with session cookie but WRONG CSRF token
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/test/start", nil)
-	req.AddCookie(&http.Cookie{
-		Name:  auth.CookieNameAccess,
-		Value: "header." + sessionID + ".signature",
-	})
+	req.AddCookie(&http.Cookie{Name: auth.CookieNameAccess, Value: cookieValue(payload)})
 	req.Header.Set(auth.CSRFHeaderName, "wrong-token")
 	w := httptest.NewRecorder()
 
@@ -425,67 +390,11 @@ func TestCSRFMiddlewareInvalidToken(t *testing.T) {
 	}
 }
 
-func TestCSRFManagerTokenCount(t *testing.T) {
-	manager := auth.NewCSRFManager(newTestLogger())
-	defer manager.Stop()
-
-	if manager.TokenCount() != 0 {
-		t.Errorf("expected 0 tokens, got %d", manager.TokenCount())
-	}
-
-	_, err := manager.GenerateToken("session1")
-	if err != nil {
-		t.Fatalf("failed to generate token: %v", err)
-	}
-
-	if manager.TokenCount() != 1 {
-		t.Errorf("expected 1 token, got %d", manager.TokenCount())
-	}
-
-	_, err = manager.GenerateToken("session2")
-	if err != nil {
-		t.Fatalf("failed to generate token: %v", err)
-	}
-
-	if manager.TokenCount() != 2 {
-		t.Errorf("expected 2 tokens, got %d", manager.TokenCount())
-	}
-
-	manager.RevokeToken("session1")
-
-	if manager.TokenCount() != 1 {
-		t.Errorf("expected 1 token after revoke, got %d", manager.TokenCount())
-	}
-}
-
 func TestCSRFManagerStop(t *testing.T) {
 	manager := auth.NewCSRFManager(newTestLogger())
-
-	// Generate some tokens
-	_, err := manager.GenerateToken("session1")
-	if err != nil {
+	if _, err := manager.GenerateToken("session1"); err != nil {
 		t.Fatalf("failed to generate token: %v", err)
 	}
-
-	// Verify context is not canceled initially
-	select {
-	case <-manager.CtxDone():
-		t.Fatal("context should not be canceled initially")
-	default:
-		// Expected - context is still active
-	}
-
-	// Stop the manager
+	// Stop delegates to foundation's cleanup goroutine; it must not hang.
 	manager.Stop()
-
-	// Give goroutine time to exit
-	time.Sleep(50 * time.Millisecond)
-
-	// Verify context is canceled
-	select {
-	case <-manager.CtxDone():
-		// Expected - context is canceled
-	default:
-		t.Fatal("context should be canceled after Stop()")
-	}
 }
