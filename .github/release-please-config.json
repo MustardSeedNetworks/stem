@@ -1,7 +1,5 @@
 {
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
-  "last-release-sha": "2b64395476c3edfee4b5e1421c61ac6ec5cff59b",
-  "release-as": "0.24.0",
   "packages": {
     ".": {
       "release-type": "go",
@@ -9,17 +7,44 @@
       "bump-patch-for-minor-pre-major": true,
       "changelog-path": "CHANGELOG.md",
       "versioning": "default",
-      "extra-files": ["ui/package.json"]
+      "extra-files": [
+        "ui/package.json"
+      ],
+      "release-as": "0.24.0"
     }
   },
   "changelog-sections": [
-    { "type": "feat", "section": "Features" },
-    { "type": "fix", "section": "Bug Fixes" },
-    { "type": "perf", "section": "Performance Improvements" },
-    { "type": "refactor", "section": "Code Refactoring" },
-    { "type": "docs", "section": "Documentation" },
-    { "type": "test", "section": "Tests" },
-    { "type": "ci", "section": "Continuous Integration" },
-    { "type": "chore", "section": "Miscellaneous" }
+    {
+      "type": "feat",
+      "section": "Features"
+    },
+    {
+      "type": "fix",
+      "section": "Bug Fixes"
+    },
+    {
+      "type": "perf",
+      "section": "Performance Improvements"
+    },
+    {
+      "type": "refactor",
+      "section": "Code Refactoring"
+    },
+    {
+      "type": "docs",
+      "section": "Documentation"
+    },
+    {
+      "type": "test",
+      "section": "Tests"
+    },
+    {
+      "type": "ci",
+      "section": "Continuous Integration"
+    },
+    {
+      "type": "chore",
+      "section": "Miscellaneous"
+    }
   ]
 }
