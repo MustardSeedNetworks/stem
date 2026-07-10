@@ -99,7 +99,7 @@ func tuiTestMode() error {
 				_, _ = fmt.Fprintf(os.Stdout, "Error: %s\n", result.Message)
 				return fmt.Errorf("license trial failed: %s", result.Message)
 			}
-		} else if state.Tier < license.TierProfessional && !state.IsTrialMode {
+		} else if license.Tier(state.Tier) < license.TierProfessional && !state.IsTrialMode {
 			_, _ = fmt.Fprintln(os.Stdout, "Error: Professional TUI requires a Tier 2 (Professional) license")
 			return errors.New("license tier too low")
 		}

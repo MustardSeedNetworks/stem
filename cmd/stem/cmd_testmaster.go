@@ -85,7 +85,7 @@ func checkTestLicense() bool {
 		_, _ = fmt.Fprintln(os.Stdout, "Error: License expired. Please activate a valid license.")
 		_, _ = fmt.Fprintln(os.Stdout, "Run 'stem license --status' for details")
 		return false
-	case state.Tier < license.TierProfessional && !state.IsTrialMode:
+	case license.Tier(state.Tier) < license.TierProfessional && !state.IsTrialMode:
 		_, _ = fmt.Fprintln(os.Stdout, "Error: Professional features require a Tier 2 (Professional) license")
 		_, _ = fmt.Fprintln(os.Stdout, "Your license: Tier 1 (Reflector only)")
 		return false
