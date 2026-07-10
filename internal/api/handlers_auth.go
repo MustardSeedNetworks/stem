@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/MustardSeedNetworks/foundation/pkg/csrf"
+
 	"github.com/MustardSeedNetworks/stem/internal/auth"
 	"github.com/MustardSeedNetworks/stem/internal/logging"
 )
@@ -67,37 +69,16 @@ func (s *Server) handleAuthLogin(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// sessionIDFromJWT extracts the JWT payload segment, which is the same
-// identifier auth.GetSessionIDFromRequest uses to key CSRF tokens.
-// Returns "" if the token is malformed.
+// sessionIDFromJWT derives the CSRF session key from a raw access-token
+// string, using the same sha256(bearer) keying as auth.GetSessionIDFromRequest
+// so a token minted for a request (keyed off the cookie) can be revoked here by
+// its access token. Returns "" for an empty token. This is the raw-token
+// equivalent of auth.GetSessionIDFromRequest, which expects an [http.Request].
 func sessionIDFromJWT(token string) string {
-	const jwtParts = 2
-	parts := splitJWT(token)
-	if len(parts) < jwtParts {
+	if token == "" {
 		return ""
 	}
-	return parts[1]
-}
-
-// splitJWT splits a JWT on '.' without allocating for the empty-string
-// edge case. Defined here rather than in auth/ because
-// auth.GetSessionIDFromRequest expects an [http.Request]; this is the
-// raw-token equivalent.
-func splitJWT(token string) []string {
-	if token == "" {
-		return nil
-	}
-	const jwtSegments = 3
-	parts := make([]string, 0, jwtSegments)
-	start := 0
-	for i := range len(token) {
-		if token[i] == '.' {
-			parts = append(parts, token[start:i])
-			start = i + 1
-		}
-	}
-	parts = append(parts, token[start:])
-	return parts
+	return csrf.SessionKey(token)
 }
 
 // handleAuthLogout revokes the current access token and clears auth cookies.

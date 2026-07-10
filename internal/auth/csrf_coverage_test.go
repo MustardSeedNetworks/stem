@@ -7,6 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/MustardSeedNetworks/foundation/pkg/csrf"
+
 	"github.com/MustardSeedNetworks/stem/internal/auth"
 )
 
@@ -70,10 +72,11 @@ func TestCSRFMiddleware_BlocksAuthenticatedMutation(t *testing.T) {
 	})
 	h := m.CSRFMiddleware(next)
 
-	// Fake 3-part bearer token → GetSessionIDFromRequest returns the payload
-	// part ("sess") as the session id. The signature is never verified here.
+	// Fake bearer token → GetSessionIDFromRequest returns sha256(bearer) as
+	// the session key (foundation keying). The signature is never verified
+	// here; the middleware only hashes the extracted token.
 	const bearer = "hdr.sess.sig"
-	const sessionID = "sess"
+	sessionID := csrf.SessionKey(bearer)
 
 	post := func(withToken bool) *httptest.ResponseRecorder {
 		called = false
