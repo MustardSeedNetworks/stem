@@ -11,7 +11,7 @@
  */
 
 import { type ReactElement, useCallback } from 'react';
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter } from 'react-router';
 import { AppShell } from './AppShell';
 import { AuthGate } from './components/auth/AuthGate';
 import { TopBar } from './components/TopBar';
