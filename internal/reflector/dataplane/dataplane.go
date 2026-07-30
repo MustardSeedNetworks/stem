@@ -12,6 +12,7 @@ package dataplane
 #cgo linux LDFLAGS: -lxdp -lbpf -lelf -lz
 
 #include "reflector.h"
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -38,10 +39,39 @@ static reflector_config_t make_config(
     config.dpdk_args = (char *)dpdk_args;
     return config;
 }
+
+static void stop_reflector(uintptr_t ctx) {
+    reflector_stop((reflector_ctx_t *)ctx);
+}
+
+static int init_reflector(uintptr_t ctx, const char *ifname) {
+    return reflector_init((reflector_ctx_t *)ctx, ifname);
+}
+
+static int start_reflector(uintptr_t ctx) {
+    return reflector_start((reflector_ctx_t *)ctx);
+}
+
+static void cleanup_reflector(uintptr_t ctx) {
+    reflector_cleanup((reflector_ctx_t *)ctx);
+}
+
+static void get_reflector_stats(uintptr_t ctx, uintptr_t stats) {
+    reflector_get_stats((reflector_ctx_t *)ctx, (reflector_stats_t *)stats);
+}
+
+static int update_reflector_filter(uintptr_t ctx, uint16_t port, sig_filter_t filter) {
+    return reflector_update_filter((reflector_ctx_t *)ctx, port, filter);
+}
+
+static void reset_reflector_stats(uintptr_t ctx) {
+    reflector_reset_stats((reflector_ctx_t *)ctx);
+}
 */
 import "C"
 
 import (
+	"errors"
 	"fmt"
 	"sync"
 	"unsafe"
@@ -98,7 +128,7 @@ type ConfigUpdate struct {
 
 // Dataplane wraps the C reflector context
 type Dataplane struct {
-	ctx      C.reflector_ctx_t
+	ctx      *C.reflector_ctx_t
 	cfg      *config.Config
 	running  bool
 	closed   bool
@@ -109,16 +139,22 @@ type Dataplane struct {
 // New creates a new dataplane instance
 func New(cfg *config.Config) (*Dataplane, error) {
 	dp := &Dataplane{
+		ctx: (*C.reflector_ctx_t)(C.calloc(1, C.size_t(C.sizeof_reflector_ctx_t))),
 		cfg: cfg,
+	}
+	if dp.ctx == nil {
+		return nil, errors.New("failed to allocate reflector context")
 	}
 
 	// Parse OUI
 	oui, err := cfg.ParseOUI()
 	if err != nil {
+		C.free(unsafe.Pointer(dp.ctx))
 		return nil, fmt.Errorf("failed to parse OUI: %w", err)
 	}
 	sigFilter, err := signatureFilterValue(cfg.SignatureFilter)
 	if err != nil {
+		C.free(unsafe.Pointer(dp.ctx))
 		return nil, err
 	}
 
@@ -158,7 +194,12 @@ func New(cfg *config.Config) (*Dataplane, error) {
 	)
 
 	// Initialize reflector
-	if C.reflector_init(&dp.ctx, ifname) < 0 {
+	ctx := C.uintptr_t(uintptr(unsafe.Pointer(dp.ctx)))
+	if C.init_reflector(ctx, ifname) < 0 {
+		if dp.dpdkArgs != nil {
+			C.free(unsafe.Pointer(dp.dpdkArgs))
+		}
+		C.free(unsafe.Pointer(dp.ctx))
 		return nil, fmt.Errorf("failed to initialize reflector on %s", cfg.Interface)
 	}
 
@@ -183,15 +224,20 @@ func signatureFilterValue(filter string) (int, error) {
 		return 0, err
 	}
 	values := map[string]int{
-		"all": 0, "ito": 1, "rfc2544": 2,
-		"probeot": 6, "dataot": 7, "latency": 8,
-		"y1564": 3, "custom": 4, "msn": 5,
+		"all": int(C.SIG_FILTER_ALL), "ito": int(C.SIG_FILTER_ITO),
+		"rfc2544": int(C.SIG_FILTER_RFC2544), "y1564": int(C.SIG_FILTER_Y1564),
+		"custom": int(C.SIG_FILTER_CUSTOM), "msn": int(C.SIG_FILTER_MSN),
+		"probeot": int(C.SIG_FILTER_PROBEOT), "dataot": int(C.SIG_FILTER_DATAOT),
+		"latency": int(C.SIG_FILTER_LATENCY),
 	}
 	return values[filter], nil
 }
 
 func reflectionModeValue(mode string) (int, error) {
-	values := map[string]int{"mac": 0, "mac-ip": 1, "all": 2}
+	values := map[string]int{
+		"mac": int(C.REFLECT_MODE_MAC), "mac-ip": int(C.REFLECT_MODE_MAC_IP),
+		"all": int(C.REFLECT_MODE_ALL),
+	}
 	value, ok := values[mode]
 	if !ok {
 		return 0, fmt.Errorf("invalid reflection mode %q", mode)
@@ -205,14 +251,18 @@ func (dp *Dataplane) Start() error {
 	defer dp.mu.Unlock()
 
 	if dp.running {
-		return fmt.Errorf("dataplane already running")
+		return errors.New("dataplane already running")
 	}
 	if dp.closed {
-		return fmt.Errorf("dataplane is closed")
+		return errors.New("dataplane is closed")
+	}
+	if dp.ctx == nil {
+		return errors.New("dataplane is not initialized")
 	}
 
-	if C.reflector_start(&dp.ctx) < 0 {
-		return fmt.Errorf("failed to start reflector")
+	ctx := C.uintptr_t(uintptr(unsafe.Pointer(dp.ctx)))
+	if C.start_reflector(ctx) < 0 {
+		return errors.New("failed to start reflector")
 	}
 
 	dp.running = true
@@ -228,7 +278,7 @@ func (dp *Dataplane) Stop() {
 		return
 	}
 
-	C.reflector_stop(&dp.ctx)
+	C.stop_reflector(C.uintptr_t(uintptr(unsafe.Pointer(dp.ctx))))
 	dp.running = false
 }
 
@@ -240,10 +290,14 @@ func (dp *Dataplane) Close() {
 		return
 	}
 	if dp.running {
-		C.reflector_stop(&dp.ctx)
+		C.stop_reflector(C.uintptr_t(uintptr(unsafe.Pointer(dp.ctx))))
 		dp.running = false
 	}
-	C.reflector_cleanup(&dp.ctx)
+	if dp.ctx != nil {
+		C.cleanup_reflector(C.uintptr_t(uintptr(unsafe.Pointer(dp.ctx))))
+		C.free(unsafe.Pointer(dp.ctx))
+		dp.ctx = nil
+	}
 	// Free stored C strings
 	if dp.dpdkArgs != nil {
 		C.free(unsafe.Pointer(dp.dpdkArgs))
@@ -256,12 +310,14 @@ func (dp *Dataplane) Close() {
 func (dp *Dataplane) GetStats() Stats {
 	dp.mu.RLock()
 	defer dp.mu.RUnlock()
-	if dp.closed {
+	if dp.closed || dp.ctx == nil {
 		return Stats{}
 	}
 
 	var cStats C.reflector_stats_t
-	C.reflector_get_stats(&dp.ctx, &cStats)
+	ctx := C.uintptr_t(uintptr(unsafe.Pointer(dp.ctx)))
+	stats := C.uintptr_t(uintptr(unsafe.Pointer(&cStats)))
+	C.get_reflector_stats(ctx, stats)
 
 	return Stats{
 		PacketsReceived:  uint64(cStats.packets_received),
@@ -340,34 +396,17 @@ func (dp *Dataplane) UpdateConfig(update *ConfigUpdate) error {
 	dp.mu.Lock()
 	defer dp.mu.Unlock()
 	if dp.closed {
-		return fmt.Errorf("dataplane is closed")
+		return errors.New("dataplane is closed")
 	}
 	if dp.running {
-		return fmt.Errorf("reflector configuration cannot change while running")
+		return errors.New("reflector configuration cannot change while running")
+	}
+	if dp.ctx == nil || dp.cfg == nil {
+		return errors.New("dataplane is not initialized")
 	}
 
-	if update.Port != nil || update.SignatureFilter != nil {
-		currentPort := dp.cfg.Filtering.Port
-		if update.Port != nil {
-			currentPort = *update.Port
-		}
-		currentSignatureFilter := sigFilter
-		if update.SignatureFilter != nil {
-			currentSignatureFilter = sigFilter
-		} else {
-			var currentErr error
-			currentSignatureFilter, currentErr = signatureFilterValue(dp.cfg.SignatureFilter)
-			if currentErr != nil {
-				return currentErr
-			}
-		}
-		if C.reflector_update_filter(
-			&dp.ctx,
-			C.uint16_t(currentPort),
-			C.sig_filter_t(currentSignatureFilter),
-		) != 0 {
-			return fmt.Errorf("failed to update reflector packet filter")
-		}
+	if err := dp.updatePacketFilter(update, sigFilter); err != nil {
+		return err
 	}
 
 	// Apply each non-nil field
@@ -404,12 +443,34 @@ func (dp *Dataplane) UpdateConfig(update *ConfigUpdate) error {
 	return nil
 }
 
+func (dp *Dataplane) updatePacketFilter(update *ConfigUpdate, sigFilter int) error {
+	if update.Port == nil && update.SignatureFilter == nil {
+		return nil
+	}
+	port := dp.cfg.Filtering.Port
+	if update.Port != nil {
+		port = *update.Port
+	}
+	if update.SignatureFilter == nil {
+		var err error
+		sigFilter, err = signatureFilterValue(dp.cfg.SignatureFilter)
+		if err != nil {
+			return err
+		}
+	}
+	ctx := C.uintptr_t(uintptr(unsafe.Pointer(dp.ctx)))
+	if C.update_reflector_filter(ctx, C.uint16_t(port), C.sig_filter_t(sigFilter)) != 0 {
+		return errors.New("failed to update reflector packet filter")
+	}
+	return nil
+}
+
 // ResetStats resets the statistics counters
 func (dp *Dataplane) ResetStats() {
 	dp.mu.Lock()
 	defer dp.mu.Unlock()
-	if dp.closed {
+	if dp.closed || dp.ctx == nil {
 		return
 	}
-	C.reflector_reset_stats(&dp.ctx)
+	C.reset_reflector_stats(C.uintptr_t(uintptr(unsafe.Pointer(dp.ctx))))
 }
