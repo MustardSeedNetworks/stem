@@ -97,7 +97,7 @@ following tokens. Values are per-product; names are universal.
 
 ### Required dependencies
 - React 19+
-- `react-router-dom` (for `useLocation`, `useNavigate`, `Link`)
+- `react-router` (for `useLocation`, `useNavigate`, `Link`)
 - `lucide-react` (icon library)
 
 ## Keeping the three repos consistent

@@ -773,6 +773,8 @@ extern int rfc2544_reset_test(rfc2544_ctx_t *ctx, uint32_t frame_size,
 extern uint64_t rfc2544_get_line_rate(const char *interface);
 extern uint64_t rfc2544_calc_pps(uint64_t line_rate, uint32_t frame_size);
 extern void rfc2544_default_config(rfc2544_config_t *config);
+extern rfc2544_config_t *rfc2544_config_alloc_default(void);
+extern void rfc2544_config_free(rfc2544_config_t *config);
 
 // Y.1564 functions
 extern int y1564_config_test(rfc2544_ctx_t *ctx, const y1564_service_t *service,
@@ -854,9 +856,11 @@ var ErrNotSupported = errors.New("CGO dataplane not available on this platform")
 type Context struct {
 	ctx       *C.rfc2544_ctx_t
 	mu        sync.Mutex
+	ctxMu     sync.RWMutex
 	stats     Stats
 	config    Config
 	frameSize uint32
+	dpdkArgs  *C.char
 }
 
 // NewContext creates a new RFC2544 test context
@@ -873,19 +877,16 @@ func NewContext(iface string) (*Context, error) {
 	return &Context{ctx: cctx}, nil
 }
 
-// NewTestContext creates a test context for unit tests that need a non-nil
-// context but do not execute dataplane operations.
-func NewTestContext() *Context {
-	return &Context{}
-}
-
 // Configure applies test configuration
 func (c *Context) Configure(cfg *Config) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	var ccfg C.rfc2544_config_t
-	C.rfc2544_default_config(&ccfg)
+	ccfg := C.rfc2544_config_alloc_default()
+	if ccfg == nil {
+		return errors.New("allocate RFC 2544 configuration")
+	}
+	defer C.rfc2544_config_free(ccfg)
 
 	// Copy interface name
 	cIface := C.CString(cfg.Interface)
@@ -909,28 +910,35 @@ func (c *Context) Configure(cfg *Config) error {
 	ccfg.batch_size = C.uint32_t(cfg.BatchSize)
 	ccfg.use_dpdk = C.bool(cfg.UseDPDK)
 
-	var dpdkArgsPtr *C.char
+	var nextDPDKArgs *C.char
 	if cfg.DPDKArgs != "" {
-		dpdkArgsPtr = C.CString(cfg.DPDKArgs)
-		ccfg.dpdk_args = dpdkArgsPtr
+		nextDPDKArgs = C.CString(cfg.DPDKArgs)
+		ccfg.dpdk_args = nextDPDKArgs
 	}
 
-	ret := C.rfc2544_configure(c.ctx, &ccfg)
-
-	// Free DPDK args string after configure copies it
-	if dpdkArgsPtr != nil {
-		C.free(unsafe.Pointer(dpdkArgsPtr))
-	}
+	ret := C.rfc2544_configure(c.ctx, ccfg)
 
 	if ret < 0 {
+		if nextDPDKArgs != nil {
+			C.free(unsafe.Pointer(nextDPDKArgs))
+		}
 		return fmt.Errorf("configure failed: %d", ret)
 	}
+	if c.dpdkArgs != nil {
+		C.free(unsafe.Pointer(c.dpdkArgs))
+	}
+	c.dpdkArgs = nextDPDKArgs
 
 	return nil
 }
 
 // Run starts the configured test
 func (c *Context) Run() error {
+	c.ctxMu.RLock()
+	defer c.ctxMu.RUnlock()
+	if c.ctx == nil {
+		return errors.New("dataplane context is closed")
+	}
 	ret := C.rfc2544_run(c.ctx)
 	if ret < 0 {
 		return fmt.Errorf("run failed: %d", ret)
@@ -940,34 +948,37 @@ func (c *Context) Run() error {
 
 // Cancel stops a running test
 func (c *Context) Cancel() {
-	C.rfc2544_cancel(c.ctx)
+	c.ctxMu.RLock()
+	defer c.ctxMu.RUnlock()
+	if c.ctx != nil {
+		C.rfc2544_cancel(c.ctx)
+	}
 }
 
 // State returns the current test state
 func (c *Context) State() TestState {
+	c.ctxMu.RLock()
+	defer c.ctxMu.RUnlock()
+	if c.ctx == nil {
+		return StateIdle
+	}
 	return TestState(C.rfc2544_get_state(c.ctx))
 }
 
 // Close cleans up resources
 func (c *Context) Close() {
+	c.ctxMu.Lock()
+	defer c.ctxMu.Unlock()
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if c.ctx != nil {
 		C.rfc2544_cleanup(c.ctx)
 		c.ctx = nil
 	}
-}
-
-// GetLineRate returns the interface line rate in bits/sec
-func GetLineRate(iface string) uint64 {
-	cIface := C.CString(iface)
-	defer C.free(unsafe.Pointer(cIface))
-	return uint64(C.rfc2544_get_line_rate(cIface))
-}
-
-// CalcPPS calculates packets per second for given rate and frame size
-func CalcPPS(lineRate uint64, frameSize uint32) uint64 {
-	return uint64(C.rfc2544_calc_pps(C.uint64_t(lineRate), C.uint32_t(frameSize)))
+	if c.dpdkArgs != nil {
+		C.free(unsafe.Pointer(c.dpdkArgs))
+		c.dpdkArgs = nil
+	}
 }
 
 // RunCustomStreamTest executes a custom traffic stream.

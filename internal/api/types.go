@@ -5,7 +5,7 @@ package api
 // Configuration constants.
 const (
 	DefaultPortFilter = 3842
-	DefaultOUIFilter  = "00:c0:17" // NetAlly OUI.
+	DefaultOUIFilter  = ""
 	DefaultProfile    = "all"
 )
 

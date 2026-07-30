@@ -9,12 +9,35 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/MustardSeedNetworks/stem/internal/api/ratelimit"
 	"github.com/MustardSeedNetworks/stem/internal/auth"
 	"github.com/MustardSeedNetworks/stem/internal/netif"
+	"github.com/MustardSeedNetworks/stem/internal/services/modtypes"
 )
+
+type blockingCancelableExecutor struct {
+	cancelled chan struct{}
+	done      chan struct{}
+	once      sync.Once
+}
+
+func (e *blockingCancelableExecutor) Execute(testType string, _ *modtypes.TestConfig) (*modtypes.Result, error) {
+	<-e.cancelled
+	return &modtypes.Result{TestType: testType, Success: false}, errors.New("cancelled")
+}
+
+func (e *blockingCancelableExecutor) Cancel() {
+	e.once.Do(func() { close(e.cancelled) })
+}
+
+func (e *blockingCancelableExecutor) Close() {
+	close(e.done)
+}
 
 // newTestServer creates a test server with automatic cleanup.
 // This helper ensures that all servers created in tests are properly
@@ -709,8 +732,8 @@ func TestReflectorConfig(t *testing.T) {
 	if config.PortFilter != 3842 {
 		t.Errorf("Expected default port filter 3842, got %d", config.PortFilter)
 	}
-	if config.OUIFilter != "00:c0:17" {
-		t.Errorf("Expected default OUI filter '00:c0:17', got '%s'", config.OUIFilter)
+	if config.OUIFilter != "" {
+		t.Errorf("Expected no default OUI filter, got '%s'", config.OUIFilter)
 	}
 	if len(config.SignatureFilter) != 1 {
 		t.Errorf("Expected 1 signature filter, got %d", len(config.SignatureFilter))
@@ -1209,6 +1232,52 @@ func TestBeginTestRun(t *testing.T) {
 			t.Errorf("Expected errTestAlreadyRunning, got: %v", beginErr)
 		}
 	})
+
+	t.Run("already starting", func(t *testing.T) {
+		s.statsMu.Lock()
+		s.testStatus = statusStarting
+		s.statsMu.Unlock()
+
+		beginErr := s.beginTestRun("latency", "benchmark")
+		if !errors.Is(beginErr, errTestAlreadyRunning) {
+			t.Fatalf("beginTestRun() = %v, want errTestAlreadyRunning", beginErr)
+		}
+	})
+}
+
+func TestStopCancelsActiveExecutorWithoutStatusOverwrite(t *testing.T) {
+	t.Setenv("STEM_AUTH_USERNAME", "canceltestuser")
+	t.Setenv("STEM_AUTH_PASSWORD", "canceltestpass123")
+	s := newTestServer(t)
+	if err := s.beginTestRun("throughput", "benchmark"); err != nil {
+		t.Fatalf("beginTestRun() error: %v", err)
+	}
+	exec := &blockingCancelableExecutor{
+		cancelled: make(chan struct{}),
+		done:      make(chan struct{}),
+	}
+	factory := func(string) (testExecutor, error) { return exec, nil }
+	if err := s.runModuleTest(factory, "benchmark", "throughput", "lo", nil); err != nil {
+		t.Fatalf("runModuleTest() error: %v", err)
+	}
+
+	w := httptest.NewRecorder()
+	s.handleTestStop(w, httptest.NewRequest(http.MethodPost, "/api/v1/test/stop", nil))
+	if w.Code != http.StatusOK {
+		t.Fatalf("stop status = %d, want 200", w.Code)
+	}
+	select {
+	case <-exec.done:
+	case <-time.After(time.Second):
+		t.Fatal("executor did not stop after cancellation")
+	}
+
+	s.statsMu.RLock()
+	status := s.testStatus
+	s.statsMu.RUnlock()
+	if status != statusCancelled {
+		t.Fatalf("status = %q, want %q", status, statusCancelled)
+	}
 }
 
 // TestValidateReflectorProfile tests the validateReflectorProfile function.
@@ -1256,50 +1325,96 @@ func TestBuildReflectorConfigUpdate(t *testing.T) {
 
 	s := newTestServer(t)
 
-	t.Run("update profile", func(t *testing.T) {
-		cfg := &ReflectorConfig{Profile: "netally", SignatureFilter: nil, OUIFilter: "", PortFilter: 0}
-		assertBuildConfigChanges(t, s, cfg, 1)
-		if s.reflectorConfig.Profile != "netally" {
-			t.Errorf("Expected profile 'netally', got '%s'", s.reflectorConfig.Profile)
-		}
-	})
+	t.Run("update profiles", func(t *testing.T) { testBuildReflectorProfileUpdate(t, s) })
+	t.Run("update fields", func(t *testing.T) { testBuildReflectorFieldUpdates(t, s) })
+	t.Run("reject invalid values", func(t *testing.T) { testBuildReflectorInvalidUpdates(t, s) })
+	t.Run("multiple changes", func(t *testing.T) { testBuildReflectorMultipleChanges(t, s) })
+}
 
-	t.Run("update OUI filter", func(t *testing.T) {
-		cfg := &ReflectorConfig{Profile: "", SignatureFilter: nil, OUIFilter: "00:11:22", PortFilter: 0}
-		assertBuildConfigChanges(t, s, cfg, 1)
-		if s.reflectorConfig.OUIFilter != "00:11:22" {
-			t.Errorf("Expected OUI filter '00:11:22', got '%s'", s.reflectorConfig.OUIFilter)
-		}
-	})
+func testBuildReflectorProfileUpdate(t *testing.T, s *Server) {
+	t.Helper()
+	s.reflectorConfig.OUIFilter = "00:11:22"
+	cfg := &ReflectorConfig{Profile: "netally"}
+	changes, update, err := s.buildReflectorConfigUpdate(cfg)
+	if err != nil || len(changes) != 1 {
+		t.Fatalf("buildReflectorConfigUpdate() = %v, %v", changes, err)
+	}
+	s.commitReflectorConfigUpdate(cfg)
+	if s.reflectorConfig.Profile != "netally" {
+		t.Errorf("Expected profile 'netally', got '%s'", s.reflectorConfig.Profile)
+	}
+	if update == nil || update.Mode == nil || *update.Mode != "mac-ip" {
+		t.Fatalf("NetAlly mode update = %+v, want mac-ip", update)
+	}
+	if update.SignatureFilter == nil || *update.SignatureFilter != "ito" {
+		t.Fatalf("NetAlly signature update = %+v, want ito", update)
+	}
+	if update.Port == nil || *update.Port != 3842 {
+		t.Fatalf("NetAlly port update = %+v, want 3842", update)
+	}
+	if update.FilterOUI == nil || *update.FilterOUI || s.reflectorConfig.OUIFilter != "" {
+		t.Fatalf(
+			"NetAlly profile retained stale OUI filter: update=%+v stored=%q",
+			update,
+			s.reflectorConfig.OUIFilter,
+		)
+	}
 
-	t.Run("update port filter", func(t *testing.T) {
-		cfg := &ReflectorConfig{Profile: "", SignatureFilter: nil, OUIFilter: "", PortFilter: 9999}
-		assertBuildConfigChanges(t, s, cfg, 1)
-		if s.reflectorConfig.PortFilter != 9999 {
-			t.Errorf("Expected port filter 9999, got %d", s.reflectorConfig.PortFilter)
-		}
-	})
+	changes, update, err = s.buildReflectorConfigUpdate(&ReflectorConfig{Profile: "msn"})
+	if err != nil || len(changes) != 1 {
+		t.Fatalf("MSN buildReflectorConfigUpdate() = %v, %v", changes, err)
+	}
+	s.commitReflectorConfigUpdate(&ReflectorConfig{Profile: "msn"})
+	if update.Port == nil || *update.Port != 0 || s.reflectorConfig.PortFilter != 0 {
+		t.Fatalf("MSN port update = %+v, stored port = %d; want 0", update, s.reflectorConfig.PortFilter)
+	}
+}
 
-	t.Run("update signature filter", func(t *testing.T) {
-		cfg := &ReflectorConfig{Profile: "", SignatureFilter: []string{"sig1", "sig2"}, OUIFilter: "", PortFilter: 0}
-		assertBuildConfigChanges(t, s, cfg, 1)
-		if len(s.reflectorConfig.SignatureFilter) != 2 {
-			t.Errorf("Expected 2 signature filters, got %d", len(s.reflectorConfig.SignatureFilter))
-		}
-	})
+func testBuildReflectorFieldUpdates(t *testing.T, s *Server) {
+	t.Helper()
+	cfg := &ReflectorConfig{OUIFilter: "00:11:22"}
+	assertBuildConfigChanges(t, s, cfg, 1)
+	s.commitReflectorConfigUpdate(cfg)
+	if s.reflectorConfig.OUIFilter != "00:11:22" {
+		t.Errorf("Expected OUI filter '00:11:22', got '%s'", s.reflectorConfig.OUIFilter)
+	}
 
-	t.Run("invalid port out of range", func(t *testing.T) {
-		cfg := &ReflectorConfig{Profile: "", SignatureFilter: nil, OUIFilter: "", PortFilter: 100000}
-		_, _, buildErr := s.buildReflectorConfigUpdate(cfg)
-		if buildErr == nil {
-			t.Error("Expected error for port out of range")
-		}
-	})
+	cfg = &ReflectorConfig{PortFilter: 9999}
+	assertBuildConfigChanges(t, s, cfg, 1)
+	s.commitReflectorConfigUpdate(cfg)
+	if s.reflectorConfig.PortFilter != 9999 {
+		t.Errorf("Expected port filter 9999, got %d", s.reflectorConfig.PortFilter)
+	}
 
-	t.Run("multiple changes", func(t *testing.T) {
-		cfg := &ReflectorConfig{Profile: "msn", SignatureFilter: nil, OUIFilter: "aa:bb:cc", PortFilter: 1234}
-		assertBuildConfigChanges(t, s, cfg, 3)
-	})
+	cfg = &ReflectorConfig{SignatureFilter: []string{"msn"}}
+	assertBuildConfigChanges(t, s, cfg, 1)
+	s.commitReflectorConfigUpdate(cfg)
+	if len(s.reflectorConfig.SignatureFilter) != 1 {
+		t.Errorf("Expected 1 signature filter, got %d", len(s.reflectorConfig.SignatureFilter))
+	}
+}
+
+func testBuildReflectorInvalidUpdates(t *testing.T, s *Server) {
+	t.Helper()
+	before := s.reflectorConfig
+	for _, cfg := range []*ReflectorConfig{
+		{SignatureFilter: []string{"ito", "msn"}},
+		{Profile: "netally", SignatureFilter: []string{"ito", "msn"}},
+		{PortFilter: 100000},
+	} {
+		if _, _, buildErr := s.buildReflectorConfigUpdate(cfg); buildErr == nil {
+			t.Fatalf("buildReflectorConfigUpdate(%+v) accepted invalid values", cfg)
+		}
+		if !reflect.DeepEqual(s.reflectorConfig, before) {
+			t.Fatalf("rejected update changed config from %+v to %+v", before, s.reflectorConfig)
+		}
+	}
+}
+
+func testBuildReflectorMultipleChanges(t *testing.T, s *Server) {
+	t.Helper()
+	cfg := &ReflectorConfig{Profile: "msn", OUIFilter: "aa:bb:cc", PortFilter: 1234}
+	assertBuildConfigChanges(t, s, cfg, 3)
 }
 
 // TestApplyReflectorDataplaneUpdate tests the applyReflectorDataplaneUpdate function.
@@ -1338,7 +1453,7 @@ func TestExecuteTest(t *testing.T) {
 	s := newTestServer(t)
 
 	t.Run("unknown module", func(t *testing.T) {
-		execErr := s.executeTest("unknown_module", "test", "eth0", nil)
+		execErr := s.executeTest("unknown_module", "test", "eth0", "", nil)
 		if execErr == nil {
 			t.Error("Expected error for unknown module")
 		}
@@ -2075,7 +2190,7 @@ func TestExecuteReflectorCoverage(t *testing.T) {
 	// Note: Actually executing reflector requires a valid interface
 	// and may have platform-specific behavior. Test the error path.
 	t.Run("execute with nonexistent interface", func(t *testing.T) {
-		execErr := s.executeReflector("nonexistent_iface_xyz123", nil)
+		execErr := s.executeReflector("nonexistent_iface_xyz123", "")
 		if execErr == nil {
 			t.Error("Expected error for nonexistent interface")
 		}
@@ -2095,6 +2210,7 @@ func TestRunModuleTestCoverage(t *testing.T) {
 			"benchmark",
 			"rfc2544_throughput",
 			"nonexistent_iface_xyz123",
+			"",
 			nil,
 		)
 		// May fail due to interface, but that's expected.
@@ -3090,7 +3206,7 @@ func TestBuildReflectorConfigUpdateVariations(t *testing.T) {
 	t.Run("update signature filter only", func(t *testing.T) {
 		cfg := &ReflectorConfig{
 			Profile:         "",
-			SignatureFilter: []string{"probeot", "dataot"},
+			SignatureFilter: []string{"probeot"},
 			OUIFilter:       "",
 			PortFilter:      0,
 		}
@@ -3331,7 +3447,7 @@ func TestExecuteReflectorVariations(t *testing.T) {
 	t.Run("execute with nonexistent interface", func(t *testing.T) {
 		s := newTestServer(t)
 
-		execErr := s.executeReflector("nonexistent_iface_xyz", nil)
+		execErr := s.executeReflector("nonexistent_iface_xyz", "")
 		if execErr == nil {
 			t.Error("Expected error for nonexistent interface")
 		}
@@ -3346,7 +3462,7 @@ func TestExecuteReflectorVariations(t *testing.T) {
 			t.Skip("No network interfaces available")
 		}
 
-		execErr := s.executeReflector(ifaces[0].Name, nil)
+		execErr := s.executeReflector(ifaces[0].Name, "")
 		// May succeed or fail depending on permissions.
 		t.Logf("executeReflector error: %v", execErr)
 	})
@@ -3700,7 +3816,7 @@ func TestExecuteTestWithUnknownModule(t *testing.T) {
 
 	s := newTestServer(t)
 
-	execErr := s.executeTest("unknown_module_xyz", "throughput", "en0", nil)
+	execErr := s.executeTest("unknown_module_xyz", "throughput", "en0", "", nil)
 	if execErr == nil {
 		t.Error("Expected error for unknown module")
 	}
@@ -3965,6 +4081,47 @@ func TestBuildReflectorConfigUpdateWithPortFilter(t *testing.T) {
 
 	if len(changes) != 1 {
 		t.Errorf("Expected 1 change, got %d", len(changes))
+	}
+}
+
+func TestReflectorStartConfigNamedProfilePrecedence(t *testing.T) {
+	update := reflectorStartConfig(ReflectorConfig{
+		Profile:         "netally",
+		PortFilter:      9999,
+		SignatureFilter: []string{"msn"},
+		OUIFilter:       "00:11:22",
+	})
+
+	if update.Port == nil || *update.Port != 3842 {
+		t.Fatalf("port = %v, want 3842", update.Port)
+	}
+	if update.SignatureFilter == nil || *update.SignatureFilter != "ito" {
+		t.Fatalf("signature = %v, want ito", update.SignatureFilter)
+	}
+	if update.Mode == nil || *update.Mode != "mac-ip" {
+		t.Fatalf("mode = %v, want mac-ip", update.Mode)
+	}
+	if update.FilterOUI == nil || *update.FilterOUI || update.OUI != nil {
+		t.Fatalf("named profile did not clear stale OUI override: %+v", update)
+	}
+}
+
+func TestReflectorStartConfigCustomProfileOverrides(t *testing.T) {
+	update := reflectorStartConfig(ReflectorConfig{
+		Profile:         "custom",
+		PortFilter:      9999,
+		SignatureFilter: []string{"rfc2544"},
+		OUIFilter:       "00:11:22",
+	})
+
+	if update.Port == nil || *update.Port != 9999 {
+		t.Fatalf("port = %v, want 9999", update.Port)
+	}
+	if update.SignatureFilter == nil || *update.SignatureFilter != "rfc2544" {
+		t.Fatalf("signature = %v, want rfc2544", update.SignatureFilter)
+	}
+	if update.FilterOUI == nil || !*update.FilterOUI || update.OUI == nil || *update.OUI != "00:11:22" {
+		t.Fatalf("custom OUI override = %+v", update)
 	}
 }
 

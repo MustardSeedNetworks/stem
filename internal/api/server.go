@@ -125,7 +125,11 @@ type Server struct {
 	httpServer           *http.Server
 	stats                *Stats
 	statsMu              sync.RWMutex
+	testRunMu            sync.Mutex
+	reflectorMu          sync.Mutex
 	testStatus           string
+	testRunID            uint64
+	activeTestExec       testExecutor
 	currentTest          string
 	testResult           *TestResultResponse
 	startTime            time.Time

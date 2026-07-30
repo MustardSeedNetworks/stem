@@ -73,6 +73,13 @@ func (e *Executor) Close() {
 	}
 }
 
+// Cancel requests cancellation of the active dataplane test.
+func (e *Executor) Cancel() {
+	if cancellable, ok := e.dp.(interface{ Cancel() }); ok {
+		cancellable.Cancel()
+	}
+}
+
 // Execute runs a Y.1731 OAM test.
 func (e *Executor) Execute(testType string, cfg *modtypes.TestConfig) (*modtypes.Result, error) {
 	if !e.CanRun(testType) {

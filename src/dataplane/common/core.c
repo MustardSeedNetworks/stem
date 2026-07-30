@@ -43,6 +43,20 @@ typedef struct {
     void    *platform_data;
 } packet_t;
 
+rfc2544_config_t *rfc2544_config_alloc_default(void)
+{
+    rfc2544_config_t *config = calloc(1, sizeof(*config));
+    if (config) {
+        rfc2544_default_config(config);
+    }
+    return config;
+}
+
+void rfc2544_config_free(rfc2544_config_t *config)
+{
+    free(config);
+}
+
 /* Platform operations interface */
 struct platform_ops {
     const char *name;
@@ -408,6 +422,8 @@ int rfc2544_init(rfc2544_ctx_t **ctx_out, const char *interface)
         rfc2544_log(LOG_ERROR, "Failed to allocate context");
         return -ENOMEM;
     }
+    atomic_init(&ctx->state, STATE_IDLE);
+    atomic_init(&ctx->cancel_requested, false);
 
     strncpy(ctx->interface, interface, sizeof(ctx->interface) - 1);
     strncpy(ctx->config.interface, interface, sizeof(ctx->config.interface) - 1);

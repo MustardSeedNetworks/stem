@@ -90,7 +90,6 @@ const (
 	bannerWidth          = 60
 	licenseBannerWidth   = 50
 	statsIntervalSeconds = 5
-	shutdownDelayMs      = 100
 )
 
 func main() {

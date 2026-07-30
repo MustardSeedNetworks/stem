@@ -45,7 +45,7 @@ func NewExecutor(iface string) (*Executor, error) {
 		Reflection: reflectorConfig.ReflectConfig{
 			Mode: "all",
 		},
-		Platform: reflectorConfig.PlatformConfig{UseDPDK: false, UseAFXDP: false, DPDKArgs: ""},
+		Platform: reflectorConfig.PlatformConfig{UseDPDK: false, UseAFXDP: true, DPDKArgs: ""},
 		Stats:    reflectorConfig.StatsConfig{Format: "", Interval: 0},
 	}
 

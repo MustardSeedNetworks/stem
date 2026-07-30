@@ -8,16 +8,16 @@
 #ifndef REFLECTOR_H
 #define REFLECTOR_H
 
+#include <stdatomic.h>
 #include <stdbool.h>
 #include <stdint.h>
 
 #include <sys/types.h>
 
-/* Threading support: GCD on macOS, pthreads elsewhere */
+/* Threading support: GCD workers on macOS, pthread synchronization everywhere. */
+#include <pthread.h>
 #ifdef __APPLE__
 #include <dispatch/dispatch.h>
-#else
-#include <pthread.h>
 #endif
 
 /* Version information */
@@ -66,10 +66,12 @@
 #define UMEM_SIZE           (NUM_FRAMES * FRAME_SIZE)
 
 /* ITO packet signatures (NetAlly/Fluke/NETSCOUT) */
-#define ITO_SIG_PROBEOT "PROBEOT"
-#define ITO_SIG_DATAOT  "DATA:OT"
-#define ITO_SIG_LATENCY "LATENCY"
-#define ITO_SIG_LEN     7
+#define ITO_SIG_PROBEOT         "PROBEOT"
+#define ITO_SIG_DATAOT          "DATA:OT"
+#define ITO_SIG_LATENCY         "LATENCY"
+#define ITO_SIG_LEN             7
+#define ITO_TOS_WIGGLE          0x01
+#define PACKET_BLOCK_TIMEOUT_MS 1
 
 /* Custom signatures (RFC2544/Y.1564 tester) */
 #define CUSTOM_SIG_RFC2544 "RFC2544"
@@ -160,7 +162,10 @@ typedef enum {
     SIG_FILTER_RFC2544 = 2,
     SIG_FILTER_Y1564   = 3,
     SIG_FILTER_CUSTOM  = 4,
-    SIG_FILTER_MSN     = 5
+    SIG_FILTER_MSN     = 5,
+    SIG_FILTER_PROBEOT = 6,
+    SIG_FILTER_DATAOT  = 7,
+    SIG_FILTER_LATENCY = 8
 } sig_filter_t;
 
 /* Packet signature types */
@@ -272,6 +277,7 @@ typedef struct {
     bool           software_checksum;
 
     bool  use_dpdk;
+    bool  use_af_xdp;
     char *dpdk_args;
 
     uint16_t ito_port;
@@ -305,7 +311,10 @@ typedef struct {
     platform_ctx_t     *pctx;
     reflector_config_t *config;
     reflector_stats_t   stats;
-    volatile bool       running;
+    pthread_mutex_t     stats_mutex;
+    bool                stats_mutex_initialized;
+    bool                thread_started;
+    atomic_bool         running;
 } worker_ctx_t;
 
 /* Reflector context */
@@ -320,7 +329,7 @@ typedef struct {
     pthread_t *worker_tids;
 #endif
     reflector_stats_t global_stats;
-    volatile bool     running;
+    atomic_bool       running;
     int               num_workers;
 } reflector_ctx_t;
 
@@ -340,6 +349,7 @@ void reflector_cleanup(reflector_ctx_t *rctx);
 int  reflector_start(reflector_ctx_t *rctx);
 void reflector_stop(reflector_ctx_t *rctx);
 int  reflector_set_config(reflector_ctx_t *rctx, const reflector_config_t *config);
+int  reflector_update_filter(reflector_ctx_t *rctx, uint16_t port, sig_filter_t signature_filter);
 void reflector_get_config(const reflector_ctx_t *rctx, reflector_config_t *config);
 void reflector_get_stats(const reflector_ctx_t *rctx, reflector_stats_t *stats);
 void reflector_reset_stats(reflector_ctx_t *rctx);
@@ -365,6 +375,7 @@ void           reflect_packet_inplace(uint8_t *data, uint32_t len);
 void           reflect_packet_with_checksum(uint8_t *data, uint32_t len, bool software_checksum);
 void           reflect_packet_with_mode(uint8_t *data, uint32_t len, reflect_mode_t mode,
                                         bool software_checksum);
+void           reflect_netally_packet(uint8_t *data, uint32_t len, reflect_mode_t mode);
 void reflect_packet_ipv6(uint8_t *data, uint32_t len, reflect_mode_t mode, bool software_checksum);
 bool is_vlan_tagged(const uint8_t *data, uint32_t len, uint16_t *inner_ethertype,
                     uint32_t *vlan_offset);
@@ -372,6 +383,7 @@ bool is_vlan_tagged(const uint8_t *data, uint32_t len, uint16_t *inner_ethertype
 void update_signature_stats(reflector_stats_t *stats, ito_sig_type_t sig_type);
 void update_latency_stats(latency_stats_t *latency, uint64_t latency_ns);
 void update_error_stats(reflector_stats_t *stats, error_category_t err_cat);
+int  packet_platform_set_guard_port(worker_ctx_t *wctx, uint16_t port);
 void reflector_print_stats_formatted(const reflector_stats_t *stats, stats_format_t format);
 void reflector_print_stats_json(const reflector_stats_t *stats);
 void reflector_print_stats_csv(const reflector_stats_t *stats);

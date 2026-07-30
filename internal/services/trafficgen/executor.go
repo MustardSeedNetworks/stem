@@ -50,6 +50,13 @@ func (e *Executor) Close() {
 	}
 }
 
+// Cancel requests cancellation of the active dataplane test.
+func (e *Executor) Cancel() {
+	if e.ctx != nil {
+		e.ctx.Cancel()
+	}
+}
+
 // Execute runs a custom traffic generation test.
 func (e *Executor) Execute(testType string, cfg *modtypes.TestConfig) (*modtypes.Result, error) {
 	if !e.CanRun(testType) {

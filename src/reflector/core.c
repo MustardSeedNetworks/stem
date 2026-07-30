@@ -2,7 +2,6 @@
  * core.c - Core reflector engine and worker thread management
  */
 
-#define _GNU_SOURCE
 #include <errno.h>
 #include <signal.h>
 #include <stdio.h>
@@ -45,6 +44,9 @@ typedef struct {
     uint64_t        sig_probeot_count;
     uint64_t        sig_dataot_count;
     uint64_t        sig_latency_count;
+    uint64_t        sig_rfc2544_count;
+    uint64_t        sig_y1564_count;
+    uint64_t        sig_msn_count;
     uint64_t        sig_unknown_count;
     uint64_t        err_tx_failed;
     latency_stats_t latency_batch;
@@ -68,6 +70,9 @@ static inline void flush_stats_batch(reflector_stats_t *stats, stats_batch_t *ba
     stats->sig_probeot_count += batch->sig_probeot_count;
     stats->sig_dataot_count += batch->sig_dataot_count;
     stats->sig_latency_count += batch->sig_latency_count;
+    stats->sig_rfc2544_count += batch->sig_rfc2544_count;
+    stats->sig_y1564_count += batch->sig_y1564_count;
+    stats->sig_msn_count += batch->sig_msn_count;
     stats->sig_unknown_count += batch->sig_unknown_count;
 
     /* Error counters */
@@ -99,6 +104,13 @@ static inline void flush_stats_batch(reflector_stats_t *stats, stats_batch_t *ba
 
     /* Reset batch */
     memset(batch, 0, sizeof(*batch));
+}
+
+static inline void flush_worker_stats(worker_ctx_t *wctx, stats_batch_t *batch)
+{
+    pthread_mutex_lock(&wctx->stats_mutex);
+    flush_stats_batch(&wctx->stats, batch);
+    pthread_mutex_unlock(&wctx->stats_mutex);
 }
 
 /* Worker main loop with batched statistics */
@@ -163,15 +175,29 @@ static void *worker_thread(void *arg)
                 case ITO_SIG_TYPE_LATENCY:
                     stats_batch.sig_latency_count++;
                     break;
+                case SIG_TYPE_RFC2544:
+                    stats_batch.sig_rfc2544_count++;
+                    break;
+                case SIG_TYPE_Y1564:
+                    stats_batch.sig_y1564_count++;
+                    break;
+                case SIG_TYPE_MSN:
+                    stats_batch.sig_msn_count++;
+                    break;
                 default:
                     stats_batch.sig_unknown_count++;
                     break;
                 }
 
-                /* Reflect in-place with configurable mode and optional software checksums */
-                reflect_packet_with_mode(pkts_rx[i].data, pkts_rx[i].len,
-                                         wctx->config->reflect_mode,
-                                         wctx->config->software_checksum);
+                if (sig_type == ITO_SIG_TYPE_PROBEOT || sig_type == ITO_SIG_TYPE_DATAOT ||
+                    sig_type == ITO_SIG_TYPE_LATENCY) {
+                    reflect_netally_packet(pkts_rx[i].data, pkts_rx[i].len,
+                                           wctx->config->reflect_mode);
+                } else {
+                    reflect_packet_with_mode(pkts_rx[i].data, pkts_rx[i].len,
+                                             wctx->config->reflect_mode,
+                                             wctx->config->software_checksum);
+                }
 
                 /* Accumulate latency stats in local batch if enabled */
                 if (wctx->config->measure_latency) {
@@ -232,12 +258,12 @@ static void *worker_thread(void *arg)
         /* Flush batch to worker stats every BATCH_SIZE packets or periodically */
         stats_batch.batch_count++;
         if (unlikely(stats_batch.batch_count >= STATS_FLUSH_BATCHES)) {
-            flush_stats_batch(&wctx->stats, &stats_batch);
+            flush_worker_stats(wctx, &stats_batch);
         }
     }
 
     /* Final flush before exiting */
-    flush_stats_batch(&wctx->stats, &stats_batch);
+    flush_worker_stats(wctx, &stats_batch);
 
     reflector_log(LOG_INFO, "Worker %d stopped", wctx->worker_id);
 #ifndef __APPLE__
@@ -254,6 +280,7 @@ int reflector_init(reflector_ctx_t *rctx, const char *ifname)
     }
 
     memset(rctx, 0, sizeof(*rctx));
+    atomic_init(&rctx->running, false);
 
     /* Set defaults */
 #ifdef __APPLE__
@@ -269,6 +296,7 @@ int reflector_init(reflector_ctx_t *rctx, const char *ifname)
     rctx->config.cpu_affinity      = -1;    /* Auto: use IRQ affinity */
     rctx->config.use_huge_pages    = false; /* Disabled by default */
     rctx->config.software_checksum = false; /* Use NIC offload by default */
+    rctx->config.use_af_xdp        = true;
 
     /* ITO packet filtering defaults */
     rctx->config.ito_port     = ITO_UDP_PORT; /* Default: port 3842 */
@@ -288,56 +316,9 @@ int reflector_init(reflector_ctx_t *rctx, const char *ifname)
         return -1;
     }
 
-    /* Determine platform */
+    /* Platform selection occurs in reflector_start after callers apply config. */
 #ifdef __linux__
-#if HAVE_DPDK
-    /* Check if DPDK mode requested */
-    if (rctx->config.use_dpdk) {
-        platform_ops = get_dpdk_platform_ops();
-        reflector_log(LOG_INFO, "Platform: DPDK (100G line-rate mode)");
-        reflector_log(LOG_INFO, "DPDK EAL args: %s",
-                      rctx->config.dpdk_args ? rctx->config.dpdk_args : "(default)");
-    } else
-#endif
-    /* Try AF_XDP first if available, otherwise use AF_PACKET */
-#if HAVE_AF_XDP
-    {
-        platform_ops = get_xdp_platform_ops();
-        reflector_log(LOG_INFO, "Platform: AF_XDP (high-performance zero-copy mode)");
-    }
-#else
-    /* AF_XDP not available - print huge warning */
-    reflector_log(LOG_WARN,
-                  "╔════════════════════════════════════════════════════════════════════╗");
-    reflector_log(LOG_WARN, "║                   ⚠️  PERFORMANCE WARNING  ⚠️                      ║");
-    reflector_log(LOG_WARN,
-                  "╠════════════════════════════════════════════════════════════════════╣");
-    reflector_log(LOG_WARN,
-                  "║ AF_XDP not available - using AF_PACKET fallback mode              ║");
-    reflector_log(LOG_WARN,
-                  "║                                                                    ║");
-    reflector_log(LOG_WARN,
-                  "║ EXPECTED PERFORMANCE: ~50-100 Mbps (NOT line-rate)                ║");
-    reflector_log(LOG_WARN,
-                  "║ AF_XDP PERFORMANCE:   ~10 Gbps (100x faster)                      ║");
-    reflector_log(LOG_WARN,
-                  "║                                                                    ║");
-    reflector_log(LOG_WARN,
-                  "║ To enable AF_XDP:                                                  ║");
-    reflector_log(LOG_WARN,
-                  "║   sudo apt install libxdp-dev libbpf-dev                           ║");
-    reflector_log(LOG_WARN,
-                  "║   make clean && make                                               ║");
-    reflector_log(LOG_WARN,
-                  "║                                                                    ║");
-    reflector_log(LOG_WARN,
-                  "║ Suitable for: Lab testing, low-rate validation                    ║");
-    reflector_log(LOG_WARN,
-                  "║ NOT suitable for: Production, high-rate testing (>100 Mbps)       ║");
-    reflector_log(LOG_WARN,
-                  "╚════════════════════════════════════════════════════════════════════╝");
     platform_ops = get_packet_platform_ops();
-#endif
 #elif defined(__APPLE__)
     /* macOS BPF has architectural limitations */
     reflector_log(LOG_WARN,
@@ -397,8 +378,8 @@ int reflector_init(reflector_ctx_t *rctx, const char *ifname)
     rctx->config.num_workers = 1;
 #endif
 
-    reflector_log(LOG_INFO, "Reflector initialized on %s (%d workers, platform: %s)", ifname,
-                  rctx->config.num_workers, platform_ops->name);
+    reflector_log(LOG_INFO, "Reflector initialized on %s (%d workers)", ifname,
+                  rctx->config.num_workers);
 
     return 0;
 }
@@ -406,6 +387,29 @@ int reflector_init(reflector_ctx_t *rctx, const char *ifname)
 /* Start reflector workers */
 int reflector_start(reflector_ctx_t *rctx)
 {
+#ifdef __linux__
+    if (rctx->config.use_dpdk) {
+#if HAVE_DPDK
+        platform_ops = get_dpdk_platform_ops();
+        reflector_log(LOG_INFO, "Platform: DPDK (100G line-rate mode)");
+#else
+        reflector_log(LOG_ERROR, "DPDK was requested but is not available in this build");
+        return -ENOTSUP;
+#endif
+    } else if (rctx->config.use_af_xdp) {
+#if HAVE_AF_XDP
+        platform_ops = get_xdp_platform_ops();
+        reflector_log(LOG_INFO, "Platform: AF_XDP (high-performance zero-copy mode)");
+#else
+        platform_ops = get_packet_platform_ops();
+        reflector_log(LOG_WARN, "AF_XDP was requested but is unavailable; using AF_PACKET");
+#endif
+    } else {
+        platform_ops = get_packet_platform_ops();
+        reflector_log(LOG_INFO, "Platform: AF_PACKET (explicit selection)");
+    }
+#endif
+
     rctx->num_workers       = rctx->config.num_workers;
     rctx->workers           = calloc((size_t)rctx->num_workers, sizeof(worker_ctx_t));
     rctx->platform_contexts = calloc((size_t)rctx->num_workers, sizeof(platform_ctx_t *));
@@ -437,14 +441,21 @@ int reflector_start(reflector_ctx_t *rctx)
     /* Initialize and start workers */
     for (int i = 0; i < rctx->num_workers; i++) {
         worker_ctx_t *wctx = &rctx->workers[i];
-        wctx->worker_id    = i;
-        wctx->queue_id     = i;
+        atomic_init(&wctx->running, true);
+        wctx->worker_id = i;
+        wctx->queue_id  = i;
         /* Use explicit CPU affinity if configured, otherwise auto-detect from IRQ */
         wctx->cpu_id  = (rctx->config.cpu_affinity >= 0)
                             ? rctx->config.cpu_affinity
                             : get_queue_cpu_affinity(rctx->config.ifname, i);
         wctx->config  = &rctx->config;
         wctx->running = true;
+        if (pthread_mutex_init(&wctx->stats_mutex, NULL) != 0) {
+            reflector_log(LOG_ERROR, "Failed to initialize stats mutex for worker %d", i);
+            reflector_stop(rctx);
+            return -1;
+        }
+        wctx->stats_mutex_initialized = true;
 
         /* Initialize platform */
         if (platform_ops->init(rctx, wctx) < 0) {
@@ -554,14 +565,16 @@ int reflector_start(reflector_ctx_t *rctx)
         }
 
         rctx->platform_contexts[i] = wctx->pctx;
+    }
 
-        /* Drop privileges after socket/interface initialization (first worker only) */
-        if (i == 0) {
-            if (drop_privileges() < 0) {
-                reflector_log(LOG_WARN, "Failed to drop privileges (continuing anyway)");
-                /* Continue - not fatal for functionality */
-            }
-        }
+    /* Every queue needs privileged socket setup. Drop privileges only after all
+     * platform contexts are ready, then launch the packet workers. */
+    if (drop_privileges() < 0) {
+        reflector_log(LOG_WARN, "Failed to drop privileges (continuing anyway)");
+    }
+
+    for (int i = 0; i < rctx->num_workers; i++) {
+        worker_ctx_t *wctx = &rctx->workers[i];
 
 #ifdef __APPLE__
         /* Create GCD queue with QoS for low-latency packet processing */
@@ -583,6 +596,7 @@ int reflector_start(reflector_ctx_t *rctx)
 
         /* Launch worker on GCD queue */
         dispatch_group_enter(rctx->worker_group);
+        wctx->thread_started = true;
         dispatch_async(rctx->worker_queues[i], ^{
           worker_loop(wctx);
           dispatch_group_leave(rctx->worker_group);
@@ -594,6 +608,7 @@ int reflector_start(reflector_ctx_t *rctx)
             reflector_stop(rctx);
             return -1;
         }
+        wctx->thread_started = true;
 #endif
     }
 
@@ -620,15 +635,22 @@ void reflector_stop(reflector_ctx_t *rctx)
         /* Wait for all pthread workers to exit */
         if (rctx->worker_tids) {
             for (int i = 0; i < rctx->num_workers; i++) {
-                pthread_join(rctx->worker_tids[i], NULL);
+                if (rctx->workers[i].thread_started) {
+                    pthread_join(rctx->worker_tids[i], NULL);
+                }
             }
         }
 #endif
 
+        reflector_get_stats(rctx, &rctx->global_stats);
+
         /* Cleanup platform contexts */
         for (int i = 0; i < rctx->num_workers; i++) {
-            if (platform_ops && platform_ops->cleanup) {
+            if (rctx->workers[i].pctx && platform_ops && platform_ops->cleanup) {
                 platform_ops->cleanup(&rctx->workers[i]);
+            }
+            if (rctx->workers[i].stats_mutex_initialized) {
+                pthread_mutex_destroy(&rctx->workers[i].stats_mutex);
             }
         }
 
@@ -675,10 +697,19 @@ void reflector_cleanup(reflector_ctx_t *rctx)
 /* Get aggregated statistics (thread-safe) */
 void reflector_get_stats(const reflector_ctx_t *rctx, reflector_stats_t *stats)
 {
+    if (!rctx->workers) {
+        *stats = rctx->global_stats;
+        return;
+    }
     memset(stats, 0, sizeof(*stats));
 
     for (int i = 0; i < rctx->num_workers; i++) {
-        const reflector_stats_t *ws = &rctx->workers[i].stats;
+        worker_ctx_t *worker = &rctx->workers[i];
+        if (!worker->stats_mutex_initialized) {
+            continue;
+        }
+        const reflector_stats_t *ws = &worker->stats;
+        pthread_mutex_lock(&worker->stats_mutex);
 
         /* Basic packet counters - use atomic loads for thread safety */
         stats->packets_received += ATOMIC_LOAD64(ws->packets_received);
@@ -691,6 +722,9 @@ void reflector_get_stats(const reflector_ctx_t *rctx, reflector_stats_t *stats)
         stats->sig_probeot_count += ATOMIC_LOAD64(ws->sig_probeot_count);
         stats->sig_dataot_count += ATOMIC_LOAD64(ws->sig_dataot_count);
         stats->sig_latency_count += ATOMIC_LOAD64(ws->sig_latency_count);
+        stats->sig_rfc2544_count += ATOMIC_LOAD64(ws->sig_rfc2544_count);
+        stats->sig_y1564_count += ATOMIC_LOAD64(ws->sig_y1564_count);
+        stats->sig_msn_count += ATOMIC_LOAD64(ws->sig_msn_count);
         stats->sig_unknown_count += ATOMIC_LOAD64(ws->sig_unknown_count);
 
         /* Error counters */
@@ -730,6 +764,7 @@ void reflector_get_stats(const reflector_ctx_t *rctx, reflector_stats_t *stats)
                 }
             }
         }
+        pthread_mutex_unlock(&worker->stats_mutex);
     }
 
     /* Calculate average latency */
@@ -741,8 +776,18 @@ void reflector_get_stats(const reflector_ctx_t *rctx, reflector_stats_t *stats)
 /* Reset statistics */
 void reflector_reset_stats(reflector_ctx_t *rctx)
 {
-    for (int i = 0; i < rctx->num_workers; i++) {
-        memset(&rctx->workers[i].stats, 0, sizeof(reflector_stats_t));
+    if (!rctx) {
+        return;
+    }
+    if (rctx->workers) {
+        for (int i = 0; i < rctx->num_workers; i++) {
+            if (!rctx->workers[i].stats_mutex_initialized) {
+                continue;
+            }
+            pthread_mutex_lock(&rctx->workers[i].stats_mutex);
+            memset(&rctx->workers[i].stats, 0, sizeof(reflector_stats_t));
+            pthread_mutex_unlock(&rctx->workers[i].stats_mutex);
+        }
     }
     memset(&rctx->global_stats, 0, sizeof(reflector_stats_t));
 }
@@ -772,6 +817,19 @@ int reflector_set_config(reflector_ctx_t *rctx, const reflector_config_t *config
         rctx->config.num_workers = 1;
     }
 
+    return 0;
+}
+
+int reflector_update_filter(reflector_ctx_t *rctx, uint16_t port, sig_filter_t signature_filter)
+{
+    if (!rctx) {
+        return -EINVAL;
+    }
+    if (rctx->running) {
+        return -EBUSY;
+    }
+    rctx->config.ito_port   = port;
+    rctx->config.sig_filter = signature_filter;
     return 0;
 }
 

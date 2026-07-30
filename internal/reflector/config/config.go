@@ -102,7 +102,7 @@ func LoadFile(path string) (*Config, error) {
 		TUI:             TUIConfig{Enabled: false},
 		Filtering:       FilterConfig{Port: 0, FilterOUI: false, OUI: "", FilterMAC: false},
 		Reflection:      ReflectConfig{Mode: ""},
-		Platform:        PlatformConfig{UseDPDK: false, UseAFXDP: false, DPDKArgs: ""},
+		Platform:        PlatformConfig{UseDPDK: false, UseAFXDP: true, DPDKArgs: ""},
 		Stats:           StatsConfig{Format: "", Interval: 0},
 	}
 	unmarshalErr := yaml.Unmarshal(data, cfg)

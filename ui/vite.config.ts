@@ -60,7 +60,7 @@ export default defineConfig(({ mode }) => {
       dedupe: [
         'react',
         'react-dom',
-        'react-router-dom',
+        'react-router',
         'lucide-react',
         'i18next',
         'react-i18next',
@@ -113,7 +113,7 @@ export default defineConfig(({ mode }) => {
             if (
               id.includes('/node_modules/react/') ||
               id.includes('/node_modules/react-dom/') ||
-              id.includes('/node_modules/react-router-dom/') ||
+              id.includes('/node_modules/react-router/') ||
               id.includes('/node_modules/scheduler/')
             )
               return 'vendor-react';

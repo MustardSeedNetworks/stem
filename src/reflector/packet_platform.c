@@ -21,6 +21,7 @@
 #include <string.h>
 
 #include <arpa/inet.h>
+#include <linux/filter.h>
 #include <linux/if_ether.h>
 #include <linux/if_packet.h>
 #include <sys/ioctl.h>
@@ -42,19 +43,16 @@
 
 /* Platform-specific context for optimized AF_PACKET */
 struct platform_ctx {
-    int sock_fd; /* AF_PACKET socket */
+    int      sock_fd;      /* AF_PACKET socket */
+    int      udp_guard_fd; /* Prevent the kernel from rejecting reflected UDP probes. */
+    uint16_t udp_guard_port;
+    bool     udp_guard_configured;
 
     /* RX ring buffer (PACKET_MMAP) */
     void        *rx_ring;
     size_t       rx_ring_size;
     unsigned int rx_frame_num;
     unsigned int rx_frame_idx;
-
-    /* TX ring buffer (PACKET_MMAP) */
-    void        *tx_ring;
-    size_t       tx_ring_size;
-    unsigned int tx_frame_num;
-    unsigned int tx_frame_idx;
 
     /* TPACKET version in use (2 or 3) */
     int tpacket_version;
@@ -68,10 +66,70 @@ struct platform_ctx {
     /* V3 block tracking */
     unsigned int current_block_idx;
     unsigned int current_block_offset;
+    uint32_t     current_frame_offset;
+    bool         block_release_pending;
 
     /* Frame size */
     uint32_t frame_size;
 };
+
+void packet_platform_cleanup(worker_ctx_t *wctx);
+void packet_platform_release_batch(worker_ctx_t *wctx, packet_t *pkts, int num_pkts);
+
+static int open_udp_guard(const char *ifname, uint16_t port)
+{
+    int fd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (fd < 0) {
+        return -1;
+    }
+    const struct sock_filter code[] = {BPF_STMT(BPF_RET | BPF_K, 0)};
+    const struct sock_fprog  filter = {.len = 1, .filter = (struct sock_filter *)code};
+    struct sockaddr_in       addr   = {
+        .sin_family      = AF_INET,
+        .sin_port        = htons(port),
+        .sin_addr.s_addr = htonl(INADDR_ANY),
+    };
+    if (setsockopt(fd, SOL_SOCKET, SO_BINDTODEVICE, ifname, strlen(ifname) + 1) < 0 ||
+        setsockopt(fd, SOL_SOCKET, SO_ATTACH_FILTER, &filter, sizeof(filter)) < 0 ||
+        bind(fd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+        int saved_errno = errno;
+        close(fd);
+        errno = saved_errno;
+        return -1;
+    }
+    return fd;
+}
+
+static int ignore_outgoing_packets(int fd)
+{
+    int enabled = 1;
+    return setsockopt(fd, SOL_PACKET, PACKET_IGNORE_OUTGOING, &enabled, sizeof(enabled));
+}
+
+int packet_platform_set_guard_port(worker_ctx_t *wctx, uint16_t port)
+{
+    struct platform_ctx *pctx = wctx->pctx;
+    if (pctx->udp_guard_configured && pctx->udp_guard_port == port) {
+        return 0;
+    }
+
+    int fd = port == 0 ? -1 : open_udp_guard(wctx->config->ifname, port);
+    if (port != 0 && fd < 0 && errno != EADDRINUSE) {
+        reflector_log(LOG_ERROR, "Failed to bind filtered UDP guard port %u: %s", port,
+                      strerror(errno));
+        return -1;
+    }
+    if (port != 0 && fd < 0) {
+        reflector_log(LOG_INFO, "UDP port %u is already claimed; no guard socket needed", port);
+    }
+    if (pctx->udp_guard_fd >= 0) {
+        close(pctx->udp_guard_fd);
+    }
+    pctx->udp_guard_fd         = fd;
+    pctx->udp_guard_port       = port;
+    pctx->udp_guard_configured = true;
+    return 0;
+}
 
 /*
  * Try to setup TPACKET_V3 (preferred for real hardware)
@@ -90,7 +148,7 @@ static int try_tpacket_v3(struct platform_ctx *pctx)
     pctx->req3.tp_frame_size       = PACKET_FRAME_SIZE;
     pctx->req3.tp_block_nr         = PACKET_BLOCK_NR;
     pctx->req3.tp_frame_nr         = PACKET_RING_FRAMES;
-    pctx->req3.tp_retire_blk_tov   = 10; /* 10ms block timeout */
+    pctx->req3.tp_retire_blk_tov   = PACKET_BLOCK_TIMEOUT_MS;
     pctx->req3.tp_feature_req_word = 0;
 
     if (setsockopt(pctx->sock_fd, SOL_PACKET, PACKET_RX_RING, &pctx->req3, sizeof(pctx->req3)) <
@@ -146,13 +204,20 @@ int packet_platform_init(reflector_ctx_t *rctx, worker_ctx_t *wctx)
         return -ENOMEM;
     }
 
-    wctx->pctx       = pctx;
-    pctx->frame_size = PACKET_FRAME_SIZE;
+    wctx->pctx         = pctx;
+    pctx->frame_size   = PACKET_FRAME_SIZE;
+    pctx->udp_guard_fd = -1;
 
     /* Create AF_PACKET socket */
     pctx->sock_fd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
     if (pctx->sock_fd < 0) {
         reflector_log(LOG_ERROR, "Failed to create AF_PACKET socket: %s", strerror(errno));
+        free(pctx);
+        return -1;
+    }
+    if (ignore_outgoing_packets(pctx->sock_fd) < 0) {
+        reflector_log(LOG_ERROR, "Failed to suppress outgoing packet capture: %s", strerror(errno));
+        close(pctx->sock_fd);
         free(pctx);
         return -1;
     }
@@ -165,7 +230,8 @@ int packet_platform_init(reflector_ctx_t *rctx, worker_ctx_t *wctx)
         /* Need new socket since V3 attempt may have left socket in bad state */
         close(pctx->sock_fd);
         pctx->sock_fd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
-        if (pctx->sock_fd < 0 || try_tpacket_v2(pctx) < 0) {
+        if (pctx->sock_fd < 0 || ignore_outgoing_packets(pctx->sock_fd) < 0 ||
+            try_tpacket_v2(pctx) < 0) {
             reflector_log(LOG_ERROR, "Failed to setup TPACKET_V2: %s", strerror(errno));
             if (pctx->sock_fd >= 0) {
                 close(pctx->sock_fd);
@@ -176,56 +242,34 @@ int packet_platform_init(reflector_ctx_t *rctx, worker_ctx_t *wctx)
         reflector_log(LOG_DEBUG, "Using TPACKET_V2 (frame-level, veth compatible)");
     }
 
-    /* Configure TX ring buffer (same for V2 and V3) */
-    struct tpacket_req tx_req = {0};
-    tx_req.tp_block_size      = PACKET_BLOCK_SIZE;
-    tx_req.tp_frame_size      = PACKET_FRAME_SIZE;
-    tx_req.tp_block_nr        = PACKET_BLOCK_NR / 2; /* Smaller TX ring */
-    tx_req.tp_frame_nr        = PACKET_RING_FRAMES / 2;
-
-    bool have_tx_ring = true;
-    if (setsockopt(pctx->sock_fd, SOL_PACKET, PACKET_TX_RING, &tx_req, sizeof(tx_req)) < 0) {
-        reflector_log(LOG_WARN, "Failed to setup TX ring (will use send()): %s", strerror(errno));
-        have_tx_ring = false;
-        memset(&tx_req, 0, sizeof(tx_req));
-    }
-
-    /* Calculate total ring size */
-    pctx->tx_ring_size     = have_tx_ring ? (tx_req.tp_block_size * tx_req.tp_block_nr) : 0;
-    pctx->tx_frame_num     = have_tx_ring ? tx_req.tp_frame_nr : 0;
-    size_t total_ring_size = pctx->rx_ring_size + pctx->tx_ring_size;
-
-    /* mmap() the ring buffers */
+    /* mmap() the RX ring. TX uses sendmmsg(): PACKET_TX_RING has inconsistent
+     * TPACKET_V3 behavior on veth devices, while batched direct sends retain
+     * qdisc bypass and avoid silently dropping reflected probes. */
     bool use_simple_mode = false;
-    pctx->rx_ring        = mmap(NULL, total_ring_size, PROT_READ | PROT_WRITE,
+    pctx->rx_ring        = mmap(NULL, pctx->rx_ring_size, PROT_READ | PROT_WRITE,
                                 MAP_SHARED | MAP_LOCKED | MAP_POPULATE, pctx->sock_fd, 0);
+    if (pctx->rx_ring == MAP_FAILED && (errno == EAGAIN || errno == EPERM || errno == ENOMEM)) {
+        reflector_log(
+            LOG_INFO,
+            "Locked packet rings unavailable; retrying zero-copy rings without MAP_LOCKED");
+        pctx->rx_ring = mmap(NULL, pctx->rx_ring_size, PROT_READ | PROT_WRITE,
+                             MAP_SHARED | MAP_POPULATE, pctx->sock_fd, 0);
+    }
     if (pctx->rx_ring == MAP_FAILED) {
         reflector_log(LOG_WARN, "Failed to mmap ring buffers: %s", strerror(errno));
         reflector_log(LOG_INFO, "Using simple recv/send mode (slower but more compatible)");
         use_simple_mode    = true;
         pctx->rx_ring      = NULL;
-        pctx->tx_ring      = NULL;
         pctx->rx_ring_size = 0;
-        pctx->tx_ring_size = 0;
     }
 
     if (!use_simple_mode) {
-        /* Only set tx_ring if TX ring was successfully configured */
-        if (have_tx_ring) {
-            pctx->tx_ring      = pctx->rx_ring + pctx->rx_ring_size;
-            pctx->tx_frame_num = tx_req.tp_frame_nr;
-        } else {
-            pctx->tx_ring      = NULL; /* Force simple send() mode */
-            pctx->tx_frame_num = 0;
-        }
         pctx->rx_frame_idx         = 0;
-        pctx->tx_frame_idx         = 0;
         pctx->current_block_idx    = 0;
         pctx->current_block_offset = 0;
 
-        reflector_log(LOG_INFO, "Allocated PACKET_MMAP rings: RX=%zu MB, TX=%s",
-                      pctx->rx_ring_size / (1024 * 1024),
-                      have_tx_ring ? "ring mode" : "simple send() mode");
+        reflector_log(LOG_INFO, "Allocated PACKET_MMAP RX ring: %zu MB; TX: batched direct send",
+                      pctx->rx_ring_size / (1024 * 1024));
     }
 
     /* Bind to interface */
@@ -236,10 +280,30 @@ int packet_platform_init(reflector_ctx_t *rctx, worker_ctx_t *wctx)
 
     if (bind(pctx->sock_fd, (struct sockaddr *)&sll, sizeof(sll)) < 0) {
         reflector_log(LOG_ERROR, "Failed to bind AF_PACKET socket: %s", strerror(errno));
-        munmap(pctx->rx_ring, total_ring_size);
+        munmap(pctx->rx_ring, pctx->rx_ring_size);
         close(pctx->sock_fd);
         free(pctx);
         return -1;
+    }
+
+    /* AF_PACKET sees the probe before the UDP stack, but it does not claim the
+     * destination port. Keep a UDP socket bound so Linux does not race the raw
+     * reflected reply with an ICMP port-unreachable response. */
+    if (wctx->worker_id == 0 &&
+        (wctx->config->sig_filter == SIG_FILTER_ALL || wctx->config->sig_filter == SIG_FILTER_ITO ||
+         wctx->config->sig_filter == SIG_FILTER_PROBEOT ||
+         wctx->config->sig_filter == SIG_FILTER_DATAOT ||
+         wctx->config->sig_filter == SIG_FILTER_LATENCY)) {
+        if (wctx->config->ito_port == 0) {
+            reflector_log(LOG_ERROR,
+                          "AF_PACKET requires a UDP port for ITO reflection to suppress ICMP");
+            packet_platform_cleanup(wctx);
+            return -1;
+        }
+        if (packet_platform_set_guard_port(wctx, wctx->config->ito_port) < 0) {
+            packet_platform_cleanup(wctx);
+            return -1;
+        }
     }
 
     /* Enable PACKET_QDISC_BYPASS for faster TX */
@@ -300,11 +364,15 @@ void packet_platform_cleanup(worker_ctx_t *wctx)
     }
 
     if (pctx->rx_ring && pctx->rx_ring != MAP_FAILED) {
-        munmap(pctx->rx_ring, pctx->rx_ring_size + pctx->tx_ring_size);
+        munmap(pctx->rx_ring, pctx->rx_ring_size);
     }
 
     if (pctx->sock_fd >= 0) {
         close(pctx->sock_fd);
+    }
+
+    if (pctx->udp_guard_fd >= 0) {
+        close(pctx->udp_guard_fd);
     }
 
     free(pctx);
@@ -346,45 +414,49 @@ int packet_platform_recv_batch(worker_ctx_t *wctx, packet_t *pkts, int max_pkts)
 
     /* TPACKET_V3: Block-level iteration (optimal for real hardware) */
     if (pctx->tpacket_version == 3) {
-        while (num_pkts < max_pkts) {
-            /* Get current block */
-            struct tpacket_block_desc *block =
-                (struct tpacket_block_desc *)(pctx->rx_ring +
-                                              (pctx->current_block_idx * PACKET_BLOCK_SIZE));
+        struct tpacket_block_desc *block =
+            (struct tpacket_block_desc *)((uint8_t *)pctx->rx_ring +
+                                          (pctx->current_block_idx * PACKET_BLOCK_SIZE));
 
-            /* Check if block is ready */
-            if ((block->hdr.bh1.block_status & TP_STATUS_USER) == 0) {
-                break; /* No more blocks ready */
-            }
-
-            /* Iterate frames within this block */
-            uint32_t num_frames = block->hdr.bh1.num_pkts;
-            uint8_t *frame_ptr  = (uint8_t *)block + block->hdr.bh1.offset_to_first_pkt;
-
-            while (pctx->current_block_offset < num_frames && num_pkts < max_pkts) {
-                struct tpacket3_hdr *hdr = (struct tpacket3_hdr *)frame_ptr;
-
-                /* Point directly at packet data in ring (zero-copy) */
-                pkts[num_pkts].data = (uint8_t *)hdr + hdr->tp_mac;
-                pkts[num_pkts].len  = hdr->tp_snaplen;
-                /* Store block index in upper 16 bits, frame offset in lower 16 bits */
-                pkts[num_pkts].addr = (pctx->current_block_idx << 16) | pctx->current_block_offset;
-                pkts[num_pkts].timestamp = wctx->config->measure_latency ? get_timestamp_ns() : 0;
-
-                num_pkts++;
-                pctx->current_block_offset++;
-                frame_ptr += hdr->tp_next_offset;
-            }
-
-            /* If we've processed all frames in this block, move to next block
-             * NOTE: Don't release block here! Packet data pointers still reference it.
-             * Blocks will be released in release_batch after packets are processed.
-             */
-            if (pctx->current_block_offset >= num_frames) {
-                pctx->current_block_idx    = (pctx->current_block_idx + 1) % PACKET_BLOCK_NR;
-                pctx->current_block_offset = 0;
-            }
+        /* The previous call returned pointers into this block. Release it only now,
+         * after the worker has finished inspecting and transmitting that batch. */
+        if (pctx->block_release_pending) {
+            block->hdr.bh1.block_status = TP_STATUS_KERNEL;
+            pctx->current_block_idx     = (pctx->current_block_idx + 1) % PACKET_BLOCK_NR;
+            pctx->current_block_offset  = 0;
+            pctx->current_frame_offset  = 0;
+            pctx->block_release_pending = false;
+            block = (struct tpacket_block_desc *)((uint8_t *)pctx->rx_ring +
+                                                  (pctx->current_block_idx * PACKET_BLOCK_SIZE));
         }
+
+        if ((block->hdr.bh1.block_status & TP_STATUS_USER) == 0) {
+            return 0;
+        }
+
+        uint32_t num_frames = block->hdr.bh1.num_pkts;
+        if (pctx->current_frame_offset == 0) {
+            pctx->current_frame_offset = block->hdr.bh1.offset_to_first_pkt;
+        }
+
+        while (pctx->current_block_offset < num_frames && num_pkts < max_pkts) {
+            struct tpacket3_hdr *hdr =
+                (struct tpacket3_hdr *)((uint8_t *)block + pctx->current_frame_offset);
+
+            pkts[num_pkts].data      = (uint8_t *)hdr + hdr->tp_mac;
+            pkts[num_pkts].len       = hdr->tp_snaplen;
+            pkts[num_pkts].addr      = (pctx->current_block_idx << 16) | pctx->current_block_offset;
+            pkts[num_pkts].timestamp = wctx->config->measure_latency ? get_timestamp_ns() : 0;
+
+            num_pkts++;
+            pctx->current_block_offset++;
+            pctx->current_frame_offset += hdr->tp_next_offset;
+        }
+
+        if (pctx->current_block_offset >= num_frames) {
+            pctx->block_release_pending = true;
+        }
+
         return num_pkts;
     }
 
@@ -395,7 +467,7 @@ int packet_platform_recv_batch(worker_ctx_t *wctx, packet_t *pkts, int max_pkts)
             pctx->rx_frame_idx = 0; /* Wrap around */
         }
         size_t               offset = (size_t)pctx->rx_frame_idx * pctx->frame_size;
-        struct tpacket2_hdr *hdr    = (struct tpacket2_hdr *)(pctx->rx_ring + offset);
+        struct tpacket2_hdr *hdr    = (struct tpacket2_hdr *)((uint8_t *)pctx->rx_ring + offset);
 
         /* Check if frame is ready (kernel filled it) */
         if ((hdr->tp_status & TP_STATUS_USER) == 0) {
@@ -419,13 +491,12 @@ int packet_platform_recv_batch(worker_ctx_t *wctx, packet_t *pkts, int max_pkts)
 }
 
 /*
- * Send batch of packets via PACKET_MMAP TX ring (zero-copy)
- * Falls back to simple send() if ring buffers not available.
+ * Send a packet batch directly. This remains compatible with veth devices and
+ * uses one syscall for the batch while PACKET_QDISC_BYPASS keeps the fast path.
  */
 int packet_platform_send_batch(worker_ctx_t *wctx, packet_t *pkts, int num_pkts)
 {
     struct platform_ctx *pctx = wctx->pctx;
-    int                  sent = 0;
 
     /* Validate num_pkts to prevent out-of-bounds access */
     if (unlikely(num_pkts < 0 || num_pkts > BATCH_SIZE)) {
@@ -433,56 +504,28 @@ int packet_platform_send_batch(worker_ctx_t *wctx, packet_t *pkts, int num_pkts)
         return 0;
     }
 
-    /* Simple mode: use basic send() */
-    if (!pctx->tx_ring) {
-        for (int i = 0; i < num_pkts; i++) {
-            /* Validate packet data pointer */
-            if (!pkts[i].data) {
-                continue;
-            }
-            ssize_t ret = send(pctx->sock_fd, pkts[i].data, pkts[i].len, MSG_DONTWAIT);
-            if (ret > 0) {
-                sent++;
-            }
-            /* Silently drop failed sends - caller tracks TX failures */
-        }
-        return sent;
-    }
-
-    /* Ring mode: Use TX ring */
+    struct mmsghdr messages[BATCH_SIZE] = {0};
+    struct iovec   iovecs[BATCH_SIZE]   = {0};
     for (int i = 0; i < num_pkts; i++) {
-        struct tpacket2_hdr *hdr =
-            (struct tpacket2_hdr *)(pctx->tx_ring + (pctx->tx_frame_idx * pctx->frame_size));
-
-        /* Wait for TX frame to be available */
-        if (hdr->tp_status != TP_STATUS_AVAILABLE) {
-            /* TX ring full, send what we have */
-            if (sent > 0) {
-                send(pctx->sock_fd, NULL, 0, MSG_DONTWAIT); /* Kick TX */
-            }
-            break;
+        if (!pkts[i].data || pkts[i].len == 0) {
+            reflector_log(LOG_ERROR, "Invalid packet at batch index %d", i);
+            packet_platform_release_batch(wctx, pkts, num_pkts);
+            return -1;
         }
-
-        /* Copy packet into TX frame */
-        uint8_t *frame_data = (uint8_t *)hdr + TPACKET_HDRLEN;
-        memcpy(frame_data, pkts[i].data, pkts[i].len);
-
-        /* Set frame metadata */
-        hdr->tp_len     = pkts[i].len;
-        hdr->tp_snaplen = pkts[i].len;
-
-        /* Mark frame as ready for kernel to send */
-        hdr->tp_status = TP_STATUS_SEND_REQUEST;
-
-        sent++;
-        pctx->tx_frame_idx = (pctx->tx_frame_idx + 1) % pctx->tx_frame_num;
+        iovecs[i].iov_base             = pkts[i].data;
+        iovecs[i].iov_len              = pkts[i].len;
+        messages[i].msg_hdr.msg_iov    = &iovecs[i];
+        messages[i].msg_hdr.msg_iovlen = 1;
     }
 
-    /* Kick TX to send frames */
-    if (sent > 0) {
-        send(pctx->sock_fd, NULL, 0, MSG_DONTWAIT);
+    int sent = sendmmsg(pctx->sock_fd, messages, (unsigned int)num_pkts, MSG_DONTWAIT);
+    if (sent < 0) {
+        packet_platform_release_batch(wctx, pkts, num_pkts);
+        return -1;
     }
-
+    if (sent < num_pkts) {
+        packet_platform_release_batch(wctx, &pkts[sent], num_pkts - sent);
+    }
     return sent;
 }
 
@@ -507,25 +550,8 @@ void packet_platform_release_batch(worker_ctx_t *wctx, packet_t *pkts, int num_p
 
     /* TPACKET_V3: Release blocks that these packets came from */
     if (pctx->tpacket_version == 3) {
-        /* Track which blocks we've released to avoid double-release */
-        uint32_t released_blocks = 0; /* Bitmask for up to 32 blocks */
-
-        for (int i = 0; i < num_pkts; i++) {
-            /* Block index is stored in upper 16 bits of addr */
-            uint32_t block_idx = pkts[i].addr >> 16;
-            uint32_t block_bit = 1u << (block_idx % 32);
-
-            /* Skip if already released */
-            if (released_blocks & block_bit) {
-                continue;
-            }
-
-            /* Release block back to kernel */
-            struct tpacket_block_desc *block =
-                (struct tpacket_block_desc *)(pctx->rx_ring + (block_idx * PACKET_BLOCK_SIZE));
-            block->hdr.bh1.block_status = TP_STATUS_KERNEL;
-            released_blocks |= block_bit;
-        }
+        /* V3 packets share block ownership. recv_batch releases a completed block
+         * on the next call, after every pointer returned from it is no longer used. */
         return;
     }
 
@@ -533,7 +559,7 @@ void packet_platform_release_batch(worker_ctx_t *wctx, packet_t *pkts, int num_p
     for (int i = 0; i < num_pkts; i++) {
         uint32_t             frame_idx = pkts[i].addr; /* We stored frame index in addr */
         struct tpacket2_hdr *hdr =
-            (struct tpacket2_hdr *)(pctx->rx_ring + (frame_idx * pctx->frame_size));
+            (struct tpacket2_hdr *)((uint8_t *)pctx->rx_ring + (frame_idx * pctx->frame_size));
 
         /* Return frame to kernel */
         hdr->tp_status = TP_STATUS_KERNEL;

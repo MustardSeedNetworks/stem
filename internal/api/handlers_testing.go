@@ -20,6 +20,8 @@ func (s *Server) handleTestStart(w http.ResponseWriter, r *http.Request) {
 		WriteMethodNotAllowed(w)
 		return
 	}
+	s.testRunMu.Lock()
+	defer s.testRunMu.Unlock()
 
 	var req TestStartRequest
 	if !decodeJSONStrict(w, r, &req, maxRequestBodySize) {
@@ -63,7 +65,7 @@ func (s *Server) handleTestStart(w http.ResponseWriter, r *http.Request) {
 		"interface", iface,
 	)
 
-	execErr := s.executeTest(mod.Name(), req.TestType, iface, req.Config)
+	execErr := s.executeTest(mod.Name(), req.TestType, iface, req.Profile, req.Config)
 	if execErr != nil {
 		s.respondTestExecutionError(w, execErr, mod.Name(), req.TestType)
 		return
@@ -83,6 +85,10 @@ func (s *Server) handleTestStop(w http.ResponseWriter, r *http.Request) {
 		WriteMethodNotAllowed(w)
 		return
 	}
+	s.testRunMu.Lock()
+	defer s.testRunMu.Unlock()
+	s.reflectorMu.Lock()
+	defer s.reflectorMu.Unlock()
 
 	s.statsMu.Lock()
 	testType := s.currentTest
@@ -90,7 +96,9 @@ func (s *Server) handleTestStop(w http.ResponseWriter, r *http.Request) {
 
 	// Check if reflector is running.
 	if exec != nil && exec.IsRunning() {
+		s.statsMu.Unlock()
 		exec.Stop()
+		s.statsMu.Lock()
 		s.testStatus = statusStopped
 		s.currentTest = ""
 		s.statsMu.Unlock()
@@ -106,10 +114,16 @@ func (s *Server) handleTestStop(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	execToCancel := s.activeTestExec
+	s.activeTestExec = nil
+	s.testRunID++
 	s.testStatus = statusCancelled
 	s.currentTest = ""
 	s.currentModule = ""
 	s.statsMu.Unlock()
+	if cancellable, ok := execToCancel.(interface{ Cancel() }); ok {
+		cancellable.Cancel()
+	}
 
 	logging.Info("Test cancelled", "testType", testType)
 	writeJSON(w, StatusResponse{Status: statusStopped})
@@ -193,10 +207,11 @@ func (s *Server) validateInterfaceForTest(w http.ResponseWriter, ifaceName strin
 func (s *Server) beginTestRun(testType, module string) error {
 	s.statsMu.Lock()
 	defer s.statsMu.Unlock()
-	if s.testStatus == statusRunning {
+	if s.testStatus == statusRunning || s.testStatus == statusStarting {
 		return errTestAlreadyRunning
 	}
 	s.testStatus = statusStarting
+	s.testRunID++
 	s.currentTest = testType
 	s.currentModule = module
 	s.testResult = nil

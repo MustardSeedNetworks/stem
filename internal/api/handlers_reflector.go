@@ -3,12 +3,14 @@
 package api
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"net/http"
 	"time"
 
 	"github.com/MustardSeedNetworks/stem/internal/logging"
+	reflectorConfig "github.com/MustardSeedNetworks/stem/internal/reflector/config"
 	reflectorDP "github.com/MustardSeedNetworks/stem/internal/reflector/dataplane"
 	"github.com/MustardSeedNetworks/stem/internal/services/reflector"
 )
@@ -41,6 +43,15 @@ func (s *Server) handleReflectorConfigUpdate(w http.ResponseWriter, r *http.Requ
 	if !decodeJSONStrict(w, r, &cfg, maxRequestBodySize) {
 		return
 	}
+	s.reflectorMu.Lock()
+	defer s.reflectorMu.Unlock()
+	s.statsMu.RLock()
+	exec := s.reflectorExec
+	s.statsMu.RUnlock()
+	if exec != nil && exec.IsRunning() {
+		WriteConflict(w, "Stop the reflector before changing its configuration")
+		return
+	}
 
 	err := s.validateReflectorProfile(cfg.Profile)
 	if err != nil {
@@ -62,6 +73,7 @@ func (s *Server) handleReflectorConfigUpdate(w http.ResponseWriter, r *http.Requ
 		WriteInternalError(w, err)
 		return
 	}
+	s.commitReflectorConfigUpdate(&cfg)
 
 	if len(changes) > 0 {
 		logging.Info("reflector config updated", "changes", changes)
@@ -75,7 +87,12 @@ func (s *Server) validateReflectorProfile(profile string) error {
 	if profile == "" {
 		return nil
 	}
-	validProfiles := map[string]bool{"netally": true, "msn": true, "all": true, "custom": true}
+	validProfiles := map[string]bool{
+		reflectorConfig.ProfileNetAlly: true,
+		reflectorConfig.ProfileMSN:     true,
+		reflectorConfig.ProfileAll:     true,
+		reflectorConfig.ProfileCustom:  true,
+	}
 	if !validProfiles[profile] {
 		return fmt.Errorf("invalid profile: %s", profile)
 	}
@@ -85,68 +102,86 @@ func (s *Server) validateReflectorProfile(profile string) error {
 // buildReflectorConfigUpdate builds the config update and returns changes list.
 func (s *Server) buildReflectorConfigUpdate(cfg *ReflectorConfig) ([]string, *reflectorDP.ConfigUpdate, error) {
 	var changes []string
-
-	s.statsMu.Lock()
-	defer s.statsMu.Unlock()
-
-	exec := s.reflectorExec
-
-	var dpUpdate *reflectorDP.ConfigUpdate
-	if exec != nil {
-		dpUpdate = &reflectorDP.ConfigUpdate{
-			Port:            nil,
-			FilterOUI:       nil,
-			OUI:             nil,
-			FilterMAC:       nil,
-			Mode:            nil,
-			SignatureFilter: nil,
+	var safePort uint16
+	if cfg.PortFilter > 0 {
+		var ok bool
+		safePort, ok = safeIntToUint16(cfg.PortFilter)
+		if !ok {
+			return nil, nil, fmt.Errorf("port %d out of valid range (0-%d)", cfg.PortFilter, math.MaxUint16)
 		}
 	}
+	if cfg.SignatureFilter != nil {
+		if len(cfg.SignatureFilter) != 1 {
+			return nil, nil, errors.New("exactly one signature filter is required")
+		}
+		if err := reflectorConfig.ValidateSignatureFilter(cfg.SignatureFilter[0]); err != nil {
+			return nil, nil, err
+		}
+	}
+	if cfg.OUIFilter != "" {
+		candidate := reflectorConfig.Config{Filtering: reflectorConfig.FilterConfig{OUI: cfg.OUIFilter}}
+		if _, err := candidate.ParseOUI(); err != nil {
+			return nil, nil, err
+		}
+	}
+
+	dpUpdate := &reflectorDP.ConfigUpdate{}
 
 	if cfg.Profile != "" {
-		s.reflectorConfig.Profile = cfg.Profile
 		changes = append(changes, "profile="+cfg.Profile)
-		if dpUpdate != nil {
-			mode := cfg.Profile
-			if mode == "netally" || mode == "msn" {
-				mode = "all"
-			}
-			dpUpdate.Mode = &mode
-		}
-	}
-
-	if cfg.OUIFilter != "" {
-		s.reflectorConfig.OUIFilter = cfg.OUIFilter
-		changes = append(changes, "ouiFilter="+cfg.OUIFilter)
-		if dpUpdate != nil {
-			dpUpdate.OUI = &cfg.OUIFilter
-			filterOUI := true
+		settings := reflectorConfig.SettingsForProfile(cfg.Profile)
+		dpUpdate.Mode = &settings.Mode
+		dpUpdate.SignatureFilter = &settings.SignatureFilter
+		dpUpdate.Port = &settings.Port
+		if cfg.Profile != reflectorConfig.ProfileCustom {
+			filterOUI := false
 			dpUpdate.FilterOUI = &filterOUI
 		}
 	}
 
+	if cfg.OUIFilter != "" {
+		changes = append(changes, "ouiFilter="+cfg.OUIFilter)
+		dpUpdate.OUI = &cfg.OUIFilter
+		filterOUI := true
+		dpUpdate.FilterOUI = &filterOUI
+	}
+
 	if cfg.PortFilter > 0 {
-		safePort, ok := safeIntToUint16(cfg.PortFilter)
-		if !ok {
-			return nil, nil, fmt.Errorf("port %d out of valid range (0-%d)", cfg.PortFilter, math.MaxUint16)
-		}
-		s.reflectorConfig.PortFilter = cfg.PortFilter
 		changes = append(changes, fmt.Sprintf("portFilter=%d", cfg.PortFilter))
-		if dpUpdate != nil {
-			dpUpdate.Port = &safePort
-		}
+		dpUpdate.Port = &safePort
 	}
 
 	if cfg.SignatureFilter != nil {
-		s.reflectorConfig.SignatureFilter = cfg.SignatureFilter
 		changes = append(changes, "signatureFilter updated")
-		if dpUpdate != nil && len(cfg.SignatureFilter) > 0 {
-			sigFilter := cfg.SignatureFilter[0]
-			dpUpdate.SignatureFilter = &sigFilter
-		}
+		sigFilter := cfg.SignatureFilter[0]
+		dpUpdate.SignatureFilter = &sigFilter
 	}
 
 	return changes, dpUpdate, nil
+}
+
+func (s *Server) commitReflectorConfigUpdate(cfg *ReflectorConfig) {
+	s.statsMu.Lock()
+	defer s.statsMu.Unlock()
+
+	if cfg.Profile != "" {
+		settings := reflectorConfig.SettingsForProfile(cfg.Profile)
+		s.reflectorConfig.Profile = cfg.Profile
+		s.reflectorConfig.SignatureFilter = []string{settings.SignatureFilter}
+		s.reflectorConfig.PortFilter = int(settings.Port)
+		if cfg.Profile != "custom" {
+			s.reflectorConfig.OUIFilter = ""
+		}
+	}
+	if cfg.OUIFilter != "" {
+		s.reflectorConfig.OUIFilter = cfg.OUIFilter
+	}
+	if cfg.PortFilter > 0 {
+		s.reflectorConfig.PortFilter = cfg.PortFilter
+	}
+	if cfg.SignatureFilter != nil {
+		s.reflectorConfig.SignatureFilter = append([]string(nil), cfg.SignatureFilter...)
+	}
 }
 
 // applyReflectorDataplaneUpdate applies the config update to the dataplane.

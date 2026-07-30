@@ -864,7 +864,9 @@ uint64_t rfc2544_calc_pps(uint64_t line_rate, uint32_t frame_size);
  * Get default configuration
  * @param config Configuration to populate
  */
-void rfc2544_default_config(rfc2544_config_t *config);
+void              rfc2544_default_config(rfc2544_config_t *config);
+rfc2544_config_t *rfc2544_config_alloc_default(void);
+void              rfc2544_config_free(rfc2544_config_t *config);
 
 /**
  * Print results in configured format

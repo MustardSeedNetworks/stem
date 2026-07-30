@@ -10,7 +10,7 @@
  */
 
 import { type ReactElement, type ReactNode, Suspense } from 'react';
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router';
 import { HelpDrawer } from './components/HelpDrawer';
 import { ResultHistory } from './components/ResultHistory';
 import { SettingsDrawer } from './components/SettingsDrawer';

@@ -9,7 +9,7 @@
 import { Command } from 'cmdk';
 import { HelpCircle, Moon, Search, Settings as SettingsIcon, Sun } from 'lucide-react';
 import { type FC, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import type { SidebarNavGroup } from '../../ui/Sidebar';
 
 export interface CommandPaletteAction {

@@ -233,16 +233,16 @@ func TestHandleReflectorConfigDefaults(t *testing.T) {
 		t.Errorf("Expected default profile 'all', got '%v'", resp["profile"])
 	}
 
-	// Default port filter should be 3842.
+	// The all profile guards the NetAlly UDP port by default.
 	portFilter, ok := resp["portFilter"].(float64)
 	if !ok || int(portFilter) != 3842 {
 		t.Errorf("Expected default portFilter 3842, got '%v'", resp["portFilter"])
 	}
 
-	// Default OUI filter should be "00:c0:17".
+	// OUI filtering is opt-in.
 	ouiFilter, ok := resp["ouiFilter"].(string)
-	if !ok || ouiFilter != "00:c0:17" {
-		t.Errorf("Expected default ouiFilter '00:c0:17', got '%v'", resp["ouiFilter"])
+	if !ok || ouiFilter != "" {
+		t.Errorf("Expected no default ouiFilter, got '%v'", resp["ouiFilter"])
 	}
 }
 
@@ -419,7 +419,7 @@ func TestHandleReflectorConfigPost_SignatureFilter(t *testing.T) {
 	s := setupReflectorTestServer(t)
 	token := getReflectorAuthToken(t, s)
 
-	body := bytes.NewBufferString(`{"signatureFilter":["probeot","dataot"]}`)
+	body := bytes.NewBufferString(`{"signatureFilter":["probeot"]}`)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/reflector/config", body)
 	authorizeWithCSRF(t, s, req, token)
 	w := httptest.NewRecorder()
