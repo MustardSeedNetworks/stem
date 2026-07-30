@@ -233,10 +233,10 @@ func TestHandleReflectorConfigDefaults(t *testing.T) {
 		t.Errorf("Expected default profile 'all', got '%v'", resp["profile"])
 	}
 
-	// The all profile does not restrict the UDP port by default.
+	// The all profile guards the NetAlly UDP port by default.
 	portFilter, ok := resp["portFilter"].(float64)
-	if !ok || int(portFilter) != 0 {
-		t.Errorf("Expected default portFilter 0, got '%v'", resp["portFilter"])
+	if !ok || int(portFilter) != 3842 {
+		t.Errorf("Expected default portFilter 3842, got '%v'", resp["portFilter"])
 	}
 
 	// OUI filtering is opt-in.
