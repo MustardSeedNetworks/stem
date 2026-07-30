@@ -877,12 +877,6 @@ func NewContext(iface string) (*Context, error) {
 	return &Context{ctx: cctx}, nil
 }
 
-// NewTestContext creates a test context for unit tests that need a non-nil
-// context but do not execute dataplane operations.
-func NewTestContext() *Context {
-	return &Context{}
-}
-
 // Configure applies test configuration
 func (c *Context) Configure(cfg *Config) error {
 	c.mu.Lock()
@@ -985,18 +979,6 @@ func (c *Context) Close() {
 		C.free(unsafe.Pointer(c.dpdkArgs))
 		c.dpdkArgs = nil
 	}
-}
-
-// GetLineRate returns the interface line rate in bits/sec
-func GetLineRate(iface string) uint64 {
-	cIface := C.CString(iface)
-	defer C.free(unsafe.Pointer(cIface))
-	return uint64(C.rfc2544_get_line_rate(cIface))
-}
-
-// CalcPPS calculates packets per second for given rate and frame size
-func CalcPPS(lineRate uint64, frameSize uint32) uint64 {
-	return uint64(C.rfc2544_calc_pps(C.uint64_t(lineRate), C.uint32_t(frameSize)))
 }
 
 // RunCustomStreamTest executes a custom traffic stream.

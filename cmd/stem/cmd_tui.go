@@ -38,25 +38,7 @@ func tuiReflectMode(iface string) error {
 		}
 	}
 
-	// Build reflector config.
-	cfg := &reflectorConfig.Config{
-		Interface:       iface,
-		Verbose:         false,
-		SignatureFilter: DefaultSignatureFilter,
-		WebUI:           reflectorConfig.WebUIConfig{Enabled: false, Port: 0},
-		TUI:             reflectorConfig.TUIConfig{Enabled: true},
-		Filtering: reflectorConfig.FilterConfig{
-			Port:      0,
-			FilterOUI: false,
-			OUI:       "",
-			FilterMAC: false,
-		},
-		Reflection: reflectorConfig.ReflectConfig{
-			Mode: DefaultReflectionMode,
-		},
-		Platform: reflectorConfig.PlatformConfig{UseDPDK: false, UseAFXDP: true, DPDKArgs: ""},
-		Stats:    reflectorConfig.StatsConfig{Format: "text", Interval: 0},
-	}
+	cfg := buildTUIReflectorConfig(iface)
 
 	// Create and start reflector dataplane.
 	dp, dpErr := reflectorDP.New(cfg)
@@ -82,6 +64,27 @@ func tuiReflectMode(iface string) error {
 	}
 
 	return nil
+}
+
+func buildTUIReflectorConfig(iface string) *reflectorConfig.Config {
+	return &reflectorConfig.Config{
+		Interface:       iface,
+		Verbose:         false,
+		SignatureFilter: DefaultSignatureFilter,
+		WebUI:           reflectorConfig.WebUIConfig{Enabled: false, Port: 0},
+		TUI:             reflectorConfig.TUIConfig{Enabled: true},
+		Filtering: reflectorConfig.FilterConfig{
+			Port:      reflectorConfig.NetAllyPort,
+			FilterOUI: false,
+			OUI:       "",
+			FilterMAC: false,
+		},
+		Reflection: reflectorConfig.ReflectConfig{
+			Mode: DefaultReflectionMode,
+		},
+		Platform: reflectorConfig.PlatformConfig{UseDPDK: false, UseAFXDP: true, DPDKArgs: ""},
+		Stats:    reflectorConfig.StatsConfig{Format: "text", Interval: 0},
+	}
 }
 
 // tuiTestMode runs the testmaster TUI mode.
