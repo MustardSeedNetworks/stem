@@ -23,6 +23,7 @@ static reflector_config_t make_config(
     uint8_t oui0, uint8_t oui1, uint8_t oui2,
     int reflect_mode,
     int use_dpdk,
+    int use_af_xdp,
     const char *dpdk_args
 ) {
     reflector_config_t config = {0};
@@ -32,10 +33,9 @@ static reflector_config_t make_config(
     config.oui[1] = oui1;
     config.oui[2] = oui2;
     config.reflect_mode = (reflect_mode_t)reflect_mode;
-#if HAVE_DPDK
     config.use_dpdk = use_dpdk ? true : false;
+    config.use_af_xdp = use_af_xdp ? true : false;
     config.dpdk_args = (char *)dpdk_args;
-#endif
     return config;
 }
 */
@@ -101,6 +101,7 @@ type Dataplane struct {
 	ctx      C.reflector_ctx_t
 	cfg      *config.Config
 	running  bool
+	closed   bool
 	mu       sync.RWMutex
 	dpdkArgs *C.char // Store to prevent dangling pointer
 }
@@ -115,6 +116,10 @@ func New(cfg *config.Config) (*Dataplane, error) {
 	oui, err := cfg.ParseOUI()
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse OUI: %w", err)
+	}
+	sigFilter, err := signatureFilterValue(cfg.SignatureFilter)
+	if err != nil {
+		return nil, err
 	}
 
 	// Create C config
@@ -136,6 +141,10 @@ func New(cfg *config.Config) (*Dataplane, error) {
 	if cfg.Platform.UseDPDK {
 		useDPDK = 1
 	}
+	useAFXDP := 0
+	if cfg.Platform.UseAFXDP {
+		useAFXDP = 1
+	}
 
 	cConfig := C.make_config(
 		ifname,
@@ -144,6 +153,7 @@ func New(cfg *config.Config) (*Dataplane, error) {
 		C.uint8_t(oui[0]), C.uint8_t(oui[1]), C.uint8_t(oui[2]),
 		C.int(cfg.ReflectModeInt()),
 		C.int(useDPDK),
+		C.int(useAFXDP),
 		dpdkArgs,
 	)
 
@@ -152,10 +162,41 @@ func New(cfg *config.Config) (*Dataplane, error) {
 		return nil, fmt.Errorf("failed to initialize reflector on %s", cfg.Interface)
 	}
 
-	// Apply config
-	dp.ctx.config = cConfig
+	// Preserve interface and worker settings detected by reflector_init.
+	dp.ctx.config.ito_port = cConfig.ito_port
+	dp.ctx.config.filter_oui = cConfig.filter_oui
+	dp.ctx.config.oui[0] = cConfig.oui[0]
+	dp.ctx.config.oui[1] = cConfig.oui[1]
+	dp.ctx.config.oui[2] = cConfig.oui[2]
+	dp.ctx.config.filter_dst_mac = C.bool(cfg.Filtering.FilterMAC)
+	dp.ctx.config.reflect_mode = cConfig.reflect_mode
+	dp.ctx.config.sig_filter = C.sig_filter_t(sigFilter)
+	dp.ctx.config.use_dpdk = cConfig.use_dpdk
+	dp.ctx.config.use_af_xdp = cConfig.use_af_xdp
+	dp.ctx.config.dpdk_args = cConfig.dpdk_args
 
 	return dp, nil
+}
+
+func signatureFilterValue(filter string) (int, error) {
+	if err := config.ValidateSignatureFilter(filter); err != nil {
+		return 0, err
+	}
+	values := map[string]int{
+		"all": 0, "ito": 1, "rfc2544": 2,
+		"probeot": 6, "dataot": 7, "latency": 8,
+		"y1564": 3, "custom": 4, "msn": 5,
+	}
+	return values[filter], nil
+}
+
+func reflectionModeValue(mode string) (int, error) {
+	values := map[string]int{"mac": 0, "mac-ip": 1, "all": 2}
+	value, ok := values[mode]
+	if !ok {
+		return 0, fmt.Errorf("invalid reflection mode %q", mode)
+	}
+	return value, nil
 }
 
 // Start begins packet processing
@@ -165,6 +206,9 @@ func (dp *Dataplane) Start() error {
 
 	if dp.running {
 		return fmt.Errorf("dataplane already running")
+	}
+	if dp.closed {
+		return fmt.Errorf("dataplane is closed")
 	}
 
 	if C.reflector_start(&dp.ctx) < 0 {
@@ -184,23 +228,38 @@ func (dp *Dataplane) Stop() {
 		return
 	}
 
-	// The C code handles stopping via the running flag
+	C.reflector_stop(&dp.ctx)
 	dp.running = false
 }
 
 // Close cleans up dataplane resources
 func (dp *Dataplane) Close() {
-	dp.Stop()
+	dp.mu.Lock()
+	defer dp.mu.Unlock()
+	if dp.closed {
+		return
+	}
+	if dp.running {
+		C.reflector_stop(&dp.ctx)
+		dp.running = false
+	}
 	C.reflector_cleanup(&dp.ctx)
 	// Free stored C strings
 	if dp.dpdkArgs != nil {
 		C.free(unsafe.Pointer(dp.dpdkArgs))
 		dp.dpdkArgs = nil
 	}
+	dp.closed = true
 }
 
 // GetStats returns current statistics
 func (dp *Dataplane) GetStats() Stats {
+	dp.mu.RLock()
+	defer dp.mu.RUnlock()
+	if dp.closed {
+		return Stats{}
+	}
+
 	var cStats C.reflector_stats_t
 	C.reflector_get_stats(&dp.ctx, &cStats)
 
@@ -253,14 +312,67 @@ func (dp *Dataplane) UpdateConfig(update *ConfigUpdate) error {
 	if update == nil {
 		return nil
 	}
+	sigFilter, mode := 0, 0
+	if update.SignatureFilter != nil {
+		value, err := signatureFilterValue(*update.SignatureFilter)
+		if err != nil {
+			return err
+		}
+		sigFilter = value
+	}
+	if update.Mode != nil {
+		value, err := reflectionModeValue(*update.Mode)
+		if err != nil {
+			return err
+		}
+		mode = value
+	}
+	var parsedOUI [3]byte
+	if update.OUI != nil {
+		candidate := config.Config{Filtering: config.FilterConfig{OUI: *update.OUI}}
+		value, err := candidate.ParseOUI()
+		if err != nil {
+			return fmt.Errorf("invalid OUI format %q: %w", *update.OUI, err)
+		}
+		parsedOUI = value
+	}
 
 	dp.mu.Lock()
 	defer dp.mu.Unlock()
+	if dp.closed {
+		return fmt.Errorf("dataplane is closed")
+	}
+	if dp.running {
+		return fmt.Errorf("reflector configuration cannot change while running")
+	}
+
+	if update.Port != nil || update.SignatureFilter != nil {
+		currentPort := dp.cfg.Filtering.Port
+		if update.Port != nil {
+			currentPort = *update.Port
+		}
+		currentSignatureFilter := sigFilter
+		if update.SignatureFilter != nil {
+			currentSignatureFilter = sigFilter
+		} else {
+			var currentErr error
+			currentSignatureFilter, currentErr = signatureFilterValue(dp.cfg.SignatureFilter)
+			if currentErr != nil {
+				return currentErr
+			}
+		}
+		if C.reflector_update_filter(
+			&dp.ctx,
+			C.uint16_t(currentPort),
+			C.sig_filter_t(currentSignatureFilter),
+		) != 0 {
+			return fmt.Errorf("failed to update reflector packet filter")
+		}
+	}
 
 	// Apply each non-nil field
 	if update.Port != nil {
 		dp.cfg.Filtering.Port = *update.Port
-		dp.ctx.config.ito_port = C.uint16_t(*update.Port)
 	}
 
 	if update.FilterOUI != nil {
@@ -269,18 +381,10 @@ func (dp *Dataplane) UpdateConfig(update *ConfigUpdate) error {
 	}
 
 	if update.OUI != nil {
-		// Validate OUI format before updating
-		oldOUI := dp.cfg.Filtering.OUI
 		dp.cfg.Filtering.OUI = *update.OUI
-		parsed, err := dp.cfg.ParseOUI()
-		if err != nil {
-			// Restore old value and return error
-			dp.cfg.Filtering.OUI = oldOUI
-			return fmt.Errorf("invalid OUI format '%s': %w", *update.OUI, err)
-		}
-		dp.ctx.config.oui[0] = C.uint8_t(parsed[0])
-		dp.ctx.config.oui[1] = C.uint8_t(parsed[1])
-		dp.ctx.config.oui[2] = C.uint8_t(parsed[2])
+		dp.ctx.config.oui[0] = C.uint8_t(parsedOUI[0])
+		dp.ctx.config.oui[1] = C.uint8_t(parsedOUI[1])
+		dp.ctx.config.oui[2] = C.uint8_t(parsedOUI[2])
 	}
 
 	if update.FilterMAC != nil {
@@ -290,19 +394,11 @@ func (dp *Dataplane) UpdateConfig(update *ConfigUpdate) error {
 
 	if update.Mode != nil {
 		dp.cfg.Reflection.Mode = *update.Mode
-		dp.ctx.config.reflect_mode = C.reflect_mode_t(dp.cfg.ReflectModeInt())
+		dp.ctx.config.reflect_mode = C.reflect_mode_t(mode)
 	}
 
 	if update.SignatureFilter != nil {
 		dp.cfg.SignatureFilter = *update.SignatureFilter
-		// Map string to enum
-		sigMap := map[string]int{
-			"all": 0, "ito": 1, "rfc2544": 2,
-			"y1564": 3, "custom": 4, "msn": 5,
-		}
-		if val, exists := sigMap[*update.SignatureFilter]; exists {
-			dp.ctx.config.sig_filter = C.sig_filter_t(val)
-		}
 	}
 
 	return nil
@@ -312,6 +408,8 @@ func (dp *Dataplane) UpdateConfig(update *ConfigUpdate) error {
 func (dp *Dataplane) ResetStats() {
 	dp.mu.Lock()
 	defer dp.mu.Unlock()
-	// Reset the C stats - use memset via CGO
-	C.memset(unsafe.Pointer(&dp.ctx.global_stats), 0, C.sizeof_reflector_stats_t)
+	if dp.closed {
+		return
+	}
+	C.reflector_reset_stats(&dp.ctx)
 }

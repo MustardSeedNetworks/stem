@@ -7,6 +7,8 @@ import (
 	"fmt"
 
 	"github.com/MustardSeedNetworks/stem/internal/logging"
+	reflectorConfig "github.com/MustardSeedNetworks/stem/internal/reflector/config"
+	reflectorDP "github.com/MustardSeedNetworks/stem/internal/reflector/dataplane"
 	"github.com/MustardSeedNetworks/stem/internal/services"
 	"github.com/MustardSeedNetworks/stem/internal/services/modtypes"
 	"github.com/MustardSeedNetworks/stem/internal/services/reflector"
@@ -31,10 +33,10 @@ type (
 )
 
 // executeTest runs the test via the appropriate module executor.
-func (s *Server) executeTest(moduleName, testType, iface string, config *TestConfig) error {
+func (s *Server) executeTest(moduleName, testType, iface, profile string, config *TestConfig) error {
 	// Handle reflector separately as it has different lifecycle.
 	if moduleName == moduleReflector {
-		return s.executeReflector(iface, config)
+		return s.executeReflector(iface, profile)
 	}
 
 	resolver := s.executorResolver
@@ -59,14 +61,15 @@ func (s *Server) runModuleTest(
 	if err != nil {
 		return fmt.Errorf("create %s executor: %w", moduleName, err)
 	}
+	s.statsMu.Lock()
+	runID := s.testRunID
+	s.activeTestExec = exec
+	s.testStatus = statusRunning
+	s.statsMu.Unlock()
 
 	// Run test in goroutine.
 	go func() {
 		defer exec.Close()
-
-		s.statsMu.Lock()
-		s.testStatus = statusRunning
-		s.statsMu.Unlock()
 
 		// Convert server config to module config with params map.
 		cfg := convertToModuleConfig(iface, testType, config)
@@ -74,6 +77,11 @@ func (s *Server) runModuleTest(
 		result, execErr := exec.Execute(testType, cfg)
 
 		s.statsMu.Lock()
+		if s.testRunID != runID {
+			s.statsMu.Unlock()
+			return
+		}
+		s.activeTestExec = nil
 
 		if execErr != nil {
 			s.testStatus = statusError
@@ -115,12 +123,27 @@ func (s *Server) runModuleTest(
 }
 
 // executeReflector starts the reflector mode.
-func (s *Server) executeReflector(iface string, config *TestConfig) error {
+func (s *Server) executeReflector(iface, profile string) error {
+	s.reflectorMu.Lock()
+	defer s.reflectorMu.Unlock()
+
+	if err := s.validateReflectorProfile(profile); err != nil {
+		return err
+	}
 	// Check if already running.
 	s.statsMu.Lock()
 	if s.reflectorExec != nil && s.reflectorExec.IsRunning() {
 		s.statsMu.Unlock()
 		return errors.New("reflector already running")
+	}
+
+	// Recreate the executor when the selected interface changes.
+	if s.reflectorExec != nil && s.reflectorExec.Dataplane().Interface() != iface {
+		oldExec := s.reflectorExec
+		s.reflectorExec = nil
+		s.statsMu.Unlock()
+		oldExec.Close()
+		s.statsMu.Lock()
 	}
 
 	// Create new executor if needed.
@@ -132,57 +155,67 @@ func (s *Server) executeReflector(iface string, config *TestConfig) error {
 		}
 		s.reflectorExec = exec
 	}
+	exec := s.reflectorExec
+	storedConfig := s.reflectorConfig
 	s.statsMu.Unlock()
 
-	// Run reflector in goroutine.
-	go func() {
-		s.statsMu.Lock()
-		exec := s.reflectorExec
-		s.testStatus = statusRunning
-		s.currentTest = testTypeReflect
-		s.currentModule = moduleReflector
-		s.statsMu.Unlock()
+	if profile != "" {
+		storedConfig.Profile = profile
+	}
+	update := reflectorStartConfig(storedConfig)
+	if err := exec.Dataplane().UpdateConfig(update); err != nil {
+		return fmt.Errorf("apply reflector config: %w", err)
+	}
 
-		// Note: Reflector uses its own config type (reflector.Config).
-		// Currently the reflector's Execute ignores the config parameter.
-		// Convert server config to reflector.Config when reflector uses it.
-		_ = config // Suppress unused parameter warning.
-		result, err := exec.Execute(testTypeReflect, nil)
+	result, err := exec.Execute(testTypeReflect, nil)
+	if err != nil {
+		return err
+	}
 
-		s.statsMu.Lock()
-
-		if err != nil {
-			s.testStatus = statusError
-			s.testResult = &TestResultResponse{
-				Status:   statusError,
-				TestType: testTypeReflect,
-				Module:   moduleReflector,
-				Success:  false,
-				Error:    err.Error(),
-				Message:  "",
-				Data:     nil,
-			}
-			logging.Error("Reflector start failed", "error", err)
-			s.currentModule = ""
-			s.statsMu.Unlock()
-			return
-		}
-
-		s.testResult = &TestResultResponse{
-			Status:   statusRunning,
-			TestType: testTypeReflect,
-			Module:   moduleReflector,
-			Success:  result.Success,
-			Error:    "",
-			Message:  "",
-			Data:     result.Data,
-		}
-		logging.Info("Reflector started", "success", result.Success)
-		s.currentModule = ""
-		s.statsMu.Unlock()
-	}()
+	s.statsMu.Lock()
+	s.testStatus = statusRunning
+	s.currentTest = testTypeReflect
+	s.currentModule = ""
+	s.testResult = &TestResultResponse{
+		Status:   statusRunning,
+		TestType: testTypeReflect,
+		Module:   moduleReflector,
+		Success:  result.Success,
+		Error:    "",
+		Message:  "",
+		Data:     result.Data,
+	}
+	s.statsMu.Unlock()
+	logging.Info("Reflector started", "success", result.Success)
 
 	return nil
+}
+
+func reflectorStartConfig(storedConfig ReflectorConfig) *reflectorDP.ConfigUpdate {
+	settings := reflectorConfig.SettingsForProfile(storedConfig.Profile)
+	update := &reflectorDP.ConfigUpdate{
+		Port:            &settings.Port,
+		Mode:            &settings.Mode,
+		SignatureFilter: &settings.SignatureFilter,
+	}
+	if storedConfig.Profile != reflectorConfig.ProfileCustom {
+		filterOUI := false
+		update.FilterOUI = &filterOUI
+		return update
+	}
+	if port, ok := safeIntToUint16(storedConfig.PortFilter); ok && port > 0 {
+		update.Port = &port
+	}
+	if len(storedConfig.SignatureFilter) == 1 {
+		filter := storedConfig.SignatureFilter[0]
+		update.SignatureFilter = &filter
+	}
+	if storedConfig.OUIFilter != "" {
+		filterOUI := true
+		update.FilterOUI = &filterOUI
+		update.OUI = &storedConfig.OUIFilter
+	}
+	return update
 }
 
 // convertToModuleConfig converts server TestConfig to modtypes.TestConfig with params map.

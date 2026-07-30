@@ -54,7 +54,7 @@ func tuiReflectMode(iface string) error {
 		Reflection: reflectorConfig.ReflectConfig{
 			Mode: DefaultReflectionMode,
 		},
-		Platform: reflectorConfig.PlatformConfig{UseDPDK: false, UseAFXDP: false, DPDKArgs: ""},
+		Platform: reflectorConfig.PlatformConfig{UseDPDK: false, UseAFXDP: true, DPDKArgs: ""},
 		Stats:    reflectorConfig.StatsConfig{Format: "text", Interval: 0},
 	}
 

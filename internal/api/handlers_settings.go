@@ -147,6 +147,10 @@ func (s *Server) handleModeUpdate(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	s.testRunMu.Lock()
+	defer s.testRunMu.Unlock()
+	s.reflectorMu.Lock()
+	defer s.reflectorMu.Unlock()
 
 	s.statsMu.RLock()
 	oldMode := s.mode
@@ -207,8 +211,11 @@ func (s *Server) handleModeUpdate(w http.ResponseWriter, r *http.Request) {
 func (s *Server) teardownForModeSwitch() {
 	s.statsMu.Lock()
 	exec := s.reflectorExec
+	testExec := s.activeTestExec
 	wasRunning := s.testStatus == statusRunning || s.testStatus == statusStarting
 	if wasRunning {
+		s.testRunID++
+		s.activeTestExec = nil
 		s.testStatus = statusCancelled
 		s.currentTest = ""
 		s.currentModule = ""
@@ -218,6 +225,9 @@ func (s *Server) teardownForModeSwitch() {
 	}
 	s.statsMu.Unlock()
 
+	if cancellable, ok := testExec.(interface{ Cancel() }); ok {
+		cancellable.Cancel()
+	}
 	if exec != nil {
 		logging.Info("stopping reflector for mode switch")
 		exec.Stop()

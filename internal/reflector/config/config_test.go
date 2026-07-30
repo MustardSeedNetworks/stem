@@ -92,15 +92,15 @@ func TestReflectConfig(t *testing.T) {
 func TestPlatformConfig(t *testing.T) {
 	cfg := config.PlatformConfig{
 		UseDPDK:  true,
-		UseAFXDP: false,
+		UseAFXDP: true,
 		DPDKArgs: "-l 0-3 -n 4",
 	}
 
 	if !cfg.UseDPDK {
 		t.Error("Expected UseDPDK true")
 	}
-	if cfg.UseAFXDP {
-		t.Error("Expected UseAFXDP false")
+	if !cfg.UseAFXDP {
+		t.Error("Expected UseAFXDP true")
 	}
 	if cfg.DPDKArgs != "-l 0-3 -n 4" {
 		t.Errorf("Expected DPDKArgs '-l 0-3 -n 4', got '%s'", cfg.DPDKArgs)

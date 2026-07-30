@@ -116,18 +116,24 @@ ifeq ($(UNAME),Linux)
 	$(CC) $(CFLAGS) -o bin/test_pacing tests/c/test_pacing.c $(C_PACING_SRCS) $(C_LDFLAGS)
 	$(CC) $(CFLAGS) -o bin/test_protocols tests/c/test_protocols.c $(C_PROTO_SRCS) $(C_LDFLAGS)
 	$(CC) $(CFLAGS) -o bin/test_packet_parse tests/c/test_packet_parse.c src/dataplane/common/packet.c $(C_LDFLAGS)
+	$(CC) $(CFLAGS) -o bin/test_netally_reflector tests/c/test_netally_reflector.c \
+		src/reflector/netally.c src/reflector/packet.c src/reflector/util.c $(C_LDFLAGS)
 	@echo "Running C tests..."
 	./bin/test_pacing
 	./bin/test_protocols
 	./bin/test_packet_parse
+	./bin/test_netally_reflector
 else ifeq ($(UNAME),Darwin)
 	@echo "Building C tests (common code only, macOS)..."
 	mkdir -p bin
 	$(CC) $(CFLAGS) -DSTUB_PLATFORM -o bin/test_pacing tests/c/test_pacing.c $(C_PACING_SRCS) $(C_LDFLAGS)
 	$(CC) $(CFLAGS) -DSTUB_PLATFORM -o bin/test_packet_parse tests/c/test_packet_parse.c src/dataplane/common/packet.c $(C_LDFLAGS)
+	$(CC) $(CFLAGS) -DSTUB_PLATFORM -o bin/test_netally_reflector tests/c/test_netally_reflector.c \
+		src/reflector/netally.c src/reflector/packet.c src/reflector/util.c $(C_LDFLAGS)
 	@echo "Running C tests..."
 	./bin/test_pacing
 	./bin/test_packet_parse
+	./bin/test_netally_reflector
 	@echo "Note: Protocol tests require Linux networking APIs"
 else
 	@echo "C tests require Linux or macOS"
@@ -146,8 +152,12 @@ c-test-asan: ## Build + run the dataplane parser tests under AddressSanitizer/UB
 	mkdir -p bin
 	$(CC) $(C_SAN_CFLAGS) -o bin/test_packet_parse_asan \
 		tests/c/test_packet_parse.c src/dataplane/common/packet.c -pthread -lm
+	$(CC) $(C_SAN_CFLAGS) -o bin/test_netally_reflector_asan \
+		tests/c/test_netally_reflector.c src/reflector/netally.c src/reflector/packet.c \
+		src/reflector/util.c -pthread -lm
 	@echo "Running packet-parser tests (ASAN)..."
 	ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=halt_on_error=1 ./bin/test_packet_parse_asan
+	ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=halt_on_error=1 ./bin/test_netally_reflector_asan
 
 c-fuzz: ## Fuzz the dataplane packet parser under libFuzzer+ASAN (FUZZ_SECONDS=60)
 	@command -v $(FUZZ_CC) >/dev/null 2>&1 || { echo "$(FUZZ_CC) (clang) required for libFuzzer"; exit 1; }

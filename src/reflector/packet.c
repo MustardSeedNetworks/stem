@@ -23,13 +23,11 @@
 /* SIMD support for x86_64 architectures */
 #if defined(__x86_64__) || defined(_M_X64)
 #include <cpuid.h>
-#include <emmintrin.h> /* SSE2 */
-#include <pmmintrin.h> /* SSE3 */
-#include <tmmintrin.h> /* SSSE3 - needed for _mm_shuffle_epi8 */
+#include <emmintrin.h>
+#include <tmmintrin.h>
 
 /* CPU feature detection flags */
-static int            cpu_has_sse2    = 0;
-static int            cpu_has_sse3    = 0;
+static int            cpu_has_ssse3   = 0;
 static pthread_once_t cpu_detect_once = PTHREAD_ONCE_INIT;
 
 /*
@@ -41,18 +39,16 @@ static void detect_cpu_features(void)
 
     /* Check for SSE2 (CPUID.01H:EDX.SSE2[bit 26]) */
     if (__get_cpuid(1, &eax, &ebx, &ecx, &edx)) {
-        cpu_has_sse2 = (edx & (1 << 26)) ? 1 : 0;
-        cpu_has_sse3 = (ecx & (1 << 0)) ? 1 : 0;
+        cpu_has_ssse3 = (ecx & (1 << 9)) ? 1 : 0;
     } else {
-        cpu_has_sse2 = 0;
-        cpu_has_sse3 = 0;
+        cpu_has_ssse3 = 0;
     }
 
     /* Log which implementation (runs only once) */
-    if (cpu_has_sse2) {
-        reflector_log(LOG_INFO, "SIMD: x86_64 SSE2 enabled");
+    if (cpu_has_ssse3) {
+        reflector_log(LOG_INFO, "SIMD: x86_64 SSSE3 enabled");
     } else {
-        reflector_log(LOG_INFO, "Using scalar packet reflection (SSE2 not available)");
+        reflector_log(LOG_INFO, "Using scalar packet reflection (SSSE3 not available)");
     }
 }
 #endif /* __x86_64__ */
@@ -160,6 +156,10 @@ ALWAYS_INLINE bool is_ito_packet(const uint8_t *data, uint32_t len,
     uint32_t udp_offset         = ETH_HDR_LEN + ip_hdr_len;
     uint32_t udp_payload_offset = udp_offset + UDP_HDR_LEN;
 
+    if (unlikely(len < udp_payload_offset + ITO_SIG_OFFSET + ITO_SIG_LEN)) {
+        return false;
+    }
+
     /* Check destination UDP port if filtering enabled (default: 3842) */
     if (config->ito_port != 0) {
         uint16_t dst_port = (data[udp_offset + UDP_DST_PORT_OFFSET] << 8) |
@@ -170,15 +170,6 @@ ALWAYS_INLINE bool is_ito_packet(const uint8_t *data, uint32_t len,
             }
             return false;
         }
-    }
-
-    /* Ensure we have enough data for signature - LIKELY to have enough */
-    if (unlikely(len < udp_payload_offset + ITO_SIG_OFFSET + ITO_SIG_LEN)) {
-        if (unlikely(debug_count++ < 3)) {
-            DEBUG_LOG("Too short for signature: len=%u, need=%u", len,
-                      udp_payload_offset + ITO_SIG_OFFSET + ITO_SIG_LEN);
-        }
-        return false;
     }
 
     /* Check signatures based on filter mode */
@@ -199,10 +190,18 @@ ALWAYS_INLINE bool is_ito_packet(const uint8_t *data, uint32_t len,
     }
 
     /* ITO signatures (NetAlly/Fluke/NETSCOUT) - at offset 5 */
-    if (filter == SIG_FILTER_ALL || filter == SIG_FILTER_ITO) {
-        if (memcmp(ito_sig, ITO_SIG_PROBEOT, ITO_SIG_LEN) == 0 ||
-            memcmp(ito_sig, ITO_SIG_DATAOT, ITO_SIG_LEN) == 0 ||
-            memcmp(ito_sig, ITO_SIG_LATENCY, ITO_SIG_LEN) == 0) {
+    if (filter == SIG_FILTER_ALL || filter == SIG_FILTER_ITO || filter == SIG_FILTER_PROBEOT ||
+        filter == SIG_FILTER_DATAOT || filter == SIG_FILTER_LATENCY) {
+        bool matches = (filter == SIG_FILTER_ALL || filter == SIG_FILTER_ITO ||
+                        filter == SIG_FILTER_PROBEOT) &&
+                       memcmp(ito_sig, ITO_SIG_PROBEOT, ITO_SIG_LEN) == 0;
+        matches      = matches || ((filter == SIG_FILTER_ALL || filter == SIG_FILTER_ITO ||
+                                    filter == SIG_FILTER_DATAOT) &&
+                                   memcmp(ito_sig, ITO_SIG_DATAOT, ITO_SIG_LEN) == 0);
+        matches      = matches || ((filter == SIG_FILTER_ALL || filter == SIG_FILTER_ITO ||
+                                    filter == SIG_FILTER_LATENCY) &&
+                                   memcmp(ito_sig, ITO_SIG_LATENCY, ITO_SIG_LEN) == 0);
+        if (matches) {
             DEBUG_LOG("ITO packet matched! len=%u", len);
             return true;
         }
@@ -236,7 +235,7 @@ ALWAYS_INLINE bool is_ito_packet(const uint8_t *data, uint32_t len,
 
 #if defined(__x86_64__) || defined(_M_X64)
 /*
- * SIMD-optimized packet reflection using SSE2 instructions
+ * SIMD-optimized packet reflection using SSSE3 instructions
  *
  * Uses 128-bit SIMD operations to swap headers in parallel:
  * - Load 16 bytes at a time into SIMD registers
@@ -245,7 +244,8 @@ ALWAYS_INLINE bool is_ito_packet(const uint8_t *data, uint32_t len,
  *
  * Expected performance gain: 2-3% over scalar version
  */
-static ALWAYS_INLINE void reflect_packet_inplace_simd(uint8_t *data, uint32_t len)
+__attribute__((target("ssse3"))) static void reflect_packet_inplace_simd(uint8_t *data,
+                                                                         uint32_t len)
 {
     (void)len;
 
@@ -519,7 +519,7 @@ static uint16_t calculate_udp_checksum(const uint8_t *iph, const uint8_t *udph, 
  *
  * Automatically detects CPU capabilities and uses the fastest available
  * implementation:
- * - x86_64: SSE2/SSE3 SIMD
+ * - x86_64: SSSE3 SIMD
  * - ARM64: NEON SIMD
  * - Others: Optimized scalar
  *
@@ -533,7 +533,7 @@ void reflect_packet_inplace(uint8_t *data, uint32_t len)
     pthread_once(&cpu_detect_once, detect_cpu_features);
 
     /* Dispatch to SIMD or scalar version */
-    if (likely(cpu_has_sse2)) {
+    if (likely(cpu_has_ssse3)) {
         reflect_packet_inplace_simd(data, len);
     } else {
         reflect_packet_inplace_scalar(data, len);

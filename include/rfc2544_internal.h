@@ -8,6 +8,8 @@
 #ifndef RFC2544_INTERNAL_H
 #define RFC2544_INTERNAL_H
 
+#include <stdatomic.h>
+
 #include <pthread.h>
 
 #include "platform_config.h"
@@ -37,8 +39,8 @@ struct rfc2544_ctx {
     rfc2544_config_t config;
 
     /* State */
-    test_state_t  state;
-    volatile bool cancel_requested;
+    _Atomic(test_state_t) state;
+    atomic_bool           cancel_requested;
 
     /* Platform */
     const platform_ops_t *platform;

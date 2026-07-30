@@ -21,16 +21,18 @@ import (
 
 // getSignatureFilter maps profile name to signature filter.
 func getSignatureFilter(profile string) string {
-	switch profile {
-	case "netally", "ito":
-		return "ito"
-	case "msn":
-		return "msn"
-	case "custom":
-		return "custom"
-	default:
-		return DefaultSignatureFilter
+	return reflectorConfig.SettingsForProfile(profile).SignatureFilter
+}
+
+func getReflectionMode(profile string) string {
+	return reflectorConfig.SettingsForProfile(profile).Mode
+}
+
+func getReflectorPort(profile string, requested uint16) uint16 {
+	if requested == 0 {
+		return reflectorConfig.SettingsForProfile(profile).Port
 	}
+	return requested
 }
 
 // reflectorStatsLoop displays reflector stats periodically until interrupted.
@@ -45,8 +47,7 @@ func reflectorStatsLoop(dp *reflectorDP.Dataplane) {
 		select {
 		case <-sigChan:
 			_, _ = fmt.Fprintln(os.Stdout, "\nShutting down reflector...")
-			go dp.Stop()
-			time.Sleep(shutdownDelayMs * time.Millisecond)
+			dp.Stop()
 			stats := dp.GetStats()
 			_, _ = fmt.Fprintf(os.Stdout, "\nFinal Statistics:\n")
 			_, _ = fmt.Fprintf(os.Stdout, "  Packets Received:  %d\n", stats.PacketsReceived)
@@ -193,15 +194,15 @@ func buildReflectorConfig(parsed *reflectCmdArgs, sigFilter string) *reflectorCo
 		WebUI:           reflectorConfig.WebUIConfig{Enabled: false, Port: 0},
 		TUI:             reflectorConfig.TUIConfig{Enabled: parsed.useTUI},
 		Filtering: reflectorConfig.FilterConfig{
-			Port:      parsed.port,
+			Port:      getReflectorPort(parsed.profile, parsed.port),
 			FilterOUI: false,
 			OUI:       "00:c0:17", // Default NetAlly OUI.
 			FilterMAC: false,
 		},
 		Reflection: reflectorConfig.ReflectConfig{
-			Mode: DefaultReflectionMode,
+			Mode: getReflectionMode(parsed.profile),
 		},
-		Platform: reflectorConfig.PlatformConfig{UseDPDK: false, UseAFXDP: false, DPDKArgs: ""},
+		Platform: reflectorConfig.PlatformConfig{UseDPDK: false, UseAFXDP: true, DPDKArgs: ""},
 		Stats:    reflectorConfig.StatsConfig{Format: "text", Interval: 0},
 	}
 
