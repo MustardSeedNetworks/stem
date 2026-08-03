@@ -10,6 +10,7 @@
 #
 # Covers natively:
 #   - Multi-arch builds (linux/windows × amd64/arm64; darwin arm64 only)
+#   - Native C reflector dataplane in Linux amd64 DEB/RPM packages
 #   - Archives (.tar.gz, .zip), Linux packages (.deb, .rpm) via nfpm
 #   - ldflags injection (Version, Commit, BuildTime, UIBuildHash) into
 #     internal/version — the canonical contract shared with seed and niac
@@ -24,9 +25,10 @@
 #     Vite writes directly to internal/api/ui/ which Go embeds. The
 #     `before:` hook below just verifies the dist landed.
 #
-# Stem builds with CGO_ENABLED=0 across all targets (pure-Go networking
-# via gopacket without the libpcap C dependency), so the cross-compile
-# overrides used by seed and niac aren't needed here.
+# Linux amd64 DEB/RPM packages include the CGO AF_PACKET/AF_XDP reflector
+# dataplane. Tarballs remain dependency-free portable builds. Linux arm64
+# remains portable until releases run on a native arm64 builder; Darwin and
+# Windows do not support this dataplane.
 #
 # Tested against goreleaser v2.x inside goreleaser-cross:v1.26.2-3.
 # =============================================================================
@@ -38,19 +40,21 @@ project_name: stem
 before:
   hooks:
     - go mod download
+    - bash -c 'make CC=clang-18 CFLAGS="-D_GNU_SOURCE -D_DEFAULT_SOURCE -std=c23 -Wall -Wextra -Wpedantic -O3 -march=x86-64-v2 -pthread -Iinclude" dataplane'
+    - bash -c 'CGO_ENABLED=1 go build -trimpath -buildvcs=false -o /tmp/stem-native-preflight ./cmd/stem && ldd /tmp/stem-native-preflight | grep -q libxdp && /tmp/stem-native-preflight version'
     # UI dist is built BEFORE goreleaser runs (in the build-ui job inside
     # release.yml) and written to internal/api/ui/. internal/api/server.go
     # then `go:embed`s it into the binary. Just verify it landed.
     - bash -c 'test -f internal/api/ui/index.html || (echo "internal/api/ui/index.html missing — UI build step failed or artifact missing"; exit 1)'
 
 builds:
-  - id: stem-linux
+  - id: stem-linux-native-amd64
     main: ./cmd/stem
     binary: stem
     env:
-      - CGO_ENABLED=0
+      - CGO_ENABLED=1
     goos: [linux]
-    goarch: [amd64, arm64]
+    goarch: [amd64]
     flags:
       - -trimpath
       - -buildvcs=false
@@ -60,6 +64,30 @@ builds:
       - -X github.com/MustardSeedNetworks/stem/internal/version.Commit={{.Commit}}
       - -X github.com/MustardSeedNetworks/stem/internal/version.BuildTime={{.Date}}
       - -X github.com/MustardSeedNetworks/stem/internal/version.UIBuildHash={{.Env.UI_BUILD_HASH}}
+
+  - id: stem-linux-portable-amd64
+    main: ./cmd/stem
+    binary: stem
+    env:
+      - CGO_ENABLED=0
+    goos: [linux]
+    goarch: [amd64]
+    flags:
+      - -trimpath
+      - -buildvcs=false
+    ldflags: *ldflags
+
+  - id: stem-linux-portable-arm64
+    main: ./cmd/stem
+    binary: stem
+    env:
+      - CGO_ENABLED=0
+    goos: [linux]
+    goarch: [arm64]
+    flags:
+      - -trimpath
+      - -buildvcs=false
+    ldflags: *ldflags
 
   - id: stem-darwin
     main: ./cmd/stem
@@ -88,7 +116,7 @@ builds:
 
 archives:
   - id: linux-archive
-    ids: [stem-linux]
+    ids: [stem-linux-portable-amd64, stem-linux-portable-arm64]
     name_template: "stem-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
     formats: [tar.gz]
     files:
@@ -120,8 +148,9 @@ archives:
 # Linux .deb + .rpm via nfpm (built into goreleaser). This block replaces
 # the prior .nfpm.yaml sidecar at the goreleaser cutover.
 nfpms:
-  - id: linux-packages
-    ids: [stem-linux]
+  - &linux-package
+    id: linux-packages-native-amd64
+    ids: [stem-linux-native-amd64]
     package_name: stem
     vendor: Mustard Seed Networks
     homepage: https://github.com/MustardSeedNetworks/stem
@@ -153,10 +182,18 @@ nfpms:
         dependencies:
           - systemd
           - libcap2-bin
+          - libbpf1
+          - libelf1
+          - libxdp1
+          - zlib1g
       rpm:
         dependencies:
           - systemd
           - libcap
+          - elfutils-libelf
+          - libbpf
+          - libxdp
+          - zlib
     contents:
       - src: ./deploy/systemd/stem.service
         dst: /usr/lib/systemd/system/stem.service
@@ -198,6 +235,19 @@ nfpms:
       preremove: ./deploy/nfpm/preremove.sh
       postremove: ./deploy/nfpm/postremove.sh
     bindir: /usr/bin
+
+  - <<: *linux-package
+    id: linux-packages-portable-arm64
+    ids: [stem-linux-portable-arm64]
+    overrides:
+      deb:
+        dependencies:
+          - systemd
+          - libcap2-bin
+      rpm:
+        dependencies:
+          - systemd
+          - libcap
 
 checksum:
   name_template: "checksums.txt"
