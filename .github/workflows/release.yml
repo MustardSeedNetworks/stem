@@ -21,10 +21,8 @@
 # on the same release tooling.
 #
 # Toolchain notes:
-#   stem builds with CGO_ENABLED=0 across all targets (pure-Go networking,
-#   no libpcap), so the per-target compiler overrides used by seed and
-#   niac inside goreleaser-cross aren't needed. The container is still
-#   used for the bundled goreleaser + ancillary tooling parity.
+#   Linux amd64 DEB/RPM packages include the native C reflector dataplane.
+#   Tarballs, Linux arm64, Darwin, and Windows use the portable Go build.
 #
 # Inputs: only the typed `dry_run` boolean - no untrusted event fields
 # are interpolated into shell commands.
@@ -137,6 +135,17 @@ jobs:
         with:
           name: ui-dist
           path: internal/api/ui/
+
+      - name: Install native reflector build dependencies
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            clang-18 \
+            libbpf-dev \
+            libelf-dev \
+            libxdp-dev \
+            make \
+            zlib1g-dev
 
       - name: Install Syft (SBOM) inside container
         env:

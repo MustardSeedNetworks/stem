@@ -18,6 +18,7 @@ All canonical documentation for The Stem now lives under the [MustardSeedNetwork
 | `TESTING.md`             | `05-Engineering/TESTING.md` plus `05-Engineering/TESTING_STRATEGY.md`/`03-The-Seed/THE_SEED_TESTING_STRATEGY.md` |
 | `SURVEY_COMPLETION_PLAN.md` | `05-Engineering/SURVEY_COMPLETION_PLAN.md` |
 | `WIKI_CONTENT.md`        | `05-Engineering/WIKI_CONTENT.md` |
+| NetAlly reflector validation | `03-The-Stem/STEM_NETALLY_REFLECTOR_CLOSEOUT.md` |
 
 If new documentation is needed for The Stem, add it under MustardSeedNetworks (use the `03-The-Stem` and `05-Engineering` folders as appropriate) and then update this table to point to the new file so readers here know where to look.
 

@@ -7,7 +7,7 @@
 # Creates issues with:
 # - File location and line number
 # - TODO context (surrounding code)
-# - Labels: todo, needs-triage
+# - Labels: type: chore, status: needs-triage
 # =============================================================================
 
 name: TODO Tracker
@@ -110,7 +110,7 @@ jobs:
         run: |
           # Check if summary issue already exists this week
           WEEK=$(date +%Y-W%V)
-          EXISTING=$(gh issue list --label "todo" --search "TODO Summary $WEEK" --json number --jq '.[0].number' || echo "")
+          EXISTING=$(gh issue list --label "type: chore" --search "TODO Summary $WEEK" --json number --jq '.[0].number' || echo "")
 
           if [ -n "$EXISTING" ]; then
             echo "Summary issue #$EXISTING already exists for this week"
@@ -140,4 +140,4 @@ jobs:
           gh issue create \
             --title "TODO Summary $WEEK: ${{ steps.todos.outputs.count }} items" \
             --body "$BODY" \
-            --label "todo,needs-triage"
+            --label "type: chore,status: needs-triage"

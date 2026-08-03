@@ -116,6 +116,12 @@ jobs:
       - name: Compile native Go bindings
         run: CGO_ENABLED=1 go test -run '^$' ./internal/reflector/dataplane ./internal/services/orchestrator/dataplane
 
+      - name: Verify native Linux release linkage
+        run: |
+          CGO_ENABLED=1 make quick
+          ldd bin/stem | grep -q libxdp
+          bin/stem version
+
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@82606bf257cbaff209d206a39f5134f0cfbfd2ee # v9.2.1
         with:

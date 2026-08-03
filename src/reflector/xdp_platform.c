@@ -93,6 +93,23 @@ static int configure_umem(struct platform_ctx *pctx, void *buffer, uint64_t size
     return 0;
 }
 
+static void complete_bpf_init_without_filter(struct platform_ctx *pctx)
+{
+    pctx->bpf_obj      = NULL;
+    pctx->xsks_map_fd  = -1;
+    pctx->mac_map_fd   = -1;
+    pctx->sig_map_fd   = -1;
+    pctx->stats_map_fd = -1;
+    pctx->prog_fd      = -1;
+    g_bpf_obj          = NULL;
+    g_xsks_map_fd      = -1;
+    g_mac_map_fd       = -1;
+    g_sig_map_fd       = -1;
+    g_stats_map_fd     = -1;
+    g_prog_fd          = -1;
+    __atomic_store_n(&g_bpf_init_done, 1, __ATOMIC_RELEASE);
+}
+
 /*
  * Populate fill queue with buffers for kernel to use
  */
@@ -125,8 +142,7 @@ static int load_xdp_program(worker_ctx_t *wctx)
     /* Check if BPF object file exists */
     if (access("src/xdp/filter.bpf.o", F_OK) != 0) {
         reflector_log(LOG_WARN, "eBPF filter not found, will use SKB mode without filter");
-        pctx->bpf_obj = NULL;
-        pctx->prog_fd = -1;
+        complete_bpf_init_without_filter(pctx);
         return 0; /* Not an error - AF_XDP works without eBPF */
     }
 
@@ -134,8 +150,7 @@ static int load_xdp_program(worker_ctx_t *wctx)
     pctx->bpf_obj = bpf_object__open_file("src/xdp/filter.bpf.o", NULL);
     if (libbpf_get_error(pctx->bpf_obj)) {
         reflector_log(LOG_WARN, "Failed to load eBPF filter, will use SKB mode without filter");
-        pctx->bpf_obj = NULL;
-        pctx->prog_fd = -1;
+        complete_bpf_init_without_filter(pctx);
         return 0; /* Not an error - AF_XDP works without eBPF */
     }
 

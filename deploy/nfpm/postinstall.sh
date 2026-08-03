@@ -3,6 +3,8 @@ set -e
 
 BINARY=/usr/bin/stem
 CONFIG_DIR=/etc/stem
+AF_XDP_DROPIN_DIR=/etc/systemd/system/stem.service.d
+AF_XDP_DROPIN="$AF_XDP_DROPIN_DIR/10-af-xdp-capability.conf"
 
 if [ ! -f "$CONFIG_DIR/config.yaml" ] && [ -f /usr/share/stem/config.yaml ]; then
     cp /usr/share/stem/config.yaml "$CONFIG_DIR/config.yaml"
@@ -23,9 +25,19 @@ EOF
 fi
 
 if command -v setcap >/dev/null 2>&1; then
-    setcap 'cap_net_raw,cap_net_admin,cap_net_bind_service=+ep' "$BINARY" || \
+    capabilities=cap_net_raw,cap_net_admin,cap_net_bind_service
+    if ldd "$BINARY" 2>/dev/null | grep -q libxdp && \
+        command -v capsh >/dev/null 2>&1 && capsh --has-b=cap_bpf >/dev/null 2>&1; then
+        capabilities="$capabilities,cap_bpf"
+        install -d -m 755 "$AF_XDP_DROPIN_DIR"
+        printf '%s\n' '[Service]' 'AmbientCapabilities=CAP_BPF' > "$AF_XDP_DROPIN"
+    else
+        rm -f "$AF_XDP_DROPIN"
+    fi
+    setcap "$capabilities=+ep" "$BINARY" || \
         echo "warning: could not set capabilities on $BINARY"
 else
+    rm -f "$AF_XDP_DROPIN"
     echo "warning: setcap not found; install libcap/libcap2-bin for non-root packet tests"
 fi
 

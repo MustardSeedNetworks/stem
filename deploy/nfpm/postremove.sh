@@ -2,11 +2,21 @@
 set -e
 
 is_purge=0
+is_final_remove=0
 case "$1" in
     purge|0)
         is_purge=1
+        is_final_remove=1
+        ;;
+    remove)
+        is_final_remove=1
         ;;
 esac
+
+if [ "$is_final_remove" -eq 1 ]; then
+    rm -f /etc/systemd/system/stem.service.d/10-af-xdp-capability.conf
+    rmdir /etc/systemd/system/stem.service.d 2>/dev/null || true
+fi
 
 if [ "$is_purge" -eq 1 ]; then
     if command -v ufw >/dev/null 2>&1; then
