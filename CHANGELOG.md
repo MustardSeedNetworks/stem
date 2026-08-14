@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.5](https://github.com/MustardSeedNetworks/stem/compare/v0.24.4...v0.24.5) (2026-08-14)
+
+
+### Continuous Integration
+
+* **lint:** enforce full-tree Go lint ([#565](https://github.com/MustardSeedNetworks/stem/issues/565)) ([5b9348a](https://github.com/MustardSeedNetworks/stem/commit/5b9348ad725d9f3518e4b48615b16b831a910858))
+
+
+### Miscellaneous
+
+* refresh toolchain and frontend dependencies ([#563](https://github.com/MustardSeedNetworks/stem/issues/563)) ([46503a1](https://github.com/MustardSeedNetworks/stem/commit/46503a1e125e793706c1676689707b00e8711224))
+
 ## [0.24.4](https://github.com/MustardSeedNetworks/stem/compare/v0.24.3...v0.24.4) (2026-08-14)
 
 
