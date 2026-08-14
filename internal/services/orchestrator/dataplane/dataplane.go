@@ -858,11 +858,7 @@ import (
 )
 
 const (
-	interfaceNameMax       = 63
-	defaultCustomFrameSize = 1518
-	defaultCustomRatePct   = 10.0
-	defaultCustomDuration  = 10
-	defaultCustomWarmup    = 1
+	interfaceNameMax = 63
 )
 
 // ErrNotSupported is defined for interface parity across build targets.
@@ -1033,33 +1029,6 @@ func (c *Context) RunCustomStreamTest(cfg *TrafficGenConfig) (*TrafficGenResult,
 			P99Ns:    float64(cResult.latency.p99_ns),
 		},
 	}, nil
-}
-
-func customStreamParameters(cfg *TrafficGenConfig) (uint32, float64, uint32, uint32, uint32) {
-	frameSize := uint32(defaultCustomFrameSize)
-	ratePct := defaultCustomRatePct
-	durationSec := uint32(defaultCustomDuration)
-	warmupSec := uint32(defaultCustomWarmup)
-	streamID := uint32(0)
-	if cfg == nil {
-		return frameSize, ratePct, durationSec, warmupSec, streamID
-	}
-	if cfg.FrameSize > 0 {
-		frameSize = cfg.FrameSize
-	}
-	if cfg.RatePct > 0 {
-		ratePct = cfg.RatePct
-	}
-	if cfg.DurationSec > 0 {
-		durationSec = cfg.DurationSec
-	}
-	if cfg.WarmupSec > 0 {
-		warmupSec = cfg.WarmupSec
-	}
-	if cfg.StreamID > 0 {
-		streamID = cfg.StreamID
-	}
-	return frameSize, ratePct, durationSec, warmupSec, streamID
 }
 
 // RunSystemRecoveryTest runs RFC 2544 Section 26.5 System Recovery test.
