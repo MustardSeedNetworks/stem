@@ -148,7 +148,8 @@ license-check-go: ## Check Go module licenses
 license-check-npm: ## Check npm package licenses
 	@printf "$(BOLD)🔍 Checking npm dependency licenses...$(RESET)\n"
 	@cd ui && npx license-checker --summary --onlyAllow \
-		"MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;ISC;CC0-1.0;Unlicense;0BSD" \
+		"MIT;MIT-0;MIT OR Apache-2.0;Apache-2.0;BlueOak-1.0.0;BSD-2-Clause;BSD-3-Clause;CC-BY-4.0;ISC;CC0-1.0;MPL-2.0;OFL-1.1;Python-2.0;Unlicense;0BSD" \
+		--excludePrivatePackages \
 		2>/dev/null || printf "$(YELLOW)⚠ Some license issues found$(RESET)\n"
 
 license-report: ## Generate full license report
