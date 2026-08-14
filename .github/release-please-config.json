@@ -9,7 +9,21 @@
       "changelog-path": "CHANGELOG.md",
       "versioning": "default",
       "extra-files": [
-        "ui/package.json"
+        {
+          "type": "json",
+          "path": "ui/package.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "ui/package-lock.json",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "json",
+          "path": "ui/package-lock.json",
+          "jsonpath": "$.packages[\"\"].version"
+        }
       ]
     }
   },
