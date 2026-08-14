@@ -36,10 +36,11 @@
 #include "reflector.h"
 
 /* Ring buffer configuration - tuned for performance */
-#define PACKET_RING_FRAMES 4096
-#define PACKET_FRAME_SIZE  2048
-#define PACKET_BLOCK_SIZE  (PACKET_FRAME_SIZE * 128) /* 128 frames per block */
-#define PACKET_BLOCK_NR    (PACKET_RING_FRAMES / 128)
+#define PACKET_RING_FRAMES  4096
+#define PACKET_FRAME_SIZE   2048
+#define PACKET_BLOCK_SIZE   (PACKET_FRAME_SIZE * 128) /* 128 frames per block */
+#define PACKET_BLOCK_NR     (PACKET_RING_FRAMES / 128)
+#define PACKET_IDLE_WAIT_MS 100
 
 /* Platform-specific context for optimized AF_PACKET */
 struct platform_ctx {
@@ -384,6 +385,16 @@ void packet_platform_cleanup(worker_ctx_t *wctx)
  */
 static __thread uint8_t simple_rx_buf[2048];
 
+static void wait_for_packet(int fd)
+{
+    struct pollfd pfd = {.fd = fd, .events = POLLIN};
+    int           result;
+
+    do {
+        result = poll(&pfd, 1, PACKET_IDLE_WAIT_MS);
+    } while (result < 0 && errno == EINTR);
+}
+
 /*
  * Receive batch of packets from PACKET_MMAP ring (zero-copy)
  * Falls back to simple recv() if ring buffers not available.
@@ -409,6 +420,9 @@ int packet_platform_recv_batch(worker_ctx_t *wctx, packet_t *pkts, int max_pkts)
             /* In simple mode, process one at a time since we use single buffer */
             break;
         }
+        if (num_pkts == 0) {
+            wait_for_packet(pctx->sock_fd);
+        }
         return num_pkts;
     }
 
@@ -431,6 +445,7 @@ int packet_platform_recv_batch(worker_ctx_t *wctx, packet_t *pkts, int max_pkts)
         }
 
         if ((block->hdr.bh1.block_status & TP_STATUS_USER) == 0) {
+            wait_for_packet(pctx->sock_fd);
             return 0;
         }
 
@@ -472,6 +487,9 @@ int packet_platform_recv_batch(worker_ctx_t *wctx, packet_t *pkts, int max_pkts)
         /* Check if frame is ready (kernel filled it) */
         if ((hdr->tp_status & TP_STATUS_USER) == 0) {
             /* No more packets ready */
+            if (num_pkts == 0) {
+                wait_for_packet(pctx->sock_fd);
+            }
             break;
         }
 
