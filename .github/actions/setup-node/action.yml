@@ -4,7 +4,7 @@ inputs:
   node-version:
     description: 'Node.js version'
     required: false
-    default: '26.4.0'
+    default: '26.5.0'
   working-directory:
     description: 'Working directory for npm'
     required: false
@@ -12,7 +12,7 @@ inputs:
   npm-version:
     description: 'npm version'
     required: false
-    default: '11.18.0'
+    default: '12.0.2'
 runs:
   using: composite
   steps:
