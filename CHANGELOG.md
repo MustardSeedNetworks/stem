@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.3](https://github.com/MustardSeedNetworks/stem/compare/v0.24.2...v0.24.3) (2026-08-14)
+
+
+### Bug Fixes
+
+* **release:** synchronize Stem version metadata ([#559](https://github.com/MustardSeedNetworks/stem/issues/559)) ([4d30771](https://github.com/MustardSeedNetworks/stem/commit/4d30771ef27e79428f46eab52cde74ef0e600dcc))
+* **security:** bump Go to 1.26.6 for five reachable stdlib CVEs ([#558](https://github.com/MustardSeedNetworks/stem/issues/558)) ([086b420](https://github.com/MustardSeedNetworks/stem/commit/086b4202b623f57e3d28c134f3f7e5391abdd071))
+
 ## [0.24.2](https://github.com/MustardSeedNetworks/stem/compare/v0.24.1...v0.24.2) (2026-08-03)
 
 
