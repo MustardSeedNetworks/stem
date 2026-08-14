@@ -39,9 +39,14 @@ func getReflectorPort(profile string, requested uint16) uint16 {
 func reflectorStatsLoop(dp *reflectorDP.Dataplane) {
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+	defer signal.Stop(sigChan)
 
-	ticker := time.NewTicker(statsIntervalSeconds * time.Second)
-	defer ticker.Stop()
+	var statsTick <-chan time.Time
+	if stdout, err := os.Stdout.Stat(); err == nil && stdout.Mode()&os.ModeCharDevice != 0 {
+		ticker := time.NewTicker(statsIntervalSeconds * time.Second)
+		defer ticker.Stop()
+		statsTick = ticker.C
+	}
 
 	for {
 		select {
@@ -55,7 +60,7 @@ func reflectorStatsLoop(dp *reflectorDP.Dataplane) {
 			_, _ = fmt.Fprintf(os.Stdout, "  Bytes Received:    %d\n", stats.BytesReceived)
 			_, _ = fmt.Fprintf(os.Stdout, "  Bytes Reflected:   %d\n", stats.BytesReflected)
 			return
-		case <-ticker.C:
+		case <-statsTick:
 			stats := dp.GetStats()
 			_, _ = fmt.Fprintf(
 				os.Stdout,

@@ -61,11 +61,13 @@ security-backend: ## Run Go security scans
 	$(call timer-end,security-backend,Go security scan)
 
 security-backend-quiet:
-	@if ! command -v govulncheck > /dev/null 2>&1; then \
+	@GOVULNCHECK=$$(command -v govulncheck 2>/dev/null || echo "$$(go env GOPATH)/bin/govulncheck"); \
+	if [ ! -x "$$GOVULNCHECK" ]; then \
 		go install golang.org/x/vuln/cmd/govulncheck@latest; \
-	fi
-	@printf "   Scanning Go dependencies...\n"
-	@OUTPUT=$$(govulncheck ./... 2>&1); STATUS=$$?; \
+		GOVULNCHECK="$$(go env GOPATH)/bin/govulncheck"; \
+	fi; \
+	printf "   Scanning Go dependencies...\n"; \
+	OUTPUT=$$("$$GOVULNCHECK" ./... 2>&1); STATUS=$$?; \
 	echo "$$OUTPUT" | grep -E "(Vulnerability|No vulnerabilities)" | head -5; \
 	if [ $$STATUS -ne 0 ]; then \
 		echo "$$OUTPUT"; \
