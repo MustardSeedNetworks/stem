@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.4](https://github.com/MustardSeedNetworks/stem/compare/v0.24.3...v0.24.4) (2026-08-14)
+
+
+### Bug Fixes
+
+* **release:** restore Stem manifest mode ([#561](https://github.com/MustardSeedNetworks/stem/issues/561)) ([1bb40ab](https://github.com/MustardSeedNetworks/stem/commit/1bb40abd856e87b12e3edd31e12f7efccf39a43f))
+
 ## [0.24.3](https://github.com/MustardSeedNetworks/stem/compare/v0.24.2...v0.24.3) (2026-08-14)
 
 
