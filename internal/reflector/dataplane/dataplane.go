@@ -79,6 +79,8 @@ import (
 	"github.com/MustardSeedNetworks/stem/internal/reflector/config"
 )
 
+const nanosecondsPerMicrosecond = 1000
+
 // Available reports whether the CGO + Linux reflector dataplane is
 // compiled into this binary. The real (CGO + Linux) build always
 // returns true; the stub build (non-Linux, or CGO disabled) returns
@@ -95,7 +97,7 @@ func UnsupportedReason() string {
 	return ""
 }
 
-// Stats holds dataplane statistics
+// Stats holds dataplane statistics.
 type Stats struct {
 	PacketsReceived  uint64
 	PacketsReflected uint64
@@ -126,7 +128,7 @@ type ConfigUpdate struct {
 	SignatureFilter *string // Signature filter: "all", "ito", "rfc2544", etc.
 }
 
-// Dataplane wraps the C reflector context
+// Dataplane wraps the C reflector context.
 type Dataplane struct {
 	ctx      *C.reflector_ctx_t
 	cfg      *config.Config
@@ -136,7 +138,7 @@ type Dataplane struct {
 	dpdkArgs *C.char // Store to prevent dangling pointer
 }
 
-// New creates a new dataplane instance
+// New creates a new dataplane instance.
 func New(cfg *config.Config) (*Dataplane, error) {
 	dp := &Dataplane{
 		ctx: (*C.reflector_ctx_t)(C.calloc(1, C.size_t(C.sizeof_reflector_ctx_t))),
@@ -245,7 +247,7 @@ func reflectionModeValue(mode string) (int, error) {
 	return value, nil
 }
 
-// Start begins packet processing
+// Start begins packet processing.
 func (dp *Dataplane) Start() error {
 	dp.mu.Lock()
 	defer dp.mu.Unlock()
@@ -269,7 +271,7 @@ func (dp *Dataplane) Start() error {
 	return nil
 }
 
-// Stop halts packet processing
+// Stop halts packet processing.
 func (dp *Dataplane) Stop() {
 	dp.mu.Lock()
 	defer dp.mu.Unlock()
@@ -282,7 +284,7 @@ func (dp *Dataplane) Stop() {
 	dp.running = false
 }
 
-// Close cleans up dataplane resources
+// Close cleans up dataplane resources.
 func (dp *Dataplane) Close() {
 	dp.mu.Lock()
 	defer dp.mu.Unlock()
@@ -306,7 +308,7 @@ func (dp *Dataplane) Close() {
 	dp.closed = true
 }
 
-// GetStats returns current statistics
+// GetStats returns current statistics.
 func (dp *Dataplane) GetStats() Stats {
 	dp.mu.RLock()
 	defer dp.mu.RUnlock()
@@ -332,14 +334,14 @@ func (dp *Dataplane) GetStats() Stats {
 		SigRFC2544:       uint64(cStats.sig_rfc2544_count),
 		SigY1564:         uint64(cStats.sig_y1564_count),
 		SigMSN:           uint64(cStats.sig_msn_count),
-		LatencyMin:       float64(cStats.latency.min_ns) / 1000.0,
-		LatencyAvg:       float64(cStats.latency.avg_ns) / 1000.0,
-		LatencyMax:       float64(cStats.latency.max_ns) / 1000.0,
+		LatencyMin:       float64(cStats.latency.min_ns) / nanosecondsPerMicrosecond,
+		LatencyAvg:       float64(cStats.latency.avg_ns) / nanosecondsPerMicrosecond,
+		LatencyMax:       float64(cStats.latency.max_ns) / nanosecondsPerMicrosecond,
 		LatencyCount:     uint64(cStats.latency.count),
 	}
 }
 
-// IsRunning returns whether the dataplane is active
+// IsRunning returns whether the dataplane is active.
 func (dp *Dataplane) IsRunning() bool {
 	dp.mu.RLock()
 	defer dp.mu.RUnlock()
@@ -356,7 +358,7 @@ func (dp *Dataplane) Interface() string {
 	return dp.cfg.Interface
 }
 
-// Config returns the configuration
+// Config returns the configuration.
 func (dp *Dataplane) Config() *config.Config {
 	return dp.cfg
 }
@@ -368,29 +370,9 @@ func (dp *Dataplane) UpdateConfig(update *ConfigUpdate) error {
 	if update == nil {
 		return nil
 	}
-	sigFilter, mode := 0, 0
-	if update.SignatureFilter != nil {
-		value, err := signatureFilterValue(*update.SignatureFilter)
-		if err != nil {
-			return err
-		}
-		sigFilter = value
-	}
-	if update.Mode != nil {
-		value, err := reflectionModeValue(*update.Mode)
-		if err != nil {
-			return err
-		}
-		mode = value
-	}
-	var parsedOUI [3]byte
-	if update.OUI != nil {
-		candidate := config.Config{Filtering: config.FilterConfig{OUI: *update.OUI}}
-		value, err := candidate.ParseOUI()
-		if err != nil {
-			return fmt.Errorf("invalid OUI format %q: %w", *update.OUI, err)
-		}
-		parsedOUI = value
+	sigFilter, mode, parsedOUI, err := validateConfigUpdate(update)
+	if err != nil {
+		return err
 	}
 
 	dp.mu.Lock()
@@ -405,11 +387,43 @@ func (dp *Dataplane) UpdateConfig(update *ConfigUpdate) error {
 		return errors.New("dataplane is not initialized")
 	}
 
-	if err := dp.updatePacketFilter(update, sigFilter); err != nil {
-		return err
+	if filterErr := dp.updatePacketFilter(update, sigFilter); filterErr != nil {
+		return filterErr
 	}
 
-	// Apply each non-nil field
+	dp.applyConfigUpdate(update, mode, parsedOUI)
+	return nil
+}
+
+func validateConfigUpdate(update *ConfigUpdate) (int, int, [3]byte, error) {
+	sigFilter, mode := 0, 0
+	if update.SignatureFilter != nil {
+		value, err := signatureFilterValue(*update.SignatureFilter)
+		if err != nil {
+			return 0, 0, [3]byte{}, err
+		}
+		sigFilter = value
+	}
+	if update.Mode != nil {
+		value, err := reflectionModeValue(*update.Mode)
+		if err != nil {
+			return 0, 0, [3]byte{}, err
+		}
+		mode = value
+	}
+	var parsedOUI [3]byte
+	if update.OUI != nil {
+		candidate := config.Config{Filtering: config.FilterConfig{OUI: *update.OUI}}
+		value, err := candidate.ParseOUI()
+		if err != nil {
+			return 0, 0, [3]byte{}, fmt.Errorf("invalid OUI format %q: %w", *update.OUI, err)
+		}
+		parsedOUI = value
+	}
+	return sigFilter, mode, parsedOUI, nil
+}
+
+func (dp *Dataplane) applyConfigUpdate(update *ConfigUpdate, mode int, parsedOUI [3]byte) {
 	if update.Port != nil {
 		dp.cfg.Filtering.Port = *update.Port
 	}
@@ -439,8 +453,6 @@ func (dp *Dataplane) UpdateConfig(update *ConfigUpdate) error {
 	if update.SignatureFilter != nil {
 		dp.cfg.SignatureFilter = *update.SignatureFilter
 	}
-
-	return nil
 }
 
 func (dp *Dataplane) updatePacketFilter(update *ConfigUpdate, sigFilter int) error {
@@ -465,7 +477,7 @@ func (dp *Dataplane) updatePacketFilter(update *ConfigUpdate, sigFilter int) err
 	return nil
 }
 
-// ResetStats resets the statistics counters
+// ResetStats resets the statistics counters.
 func (dp *Dataplane) ResetStats() {
 	dp.mu.Lock()
 	defer dp.mu.Unlock()

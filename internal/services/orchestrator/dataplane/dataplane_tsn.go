@@ -220,7 +220,7 @@ func (c *Context) RunTSNIsolationTest(cfg *TSNConfig) (*TSNIsolationResult, erro
 		NumClasses:    uint32(cResult.num_classes),
 		OverallPassed: bool(cResult.overall_passed),
 	}
-	for i := 0; i < len(result.ClassResults); i++ {
+	for i := range len(result.ClassResults) {
 		cr := cResult.class_results[i]
 		result.ClassResults[i] = TSNClassResult{
 			FramesTx:         uint64(cr.frames_tx),
@@ -308,7 +308,7 @@ func (c *Context) RunTSNFullTest(cfg *TSNConfig) (*TSNFullResult, error) {
 		OverallPassed: bool(cResult.overall_passed),
 	}
 
-	for i := 0; i < len(result.IsolationResult.ClassResults); i++ {
+	for i := range len(result.IsolationResult.ClassResults) {
 		cr := cResult.isolation_result.class_results[i]
 		result.IsolationResult.ClassResults[i] = TSNClassResult{
 			FramesTx:         uint64(cr.frames_tx),
@@ -321,7 +321,7 @@ func (c *Context) RunTSNFullTest(cfg *TSNConfig) (*TSNFullResult, error) {
 		}
 	}
 
-	for i := 0; i < len(result.LatencyResults); i++ {
+	for i := range len(result.LatencyResults) {
 		lr := cResult.latency_results[i]
 		result.LatencyResults[i] = TSNLatencyResult{
 			TrafficClass:  uint32(lr.traffic_class),
