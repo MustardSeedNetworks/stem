@@ -2,18 +2,18 @@
 
 package dataplane
 
-import "fmt"
+import "errors"
 
-// New creates a new RFC2544 context with configuration
+// New creates a new RFC2544 context with configuration.
 func New(cfg Config) (*Context, error) {
 	ctx, err := NewContext(cfg.Interface)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := ctx.Configure(&cfg); err != nil {
+	if configureErr := ctx.Configure(&cfg); configureErr != nil {
 		ctx.Close()
-		return nil, err
+		return nil, configureErr
 	}
 
 	// Store config in context for later use
@@ -22,21 +22,21 @@ func New(cfg Config) (*Context, error) {
 	return ctx, nil
 }
 
-// SetFrameSize sets the frame size for subsequent tests
+// SetFrameSize sets the frame size for subsequent tests.
 func (c *Context) SetFrameSize(frameSize uint32) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.frameSize = frameSize
 }
 
-// RunThroughputTestCLI runs throughput test and returns CLI-friendly result
+// RunThroughputTest runs a throughput test and returns a CLI-friendly result.
 func (c *Context) RunThroughputTest() (*ThroughputResultCLI, error) {
 	results, err := c.runThroughputTestInternal(c.frameSize)
 	if err != nil {
 		return nil, err
 	}
 	if len(results) == 0 {
-		return nil, fmt.Errorf("no results")
+		return nil, errors.New("no results")
 	}
 
 	r := results[0]
@@ -50,7 +50,7 @@ func (c *Context) RunThroughputTest() (*ThroughputResultCLI, error) {
 	}, nil
 }
 
-// RunLatencyTestCLI runs latency test at multiple load levels
+// RunLatencyTest runs latency tests at multiple load levels.
 func (c *Context) RunLatencyTest(loadLevels []float64) ([]LatencyResultCLI, error) {
 	var results []LatencyResultCLI
 
@@ -67,14 +67,14 @@ func (c *Context) RunLatencyTest(loadLevels []float64) ([]LatencyResultCLI, erro
 	}
 
 	if len(results) == 0 {
-		return nil, fmt.Errorf("no latency results")
+		return nil, errors.New("no latency results")
 	}
 
 	return results, nil
 }
 
-// RunFrameLossTestCLI runs frame loss test with stepped load
-func (c *Context) RunFrameLossTest(startPct, endPct, stepPct float64) ([]FrameLossResultCLI, error) {
+// RunFrameLossTest runs a frame loss test with stepped load.
+func (c *Context) RunFrameLossTest(_, _, _ float64) ([]FrameLossResultCLI, error) {
 	results, err := c.runFrameLossTestInternal(c.frameSize)
 	if err != nil {
 		return nil, err
@@ -94,8 +94,8 @@ func (c *Context) RunFrameLossTest(startPct, endPct, stepPct float64) ([]FrameLo
 	return cliResults, nil
 }
 
-// RunBackToBackTestCLI runs back-to-back burst test
-func (c *Context) RunBackToBackTest(initialBurst uint64, trials uint32) (*BackToBackResultCLI, error) {
+// RunBackToBackTest runs a back-to-back burst test.
+func (c *Context) RunBackToBackTest(_ uint64, _ uint32) (*BackToBackResultCLI, error) {
 	result, err := c.runBackToBackTestInternal(c.frameSize)
 	if err != nil {
 		return nil, err

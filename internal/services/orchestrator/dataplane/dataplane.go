@@ -750,6 +750,15 @@ typedef struct {
 
 // External C functions
 extern int rfc2544_init(rfc2544_ctx_t **ctx, const char *interface);
+typedef struct {
+    rfc2544_ctx_t *ctx;
+    int status;
+} stem_rfc2544_init_result_t;
+static stem_rfc2544_init_result_t stem_rfc2544_initialize(const char *interface) {
+    stem_rfc2544_init_result_t result = {0};
+    result.status = rfc2544_init(&result.ctx, interface);
+    return result;
+}
 extern int rfc2544_configure(rfc2544_ctx_t *ctx, const rfc2544_config_t *config);
 extern int rfc2544_run(rfc2544_ctx_t *ctx);
 extern void rfc2544_cancel(rfc2544_ctx_t *ctx);
@@ -848,11 +857,15 @@ import (
 	"unsafe"
 )
 
+const (
+	interfaceNameMax = 63
+)
+
 // ErrNotSupported is defined for interface parity across build targets.
 // in the CGO build since the dataplane is available.
 var ErrNotSupported = errors.New("CGO dataplane not available on this platform")
 
-// Context wraps the C rfc2544_ctx_t
+// Context wraps the C rfc2544_ctx_t.
 type Context struct {
 	ctx       *C.rfc2544_ctx_t
 	mu        sync.Mutex
@@ -863,21 +876,20 @@ type Context struct {
 	dpdkArgs  *C.char
 }
 
-// NewContext creates a new RFC2544 test context
+// NewContext creates a new RFC2544 test context.
 func NewContext(iface string) (*Context, error) {
 	cIface := C.CString(iface)
 	defer C.free(unsafe.Pointer(cIface))
 
-	var cctx *C.rfc2544_ctx_t
-	ret := C.rfc2544_init(&cctx, cIface)
-	if ret < 0 {
-		return nil, fmt.Errorf("init failed: %d", ret)
+	result := C.stem_rfc2544_initialize(cIface)
+	if result.status < 0 {
+		return nil, fmt.Errorf("init failed: %d", result.status)
 	}
 
-	return &Context{ctx: cctx}, nil
+	return &Context{ctx: result.ctx}, nil
 }
 
-// Configure applies test configuration
+// Configure applies test configuration.
 func (c *Context) Configure(cfg *Config) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -891,7 +903,7 @@ func (c *Context) Configure(cfg *Config) error {
 	// Copy interface name
 	cIface := C.CString(cfg.Interface)
 	defer C.free(unsafe.Pointer(cIface))
-	C.strncpy(&ccfg._interface[0], cIface, 63)
+	C.strncpy(&ccfg._interface[0], cIface, interfaceNameMax)
 
 	ccfg.line_rate = C.uint64_t(cfg.LineRate)
 	ccfg.auto_detect_nic = C.bool(cfg.AutoDetect)
@@ -932,7 +944,7 @@ func (c *Context) Configure(cfg *Config) error {
 	return nil
 }
 
-// Run starts the configured test
+// Run starts the configured test.
 func (c *Context) Run() error {
 	c.ctxMu.RLock()
 	defer c.ctxMu.RUnlock()
@@ -946,7 +958,7 @@ func (c *Context) Run() error {
 	return nil
 }
 
-// Cancel stops a running test
+// Cancel stops a running test.
 func (c *Context) Cancel() {
 	c.ctxMu.RLock()
 	defer c.ctxMu.RUnlock()
@@ -955,7 +967,7 @@ func (c *Context) Cancel() {
 	}
 }
 
-// State returns the current test state
+// State returns the current test state.
 func (c *Context) State() TestState {
 	c.ctxMu.RLock()
 	defer c.ctxMu.RUnlock()
@@ -965,7 +977,7 @@ func (c *Context) State() TestState {
 	return TestState(C.rfc2544_get_state(c.ctx))
 }
 
-// Close cleans up resources
+// Close cleans up resources.
 func (c *Context) Close() {
 	c.ctxMu.Lock()
 	defer c.ctxMu.Unlock()
@@ -986,29 +998,7 @@ func (c *Context) RunCustomStreamTest(cfg *TrafficGenConfig) (*TrafficGenResult,
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	frameSize := uint32(1518)
-	ratePct := 10.0
-	durationSec := uint32(10)
-	warmupSec := uint32(1)
-	streamID := uint32(0)
-
-	if cfg != nil {
-		if cfg.FrameSize > 0 {
-			frameSize = cfg.FrameSize
-		}
-		if cfg.RatePct > 0 {
-			ratePct = cfg.RatePct
-		}
-		if cfg.DurationSec > 0 {
-			durationSec = cfg.DurationSec
-		}
-		if cfg.WarmupSec > 0 {
-			warmupSec = cfg.WarmupSec
-		}
-		if cfg.StreamID > 0 {
-			streamID = cfg.StreamID
-		}
-	}
+	frameSize, ratePct, durationSec, warmupSec, streamID := customStreamParameters(cfg)
 
 	signature := C.CString("CUSTOM ")
 	defer C.free(unsafe.Pointer(signature))
@@ -1041,7 +1031,7 @@ func (c *Context) RunCustomStreamTest(cfg *TrafficGenConfig) (*TrafficGenResult,
 	}, nil
 }
 
-// RunSystemRecoveryTest runs RFC 2544 Section 26.5 System Recovery test
+// RunSystemRecoveryTest runs RFC 2544 Section 26.5 System Recovery test.
 func (c *Context) RunSystemRecoveryTest(throughputPct float64, overloadSec uint32) (*RecoveryResultCLI, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -1065,7 +1055,7 @@ func (c *Context) RunSystemRecoveryTest(throughputPct float64, overloadSec uint3
 	}, nil
 }
 
-// RunResetTest runs RFC 2544 Section 26.6 Reset test
+// RunResetTest runs RFC 2544 Section 26.6 Reset test.
 func (c *Context) RunResetTest() (*ResetResultCLI, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -1086,7 +1076,7 @@ func (c *Context) RunResetTest() (*ResetResultCLI, error) {
 	}, nil
 }
 
-// Internal wrappers for the existing methods
+// Internal wrappers for the existing methods.
 func (c *Context) runThroughputTestInternal(frameSize uint32) ([]ThroughputResult, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -1101,7 +1091,7 @@ func (c *Context) runThroughputTestInternal(frameSize uint32) ([]ThroughputResul
 	}
 
 	goResults := make([]ThroughputResult, count)
-	for i := 0; i < int(count); i++ {
+	for i := range int(count) {
 		goResults[i] = ThroughputResult{
 			FrameSize:    uint32(results[i].frame_size),
 			MaxRatePct:   float64(results[i].max_rate_pct),
@@ -1165,7 +1155,7 @@ func (c *Context) runFrameLossTestInternal(frameSize uint32) ([]FrameLossPoint, 
 	}
 
 	goResults := make([]FrameLossPoint, count)
-	for i := 0; i < int(count); i++ {
+	for i := range int(count) {
 		goResults[i] = FrameLossPoint{
 			OfferedRatePct: float64(results[i].offered_rate_pct),
 			ActualRateMbps: float64(results[i].actual_rate_mbps),

@@ -117,6 +117,12 @@ extern void mef_default_config(mef_config_t *config);
 import "C"
 import "fmt"
 
+const (
+	mefServiceIDMaxLength = 31
+	kilobitsPerMegabit    = 1000
+	mefMaxFrameSizes      = 7
+)
+
 // RunMEFConfigTest executes MEF configuration test.
 func (c *Context) RunMEFConfigTest(cfg *MEFConfig) (*MEFConfigResult, error) {
 	c.mu.Lock()
@@ -138,12 +144,9 @@ func (c *Context) RunMEFConfigTest(cfg *MEFConfig) (*MEFConfigResult, error) {
 		OverallPassed: bool(cResult.overall_passed),
 	}
 
-	numSteps := int(cResult.num_steps)
-	if numSteps > len(result.Steps) {
-		numSteps = len(result.Steps)
-	}
+	numSteps := min(int(cResult.num_steps), len(result.Steps))
 
-	for i := 0; i < numSteps; i++ {
+	for i := range numSteps {
 		step := cResult.steps[i]
 		result.Steps[i] = MEFStepResult{
 			StepPct:          uint32(step.step_pct),
@@ -219,7 +222,7 @@ func (c *Context) RunMEFFullTest(cfg *MEFConfig) (*MEFConfigResult, *MEFPerfResu
 		NumSteps:      uint32(cConfig.num_steps),
 		OverallPassed: bool(cConfig.overall_passed),
 	}
-	for i := 0; i < len(configResult.Steps); i++ {
+	for i := range len(configResult.Steps) {
 		step := cConfig.steps[i]
 		configResult.Steps[i] = MEFStepResult{
 			StepPct:          uint32(step.step_pct),
@@ -262,21 +265,15 @@ func fillMEFConfig(cCfg *C.mef_config_t, cfg *MEFConfig) {
 	if cfg == nil {
 		return
 	}
-	if cfg.ServiceID != "" {
-		idBytes := []byte(cfg.ServiceID)
-		for i := 0; i < len(idBytes) && i < 31; i++ {
-			cCfg.service_id[i] = C.char(idBytes[i])
-		}
-		cCfg.service_id[31] = 0
-	}
+	fillMEFServiceID(cCfg, cfg.ServiceID)
 	if cfg.CoS > 0 {
 		cCfg.cos = C.mef_cos_t(cfg.CoS)
 	}
 	if cfg.CIRMbps > 0 {
-		cCfg.bw_profile.cir_kbps = C.uint32_t(cfg.CIRMbps * 1000)
+		cCfg.bw_profile.cir_kbps = C.uint32_t(cfg.CIRMbps * kilobitsPerMegabit)
 	}
 	if cfg.EIRMbps > 0 {
-		cCfg.bw_profile.eir_kbps = C.uint32_t(cfg.EIRMbps * 1000)
+		cCfg.bw_profile.eir_kbps = C.uint32_t(cfg.EIRMbps * kilobitsPerMegabit)
 	}
 	if cfg.CBSBytes > 0 {
 		cCfg.bw_profile.cbs_bytes = C.uint32_t(cfg.CBSBytes)
@@ -302,14 +299,24 @@ func fillMEFConfig(cCfg *C.mef_config_t, cfg *MEFConfig) {
 	if cfg.PerfDurationMin > 0 {
 		cCfg.perf_test_duration_min = C.uint32_t(cfg.PerfDurationMin)
 	}
-	if len(cfg.FrameSizes) > 0 {
-		count := len(cfg.FrameSizes)
-		if count > 7 {
-			count = 7
-		}
-		for i := 0; i < count; i++ {
-			cCfg.frame_sizes[i] = C.uint32_t(cfg.FrameSizes[i])
-		}
-		cCfg.num_frame_sizes = C.uint32_t(count)
+	fillMEFFrameSizes(cCfg, cfg.FrameSizes)
+}
+
+func fillMEFServiceID(cCfg *C.mef_config_t, serviceID string) {
+	if serviceID == "" {
+		return
 	}
+	idBytes := []byte(serviceID)
+	for i := range min(len(idBytes), mefServiceIDMaxLength) {
+		cCfg.service_id[i] = C.char(idBytes[i])
+	}
+	cCfg.service_id[mefServiceIDMaxLength] = 0
+}
+
+func fillMEFFrameSizes(cCfg *C.mef_config_t, frameSizes []uint32) {
+	count := min(len(frameSizes), mefMaxFrameSizes)
+	for i := range count {
+		cCfg.frame_sizes[i] = C.uint32_t(frameSizes[i])
+	}
+	cCfg.num_frame_sizes = C.uint32_t(count)
 }

@@ -80,7 +80,7 @@ extern int y1564_perf_test(rfc2544_ctx_t *ctx, const y1564_service_t *service,
 import "C"
 import "fmt"
 
-// RunY1564ConfigTest executes ITU-T Y.1564 Service Configuration Test
+// RunY1564ConfigTest executes ITU-T Y.1564 Service Configuration Test.
 func (c *Context) RunY1564ConfigTest(service *Y1564Service) (*Y1564ConfigResult, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -117,7 +117,7 @@ func (c *Context) RunY1564ConfigTest(service *Y1564Service) (*Y1564ConfigResult,
 		ServicePass: bool(cResult.service_pass),
 	}
 
-	for i := 0; i < 4; i++ {
+	for i := range len(result.Steps) {
 		result.Steps[i] = Y1564StepResult{
 			Step:             uint32(cResult.steps[i].step),
 			OfferedRatePct:   float64(cResult.steps[i].offered_rate_pct),
@@ -139,7 +139,7 @@ func (c *Context) RunY1564ConfigTest(service *Y1564Service) (*Y1564ConfigResult,
 	return result, nil
 }
 
-// RunY1564PerfTest executes ITU-T Y.1564 Service Performance Test
+// RunY1564PerfTest executes ITU-T Y.1564 Service Performance Test.
 func (c *Context) RunY1564PerfTest(service *Y1564Service, durationSec uint32) (*Y1564PerfResult, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()

@@ -4,7 +4,7 @@ package dataplane
 
 import "time"
 
-// TestType mirrors C test_type_t
+// TestType mirrors C test_type_t.
 type TestType int
 
 const (
@@ -19,7 +19,7 @@ const (
 	TestY1564Full
 )
 
-// TestState mirrors C test_state_t
+// TestState mirrors C test_state_t.
 type TestState int
 
 const (
@@ -30,7 +30,7 @@ const (
 	StateCancelled
 )
 
-// LatencyStats contains latency measurements
+// LatencyStats contains latency measurements.
 type LatencyStats struct {
 	Count    uint64
 	MinNs    float64
@@ -42,7 +42,7 @@ type LatencyStats struct {
 	P99Ns    float64
 }
 
-// ThroughputResult from binary search test
+// ThroughputResult from binary search test.
 type ThroughputResult struct {
 	FrameSize    uint32
 	MaxRatePct   float64
@@ -53,7 +53,7 @@ type ThroughputResult struct {
 	Latency      LatencyStats
 }
 
-// FrameLossPoint for a single load level
+// FrameLossPoint for a single load level.
 type FrameLossPoint struct {
 	OfferedRatePct float64
 	ActualRateMbps float64
@@ -62,14 +62,14 @@ type FrameLossPoint struct {
 	LossPct        float64
 }
 
-// LatencyResult from latency test
+// LatencyResult from latency test.
 type LatencyResult struct {
 	FrameSize      uint32
 	OfferedRatePct float64
 	Latency        LatencyStats
 }
 
-// BurstResult from back-to-back test
+// BurstResult from back-to-back test.
 type BurstResult struct {
 	FrameSize     uint32
 	MaxBurst      uint64
@@ -77,7 +77,7 @@ type BurstResult struct {
 	Trials        uint32
 }
 
-// RecoveryResult from RFC 2544 Section 26.5 System Recovery test
+// RecoveryResult from RFC 2544 Section 26.5 System Recovery test.
 type RecoveryResult struct {
 	FrameSize       uint32
 	OverloadRatePct float64
@@ -88,7 +88,7 @@ type RecoveryResult struct {
 	Trials          uint32
 }
 
-// ResetResult from RFC 2544 Section 26.6 Reset test
+// ResetResult from RFC 2544 Section 26.6 Reset test.
 type ResetResult struct {
 	FrameSize   uint32
 	ResetTimeMs float64
@@ -97,7 +97,7 @@ type ResetResult struct {
 	ManualReset bool
 }
 
-// Y1564SLA contains SLA parameters for Y.1564 testing
+// Y1564SLA contains SLA parameters for Y.1564 testing.
 type Y1564SLA struct {
 	CIRMbps         float64
 	EIRMbps         float64
@@ -108,7 +108,7 @@ type Y1564SLA struct {
 	FLRThresholdPct float64
 }
 
-// Y1564Service represents a service configuration for Y.1564 testing
+// Y1564Service represents a service configuration for Y.1564 testing.
 type Y1564Service struct {
 	ServiceID   uint32
 	ServiceName string
@@ -118,7 +118,7 @@ type Y1564Service struct {
 	Enabled     bool
 }
 
-// Y1564StepResult from a Y.1564 configuration test step
+// Y1564StepResult from a Y.1564 configuration test step.
 type Y1564StepResult struct {
 	Step             uint32
 	OfferedRatePct   float64
@@ -136,14 +136,14 @@ type Y1564StepResult struct {
 	StepPass         bool
 }
 
-// Y1564ConfigResult from Y.1564 service configuration test
+// Y1564ConfigResult from Y.1564 service configuration test.
 type Y1564ConfigResult struct {
 	ServiceID   uint32
 	Steps       [4]Y1564StepResult
 	ServicePass bool
 }
 
-// Y1564PerfResult from Y.1564 service performance test
+// Y1564PerfResult from Y.1564 service performance test.
 type Y1564PerfResult struct {
 	ServiceID   uint32
 	DurationSec uint32
@@ -469,7 +469,7 @@ type TrafficGenResult struct {
 	Latency      LatencyStats
 }
 
-// Config for RFC2544 tests
+// Config for RFC2544 tests.
 type Config struct {
 	Interface      string
 	LineRate       uint64
@@ -491,7 +491,7 @@ type Config struct {
 	DPDKArgs       string
 }
 
-// Stats for real-time monitoring
+// Stats for real-time monitoring.
 type Stats struct {
 	TxPackets   uint64
 	TxBytes     uint64
@@ -506,7 +506,7 @@ type Stats struct {
 // Wrapper types and functions for CLI integration
 // =============================================================================
 
-// ThroughputResult wraps the throughput test result for CLI
+// ThroughputResultCLI wraps the throughput test result for CLI.
 type ThroughputResultCLI struct {
 	FrameSize   uint32
 	MaxRatePct  float64
@@ -516,14 +516,14 @@ type ThroughputResultCLI struct {
 	Latency     LatencyStats
 }
 
-// LatencyResultCLI wraps the latency test result for CLI
+// LatencyResultCLI wraps the latency test result for CLI.
 type LatencyResultCLI struct {
 	FrameSize uint32
 	LoadPct   float64
 	Latency   LatencyStats
 }
 
-// FrameLossResultCLI wraps the frame loss test result for CLI
+// FrameLossResultCLI wraps the frame loss test result for CLI.
 type FrameLossResultCLI struct {
 	FrameSize  uint32
 	OfferedPct float64
@@ -532,7 +532,7 @@ type FrameLossResultCLI struct {
 	LossPct    float64
 }
 
-// BackToBackResultCLI wraps the back-to-back test result for CLI
+// BackToBackResultCLI wraps the back-to-back test result for CLI.
 type BackToBackResultCLI struct {
 	FrameSize       uint32
 	MaxBurstFrames  uint64
@@ -540,7 +540,7 @@ type BackToBackResultCLI struct {
 	Trials          uint32
 }
 
-// RecoveryResultCLI wraps the system recovery test result for CLI
+// RecoveryResultCLI wraps the system recovery test result for CLI.
 type RecoveryResultCLI struct {
 	FrameSize       uint32
 	OverloadRatePct float64
@@ -551,7 +551,7 @@ type RecoveryResultCLI struct {
 	Trials          uint32
 }
 
-// ResetResultCLI wraps the reset test result for CLI
+// ResetResultCLI wraps the reset test result for CLI.
 type ResetResultCLI struct {
 	FrameSize   uint32
 	ResetTimeMs float64
