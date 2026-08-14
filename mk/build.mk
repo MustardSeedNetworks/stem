@@ -47,6 +47,9 @@ ui: ui-deps ## Build React WebUI (output: internal/api/ui/)
 # Backend Build
 # =============================================================================
 
+ifeq ($(UNAME),Linux)
+go: dataplane
+endif
 go: ## Build Go binary
 	@echo "Building $(BINARY)..."
 	mkdir -p bin
