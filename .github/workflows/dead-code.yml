@@ -164,7 +164,7 @@ jobs:
 
           # Find Go files not imported anywhere
           echo "#### Go Files" >> $GITHUB_STEP_SUMMARY
-          for file in $(find . -name "*.go" -not -path "./vendor/*" -not -name "*_test.go"); do
+          while IFS= read -r -d '' file; do
             pkg=$(dirname "$file" | sed 's|^\./||')
             # Check if package is imported
             if ! grep -r "\"github.com/MustardSeedNetworks/stem/$pkg\"" --include="*.go" . > /dev/null 2>&1; then
@@ -174,18 +174,18 @@ jobs:
               fi
               echo "- Potentially orphaned: $file" >> $GITHUB_STEP_SUMMARY
             fi
-          done || echo "All Go packages appear to be used" >> $GITHUB_STEP_SUMMARY
+          done < <(find . -name "*.go" -not -path "./vendor/*" -not -name "*_test.go" -print0) || echo "All Go packages appear to be used" >> $GITHUB_STEP_SUMMARY
 
           # Find TypeScript files not imported anywhere
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "#### TypeScript Files" >> $GITHUB_STEP_SUMMARY
           cd ui/src
-          for file in $(find . -name "*.tsx" -o -name "*.ts" | grep -v ".test." | grep -v ".stories." | grep -v ".d.ts"); do
+          while IFS= read -r file; do
             basename=$(basename "$file" | sed 's/\.[^.]*$//')
             # Check if file is imported
-            if ! grep -r "from.*['\"].*$basename['\"]" --include="*.ts" --include="*.tsx" . > /dev/null 2>&1; then
-              if ! grep -r "import.*$basename" --include="*.ts" --include="*.tsx" . > /dev/null 2>&1; then
+            if ! grep -r "from.*['\"].*${basename}['\"]" --include="*.ts" --include="*.tsx" . > /dev/null 2>&1; then
+              if ! grep -r "import.*${basename}" --include="*.ts" --include="*.tsx" . > /dev/null 2>&1; then
                 echo "- Potentially orphaned: $file" >> $GITHUB_STEP_SUMMARY
               fi
             fi
-          done || echo "All TypeScript files appear to be used" >> $GITHUB_STEP_SUMMARY
+          done < <(find . \( -name "*.tsx" -o -name "*.ts" \) | grep -v ".test." | grep -v ".stories." | grep -v ".d.ts") || echo "All TypeScript files appear to be used" >> $GITHUB_STEP_SUMMARY

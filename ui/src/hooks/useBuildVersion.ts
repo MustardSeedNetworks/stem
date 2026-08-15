@@ -3,8 +3,8 @@ import { logWarn } from '../utils/logger';
 
 /**
  * Build metadata served by the backend's unauthenticated /__version endpoint.
- * Mirrors the lowercase JSON keys defined by the Universal Build Contract
- * (CLAUDE.md): every sibling project (seed/stem/niac) exposes the same shape.
+ * Mirrors the lowercase JSON keys defined by the Universal Build Contract;
+ * every sibling project (seed/stem/niac) exposes the same shape.
  */
 export interface BuildVersion {
   version: string;

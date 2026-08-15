@@ -36,8 +36,8 @@ const (
 	// hibpDisableEnv is the opt-out switch for air-gapped deployments.
 	hibpDisableEnv = "STEM_DISABLE_HIBP"
 	// hibpSuccessStatusClass is the integer-divided value of HTTP 2xx
-	// status codes (status / 100 == 2). Named to avoid the magic-number
-	// linter complaint at the comparison site.
+	// status codes (status / 100 == 2). Named to avoid the
+	// unnamed-constant linter complaint at the comparison site.
 	hibpSuccessStatusClass = 2
 )
 
