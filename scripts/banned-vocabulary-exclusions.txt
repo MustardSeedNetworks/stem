@@ -1,0 +1,48 @@
+# Exact, reviewable exceptions for text that is not current product copy.
+# Format: git path pattern | why the immutable or developer-only text is exempt
+
+# Immutable history and legal source text.
+CHANGELOG.md | release-please generated immutable release history
+LICENSE | unmodified proprietary legal source text
+docs/ARCHITECTURE_AUDIT_2025-01-19.md | dated audit snapshot retained as immutable history
+docs/SECURITY_AUDIT.md | dated security audit retained as immutable history
+docs/security/AUTH_AUDIT_2026-05-19.md | dated security audit retained as immutable history
+
+# Protocol standard terminology, which is never translated or renamed.
+# MEF 23.1 defines "Premium" as a Class of Service label; it is the standard's
+# name for a traffic class, not a Stem product tier.
+include/rfc2544.h | MEF 23.1 Class-of-Service identifier, not a product tier
+internal/services/orchestrator/dataplane/dataplane.go | MEF 23.1 Class-of-Service identifier
+internal/services/orchestrator/dataplane/dataplane_mef.go | MEF 23.1 Class-of-Service identifier
+
+# Policy documentation that must quote the banned terms to state the rule.
+ui/SHELL.md | states the banned-vocabulary policy and must name the terms
+docs/README.md | relocation index; the old filenames it maps are immutable history
+
+# Developer instructions, tests, generated locks, and tool configuration.
+AGENTS.md | developer-only agent instructions
+**/AGENTS.md | developer-only agent instructions
+CONTRIBUTING.md | developer-only contributor instructions naming dev tooling
+.ignore | developer-tool path rules
+.serena/** | developer agent tooling
+.github/workflows/** | developer CI configuration
+scripts/i18n/README.md | developer i18n tooling instructions
+scripts/i18n/validate.sh | developer i18n tooling
+.gitignore | developer-tool path rules
+.markdownlint-cli2.jsonc | developer-tool path rules
+.markdownlintignore | developer-tool path rules
+codecov.yml | developer-tool path rules
+scripts/i18n/banned-vocab.txt | policy term source
+scripts/test-check-banned-vocabulary.py | checker fixture self-tests
+**/*_test.go | developer test fixtures and protocol terminology
+ui/**/*.test.ts | developer test fixtures
+ui/**/*.test.tsx | developer test fixtures
+ui/e2e/** | developer end-to-end test fixtures
+package-lock.json | generated dependency lockfile
+ui/package-lock.json | generated dependency lockfile
+.golangci.yml | developer linter rule identifiers
+.clang-tidy | developer linter rule identifiers
+mk/test.mk | developer test package filters
+ui/vite.config.ts | developer-tool path rules
+ui/vitest.config.ts | developer-tool path rules
+scripts/banned-vocabulary-exclusions.txt | policy exclusion list; its reasons must name the terms

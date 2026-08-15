@@ -38,6 +38,7 @@ jobs:
   changes:
     name: Changed paths
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     outputs:
       backend: ${{ steps.filter.outputs.backend }}
       frontend: ${{ steps.filter.outputs.frontend }}
@@ -75,6 +76,7 @@ jobs:
   backend:
     name: Backend (Go)
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     needs: changes
     if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true' || needs.changes.outputs.c == 'true' || needs.changes.outputs.workflows == 'true'
     steps:
@@ -148,8 +150,21 @@ jobs:
       - name: Filename-policy gate — no monolith naming outside internal/api
         run: ./scripts/check-filename-policy.sh
 
-      - name: File-size gate (STRICT — W5.5 bookend, fleet-wide Go + TS red flags)
-        run: STRICT=1 ./scripts/check-file-size.sh
+      - name: File-size gate (baseline-ratchet)
+        # Adopts niac-go's implementation so all three repos share one gate.
+        # Red-flag files present at adoption are recorded in
+        # scripts/file-size-baseline.txt with their current size and may not
+        # grow; anything new or increased fails. stem's baseline is empty —
+        # it had already paid its debt down under the previous STRICT=1 mode.
+        run: ./scripts/check-file-size.sh
+
+      - name: Banned-vocabulary gate (strategy reset)
+        # Ported from seed, which was the only repo enforcing it. Catches
+        # retired tier names and AI vocabulary in customer-facing copy —
+        # it found "TestSuite (Tier 2)" still shipping in docs/man/*.1.
+        run: |
+          python3 scripts/test-check-banned-vocabulary.py
+          python3 scripts/check-banned-vocabulary.py
 
       - name: Run tests
         run: CGO_ENABLED=0 go test -v -coverprofile=coverage.out ./...
@@ -196,6 +211,7 @@ jobs:
   race:
     name: Backend (race detector)
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     needs: changes
     if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true' || needs.changes.outputs.c == 'true' || needs.changes.outputs.workflows == 'true'
     env:
@@ -248,6 +264,7 @@ jobs:
   frontend:
     name: Frontend (TypeScript)
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: changes
     if: needs.changes.outputs.frontend == 'true' || needs.changes.outputs.workflows == 'true'
     defaults:
@@ -298,6 +315,7 @@ jobs:
   c-lint:
     name: C Lint (C23)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: changes
     if: needs.changes.outputs.c == 'true' || needs.changes.outputs.workflows == 'true'
     steps:
@@ -328,10 +346,10 @@ jobs:
         id: check-c
         run: |
           if [ -d "src" ] && find src include tests/c -name '*.c' -o -name '*.h' 2>/dev/null | grep -q .; then
-            echo "has_c=true" >> $GITHUB_OUTPUT
+            echo "has_c=true" >> "$GITHUB_OUTPUT"
             echo "Found C source files"
           else
-            echo "has_c=false" >> $GITHUB_OUTPUT
+            echo "has_c=false" >> "$GITHUB_OUTPUT"
             echo "No C source files found, skipping C lint"
           fi
 
@@ -362,16 +380,16 @@ jobs:
         continue-on-error: true
         run: |
           echo "Checking C code formatting (C23 standard)..."
-          find src include tests/c -name '*.c' -o -name '*.h' 2>/dev/null | \
-            xargs clang-format --dry-run --Werror --style=file
+          find src include tests/c \( -name '*.c' -o -name '*.h' \) -print0 2>/dev/null | \
+            xargs -0 clang-format --dry-run --Werror --style=file
 
       - name: Run clang-tidy (C23)
         if: steps.check-c.outputs.has_c == 'true'
         continue-on-error: true
         run: |
           echo "Running clang-tidy with C23 checks..."
-          find src include tests/c -name '*.c' -o -name '*.h' 2>/dev/null | \
-            xargs clang-tidy \
+          find src include tests/c \( -name '*.c' -o -name '*.h' \) -print0 2>/dev/null | \
+            xargs -0 clang-tidy \
               --config-file=.clang-tidy \
               --extra-arg=-std=c23 \
               --extra-arg=-Iinclude \
@@ -410,6 +428,7 @@ jobs:
   dataplane-safety:
     name: Dataplane Safety (ASAN + fuzz)
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     needs: changes
     if: needs.changes.outputs.c == 'true' || needs.changes.outputs.workflows == 'true'
     steps:
@@ -450,6 +469,7 @@ jobs:
   security:
     name: Security Scanning
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     # Always runs — security checks are non-negotiable on every PR.
     permissions:
       contents: read
@@ -571,6 +591,7 @@ jobs:
   quality:
     name: Quality Checks
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: changes
     if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true' || needs.changes.outputs.c == 'true' || needs.changes.outputs.workflows == 'true'
     steps:
@@ -626,11 +647,46 @@ jobs:
           echo "✅ No unsafe logging patterns detected"
 
   # ============================================================================
+  # Workflow Linting
+  # ============================================================================
+  # Static analysis of the workflows themselves. Kept out of `quality` so it
+  # runs in parallel and only when workflow files actually change.
+  #   actionlint — syntax, expression and shell errors inside run: blocks.
+  #
+  # zizmor (Actions security scanner) is NOT wired in yet: it currently reports
+  # 76-88 findings per repo, 10-13 of them high (pull_request_target triggers,
+  # workflow-level write permissions, release-please App-token use). Those need
+  # real review — narrowing them carelessly breaks release automation — so they
+  # are tracked as their own security pass rather than bolted on here as a
+  # continue-on-error step that would enforce nothing.
+  workflow-lint:
+    name: Workflow Lint (actionlint)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: changes
+    if: needs.changes.outputs.workflows == 'true'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Go
+        uses: ./.github/actions/setup-go
+
+      - name: Run actionlint
+        run: |
+          go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
+          # SC2129 is a pure style preference about grouping `>>` redirects in
+          # step summaries; the ungrouped form stays readable and diffs one
+          # line at a time. Every correctness-level rule stays enabled.
+          actionlint -ignore 'SC2129' -color
+
+
+  # ============================================================================
   # Internationalization (i18n) Validation
   # ============================================================================
   i18n:
     name: i18n Validation
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: changes
     if: |
       needs.changes.outputs.frontend == 'true'
@@ -660,25 +716,48 @@ jobs:
   docs:
     name: Documentation Quality
     runs-on: ubuntu-latest
-    # Always runs — cheap (runs in seconds) and applies to every PR.
+    timeout-minutes: 10
+    # External link checking is NOT here: it walks every URL in every .md file,
+    # measured ~6 min (the longest job in this workflow), and failed on
+    # third-party link rot rather than on the change under review — which is
+    # why it had been pinned to continue-on-error and enforced nothing.
+    # It now runs on a schedule: .github/workflows/docs-link-check.yml
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Check markdown links
-        uses: gaurav-nelson/github-action-markdown-link-check@5c5dfc0ac2e225883c0e5f03a85311ec2830d368 # v1
-        continue-on-error: true
         with:
-          use-quiet-mode: "yes"
+          # Needed to diff against the base ref for changed-file scoping.
+          fetch-depth: 0
 
-      - name: Lint markdown files
+      - name: Collect changed markdown files
+        id: changed-md
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          set -euo pipefail
+          if [ -n "${BASE_SHA}" ] && git cat-file -e "${BASE_SHA}^{commit}" 2>/dev/null; then
+            files=$(git diff --name-only --diff-filter=ACMR "${BASE_SHA}" HEAD -- '*.md')
+          else
+            files=$(git ls-files '*.md')
+          fi
+          files=$(printf '%s\n' "${files}" | grep -vE '^(node_modules|build|dist|coverage)/' | grep -v 'CHANGELOG.md$' || true)
+          {
+            echo "files<<EOF"
+            printf '%s\n' "${files}"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+          if [ -z "${files}" ]; then echo "empty=true" >> "$GITHUB_OUTPUT"; fi
+
+      # Blocking, but scoped to the files this change touches. The repo carries
+      # ~490 pre-existing violations of its own .markdownlint.json; gating the
+      # full tree would fail every PR, and gating nothing (the previous
+      # continue-on-error) enforced nothing. Scoping ratchets the debt down as
+      # files are touched, matching the file-size gate's baseline approach.
+      - name: Lint changed markdown files
+        if: steps.changed-md.outputs.empty != 'true'
         uses: DavidAnson/markdownlint-cli2-action@21c1be1b93ad9ed58fa840aacc3f279cde2a72ff # v24.2.0
-        continue-on-error: true
         with:
-          globs: |
-            **/*.md
-            !**/node_modules/**
-            !**/dist/**
+          globs: ${{ steps.changed-md.outputs.files }}
 
   # ============================================================================
   # Build
@@ -687,6 +766,7 @@ jobs:
     name: Build (${{ matrix.os }}-${{ matrix.arch }})
     needs: [changes, backend, frontend]
     runs-on: ${{ matrix.runner }}
+    timeout-minutes: 25
     # always() lets the if: evaluate when backend was skipped upstream.
     # Note: matrix.required draft-skip was attempted here originally but
     # GitHub Actions rejects `matrix` in job-level if: (the matrix context
@@ -772,7 +852,7 @@ jobs:
         # build command so it's covered by the amd64 check.
         if: matrix.os == 'linux' && matrix.arch == 'amd64'
         run: |
-          if [ -z "$(ls -A internal/api/ui/ 2>/dev/null | grep -v '^\.gitkeep$')" ]; then
+          if [ -z "$(find internal/api/ui -mindepth 1 ! -name '.gitkeep' -print -quit 2>/dev/null)" ]; then
             echo "::error::internal/api/ui is empty — frontend-dist artifact missing?"
             exit 1
           fi
@@ -811,6 +891,7 @@ jobs:
   darwin-compile-check:
     name: Darwin compile check (arm64)
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: [changes, backend, frontend]
     if: |
       always() &&
@@ -878,7 +959,7 @@ jobs:
           # legacy STEM_TLS_ENABLED env var was removed). Self-signed cert
           # is auto-generated on first start.
           nohup ./bin/stem web -p 8444 > server.log 2>&1 &
-          for i in {1..30}; do
+          for _ in {1..30}; do
             if curl -skf https://localhost:8444/health/ready 2>/dev/null; then
               echo "Server ready"
               exit 0
@@ -889,7 +970,7 @@ jobs:
           exit 1
 
       - name: Run Lighthouse
-        uses: treosh/lighthouse-ci-action@3e7e23fb74242897f95c0ba9cabad3d0227b9b18 # v12.6.2
+        uses: treosh/lighthouse-ci-action@3e7e23fb74242897f95c0ba9cabad3d0227b9b18 # v12
         with:
           urls: |
             https://localhost:8444
@@ -954,7 +1035,7 @@ jobs:
           # probes; Playwright bypasses cert via PLAYWRIGHT_IGNORE_HTTPS_ERRORS.
           nohup ./bin/stem web -p 8444 > server.log 2>&1 &
           echo "Waiting for server to start..."
-          for i in {1..30}; do
+          for _ in {1..30}; do
             if curl -skf https://localhost:8444/health/ready 2>/dev/null; then
               echo "Server ready after $i attempts"
               exit 0
@@ -1007,6 +1088,7 @@ jobs:
   ci-complete:
     name: CI Complete
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     # NOTE: e2e and lighthouse are deliberately excluded from this aggregator.
     # They were dropped from required-status-checks on main because they're
     # advisory (flaky / surface real issues that are tracked separately).
@@ -1023,6 +1105,7 @@ jobs:
       - security
       - semgrep
       - quality
+      - workflow-lint
       - i18n
       - docs
       - build

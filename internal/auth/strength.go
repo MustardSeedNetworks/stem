@@ -8,7 +8,7 @@ import (
 
 // zxcvbn score bands. The library returns an int in [0,4]; we name
 // the bands referenced by strengthFeedback so the switch reads as
-// English rather than as bare magic numbers.
+// English rather than as bare numeric literals.
 const (
 	// scoreVeryGuessable is zxcvbn band 1.
 	scoreVeryGuessable = 1

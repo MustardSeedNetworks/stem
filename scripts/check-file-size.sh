@@ -1,47 +1,58 @@
-#!/usr/bin/env bash
-# check-file-size.sh — file-size gate (W0c fleet UI plan).
+#!/bin/bash
+# scripts/check-file-size.sh
+# Checks Go source files don't exceed maximum line count
+# Part of CI quality gates
 #
-# Flags Go/TS/TSX files that have grown beyond maintainable thresholds.
-# This is the enforcement bookend for a later App.tsx decomposition.
-#
-# Modes:
-#   STRICT=0 — Warn only, exit 0 (default). Ships this way because
-#               App.tsx is 1,453 lines at gate introduction (W0c).
-#   STRICT=1 — Fail on red-flag violations (flip once App.tsx is split).
-#
-# Thresholds:
-#   Go source:  warn >600 lines, red flag >1200
-#   Go tests:   warn >1000 lines
-#   TS/TSX:     warn >400 lines, red flag >800
-#
-# Usage:
-#   ./scripts/check-file-size.sh           # Warn mode
-#   STRICT=1 ./scripts/check-file-size.sh  # Strict mode (fail CI)
+# Files above the red-flag threshold fail unless their current debt is listed
+# in scripts/file-size-baseline.txt. A baselined file may not grow.
 
-set -uo pipefail
+set -euo pipefail
 
+SCAN_ROOT=${SCAN_ROOT:-.}
 MAX_GO_LINES=${MAX_GO_LINES:-600}
 MAX_TEST_LINES=${MAX_TEST_LINES:-1000}
 MAX_TS_LINES=${MAX_TS_LINES:-400}
 RED_FLAG_GO=${RED_FLAG_GO:-1200}
 RED_FLAG_TS=${RED_FLAG_TS:-800}
-STRICT=${STRICT:-0}
+BASELINE_FILE=${BASELINE_FILE:-scripts/file-size-baseline.txt}
 VIOLATIONS=0
 WARNINGS=0
+
+cd "$SCAN_ROOT"
+
+baseline_limit() {
+    local file=$1
+    awk -v target="$file" '$1 == target { print $2; exit }' "$BASELINE_FILE"
+}
+
+record_red_flag() {
+    local file=$1
+    local lines=$2
+    local threshold=$3
+    local limit
+    limit=$(baseline_limit "$file")
+    if [ -n "$limit" ] && [ "$lines" -le "$limit" ]; then
+        echo "⚠️  $file ($lines lines, baselined maximum: $limit)"
+        WARNINGS=$((WARNINGS + 1))
+        return
+    fi
+    echo "❌ $file ($lines lines, red flag: >${threshold})"
+    VIOLATIONS=$((VIOLATIONS + 1))
+}
 
 echo "Checking file sizes:"
 echo "  Go source: max ${MAX_GO_LINES}, red flag >${RED_FLAG_GO}"
 echo "  Go tests:  max ${MAX_TEST_LINES}"
 echo "  TS/TSX:    max ${MAX_TS_LINES}, red flag >${RED_FLAG_TS}"
-echo "Mode: $([ "$STRICT" = "1" ] && echo "STRICT (will fail CI)" || echo "WARN ONLY")"
+echo "  Baseline:  ${BASELINE_FILE}"
 echo "==========================================================================="
 
 # Check Go non-test files
 while IFS= read -r -d '' file; do
+    file=${file#./}
     lines=$(wc -l < "$file" | tr -d ' ')
     if [ "$lines" -gt "$RED_FLAG_GO" ]; then
-        echo "❌ $file ($lines lines, RED FLAG: >${RED_FLAG_GO})"
-        VIOLATIONS=$((VIOLATIONS + 1))
+        record_red_flag "$file" "$lines" "$RED_FLAG_GO"
     elif [ "$lines" -gt "$MAX_GO_LINES" ]; then
         echo "⚠️  $file ($lines lines, max: $MAX_GO_LINES)"
         WARNINGS=$((WARNINGS + 1))
@@ -50,6 +61,7 @@ done < <(find . -name "*.go" -not -name "*_test.go" -not -path "./vendor/*" -pri
 
 # Check Go test files (allow more lines)
 while IFS= read -r -d '' file; do
+    file=${file#./}
     lines=$(wc -l < "$file" | tr -d ' ')
     if [ "$lines" -gt "$MAX_TEST_LINES" ]; then
         echo "⚠️  $file ($lines lines, max: $MAX_TEST_LINES)"
@@ -60,15 +72,15 @@ done < <(find . -name "*_test.go" -not -path "./vendor/*" -print0 2>/dev/null ||
 # Check TS/TSX files
 if [ -d "ui/src" ]; then
     while IFS= read -r -d '' file; do
+        file=${file#./}
         lines=$(wc -l < "$file" | tr -d ' ')
         if [ "$lines" -gt "$RED_FLAG_TS" ]; then
-            echo "❌ $file ($lines lines, RED FLAG: >${RED_FLAG_TS})"
-            VIOLATIONS=$((VIOLATIONS + 1))
+            record_red_flag "$file" "$lines" "$RED_FLAG_TS"
         elif [ "$lines" -gt "$MAX_TS_LINES" ]; then
             echo "⚠️  $file ($lines lines, max: $MAX_TS_LINES)"
             WARNINGS=$((WARNINGS + 1))
         fi
-    done < <(find ui/src \( -name "*.ts" -o -name "*.tsx" \) -print0 2>/dev/null || true)
+    done < <(find ui/src -name "*.ts" -o -name "*.tsx" | tr '\n' '\0' 2>/dev/null || true)
 fi
 
 echo "==========================================================================="
@@ -80,17 +92,10 @@ fi
 
 echo "📊 Found $VIOLATIONS red flag(s), $WARNINGS warning(s)"
 
-if [ "$VIOLATIONS" -gt 0 ] && [ "$STRICT" = "1" ]; then
-    echo "❌ STRICT mode: Failing CI due to red flag file size violations"
-    echo ""
-    echo "To fix: Split large files into smaller, focused modules"
-    echo "To temporarily bypass: Set STRICT=0 in CI workflow"
+if [ "$VIOLATIONS" -gt 0 ]; then
+    echo "❌ Failing due to new or increased red-flag files"
+    echo "Split the file or update the reviewed baseline with its accepted maximum."
     exit 1
-elif [ "$VIOLATIONS" -gt 0 ]; then
-    echo "⚠️  Red flag violations found but not failing CI (STRICT=0)"
-    echo "To enable strict enforcement: Set STRICT=1 in CI workflow"
-    exit 0
-else
-    echo "ℹ️  Warnings only - files exceed ideal limits but are under red flag threshold"
-    exit 0
 fi
+
+echo "ℹ️  Warnings are existing size debt below the enforced red-flag boundary"

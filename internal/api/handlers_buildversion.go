@@ -10,7 +10,7 @@ import (
 // handleBuildVersion serves GET /__version with build metadata for deployment
 // validation. Unauthenticated by design — operators need to verify which
 // binary is running without holding a session. Required by the Universal
-// Build Contract (CLAUDE.md): all three sibling projects (seed/stem/niac)
+// Build Contract: all three sibling projects (seed/stem/niac)
 // expose this endpoint with lowercase JSON keys: version, commit, buildTime,
 // uiBuildHash.
 //
