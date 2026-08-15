@@ -71,13 +71,49 @@ jobs:
               - '.github/workflows/**'
 
   # ============================================================================
+  # Build UI once, shared via artifact
+  # ============================================================================
+  # backend and race both need internal/api/ui/ populated (Go's //go:embed in
+  # internal/api/embed_ui.go) purely to satisfy the embed and native-link
+  # steps — they don't validate the UI source themselves (frontend does that).
+  # Building it in each of those two jobs put the UI build on the critical
+  # path twice; build it once here and let both download the artifact.
+  #
+  # frontend is NOT wired to this job — it builds the UI as the thing under
+  # test (types/lint/Vitest/Storybook), so it keeps building its own copy.
+  build-ui:
+    name: Build UI (shared artifact)
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true' || needs.changes.outputs.c == 'true' || needs.changes.outputs.workflows == 'true'
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node.js
+        uses: ./.github/actions/setup-node
+
+      - name: Install dependencies
+        run: npm ci --prefix ui
+
+      - name: Build
+        run: npm run build --prefix ui
+
+      - name: Upload built UI assets
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: backend-ui-dist
+          path: internal/api/ui/
+          retention-days: 1
+
+  # ============================================================================
   # Backend (Go)
   # ============================================================================
   backend:
     name: Backend (Go)
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    needs: changes
+    needs: [changes, build-ui]
     if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true' || needs.changes.outputs.c == 'true' || needs.changes.outputs.workflows == 'true'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -96,10 +132,17 @@ jobs:
       - name: Verify dependencies
         run: go mod verify
 
-      - name: Build embedded UI assets
-        run: |
-          npm ci --prefix ui
-          npm run build --prefix ui
+      - name: Download built UI assets
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: backend-ui-dist
+          path: internal/api/ui/
+
+      - name: Install UI dependencies
+        # npm ci (not a build) — needed by check-types-drift.sh, which runs
+        # `npm --prefix ui run gen-types`. The actual built UI assets come
+        # from the build-ui job's shared artifact, downloaded above.
+        run: npm ci --prefix ui
 
       - name: Install native build dependencies
         run: |
@@ -212,7 +255,7 @@ jobs:
     name: Backend (race detector)
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    needs: changes
+    needs: [changes, build-ui]
     if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true' || needs.changes.outputs.c == 'true' || needs.changes.outputs.workflows == 'true'
     env:
       GOMODCACHE: ${{ github.workspace }}/.cache/go/pkg/mod
@@ -224,13 +267,11 @@ jobs:
       - name: Set up Go
         uses: ./.github/actions/setup-go
 
-      - name: Set up Node.js
-        uses: ./.github/actions/setup-node
-
-      - name: Build embedded UI assets
-        run: |
-          npm ci --prefix ui
-          npm run build --prefix ui
+      - name: Download built UI assets
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: backend-ui-dist
+          path: internal/api/ui/
 
       - name: Install native build dependencies
         run: |
@@ -1025,10 +1066,27 @@ jobs:
       - name: Build backend
         run: CGO_ENABLED=0 go build -o bin/stem ./cmd/stem/
 
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('ui/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
+
+      - name: Install Playwright OS dependencies
+        working-directory: ui
+        # apt packages only, not cacheable — always runs regardless of
+        # whether the browser binaries above were restored from cache.
+        run: npx playwright install-deps
+
       - name: Install Playwright browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         working-directory: ui
         # Per E2E_CONVENTIONS: chromium (Chrome+Edge) and webkit (Safari).
-        run: npx playwright install --with-deps chromium webkit
+        # --with-deps omitted — OS deps are installed unconditionally above.
+        run: npx playwright install chromium webkit
 
       - name: Start backend server
         env:
@@ -1103,6 +1161,7 @@ jobs:
     # they just don't gate merge.
     needs:
       - changes
+      - build-ui
       - backend
       - race
       - frontend
