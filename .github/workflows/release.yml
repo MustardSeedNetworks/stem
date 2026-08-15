@@ -54,9 +54,7 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  contents: write
-  id-token: write # cosign keyless OIDC
-  packages: write
+  contents: read
 
 jobs:
   # =========================================================================
@@ -74,11 +72,18 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up Node.js
+        # zizmor: ignore[cache-poisoning]
+        # Caching is disabled below, so there is no cache to poison. zizmor
+        # flags every setup-node in a publishing workflow regardless of the
+        # `cache` input (Low confidence); re-check on the next zizmor bump.
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: "26.5.0"
-          cache: npm
-          cache-dependency-path: ui/package-lock.json
+          # No npm cache on the release path. This job's output is published
+          # and attested, so a poisoned cache entry restored from a branch
+          # would land in a signed artifact. CI keeps its cache; releases
+          # always resolve from the registry. (zizmor cache-poisoning)
+          cache: false
 
       - name: Set up npm
         run: npm install -g npm@12.0.2
@@ -111,6 +116,9 @@ jobs:
     if: ${{ !inputs.provenance_only }}
     runs-on: ubuntu-latest
     needs: [build-ui]
+    permissions:
+      contents: write
+      id-token: write # cosign keyless OIDC
     container:
       # Docker Hub tag scheme: <go-version>-<goreleaser-version>. v1.26.4
       # tracks Go 1.26.4 + goreleaser v2.17.0. Pinned for reproducibility;
