@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.7](https://github.com/MustardSeedNetworks/stem/compare/v0.24.6...v0.24.7) (2026-08-15)
+
+
+### Bug Fixes
+
+* **build:** point build:analyze at tsc ([#590](https://github.com/MustardSeedNetworks/stem/issues/590)) ([a3e06fa](https://github.com/MustardSeedNetworks/stem/commit/a3e06fa5a9507ff72e4c48ef62f5789e9f642113))
+* **ci:** exempt bot PRs from the required PR-body check ([#578](https://github.com/MustardSeedNetworks/stem/issues/578)) ([ee97c4f](https://github.com/MustardSeedNetworks/stem/commit/ee97c4f5a48c20c2b5ef6f6280783c5c7fb63c43))
+* **release:** stop requesting an App permission that is not granted ([#593](https://github.com/MustardSeedNetworks/stem/issues/593)) ([ca85e81](https://github.com/MustardSeedNetworks/stem/commit/ca85e81ed2f0a1ec6ce4eda3ffa6bee59b9ee724))
+
+
+### Continuous Integration
+
+* add missing gates, timeouts, and workflow linting ([#571](https://github.com/MustardSeedNetworks/stem/issues/571)) ([0680801](https://github.com/MustardSeedNetworks/stem/commit/0680801a04f89c9d501d01cafc9005528157eec5))
+* build UI once and share via artifact, cache Playwright browsers ([#574](https://github.com/MustardSeedNetworks/stem/issues/574)) ([1ad21da](https://github.com/MustardSeedNetworks/stem/commit/1ad21da96add7b5356c3ab232b5a05593e90c914))
+* pin Node via the setup-node composite everywhere ([#576](https://github.com/MustardSeedNetworks/stem/issues/576)) ([fc920e5](https://github.com/MustardSeedNetworks/stem/commit/fc920e5c1c17622c21c6f5eb8817243fc8d19b9f))
+* scope workflow permissions to jobs and narrow the release-please App token ([#573](https://github.com/MustardSeedNetworks/stem/issues/573)) ([9e37680](https://github.com/MustardSeedNetworks/stem/commit/9e376803d2dabe280926e94a40978316ea0dc26b))
+
+
+### Miscellaneous
+
+* **deps:** adopt TypeScript 7 and refresh the release container ([#589](https://github.com/MustardSeedNetworks/stem/issues/589)) ([d4157c3](https://github.com/MustardSeedNetworks/stem/commit/d4157c3a07e62444d9df0dfd46d4598b571e35c8))
+* **deps:** bump remaining outdated deps to latest majors ([#591](https://github.com/MustardSeedNetworks/stem/issues/591)) ([af51c14](https://github.com/MustardSeedNetworks/stem/commit/af51c14afe03fd66dcedebb6612674b4000f2701))
+* **deps:** lock file maintenance ([#586](https://github.com/MustardSeedNetworks/stem/issues/586)) ([1513e21](https://github.com/MustardSeedNetworks/stem/commit/1513e21736276c742aedebbfd40a81a1428a90d4))
+* **deps:** lock file maintenance ([#587](https://github.com/MustardSeedNetworks/stem/issues/587)) ([56fc492](https://github.com/MustardSeedNetworks/stem/commit/56fc492115f17fafc1eaf4fe9eb6300b7e47eed9))
+
 ## [0.24.6](https://github.com/MustardSeedNetworks/stem/compare/v0.24.5...v0.24.6) (2026-08-14)
 
 
