@@ -59,14 +59,25 @@ without adding it to `ci-complete`'s `needs:` list makes that job advisory.
   `SC2129` is ignored as a pure style preference; every correctness rule stays on.
 - **zizmor** (pinned 1.29.0) — Actions security scanner, run against the whole
   `.github/workflows/` directory. **Blocks on High findings.** The repo sits
-  at zero High. Two findings elsewhere in the directory (`release.yml`,
-  `release-please.yml`) survived review and carry `# zizmor: ignore[...]`
-  comments with the reasoning inline; anything else that reaches High fails
-  the build. Low/Informational are reported but not yet enforced.
+  at zero High. One finding elsewhere in the directory (`release-please.yml`)
+  survived review and carries a `# zizmor: ignore[...]` comment with the
+  reasoning inline; anything else that reaches High fails the build.
+  Low/Informational are reported but not yet enforced.
 
 Permissions follow least privilege: workflows declare `permissions: {}` (or
 `contents: read`) at the top level and grant scopes per job. A new job that
-needs a write scope declares it on the job, never workflow-wide.
+needs a write scope declares it on the job, never workflow-wide. `release.yml`
+deliberately runs without npm caching, because its output is published and
+attested and a restored cache entry could land inside a signed artifact; it
+opts out by passing `cache: ""` to the `setup-node` composite action.
+
+## The Node.js pin lives in one file
+
+Every workflow that needs Node uses `./.github/actions/setup-node`; none pin a
+`node-version:` literal. The composite is the single place the Node and npm
+versions are declared, and it must stay in step with `.nvmrc` and the `engines` /
+`packageManager` fields in `package.json`. Release and CI therefore build on the
+same Node version by construction rather than by convention.
 
 ## CI Must Pass Before Merge
 
