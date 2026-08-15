@@ -158,7 +158,7 @@ jobs:
         # it had already paid its debt down under the previous STRICT=1 mode.
         run: ./scripts/check-file-size.sh
 
-      - name: Banned-vocabulary gate (strategy reset, CLAUDE.md)
+      - name: Banned-vocabulary gate (strategy reset)
         # Ported from seed, which was the only repo enforcing it. Catches
         # retired tier names and AI vocabulary in customer-facing copy —
         # it found "TestSuite (Tier 2)" still shipping in docs/man/*.1.
