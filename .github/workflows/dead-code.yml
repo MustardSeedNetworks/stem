@@ -46,7 +46,7 @@ jobs:
         # (niac job 95072124340, installing the same package), because apt
         # waits forever on a dead connection by default. Bound apt's own
         # network waits, then retry the transient case.
-        uses: ./.github/actions/apt-install
+        uses: MustardSeedNetworks/.github/.github/actions/apt-install@3567cebc11a2277106bb350042287918ad92e542 # v1.2.0
         with:
           packages: libpcap-dev
 

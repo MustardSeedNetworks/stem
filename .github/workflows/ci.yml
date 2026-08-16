@@ -149,7 +149,7 @@ jobs:
         # (actions/runner-images Ubuntu2404-Readme.md) — only the packages
         # not already on the image are installed here.
         timeout-minutes: 8
-        uses: ./.github/actions/apt-install
+        uses: MustardSeedNetworks/.github/.github/actions/apt-install@3567cebc11a2277106bb350042287918ad92e542 # v1.2.0
         with:
           packages: libbpf-dev libelf-dev libxdp-dev zlib1g-dev
 
@@ -277,7 +277,7 @@ jobs:
         # (actions/runner-images Ubuntu2404-Readme.md) — only the packages
         # not already on the image are installed here.
         timeout-minutes: 8
-        uses: ./.github/actions/apt-install
+        uses: MustardSeedNetworks/.github/.github/actions/apt-install@3567cebc11a2277106bb350042287918ad92e542 # v1.2.0
         with:
           packages: libbpf-dev libelf-dev libxdp-dev zlib1g-dev
 
@@ -364,7 +364,7 @@ jobs:
         # preinstalled on ubuntu-24.04 (actions/runner-images
         # Ubuntu2404-Readme.md) — only cppcheck and bear are installed here.
         timeout-minutes: 8
-        uses: ./.github/actions/apt-install
+        uses: MustardSeedNetworks/.github/.github/actions/apt-install@3567cebc11a2277106bb350042287918ad92e542 # v1.2.0
         with:
           packages: cppcheck bear
 
@@ -476,7 +476,7 @@ jobs:
         # clang-18 ships preinstalled on ubuntu-24.04 (actions/runner-images
         # Ubuntu2404-Readme.md) — only cppcheck is installed here.
         timeout-minutes: 8
-        uses: ./.github/actions/apt-install
+        uses: MustardSeedNetworks/.github/.github/actions/apt-install@3567cebc11a2277106bb350042287918ad92e542 # v1.2.0
         with:
           packages: cppcheck
 
@@ -542,7 +542,7 @@ jobs:
 
       - name: Run govulncheck
         run: |
-          go install golang.org/x/vuln/cmd/govulncheck@v1.3.0
+          go install golang.org/x/vuln/cmd/govulncheck@v1.7.0
           govulncheck ./...
 
       - name: Run gosec
@@ -1105,7 +1105,7 @@ jobs:
         # whole job budget without running a test (job 95068053052), because
         # apt waits forever on a dead connection by default. Bound apt's own
         # network waits, then retry the transient case.
-        uses: ./.github/actions/apt-install
+        uses: MustardSeedNetworks/.github/.github/actions/apt-install@3567cebc11a2277106bb350042287918ad92e542 # v1.2.0
         with:
           command: cd ui && npx playwright install-deps
 
