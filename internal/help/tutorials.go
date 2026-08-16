@@ -320,6 +320,8 @@ func rfc2544TutorialSummarySteps() []TutorialStep {
 	}
 }
 
+// Y1564Tutorial - ITU-T Y.1564 service activation testing (CIR/EIR/CBS/EBS
+// step load and traffic policing) for carrier Ethernet.
 func Y1564Tutorial() Tutorial {
 	return Tutorial{
 		ID:          CatY1564,
@@ -454,6 +456,9 @@ func y1564TutorialFailureSteps() []TutorialStep {
 	}
 }
 
+// TroubleshootTutorial - diagnosing common test failures: zero throughput,
+// wrong interface, an unresponsive reflector, run-to-run variability,
+// under-target throughput, and privilege errors on raw-socket modes.
 func TroubleshootTutorial() Tutorial {
 	return Tutorial{
 		ID:          "troubleshoot",

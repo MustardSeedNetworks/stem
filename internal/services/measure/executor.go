@@ -9,8 +9,6 @@ import (
 	"github.com/MustardSeedNetworks/stem/internal/services/orchestrator/dataplane"
 )
 
-// Executor wraps the Measure module with test execution capability.
-// Y.1731 OAM tests execute via the dataplane on supported platforms.
 const (
 	// Y.1731 defaults - aligned with TUI/WebUI.
 	defaultMEPID       = 1
@@ -24,6 +22,8 @@ const (
 	defaultMEGID       = "MSN-MEG-01" // Match TUI/WebUI default MEG ID.
 )
 
+// Executor wraps the Measure module with test execution capability.
+// Y.1731 OAM tests execute via the dataplane on supported platforms.
 type Executor struct {
 	*Module
 

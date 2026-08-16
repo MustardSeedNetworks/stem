@@ -11,13 +11,18 @@ type ProfileSettings struct {
 	Port            uint16
 }
 
+// Reflector profiles select the signature filter, MAC/IP echo mode, and
+// listening port a peer reflector expects; SettingsForProfile maps each name
+// to those settings. ProfileNetAlly and ProfileITO are aliases for the same
+// behavior (interop with NetAlly/ITO test sets on the industry-standard port).
 const (
 	ProfileNetAlly = "netally"
 	ProfileITO     = "ito"
 	ProfileMSN     = "msn"
 	ProfileAll     = filterAll
 	ProfileCustom  = "custom"
-	NetAllyPort    = 3842
+	// NetAllyPort is the reflector port expected by NetAlly/ITO test sets.
+	NetAllyPort = 3842
 )
 
 // SettingsForProfile returns consistent CLI and API behavior for a profile.

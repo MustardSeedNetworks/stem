@@ -1,9 +1,6 @@
-/*
- * The Stem - CLI Command Help
- *
- * Documentation for all CLI commands and their options.
- */
-
+// Package help provides the static, hand-maintained content behind `stem
+// help` and `stem tutorial`: per-command flag/example reference (this file)
+// and step-by-step tutorials (tutorials.go).
 package help
 
 // GetAllCommands returns help for all CLI commands.
@@ -230,6 +227,7 @@ func testCommandExamples() []Example {
 	}
 }
 
+// WebCommand documents the web subcommand.
 func WebCommand() CommandHelp {
 	return CommandHelp{
 		Name:    "web",
