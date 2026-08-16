@@ -159,7 +159,9 @@ jobs:
           EOF
           for attempt in 1 2 3; do
             # A timeout kill can leave dpkg half-configured; recover first.
-            [ "$attempt" -gt 1 ] && sudo dpkg --configure -a >/dev/null 2>&1 || true
+            if [ "$attempt" -gt 1 ]; then
+              sudo dpkg --configure -a >/dev/null 2>&1 || true
+            fi
             if timeout -k 15 120 sudo apt-get update && \
                timeout -k 15 120 sudo apt-get install -y \
                  clang-18 \
@@ -309,7 +311,9 @@ jobs:
           EOF
           for attempt in 1 2 3; do
             # A timeout kill can leave dpkg half-configured; recover first.
-            [ "$attempt" -gt 1 ] && sudo dpkg --configure -a >/dev/null 2>&1 || true
+            if [ "$attempt" -gt 1 ]; then
+              sudo dpkg --configure -a >/dev/null 2>&1 || true
+            fi
             if timeout -k 15 120 sudo apt-get update && \
                timeout -k 15 120 sudo apt-get install -y \
                  clang-18 \
@@ -420,7 +424,9 @@ jobs:
           install_ok=
           for attempt in 1 2 3; do
             # A timeout kill can leave dpkg half-configured; recover first.
-            [ "$attempt" -gt 1 ] && sudo dpkg --configure -a >/dev/null 2>&1 || true
+            if [ "$attempt" -gt 1 ]; then
+              sudo dpkg --configure -a >/dev/null 2>&1 || true
+            fi
             if timeout -k 15 120 sudo apt-get update && \
                timeout -k 15 120 sudo apt-get install -y \
                  clang-18 \
@@ -558,7 +564,9 @@ jobs:
           install_ok=
           for attempt in 1 2 3; do
             # A timeout kill can leave dpkg half-configured; recover first.
-            [ "$attempt" -gt 1 ] && sudo dpkg --configure -a >/dev/null 2>&1 || true
+            if [ "$attempt" -gt 1 ]; then
+              sudo dpkg --configure -a >/dev/null 2>&1 || true
+            fi
             if timeout -k 15 120 sudo apt-get update && \
                timeout -k 15 120 sudo apt-get install -y clang-18 cppcheck; then
               install_ok=1
@@ -577,7 +585,9 @@ jobs:
           # it, so a stalled mirror here shouldn't fail the job — just bound
           # the wait the same way as the required install above.
           for attempt in 1 2 3; do
-            [ "$attempt" -gt 1 ] && sudo dpkg --configure -a >/dev/null 2>&1 || true
+            if [ "$attempt" -gt 1 ]; then
+              sudo dpkg --configure -a >/dev/null 2>&1 || true
+            fi
             timeout -k 15 120 sudo apt-get install -y libclang-rt-18-dev && break
             echo "libclang-rt-18-dev install attempt ${attempt} failed; retrying in $((attempt * 10))s..."
             sleep $((attempt * 10))
