@@ -139,6 +139,7 @@ jobs:
           path: internal/api/ui/
 
       - name: Install native reflector build dependencies
+        timeout-minutes: 8
         run: |
           apt-get update
           apt-get install -y --no-install-recommends \
