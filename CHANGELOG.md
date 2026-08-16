@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.9](https://github.com/MustardSeedNetworks/stem/compare/v0.24.8...v0.24.9) (2026-08-16)
+
+
+### Continuous Integration
+
+* declare which jobs deliberately do not gate a merge ([#612](https://github.com/MustardSeedNetworks/stem/issues/612)) ([f806990](https://github.com/MustardSeedNetworks/stem/commit/f8069905eefe19d35198bc8eac406f1e917cea74))
+
+
+### Miscellaneous
+
+* **ci:** adopt shared apt-install composite from MustardSeedNetworks/.github ([#610](https://github.com/MustardSeedNetworks/stem/issues/610)) ([a1bcc05](https://github.com/MustardSeedNetworks/stem/commit/a1bcc05f468327441c250b10dfb2ebdeb3559081))
+* **ci:** consolidate apt-install retry blocks and right-size CI settings ([#604](https://github.com/MustardSeedNetworks/stem/issues/604)) ([2d28ac3](https://github.com/MustardSeedNetworks/stem/commit/2d28ac3ae95f1b0e29e8a91802d17ec9f5bc0332))
+* **deps:** update module golang.org/x/vuln/cmd/govulncheck to v1.7.0 ([#608](https://github.com/MustardSeedNetworks/stem/issues/608)) ([4483c5b](https://github.com/MustardSeedNetworks/stem/commit/4483c5b4ae01295df8d9542ea763af84c50c123e))
+* **release:** drop the no-op trigger-release job ([#607](https://github.com/MustardSeedNetworks/stem/issues/607)) ([ce73dc4](https://github.com/MustardSeedNetworks/stem/commit/ce73dc4d47efe9fc9b4720bf6b909ce679251b54))
+
 ## [0.24.8](https://github.com/MustardSeedNetworks/stem/compare/v0.24.7...v0.24.8) (2026-08-16)
 
 
