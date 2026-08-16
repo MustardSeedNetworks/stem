@@ -63,7 +63,7 @@ security-backend: ## Run Go security scans
 security-backend-quiet:
 	@GOVULNCHECK=$$(command -v govulncheck 2>/dev/null || echo "$$(go env GOPATH)/bin/govulncheck"); \
 	if [ ! -x "$$GOVULNCHECK" ]; then \
-		go install golang.org/x/vuln/cmd/govulncheck@latest; \
+		go install golang.org/x/vuln/cmd/govulncheck@v1.7.0; \
 		GOVULNCHECK="$$(go env GOPATH)/bin/govulncheck"; \
 	fi; \
 	printf "   Scanning Go dependencies...\n"; \
@@ -106,7 +106,7 @@ security-secrets: ## Scan for secrets in codebase
 security-secrets-quiet:
 	@GITLEAKS=$$(command -v gitleaks 2>/dev/null || echo "$$(go env GOPATH)/bin/gitleaks"); \
 	if [ ! -x "$$GITLEAKS" ]; then \
-		go install github.com/zricethezav/gitleaks/v8@latest; \
+		go install github.com/zricethezav/gitleaks/v8@v8.30.1; \
 		GITLEAKS="$$(go env GOPATH)/bin/gitleaks"; \
 	fi; \
 	printf "   Scanning for secrets...\n"; \
@@ -141,7 +141,7 @@ license-check-go: ## Check Go module licenses
 	@printf "$(BOLD)🔍 Checking Go dependency licenses...$(RESET)\n"
 	@if ! command -v go-licenses >/dev/null 2>&1; then \
 		printf "$(YELLOW)Installing go-licenses...$(RESET)\n"; \
-		go install github.com/google/go-licenses@latest; \
+		go install github.com/google/go-licenses@v1.6.0; \
 	fi
 	@go-licenses check ./... \
 		--disallowed_types=forbidden,restricted \

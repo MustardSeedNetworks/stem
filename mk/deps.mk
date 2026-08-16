@@ -69,19 +69,19 @@ tools-go: ## Install Go development tools
 	@printf "  Installing golangci-lint v2...\n"
 	go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.2
 	@printf "  Installing govulncheck...\n"
-	go install golang.org/x/vuln/cmd/govulncheck@latest
+	go install golang.org/x/vuln/cmd/govulncheck@v1.7.0
 	@printf "  Installing gosec...\n"
-	go install github.com/securego/gosec/v2/cmd/gosec@latest
+	go install github.com/securego/gosec/v2/cmd/gosec@v2.28.0
 	@printf "  Installing gofumpt...\n"
-	go install mvdan.cc/gofumpt@latest
+	go install mvdan.cc/gofumpt@v0.11.0
 	@printf "  Installing goimports...\n"
-	go install golang.org/x/tools/cmd/goimports@latest
+	go install golang.org/x/tools/cmd/goimports@v0.49.0
 	@printf "  Installing staticcheck...\n"
-	go install honnef.co/go/tools/cmd/staticcheck@latest
+	go install honnef.co/go/tools/cmd/staticcheck@v0.7.0
 	@printf "  Installing gitleaks...\n"
-	go install github.com/zricethezav/gitleaks/v8@latest
+	go install github.com/zricethezav/gitleaks/v8@v8.30.1
 	@printf "  Installing gotestsum...\n"
-	go install gotest.tools/gotestsum@latest
+	go install gotest.tools/gotestsum@v1.13.0
 	$(call timer-end,tools-go,Tool installation)
 	@printf "\n$(GREEN)✓ All Go tools installed to $$(go env GOPATH)/bin$(RESET)\n"
 	@printf "\nInstalled tools:\n"

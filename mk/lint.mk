@@ -22,6 +22,34 @@
 lint: lint-go lint-frontend ## Run all linters
 	@printf "$(GREEN)✓ All linters passed$(RESET)\n"
 
+# Lint the cgo/linux-tagged files macOS cannot compile.
+#
+# 17 files here sit behind `//go:build cgo` or `linux`. On macOS golangci-lint
+# skips them silently — a PR once passed `make lint` locally and failed CI's
+# Linux leg on findings in dataplane_types.go, which does not compile on darwin
+# at all. `GOOS=linux` on the host does NOT substitute: it forces CGO_ENABLED=0
+# and yields typecheck noise rather than findings.
+#
+# Uses Apple's `container` runtime (native macOS, no Docker Desktop). The image
+# carries a real Linux toolchain plus libpcap/libbpf/libelf headers.
+lint-linux: ## Lint cgo/linux-tagged files in a Linux container (macOS gap)
+	@command -v container >/dev/null 2>&1 || { \
+		printf "$(YELLOW)⚠ 'container' not installed — brew install container$(RESET)\n"; exit 1; }
+	@container system start >/dev/null 2>&1 || true
+	@printf "$(BOLD)🐧 Linting linux/cgo-tagged files in a container...$(RESET)\n"
+	@container run --rm -v "$(CURDIR)":/src -w /src msn-lint-linux:$(LINT_LINUX_TAG) \
+		run --max-issues-per-linter=0 --max-same-issues=0 ./... \
+		2>&1 | grep -v '^level=warning' || true
+	@printf "$(GREEN)✓ Linux/cgo lint complete$(RESET)\n"
+
+# Build the Linux lint image. Dockerfile lives in MustardSeedNetworks/.github
+# so all four products share one definition.
+lint-linux-image: ## Build the Linux lint container image
+	@container build -t msn-lint-linux:$(LINT_LINUX_TAG) $(LINT_LINUX_CONTEXT)
+
+LINT_LINUX_TAG ?= 1.0.0
+LINT_LINUX_CONTEXT ?= ../.github/tools/lint-linux
+
 lint-go: ## Run Go linter (golangci-lint)
 	@printf "$(BOLD)🔍 Running Go linter (golangci-lint)...$(RESET)\n"
 	@GOLANGCI_LINT="$$(go env GOPATH)/bin/golangci-lint"; \
