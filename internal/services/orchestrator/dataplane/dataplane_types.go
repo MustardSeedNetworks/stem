@@ -7,6 +7,9 @@ import "time"
 // TestType mirrors C test_type_t.
 type TestType int
 
+// The RFC 2544, Y.1564 and Y.1731 test types the C dataplane accepts. Order is
+// load-bearing: these are iota values passed across the cgo boundary and must
+// stay in lockstep with test_type_t in the C header.
 const (
 	TestThroughput TestType = iota
 	TestLatency
@@ -22,6 +25,8 @@ const (
 // TestState mirrors C test_state_t.
 type TestState int
 
+// Lifecycle states a dataplane test moves through. Like TestType these are
+// iota values shared with C, so the order must match test_state_t.
 const (
 	StateIdle TestState = iota
 	StateRunning
@@ -162,6 +167,9 @@ type Y1564PerfResult struct {
 
 // RFC 2889 configuration and results
 
+// RFC2889Config holds the shared test parameters for RFC 2889 LAN-switch
+// benchmarks (address caching, address learning rate, forwarding, broadcast,
+// and congestion control).
 type RFC2889Config struct {
 	FrameSize         uint32
 	DurationSec       uint32
@@ -172,6 +180,9 @@ type RFC2889Config struct {
 	Pattern           uint32
 }
 
+// RFC2889ForwardingResult is the outcome of the RFC 2889 forwarding-rate
+// test: the binary-search maximum rate the DUT forwards without loss across
+// PortCount ports using the given traffic Pattern.
 type RFC2889ForwardingResult struct {
 	FrameSize         uint32
 	PortCount         uint32
@@ -183,6 +194,9 @@ type RFC2889ForwardingResult struct {
 	FramesRx          uint64
 }
 
+// RFC2889CachingResult is the outcome of the RFC 2889 address-caching-capacity
+// test: whether the DUT sustains AddressCount learned addresses without
+// dropping frames.
 type RFC2889CachingResult struct {
 	AddressCount uint32
 	FrameSize    uint32
@@ -193,6 +207,9 @@ type RFC2889CachingResult struct {
 	Passed       bool
 }
 
+// RFC2889LearningResult is the outcome of the RFC 2889 address-learning-rate
+// test: how quickly the DUT learns new source MAC addresses and whether
+// forwarding stays correct once learning completes.
 type RFC2889LearningResult struct {
 	FrameSize           uint32
 	PortCount           uint32
@@ -203,6 +220,8 @@ type RFC2889LearningResult struct {
 	VerificationLossPct float64
 }
 
+// RFC2889BroadcastResult is the outcome of the RFC 2889 broadcast
+// forwarding/replication test across IngressPorts and EgressPorts.
 type RFC2889BroadcastResult struct {
 	FrameSize         uint32
 	IngressPorts      uint32
@@ -214,6 +233,9 @@ type RFC2889BroadcastResult struct {
 	ReplicationFactor float64
 }
 
+// RFC2889CongestionResult is the outcome of the RFC 2889 congestion-control
+// test: head-of-line blocking and pause-frame/backpressure behavior when the
+// DUT is driven past its forwarding rate.
 type RFC2889CongestionResult struct {
 	FrameSize            uint32
 	OverloadRatePct      float64
@@ -227,6 +249,8 @@ type RFC2889CongestionResult struct {
 
 // RFC 6349 configuration and results
 
+// RFC6349Config holds the test parameters for an RFC 6349 TCP throughput
+// test: target rate, RTT range, receive window, parallel streams, and MSS.
 type RFC6349Config struct {
 	TargetRateMbps  float64
 	MinRTTMs        float64
@@ -238,6 +262,9 @@ type RFC6349Config struct {
 	Mode            uint32
 }
 
+// RFC6349Result is the outcome of an RFC 6349 TCP throughput test: the
+// achieved rate against the BDP-derived theoretical maximum, TCP efficiency,
+// and buffer delay.
 type RFC6349Result struct {
 	AchievedRateMbps    float64
 	TheoreticalRateMbps float64
@@ -255,6 +282,8 @@ type RFC6349Result struct {
 	Passed              bool
 }
 
+// TCPPathInfo captures the network-path characteristics (MTU, RTT, BDP,
+// bottleneck bandwidth) used to plan an RFC 6349 test's window and rate.
 type TCPPathInfo struct {
 	PathMTU          uint32
 	MSS              uint32
@@ -268,6 +297,9 @@ type TCPPathInfo struct {
 
 // Y.1731 configuration and results
 
+// Y1731Config holds the parameters for an ITU-T Y.1731 Ethernet OAM session:
+// maintenance end point (MEP) identity, maintenance entity group (MEG) level
+// and ID, and the CCM/measurement cadence.
 type Y1731Config struct {
 	MEPID          uint32
 	MEGLevel       uint32
@@ -281,6 +313,8 @@ type Y1731Config struct {
 	PriorityTagged bool
 }
 
+// Y1731DelayResult is the outcome of a Y.1731 ETH-DM (delay measurement)
+// test.
 type Y1731DelayResult struct {
 	FramesSent       uint32
 	FramesReceived   uint32
@@ -291,6 +325,8 @@ type Y1731DelayResult struct {
 	DelayVariationUs float64
 }
 
+// Y1731LossResult is the outcome of a Y.1731 ETH-LM (loss measurement) test,
+// including near-end and far-end loss ratios and derived availability.
 type Y1731LossResult struct {
 	FramesTx         uint64
 	FramesRx         uint64
@@ -301,6 +337,8 @@ type Y1731LossResult struct {
 	AvailabilityPct  float64
 }
 
+// Y1731LoopbackResult is the outcome of a Y.1731 ETH-LB (loopback) test:
+// round-trip timing over sent LBM / received LBR frames.
 type Y1731LoopbackResult struct {
 	LBMSent     uint64
 	LBRReceived uint64
@@ -311,6 +349,9 @@ type Y1731LoopbackResult struct {
 
 // MEF configuration and results
 
+// MEFConfig holds the MEF/Y.1564 service-attribute configuration for a
+// step-load service activation test: CIR/EIR, CBS/EBS, and the frame-delay,
+// jitter, loss, and availability thresholds that gate pass/fail.
 type MEFConfig struct {
 	ServiceID         string
 	CoS               uint32
@@ -327,6 +368,8 @@ type MEFConfig struct {
 	FrameSizes        []uint32
 }
 
+// MEFStepResult is the outcome of a single load step in the MEF/Y.1564
+// step-load test.
 type MEFStepResult struct {
 	StepPct          uint32
 	OfferedRateKbps  uint32
@@ -341,6 +384,8 @@ type MEFStepResult struct {
 	Passed           bool
 }
 
+// MEFConfigResult is the overall outcome of the MEF/Y.1564 configuration
+// test: the per-CoS step results and the aggregate pass verdict.
 type MEFConfigResult struct {
 	ServiceID     string
 	Steps         [4]MEFStepResult
@@ -348,6 +393,8 @@ type MEFConfigResult struct {
 	OverallPassed bool
 }
 
+// MEFPerfResult is the outcome of the MEF/Y.1564 sustained performance test
+// run at the target rate for DurationSec.
 type MEFPerfResult struct {
 	ServiceID       string
 	DurationSec     uint32
@@ -369,6 +416,8 @@ type MEFPerfResult struct {
 
 // TSN configuration and results
 
+// TSNConfig holds the parameters for a TSN test exercising 802.1Qbv gate
+// scheduling and 802.1AS time synchronization.
 type TSNConfig struct {
 	DurationSec       uint32
 	WarmupSec         uint32
@@ -385,6 +434,7 @@ type TSNConfig struct {
 	TrafficClass      uint32
 }
 
+// TSNTimingResult is the outcome of the TSN gate-timing-accuracy test.
 type TSNTimingResult struct {
 	CyclesTested       uint32
 	TimingErrors       uint32
@@ -393,6 +443,8 @@ type TSNTimingResult struct {
 	GateTimingPassed   bool
 }
 
+// TSNClassResult is the per-traffic-class outcome of a TSN isolation test:
+// how much a class's frames were interfered with by other traffic classes.
 type TSNClassResult struct {
 	FramesTx         uint64
 	FramesRx         uint64
@@ -403,12 +455,16 @@ type TSNClassResult struct {
 	Passed           bool
 }
 
+// TSNIsolationResult is the aggregated outcome of the TSN class-isolation
+// test across NumClasses traffic classes.
 type TSNIsolationResult struct {
 	NumClasses    uint32
 	ClassResults  [8]TSNClassResult
 	OverallPassed bool
 }
 
+// TSNLatencyResult is the per-traffic-class latency distribution measured
+// during a TSN test.
 type TSNLatencyResult struct {
 	TrafficClass  uint32
 	Samples       uint32
@@ -423,6 +479,8 @@ type TSNLatencyResult struct {
 	OverallPassed bool
 }
 
+// TSNPTPResult is the outcome of the 802.1AS PTP clock-synchronization
+// accuracy test.
 type TSNPTPResult struct {
 	Samples        uint32
 	OffsetAvgNs    float64
@@ -431,6 +489,8 @@ type TSNPTPResult struct {
 	SyncAchieved   bool
 }
 
+// TSNFullResult combines the timing, isolation, per-class latency, and PTP
+// results of a full TSN test run.
 type TSNFullResult struct {
 	TimingResult    TSNTimingResult
 	IsolationResult TSNIsolationResult
@@ -441,6 +501,8 @@ type TSNFullResult struct {
 
 // Traffic generation configuration
 
+// TrafficGenConfig holds raw traffic-generation parameters (rate, burst
+// pattern, VLAN tagging) used independent of any specific RFC/ITU-T test.
 type TrafficGenConfig struct {
 	FrameSize       uint32
 	RatePct         float64
@@ -458,6 +520,8 @@ type TrafficGenConfig struct {
 
 // Traffic generation result
 
+// TrafficGenResult is the outcome of a raw traffic-generation run: packets
+// and bytes sent/received, achieved rate, and loss.
 type TrafficGenResult struct {
 	PacketsSent  uint64
 	PacketsRecv  uint64

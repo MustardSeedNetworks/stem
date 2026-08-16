@@ -12,6 +12,10 @@ import (
 	"github.com/MustardSeedNetworks/stem/internal/services/trafficgen"
 )
 
+// DefaultRegistry builds and returns a fresh Registry containing every
+// production module (reflector plus each executable test module), wired to
+// its executor factory. Callers get an independent registry on each call;
+// exported for module_test.go's external test package.
 func DefaultRegistry() *Registry {
 	return buildDefaultRegistry()
 }

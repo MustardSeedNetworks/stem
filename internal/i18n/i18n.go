@@ -1,10 +1,7 @@
-/*
- * The Stem - Internationalization (i18n) Support
- *
- * Provides localization for English (en) and Spanish (es).
- * Translations are loaded from embedded JSON files in the locales directory.
- */
-
+// Package i18n provides localization for The Stem's CLI and API output in
+// English and Spanish. Translations are loaded from JSON files embedded at
+// build time from the locales directory; RFC/protocol/metric/product names
+// are never translated, only surrounding prose.
 package i18n
 
 import (
@@ -21,6 +18,8 @@ var localesFS embed.FS
 // Language represents a supported language.
 type Language string
 
+// Supported languages. Adding a new one requires both a locales/<code>.json
+// file and an entry here.
 const (
 	English Language = "en"
 	Spanish Language = "es"

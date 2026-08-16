@@ -204,6 +204,11 @@ func serveFallbackUIPage(w http.ResponseWriter, _ *http.Request) {
 </html>`))
 }
 
+// NewServer builds a Server bound to port: it loads the license manager,
+// auto-selects a network interface, and constructs the auth manager from
+// STEM_JWT_SECRET / STEM_AUTH_USERNAME / STEM_AUTH_PASSWORD (returning an
+// error if those env vars are missing or invalid). The returned Server has
+// not started listening yet; call Run to bind the TLS listener and serve.
 func NewServer(port int) (*Server, error) {
 	// Initialize license manager.
 	licMgr, err := license.NewManager()
