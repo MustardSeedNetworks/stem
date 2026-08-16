@@ -24,6 +24,11 @@ issues:
   # Set to 0 to disable.
   # Default: 3
   max-same-issues: 50
+  # 0 = report everything. The default is 50 PER LINTER, which silently hides
+  # findings past that point — a lint run can report "50 issues" when there are
+  # 71. seed hit exactly that (real count 71, capped view 50) and niac-go 59 vs
+  # ~50. A gate that truncates its own output is not a gate.
+  max-issues-per-linter: 0
 
 formatters:
   enable:
