@@ -141,7 +141,7 @@ license-check-go: ## Check Go module licenses
 	@printf "$(BOLD)🔍 Checking Go dependency licenses...$(RESET)\n"
 	@if ! command -v go-licenses >/dev/null 2>&1; then \
 		printf "$(YELLOW)Installing go-licenses...$(RESET)\n"; \
-		go install github.com/google/go-licenses@v1.6.0; \
+		go install github.com/google/go-licenses@v2.0.1; \
 	fi
 	@go-licenses check ./... \
 		--disallowed_types=forbidden,restricted \
