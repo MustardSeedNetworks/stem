@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.8](https://github.com/MustardSeedNetworks/stem/compare/v0.24.7...v0.24.8) (2026-08-16)
+
+
+### Bug Fixes
+
+* **ci:** bound apt waits in Playwright OS-deps step ([#597](https://github.com/MustardSeedNetworks/stem/issues/597)) ([8c4732e](https://github.com/MustardSeedNetworks/stem/commit/8c4732ef00dc761fafbd5ab4b086e47dfa32d2a6))
+* **ci:** bound apt waits in remaining install steps ([#602](https://github.com/MustardSeedNetworks/stem/issues/602)) ([46517ad](https://github.com/MustardSeedNetworks/stem/commit/46517ad9294426b2313e24fdbda815fce8e620aa))
+
 ## [0.24.7](https://github.com/MustardSeedNetworks/stem/compare/v0.24.6...v0.24.7) (2026-08-15)
 
 
