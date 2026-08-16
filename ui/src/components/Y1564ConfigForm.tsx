@@ -168,6 +168,7 @@ export function Y1564ConfigForm({
 
   return (
     <CollapsibleSection
+      testId="y1564-config-form"
       title={
         <div className="flex items-center gap-compact">
           <Settings2 className="w-4 h-4" />

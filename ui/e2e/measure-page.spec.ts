@@ -1,36 +1,48 @@
 import { expect, test } from '@playwright/test';
 import { skipSetupWizard } from './helpers/auth';
+import { useRole } from './helpers/role';
 
 /**
  * Measure Page (/tests/measure) E2E
  *
- * Covers the Y.1731 OAM measurement surface:
- * - Page renders with the proper heading
- * - Test configuration content is gated by RoleGuard
+ * Covers the Y.1731 OAM delay and loss surface and the RoleGuard contract that wraps it.
+ *
+ * The previous role test asserted one broad regex —
+ * /y\\.1731|oam|delay|loss|measurement|permission|role|access/i
+ * — described as "the form OR a role-denied message". Both halves matched
+ * ordinary page copy (the header description alone satisfies it), so it passed
+ * in either role and could not fail if the module disappeared entirely.
+ *
+ * These assert the two states separately via testids, so they stay honest
+ * under the es locale too.
  */
 
 test.describe('Measure Page', () => {
-  test.beforeEach(async ({ page }) => {
+  test('renders the page header', async ({ page }) => {
     await skipSetupWizard(page);
     await page.goto('/tests/measure');
-    await expect(page.getByTestId('page-header-title')).toBeVisible({
-      timeout: 10000,
-    });
+    await expect(page.getByTestId('page-header-title')).toBeVisible({ timeout: 10000 });
   });
 
-  test('should render the page header with Measure title', async ({ page }) => {
-    await expect(page.getByTestId('page-header-title')).toBeVisible();
-    await expect(page.getByText(/y\.1731 oam delay.*loss/i)).toBeVisible();
-  });
-
-  test('should land on the /tests/measure route', async ({ page }) => {
+  test('lands on the /tests/measure route', async ({ page }) => {
+    await skipSetupWizard(page);
+    await page.goto('/tests/measure');
     await expect(page).toHaveURL(/\/tests\/measure$/);
   });
 
-  test('should show role-gated content', async ({ page }) => {
-    const content = page.locator(
-      'text=/y\\.1731|oam|delay|loss|measurement|permission|role|access/i',
-    );
-    await expect(content.locator('visible=true').first()).toBeVisible({ timeout: 5000 });
+  test('shows no role banner as test_master', async ({ page }) => {
+    await skipSetupWizard(page);
+    await useRole(page, 'test_master');
+    await page.goto('/tests/measure');
+    await expect(page.getByTestId('page-header-title')).toBeVisible({ timeout: 10000 });
+
+    await expect(page.getByTestId('role-guard-banner')).toHaveCount(0);
+  });
+
+  test('warns a reflector that the module needs test_master', async ({ page }) => {
+    await skipSetupWizard(page);
+    await useRole(page, 'reflector');
+    await page.goto('/tests/measure');
+    await expect(page.getByTestId('role-guard-banner')).toBeVisible({ timeout: 10000 });
   });
 });

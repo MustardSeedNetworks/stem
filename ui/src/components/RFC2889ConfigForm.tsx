@@ -108,6 +108,7 @@ export function RFC2889ConfigForm({
 
   return (
     <CollapsibleSection
+      testId="rfc2889-config-form"
       title={
         <div className="flex items-center gap-compact">
           <Network className="w-4 h-4" />

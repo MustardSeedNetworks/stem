@@ -113,6 +113,7 @@ export function Y1731ConfigForm({
 
   return (
     <CollapsibleSection
+      testId="y1731-config-form"
       title={
         <div className="flex items-center gap-compact">
           <Gauge className="w-4 h-4" />

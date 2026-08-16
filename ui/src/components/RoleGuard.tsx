@@ -72,6 +72,7 @@ export const RoleGuard: FC<RoleGuardProps> = ({ requires, moduleName, children }
     <>
       <div
         role="status"
+        data-testid="role-guard-banner"
         className="flex flex-wrap items-center gap-default rounded-lg border border-status-warning/30 bg-status-warning/10 px-3 py-row text-sm text-status-warning"
       >
         <AlertTriangle className="h-4 w-4 flex-shrink-0" aria-hidden="true" />

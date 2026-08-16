@@ -56,6 +56,12 @@ interface CollapsibleSectionProps {
   variant?: 'default' | 'compact';
   /** Additional CSS classes */
   className?: string;
+  /**
+   * Test hook on the section root. Without it the only way to select a
+   * collapsible section from a test is its title text, which breaks under
+   * the es locale.
+   */
+  testId?: string;
 }
 
 /**
@@ -91,6 +97,7 @@ export function CollapsibleSection({
   status,
   variant = 'default',
   className = '',
+  testId,
 }: CollapsibleSectionProps): ReactElement {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
@@ -98,6 +105,7 @@ export function CollapsibleSection({
 
   return (
     <section
+      data-testid={testId}
       className={cn(
         !isCompact && border.card,
         !isCompact && radius.lg,

@@ -124,6 +124,7 @@ export function RFC6349ConfigForm({
 
   return (
     <CollapsibleSection
+      testId="rfc6349-config-form"
       title={
         <div className="flex items-center gap-compact">
           <Activity className="w-4 h-4" />

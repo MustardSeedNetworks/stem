@@ -127,7 +127,7 @@ export function RFC2544ConfigForm({
   const hasBackToBack = selectedTests.includes('rfc2544_back_to_back');
 
   return (
-    <div className="stack-lg">
+    <div data-testid="rfc2544-config-form" className="stack-lg">
       {/* Test Duration */}
       <div className="stack">
         <div className="text-xs font-semibold text-text-muted uppercase tracking-wide">
