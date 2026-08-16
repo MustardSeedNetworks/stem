@@ -153,11 +153,10 @@ jobs:
         # metapackages) — only the packages not already in the image are
         # installed here.
         timeout-minutes: 8
-        uses: ./.github/actions/apt-install
+        uses: MustardSeedNetworks/.github/.github/actions/apt-install@3567cebc11a2277106bb350042287918ad92e542 # v1.2.0
         with:
           packages: libbpf-dev libelf-dev libxdp-dev zlib1g-dev
           no-install-recommends: 'true'
-          sudo: 'false'
 
       - name: Install Syft (SBOM) inside container
         env:
