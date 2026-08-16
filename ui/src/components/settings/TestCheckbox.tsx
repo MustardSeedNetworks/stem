@@ -28,6 +28,7 @@ export function TestCheckbox({ test, checked, onChange }: TestCheckboxProps): Re
     >
       <input
         type="checkbox"
+        data-testid={`test-checkbox-${test.id}`}
         checked={checked}
         onChange={onChange}
         aria-label={`Toggle ${test.name}`}

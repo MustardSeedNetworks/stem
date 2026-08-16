@@ -124,6 +124,7 @@ export function TopBar({
       {mode === 'test_master' ? (
         <div className="flex flex-wrap items-center gap-default">
           <select
+            data-testid="interface-select"
             value={selectedInterface}
             onChange={(e: React.ChangeEvent<HTMLSelectElement>): void =>
               setSelectedInterface(e.target.value)
@@ -142,6 +143,7 @@ export function TopBar({
           {stats.testStatus === 'running' || stats.testStatus === 'starting' ? (
             <button
               type="button"
+              data-testid="stop-test-button"
               onClick={onStopTest}
               className="btn btn-secondary"
               disabled={isStoppingTest}
@@ -162,6 +164,7 @@ export function TopBar({
           ) : (
             <button
               type="button"
+              data-testid="start-test-button"
               onClick={onStartTest}
               className="btn btn-primary"
               disabled={!selectedInterface || isStartingTest}
