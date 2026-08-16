@@ -7,6 +7,9 @@ import "time"
 // TestType mirrors C test_type_t.
 type TestType int
 
+// The RFC 2544, Y.1564 and Y.1731 test types the C dataplane accepts. Order is
+// load-bearing: these are iota values passed across the cgo boundary and must
+// stay in lockstep with test_type_t in the C header.
 const (
 	TestThroughput TestType = iota
 	TestLatency
@@ -22,6 +25,8 @@ const (
 // TestState mirrors C test_state_t.
 type TestState int
 
+// Lifecycle states a dataplane test moves through. Like TestType these are
+// iota values shared with C, so the order must match test_state_t.
 const (
 	StateIdle TestState = iota
 	StateRunning
