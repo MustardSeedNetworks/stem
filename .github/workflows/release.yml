@@ -139,15 +139,42 @@ jobs:
           path: internal/api/ui/
 
       - name: Install native reflector build dependencies
+        timeout-minutes: 8
+        # Container runs as root (no sudo) — see the "Mark workspace as safe"
+        # step above for the same reason.
+        #
+        # A stalled Ubuntu mirror once hung apt for 25 minutes installing a
+        # single package elsewhere in the fleet (niac job 95072124340),
+        # because apt waits forever on a dead connection by default. Bound
+        # apt's own network waits, then retry the transient case. This step
+        # gates the release build, so a hang here is worse than in CI.
         run: |
-          apt-get update
-          apt-get install -y --no-install-recommends \
-            clang-18 \
-            libbpf-dev \
-            libelf-dev \
-            libxdp-dev \
-            make \
-            zlib1g-dev
+          tee /etc/apt/apt.conf.d/99-ci-timeouts >/dev/null <<'EOF'
+          Acquire::http::Timeout "20";
+          Acquire::https::Timeout "20";
+          Acquire::Retries "2";
+          DPkg::Lock::Timeout "60";
+          EOF
+          for attempt in 1 2 3; do
+            # A timeout kill can leave dpkg half-configured; recover first.
+            if [ "$attempt" -gt 1 ]; then
+              dpkg --configure -a >/dev/null 2>&1 || true
+            fi
+            if timeout -k 15 120 apt-get update && \
+               timeout -k 15 120 apt-get install -y --no-install-recommends \
+                 clang-18 \
+                 libbpf-dev \
+                 libelf-dev \
+                 libxdp-dev \
+                 make \
+                 zlib1g-dev; then
+              exit 0
+            fi
+            echo "native reflector build dependencies install attempt ${attempt} failed; retrying in $((attempt * 10))s..."
+            sleep $((attempt * 10))
+          done
+          echo "::error::native reflector build dependencies install failed after 3 attempts"
+          exit 1
 
       - name: Install Syft (SBOM) inside container
         env:
