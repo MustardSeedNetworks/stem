@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.10](https://github.com/MustardSeedNetworks/stem/compare/v0.24.9...v0.24.10) (2026-08-16)
+
+
+### Bug Fixes
+
+* **ci:** upload backend coverage with the correct input name ([#618](https://github.com/MustardSeedNetworks/stem/issues/618)) ([12b1850](https://github.com/MustardSeedNetworks/stem/commit/12b1850b1abff01cd4c2b7841bdb014b3f56db86))
+* **release:** generate SBOMs for .deb and .rpm ([#616](https://github.com/MustardSeedNetworks/stem/issues/616)) ([bca747a](https://github.com/MustardSeedNetworks/stem/commit/bca747a36becf696f5605b1e0d0b43b8a9bd917d))
+
+
+### Continuous Integration
+
+* make required checks report on merge_group ([#621](https://github.com/MustardSeedNetworks/stem/issues/621)) ([0290990](https://github.com/MustardSeedNetworks/stem/commit/0290990e5096f5f43b84d6235fd3933c22a9b17c))
+* stop PRs writing their own cache copies ([#614](https://github.com/MustardSeedNetworks/stem/issues/614)) ([097df2a](https://github.com/MustardSeedNetworks/stem/commit/097df2adbfbbf0d2da52bac72cc13c07c6f7eafe))
+
 ## [0.24.9](https://github.com/MustardSeedNetworks/stem/compare/v0.24.8...v0.24.9) (2026-08-16)
 
 
