@@ -3,6 +3,7 @@
  * @description Bootstraps the React application and mounts it to the DOM.
  */
 
+import '@fontsource-variable/manrope';
 import '@fontsource-variable/inter';
 import '@fontsource-variable/jetbrains-mono';
 import { QueryClientProvider } from '@tanstack/react-query';
