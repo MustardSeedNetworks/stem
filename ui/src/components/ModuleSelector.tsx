@@ -256,6 +256,7 @@ export function ModuleSelector({
           {/* Module Header */}
           <button
             type="button"
+            data-testid={`module-toggle-${mod.name}`}
             onClick={(): void => toggleModule(mod.name)}
             title={`${mod.description}. Click to ${expandedModule === mod.name ? 'collapse and hide' : 'expand and choose'} ${mod.tests.length} ${mod.standard} test${mod.tests.length === 1 ? '' : 's'}.`}
             aria-label={`${mod.displayName} module — ${expandedModule === mod.name ? 'collapse' : 'expand'} test list`}
@@ -335,6 +336,7 @@ export function ModuleSelector({
                     >
                       <input
                         type="checkbox"
+                        data-testid={`test-checkbox-${testId}`}
                         checked={selectedTests.includes(testId)}
                         onChange={() => toggleTest(testId)}
                         aria-label={`Include ${testInfo.name} (${testId}) in the test run`}

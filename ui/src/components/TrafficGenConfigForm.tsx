@@ -127,6 +127,7 @@ export function TrafficGenConfigForm({
 
   return (
     <CollapsibleSection
+      testId="trafficgen-config-form"
       title={
         <div className="flex items-center gap-compact">
           <Radio className="w-4 h-4" />

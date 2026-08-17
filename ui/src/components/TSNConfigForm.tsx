@@ -442,6 +442,7 @@ export function TSNConfigForm({
 
   return (
     <CollapsibleSection
+      testId="tsn-config-form"
       title={
         <div className="flex items-center gap-compact">
           <Clock className="w-4 h-4" />

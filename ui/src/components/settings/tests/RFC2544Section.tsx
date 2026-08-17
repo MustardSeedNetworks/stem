@@ -61,6 +61,7 @@ export function RFC2544Section({
 
   return (
     <CollapsibleSection
+      testId="rfc2544-test-section"
       title={
         <div className="flex items-center gap-compact">
           <Zap className="w-4 h-4" aria-hidden="true" />

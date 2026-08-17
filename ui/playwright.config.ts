@@ -40,7 +40,11 @@ export default defineConfig({
     ['json', { outputFile: 'playwright-report/results.json' }],
   ],
   use: {
-    baseURL: process.env.E2E_BASE_URL || 'http://localhost:5173',
+    // 3000, not Vite's 5173 default — vite.config.ts pins server.port to 3000.
+    // Both this and webServer.url said 5173, so a local `npm run test:e2e`
+    // always timed out waiting for a port nothing listens on. CI sets
+    // E2E_BASE_URL and skips webServer entirely, which hid it.
+    baseURL: process.env.E2E_BASE_URL || 'http://localhost:3000',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'on-first-retry',
@@ -72,7 +76,7 @@ export default defineConfig({
     ? undefined
     : {
         command: 'npm run dev',
-        url: 'http://localhost:5173',
+        url: 'http://localhost:3000',
         reuseExistingServer: !process.env.CI,
         timeout: 120000,
       },
