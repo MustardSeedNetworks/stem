@@ -28,7 +28,6 @@ without adding it to `ci-complete`'s `needs:` list makes that job advisory.
 | `docs` | Documentation | Markdown lint (blocking, scoped to changed files) |
 | `build` | Build verification | Multi-arch binaries with full ldflags |
 | `darwin-compile-check` | macOS cross-compile | arm64 compile only |
-| `lighthouse` | Frontend performance | Lighthouse budgets |
 | `e2e` | Browser tests | Playwright, chromium + webkit (browsers cached) |
 | `ci-complete` | Aggregate gate | The required status check |
 
