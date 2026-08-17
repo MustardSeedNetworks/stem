@@ -1,7 +1,4 @@
-import { History } from 'lucide-react';
 import { useAppContext } from '../contexts/AppContext';
-import { Breadcrumbs } from '../ui/Breadcrumbs';
-import { PageHeader } from '../ui/PageHeader';
 
 /**
  * History page — shows the latest test result and points the user at
@@ -12,13 +9,7 @@ import { PageHeader } from '../ui/PageHeader';
 export function HistoryPage() {
   const { testResult } = useAppContext();
   return (
-    <section className="stack-xl">
-      <Breadcrumbs />
-      <PageHeader
-        icon={History}
-        title="History"
-        description="Latest test result snapshot. Open the full history drawer from the sidebar to browse the archive."
-      />
+    <>
       {testResult ? (
         <div className="rounded-lg border border-surface-border bg-surface-raised pad-lg stack-lg">
           <div className="flex flex-wrap items-start justify-between gap-comfortable">
@@ -57,6 +48,6 @@ export function HistoryPage() {
           here for the result snapshot.
         </div>
       )}
-    </section>
+    </>
   );
 }

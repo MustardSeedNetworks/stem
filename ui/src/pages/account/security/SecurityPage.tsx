@@ -110,11 +110,6 @@ export function SecurityPage(): ReactElement {
 
   return (
     <section className="stack-xl">
-      <header>
-        <h1 className="heading-1">{t('title')}</h1>
-        <p className="text-sm text-text-muted">{t('subtitle')}</p>
-      </header>
-
       {error ? (
         <div
           role="alert"

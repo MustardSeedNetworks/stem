@@ -10,17 +10,7 @@
  * Wraps everything in a RoleGuard so a Test-Master stem prompts the
  * operator to switch roles before using the reflector.
  */
-import {
-  Activity,
-  AlertTriangle,
-  Clock,
-  Gauge,
-  Play,
-  RefreshCw,
-  Repeat,
-  Square,
-  Wifi,
-} from 'lucide-react';
+import { Activity, AlertTriangle, Clock, Gauge, Play, RefreshCw, Square, Wifi } from 'lucide-react';
 import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { HeaderInterfaceSelector } from '../components/HeaderInterfaceSelector';
@@ -32,8 +22,6 @@ import { useAppContext } from '../contexts/AppContext';
 import { useRole } from '../contexts/RoleContext';
 import { useCapabilities } from '../hooks/useCapabilities';
 import type { InterfaceInfo, Stats } from '../types/api';
-import { Breadcrumbs } from '../ui/Breadcrumbs';
-import { PageHeader } from '../ui/PageHeader';
 import { type RollupState, StatusRollup } from '../ui/StatusRollup';
 
 function formatNumber(num: number): string {
@@ -270,20 +258,10 @@ export function ReflectorPage(): ReactElement {
   };
 
   return (
-    <section className="stack-xl">
-      <Breadcrumbs />
-      <PageHeader
-        eyebrow="Test module"
-        icon={Repeat}
-        title="Reflector"
-        description="Loopback reflector — bounces frames back to the test master for end-to-end measurement."
-        iconColorClass="text-module-reflector"
-        secondary={reflectorRunning ? `${formatNumber(stats.currentPps)} pps` : undefined}
-      />
-
+    <>
       {/* Live run opens with the rollup, not with stat cards: the first
-          question on this page is whether the run is healthy, and four numbers
-          in a row do not answer it. */}
+        question on this page is whether the run is healthy, and four numbers
+        in a row do not answer it. */}
       <StatusRollup
         state={rollupState}
         headline={rollupHeadline}
@@ -415,7 +393,7 @@ export function ReflectorPage(): ReactElement {
         {/* Reflector profile picker (moved out of Settings drawer) */}
         <ReflectorSection profile={reflectorProfile} onProfileChange={setReflectorProfile} />
       </RoleGuard>
-    </section>
+    </>
   );
 }
 

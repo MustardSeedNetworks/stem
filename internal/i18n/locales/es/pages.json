@@ -1,0 +1,43 @@
+{
+  "accountSecurity": {
+    "description": "Administre la autenticación de dos factores y las llaves de acceso.",
+    "label": "Seguridad",
+    "title": "Seguridad de la cuenta"
+  },
+  "benchmark": {
+    "description": "Mediciones RFC 2544 de rendimiento, latencia, pérdida de tramas y ráfagas consecutivas.",
+    "label": "Benchmark",
+    "title": "Benchmark"
+  },
+  "certify": {
+    "description": "Certificación de reenvío RFC 2889, rendimiento TCP RFC 6349 y redes sensibles al tiempo TSN.",
+    "label": "Certify",
+    "title": "Certify"
+  },
+  "history": {
+    "description": "Última instantánea de resultados de prueba. Abra el cajón de historial completo desde la barra lateral para explorar el archivo.",
+    "label": "Historial",
+    "title": "Historial"
+  },
+  "measure": {
+    "description": "Medición Y.1731 OAM de retardo / pérdida / pérdida sintética.",
+    "label": "Measure",
+    "title": "Measure"
+  },
+  "reflector": {
+    "description": "Reflector de bucle: devuelve las tramas al test master para la medición de extremo a extremo.",
+    "eyebrow": "Módulo de prueba",
+    "label": "Reflector",
+    "title": "Reflector"
+  },
+  "serviceTest": {
+    "description": "Activación de servicio y verificación de rendimiento Y.1564 / MEF.",
+    "label": "ServiceTest",
+    "title": "ServiceTest"
+  },
+  "trafficGen": {
+    "description": "Generación de tráfico personalizado: modele flujos, aplique carga y valide rutas.",
+    "label": "TrafficGen",
+    "title": "TrafficGen"
+  }
+}

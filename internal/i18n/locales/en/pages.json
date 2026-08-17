@@ -1,0 +1,43 @@
+{
+  "accountSecurity": {
+    "description": "Manage two-factor authentication and passkeys.",
+    "label": "Security",
+    "title": "Account Security"
+  },
+  "benchmark": {
+    "description": "RFC 2544 throughput, latency, frame-loss, and back-to-back measurements.",
+    "label": "Benchmark",
+    "title": "Benchmark"
+  },
+  "certify": {
+    "description": "RFC 2889 forwarding, RFC 6349 TCP throughput, and TSN time-sensitive networking certification.",
+    "label": "Certify",
+    "title": "Certify"
+  },
+  "history": {
+    "description": "Latest test result snapshot. Open the full history drawer from the sidebar to browse the archive.",
+    "label": "History",
+    "title": "History"
+  },
+  "measure": {
+    "description": "Y.1731 OAM delay / loss / synthetic loss measurement.",
+    "label": "Measure",
+    "title": "Measure"
+  },
+  "reflector": {
+    "description": "Loopback reflector — bounces frames back to the test master for end-to-end measurement.",
+    "eyebrow": "Test module",
+    "label": "Reflector",
+    "title": "Reflector"
+  },
+  "serviceTest": {
+    "description": "Y.1564 / MEF service activation and performance verification.",
+    "label": "ServiceTest",
+    "title": "ServiceTest"
+  },
+  "trafficGen": {
+    "description": "Custom traffic generation — shape streams, drive load, and validate paths.",
+    "label": "TrafficGen",
+    "title": "TrafficGen"
+  }
+}

@@ -21,6 +21,7 @@ import type enCommon from '@locales/en/common.json';
 import type enErrors from '@locales/en/errors.json';
 import type enHelp from '@locales/en/help.json';
 import type enModules from '@locales/en/modules.json';
+import type enPages from '@locales/en/pages.json';
 import type enParams from '@locales/en/params.json';
 import type enRecovery from '@locales/en/recovery.json';
 import type enSecurity from '@locales/en/security.json';
@@ -40,6 +41,7 @@ export type SetupTranslations = typeof enSetup;
 export type CliTranslations = typeof enCli;
 export type ParamsTranslations = typeof enParams;
 export type HelpTranslations = typeof enHelp;
+export type PagesTranslations = typeof enPages;
 
 /**
  * All translations combined.
@@ -55,6 +57,7 @@ export interface Translations {
   cli: CliTranslations;
   params: ParamsTranslations;
   help: HelpTranslations;
+  pages: PagesTranslations;
 }
 
 /**
