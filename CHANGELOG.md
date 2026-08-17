@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.13](https://github.com/MustardSeedNetworks/stem/compare/v0.24.12...v0.24.13) (2026-08-17)
+
+
+### Documentation
+
+* drop Lighthouse from the CI job reference ([#651](https://github.com/MustardSeedNetworks/stem/issues/651)) ([69634a1](https://github.com/MustardSeedNetworks/stem/commit/69634a1b30f5667285ab16b1577a5daa6a471d4c)), closes [#634](https://github.com/MustardSeedNetworks/stem/issues/634)
+
+
+### Continuous Integration
+
+* make CI conformance a blocking gate ([#648](https://github.com/MustardSeedNetworks/stem/issues/648)) ([50054f3](https://github.com/MustardSeedNetworks/stem/commit/50054f3bcac4f8eab92ca2493ffaba7f8c713780))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#646](https://github.com/MustardSeedNetworks/stem/issues/646)) ([d280379](https://github.com/MustardSeedNetworks/stem/commit/d280379a3eb800fe63aeefc5b7cb221f32da5e35))
+
 ## [0.24.12](https://github.com/MustardSeedNetworks/stem/compare/v0.24.11...v0.24.12) (2026-08-17)
 
 
