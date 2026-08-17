@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.12](https://github.com/MustardSeedNetworks/stem/compare/v0.24.11...v0.24.12) (2026-08-17)
+
+
+### Bug Fixes
+
+* load the module catalogue from /api/v1/modules ([#643](https://github.com/MustardSeedNetworks/stem/issues/643)) ([74815cd](https://github.com/MustardSeedNetworks/stem/commit/74815cd9186a681d7160d0e96be6983f6762e5ee))
+
+
+### Tests
+
+* **e2e:** assert the RoleGuard contract and cover the RFC 2544 run journey ([#637](https://github.com/MustardSeedNetworks/stem/issues/637)) ([33a2fb8](https://github.com/MustardSeedNetworks/stem/commit/33a2fb8dcf497833689a8e9d73a8c6fd7c3bfd5c))
+
+
+### Continuous Integration
+
+* drop Lighthouse ([#635](https://github.com/MustardSeedNetworks/stem/issues/635)) ([05ec9c6](https://github.com/MustardSeedNetworks/stem/commit/05ec9c6ce3489810b27744e647b55ae0aad3bb81))
+
+
+### Miscellaneous
+
+* **deps:** update module github.com/google/go-licenses to v2 ([#633](https://github.com/MustardSeedNetworks/stem/issues/633)) ([733f748](https://github.com/MustardSeedNetworks/stem/commit/733f748add17b65dfc58dc323ca911b28c678ce6))
+
 ## [0.24.11](https://github.com/MustardSeedNetworks/stem/compare/v0.24.10...v0.24.11) (2026-08-16)
 
 
