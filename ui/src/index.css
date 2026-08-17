@@ -218,7 +218,7 @@ body {
 
   /* Page titles - largest, used sparingly (login, major pages) */
   .heading-1 {
-    @apply text-2xl sm:text-3xl font-bold text-text-primary leading-tight tracking-tight;
+    @apply text-2xl sm:text-3xl font-extrabold text-text-primary leading-tight tracking-[-0.025em];
   }
 
   /* Section/modal titles - prominent but secondary to h1 */

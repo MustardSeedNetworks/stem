@@ -29,6 +29,18 @@ interface BreadcrumbItem {
 
 interface PageHeaderProps {
   title: string;
+  /**
+   * Kicker above the title naming the product domain — "Reflector", "Benchmark".
+   * Optional so existing callers are unaffected.
+   */
+  eyebrow?: string;
+  /**
+   * The slot beside the primary action. Prefer a state readout to a second
+   * button: "Uptime 02:41:19", "Last poll 41s", "64 targets". A page with no
+   * single most-likely action should have no primary button rather than an
+   * invented one.
+   */
+  secondary?: ReactNode;
   description?: string;
   icon?: LucideIcon;
   iconColorClass?: string;
@@ -120,6 +132,8 @@ const HelpPanel: FC<HelpPanelProps> = ({ title, children, onClose }) => {
 
 export const PageHeader: FC<PageHeaderProps> = ({
   title,
+  eyebrow,
+  secondary,
   description,
   icon,
   iconColorClass = 'text-brand-primary',
@@ -139,6 +153,11 @@ export const PageHeader: FC<PageHeaderProps> = ({
         <div className="flex items-center gap-default">
           {icon ? createElement(icon, { className: `h-8 w-8 ${iconColorClass}` }) : null}
           <div>
+            {eyebrow ? (
+              <p className="kicker mb-1" data-testid="page-header-eyebrow">
+                {eyebrow}
+              </p>
+            ) : null}
             <h1 className="heading-1 font-display" data-testid="page-header-title">
               {title}
             </h1>
@@ -146,6 +165,11 @@ export const PageHeader: FC<PageHeaderProps> = ({
           </div>
         </div>
         <div className="flex items-center gap-default">
+          {secondary ? (
+            <div className="figure text-sm text-text-secondary" data-testid="page-header-secondary">
+              {secondary}
+            </div>
+          ) : null}
           {actions}
           {help ? (
             <button
