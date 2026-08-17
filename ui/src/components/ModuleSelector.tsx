@@ -191,29 +191,43 @@ export function ModuleSelector({
   const [modules, setModules] = useState<Module[]>([]);
   const [expandedModule, setExpandedModule] = useState<string | null>('benchmark');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Fetch modules from API
+  // Fetch the module catalogue from the daemon.
+  //
+  // This used to request '/api/modules' — no /v1, unlike every other call in
+  // the app. That path does not 404: it falls through to the SPA handler and
+  // returns index.html with HTTP 200, so `response.ok` was true, `.json()`
+  // threw on HTML, and the catch silently substituted a hardcoded list. The
+  // catalogue therefore never reflected the daemon, and nothing surfaced it.
   useEffect(() => {
     const fetchModules = async (): Promise<void> => {
       try {
-        const response = await fetch('/api/modules');
-        if (response.ok) {
-          const data = await (response.json() as Promise<{ modules?: Module[] }>);
-          setModules(data.modules ?? []);
-        } else {
-          // Use fallback static data if API unavailable
-          setModules(getStaticModules());
+        const response = await fetch('/api/v1/modules');
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
         }
-      } catch {
-        // Use fallback static data
-        setModules(getStaticModules());
+        // An HTML body means the request was routed to the SPA rather than the
+        // API. Checking explicitly keeps that failure loud instead of letting
+        // it read as a parse error.
+        const contentType = response.headers.get('content-type') ?? '';
+        if (!contentType.includes('application/json')) {
+          throw new Error(`expected JSON, got ${contentType || 'no content-type'}`);
+        }
+        const data = (await response.json()) as { modules?: Module[] };
+        setModules(data.modules ?? []);
+        setError(null);
+      } catch (cause) {
+        // No static fallback. One that cannot be told apart from success is
+        // how this went unnoticed; an operator choosing tests the daemon does
+        // not offer would fail at start time anyway.
+        setModules([]);
+        setError(cause instanceof Error ? cause.message : 'Failed to load modules');
       } finally {
         setLoading(false);
       }
     };
-    fetchModules().catch(() => {
-      // Handle fetch error silently - fallback already set
-    });
+    void fetchModules();
   }, []);
 
   const toggleTest = (test: string): void => {
@@ -247,6 +261,14 @@ export function ModuleSelector({
 
   if (loading) {
     return <div className="text-center py-8 text-text-muted">Loading modules...</div>;
+  }
+
+  if (error) {
+    return (
+      <div role="alert" className="text-center py-8 text-status-error">
+        Could not load the test modules from this stem ({error}).
+      </div>
+    );
   }
 
   return (
@@ -365,76 +387,5 @@ export function ModuleSelector({
 }
 
 // Fallback static module data when API is unavailable
-function getStaticModules(): Module[] {
-  return [
-    {
-      name: 'reflector',
-      displayName: 'Reflector',
-      description: 'Packet reflection/loopback for remote device testing (Tier 1 mode)',
-      color: 'var(--color-module-reflector)',
-      standard: 'Loopback/Echo',
-      tests: ['reflect'],
-    },
-    {
-      name: 'benchmark',
-      displayName: 'Benchmark',
-      description: 'RFC 2544 device benchmarking',
-      color: 'var(--color-module-benchmark)',
-      standard: 'RFC 2544',
-      tests: [
-        'rfc2544_throughput',
-        'rfc2544_latency',
-        'rfc2544_frame_loss',
-        'rfc2544_back_to_back',
-        'rfc2544_system_recovery',
-        'rfc2544_reset',
-      ],
-    },
-    {
-      name: 'servicetest',
-      displayName: 'ServiceTest',
-      description: 'Y.1564 and MEF service activation',
-      color: 'var(--color-module-servicetest)',
-      standard: 'ITU-T Y.1564 / MEF',
-      tests: ['y1564_config', 'y1564_perf', 'y1564', 'mef_config', 'mef_perf', 'mef'],
-    },
-    {
-      name: 'trafficgen',
-      displayName: 'TrafficGen',
-      description: 'Custom traffic stream generation with configurable patterns',
-      color: 'var(--color-module-trafficgen)',
-      standard: 'Custom Traffic',
-      tests: ['custom_stream'],
-    },
-    {
-      name: 'measure',
-      displayName: 'Measure',
-      description: 'Y.1731 OAM performance measurement',
-      color: 'var(--color-module-measure)',
-      standard: 'ITU-T Y.1731',
-      tests: ['y1731_delay', 'y1731_loss', 'y1731_slm', 'y1731_loopback'],
-    },
-    {
-      name: 'certify',
-      displayName: 'Certify',
-      description: 'Compliance certification testing',
-      color: 'var(--color-module-certify)',
-      standard: 'RFC 2889 / RFC 6349 / TSN',
-      tests: [
-        'rfc2889_forwarding',
-        'rfc2889_caching',
-        'rfc2889_learning',
-        'rfc2889_broadcast',
-        'rfc2889_congestion',
-        'rfc6349_throughput',
-        'rfc6349_path',
-        'tsn_timing',
-        'tsn_isolation',
-        'tsn_latency',
-        'tsn',
-      ],
-    },
-  ];
-}
 
 export default ModuleSelector;
