@@ -34,6 +34,7 @@ import { useCapabilities } from '../hooks/useCapabilities';
 import type { InterfaceInfo, Stats } from '../types/api';
 import { Breadcrumbs } from '../ui/Breadcrumbs';
 import { PageHeader } from '../ui/PageHeader';
+import { type RollupState, StatusRollup } from '../ui/StatusRollup';
 
 function formatNumber(num: number): string {
   if (num >= 1e9) {
@@ -236,6 +237,34 @@ export function ReflectorPage(): ReactElement {
     'Reflector mode is not available on this platform. Use the Linux build to act as a Reflector node.',
   );
 
+  /* The platform check is the honest "unknown": on macOS and Windows the
+     reflector dataplane does not exist, so its counters are not zero, they are
+     unmeasurable. An error is crit, a cancelled run is degraded, and idle is
+     calm rather than green — nothing running is the normal resting state. */
+  const rollupState: RollupState = !reflectorSupported
+    ? 'unknown'
+    : stats.testStatus === 'error'
+      ? 'crit'
+      : stats.testStatus === 'cancelled'
+        ? 'warn'
+        : 'ok';
+
+  const rollupHeadline = !reflectorSupported
+    ? 'Reflector counters are not available on this platform'
+    : stats.testStatus === 'error'
+      ? stats.errorMessage || 'The reflector stopped with an error'
+      : stats.testStatus === 'cancelled'
+        ? 'The last reflector run was cancelled'
+        : reflectorRunning
+          ? `Reflecting on ${selectedInterface || 'the selected interface'}`
+          : 'Reflector is idle';
+
+  const rollupBody = !reflectorSupported
+    ? platformReason || unsupportedTooltip
+    : reflectorRunning
+      ? undefined
+      : 'Pick an interface and start the reflector for a test master to measure against.';
+
   const handleSwitchToTestMaster = (): void => {
     setRole('test_master');
   };
@@ -244,10 +273,26 @@ export function ReflectorPage(): ReactElement {
     <section className="stack-xl">
       <Breadcrumbs />
       <PageHeader
+        eyebrow="Test module"
         icon={Repeat}
         title="Reflector"
         description="Loopback reflector — bounces frames back to the test master for end-to-end measurement."
         iconColorClass="text-module-reflector"
+        secondary={reflectorRunning ? `${formatNumber(stats.currentPps)} pps` : undefined}
+      />
+
+      {/* Live run opens with the rollup, not with stat cards: the first
+          question on this page is whether the run is healthy, and four numbers
+          in a row do not answer it. */}
+      <StatusRollup
+        state={rollupState}
+        headline={rollupHeadline}
+        body={rollupBody}
+        figures={[
+          { label: 'Received', value: formatNumber(stats.packetsReceived) },
+          { label: 'Sent', value: formatNumber(stats.packetsSent) },
+          { label: 'Rate', value: `${formatNumber(stats.currentPps)} pps` },
+        ]}
       />
 
       <RoleGuard requires="reflector">
