@@ -9,13 +9,13 @@
  * @license Proprietary
  */
 
-import { memo, type ReactElement, type ReactNode, Suspense } from 'react';
+import { type ReactElement, type ReactNode, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router';
 import { HelpDrawer } from './components/HelpDrawer';
 import { ResultHistory } from './components/ResultHistory';
 import { SettingsDrawer } from './components/SettingsDrawer';
 import { TestResults } from './components/TestResults';
-import { navGroups } from './navGroups';
+import { useNavGroups } from './navGroups';
 import { type PageConfig, usePages } from './pageRegistry';
 import { useShellStore } from './stores/shell-store';
 import { useTestStore } from './stores/test-store';
@@ -33,6 +33,7 @@ export interface AppShellProps {
 }
 
 export function AppShell({ version, topBar, testResult, testStatus }: AppShellProps): ReactElement {
+  const navGroups = useNavGroups();
   const pages = usePages();
   const settingsOpen = useShellStore((s) => s.settingsOpen);
   const setSettingsOpen = useShellStore((s) => s.setSettingsOpen);
@@ -132,18 +133,18 @@ export function AppShell({ version, topBar, testResult, testStatus }: AppShellPr
  * breadcrumbs plus the page header — from the registry entry rather
  * than from the page body. Pages render only their own content.
  */
-const PageWithHeader = memo(({ page, children }: { page: PageConfig; children: ReactNode }) => (
-  <section className="stack-xl">
-    <Breadcrumbs />
-    <PageHeader
-      icon={page.icon}
-      iconColorClass={page.iconColorClass}
-      eyebrow={page.eyebrow}
-      title={page.title}
-      description={page.description}
-    />
-    {children}
-  </section>
-));
-
-PageWithHeader.displayName = 'PageWithHeader';
+function PageWithHeader({ page, children }: { page: PageConfig; children: ReactNode }) {
+  return (
+    <section className="stack-xl">
+      <Breadcrumbs />
+      <PageHeader
+        icon={page.icon}
+        iconColorClass={page.iconColorClass}
+        eyebrow={page.eyebrow}
+        title={page.title}
+        description={page.description}
+      />
+      {children}
+    </section>
+  );
+}

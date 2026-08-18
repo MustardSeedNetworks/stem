@@ -19,7 +19,7 @@ import {
   Waves,
   Zap,
 } from 'lucide-react';
-import { type FC, lazy, useMemo } from 'react';
+import { type FC, lazy } from 'react';
 import { useTranslation } from 'react-i18next';
 
 // Eager — default landing.
@@ -151,21 +151,17 @@ const staticPages: PageDef[] = [
  */
 export function usePages(): PageConfig[] {
   const { t } = useTranslation('pages');
-  return useMemo(
-    () =>
-      staticPages.map((p) => ({
-        path: p.path,
-        label: t(`${p.i18nKey}.label`),
-        // A page has an eyebrow when its locale namespace declares one, so the
-        // copy lives in one place instead of being mirrored by a flag here.
-        // Pages still awaiting their archetype pass have none.
-        eyebrow: t(`${p.i18nKey}.eyebrow`, { defaultValue: '' }) || undefined,
-        title: t(`${p.i18nKey}.title`),
-        description: t(`${p.i18nKey}.description`),
-        icon: p.icon,
-        iconColorClass: p.iconColorClass,
-        component: p.component,
-      })),
-    [t],
-  );
+  return staticPages.map((p) => ({
+    path: p.path,
+    label: t(`${p.i18nKey}.label`),
+    // A page has an eyebrow when its locale namespace declares one, so the
+    // copy lives in one place instead of being mirrored by a flag here.
+    // Pages still awaiting their archetype pass have none.
+    eyebrow: t(`${p.i18nKey}.eyebrow`, { defaultValue: '' }) || undefined,
+    title: t(`${p.i18nKey}.title`),
+    description: t(`${p.i18nKey}.description`),
+    icon: p.icon,
+    iconColorClass: p.iconColorClass,
+    component: p.component,
+  }));
 }
