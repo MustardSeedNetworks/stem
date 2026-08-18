@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.17](https://github.com/MustardSeedNetworks/stem/compare/v0.24.16...v0.24.17) (2026-08-18)
+
+
+### Bug Fixes
+
+* **e2e:** stop the suite exhausting its own per-IP API rate limit ([#673](https://github.com/MustardSeedNetworks/stem/issues/673)) ([918fdd6](https://github.com/MustardSeedNetworks/stem/commit/918fdd680f0b12fd3051e0190b9302ac2971e936))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#676](https://github.com/MustardSeedNetworks/stem/issues/676)) ([4ea54e6](https://github.com/MustardSeedNetworks/stem/commit/4ea54e65fa39fc96f58c74a553b8ac50f683f3dc))
+
 ## [0.24.16](https://github.com/MustardSeedNetworks/stem/compare/v0.24.15...v0.24.16) (2026-08-18)
 
 
