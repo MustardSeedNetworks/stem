@@ -10,6 +10,9 @@ package ratelimit
 import (
 	"net"
 	"net/http"
+	"os"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -29,6 +32,16 @@ const (
 	APIRateLimit = 100
 	// APIBurstLimit is the burst limit for standard API endpoints.
 	APIBurstLimit = 100
+
+	// APIRateLimitEnv optionally RAISES APIRateLimit for a deployment whose
+	// legitimate traffic arrives from one address. The E2E harness is the
+	// motivating case: Playwright drives the whole suite from a single runner
+	// IP against one backend, fullyParallel across two workers and two browser
+	// projects, so the per-IP bucket is shared by every spec at once. It ran
+	// dry in merge_group run 32174274597 and the UI faithfully rendered
+	// "Could not load the test modules from this stem (HTTP 429)" — a real 429
+	// from a real limiter, not a test defect.
+	APIRateLimitEnv = "STEM_API_RATE_LIMIT"
 
 	// CleanupInterval is how often to clean up old rate limiter entries.
 	CleanupInterval = 10 * time.Minute
@@ -112,11 +125,51 @@ func NewAuthRateLimiter() *RateLimiter {
 }
 
 // NewAPIRateLimiter creates a rate limiter configured for standard API endpoints.
-// Limits to 100 requests per minute with burst of 100.
+// Limits to 100 requests per minute with burst of 100, unless APIRateLimitEnv
+// raises it.
 func NewAPIRateLimiter() *RateLimiter {
+	limit := apiRateLimitFromEnv()
 	// Convert per-minute rate to per-second for rate.Limit.
-	r := rate.Limit(float64(APIRateLimit) / secondsPerMinute)
-	return NewRateLimiter(r, APIBurstLimit)
+	r := rate.Limit(float64(limit) / secondsPerMinute)
+	return NewRateLimiter(r, limit)
+}
+
+// apiRateLimitFromEnv resolves the per-minute API rate limit, honouring
+// APIRateLimitEnv.
+//
+// The override is deliberately one-directional: a value at or below the
+// compiled-in default is rejected, so the knob can relax the limiter for a
+// high-volume client but can never weaken it below its baseline and can never
+// switch it off. That keeps "standard API endpoints are rate limited" a
+// property of the binary rather than of its environment. The auth limiter has
+// no equivalent knob and is untouched.
+//
+// A malformed or out-of-range value falls back to the default and says so
+// rather than failing to start — an unparseable limit is an operator typo, and
+// refusing to boot the server over it trades a small misconfiguration for an
+// outage.
+func apiRateLimitFromEnv() int {
+	raw, ok := os.LookupEnv(APIRateLimitEnv)
+	if !ok {
+		return APIRateLimit
+	}
+
+	limit, err := strconv.Atoi(strings.TrimSpace(raw))
+	if err != nil || limit <= APIRateLimit {
+		logging.Warn("Ignoring API rate limit override; using the default",
+			"env", APIRateLimitEnv,
+			"value", raw,
+			"default", APIRateLimit,
+		)
+		return APIRateLimit
+	}
+
+	logging.Info("API rate limit raised by environment override",
+		"env", APIRateLimitEnv,
+		"limit", limit,
+		"default", APIRateLimit,
+	)
+	return limit
 }
 
 // GetLimiter returns the rate limiter for the given IP address.
