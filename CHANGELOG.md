@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.14](https://github.com/MustardSeedNetworks/stem/compare/v0.24.13...v0.24.14) (2026-08-18)
+
+
+### Features
+
+* **ui:** give History the List + detail archetype and retire its drawer ([#659](https://github.com/MustardSeedNetworks/stem/issues/659)) ([1ee7fca](https://github.com/MustardSeedNetworks/stem/commit/1ee7fcac7cb011665a73708a51a045cd5a94d9a6))
+
 ## [0.24.13](https://github.com/MustardSeedNetworks/stem/compare/v0.24.12...v0.24.13) (2026-08-17)
 
 
