@@ -3,7 +3,35 @@ import type { ReactRenderer } from '@storybook/react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import type { ReactElement } from 'react';
 import { CollapsibleSection } from '../CollapsibleSection';
-import { CardRow } from '../ui/Card';
+import { StatusBadge } from '../ui/StatusBadge';
+import type { Status } from '../ui/StatusConfig';
+
+/** Stand-in for the section body — the story is about the section, not its contents. */
+function Row({
+  label,
+  value,
+  status,
+  mono = false,
+}: {
+  label: string;
+  value: string;
+  status?: Status;
+  mono?: boolean;
+}): ReactElement {
+  return (
+    <div className="flex items-center justify-between py-1">
+      <span className="body-small shrink-0">{label}</span>
+      <span
+        className={`body-small inline-flex items-center gap-1 font-medium text-text-primary${
+          mono ? ' font-mono tabular-nums' : ''
+        }`}
+      >
+        {status ? <StatusBadge status={status} size="sm" /> : null}
+        {value}
+      </span>
+    </div>
+  );
+}
 
 const meta: Meta<typeof CollapsibleSection> = {
   title: 'Components/CollapsibleSection',
@@ -61,9 +89,9 @@ export const Default: Story = {
     defaultOpen: false,
     children: (
       <div className="space-y-2">
-        <CardRow label="Frame Size" value="1518 bytes" />
-        <CardRow label="Duration" value="60 seconds" />
-        <CardRow label="Rate Limit" value="1 Gbps" />
+        <Row label="Frame Size" value="1518 bytes" />
+        <Row label="Duration" value="60 seconds" />
+        <Row label="Rate Limit" value="1 Gbps" />
       </div>
     ),
   },
@@ -76,9 +104,9 @@ export const DefaultOpen: Story = {
     defaultOpen: true,
     children: (
       <div className="space-y-2">
-        <CardRow label="Protocol" value="TCP" />
-        <CardRow label="Port" value="5001" />
-        <CardRow label="Buffer Size" value="128 KB" />
+        <Row label="Protocol" value="TCP" />
+        <Row label="Port" value="5001" />
+        <Row label="Buffer Size" value="128 KB" />
       </div>
     ),
   },
@@ -110,9 +138,9 @@ export const WithStatus: Story = {
     defaultOpen: true,
     children: (
       <div className="space-y-2">
-        <CardRow label="Throughput" value="942.5 Mbps" status="success" />
-        <CardRow label="Latency" value="1.2 ms" status="success" />
-        <CardRow label="Frame Loss" value="0.00%" status="success" />
+        <Row label="Throughput" value="942.5 Mbps" status="success" />
+        <Row label="Latency" value="1.2 ms" status="success" />
+        <Row label="Frame Loss" value="0.00%" status="success" />
       </div>
     ),
   },
@@ -126,8 +154,8 @@ export const WarningStatus: Story = {
     defaultOpen: true,
     children: (
       <div className="space-y-2">
-        <CardRow label="Throughput" value="750 Mbps" status="warning" />
-        <CardRow label="Note" value="Below expected threshold" />
+        <Row label="Throughput" value="750 Mbps" status="warning" />
+        <Row label="Note" value="Below expected threshold" />
       </div>
     ),
   },
@@ -141,8 +169,8 @@ export const ErrorStatus: Story = {
     defaultOpen: true,
     children: (
       <div className="space-y-2">
-        <CardRow label="Status" value="Disconnected" status="error" />
-        <CardRow label="Last Seen" value="5 min ago" />
+        <Row label="Status" value="Disconnected" status="error" />
+        <Row label="Last Seen" value="5 min ago" />
       </div>
     ),
   },
@@ -156,9 +184,9 @@ export const CompactVariant: Story = {
     defaultOpen: true,
     children: (
       <div className="space-y-1">
-        <CardRow label="IP Address" value="192.168.1.100" mono={true} />
-        <CardRow label="Port" value="5001" mono={true} />
-        <CardRow label="Status" value="Active" status="success" />
+        <Row label="IP Address" value="192.168.1.100" mono={true} />
+        <Row label="Port" value="5001" mono={true} />
+        <Row label="Status" value="Active" status="success" />
       </div>
     ),
   },
@@ -174,8 +202,8 @@ export const CompactWithStatus: Story = {
     defaultOpen: true,
     children: (
       <div className="space-y-1">
-        <CardRow label="Latency" value="1.2 ms" status="success" />
-        <CardRow label="Jitter" value="0.3 ms" status="success" />
+        <Row label="Latency" value="1.2 ms" status="success" />
+        <Row label="Jitter" value="0.3 ms" status="success" />
       </div>
     ),
   },
@@ -203,8 +231,8 @@ export const MultipleSections: Story = {
 
       <CollapsibleSection title="Advanced Settings">
         <div className="space-y-2">
-          <CardRow label="Timeout" value="30s" />
-          <CardRow label="Retries" value="3" />
+          <Row label="Timeout" value="30s" />
+          <Row label="Retries" value="3" />
         </div>
       </CollapsibleSection>
     </div>
@@ -224,9 +252,9 @@ export const CustomTitle: Story = {
     defaultOpen: true,
     children: (
       <div className="space-y-1">
-        <CardRow label="eth0" value="Connected" status="success" />
-        <CardRow label="eth1" value="Connected" status="success" />
-        <CardRow label="wlan0" value="Connected" status="success" />
+        <Row label="eth0" value="Connected" status="success" />
+        <Row label="eth1" value="Connected" status="success" />
+        <Row label="wlan0" value="Connected" status="success" />
       </div>
     ),
   },

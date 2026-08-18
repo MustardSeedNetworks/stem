@@ -16,10 +16,6 @@ export { Alert } from './Alert';
 // Buttons
 export { Button, IconButton } from './Button';
 
-// Cards
-export type { Status } from './Card';
-export { Card, CardDivider, CardRow, CardValue } from './Card';
-
 // Combobox + command palette
 export type { ComboboxProps } from './Combobox';
 export { Combobox } from './Combobox';
@@ -47,7 +43,7 @@ export { Modal, ModalBody, ModalFooter, ModalHeader } from './Modal';
 export type { StatusType } from './StatusBadge';
 // Status + badges
 export { StatusBadge } from './StatusBadge';
-export type { SizeKey, Status as StatusKey } from './StatusConfig';
+export type { SizeKey, Status } from './StatusConfig';
 export { getSizeConfig, getStatusConfig, sizeConfig, statusConfig } from './StatusConfig';
 
 // Tags
