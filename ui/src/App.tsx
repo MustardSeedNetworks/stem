@@ -22,12 +22,13 @@ import { RoleProvider, useRole } from './contexts/RoleContext';
 import { useBuildVersion } from './hooks/useBuildVersion';
 import { useTestExecution } from './hooks/useTestExecution';
 import { useTheme } from './hooks/useTheme';
-import { navGroups } from './navGroups';
+import { useNavGroups } from './navGroups';
 import { useAuthStore } from './stores/auth-store';
 import { useShellStore } from './stores/shell-store';
 import { useTestStore } from './stores/test-store';
 
 function AppContent(): ReactElement {
+  const navGroups = useNavGroups();
   const { isDark, toggleTheme } = useTheme();
   const buildVersion = useBuildVersion();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);

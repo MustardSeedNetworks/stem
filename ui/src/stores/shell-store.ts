@@ -16,8 +16,6 @@ interface ShellState {
   settingsOpen: boolean;
   /** Help drawer visibility. */
   helpOpen: boolean;
-  /** History drawer visibility. */
-  historyOpen: boolean;
   /** Command palette (⌘K / Ctrl+K) visibility. */
   paletteOpen: boolean;
 }
@@ -25,7 +23,6 @@ interface ShellState {
 interface ShellActions {
   setSettingsOpen: (open: boolean) => void;
   setHelpOpen: (open: boolean) => void;
-  setHistoryOpen: (open: boolean) => void;
   setPaletteOpen: (open: boolean) => void;
 }
 
@@ -36,11 +33,9 @@ export const useShellStore = create<ShellStore>()(
     (set) => ({
       settingsOpen: false,
       helpOpen: false,
-      historyOpen: false,
       paletteOpen: false,
       setSettingsOpen: (open) => set({ settingsOpen: open }, false, 'setSettingsOpen'),
       setHelpOpen: (open) => set({ helpOpen: open }, false, 'setHelpOpen'),
-      setHistoryOpen: (open) => set({ historyOpen: open }, false, 'setHistoryOpen'),
       setPaletteOpen: (open) => set({ paletteOpen: open }, false, 'setPaletteOpen'),
     }),
     { name: 'shell-store' },

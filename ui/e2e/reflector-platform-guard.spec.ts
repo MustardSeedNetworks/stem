@@ -36,11 +36,12 @@ test.describe('Reflector page platform guard', () => {
     // App auto-redirects "/" to "/reflector"; assert URL just to be sure.
     await expect(page).toHaveURL(/\/reflector(\?|$)/);
 
-    // Banner is visible with the title + the reason from the payload.
-    await expect(
-      page.getByText(/Reflector mode is not available on this platform\./i),
-    ).toBeVisible();
-    await expect(page.getByText(/CGO \+ Linux required/i)).toBeVisible();
+    // Banner is visible with the title + the reason from the payload. Scoped
+    // to the banner: the rollup reports the same backend reason, by design.
+    const banner = page.getByTestId('reflector-platform-banner');
+    await expect(banner).toBeVisible();
+    await expect(banner).toContainText(/Reflector mode is not available on this platform\./i);
+    await expect(banner).toContainText(/CGO \+ Linux required/i);
 
     // The Switch to Test Master button is reachable inside the banner.
     await expect(page.getByTestId('role-chip-test_master')).toBeVisible();

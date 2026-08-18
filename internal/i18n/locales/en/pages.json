@@ -1,0 +1,62 @@
+{
+  "accountSecurity": {
+    "description": "Manage two-factor authentication and passkeys.",
+    "label": "Security",
+    "title": "Account Security"
+  },
+  "benchmark": {
+    "description": "RFC 2544 throughput, latency, frame-loss, and back-to-back measurements.",
+    "label": "Benchmark",
+    "title": "Benchmark"
+  },
+  "certify": {
+    "description": "RFC 2889 forwarding, RFC 6349 TCP throughput, and TSN time-sensitive networking certification.",
+    "label": "Certify",
+    "title": "Certify"
+  },
+  "history": {
+    "clear": "Clear history",
+    "completed": "Completed",
+    "deleteRun": "Delete run",
+    "description": "Every run recorded on this machine, with its verdict and metrics.",
+    "duration": "Duration",
+    "emptyDetail": "Select a run to see its verdict and metrics.",
+    "emptyNoMatch": "No run matches this filter.",
+    "emptyNoRuns": "No test has completed yet. Run a test from the Tests pages and it will be recorded here.",
+    "error": "Error",
+    "failed": "Failed",
+    "filterAll": "All",
+    "filterFailed": "Failed",
+    "label": "History",
+    "metrics": "Metrics",
+    "noVerdict": "No verdict recorded",
+    "passed": "Passed",
+    "runsRecorded_one": "{{count}} run recorded on this machine",
+    "runsRecorded_other": "{{count}} runs recorded on this machine",
+    "selectedRun": "Selected run",
+    "started": "Started",
+    "status": "Status",
+    "title": "History"
+  },
+  "measure": {
+    "description": "Y.1731 OAM delay / loss / synthetic loss measurement.",
+    "label": "Measure",
+    "title": "Measure"
+  },
+  "reflector": {
+    "description": "Loopback reflector — bounces frames back to the test master for end-to-end measurement.",
+    "eyebrow": "Test module",
+    "label": "Reflector",
+    "title": "Reflector"
+  },
+  "serviceTest": {
+    "description": "Y.1564 / MEF service activation and performance verification.",
+    "label": "ServiceTest",
+    "title": "ServiceTest"
+  },
+  "trafficGen": {
+    "description": "Custom traffic generation — shape streams, drive load, and validate paths.",
+    "label": "TrafficGen",
+    "title": "TrafficGen"
+  }
+}

@@ -1,8 +1,16 @@
+/**
+ * navGroups <-> pageRegistry parity guard.
+ */
+
+import { renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { navGroups } from './navGroups';
-import { pages } from './pageRegistry';
+import { useNavGroups } from './navGroups';
+import { usePages } from './pageRegistry';
 
 describe('navGroups <-> pageRegistry parity', () => {
+  const pages = renderHook(() => usePages()).result.current;
+  const navGroups = renderHook(() => useNavGroups()).result.current;
+
   const navPaths = new Set(navGroups.flatMap((group) => group.items.map((item) => item.path)));
   const routePaths = new Set(pages.map((page) => page.path));
 

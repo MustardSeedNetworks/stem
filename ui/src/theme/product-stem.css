@@ -1,0 +1,43 @@
+/* Stem — product brand values.
+ *
+ * Stem's anchor stays blue (#1976d2 family): the universal
+ * test-and-measurement colour, per the 2026-05-22 audit. The six module
+ * accents below remain, with one change of ROLE: they are no longer used as
+ * button fills. Six saturated fills competed with status for attention and
+ * made the run-state band harder to find. They now appear only as module
+ * badges (10% tint + text) and as chart series colours.
+ */
+
+:root {
+  --color-brand-primary: #0d5fb0;
+  --color-brand-accent: #0a4d8f;
+  --color-brand-gold: #8a6208;
+  --color-text-accent: #0d5fb0;
+  --color-on-brand: #ffffff;
+  --color-on-danger: #ffffff;
+  --color-on-success: #ffffff;
+
+  --color-module-reflector: #0e6f80;
+  --color-module-benchmark: #a83232;
+  --color-module-servicetest: #a14a12;
+  --color-module-trafficgen: #7d5c06;
+  --color-module-measure: #1a4fb0;
+  --color-module-certify: #5b3aa8;
+}
+
+.dark {
+  --color-brand-primary: #64b5f6;
+  --color-brand-accent: #8ecbf9;
+  --color-brand-gold: #f5c451;
+  --color-text-accent: #8ecbf9;
+  --color-on-brand: #08100c;
+  --color-on-danger: #08100c;
+  --color-on-success: #08100c;
+
+  --color-module-reflector: #22d3ee;
+  --color-module-benchmark: #f87171;
+  --color-module-servicetest: #fb923c;
+  --color-module-trafficgen: #fbbf24;
+  --color-module-measure: #60a5fa;
+  --color-module-certify: #a78bfa;
+}

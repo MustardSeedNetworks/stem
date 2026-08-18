@@ -12,14 +12,16 @@
 import { type ReactElement, type ReactNode, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router';
 import { HelpDrawer } from './components/HelpDrawer';
-import { ResultHistory } from './components/ResultHistory';
 import { SettingsDrawer } from './components/SettingsDrawer';
 import { TestResults } from './components/TestResults';
-import { navGroups } from './navGroups';
-import { pages } from './pageRegistry';
+import { useNavGroups } from './navGroups';
+import { type PageConfig, usePages } from './pageRegistry';
+import { useRecordTestResult } from './stores/history-store';
 import { useShellStore } from './stores/shell-store';
 import { useTestStore } from './stores/test-store';
 import type { Stats, TestResult } from './types/api';
+import { Breadcrumbs } from './ui/Breadcrumbs';
+import { PageHeader } from './ui/PageHeader';
 import { PageLoader } from './ui/PageLoader';
 import { SidebarLayout } from './ui/Sidebar';
 
@@ -31,12 +33,14 @@ export interface AppShellProps {
 }
 
 export function AppShell({ version, topBar, testResult, testStatus }: AppShellProps): ReactElement {
+  // A run is recorded because it finished, not because a view is open.
+  useRecordTestResult(testResult);
+  const navGroups = useNavGroups();
+  const pages = usePages();
   const settingsOpen = useShellStore((s) => s.settingsOpen);
   const setSettingsOpen = useShellStore((s) => s.setSettingsOpen);
   const helpOpen = useShellStore((s) => s.helpOpen);
   const setHelpOpen = useShellStore((s) => s.setHelpOpen);
-  const historyOpen = useShellStore((s) => s.historyOpen);
-  const setHistoryOpen = useShellStore((s) => s.setHistoryOpen);
 
   const {
     selectedTests,
@@ -64,14 +68,21 @@ export function AppShell({ version, topBar, testResult, testStatus }: AppShellPr
         version={version}
         onOpenHelp={() => setHelpOpen(true)}
         onOpenSettings={() => setSettingsOpen(true)}
-        onOpenHistory={() => setHistoryOpen(true)}
         topBar={topBar}
       >
         <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/" element={<Navigate to="/reflector" replace={true} />} />
             {pages.map((page) => (
-              <Route key={page.path} path={page.path} element={<page.component />} />
+              <Route
+                key={page.path}
+                path={page.path}
+                element={
+                  <PageWithHeader page={page}>
+                    <page.component />
+                  </PageWithHeader>
+                }
+              />
             ))}
             <Route path="*" element={<Navigate to="/reflector" replace={true} />} />
           </Routes>
@@ -106,12 +117,27 @@ export function AppShell({ version, topBar, testResult, testStatus }: AppShellPr
       />
 
       <HelpDrawer isOpen={helpOpen} onClose={() => setHelpOpen(false)} />
-
-      <ResultHistory
-        isOpen={historyOpen}
-        onClose={() => setHistoryOpen(false)}
-        currentResult={testResult}
-      />
     </>
+  );
+}
+
+/**
+ * PageWithHeader renders the section frame every routed page shares —
+ * breadcrumbs plus the page header — from the registry entry rather
+ * than from the page body. Pages render only their own content.
+ */
+function PageWithHeader({ page, children }: { page: PageConfig; children: ReactNode }) {
+  return (
+    <section className="stack-xl">
+      <Breadcrumbs />
+      <PageHeader
+        icon={page.icon}
+        iconColorClass={page.iconColorClass}
+        eyebrow={page.eyebrow}
+        title={page.title}
+        description={page.description}
+      />
+      {children}
+    </section>
   );
 }

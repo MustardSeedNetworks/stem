@@ -25,6 +25,7 @@ import enCommon from '@locales/en/common.json';
 import enErrors from '@locales/en/errors.json';
 import enHelp from '@locales/en/help.json';
 import enModules from '@locales/en/modules.json';
+import enPages from '@locales/en/pages.json';
 import enParams from '@locales/en/params.json';
 import enRecovery from '@locales/en/recovery.json';
 import enSecurity from '@locales/en/security.json';
@@ -36,6 +37,7 @@ import esCommon from '@locales/es/common.json';
 import esErrors from '@locales/es/errors.json';
 import esHelp from '@locales/es/help.json';
 import esModules from '@locales/es/modules.json';
+import esPages from '@locales/es/pages.json';
 import esParams from '@locales/es/params.json';
 import esRecovery from '@locales/es/recovery.json';
 import esSecurity from '@locales/es/security.json';
@@ -69,6 +71,7 @@ export const namespaces = [
   'cli',
   'params',
   'help',
+  'pages',
 ] as const;
 
 export type Namespace = (typeof namespaces)[number];
@@ -93,6 +96,7 @@ const resources: Resource = {
     cli: enCli,
     params: enParams,
     help: enHelp,
+    pages: enPages,
   },
   es: {
     common: esCommon,
@@ -105,6 +109,7 @@ const resources: Resource = {
     cli: esCli,
     params: esParams,
     help: esHelp,
+    pages: esPages,
   },
 };
 

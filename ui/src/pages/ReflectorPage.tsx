@@ -10,17 +10,7 @@
  * Wraps everything in a RoleGuard so a Test-Master stem prompts the
  * operator to switch roles before using the reflector.
  */
-import {
-  Activity,
-  AlertTriangle,
-  Clock,
-  Gauge,
-  Play,
-  RefreshCw,
-  Repeat,
-  Square,
-  Wifi,
-} from 'lucide-react';
+import { Activity, AlertTriangle, Clock, Gauge, Play, RefreshCw, Square, Wifi } from 'lucide-react';
 import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { HeaderInterfaceSelector } from '../components/HeaderInterfaceSelector';
@@ -32,8 +22,7 @@ import { useAppContext } from '../contexts/AppContext';
 import { useRole } from '../contexts/RoleContext';
 import { useCapabilities } from '../hooks/useCapabilities';
 import type { InterfaceInfo, Stats } from '../types/api';
-import { Breadcrumbs } from '../ui/Breadcrumbs';
-import { PageHeader } from '../ui/PageHeader';
+import { type RollupState, StatusRollup } from '../ui/StatusRollup';
 
 function formatNumber(num: number): string {
   if (num >= 1e9) {
@@ -156,7 +145,7 @@ interface PlatformBannerProps {
 function PlatformBanner({ reason, onSwitchToTestMaster }: PlatformBannerProps): ReactElement {
   const { t } = useTranslation();
   return (
-    <Alert status="warning" className="flex-wrap">
+    <Alert status="warning" className="flex-wrap" data-testid="reflector-platform-banner">
       <div className="flex flex-1 flex-wrap items-center gap-default">
         <span className="flex-1 min-w-[16rem]">
           <strong className="font-semibold">
@@ -236,18 +225,52 @@ export function ReflectorPage(): ReactElement {
     'Reflector mode is not available on this platform. Use the Linux build to act as a Reflector node.',
   );
 
+  /* The platform check is the honest "unknown": on macOS and Windows the
+     reflector dataplane does not exist, so its counters are not zero, they are
+     unmeasurable. An error is crit, a cancelled run is degraded, and idle is
+     calm rather than green — nothing running is the normal resting state. */
+  const rollupState: RollupState = !reflectorSupported
+    ? 'unknown'
+    : stats.testStatus === 'error'
+      ? 'crit'
+      : stats.testStatus === 'cancelled'
+        ? 'warn'
+        : 'ok';
+
+  const rollupHeadline = !reflectorSupported
+    ? 'Reflector counters are not available on this platform'
+    : stats.testStatus === 'error'
+      ? stats.errorMessage || 'The reflector stopped with an error'
+      : stats.testStatus === 'cancelled'
+        ? 'The last reflector run was cancelled'
+        : reflectorRunning
+          ? `Reflecting on ${selectedInterface || 'the selected interface'}`
+          : 'Reflector is idle';
+
+  const rollupBody = !reflectorSupported
+    ? platformReason || unsupportedTooltip
+    : reflectorRunning
+      ? undefined
+      : 'Pick an interface and start the reflector for a test master to measure against.';
+
   const handleSwitchToTestMaster = (): void => {
     setRole('test_master');
   };
 
   return (
-    <section className="stack-xl">
-      <Breadcrumbs />
-      <PageHeader
-        icon={Repeat}
-        title="Reflector"
-        description="Loopback reflector — bounces frames back to the test master for end-to-end measurement."
-        iconColorClass="text-module-reflector"
+    <>
+      {/* Live run opens with the rollup, not with stat cards: the first
+        question on this page is whether the run is healthy, and four numbers
+        in a row do not answer it. */}
+      <StatusRollup
+        state={rollupState}
+        headline={rollupHeadline}
+        body={rollupBody}
+        figures={[
+          { label: 'Received', value: formatNumber(stats.packetsReceived) },
+          { label: 'Sent', value: formatNumber(stats.packetsSent) },
+          { label: 'Rate', value: `${formatNumber(stats.currentPps)} pps` },
+        ]}
       />
 
       <RoleGuard requires="reflector">
@@ -370,7 +393,7 @@ export function ReflectorPage(): ReactElement {
         {/* Reflector profile picker (moved out of Settings drawer) */}
         <ReflectorSection profile={reflectorProfile} onProfileChange={setReflectorProfile} />
       </RoleGuard>
-    </section>
+    </>
   );
 }
 

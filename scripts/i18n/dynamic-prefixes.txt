@@ -153,3 +153,15 @@ setup:errors.
 settings:modules.
 settings:scopes.
 settings:standards.
+
+# pages.<route>.* — the page registry (ui/src/pageRegistry.tsx) builds
+# the route table via t(`${i18nKey}.label`) / .title / .description /
+# .eyebrow, so the static analyzer never sees these as literal keys.
+pages:accountSecurity.
+pages:benchmark.
+pages:certify.
+pages:history.
+pages:measure.
+pages:reflector.
+pages:serviceTest.
+pages:trafficGen.

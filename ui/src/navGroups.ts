@@ -1,10 +1,18 @@
 /**
- * Sidebar navigation groups for The Stem.
+ * Sidebar navigation for The Stem.
  *
  * Reflector and History are top-level items (no group header). Tests
  * remain grouped under a single 'Tests' header (one entry per module).
  * The previous singleton 'Mode' group was removed in #66; the role
  * selector now lives in the header RoleChip.
+ *
+ * Item labels resolve from the same pages.{i18nKey}.label keys the page
+ * registry uses, so the rail and the page header cannot disagree and a
+ * translator sees one canonical label per route. Most stem modules are
+ * glossary terms and read the same in every locale (Reflector, Benchmark,
+ * ServiceTest, TrafficGen, Measure, Certify); History and Security are
+ * ordinary words and do translate — which is why they were the two the
+ * rail used to get wrong.
  */
 import {
   Award,
@@ -16,35 +24,34 @@ import {
   Waves,
   Zap,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import type { SidebarNavGroup } from './ui/Sidebar';
 
-export const navGroups: SidebarNavGroup[] = [
-  {
-    label: '',
-    items: [{ path: '/reflector', label: 'Reflector', icon: Repeat }],
-  },
-  {
-    // Translated by Sidebar via t() — key resolves to "Test Modules" /
-    // "Módulos de Prueba" per common.sections.modules. Item labels stay
-    // English per the glossary (Reflector/Benchmark/etc. are product
-    // names, not translated).
-    label: 'common:sections.modules',
-    items: [
-      { path: '/tests/benchmark', label: 'Benchmark', icon: BarChart3 },
-      { path: '/tests/servicetest', label: 'ServiceTest', icon: Settings2 },
-      { path: '/tests/trafficgen', label: 'TrafficGen', icon: Zap },
-      { path: '/tests/measure', label: 'Measure', icon: Waves },
-      { path: '/tests/certify', label: 'Certify', icon: Award },
-    ],
-  },
-  {
-    label: '',
-    items: [{ path: '/history', label: 'History', icon: History }],
-  },
-  {
-    // Translated by Sidebar via t() — key resolves to "Account" / "Cuenta"
-    // per common.sections.account. (Item label "Security" stays as-is.)
-    label: 'common:sections.account',
-    items: [{ path: '/account/security', label: 'Security', icon: ShieldCheck }],
-  },
-];
+export function useNavGroups(): SidebarNavGroup[] {
+  const { t } = useTranslation('pages');
+  const { t: tCommon } = useTranslation('common');
+  return [
+    {
+      label: '',
+      items: [{ path: '/reflector', label: t('reflector.label'), icon: Repeat }],
+    },
+    {
+      label: tCommon('sections.modules'),
+      items: [
+        { path: '/tests/benchmark', label: t('benchmark.label'), icon: BarChart3 },
+        { path: '/tests/servicetest', label: t('serviceTest.label'), icon: Settings2 },
+        { path: '/tests/trafficgen', label: t('trafficGen.label'), icon: Zap },
+        { path: '/tests/measure', label: t('measure.label'), icon: Waves },
+        { path: '/tests/certify', label: t('certify.label'), icon: Award },
+      ],
+    },
+    {
+      label: '',
+      items: [{ path: '/history', label: t('history.label'), icon: History }],
+    },
+    {
+      label: tCommon('sections.account'),
+      items: [{ path: '/account/security', label: t('accountSecurity.label'), icon: ShieldCheck }],
+    },
+  ];
+}
