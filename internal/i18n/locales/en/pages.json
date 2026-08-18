@@ -15,8 +15,27 @@
     "title": "Certify"
   },
   "history": {
-    "description": "Latest test result snapshot. Open the full history drawer from the sidebar to browse the archive.",
+    "clear": "Clear history",
+    "completed": "Completed",
+    "deleteRun": "Delete run",
+    "description": "Every run recorded on this machine, with its verdict and metrics.",
+    "duration": "Duration",
+    "emptyDetail": "Select a run to see its verdict and metrics.",
+    "emptyNoMatch": "No run matches this filter.",
+    "emptyNoRuns": "No test has completed yet. Run a test from the Tests pages and it will be recorded here.",
+    "error": "Error",
+    "failed": "Failed",
+    "filterAll": "All",
+    "filterFailed": "Failed",
     "label": "History",
+    "metrics": "Metrics",
+    "noVerdict": "No verdict recorded",
+    "passed": "Passed",
+    "runsRecorded_one": "{{count}} run recorded on this machine",
+    "runsRecorded_other": "{{count}} runs recorded on this machine",
+    "selectedRun": "Selected run",
+    "started": "Started",
+    "status": "Status",
     "title": "History"
   },
   "measure": {

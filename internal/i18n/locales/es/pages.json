@@ -15,9 +15,28 @@
     "title": "Certify"
   },
   "history": {
-    "description": "Última instantánea de resultados de prueba. Abra el cajón de historial completo desde la barra lateral para explorar el archivo.",
+    "description": "Cada ejecución registrada en esta máquina, con su veredicto y métricas.",
     "label": "Historial",
-    "title": "Historial"
+    "title": "Historial",
+    "runsRecorded_one": "{{count}} ejecución registrada en esta máquina",
+    "runsRecorded_other": "{{count}} ejecuciones registradas en esta máquina",
+    "clear": "Borrar historial",
+    "filterAll": "Todas",
+    "filterFailed": "Fallidas",
+    "emptyNoRuns": "Aún no ha terminado ninguna prueba. Ejecute una desde las páginas de pruebas y se registrará aquí.",
+    "emptyNoMatch": "Ninguna ejecución coincide con este filtro.",
+    "emptyDetail": "Seleccione una ejecución para ver su veredicto y métricas.",
+    "selectedRun": "Ejecución seleccionada",
+    "deleteRun": "Eliminar ejecución",
+    "noVerdict": "Sin veredicto registrado",
+    "passed": "Superada",
+    "failed": "Fallida",
+    "error": "Error",
+    "status": "Estado",
+    "duration": "Duración",
+    "started": "Iniciada",
+    "completed": "Completada",
+    "metrics": "Métricas"
   },
   "measure": {
     "description": "Medición Y.1731 OAM de retardo / pérdida / pérdida sintética.",

@@ -14,7 +14,6 @@ import {
   ChevronLeft,
   ChevronRight,
   HelpCircle,
-  History,
   type LucideIcon,
   Menu,
   Settings,
@@ -53,7 +52,6 @@ interface SidebarLayoutProps {
    */
   onOpenHelp?: () => void;
   onOpenSettings?: () => void;
-  onOpenHistory?: () => void;
   onOpenProfiles?: () => void;
   topBar?: ReactNode;
 }
@@ -191,7 +189,6 @@ interface SidebarFooterProps {
   version?: string;
   onOpenHelp?: () => void;
   onOpenSettings?: () => void;
-  onOpenHistory?: () => void;
   onOpenProfiles?: () => void;
   onExpand: () => void;
   // SidebarLayout mounts SidebarBody twice (mobile + desktop asides) and
@@ -236,7 +233,6 @@ const SidebarFooter: FC<SidebarFooterProps> = ({
   version,
   onOpenHelp,
   onOpenSettings,
-  onOpenHistory,
   onOpenProfiles,
   onExpand,
   surfaceTestIds,
@@ -264,16 +260,6 @@ const SidebarFooter: FC<SidebarFooterProps> = ({
         />
       ) : null}
     </div>
-
-    {onOpenHistory && !collapsed ? (
-      <FullWidthDrawerButton
-        onClick={onOpenHistory}
-        icon={History}
-        label="History"
-        title="Open test history"
-        data-testid={surfaceTestIds ? 'sidebar-history-button' : undefined}
-      />
-    ) : null}
 
     {onOpenProfiles && !collapsed ? (
       <FullWidthDrawerButton
@@ -317,7 +303,6 @@ interface SidebarBodyProps {
   isActive: (path: string) => boolean;
   onOpenHelp?: () => void;
   onOpenSettings?: () => void;
-  onOpenHistory?: () => void;
   onOpenProfiles?: () => void;
   // Forwarded to SidebarFooter — see comment there.
   surfaceTestIds: boolean;
@@ -333,7 +318,6 @@ const SidebarBody: FC<SidebarBodyProps> = ({
   isActive,
   onOpenHelp,
   onOpenSettings,
-  onOpenHistory,
   onOpenProfiles,
   surfaceTestIds,
 }) => {
@@ -374,7 +358,6 @@ const SidebarBody: FC<SidebarBodyProps> = ({
         version={version}
         onOpenHelp={onOpenHelp}
         onOpenSettings={onOpenSettings}
-        onOpenHistory={onOpenHistory}
         onOpenProfiles={onOpenProfiles}
         onExpand={onExpand}
         surfaceTestIds={surfaceTestIds}
@@ -417,7 +400,6 @@ export const SidebarLayout: FC<SidebarLayoutProps> = ({
   children,
   onOpenHelp,
   onOpenSettings,
-  onOpenHistory,
   onOpenProfiles,
   topBar,
 }) => {
@@ -453,7 +435,6 @@ export const SidebarLayout: FC<SidebarLayoutProps> = ({
       isActive={isActive}
       onOpenHelp={onOpenHelp}
       onOpenSettings={onOpenSettings}
-      onOpenHistory={onOpenHistory}
       onOpenProfiles={onOpenProfiles}
       surfaceTestIds={surfaceTestIds}
     />
