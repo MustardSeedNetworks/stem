@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.15](https://github.com/MustardSeedNetworks/stem/compare/v0.24.14...v0.24.15) (2026-08-18)
+
+
+### Code Refactoring
+
+* **ui:** settle the status vocabulary and delete the dead card components ([#665](https://github.com/MustardSeedNetworks/stem/issues/665)) ([697de61](https://github.com/MustardSeedNetworks/stem/commit/697de61cc6ef1df62c04fb075718bf1efa37c4be))
+
 ## [0.24.14](https://github.com/MustardSeedNetworks/stem/compare/v0.24.13...v0.24.14) (2026-08-18)
 
 
