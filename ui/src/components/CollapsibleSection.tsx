@@ -38,8 +38,8 @@
 
 import { type ReactElement, type ReactNode, useState } from 'react';
 import { border, cn, icon as iconTokens, layout, radius, spacing } from '../styles/theme';
-import type { Status } from './ui/Card';
 import { StatusBadge } from './ui/StatusBadge';
+import type { Status } from './ui/StatusConfig';
 
 interface CollapsibleSectionProps {
   /** Section title - can be string or React node */
