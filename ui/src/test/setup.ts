@@ -1,4 +1,3 @@
-import type React from 'react';
 /**
  * Test Setup and Utilities
  *
@@ -14,57 +13,14 @@ import '@testing-library/jest-dom';
 import { afterEach, beforeEach, vi } from 'vitest';
 
 // ============================================================
-// Mock react-i18next
+// Real i18n
 // ============================================================
-vi.mock('react-i18next', () => ({
-  useTranslation: () => ({
-    t: (key: string) => {
-      // Return common translations for tests
-      const translations: Record<string, string> = {
-        // Common namespace
-        'app.title': 'The Stem',
-        'app.tagline': 'Mustard Seed Networks',
-        'buttons.login': 'Login',
-        'buttons.logout': 'Logout',
-        'status.error': 'Error',
-        'status.noDataAvailable': 'No data available',
-        // Accessibility
-        'accessibility.openHelp': 'Open help',
-        'accessibility.openSettings': 'Open settings',
-        'accessibility.openHistory': 'Open test history',
-        'accessibility.switchToLightMode': 'Switch to light mode',
-        'accessibility.switchToDarkMode': 'Switch to dark mode',
-        'accessibility.refreshInterfaces': 'Refresh interfaces',
-        'accessibility.selectProfile': 'Select profile',
-        'accessibility.selectInterface': 'Select interface',
-        // Status
-        'status.connected': 'Connected',
-        'status.disconnected': 'Disconnected',
-        'status.connecting': 'Connecting...',
-        'status.clickToReconnect': 'Click to reconnect',
-        'status.tapToReconnect': 'Tap to reconnect',
-        // HeaderBar
-        'history.title': 'Test History',
-        'help.title': 'Help & Documentation',
-        'settings.title': 'Settings',
-        'profile.current': 'Profile',
-        'profile.select': 'Select Profile',
-        'profile.manage': 'Manage',
-        'profile.noProfiles': 'No profiles',
-        'interface.select': 'Select Interface',
-        'interface.networkInterfaces': 'Network Interfaces',
-        'interface.noInterfaces': 'No interfaces found',
-      };
-      return translations[key] || key;
-    },
-    i18n: {
-      language: 'en',
-      changeLanguage: vi.fn(),
-    },
-  }),
-  Trans: ({ children }: { children: React.ReactNode }): React.ReactNode => children,
-  initReactI18next: { type: '3rdParty', init: vi.fn() },
-}));
+// Initialising the real i18next (rather than mocking react-i18next with a
+// fixed table) means a test that asserts on user-visible text is asserting
+// on the actual locale files. The mock this replaces returned the key
+// itself for anything not in its ~30-entry table and ignored t()'s options
+// argument entirely, so defaultValue and interpolation silently vanished.
+import '../i18n';
 
 // ============================================================
 // JSDoM polyfills — common browser APIs not implemented by JSDoM

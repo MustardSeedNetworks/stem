@@ -1,14 +1,9 @@
 /**
  * navGroups <-> pageRegistry parity guard.
- *
- * Implementation note: usePages() calls useTranslation('pages')
- * internally, so it needs i18next initialised. Importing './i18n'
- * does that synchronously, which lets renderHook run without a wrapper.
  */
 
 import { renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import './i18n'; // initialise i18next before hooks run
 import { useNavGroups } from './navGroups';
 import { usePages } from './pageRegistry';
 

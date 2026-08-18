@@ -122,25 +122,27 @@ describe('HeaderBar', () => {
 
     it('does not render interface selector when interfaces not provided', () => {
       render(<HeaderBar {...defaultProps} />);
-      expect(screen.queryByRole('button', { name: /select interface/i })).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: /select network interface/i }),
+      ).not.toBeInTheDocument();
     });
 
     it('renders interface selector when interfaces provided', () => {
       render(<HeaderBar {...defaultProps} interfaces={interfaces} onInterfaceChange={vi.fn()} />);
-      expect(screen.getByRole('button', { name: /select interface/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /select network interface/i })).toBeInTheDocument();
     });
 
     it('opens dropdown when interface button clicked', () => {
       render(<HeaderBar {...defaultProps} interfaces={interfaces} onInterfaceChange={vi.fn()} />);
 
-      fireEvent.click(screen.getByRole('button', { name: /select interface/i }));
+      fireEvent.click(screen.getByRole('button', { name: /select network interface/i }));
       expect(screen.getByText('Network Interfaces')).toBeInTheDocument();
     });
 
     it('shows ethernet and wifi interfaces but not loopback', () => {
       render(<HeaderBar {...defaultProps} interfaces={interfaces} onInterfaceChange={vi.fn()} />);
 
-      fireEvent.click(screen.getByRole('button', { name: /select interface/i }));
+      fireEvent.click(screen.getByRole('button', { name: /select network interface/i }));
       expect(screen.getByText('Ethernet')).toBeInTheDocument();
       expect(screen.getByText('Wi-Fi')).toBeInTheDocument();
       // loopback interface should not be shown
@@ -157,7 +159,7 @@ describe('HeaderBar', () => {
         />,
       );
 
-      fireEvent.click(screen.getByRole('button', { name: /select interface/i }));
+      fireEvent.click(screen.getByRole('button', { name: /select network interface/i }));
       fireEvent.click(screen.getByText('Ethernet'));
       expect(onInterfaceChange).toHaveBeenCalledWith('eth0');
     });
@@ -172,7 +174,7 @@ describe('HeaderBar', () => {
         />,
       );
 
-      fireEvent.click(screen.getByRole('button', { name: /select interface/i }));
+      fireEvent.click(screen.getByRole('button', { name: /select network interface/i }));
 
       // Find the button containing "Ethernet" that has the highlight class
       const buttons = screen.getAllByRole('button');
