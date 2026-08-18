@@ -152,8 +152,8 @@ jobs:
         # image (ubuntu:noble, installs the `clang`/build-essential
         # metapackages) — only the packages not already in the image are
         # installed here.
-        timeout-minutes: 8
-        uses: MustardSeedNetworks/.github/.github/actions/apt-install@3567cebc11a2277106bb350042287918ad92e542 # v1.2.0
+        timeout-minutes: 10
+        uses: MustardSeedNetworks/.github/.github/actions/apt-install@37513d7fbaacf4a7adaab1ac1514f021115868d1 # v1.4.0
         with:
           packages: libbpf-dev libelf-dev libxdp-dev zlib1g-dev
           no-install-recommends: 'true'
