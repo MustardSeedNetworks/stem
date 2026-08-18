@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.16](https://github.com/MustardSeedNetworks/stem/compare/v0.24.15...v0.24.16) (2026-08-18)
+
+
+### Bug Fixes
+
+* **ci:** adopt the apt-install composite that does not leak an apt-get ([#670](https://github.com/MustardSeedNetworks/stem/issues/670)) ([dfdf05c](https://github.com/MustardSeedNetworks/stem/commit/dfdf05cd644c6f168128dc65e7782d6c3d0d7f80))
+* **ci:** reconcile releases that a flaky CI run skipped ([#669](https://github.com/MustardSeedNetworks/stem/issues/669)) ([18fcffa](https://github.com/MustardSeedNetworks/stem/commit/18fcffae93307efce792908df3b3d69a7b229f60))
+
 ## [0.24.15](https://github.com/MustardSeedNetworks/stem/compare/v0.24.14...v0.24.15) (2026-08-18)
 
 
