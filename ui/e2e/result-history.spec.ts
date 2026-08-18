@@ -21,7 +21,8 @@ test.describe('Result History', () => {
 
   test('is reachable from the sidebar', async ({ page }) => {
     await page.goto('/');
-    await page.getByRole('link', { name: 'History', exact: true }).first().click();
+    // Rail items are buttons that navigate, not anchors.
+    await page.getByRole('button', { name: 'History', exact: true }).first().click();
 
     await expect(page).toHaveURL(/\/history$/);
     await expect(page.getByTestId('page-header-title')).toHaveText('History');
