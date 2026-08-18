@@ -58,12 +58,8 @@ test.describe('smoke @ authenticated', { tag: '@smoke' }, () => {
     await expect(page.getByTestId('help-drawer')).toBeHidden();
   });
 
-  test('history drawer opens and closes', async ({ page }) => {
-    await page.goto('/');
-    await expect(page.getByTestId('page-header-title')).toBeVisible({ timeout: 10000 });
-    await page.getByTestId('sidebar-history-button').click();
-    await expect(page.getByTestId('history-drawer')).toBeVisible();
-    await page.getByTestId('history-drawer-close').click();
-    await expect(page.getByTestId('history-drawer')).toBeHidden();
+  test('history page loads @smoke', async ({ page }) => {
+    await page.goto('/history');
+    await expect(page.getByTestId('page-header-title')).toHaveText('History', { timeout: 10000 });
   });
 });

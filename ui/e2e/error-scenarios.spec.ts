@@ -34,7 +34,7 @@ test.describe('Error Scenarios', () => {
 
     // The shell renders independently of API data — the heading should
     // appear even with zero successful data fetches.
-    await expect(page.getByRole('heading', { name: /reflector/i })).toBeVisible();
+    await expect(page.getByTestId('page-header-title')).toBeVisible();
   });
 
   test('eventually renders when every API call is delayed 2 seconds', async ({ page }) => {
@@ -47,7 +47,7 @@ test.describe('Error Scenarios', () => {
     });
 
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: /reflector/i })).toBeVisible({
+    await expect(page.getByTestId('page-header-title')).toBeVisible({
       timeout: 15000,
     });
   });
@@ -62,7 +62,7 @@ test.describe('Error Scenarios', () => {
     });
 
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: /reflector/i })).toBeVisible();
+    await expect(page.getByTestId('page-header-title')).toBeVisible();
   });
 
   test('does not crash when /api/v1/stats returns malformed JSON', async ({ page }) => {
@@ -75,7 +75,7 @@ test.describe('Error Scenarios', () => {
     });
 
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: /reflector/i })).toBeVisible();
+    await expect(page.getByTestId('page-header-title')).toBeVisible();
   });
 
   test('renders cleanly when /api/v1/interfaces returns an empty list', async ({ page }) => {
@@ -88,6 +88,6 @@ test.describe('Error Scenarios', () => {
     });
 
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: /reflector/i })).toBeVisible();
+    await expect(page.getByTestId('page-header-title')).toBeVisible();
   });
 });

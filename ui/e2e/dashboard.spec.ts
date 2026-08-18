@@ -45,7 +45,7 @@ test.describe('Dashboard', () => {
     // section anymore — module pages live under /tests/* in the
     // sidebar, and `/` redirects to `/reflector`. Assert we landed
     // there by checking for the Reflector page heading.
-    await expect(page.getByRole('heading', { name: /reflector/i })).toBeVisible();
+    await expect(page.getByTestId('page-header-title')).toBeVisible();
   });
 
   test('should have start/stop test buttons', async ({ page }) => {

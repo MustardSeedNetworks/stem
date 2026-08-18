@@ -145,7 +145,7 @@ interface PlatformBannerProps {
 function PlatformBanner({ reason, onSwitchToTestMaster }: PlatformBannerProps): ReactElement {
   const { t } = useTranslation();
   return (
-    <Alert status="warning" className="flex-wrap">
+    <Alert status="warning" className="flex-wrap" data-testid="reflector-platform-banner">
       <div className="flex flex-1 flex-wrap items-center gap-default">
         <span className="flex-1 min-w-[16rem]">
           <strong className="font-semibold">

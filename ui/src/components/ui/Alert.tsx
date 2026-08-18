@@ -12,6 +12,8 @@ export interface AlertProps {
   children: ReactNode;
   onDismiss?: () => void;
   className?: string;
+  /** E2E hook, so an assertion can be scoped to one alert. */
+  'data-testid'?: string;
 }
 
 const statusConfig: Record<
@@ -44,7 +46,13 @@ const statusConfig: Record<
   },
 };
 
-export const Alert: FC<AlertProps> = ({ status, children, onDismiss, className = '' }) => {
+export const Alert: FC<AlertProps> = ({
+  status,
+  children,
+  onDismiss,
+  className = '',
+  'data-testid': testId,
+}) => {
   const config = statusConfig[status];
   const Icon = config.icon;
 
@@ -52,6 +60,7 @@ export const Alert: FC<AlertProps> = ({ status, children, onDismiss, className =
     <div
       className={`flex items-center gap-compact rounded-lg border pad-sm ${config.containerClass} ${className}`}
       role="alert"
+      data-testid={testId}
     >
       <Icon className={`${iconSizes.md} flex-shrink-0 ${config.iconClass}`} />
       <span className="flex-1">{children}</span>
