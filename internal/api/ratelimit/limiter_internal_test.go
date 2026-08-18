@@ -5,12 +5,72 @@ package ratelimit
 import (
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"sync"
 	"testing"
 	"time"
 
 	"golang.org/x/time/rate"
 )
+
+// TestAPIRateLimitFromEnv locks the override's one-directional contract: it may
+// raise the standard API limit and may never lower or disable it, so no value
+// of APIRateLimitEnv can leave the binary less rate-limited than its default.
+func TestAPIRateLimitFromEnv(t *testing.T) {
+	tests := []struct {
+		name     string
+		set      bool
+		envValue string
+		want     int
+	}{
+		{name: "unset uses the compiled-in default", set: false, want: APIRateLimit},
+		{name: "a higher value is honoured", set: true, envValue: "1000", want: 1000},
+		{name: "surrounding whitespace is tolerated", set: true, envValue: "  1000\t", want: 1000},
+		{
+			name: "one above the default is honoured",
+			set:  true, envValue: strconv.Itoa(APIRateLimit + 1), want: APIRateLimit + 1,
+		},
+		{name: "the default itself is a no-op", set: true, envValue: strconv.Itoa(APIRateLimit), want: APIRateLimit},
+		{name: "a lower value cannot weaken the limiter", set: true, envValue: "1", want: APIRateLimit},
+		{name: "zero cannot disable the limiter", set: true, envValue: "0", want: APIRateLimit},
+		{name: "a negative value cannot disable the limiter", set: true, envValue: "-1", want: APIRateLimit},
+		{name: "a non-numeric value falls back", set: true, envValue: "lots", want: APIRateLimit},
+		{name: "an empty value falls back", set: true, envValue: "", want: APIRateLimit},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.set {
+				t.Setenv(APIRateLimitEnv, tt.envValue)
+			}
+
+			if got := apiRateLimitFromEnv(); got != tt.want {
+				t.Errorf("apiRateLimitFromEnv() = %d, want %d", got, tt.want)
+			}
+		})
+	}
+}
+
+// TestNewAPIRateLimiterHonoursOverride proves the override reaches the
+// constructed limiter's burst, not merely the helper: the regression it guards
+// is a bucket that still runs dry at the default after the env is set.
+func TestNewAPIRateLimiterHonoursOverride(t *testing.T) {
+	t.Setenv(APIRateLimitEnv, strconv.Itoa(APIRateLimit*4))
+
+	rl := NewAPIRateLimiter()
+	defer rl.Stop()
+
+	ip := "10.0.0.201"
+	for i := range APIRateLimit * 4 {
+		if !rl.Allow(ip) {
+			t.Fatalf("request %d denied; the raised burst should allow %d", i+1, APIRateLimit*4)
+		}
+	}
+
+	if rl.Allow(ip) {
+		t.Error("request beyond the raised burst should be denied; the limiter must stay on")
+	}
+}
 
 // TestTrimSpace tests the trimSpace function.
 func TestTrimSpace(t *testing.T) {

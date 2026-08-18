@@ -1094,6 +1094,19 @@ jobs:
         env:
           STEM_AUTH_USERNAME: admin
           STEM_AUTH_PASSWORD: admin
+          # The whole Playwright suite drives this one backend from one runner
+          # IP, fullyParallel across chromium and webkit. The per-IP API bucket
+          # is 100/min shared by every spec at once, and it ran dry in
+          # merge_group run 32174274597: settings-drawer-module.spec.ts failed
+          # on BOTH browsers and rfc2544-journey.spec.ts on chromium, with the
+          # DOM rendering "Could not load the test modules from this stem
+          # (HTTP 429)" — a real 429 from a real limiter, not a locator bug.
+          #
+          # Raised, not disabled: the override cannot go below the compiled-in
+          # default, so this stays a bounded limiter and the suite still proves
+          # the middleware is wired. Same shape as seed's
+          # SEED_LOGIN_MAX_ATTEMPTS=200 in scripts/run-e2e.sh.
+          STEM_API_RATE_LIMIT: "5000"
         run: |
           # Backend is HTTPS-by-default since the Wave 1 TLS rollout. The
           # legacy STEM_TLS_ENABLED env var was removed from the code; self-
@@ -1101,7 +1114,7 @@ jobs:
           # probes; Playwright bypasses cert via PLAYWRIGHT_IGNORE_HTTPS_ERRORS.
           nohup ./bin/stem web -p 8444 > server.log 2>&1 &
           echo "Waiting for server to start..."
-          for _ in {1..30}; do
+          for i in {1..30}; do
             if curl -skf https://localhost:8444/health/ready 2>/dev/null; then
               echo "Server ready after $i attempts"
               exit 0
