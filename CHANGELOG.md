@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.19](https://github.com/MustardSeedNetworks/stem/compare/v0.24.18...v0.24.19) (2026-08-20)
+
+
+### Features
+
+* **build:** enable the React Compiler, keeping every existing memo ([#694](https://github.com/MustardSeedNetworks/stem/issues/694)) ([3500c32](https://github.com/MustardSeedNetworks/stem/commit/3500c32b79ba29b6c13cf283ebc6792b3b447297))
+
+
+### Bug Fixes
+
+* **lint:** scope Biome's dist, build and coverage excludes to where they land ([#686](https://github.com/MustardSeedNetworks/stem/issues/686)) ([eda86f4](https://github.com/MustardSeedNetworks/stem/commit/eda86f4b777bbd9dadb2851d81973d24bdbcd524))
+
+
+### Miscellaneous
+
+* **deps:** update module github.com/golangci/golangci-lint/v2/cmd/golangci-lint to v2.13.1 ([#693](https://github.com/MustardSeedNetworks/stem/issues/693)) ([a573794](https://github.com/MustardSeedNetworks/stem/commit/a573794f878eb42806489d094b61d5bd0f3742b4))
+* **deps:** update module honnef.co/go/tools/cmd/staticcheck to v0.8.0 ([#691](https://github.com/MustardSeedNetworks/stem/issues/691)) ([865fea8](https://github.com/MustardSeedNetworks/stem/commit/865fea8eaaa547cec6b7421ba83d0195cf1d6899))
+* **ts:** adopt verbatimModuleSyntax and gate the fleet's strictness contract ([#692](https://github.com/MustardSeedNetworks/stem/issues/692)) ([3212dd8](https://github.com/MustardSeedNetworks/stem/commit/3212dd885906a94d5dbbc7ebd04c180251a7cbb1))
+* **ts:** turn on noUncheckedIndexedAccess, and cover the focus trap it touched ([#688](https://github.com/MustardSeedNetworks/stem/issues/688)) ([7349df7](https://github.com/MustardSeedNetworks/stem/commit/7349df7dde9a6a945061a04b9168271f38e0691a)), closes [#658](https://github.com/MustardSeedNetworks/stem/issues/658)
+
 ## [0.24.18](https://github.com/MustardSeedNetworks/stem/compare/v0.24.17...v0.24.18) (2026-08-20)
 
 
