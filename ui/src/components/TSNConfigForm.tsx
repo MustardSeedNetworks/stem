@@ -7,13 +7,18 @@
  *              through props.
  */
 
-import { AlertTriangle, Clock, Info } from 'lucide-react';
+import { AlertTriangle, Clock } from 'lucide-react';
 import type { ReactElement } from 'react';
 import { FormProvider, useFormContext } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
+import type { FrameSizeOption } from '../forms/frameSizes';
 import { useConfigForm } from '../forms/useConfigForm';
 import { TSNConfigSchema } from '../schemas/configs';
 import { CollapsibleSection } from './CollapsibleSection';
+import { FieldError } from './FieldError';
+import { FormSection } from './FormSection';
 import { HelpIcon } from './HelpIcon';
+import { TestSummary } from './TestSummary';
 
 /** TSN test configuration parameters */
 export interface TSNConfig {
@@ -49,13 +54,14 @@ export const defaultTSNConfig: TSNConfig = {
   trafficClass: 7,
 };
 
-const FRAME_SIZE_OPTIONS: Array<{ value: number; label: string }> = [
-  { value: 64, label: '64 B (min)' },
-  { value: 128, label: '128 B' },
-  { value: 256, label: '256 B' },
-  { value: 512, label: '512 B' },
-  { value: 1024, label: '1024 B' },
-  { value: 1518, label: '1518 B (max)' },
+/** TSN measures bounded latency at standard sizes; no jumbo. */
+const FRAME_SIZE_OPTIONS: FrameSizeOption[] = [
+  { value: 64, qualifier: 'frameSizeMin' },
+  { value: 128, qualifier: 'frameSize' },
+  { value: 256, qualifier: 'frameSize' },
+  { value: 512, qualifier: 'frameSize' },
+  { value: 1024, qualifier: 'frameSize' },
+  { value: 1518, qualifier: 'frameSizeMax' },
 ];
 
 const CYCLE_TIME_OPTIONS: Array<{ value: number; label: string }> = [
@@ -74,31 +80,19 @@ function formatNs(ns: number): string {
   return `${ns} ns`;
 }
 
-function FieldError({ message }: { message?: string }): ReactElement | null {
-  if (!message) return null;
-  return (
-    <div className="mt-tight text-xs text-status-error flex items-center gap-tight">
-      <AlertTriangle className="w-3 h-3" />
-      {message}
-    </div>
-  );
-}
-
 function TestParametersSection(): ReactElement {
   const {
     register,
     formState: { errors },
   } = useFormContext<TSNConfig>();
+  const { t } = useTranslation('settings');
   return (
-    <div className="stack">
-      <div className="text-xs font-semibold text-text-muted uppercase tracking-wide">
-        Test Parameters
-      </div>
+    <FormSection title={t('testConfig.tsn.params.title')}>
       <div className="grid grid-cols-3 gap-default">
         <div>
           <label htmlFor="tsn-duration" className="flex items-center gap-tight label">
-            Duration (s)
-            <HelpIcon tooltip="Test duration in seconds." />
+            {t('testConfig.tsn.params.duration')}
+            <HelpIcon tooltip={t('testConfig.tsn.params.durationHelp')} />
           </label>
           <input
             id="tsn-duration"
@@ -111,8 +105,8 @@ function TestParametersSection(): ReactElement {
         </div>
         <div>
           <label htmlFor="tsn-warmup" className="flex items-center gap-tight label">
-            Warmup (s)
-            <HelpIcon tooltip="Warmup period for synchronization." />
+            {t('testConfig.tsn.params.warmup')}
+            <HelpIcon tooltip={t('testConfig.tsn.params.warmupHelp')} />
           </label>
           <input
             id="tsn-warmup"
@@ -125,24 +119,24 @@ function TestParametersSection(): ReactElement {
         </div>
         <div>
           <label htmlFor="tsn-framesize" className="flex items-center gap-tight label">
-            Frame Size
-            <HelpIcon tooltip="Ethernet frame size for testing." />
+            {t('testConfig.tsn.params.frameSize')}
+            <HelpIcon tooltip={t('testConfig.tsn.params.frameSizeHelp')} />
           </label>
           <select
             id="tsn-framesize"
             {...register('frameSize', { valueAsNumber: true })}
             className="mt-tight w-full"
           >
-            {FRAME_SIZE_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
+            {FRAME_SIZE_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {t(`testConfig.common.${option.qualifier}`, { size: option.value })}
               </option>
             ))}
           </select>
           <FieldError message={errors.frameSize?.message} />
         </div>
       </div>
-    </div>
+    </FormSection>
   );
 }
 
@@ -151,16 +145,14 @@ function TimingRequirementsSection(): ReactElement {
     register,
     formState: { errors },
   } = useFormContext<TSNConfig>();
+  const { t } = useTranslation('settings');
   return (
-    <div className="stack">
-      <div className="text-xs font-semibold text-text-muted uppercase tracking-wide">
-        Timing Requirements
-      </div>
+    <FormSection title={t('testConfig.tsn.timing.title')}>
       <div className="grid grid-cols-2 gap-default">
         <div>
           <label htmlFor="tsn-maxlatency" className="flex items-center gap-tight label">
-            Max Latency (ns)
-            <HelpIcon tooltip="Maximum acceptable end-to-end latency in nanoseconds." />
+            {t('testConfig.tsn.timing.maxLatency')}
+            <HelpIcon tooltip={t('testConfig.tsn.timing.maxLatencyHelp')} />
           </label>
           <input
             id="tsn-maxlatency"
@@ -173,8 +165,8 @@ function TimingRequirementsSection(): ReactElement {
         </div>
         <div>
           <label htmlFor="tsn-maxjitter" className="flex items-center gap-tight label">
-            Max Jitter (ns)
-            <HelpIcon tooltip="Maximum acceptable jitter (PDV) in nanoseconds." />
+            {t('testConfig.tsn.timing.maxJitter')}
+            <HelpIcon tooltip={t('testConfig.tsn.timing.maxJitterHelp')} />
           </label>
           <input
             id="tsn-maxjitter"
@@ -186,7 +178,7 @@ function TimingRequirementsSection(): ReactElement {
           <FieldError message={errors.maxJitterNs?.message} />
         </div>
       </div>
-    </div>
+    </FormSection>
   );
 }
 
@@ -196,27 +188,25 @@ function PTPConfigSection(): ReactElement {
     watch,
     formState: { errors },
   } = useFormContext<TSNConfig>();
+  const { t } = useTranslation('settings');
   const ptpEnabled = watch('ptpEnabled');
   return (
-    <div className="stack">
-      <div className="text-xs font-semibold text-text-muted uppercase tracking-wide">
-        PTP Synchronization
-      </div>
+    <FormSection title={t('testConfig.tsn.ptp.title')}>
       <div className="stack-sm">
         <div className="flex items-center gap-compact">
           <input
             id="tsn-ptpenabled"
             type="checkbox"
             {...register('ptpEnabled')}
-            aria-label="Enable IEEE 1588 PTP hardware timestamping"
+            aria-label={t('testConfig.tsn.ptp.enableAria')}
             className="rounded border-surface-border"
           />
           <label
             htmlFor="tsn-ptpenabled"
-            title="Use IEEE 1588 PTP hardware timestamps for sub-microsecond delay measurement; requires PTP-capable NIC"
+            title={t('testConfig.tsn.ptp.enableTitle')}
             className="text-sm text-text-primary"
           >
-            Enable PTP timestamping (IEEE 1588)
+            {t('testConfig.tsn.ptp.enable')}
           </label>
         </div>
         <div className="flex items-center gap-compact">
@@ -224,23 +214,23 @@ function PTPConfigSection(): ReactElement {
             id="tsn-requiresync"
             type="checkbox"
             {...register('requirePTPSync')}
-            aria-label="Require PTP synchronization before starting test"
+            aria-label={t('testConfig.tsn.ptp.requireAria')}
             className="rounded border-surface-border"
           />
           <label
             htmlFor="tsn-requiresync"
-            title="Block the test from starting until the local PTP clock has locked to the grandmaster within the configured tolerance"
+            title={t('testConfig.tsn.ptp.requireTitle')}
             className="text-sm text-text-primary"
           >
-            Require PTP synchronization before test
+            {t('testConfig.tsn.ptp.require')}
           </label>
         </div>
       </div>
       {ptpEnabled ? (
         <div>
           <label htmlFor="tsn-syncoffset" className="flex items-center gap-tight label">
-            Max Sync Offset (ns)
-            <HelpIcon tooltip="Maximum acceptable PTP clock offset." />
+            {t('testConfig.tsn.ptp.syncOffset')}
+            <HelpIcon tooltip={t('testConfig.tsn.ptp.syncOffsetHelp')} />
           </label>
           <input
             id="tsn-syncoffset"
@@ -252,7 +242,7 @@ function PTPConfigSection(): ReactElement {
           <FieldError message={errors.maxSyncOffsetNs?.message} />
         </div>
       ) : null}
-    </div>
+    </FormSection>
   );
 }
 
@@ -261,32 +251,30 @@ function SchedulingConfigSection(): ReactElement {
     register,
     formState: { errors },
   } = useFormContext<TSNConfig>();
+  const { t } = useTranslation('settings');
   return (
-    <div className="stack">
-      <div className="text-xs font-semibold text-text-muted uppercase tracking-wide">
-        Traffic Scheduling (802.1Qbv)
-      </div>
+    <FormSection title={t('testConfig.tsn.scheduling.title')}>
       <div className="flex items-center gap-compact">
         <input
           id="tsn-preemption"
           type="checkbox"
           {...register('preemptionEnabled')}
-          aria-label="Enable IEEE 802.1Qbu frame preemption"
+          aria-label={t('testConfig.tsn.scheduling.preemptionAria')}
           className="rounded border-surface-border"
         />
         <label
           htmlFor="tsn-preemption"
-          title="Allow express traffic to preempt in-flight preemptable frames per IEEE 802.1Qbu; reduces latency for critical traffic classes"
+          title={t('testConfig.tsn.scheduling.preemptionTitle')}
           className="text-sm text-text-primary"
         >
-          Enable frame preemption (802.1Qbu)
+          {t('testConfig.tsn.scheduling.preemption')}
         </label>
       </div>
       <div className="grid grid-cols-2 gap-default">
         <div>
           <label htmlFor="tsn-cycletime" className="flex items-center gap-tight label">
-            Cycle Time
-            <HelpIcon tooltip="Time-Aware Shaper cycle duration." />
+            {t('testConfig.tsn.scheduling.cycleTime')}
+            <HelpIcon tooltip={t('testConfig.tsn.scheduling.cycleTimeHelp')} />
           </label>
           <select
             id="tsn-cycletime"
@@ -303,8 +291,8 @@ function SchedulingConfigSection(): ReactElement {
         </div>
         <div>
           <label htmlFor="tsn-trafficclass" className="flex items-center gap-tight label">
-            Traffic Class
-            <HelpIcon tooltip="Traffic class for test frames (0-7)." />
+            {t('testConfig.tsn.scheduling.trafficClass')}
+            <HelpIcon tooltip={t('testConfig.tsn.scheduling.trafficClassHelp')} />
           </label>
           <input
             id="tsn-trafficclass"
@@ -318,8 +306,8 @@ function SchedulingConfigSection(): ReactElement {
       </div>
       <div>
         <label htmlFor="tsn-numclasses" className="flex items-center gap-tight label">
-          Number of Traffic Classes
-          <HelpIcon tooltip="Total traffic classes configured (1-8)." />
+          {t('testConfig.tsn.scheduling.numClasses')}
+          <HelpIcon tooltip={t('testConfig.tsn.scheduling.numClassesHelp')} />
         </label>
         <input
           id="tsn-numclasses"
@@ -332,8 +320,8 @@ function SchedulingConfigSection(): ReactElement {
       </div>
       <div>
         <label htmlFor="tsn-basetime" className="flex items-center gap-tight label">
-          Base Time (ns)
-          <HelpIcon tooltip="Base time for gate schedule (ns since epoch). 0 = use current time." />
+          {t('testConfig.tsn.scheduling.baseTime')}
+          <HelpIcon tooltip={t('testConfig.tsn.scheduling.baseTimeHelp')} />
         </label>
         <input
           id="tsn-basetime"
@@ -344,7 +332,7 @@ function SchedulingConfigSection(): ReactElement {
         />
         <FieldError message={errors.baseTimeNs?.message} />
       </div>
-    </div>
+    </FormSection>
   );
 }
 
@@ -364,42 +352,47 @@ function TestSummarySection({
   hasScheduling,
 }: TestSummarySectionProps): ReactElement {
   const { watch } = useFormContext<TSNConfig>();
+  const { t } = useTranslation('settings');
   const v = watch();
   const selectedTestNames = [
-    hasLatency && 'Latency',
-    hasJitter && 'Jitter',
-    hasSync && 'Sync Verification',
-    hasPreemption && 'Preemption',
-    hasScheduling && 'Scheduling',
+    hasLatency && t('testConfig.tsn.tests.latency'),
+    hasJitter && t('testConfig.tsn.tests.jitter'),
+    hasSync && t('testConfig.tsn.tests.sync'),
+    hasPreemption && t('testConfig.tsn.tests.preemption'),
+    hasScheduling && t('testConfig.tsn.tests.scheduling'),
   ].filter(Boolean);
+
+  const ptpKey = !v.ptpEnabled
+    ? 'testConfig.tsn.summary.ptpDisabled'
+    : v.requirePTPSync
+      ? 'testConfig.tsn.summary.ptpRequired'
+      : 'testConfig.tsn.summary.ptpEnabled';
+
   return (
-    <div className="pad-sm rounded-lg bg-surface-base border border-surface-border">
-      <div className="flex items-center gap-compact label mb-2">
-        <Info className="w-4 h-4" />
-        Test Summary
+    <TestSummary>
+      <div>
+        {t('testConfig.common.selectedTests')}: {selectedTestNames.join(', ')}
       </div>
-      <div className="text-xs text-text-muted stack-xs">
-        <div>Selected tests: {selectedTestNames.join(', ')}</div>
-        <div>Frame size: {v.frameSize} bytes</div>
-        <div>
-          Timing: &le;{formatNs(v.maxLatencyNs)} latency | &le;{formatNs(v.maxJitterNs)} jitter
-        </div>
-        <div>
-          PTP: {v.ptpEnabled ? 'Enabled' : 'Disabled'}
-          {v.ptpEnabled && v.requirePTPSync ? ' (required)' : ''}
-          {v.ptpEnabled ? ` | Max offset: ${formatNs(v.maxSyncOffsetNs)}` : ''}
-        </div>
-        {hasScheduling || hasPreemption ? (
-          <div>
-            Scheduling: Cycle {formatNs(v.cycleTimeNs)} | TC {v.trafficClass}
-            {v.preemptionEnabled ? ' | Preemption enabled' : ''}
-          </div>
-        ) : null}
-        <div>
-          Duration: {v.duration}s + {v.warmup}s warmup
-        </div>
+      <div>{t('testConfig.tsn.summary.frameSize', { size: v.frameSize })}</div>
+      <div>
+        {t('testConfig.tsn.summary.timing', {
+          latency: formatNs(v.maxLatencyNs),
+          jitter: formatNs(v.maxJitterNs),
+        })}
       </div>
-    </div>
+      <div>{t(ptpKey as never, { offset: formatNs(v.maxSyncOffsetNs) })}</div>
+      {hasScheduling || hasPreemption ? (
+        <div>
+          {t(
+            v.preemptionEnabled
+              ? 'testConfig.tsn.summary.schedulingPreemption'
+              : 'testConfig.tsn.summary.scheduling',
+            { cycle: formatNs(v.cycleTimeNs), trafficClass: v.trafficClass },
+          )}
+        </div>
+      ) : null}
+      <div>{t('testConfig.tsn.summary.duration', { duration: v.duration, warmup: v.warmup })}</div>
+    </TestSummary>
   );
 }
 

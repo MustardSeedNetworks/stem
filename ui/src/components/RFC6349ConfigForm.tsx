@@ -6,12 +6,16 @@
  *              schema and surfaced via the form footer.
  */
 
-import { Activity, AlertTriangle, Info } from 'lucide-react';
+import { Activity, AlertTriangle } from 'lucide-react';
 import type { ReactElement } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useConfigForm } from '../forms/useConfigForm';
 import { RFC6349ConfigSchema } from '../schemas/configs';
 import { CollapsibleSection } from './CollapsibleSection';
+import { FieldError } from './FieldError';
+import { FormSection } from './FormSection';
 import { HelpIcon } from './HelpIcon';
+import { TestSummary } from './TestSummary';
 
 /** RFC 6349 test configuration parameters */
 export interface RFC6349Config {
@@ -37,17 +41,19 @@ export const defaultRFC6349Config: RFC6349Config = {
   mode: 0,
 };
 
-const MODE_OPTIONS: Array<{ value: number; label: string; description: string }> = [
-  { value: 0, label: 'Bidirectional', description: 'Test both directions' },
-  { value: 1, label: 'Upstream', description: 'Client to server only' },
-  { value: 2, label: 'Downstream', description: 'Server to client only' },
+/** Wire values, with the key that names each for the operator. */
+const MODE_OPTIONS: Array<{ value: number; key: string }> = [
+  { value: 0, key: 'modeBidirectional' },
+  { value: 1, key: 'modeUpstream' },
+  { value: 2, key: 'modeDownstream' },
 ];
 
-const MSS_OPTIONS: Array<{ value: number; label: string }> = [
-  { value: 536, label: '536 B (min)' },
-  { value: 1220, label: '1220 B (IPv6)' },
-  { value: 1460, label: '1460 B (standard)' },
-  { value: 8960, label: '8960 B (jumbo)' },
+/** Segment sizes, with the qualifier as a key so only the qualifier moves. */
+const MSS_OPTIONS: Array<{ value: number; key: string }> = [
+  { value: 536, key: 'mssMin' },
+  { value: 1220, key: 'mssIpv6' },
+  { value: 1460, key: 'mssStandard' },
+  { value: 8960, key: 'mssJumbo' },
 ];
 
 function formatBDP(bdpBytes: number): string {
@@ -64,16 +70,6 @@ interface RFC6349ConfigFormProps {
   config: RFC6349Config;
   setConfig: (config: RFC6349Config) => void;
   selectedTests: string[];
-}
-
-function FieldError({ message }: { message?: string }): ReactElement | null {
-  if (!message) return null;
-  return (
-    <div className="mt-tight text-xs text-status-error flex items-center gap-tight">
-      <AlertTriangle className="w-3 h-3" />
-      {message}
-    </div>
-  );
 }
 
 export function RFC6349ConfigForm({
@@ -93,6 +89,7 @@ export function RFC6349ConfigForm({
     watch,
     formState: { errors },
   } = form;
+  const { t } = useTranslation('settings');
 
   if (!hasRFC6349Tests) {
     return null;
@@ -128,22 +125,18 @@ export function RFC6349ConfigForm({
       title={
         <div className="flex items-center gap-compact">
           <Activity className="w-4 h-4" />
-          <span>RFC 6349 Configuration</span>
+          <span>{t('testConfig.rfc6349.title')}</span>
         </div>
       }
       defaultOpen={true}
     >
       <div className="stack-lg">
-        <div className="stack">
-          <div className="text-xs font-semibold text-text-muted uppercase tracking-wide">
-            Network Parameters
-          </div>
-
+        <FormSection title={t('testConfig.rfc6349.network.title')}>
           <div className="grid grid-cols-3 gap-default">
             <div>
               <label htmlFor="rfc6349-rate" className="flex items-center gap-tight label">
-                Target Rate (Mbps)
-                <HelpIcon tooltip="Target throughput rate for TCP testing." />
+                {t('testConfig.rfc6349.network.targetRate')}
+                <HelpIcon tooltip={t('testConfig.rfc6349.network.targetRateHelp')} />
               </label>
               <input
                 id="rfc6349-rate"
@@ -157,8 +150,8 @@ export function RFC6349ConfigForm({
 
             <div>
               <label htmlFor="rfc6349-minrtt" className="flex items-center gap-tight label">
-                Min RTT (ms)
-                <HelpIcon tooltip="Minimum expected round-trip time." />
+                {t('testConfig.rfc6349.network.minRtt')}
+                <HelpIcon tooltip={t('testConfig.rfc6349.network.minRttHelp')} />
               </label>
               <input
                 id="rfc6349-minrtt"
@@ -172,8 +165,8 @@ export function RFC6349ConfigForm({
 
             <div>
               <label htmlFor="rfc6349-maxrtt" className="flex items-center gap-tight label">
-                Max RTT (ms)
-                <HelpIcon tooltip="Maximum expected round-trip time." />
+                {t('testConfig.rfc6349.network.maxRtt')}
+                <HelpIcon tooltip={t('testConfig.rfc6349.network.maxRttHelp')} />
               </label>
               <input
                 id="rfc6349-maxrtt"
@@ -185,18 +178,14 @@ export function RFC6349ConfigForm({
               <FieldError message={errors.maxRTTMs?.message} />
             </div>
           </div>
-        </div>
+        </FormSection>
 
-        <div className="stack">
-          <div className="text-xs font-semibold text-text-muted uppercase tracking-wide">
-            TCP Parameters
-          </div>
-
+        <FormSection title={t('testConfig.rfc6349.tcp.title')}>
           <div className="grid grid-cols-2 gap-default">
             <div>
               <label htmlFor="rfc6349-rwnd" className="flex items-center gap-tight label">
-                RWND Size (bytes)
-                <HelpIcon tooltip="TCP Receive Window size. Should be >= BDP for optimal throughput." />
+                {t('testConfig.rfc6349.tcp.rwnd')}
+                <HelpIcon tooltip={t('testConfig.rfc6349.tcp.rwndHelp')} />
               </label>
               <input
                 id="rfc6349-rwnd"
@@ -210,17 +199,17 @@ export function RFC6349ConfigForm({
 
             <div>
               <label htmlFor="rfc6349-mss" className="flex items-center gap-tight label">
-                MSS
-                <HelpIcon tooltip="Maximum Segment Size for TCP." />
+                {t('testConfig.rfc6349.tcp.mss')}
+                <HelpIcon tooltip={t('testConfig.rfc6349.tcp.mssHelp')} />
               </label>
               <select
                 id="rfc6349-mss"
                 {...register('mss', { valueAsNumber: true })}
                 className="mt-tight w-full"
               >
-                {MSS_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
+                {MSS_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {t(`testConfig.rfc6349.tcp.${option.key}` as never, { size: option.value })}
                   </option>
                 ))}
               </select>
@@ -231,8 +220,8 @@ export function RFC6349ConfigForm({
           <div className="grid grid-cols-2 gap-default">
             <div>
               <label htmlFor="rfc6349-streams" className="flex items-center gap-tight label">
-                Parallel Streams
-                <HelpIcon tooltip="Number of parallel TCP connections." />
+                {t('testConfig.rfc6349.tcp.streams')}
+                <HelpIcon tooltip={t('testConfig.rfc6349.tcp.streamsHelp')} />
               </label>
               <input
                 id="rfc6349-streams"
@@ -246,29 +235,29 @@ export function RFC6349ConfigForm({
 
             <div>
               <label htmlFor="rfc6349-mode" className="flex items-center gap-tight label">
-                Test Mode
-                <HelpIcon tooltip="Direction of throughput testing." />
+                {t('testConfig.rfc6349.tcp.mode')}
+                <HelpIcon tooltip={t('testConfig.rfc6349.tcp.modeHelp')} />
               </label>
               <select
                 id="rfc6349-mode"
                 {...register('mode', { valueAsNumber: true })}
                 className="mt-tight w-full"
               >
-                {MODE_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
+                {MODE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {t(`testConfig.rfc6349.tcp.${option.key}` as never)}
                   </option>
                 ))}
               </select>
               <FieldError message={errors.mode?.message} />
             </div>
           </div>
-        </div>
+        </FormSection>
 
         <div>
           <label htmlFor="rfc6349-duration" className="flex items-center gap-tight label">
-            Duration (s)
-            <HelpIcon tooltip="Test duration in seconds." />
+            {t('testConfig.rfc6349.tcp.duration')}
+            <HelpIcon tooltip={t('testConfig.rfc6349.tcp.durationHelp')} />
           </label>
           <input
             id="rfc6349-duration"
@@ -287,34 +276,39 @@ export function RFC6349ConfigForm({
           </div>
         )}
 
-        <div className="pad-sm rounded-lg bg-surface-base border border-surface-border">
-          <div className="flex items-center gap-compact label mb-2">
-            <Info className="w-4 h-4" />
-            Test Summary
+        <TestSummary>
+          <div>
+            {t('testConfig.common.selectedTests')}:{' '}
+            {[
+              hasThroughput && t('testConfig.rfc6349.tests.throughput'),
+              hasBDP && t('testConfig.rfc6349.tests.bdp'),
+              hasEfficiency && t('testConfig.rfc6349.tests.efficiency'),
+            ]
+              .filter(Boolean)
+              .join(', ')}
           </div>
-          <div className="text-xs text-text-muted stack-xs">
-            <div>
-              Selected tests:{' '}
-              {[hasThroughput && 'Throughput', hasBDP && 'BDP', hasEfficiency && 'Efficiency']
-                .filter(Boolean)
-                .join(', ')}
-            </div>
-            <div>Target: {targetRateMbps} Mbps</div>
-            <div>
-              RTT Range: {minRTTMs} - {maxRTTMs} ms
-            </div>
-            <div>
-              BDP (calculated): {bdpFormatted}
-              {rwndSize < bdp ? (
-                <span className="text-status-warning ml-inline">RWND &lt; BDP</span>
-              ) : null}
-            </div>
-            <div>
-              Mode: {MODE_OPTIONS.find((m) => m.value === mode)?.label} | Streams: {parallelStreams}
-            </div>
-            <div>Duration: {duration}s</div>
+          <div>{t('testConfig.rfc6349.summary.target', { rate: targetRateMbps })}</div>
+          <div>{t('testConfig.rfc6349.summary.rtt', { min: minRTTMs, max: maxRTTMs })}</div>
+          <div>
+            {t('testConfig.rfc6349.summary.bdp', { bdp: bdpFormatted })}
+            {rwndSize < bdp ? (
+              <span className="text-status-warning ml-inline">
+                {t('testConfig.rfc6349.summary.rwndBelowBdp')}
+              </span>
+            ) : null}
           </div>
-        </div>
+          <div>
+            {t('testConfig.rfc6349.summary.mode', {
+              mode: t(
+                `testConfig.rfc6349.tcp.${
+                  MODE_OPTIONS.find((option) => option.value === mode)?.key ?? 'modeBidirectional'
+                }` as never,
+              ),
+              streams: parallelStreams,
+            })}
+          </div>
+          <div>{t('testConfig.rfc6349.summary.duration', { duration })}</div>
+        </TestSummary>
       </div>
     </CollapsibleSection>
   );
