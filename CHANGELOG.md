@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.18](https://github.com/MustardSeedNetworks/stem/compare/v0.24.17...v0.24.18) (2026-08-20)
+
+
+### Features
+
+* **i18n:** translate the RFC 2544 config form and share its two drifted parts ([#679](https://github.com/MustardSeedNetworks/stem/issues/679)) ([6d08b18](https://github.com/MustardSeedNetworks/stem/commit/6d08b18bd0a64feca1c816877bb6c853ee92b2e9)), closes [#668](https://github.com/MustardSeedNetworks/stem/issues/668)
+* **i18n:** translate the RFC 6349 and TSN forms, closing the seven ([#685](https://github.com/MustardSeedNetworks/stem/issues/685)) ([236a1aa](https://github.com/MustardSeedNetworks/stem/commit/236a1aa81ec2dcb772e2912ff396bb8d3a181a2a)), closes [#668](https://github.com/MustardSeedNetworks/stem/issues/668)
+* **i18n:** translate the TrafficGen, Y.1731 and RFC 2889 forms ([#684](https://github.com/MustardSeedNetworks/stem/issues/684)) ([c8c1aa9](https://github.com/MustardSeedNetworks/stem/commit/c8c1aa9ca2dd2d27667fb4a8277d42f2d04a3d7e)), closes [#668](https://github.com/MustardSeedNetworks/stem/issues/668)
+* **i18n:** translate the Y.1564 config form and share two more copied parts ([#683](https://github.com/MustardSeedNetworks/stem/issues/683)) ([3971441](https://github.com/MustardSeedNetworks/stem/commit/3971441e1a7a97c856614551d1e14b4a3e675551)), closes [#668](https://github.com/MustardSeedNetworks/stem/issues/668)
+
+
+### Bug Fixes
+
+* **deps:** update module modernc.org/sqlite to v1.57.0 ([#678](https://github.com/MustardSeedNetworks/stem/issues/678)) ([20971f8](https://github.com/MustardSeedNetworks/stem/commit/20971f8e67dd0a5213954829bb5474e731569d1d))
+
+
+### Miscellaneous
+
+* **deps:** update module github.com/golangci/golangci-lint/v2/cmd/golangci-lint to v2.13.0 ([#681](https://github.com/MustardSeedNetworks/stem/issues/681)) ([0e86e4b](https://github.com/MustardSeedNetworks/stem/commit/0e86e4b10d9d4cc098be7728e1785f8c167eb6e8))
+
 ## [0.24.17](https://github.com/MustardSeedNetworks/stem/compare/v0.24.16...v0.24.17) (2026-08-18)
 
 
