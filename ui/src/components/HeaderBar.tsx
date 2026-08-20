@@ -88,7 +88,7 @@ function getFriendlyInterfaceName(name: string, type: string): string {
     return 'Wi-Fi';
   }
   const numMatch = /(\d+)$/.exec(name);
-  if (numMatch) {
+  if (numMatch?.[1]) {
     const num = Number.parseInt(numMatch[1], 10);
     if (num > 0) {
       return `Ethernet ${num + 1}`;
