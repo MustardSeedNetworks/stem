@@ -510,6 +510,111 @@
         "ports": "Ports: {{ports}} | Pattern: {{pattern}}",
         "duration": "Duration: {{duration}}s + {{warmup}}s warmup"
       }
+    },
+    "rfc6349": {
+      "title": "RFC 6349 Configuration",
+      "network": {
+        "title": "Network Parameters",
+        "targetRate": "Target Rate (Mbps)",
+        "targetRateHelp": "Target throughput rate for TCP testing.",
+        "minRtt": "Min RTT (ms)",
+        "minRttHelp": "Minimum expected round-trip time.",
+        "maxRtt": "Max RTT (ms)",
+        "maxRttHelp": "Maximum expected round-trip time."
+      },
+      "tcp": {
+        "title": "TCP Parameters",
+        "rwnd": "RWND Size (bytes)",
+        "rwndHelp": "TCP Receive Window size. Should be >= BDP for optimal throughput.",
+        "mss": "MSS",
+        "mssHelp": "Maximum Segment Size for TCP.",
+        "mssMin": "{{size}} B (min)",
+        "mssIpv6": "{{size}} B (IPv6)",
+        "mssStandard": "{{size}} B (standard)",
+        "mssJumbo": "{{size}} B (jumbo)",
+        "streams": "Parallel Streams",
+        "streamsHelp": "Number of parallel TCP connections.",
+        "mode": "Test Mode",
+        "modeHelp": "Direction of throughput testing.",
+        "modeBidirectional": "Bidirectional",
+        "modeUpstream": "Upstream",
+        "modeDownstream": "Downstream",
+        "duration": "Duration (s)",
+        "durationHelp": "Test duration in seconds."
+      },
+      "tests": {
+        "throughput": "Throughput",
+        "bdp": "BDP",
+        "efficiency": "Efficiency"
+      },
+      "summary": {
+        "target": "Target: {{rate}} Mbps",
+        "rtt": "RTT Range: {{min}} - {{max}} ms",
+        "bdp": "BDP (calculated): {{bdp}}",
+        "rwndBelowBdp": "RWND < BDP",
+        "mode": "Mode: {{mode}} | Streams: {{streams}}",
+        "duration": "Duration: {{duration}}s"
+      }
+    },
+    "tsn": {
+      "params": {
+        "title": "Test Parameters",
+        "duration": "Duration (s)",
+        "durationHelp": "Test duration in seconds.",
+        "warmup": "Warmup (s)",
+        "warmupHelp": "Warmup period for synchronization.",
+        "frameSize": "Frame Size",
+        "frameSizeHelp": "Ethernet frame size for testing."
+      },
+      "timing": {
+        "title": "Timing Requirements",
+        "maxLatency": "Max Latency (ns)",
+        "maxLatencyHelp": "Maximum acceptable end-to-end latency in nanoseconds.",
+        "maxJitter": "Max Jitter (ns)",
+        "maxJitterHelp": "Maximum acceptable jitter (PDV) in nanoseconds."
+      },
+      "ptp": {
+        "title": "PTP Synchronization",
+        "enable": "Enable PTP timestamping (IEEE 1588)",
+        "enableTitle": "Use IEEE 1588 PTP hardware timestamps for sub-microsecond delay measurement; requires PTP-capable NIC",
+        "enableAria": "Enable IEEE 1588 PTP hardware timestamping",
+        "require": "Require PTP synchronization before test",
+        "requireTitle": "Block the test from starting until the local PTP clock has locked to the grandmaster within the configured tolerance",
+        "requireAria": "Require PTP synchronization before starting test",
+        "syncOffset": "Max Sync Offset (ns)",
+        "syncOffsetHelp": "Maximum acceptable PTP clock offset."
+      },
+      "scheduling": {
+        "title": "Traffic Scheduling (802.1Qbv)",
+        "preemption": "Enable frame preemption (802.1Qbu)",
+        "preemptionTitle": "Allow express traffic to preempt in-flight preemptable frames per IEEE 802.1Qbu; reduces latency for critical traffic classes",
+        "preemptionAria": "Enable IEEE 802.1Qbu frame preemption",
+        "cycleTime": "Cycle Time",
+        "cycleTimeHelp": "Time-Aware Shaper cycle duration.",
+        "trafficClass": "Traffic Class",
+        "trafficClassHelp": "Traffic class for test frames (0-7).",
+        "numClasses": "Number of Traffic Classes",
+        "numClassesHelp": "Total traffic classes configured (1-8).",
+        "baseTime": "Base Time (ns)",
+        "baseTimeHelp": "Base time for gate schedule (ns since epoch). 0 = use current time."
+      },
+      "tests": {
+        "latency": "Latency",
+        "jitter": "Jitter",
+        "sync": "Sync Verification",
+        "preemption": "Preemption",
+        "scheduling": "Scheduling"
+      },
+      "summary": {
+        "frameSize": "Frame size: {{size}} bytes",
+        "timing": "Timing: ≤{{latency}} latency | ≤{{jitter}} jitter",
+        "ptpDisabled": "PTP: Disabled",
+        "ptpEnabled": "PTP: Enabled | Max offset: {{offset}}",
+        "ptpRequired": "PTP: Enabled (required) | Max offset: {{offset}}",
+        "scheduling": "Scheduling: Cycle {{cycle}} | TC {{trafficClass}}",
+        "schedulingPreemption": "Scheduling: Cycle {{cycle}} | TC {{trafficClass}} | Preemption enabled",
+        "duration": "Duration: {{duration}}s + {{warmup}}s warmup"
+      }
     }
   }
 }

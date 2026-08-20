@@ -510,6 +510,111 @@
         "ports": "Puertos: {{ports}} | Patrón: {{pattern}}",
         "duration": "Duración: {{duration}} s + {{warmup}} s de calentamiento"
       }
+    },
+    "rfc6349": {
+      "title": "Configuración RFC 6349",
+      "network": {
+        "title": "Parámetros de red",
+        "targetRate": "Tasa objetivo (Mbps)",
+        "targetRateHelp": "Throughput objetivo para la prueba TCP.",
+        "minRtt": "RTT mínimo (ms)",
+        "minRttHelp": "Round-trip time mínimo esperado.",
+        "maxRtt": "RTT máximo (ms)",
+        "maxRttHelp": "Round-trip time máximo esperado."
+      },
+      "tcp": {
+        "title": "Parámetros TCP",
+        "rwnd": "Tamaño de RWND (bytes)",
+        "rwndHelp": "Tamaño de la ventana de recepción TCP. Debe ser >= BDP para un throughput óptimo.",
+        "mss": "MSS",
+        "mssHelp": "Maximum Segment Size de TCP.",
+        "mssMin": "{{size}} B (mín.)",
+        "mssIpv6": "{{size}} B (IPv6)",
+        "mssStandard": "{{size}} B (estándar)",
+        "mssJumbo": "{{size}} B (jumbo)",
+        "streams": "Flujos paralelos",
+        "streamsHelp": "Número de conexiones TCP en paralelo.",
+        "mode": "Modo de prueba",
+        "modeHelp": "Sentido de la prueba de throughput.",
+        "modeBidirectional": "Bidireccional",
+        "modeUpstream": "Subida",
+        "modeDownstream": "Bajada",
+        "duration": "Duración (s)",
+        "durationHelp": "Duración de la prueba en segundos."
+      },
+      "tests": {
+        "throughput": "Throughput",
+        "bdp": "BDP",
+        "efficiency": "Eficiencia"
+      },
+      "summary": {
+        "target": "Objetivo: {{rate}} Mbps",
+        "rtt": "Rango de RTT: {{min}} - {{max}} ms",
+        "bdp": "BDP (calculado): {{bdp}}",
+        "rwndBelowBdp": "RWND < BDP",
+        "mode": "Modo: {{mode}} | Flujos: {{streams}}",
+        "duration": "Duración: {{duration}} s"
+      }
+    },
+    "tsn": {
+      "params": {
+        "title": "Parámetros de la prueba",
+        "duration": "Duración (s)",
+        "durationHelp": "Duración de la prueba en segundos.",
+        "warmup": "Calentamiento (s)",
+        "warmupHelp": "Periodo de calentamiento para la sincronización.",
+        "frameSize": "Tamaño de trama",
+        "frameSizeHelp": "Tamaño de la trama Ethernet usada en la prueba."
+      },
+      "timing": {
+        "title": "Requisitos de temporización",
+        "maxLatency": "Latency máxima (ns)",
+        "maxLatencyHelp": "Latency extremo a extremo máxima aceptable, en nanosegundos.",
+        "maxJitter": "Jitter máximo (ns)",
+        "maxJitterHelp": "Jitter (PDV) máximo aceptable, en nanosegundos."
+      },
+      "ptp": {
+        "title": "Sincronización PTP",
+        "enable": "Activar marcas de tiempo PTP (IEEE 1588)",
+        "enableTitle": "Usar marcas de tiempo hardware PTP IEEE 1588 para medir retardos por debajo del microsegundo; requiere una NIC compatible con PTP",
+        "enableAria": "Activar las marcas de tiempo hardware PTP IEEE 1588",
+        "require": "Exigir la sincronización PTP antes de la prueba",
+        "requireTitle": "Impedir que la prueba empiece hasta que el reloj PTP local se haya enganchado al grandmaster dentro de la tolerancia configurada",
+        "requireAria": "Exigir la sincronización PTP antes de iniciar la prueba",
+        "syncOffset": "Desfase máximo de sincronización (ns)",
+        "syncOffsetHelp": "Desfase máximo aceptable del reloj PTP."
+      },
+      "scheduling": {
+        "title": "Planificación del tráfico (802.1Qbv)",
+        "preemption": "Activar la preempción de tramas (802.1Qbu)",
+        "preemptionTitle": "Permitir que el tráfico express interrumpa tramas preemptables en vuelo según IEEE 802.1Qbu; reduce el latency del tráfico crítico",
+        "preemptionAria": "Activar la preempción de tramas IEEE 802.1Qbu",
+        "cycleTime": "Tiempo de ciclo",
+        "cycleTimeHelp": "Duración del ciclo del Time-Aware Shaper.",
+        "trafficClass": "Clase de tráfico",
+        "trafficClassHelp": "Clase de tráfico de las tramas de prueba (0-7).",
+        "numClasses": "Número de clases de tráfico",
+        "numClassesHelp": "Total de clases de tráfico configuradas (1-8).",
+        "baseTime": "Tiempo base (ns)",
+        "baseTimeHelp": "Tiempo base de la planificación de puertas (ns desde epoch). 0 = usar la hora actual."
+      },
+      "tests": {
+        "latency": "Latency",
+        "jitter": "Jitter",
+        "sync": "Verificación de sincronización",
+        "preemption": "Preempción",
+        "scheduling": "Planificación"
+      },
+      "summary": {
+        "frameSize": "Tamaño de trama: {{size}} bytes",
+        "timing": "Temporización: ≤{{latency}} de latency | ≤{{jitter}} de jitter",
+        "ptpDisabled": "PTP: desactivado",
+        "ptpEnabled": "PTP: activado | Desfase máximo: {{offset}}",
+        "ptpRequired": "PTP: activado (obligatorio) | Desfase máximo: {{offset}}",
+        "scheduling": "Planificación: ciclo {{cycle}} | TC {{trafficClass}}",
+        "schedulingPreemption": "Planificación: ciclo {{cycle}} | TC {{trafficClass}} | preempción activada",
+        "duration": "Duración: {{duration}} s + {{warmup}} s de calentamiento"
+      }
     }
   }
 }
