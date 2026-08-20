@@ -5,11 +5,12 @@
  *              lives at src/schemas/configs.ts (RFC2544ConfigSchema).
  */
 
-import { AlertTriangle } from 'lucide-react';
 import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
+import { FRAME_SIZE_OPTIONS } from '../forms/frameSizes';
 import { useConfigForm } from '../forms/useConfigForm';
 import { RFC2544ConfigSchema } from '../schemas/configs';
+import { FieldError } from './FieldError';
 import { FormSection } from './FormSection';
 import { HelpIcon } from './HelpIcon';
 import { TestSummary } from './TestSummary';
@@ -50,35 +51,6 @@ interface RFC2544ConfigFormProps {
   config: RFC2544Config;
   setConfig: (config: RFC2544Config) => void;
   selectedTests: string[];
-}
-
-/**
- * The sizes RFC 2544 specifies, plus the jumbo frame operators ask for. The
- * qualifier is a separate key rather than part of the label, so "min" and
- * "jumbo" translate while the byte count does not.
- */
-const FRAME_SIZE_OPTIONS: Array<{
-  value: number;
-  qualifier: 'optionMin' | 'option' | 'optionMax' | 'optionJumbo';
-}> = [
-  { value: 64, qualifier: 'optionMin' },
-  { value: 128, qualifier: 'option' },
-  { value: 256, qualifier: 'option' },
-  { value: 512, qualifier: 'option' },
-  { value: 1024, qualifier: 'option' },
-  { value: 1280, qualifier: 'option' },
-  { value: 1518, qualifier: 'optionMax' },
-  { value: 9000, qualifier: 'optionJumbo' },
-];
-
-function FieldError({ message }: { message?: string }): ReactElement | null {
-  if (!message) return null;
-  return (
-    <div className="mt-tight text-xs text-status-error flex items-center gap-tight">
-      <AlertTriangle className="w-3 h-3" />
-      {message}
-    </div>
-  );
 }
 
 export function RFC2544ConfigForm({
@@ -249,7 +221,7 @@ export function RFC2544ConfigForm({
       ) : null}
 
       <FormSection
-        title={t('testConfig.rfc2544.frameSizes.title')}
+        title={t('testConfig.common.frameSizesTitle')}
         help={<HelpIcon tooltip={t('testConfig.rfc2544.frameSizes.help')} />}
       >
         <div className="grid grid-cols-2 gap-compact">
@@ -263,11 +235,11 @@ export function RFC2544ConfigForm({
                 type="checkbox"
                 checked={frameSizes.includes(option.value)}
                 onChange={() => toggleFrameSize(option.value)}
-                aria-label={t('testConfig.rfc2544.frameSizes.includeLabel', { size: option.value })}
+                aria-label={t('testConfig.common.frameSizeAria', { size: option.value })}
                 className="w-4 h-4 accent-brand-primary"
               />
               <span className="text-text-primary">
-                {t(`testConfig.rfc2544.frameSizes.${option.qualifier}`, { size: option.value })}
+                {t(`testConfig.common.${option.qualifier}`, { size: option.value })}
               </span>
             </label>
           ))}
@@ -313,7 +285,7 @@ export function RFC2544ConfigForm({
             .filter(Boolean)
             .join(', ')}
         </div>
-        <div>{t('testConfig.rfc2544.summary.frameSizes', { sizes: frameSizes.join(', ') })}</div>
+        <div>{t('testConfig.common.frameSizesSummary', { sizes: frameSizes.join(', ') })}</div>
         <div>
           {warmup > 0
             ? t('testConfig.rfc2544.summary.durationWithWarmup', { duration, trials, warmup })

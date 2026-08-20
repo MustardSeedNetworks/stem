@@ -250,7 +250,14 @@
       "summary": "Test Summary",
       "selectedTests": "Selected tests",
       "estimatedTime": "Estimated time: ~{{minutes}} minutes",
-      "bytesSuffix": "{{sizes}} bytes"
+      "bytesSuffix": "{{sizes}} bytes",
+      "frameSizesTitle": "Frame Sizes",
+      "frameSizeMin": "{{size}} B (min)",
+      "frameSize": "{{size}} B",
+      "frameSizeMax": "{{size}} B (max)",
+      "frameSizeJumbo": "{{size}} B (jumbo)",
+      "frameSizeAria": "Test {{size}}-byte frames",
+      "frameSizesSummary": "Frame sizes: {{sizes}} bytes"
     },
     "rfc2544": {
       "duration": {
@@ -276,14 +283,8 @@
         "testsAt": "Tests at: {{points}}"
       },
       "frameSizes": {
-        "title": "Frame Sizes",
         "help": "Select frame sizes to test. RFC 2544 specifies: 64, 128, 256, 512, 1024, 1280, 1518 bytes.",
-        "optionMin": "{{size}} B (min)",
-        "option": "{{size}} B",
-        "optionMax": "{{size}} B (max)",
-        "optionJumbo": "{{size}} B (jumbo)",
-        "includeTitle": "Include {{size}}-byte frames in the RFC 2544 sweep",
-        "includeLabel": "Test {{size}}-byte frames"
+        "includeTitle": "Include {{size}}-byte frames in the RFC 2544 sweep"
       },
       "advanced": {
         "title": "Advanced Options",
@@ -307,6 +308,69 @@
         "backToBack": "Back-to-Back",
         "systemRecovery": "System Recovery",
         "reset": "Reset"
+      }
+    },
+    "y1564": {
+      "title": "Y.1564 / MEF Configuration",
+      "bandwidth": {
+        "title": "Bandwidth Parameters",
+        "cir": "CIR (Mbps)",
+        "cirHelp": "Committed Information Rate - the guaranteed bandwidth that the service will always provide.",
+        "eir": "EIR (Mbps)",
+        "eirHelp": "Excess Information Rate - additional bandwidth available when network capacity permits (best-effort).",
+        "cbs": "CBS (KB)",
+        "cbsHelp": "Committed Burst Size - maximum burst of traffic allowed at CIR before excess marking.",
+        "ebs": "EBS (KB)",
+        "ebsHelp": "Excess Burst Size - maximum burst of excess traffic (beyond CIR) that may be allowed."
+      },
+      "sla": {
+        "title": "SLA Thresholds",
+        "flr": "Max Frame Loss (%)",
+        "flrHelp": "Maximum acceptable Frame Loss Ratio (FLR). Typical SLA values: 0.01% to 0.1%.",
+        "fd": "Max Frame Delay (ms)",
+        "fdHelp": "Maximum acceptable one-way Frame Delay (FD). Typical values: 5-50ms depending on service class.",
+        "fdv": "Max Jitter (ms)",
+        "fdvHelp": "Maximum acceptable Frame Delay Variation (FDV/jitter). Typical values: 2-10ms."
+      },
+      "frameSizes": {
+        "help": "Select frame sizes to test. RFC 2544 recommends: 64, 128, 256, 512, 1024, 1280, 1518 bytes.",
+        "includeTitle": "Include {{size}}-byte frames in the Y.1564 service activation sweep"
+      },
+      "duration": {
+        "title": "Test Duration",
+        "configStep": "Config Step Duration (s)",
+        "configStepHelp": "Duration for each step load (25%, 50%, 75%, 100% of CIR) during configuration test.",
+        "configTotal": "Total config test: ~{{seconds}}s",
+        "perf": "Performance Duration (s)",
+        "perfHelp": "Duration of the sustained performance test at 100% CIR. Y.1564 recommends minimum 15 minutes (900s).",
+        "perfMinutes": "= {{minutes}} minutes"
+      },
+      "vlan": {
+        "title": "VLAN Settings",
+        "id": "VLAN ID",
+        "idHelp": "VLAN tag for test traffic. Set to 0 for untagged traffic.",
+        "untagged": "Untagged traffic",
+        "pcp": "Priority (PCP)",
+        "pcpHelp": "Priority Code Point (802.1p). 0=Best Effort, 7=Highest Priority.",
+        "pcp0": "0 - Best Effort (BE)",
+        "pcp1": "1 - Background (BK)",
+        "pcp2": "2 - Excellent Effort (EE)",
+        "pcp3": "3 - Critical (CA)",
+        "pcp4": "4 - Video (VI)",
+        "pcp5": "5 - Voice (VO)",
+        "pcp6": "6 - Internetwork Control (IC)",
+        "pcp7": "7 - Network Control (NC)",
+        "colorAware": "Color-Aware Mode",
+        "colorAwareHelp": "Enable dual-rate testing with green (CIR) and yellow (EIR) traffic classes.",
+        "colorAwareHint": "Test green/yellow traffic separation",
+        "colorAwareTitle": "Send traffic as green (in-profile, conforms to CIR) and yellow (out-of-profile, conforms to EIR) and verify each color is treated correctly",
+        "colorAwareAria": "Enable color-aware Y.1564 testing"
+      },
+      "summary": {
+        "service": "Service: {{cir}} Mbps CIR",
+        "serviceWithEir": "Service: {{cir}} Mbps CIR + {{eir}} Mbps EIR",
+        "sla": "SLA: FLR≤{{flr}}%, FD≤{{fd}}ms, FDV≤{{fdv}}ms",
+        "vlan": "VLAN {{vlan}} / PCP {{pcp}}"
       }
     }
   }

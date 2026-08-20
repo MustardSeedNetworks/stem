@@ -12,12 +12,17 @@
  * same pattern — see issue #325 for the sweep.
  */
 
-import { AlertTriangle, Info, Settings2 } from 'lucide-react';
+import { AlertTriangle, Settings2 } from 'lucide-react';
 import type { ReactElement } from 'react';
+import { useTranslation } from 'react-i18next';
+import { FRAME_SIZE_OPTIONS } from '../forms/frameSizes';
 import { useConfigForm } from '../forms/useConfigForm';
 import { Y1564ConfigSchema } from '../schemas/configs';
 import { CollapsibleSection } from './CollapsibleSection';
+import { FieldError } from './FieldError';
+import { FormSection } from './FormSection';
 import { HelpIcon } from './HelpIcon';
+import { TestSummary } from './TestSummary';
 
 /** Y.1564 service configuration parameters */
 export interface Y1564Config {
@@ -70,29 +75,6 @@ interface Y1564ConfigFormProps {
   config: Y1564Config;
   setConfig: (config: Y1564Config) => void;
   selectedTests: string[];
-}
-
-/** Standard Ethernet frame sizes */
-const FRAME_SIZE_OPTIONS: Array<{ value: number; label: string }> = [
-  { value: 64, label: '64 B (min)' },
-  { value: 128, label: '128 B' },
-  { value: 256, label: '256 B' },
-  { value: 512, label: '512 B' },
-  { value: 1024, label: '1024 B' },
-  { value: 1280, label: '1280 B' },
-  { value: 1518, label: '1518 B (max)' },
-  { value: 9000, label: '9000 B (jumbo)' },
-];
-
-/** Field-level error display. Keeps JSX terse and consistent. */
-function FieldError({ message }: { message?: string }): ReactElement | null {
-  if (!message) return null;
-  return (
-    <div className="mt-tight text-xs text-status-error flex items-center gap-tight">
-      <AlertTriangle className="w-3 h-3" />
-      {message}
-    </div>
-  );
 }
 
 export function Y1564ConfigForm({
@@ -158,6 +140,7 @@ export function Y1564ConfigForm({
 
   // Cross-field error (fdv > fd). valibot's v.check() surfaces under
   // formState.errors.root.<unique-key>; we render the first one found.
+  const { t } = useTranslation('settings');
   const rootErrors = errors.root;
   const crossFieldError = rootErrors
     ? Object.values(rootErrors).find(
@@ -172,23 +155,18 @@ export function Y1564ConfigForm({
       title={
         <div className="flex items-center gap-compact">
           <Settings2 className="w-4 h-4" />
-          <span>Y.1564 / MEF Configuration</span>
+          <span>{t('testConfig.y1564.title')}</span>
         </div>
       }
       defaultOpen={true}
     >
       <div className="stack-lg">
-        {/* Bandwidth Configuration */}
-        <div className="stack">
-          <div className="text-xs font-semibold text-text-muted uppercase tracking-wide">
-            Bandwidth Parameters
-          </div>
-
+        <FormSection title={t('testConfig.y1564.bandwidth.title')}>
           {/* CIR */}
           <div>
             <label htmlFor="y1564-cir" className="flex items-center gap-tight label">
-              CIR (Mbps)
-              <HelpIcon tooltip="Committed Information Rate - the guaranteed bandwidth that the service will always provide." />
+              {t('testConfig.y1564.bandwidth.cir')}
+              <HelpIcon tooltip={t('testConfig.y1564.bandwidth.cirHelp')} />
             </label>
             <input
               id="y1564-cir"
@@ -203,8 +181,8 @@ export function Y1564ConfigForm({
           {/* EIR */}
           <div>
             <label htmlFor="y1564-eir" className="flex items-center gap-tight label">
-              EIR (Mbps)
-              <HelpIcon tooltip="Excess Information Rate - additional bandwidth available when network capacity permits (best-effort)." />
+              {t('testConfig.y1564.bandwidth.eir')}
+              <HelpIcon tooltip={t('testConfig.y1564.bandwidth.eirHelp')} />
             </label>
             <input
               id="y1564-eir"
@@ -219,8 +197,8 @@ export function Y1564ConfigForm({
           {/* CBS */}
           <div>
             <label htmlFor="y1564-cbs" className="flex items-center gap-tight label">
-              CBS (KB)
-              <HelpIcon tooltip="Committed Burst Size - maximum burst of traffic allowed at CIR before excess marking." />
+              {t('testConfig.y1564.bandwidth.cbs')}
+              <HelpIcon tooltip={t('testConfig.y1564.bandwidth.cbsHelp')} />
             </label>
             <input
               id="y1564-cbs"
@@ -235,8 +213,8 @@ export function Y1564ConfigForm({
           {/* EBS */}
           <div>
             <label htmlFor="y1564-ebs" className="flex items-center gap-tight label">
-              EBS (KB)
-              <HelpIcon tooltip="Excess Burst Size - maximum burst of excess traffic (beyond CIR) that may be allowed." />
+              {t('testConfig.y1564.bandwidth.ebs')}
+              <HelpIcon tooltip={t('testConfig.y1564.bandwidth.ebsHelp')} />
             </label>
             <input
               id="y1564-ebs"
@@ -247,19 +225,14 @@ export function Y1564ConfigForm({
             />
             <FieldError message={errors.ebs?.message} />
           </div>
-        </div>
+        </FormSection>
 
-        {/* SLA Thresholds */}
-        <div className="stack">
-          <div className="text-xs font-semibold text-text-muted uppercase tracking-wide">
-            SLA Thresholds
-          </div>
-
+        <FormSection title={t('testConfig.y1564.sla.title')}>
           {/* Frame Loss Ratio */}
           <div>
             <label htmlFor="y1564-flr" className="flex items-center gap-tight label">
-              Max Frame Loss (%)
-              <HelpIcon tooltip="Maximum acceptable Frame Loss Ratio (FLR). Typical SLA values: 0.01% to 0.1%." />
+              {t('testConfig.y1564.sla.flr')}
+              <HelpIcon tooltip={t('testConfig.y1564.sla.flrHelp')} />
             </label>
             <input
               id="y1564-flr"
@@ -274,8 +247,8 @@ export function Y1564ConfigForm({
           {/* Frame Delay */}
           <div>
             <label htmlFor="y1564-fd" className="flex items-center gap-tight label">
-              Max Frame Delay (ms)
-              <HelpIcon tooltip="Maximum acceptable one-way Frame Delay (FD). Typical values: 5-50ms depending on service class." />
+              {t('testConfig.y1564.sla.fd')}
+              <HelpIcon tooltip={t('testConfig.y1564.sla.fdHelp')} />
             </label>
             <input
               id="y1564-fd"
@@ -290,8 +263,8 @@ export function Y1564ConfigForm({
           {/* Frame Delay Variation */}
           <div>
             <label htmlFor="y1564-fdv" className="flex items-center gap-tight label">
-              Max Jitter (ms)
-              <HelpIcon tooltip="Maximum acceptable Frame Delay Variation (FDV/jitter). Typical values: 2-10ms." />
+              {t('testConfig.y1564.sla.fdv')}
+              <HelpIcon tooltip={t('testConfig.y1564.sla.fdvHelp')} />
             </label>
             <input
               id="y1564-fdv"
@@ -302,46 +275,41 @@ export function Y1564ConfigForm({
             />
             <FieldError message={errors.fdvThreshold?.message} />
           </div>
-        </div>
+        </FormSection>
 
-        {/* Frame Sizes */}
-        <div className="stack-sm">
-          <div className="text-xs font-semibold text-text-muted uppercase tracking-wide flex items-center gap-tight">
-            Frame Sizes
-            <HelpIcon tooltip="Select frame sizes to test. RFC 2544 recommends: 64, 128, 256, 512, 1024, 1280, 1518 bytes." />
-          </div>
+        <FormSection
+          title={t('testConfig.common.frameSizesTitle')}
+          help={<HelpIcon tooltip={t('testConfig.y1564.frameSizes.help')} />}
+        >
           <div className="grid grid-cols-2 gap-compact">
             {FRAME_SIZE_OPTIONS.map((option) => (
               <label
                 key={option.value}
-                title={`Include ${option.value}-byte frames in the Y.1564 service activation sweep`}
+                title={t('testConfig.y1564.frameSizes.includeTitle', { size: option.value })}
                 className="flex items-center gap-compact pad-xs rounded-lg cursor-pointer hover:bg-surface-hover text-sm"
               >
                 <input
                   type="checkbox"
                   checked={frameSizes.includes(option.value)}
                   onChange={() => toggleFrameSize(option.value)}
-                  aria-label={`Test ${option.value}-byte frames`}
+                  aria-label={t('testConfig.common.frameSizeAria', { size: option.value })}
                   className="w-4 h-4 accent-brand-primary"
                 />
-                <span className="text-text-primary">{option.label}</span>
+                <span className="text-text-primary">
+                  {t(`testConfig.common.${option.qualifier}`, { size: option.value })}
+                </span>
               </label>
             ))}
           </div>
           <FieldError message={errors.frameSizes?.message} />
-        </div>
+        </FormSection>
 
-        {/* Test Duration */}
-        <div className="stack">
-          <div className="text-xs font-semibold text-text-muted uppercase tracking-wide">
-            Test Duration
-          </div>
-
+        <FormSection title={t('testConfig.y1564.duration.title')}>
           {isConfigTest || isFullTest ? (
             <div>
               <label htmlFor="y1564-config-duration" className="flex items-center gap-tight label">
-                Config Step Duration (s)
-                <HelpIcon tooltip="Duration for each step load (25%, 50%, 75%, 100% of CIR) during configuration test." />
+                {t('testConfig.y1564.duration.configStep')}
+                <HelpIcon tooltip={t('testConfig.y1564.duration.configStepHelp')} />
               </label>
               <input
                 id="y1564-config-duration"
@@ -352,7 +320,9 @@ export function Y1564ConfigForm({
               />
               <FieldError message={errors.configStepDuration?.message} />
               <div className="text-xs text-text-muted mt-tight">
-                Total config test: ~{configStepDuration * 4 * frameSizes.length}s
+                {t('testConfig.y1564.duration.configTotal', {
+                  seconds: configStepDuration * 4 * frameSizes.length,
+                })}
               </div>
             </div>
           ) : null}
@@ -360,8 +330,8 @@ export function Y1564ConfigForm({
           {isPerfTest || isFullTest ? (
             <div>
               <label htmlFor="y1564-perf-duration" className="flex items-center gap-tight label">
-                Performance Duration (s)
-                <HelpIcon tooltip="Duration of the sustained performance test at 100% CIR. Y.1564 recommends minimum 15 minutes (900s)." />
+                {t('testConfig.y1564.duration.perf')}
+                <HelpIcon tooltip={t('testConfig.y1564.duration.perfHelp')} />
               </label>
               <input
                 id="y1564-perf-duration"
@@ -372,22 +342,19 @@ export function Y1564ConfigForm({
               />
               <FieldError message={errors.perfTestDuration?.message} />
               <div className="text-xs text-text-muted mt-tight">
-                = {Math.floor(perfTestDuration / 60)} minutes
+                {t('testConfig.y1564.duration.perfMinutes', {
+                  minutes: Math.floor(perfTestDuration / 60),
+                })}
               </div>
             </div>
           ) : null}
-        </div>
+        </FormSection>
 
-        {/* VLAN Configuration */}
-        <div className="stack">
-          <div className="text-xs font-semibold text-text-muted uppercase tracking-wide">
-            VLAN Settings
-          </div>
-
+        <FormSection title={t('testConfig.y1564.vlan.title')}>
           <div>
             <label htmlFor="y1564-vlan" className="flex items-center gap-tight label">
-              VLAN ID
-              <HelpIcon tooltip="VLAN tag for test traffic. Set to 0 for untagged traffic." />
+              {t('testConfig.y1564.vlan.id')}
+              <HelpIcon tooltip={t('testConfig.y1564.vlan.idHelp')} />
             </label>
             <input
               id="y1564-vlan"
@@ -398,29 +365,28 @@ export function Y1564ConfigForm({
             />
             <FieldError message={errors.vlanId?.message} />
             {vlanId === 0 && (
-              <div className="text-xs text-text-muted mt-tight">Untagged traffic</div>
+              <div className="text-xs text-text-muted mt-tight">
+                {t('testConfig.y1564.vlan.untagged')}
+              </div>
             )}
           </div>
 
           {vlanId > 0 && (
             <div>
               <label htmlFor="y1564-pcp" className="flex items-center gap-tight label">
-                Priority (PCP)
-                <HelpIcon tooltip="Priority Code Point (802.1p). 0=Best Effort, 7=Highest Priority." />
+                {t('testConfig.y1564.vlan.pcp')}
+                <HelpIcon tooltip={t('testConfig.y1564.vlan.pcpHelp')} />
               </label>
               <select
                 id="y1564-pcp"
                 {...register('pcp', { valueAsNumber: true })}
                 className="mt-tight w-full"
               >
-                <option value={0}>0 - Best Effort (BE)</option>
-                <option value={1}>1 - Background (BK)</option>
-                <option value={2}>2 - Excellent Effort (EE)</option>
-                <option value={3}>3 - Critical (CA)</option>
-                <option value={4}>4 - Video (VI)</option>
-                <option value={5}>5 - Voice (VO)</option>
-                <option value={6}>6 - Internetwork Control (IC)</option>
-                <option value={7}>7 - Network Control (NC)</option>
+                {[0, 1, 2, 3, 4, 5, 6, 7].map((priority) => (
+                  <option key={priority} value={priority}>
+                    {t(`testConfig.y1564.vlan.pcp${priority}` as never)}
+                  </option>
+                ))}
               </select>
               <FieldError message={errors.pcp?.message} />
             </div>
@@ -428,24 +394,26 @@ export function Y1564ConfigForm({
 
           {/* Color-Aware Mode */}
           <label
-            title="Send traffic as green (in-profile, conforms to CIR) and yellow (out-of-profile, conforms to EIR) and verify each color is treated correctly"
+            title={t('testConfig.y1564.vlan.colorAwareTitle')}
             className="flex items-center gap-default pad-xs rounded-lg cursor-pointer hover:bg-surface-hover"
           >
             <input
               type="checkbox"
               {...register('colorAware')}
-              aria-label="Enable color-aware Y.1564 testing"
+              aria-label={t('testConfig.y1564.vlan.colorAwareAria')}
               className="w-4 h-4 accent-brand-primary"
             />
             <div>
               <div className="font-medium text-sm flex items-center gap-tight">
-                Color-Aware Mode
-                <HelpIcon tooltip="Enable dual-rate testing with green (CIR) and yellow (EIR) traffic classes." />
+                {t('testConfig.y1564.vlan.colorAware')}
+                <HelpIcon tooltip={t('testConfig.y1564.vlan.colorAwareHelp')} />
               </div>
-              <div className="text-xs text-text-muted">Test green/yellow traffic separation</div>
+              <div className="text-xs text-text-muted">
+                {t('testConfig.y1564.vlan.colorAwareHint')}
+              </div>
             </div>
           </label>
-        </div>
+        </FormSection>
 
         {/* Cross-field error footer */}
         {crossFieldError && (
@@ -455,29 +423,22 @@ export function Y1564ConfigForm({
           </div>
         )}
 
-        {/* Summary */}
-        <div className="pad-sm rounded-lg bg-surface-base border border-surface-border">
-          <div className="flex items-center gap-compact label mb-2">
-            <Info className="w-4 h-4" />
-            Test Summary
+        <TestSummary>
+          <div>
+            {eir > 0
+              ? t('testConfig.y1564.summary.serviceWithEir', { cir, eir })
+              : t('testConfig.y1564.summary.service', { cir })}
           </div>
-          <div className="text-xs text-text-muted stack-xs">
-            <div>
-              Service: {cir} Mbps CIR
-              {eir > 0 && ` + ${eir} Mbps EIR`}
-            </div>
-            <div>Frame sizes: {frameSizes.join(', ')} bytes</div>
-            <div>
-              SLA: FLR≤{flrThreshold}%, FD≤{fdThreshold}ms, FDV≤{fdvThreshold}
-              ms
-            </div>
-            {vlanId > 0 && (
-              <div>
-                VLAN {vlanId} / PCP {pcp}
-              </div>
-            )}
+          <div>{t('testConfig.common.frameSizesSummary', { sizes: frameSizes.join(', ') })}</div>
+          <div>
+            {t('testConfig.y1564.summary.sla', {
+              flr: flrThreshold,
+              fd: fdThreshold,
+              fdv: fdvThreshold,
+            })}
           </div>
-        </div>
+          {vlanId > 0 && <div>{t('testConfig.y1564.summary.vlan', { vlan: vlanId, pcp })}</div>}
+        </TestSummary>
       </div>
     </CollapsibleSection>
   );

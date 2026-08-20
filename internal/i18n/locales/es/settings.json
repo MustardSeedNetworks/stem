@@ -250,7 +250,14 @@
       "summary": "Resumen de la prueba",
       "selectedTests": "Pruebas seleccionadas",
       "estimatedTime": "Tiempo estimado: ~{{minutes}} minutos",
-      "bytesSuffix": "{{sizes}} bytes"
+      "bytesSuffix": "{{sizes}} bytes",
+      "frameSizesTitle": "Tamaños de trama",
+      "frameSizeMin": "{{size}} B (mín.)",
+      "frameSize": "{{size}} B",
+      "frameSizeMax": "{{size}} B (máx.)",
+      "frameSizeJumbo": "{{size}} B (jumbo)",
+      "frameSizeAria": "Probar tramas de {{size}} bytes",
+      "frameSizesSummary": "Tamaños de trama: {{sizes}} bytes"
     },
     "rfc2544": {
       "duration": {
@@ -276,14 +283,8 @@
         "testsAt": "Se prueba en: {{points}}"
       },
       "frameSizes": {
-        "title": "Tamaños de trama",
         "help": "Elija los tamaños de trama a probar. RFC 2544 especifica: 64, 128, 256, 512, 1024, 1280, 1518 bytes.",
-        "optionMin": "{{size}} B (mín.)",
-        "option": "{{size}} B",
-        "optionMax": "{{size}} B (máx.)",
-        "optionJumbo": "{{size}} B (jumbo)",
-        "includeTitle": "Incluir tramas de {{size}} bytes en el barrido RFC 2544",
-        "includeLabel": "Probar tramas de {{size}} bytes"
+        "includeTitle": "Incluir tramas de {{size}} bytes en el barrido RFC 2544"
       },
       "advanced": {
         "title": "Opciones avanzadas",
@@ -307,6 +308,69 @@
         "backToBack": "Back-to-Back",
         "systemRecovery": "Recuperación del sistema",
         "reset": "Reinicio"
+      }
+    },
+    "y1564": {
+      "title": "Configuración Y.1564 / MEF",
+      "bandwidth": {
+        "title": "Parámetros de ancho de banda",
+        "cir": "CIR (Mbps)",
+        "cirHelp": "Committed Information Rate: el ancho de banda garantizado que el servicio siempre proporciona.",
+        "eir": "EIR (Mbps)",
+        "eirHelp": "Excess Information Rate: ancho de banda adicional disponible cuando la capacidad de la red lo permite (best-effort).",
+        "cbs": "CBS (KB)",
+        "cbsHelp": "Committed Burst Size: ráfaga máxima de tráfico permitida al CIR antes de marcar el exceso.",
+        "ebs": "EBS (KB)",
+        "ebsHelp": "Excess Burst Size: ráfaga máxima de tráfico en exceso (por encima del CIR) que puede permitirse."
+      },
+      "sla": {
+        "title": "Umbrales de SLA",
+        "flr": "Pérdida máxima de tramas (%)",
+        "flrHelp": "Frame Loss Ratio (FLR) máximo aceptable. Valores típicos de SLA: 0,01 % a 0,1 %.",
+        "fd": "Retardo máximo de trama (ms)",
+        "fdHelp": "Frame Delay (FD) unidireccional máximo aceptable. Valores típicos: 5-50 ms según la clase de servicio.",
+        "fdv": "Jitter máximo (ms)",
+        "fdvHelp": "Frame Delay Variation (FDV/jitter) máxima aceptable. Valores típicos: 2-10 ms."
+      },
+      "frameSizes": {
+        "help": "Elija los tamaños de trama a probar. RFC 2544 recomienda: 64, 128, 256, 512, 1024, 1280, 1518 bytes.",
+        "includeTitle": "Incluir tramas de {{size}} bytes en el barrido de activación de servicio Y.1564"
+      },
+      "duration": {
+        "title": "Duración de la prueba",
+        "configStep": "Duración de cada escalón (s)",
+        "configStepHelp": "Duración de cada escalón de carga (25 %, 50 %, 75 %, 100 % del CIR) durante la prueba de configuración.",
+        "configTotal": "Prueba de configuración total: ~{{seconds}} s",
+        "perf": "Duración de rendimiento (s)",
+        "perfHelp": "Duración de la prueba de rendimiento sostenido al 100 % del CIR. Y.1564 recomienda un mínimo de 15 minutos (900 s).",
+        "perfMinutes": "= {{minutes}} minutos"
+      },
+      "vlan": {
+        "title": "Ajustes de VLAN",
+        "id": "VLAN ID",
+        "idHelp": "Etiqueta VLAN para el tráfico de prueba. Use 0 para tráfico sin etiquetar.",
+        "untagged": "Tráfico sin etiquetar",
+        "pcp": "Prioridad (PCP)",
+        "pcpHelp": "Priority Code Point (802.1p). 0 = Best Effort, 7 = prioridad máxima.",
+        "pcp0": "0 - Best Effort (BE)",
+        "pcp1": "1 - Background (BK)",
+        "pcp2": "2 - Excellent Effort (EE)",
+        "pcp3": "3 - Critical (CA)",
+        "pcp4": "4 - Video (VI)",
+        "pcp5": "5 - Voice (VO)",
+        "pcp6": "6 - Internetwork Control (IC)",
+        "pcp7": "7 - Network Control (NC)",
+        "colorAware": "Modo consciente del color",
+        "colorAwareHelp": "Activar la prueba de doble tasa con tráfico verde (CIR) y amarillo (EIR).",
+        "colorAwareHint": "Probar la separación de tráfico verde/amarillo",
+        "colorAwareTitle": "Enviar tráfico como verde (dentro de perfil, conforme al CIR) y amarillo (fuera de perfil, conforme al EIR) y verificar que cada color se trata correctamente",
+        "colorAwareAria": "Activar la prueba Y.1564 consciente del color"
+      },
+      "summary": {
+        "service": "Servicio: {{cir}} Mbps CIR",
+        "serviceWithEir": "Servicio: {{cir}} Mbps CIR + {{eir}} Mbps EIR",
+        "sla": "SLA: FLR≤{{flr}} %, FD≤{{fd}} ms, FDV≤{{fdv}} ms",
+        "vlan": "VLAN {{vlan}} / PCP {{pcp}}"
       }
     }
   }
