@@ -31,7 +31,9 @@ export function getTestsByCategory(categoryId: string): TestHelp[] {
   if (!cat) {
     return [];
   }
-  return cat.tests.map((id) => tests[id]).filter(Boolean);
+  // filter(Boolean) drops the undefined values but does not narrow the type;
+  // an explicit predicate does both.
+  return cat.tests.map((id) => tests[id]).filter((test): test is TestHelp => test !== undefined);
 }
 
 // Helper to search tests

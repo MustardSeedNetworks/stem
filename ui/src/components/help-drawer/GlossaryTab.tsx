@@ -31,10 +31,9 @@ export function GlossaryTab({
   // Group by category
   const byCategory = glossaryEntries.reduce(
     (acc, entry) => {
-      if (!acc[entry.category]) {
-        acc[entry.category] = [];
-      }
-      acc[entry.category].push(entry);
+      const bucket = acc[entry.category] ?? [];
+      bucket.push(entry);
+      acc[entry.category] = bucket;
       return acc;
     },
     {} as Record<string, GlossaryEntry[]>,
@@ -59,7 +58,7 @@ export function GlossaryTab({
           defaultOpen={searchQuery.length > 0}
         >
           <div className="stack-sm">
-            {byCategory[category].map((entry: GlossaryEntry) => (
+            {(byCategory[category] ?? []).map((entry: GlossaryEntry) => (
               <div key={entry.term} className={cn('bg-surface-base', radius.lg, spacing.pad.sm)}>
                 <div className={layout.inline.default}>
                   <span className="font-medium body-small text-text-primary">{entry.term}</span>

@@ -41,14 +41,12 @@ function handleTabKey(
   container: HTMLElement,
   focusableElements: HTMLElement[],
 ): void {
-  if (focusableElements.length === 0) {
-    return;
-  }
-
-  const [firstElement] = focusableElements;
+  const firstElement = focusableElements.at(0);
   const lastElement = focusableElements.at(-1);
-  // Type guard: should never trigger since we verified length > 0 above
-  if (!lastElement) {
+  // An empty list has no ends to trap focus between. Checking the ends rather
+  // than the length is the same condition, stated so the type system can hold
+  // us to it.
+  if (!firstElement || !lastElement) {
     return;
   }
 
@@ -157,14 +155,14 @@ export function useFocusTrap<T extends HTMLElement = HTMLDivElement>(
         return;
       }
 
-      const focusableElements = getFocusableElements(container);
-      if (focusableElements.length === 0) {
+      const firstFocusable = getFocusableElements(container).at(0);
+      if (!firstFocusable) {
         return;
       }
 
       requestAnimationFrame(() => {
         if (!container.contains(document.activeElement)) {
-          focusableElements[0].focus();
+          firstFocusable.focus();
         }
       });
     };
