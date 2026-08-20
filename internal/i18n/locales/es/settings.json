@@ -472,6 +472,44 @@
         "frame": "Trama: {{size}} B | Intervalo: {{interval}} ms | Recuento: {{count}}",
         "duration": "Duración: {{duration}} s"
       }
+    },
+    "rfc2889": {
+      "title": "Configuración RFC 2889",
+      "params": {
+        "title": "Parámetros de la prueba",
+        "duration": "Duración (s)",
+        "durationHelp": "Duración de cada iteración de la prueba, en segundos.",
+        "warmup": "Calentamiento (s)",
+        "warmupHelp": "Periodo de calentamiento antes de empezar a medir.",
+        "frameSize": "Tamaño de trama",
+        "frameSizeHelp": "Tamaño de la trama Ethernet usada en la prueba."
+      },
+      "switch": {
+        "title": "Configuración del switch",
+        "portCount": "Número de puertos",
+        "portCountHelp": "Número de puertos del switch a probar.",
+        "pattern": "Patrón de tráfico",
+        "patternHelp": "Cómo se reparte el tráfico entre los puertos.",
+        "patternFullMesh": "Malla completa",
+        "patternPair": "Por pares",
+        "patternBroadcast": "Difusión",
+        "addressCount": "Número de direcciones",
+        "addressCountHelp": "Número de direcciones MAC para las pruebas de aprendizaje y caché. RFC 2889 recomienda probar con 1, 10, 100, 1000 y 10000 direcciones.",
+        "loss": "Pérdida aceptable (%)",
+        "lossHelp": "Porcentaje máximo de pérdida de tramas aceptable. RFC 2889 especifica 0 %."
+      },
+      "tests": {
+        "forwarding": "Reenvío",
+        "caching": "Caché",
+        "learning": "Aprendizaje",
+        "broadcast": "Difusión",
+        "congestion": "Congestión"
+      },
+      "summary": {
+        "frameSize": "Tamaño de trama: {{size}} bytes",
+        "ports": "Puertos: {{ports}} | Patrón: {{pattern}}",
+        "duration": "Duración: {{duration}} s + {{warmup}} s de calentamiento"
+      }
     }
   }
 }

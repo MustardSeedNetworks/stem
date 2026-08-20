@@ -472,6 +472,44 @@
         "frame": "Frame: {{size}}B | Interval: {{interval}}ms | Count: {{count}}",
         "duration": "Duration: {{duration}}s"
       }
+    },
+    "rfc2889": {
+      "title": "RFC 2889 Configuration",
+      "params": {
+        "title": "Test Parameters",
+        "duration": "Duration (s)",
+        "durationHelp": "Duration for each test iteration in seconds.",
+        "warmup": "Warmup (s)",
+        "warmupHelp": "Warmup period before measurement begins.",
+        "frameSize": "Frame Size",
+        "frameSizeHelp": "Ethernet frame size for testing."
+      },
+      "switch": {
+        "title": "Switch Configuration",
+        "portCount": "Port Count",
+        "portCountHelp": "Number of switch ports to test.",
+        "pattern": "Traffic Pattern",
+        "patternHelp": "How traffic is distributed across ports.",
+        "patternFullMesh": "Full Mesh",
+        "patternPair": "Pair",
+        "patternBroadcast": "Broadcast",
+        "addressCount": "Address Count",
+        "addressCountHelp": "Number of MAC addresses for learning/caching tests. RFC 2889 recommends testing at 1, 10, 100, 1000, 10000 addresses.",
+        "loss": "Acceptable Loss (%)",
+        "lossHelp": "Maximum acceptable frame loss percentage. RFC 2889 specifies 0%."
+      },
+      "tests": {
+        "forwarding": "Forwarding",
+        "caching": "Caching",
+        "learning": "Learning",
+        "broadcast": "Broadcast",
+        "congestion": "Congestion"
+      },
+      "summary": {
+        "frameSize": "Frame size: {{size}} bytes",
+        "ports": "Ports: {{ports}} | Pattern: {{pattern}}",
+        "duration": "Duration: {{duration}}s + {{warmup}}s warmup"
+      }
     }
   }
 }
