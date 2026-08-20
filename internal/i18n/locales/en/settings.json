@@ -244,5 +244,70 @@
     }
   },
   "viewModuleHint": "Group tests by the module they exercise (Reflector, Benchmark, ServiceTest, TrafficGen, Measure, Certify).",
-  "viewStandardHint": "Group tests by IETF/ITU-T/IEEE standard (RFC 2544, Y.1564, etc.)."
+  "viewStandardHint": "Group tests by IETF/ITU-T/IEEE standard (RFC 2544, Y.1564, etc.).",
+  "testConfig": {
+    "common": {
+      "summary": "Test Summary",
+      "selectedTests": "Selected tests",
+      "estimatedTime": "Estimated time: ~{{minutes}} minutes",
+      "bytesSuffix": "{{sizes}} bytes"
+    },
+    "rfc2544": {
+      "duration": {
+        "title": "Test Duration",
+        "perTest": "Duration per Test (s)",
+        "perTestHelp": "Duration for each test iteration. Longer durations provide more accurate results but take more time.",
+        "warmup": "Warmup Duration (s)",
+        "warmupHelp": "Time to stabilize traffic flow before starting measurements.",
+        "trials": "Number of Trials",
+        "trialsHelp": "Number of times to repeat each test point. More trials improve statistical accuracy."
+      },
+      "throughput": {
+        "title": "Throughput Test",
+        "resolution": "Resolution (%)",
+        "resolutionHelp": "Binary search resolution. Default: 0.1%.",
+        "maxLoss": "Max Acceptable Loss (%)",
+        "maxLossHelp": "Maximum frame loss considered acceptable. RFC 2544 specifies 0%."
+      },
+      "frameLoss": {
+        "title": "Frame Loss Test",
+        "stepSize": "Step Size (%)",
+        "stepSizeHelp": "Load increment step for frame loss rate measurement.",
+        "testsAt": "Tests at: {{points}}"
+      },
+      "frameSizes": {
+        "title": "Frame Sizes",
+        "help": "Select frame sizes to test. RFC 2544 specifies: 64, 128, 256, 512, 1024, 1280, 1518 bytes.",
+        "optionMin": "{{size}} B (min)",
+        "option": "{{size}} B",
+        "optionMax": "{{size}} B (max)",
+        "optionJumbo": "{{size}} B (jumbo)",
+        "includeTitle": "Include {{size}}-byte frames in the RFC 2544 sweep",
+        "includeLabel": "Test {{size}}-byte frames"
+      },
+      "advanced": {
+        "title": "Advanced Options",
+        "bidirectional": "Bidirectional Testing",
+        "bidirectionalHelp": "Run tests in both directions simultaneously.",
+        "bidirectionalHint": "Test both TX and RX paths",
+        "bidirectionalTitle": "Send and measure traffic in both directions simultaneously",
+        "bidirectionalAria": "Enable bidirectional testing"
+      },
+      "summary": {
+        "frameSizes": "Frame sizes: {{sizes}} bytes",
+        "duration": "Duration: {{duration}}s × {{trials}} trials",
+        "durationWithWarmup": "Duration: {{duration}}s × {{trials}} trials + {{warmup}}s warmup",
+        "throughput": "Throughput: {{resolution}}% resolution, ≤{{maxLoss}}% loss",
+        "bidirectional": "Mode: Bidirectional"
+      },
+      "tests": {
+        "throughput": "Throughput",
+        "latency": "Latency",
+        "frameLoss": "Frame Loss",
+        "backToBack": "Back-to-Back",
+        "systemRecovery": "System Recovery",
+        "reset": "Reset"
+      }
+    }
+  }
 }

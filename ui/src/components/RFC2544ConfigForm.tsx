@@ -5,11 +5,14 @@
  *              lives at src/schemas/configs.ts (RFC2544ConfigSchema).
  */
 
-import { AlertTriangle, Info } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import type { ReactElement } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useConfigForm } from '../forms/useConfigForm';
 import { RFC2544ConfigSchema } from '../schemas/configs';
+import { FormSection } from './FormSection';
 import { HelpIcon } from './HelpIcon';
+import { TestSummary } from './TestSummary';
 
 /** RFC 2544 test configuration parameters */
 export interface RFC2544Config {
@@ -49,15 +52,23 @@ interface RFC2544ConfigFormProps {
   selectedTests: string[];
 }
 
-const FRAME_SIZE_OPTIONS: Array<{ value: number; label: string }> = [
-  { value: 64, label: '64 B (min)' },
-  { value: 128, label: '128 B' },
-  { value: 256, label: '256 B' },
-  { value: 512, label: '512 B' },
-  { value: 1024, label: '1024 B' },
-  { value: 1280, label: '1280 B' },
-  { value: 1518, label: '1518 B (max)' },
-  { value: 9000, label: '9000 B (jumbo)' },
+/**
+ * The sizes RFC 2544 specifies, plus the jumbo frame operators ask for. The
+ * qualifier is a separate key rather than part of the label, so "min" and
+ * "jumbo" translate while the byte count does not.
+ */
+const FRAME_SIZE_OPTIONS: Array<{
+  value: number;
+  qualifier: 'optionMin' | 'option' | 'optionMax' | 'optionJumbo';
+}> = [
+  { value: 64, qualifier: 'optionMin' },
+  { value: 128, qualifier: 'option' },
+  { value: 256, qualifier: 'option' },
+  { value: 512, qualifier: 'option' },
+  { value: 1024, qualifier: 'option' },
+  { value: 1280, qualifier: 'option' },
+  { value: 1518, qualifier: 'optionMax' },
+  { value: 9000, qualifier: 'optionJumbo' },
 ];
 
 function FieldError({ message }: { message?: string }): ReactElement | null {
@@ -75,7 +86,8 @@ export function RFC2544ConfigForm({
   setConfig,
   selectedTests,
 }: RFC2544ConfigFormProps): ReactElement | null {
-  const hasRFC2544Tests = selectedTests.some((t) => t.startsWith('rfc2544'));
+  const { t } = useTranslation('settings');
+  const hasRFC2544Tests = selectedTests.some((id) => id.startsWith('rfc2544'));
 
   const form = useConfigForm<RFC2544Config>({
     schema: RFC2544ConfigSchema,
@@ -128,16 +140,11 @@ export function RFC2544ConfigForm({
 
   return (
     <div data-testid="rfc2544-config-form" className="stack-lg">
-      {/* Test Duration */}
-      <div className="stack">
-        <div className="text-xs font-semibold text-text-muted uppercase tracking-wide">
-          Test Duration
-        </div>
-
+      <FormSection title={t('testConfig.rfc2544.duration.title')}>
         <div>
           <label htmlFor="rfc2544-duration" className="flex items-center gap-tight label">
-            Duration per Test (s)
-            <HelpIcon tooltip="Duration for each test iteration. Longer durations provide more accurate results but take more time." />
+            {t('testConfig.rfc2544.duration.perTest')}
+            <HelpIcon tooltip={t('testConfig.rfc2544.duration.perTestHelp')} />
           </label>
           <input
             id="rfc2544-duration"
@@ -151,8 +158,8 @@ export function RFC2544ConfigForm({
 
         <div>
           <label htmlFor="rfc2544-warmup" className="flex items-center gap-tight label">
-            Warmup Duration (s)
-            <HelpIcon tooltip="Time to stabilize traffic flow before starting measurements." />
+            {t('testConfig.rfc2544.duration.warmup')}
+            <HelpIcon tooltip={t('testConfig.rfc2544.duration.warmupHelp')} />
           </label>
           <input
             id="rfc2544-warmup"
@@ -166,8 +173,8 @@ export function RFC2544ConfigForm({
 
         <div>
           <label htmlFor="rfc2544-trials" className="flex items-center gap-tight label">
-            Number of Trials
-            <HelpIcon tooltip="Number of times to repeat each test point. More trials improve statistical accuracy." />
+            {t('testConfig.rfc2544.duration.trials')}
+            <HelpIcon tooltip={t('testConfig.rfc2544.duration.trialsHelp')} />
           </label>
           <input
             id="rfc2544-trials"
@@ -178,19 +185,14 @@ export function RFC2544ConfigForm({
           />
           <FieldError message={errors.trials?.message} />
         </div>
-      </div>
+      </FormSection>
 
-      {/* Throughput Test Parameters */}
       {hasThroughput ? (
-        <div className="stack">
-          <div className="text-xs font-semibold text-text-muted uppercase tracking-wide">
-            Throughput Test
-          </div>
-
+        <FormSection title={t('testConfig.rfc2544.throughput.title')}>
           <div>
             <label htmlFor="rfc2544-resolution" className="flex items-center gap-tight label">
-              Resolution (%)
-              <HelpIcon tooltip="Binary search resolution. Default: 0.1%." />
+              {t('testConfig.rfc2544.throughput.resolution')}
+              <HelpIcon tooltip={t('testConfig.rfc2544.throughput.resolutionHelp')} />
             </label>
             <input
               id="rfc2544-resolution"
@@ -204,8 +206,8 @@ export function RFC2544ConfigForm({
 
           <div>
             <label htmlFor="rfc2544-maxloss" className="flex items-center gap-tight label">
-              Max Acceptable Loss (%)
-              <HelpIcon tooltip="Maximum frame loss considered acceptable. RFC 2544 specifies 0%." />
+              {t('testConfig.rfc2544.throughput.maxLoss')}
+              <HelpIcon tooltip={t('testConfig.rfc2544.throughput.maxLossHelp')} />
             </label>
             <input
               id="rfc2544-maxloss"
@@ -216,20 +218,15 @@ export function RFC2544ConfigForm({
             />
             <FieldError message={errors.maxLoss?.message} />
           </div>
-        </div>
+        </FormSection>
       ) : null}
 
-      {/* Frame Loss Test Parameters */}
       {hasFrameLoss ? (
-        <div className="stack">
-          <div className="text-xs font-semibold text-text-muted uppercase tracking-wide">
-            Frame Loss Test
-          </div>
-
+        <FormSection title={t('testConfig.rfc2544.frameLoss.title')}>
           <div>
             <label htmlFor="rfc2544-stepsize" className="flex items-center gap-tight label">
-              Step Size (%)
-              <HelpIcon tooltip="Load increment step for frame loss rate measurement." />
+              {t('testConfig.rfc2544.frameLoss.stepSize')}
+              <HelpIcon tooltip={t('testConfig.rfc2544.frameLoss.stepSizeHelp')} />
             </label>
             <input
               id="rfc2544-stepsize"
@@ -240,113 +237,104 @@ export function RFC2544ConfigForm({
             />
             <FieldError message={errors.stepSize?.message} />
             <div className="text-xs text-text-muted mt-tight">
-              Tests at:{' '}
-              {Array.from(
-                { length: Math.floor(100 / Math.max(1, stepSize)) + 1 },
-                (_, i) => `${i * stepSize}%`,
-              ).join(', ')}
+              {t('testConfig.rfc2544.frameLoss.testsAt', {
+                points: Array.from(
+                  { length: Math.floor(100 / Math.max(1, stepSize)) + 1 },
+                  (_, i) => `${i * stepSize}%`,
+                ).join(', '),
+              })}
             </div>
           </div>
-        </div>
+        </FormSection>
       ) : null}
 
-      {/* Frame Sizes */}
-      <div className="stack-sm">
-        <div className="text-xs font-semibold text-text-muted uppercase tracking-wide flex items-center gap-tight">
-          Frame Sizes
-          <HelpIcon tooltip="Select frame sizes to test. RFC 2544 specifies: 64, 128, 256, 512, 1024, 1280, 1518 bytes." />
-        </div>
+      <FormSection
+        title={t('testConfig.rfc2544.frameSizes.title')}
+        help={<HelpIcon tooltip={t('testConfig.rfc2544.frameSizes.help')} />}
+      >
         <div className="grid grid-cols-2 gap-compact">
           {FRAME_SIZE_OPTIONS.map((option) => (
             <label
               key={option.value}
-              title={`Include ${option.value}-byte frames in the RFC 2544 sweep`}
+              title={t('testConfig.rfc2544.frameSizes.includeTitle', { size: option.value })}
               className="flex items-center gap-compact pad-xs rounded-lg cursor-pointer hover:bg-surface-hover text-sm"
             >
               <input
                 type="checkbox"
                 checked={frameSizes.includes(option.value)}
                 onChange={() => toggleFrameSize(option.value)}
-                aria-label={`Test ${option.value}-byte frames`}
+                aria-label={t('testConfig.rfc2544.frameSizes.includeLabel', { size: option.value })}
                 className="w-4 h-4 accent-brand-primary"
               />
-              <span className="text-text-primary">{option.label}</span>
+              <span className="text-text-primary">
+                {t(`testConfig.rfc2544.frameSizes.${option.qualifier}`, { size: option.value })}
+              </span>
             </label>
           ))}
         </div>
         <FieldError message={errors.frameSizes?.message} />
-      </div>
+      </FormSection>
 
-      {/* Advanced Options */}
-      <div className="stack">
-        <div className="text-xs font-semibold text-text-muted uppercase tracking-wide">
-          Advanced Options
-        </div>
-
+      <FormSection title={t('testConfig.rfc2544.advanced.title')}>
         <label
-          title="Send and measure traffic in both directions simultaneously"
+          title={t('testConfig.rfc2544.advanced.bidirectionalTitle')}
           className="flex items-center gap-default pad-xs rounded-lg cursor-pointer hover:bg-surface-hover"
         >
           <input
             type="checkbox"
             {...register('bidirectional')}
-            aria-label="Enable bidirectional testing"
+            aria-label={t('testConfig.rfc2544.advanced.bidirectionalAria')}
             className="w-4 h-4 accent-brand-primary"
           />
           <div>
             <div className="font-medium text-sm flex items-center gap-tight">
-              Bidirectional Testing
-              <HelpIcon tooltip="Run tests in both directions simultaneously." />
+              {t('testConfig.rfc2544.advanced.bidirectional')}
+              <HelpIcon tooltip={t('testConfig.rfc2544.advanced.bidirectionalHelp')} />
             </div>
-            <div className="text-xs text-text-muted">Test both TX and RX paths</div>
+            <div className="text-xs text-text-muted">
+              {t('testConfig.rfc2544.advanced.bidirectionalHint')}
+            </div>
           </div>
         </label>
-      </div>
+      </FormSection>
 
-      {/* Test Summary */}
-      <div className="pad-sm rounded-lg bg-surface-base border border-surface-border">
-        <div className="flex items-center gap-compact label mb-2">
-          <Info className="w-4 h-4" />
-          Test Summary
+      <TestSummary>
+        <div>
+          {t('testConfig.common.selectedTests')}:{' '}
+          {[
+            hasThroughput && t('testConfig.rfc2544.tests.throughput'),
+            hasLatency && t('testConfig.rfc2544.tests.latency'),
+            hasFrameLoss && t('testConfig.rfc2544.tests.frameLoss'),
+            hasBackToBack && t('testConfig.rfc2544.tests.backToBack'),
+            selectedTests.includes('rfc2544_system_recovery') &&
+              t('testConfig.rfc2544.tests.systemRecovery'),
+            selectedTests.includes('rfc2544_reset') && t('testConfig.rfc2544.tests.reset'),
+          ]
+            .filter(Boolean)
+            .join(', ')}
         </div>
-        <div className="text-xs text-text-muted stack-xs">
-          <div>
-            Selected tests:{' '}
-            {[
-              hasThroughput && 'Throughput',
-              hasLatency && 'Latency',
-              hasFrameLoss && 'Frame Loss',
-              hasBackToBack && 'Back-to-Back',
-              selectedTests.includes('rfc2544_system_recovery') && 'System Recovery',
-              selectedTests.includes('rfc2544_reset') && 'Reset',
-            ]
-              .filter(Boolean)
-              .join(', ')}
-          </div>
-          <div>Frame sizes: {frameSizes.join(', ')} bytes</div>
-          <div>
-            Duration: {duration}s × {trials} trials
-            {warmup > 0 && ` + ${warmup}s warmup`}
-          </div>
-          {hasThroughput ? (
-            <div>
-              Throughput: {resolution}% resolution, ≤{maxLoss}% loss
-            </div>
-          ) : null}
-          {bidirectional ? <div>Mode: Bidirectional</div> : null}
-          <div className="pt-tight border-t border-surface-border mt-tight">
-            Estimated time: ~
-            {Math.ceil(
+        <div>{t('testConfig.rfc2544.summary.frameSizes', { sizes: frameSizes.join(', ') })}</div>
+        <div>
+          {warmup > 0
+            ? t('testConfig.rfc2544.summary.durationWithWarmup', { duration, trials, warmup })
+            : t('testConfig.rfc2544.summary.duration', { duration, trials })}
+        </div>
+        {hasThroughput ? (
+          <div>{t('testConfig.rfc2544.summary.throughput', { resolution, maxLoss })}</div>
+        ) : null}
+        {bidirectional ? <div>{t('testConfig.rfc2544.summary.bidirectional')}</div> : null}
+        <div className="pt-tight border-t border-surface-border mt-tight">
+          {t('testConfig.common.estimatedTime', {
+            minutes: Math.ceil(
               ((duration + warmup) *
                 trials *
                 frameSizes.length *
-                selectedTests.filter((t) => t.startsWith('rfc2544')).length) /
+                selectedTests.filter((id) => id.startsWith('rfc2544')).length) /
                 60,
-            )}{' '}
-            minutes
-          </div>
+            ),
+          })}
         </div>
-      </div>
+      </TestSummary>
     </div>
   );
 }

@@ -244,5 +244,70 @@
     }
   },
   "viewModuleHint": "Agrupar las pruebas por el módulo que ejercitan (Reflector, Benchmark, ServiceTest, TrafficGen, Measure, Certify).",
-  "viewStandardHint": "Agrupar las pruebas por estándar IETF/ITU-T/IEEE (RFC 2544, Y.1564, etc.)."
+  "viewStandardHint": "Agrupar las pruebas por estándar IETF/ITU-T/IEEE (RFC 2544, Y.1564, etc.).",
+  "testConfig": {
+    "common": {
+      "summary": "Resumen de la prueba",
+      "selectedTests": "Pruebas seleccionadas",
+      "estimatedTime": "Tiempo estimado: ~{{minutes}} minutos",
+      "bytesSuffix": "{{sizes}} bytes"
+    },
+    "rfc2544": {
+      "duration": {
+        "title": "Duración de la prueba",
+        "perTest": "Duración por prueba (s)",
+        "perTestHelp": "Duración de cada iteración de la prueba. Una duración mayor da resultados más precisos pero tarda más.",
+        "warmup": "Duración del calentamiento (s)",
+        "warmupHelp": "Tiempo para estabilizar el flujo de tráfico antes de iniciar las mediciones.",
+        "trials": "Número de repeticiones",
+        "trialsHelp": "Cuántas veces se repite cada punto de prueba. Más repeticiones mejoran la precisión estadística."
+      },
+      "throughput": {
+        "title": "Prueba de throughput",
+        "resolution": "Resolución (%)",
+        "resolutionHelp": "Resolución de la búsqueda binaria. Predeterminado: 0,1 %.",
+        "maxLoss": "Pérdida máxima aceptable (%)",
+        "maxLossHelp": "Pérdida de tramas considerada aceptable. RFC 2544 especifica 0 %."
+      },
+      "frameLoss": {
+        "title": "Prueba de pérdida de tramas",
+        "stepSize": "Tamaño del paso (%)",
+        "stepSizeHelp": "Incremento de carga para la medición de la tasa de pérdida de tramas.",
+        "testsAt": "Se prueba en: {{points}}"
+      },
+      "frameSizes": {
+        "title": "Tamaños de trama",
+        "help": "Elija los tamaños de trama a probar. RFC 2544 especifica: 64, 128, 256, 512, 1024, 1280, 1518 bytes.",
+        "optionMin": "{{size}} B (mín.)",
+        "option": "{{size}} B",
+        "optionMax": "{{size}} B (máx.)",
+        "optionJumbo": "{{size}} B (jumbo)",
+        "includeTitle": "Incluir tramas de {{size}} bytes en el barrido RFC 2544",
+        "includeLabel": "Probar tramas de {{size}} bytes"
+      },
+      "advanced": {
+        "title": "Opciones avanzadas",
+        "bidirectional": "Prueba bidireccional",
+        "bidirectionalHelp": "Ejecutar las pruebas en ambos sentidos a la vez.",
+        "bidirectionalHint": "Probar las rutas TX y RX",
+        "bidirectionalTitle": "Enviar y medir tráfico en ambos sentidos a la vez",
+        "bidirectionalAria": "Activar la prueba bidireccional"
+      },
+      "summary": {
+        "frameSizes": "Tamaños de trama: {{sizes}} bytes",
+        "duration": "Duración: {{duration}} s × {{trials}} repeticiones",
+        "durationWithWarmup": "Duración: {{duration}} s × {{trials}} repeticiones + {{warmup}} s de calentamiento",
+        "throughput": "Throughput: {{resolution}} % de resolución, ≤{{maxLoss}} % de pérdida",
+        "bidirectional": "Modo: bidireccional"
+      },
+      "tests": {
+        "throughput": "Throughput",
+        "latency": "Latency",
+        "frameLoss": "Pérdida de tramas",
+        "backToBack": "Back-to-Back",
+        "systemRecovery": "Recuperación del sistema",
+        "reset": "Reinicio"
+      }
+    }
+  }
 }
