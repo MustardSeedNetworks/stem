@@ -426,6 +426,52 @@
         "burst": "Burst: {{frames}} frames, {{gap}}µs gap",
         "duration": "Duration: {{duration}}s + {{warmup}}s warmup"
       }
+    },
+    "y1731": {
+      "title": "Y.1731 OAM Configuration",
+      "mep": {
+        "title": "MEP/MEG Configuration",
+        "mepId": "MEP ID",
+        "mepIdHelp": "Maintenance End Point identifier (1-8191).",
+        "megLevel": "MEG Level",
+        "megLevelHelp": "Maintenance Entity Group level (0-7). Higher = wider domain.",
+        "megId": "MEG ID",
+        "megIdHelp": "Maintenance Entity Group identifier string."
+      },
+      "oam": {
+        "title": "OAM Parameters",
+        "ccm": "CCM Interval",
+        "ccmHelp": "Continuity Check Message interval per Y.1731.",
+        "priority": "Priority",
+        "priorityHelp": "802.1p priority value (0-7). 6-7 typically for OAM.",
+        "tagged": "Use priority tagging (802.1Q)",
+        "taggedTitle": "Add an IEEE 802.1Q VLAN tag with the selected priority to all Y.1731 OAM frames",
+        "taggedAria": "Use 802.1Q priority tagging on OAM frames"
+      },
+      "measurement": {
+        "title": "Measurement Parameters",
+        "frameSize": "Frame Size",
+        "frameSizeHelp": "OAM frame size for measurements.",
+        "interval": "Measurement Interval (ms)",
+        "intervalHelp": "Interval between measurement probes.",
+        "count": "Frames per Interval",
+        "countHelp": "Number of measurement frames per interval.",
+        "duration": "Duration (s)",
+        "durationHelp": "Total measurement duration."
+      },
+      "tests": {
+        "delay": "Delay Measurement",
+        "loss": "Frame Loss",
+        "slm": "Synthetic Loss",
+        "loopback": "Loopback"
+      },
+      "summary": {
+        "mep": "MEP: {{mep}} | Level: {{level}} | MEG: {{meg}}",
+        "ccm": "CCM: {{ccm}} | Priority: {{priority}}",
+        "ccmTagged": "CCM: {{ccm}} | Priority: {{priority}} (tagged)",
+        "frame": "Frame: {{size}}B | Interval: {{interval}}ms | Count: {{count}}",
+        "duration": "Duration: {{duration}}s"
+      }
     }
   }
 }

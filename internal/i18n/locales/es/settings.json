@@ -426,6 +426,52 @@
         "burst": "Ráfaga: {{frames}} tramas, hueco de {{gap}} µs",
         "duration": "Duración: {{duration}} s + {{warmup}} s de calentamiento"
       }
+    },
+    "y1731": {
+      "title": "Configuración OAM Y.1731",
+      "mep": {
+        "title": "Configuración de MEP/MEG",
+        "mepId": "MEP ID",
+        "mepIdHelp": "Identificador del Maintenance End Point (1-8191).",
+        "megLevel": "Nivel de MEG",
+        "megLevelHelp": "Nivel del Maintenance Entity Group (0-7). Mayor = dominio más amplio.",
+        "megId": "MEG ID",
+        "megIdHelp": "Cadena identificadora del Maintenance Entity Group."
+      },
+      "oam": {
+        "title": "Parámetros OAM",
+        "ccm": "Intervalo de CCM",
+        "ccmHelp": "Intervalo de los Continuity Check Message según Y.1731.",
+        "priority": "Prioridad",
+        "priorityHelp": "Valor de prioridad 802.1p (0-7). Normalmente 6-7 para OAM.",
+        "tagged": "Usar etiquetado de prioridad (802.1Q)",
+        "taggedTitle": "Añadir una etiqueta VLAN IEEE 802.1Q con la prioridad elegida a todas las tramas OAM Y.1731",
+        "taggedAria": "Usar el etiquetado de prioridad 802.1Q en las tramas OAM"
+      },
+      "measurement": {
+        "title": "Parámetros de medición",
+        "frameSize": "Tamaño de trama",
+        "frameSizeHelp": "Tamaño de las tramas OAM usadas para medir.",
+        "interval": "Intervalo de medición (ms)",
+        "intervalHelp": "Intervalo entre sondas de medición.",
+        "count": "Tramas por intervalo",
+        "countHelp": "Número de tramas de medición por intervalo.",
+        "duration": "Duración (s)",
+        "durationHelp": "Duración total de la medición."
+      },
+      "tests": {
+        "delay": "Medición de retardo",
+        "loss": "Pérdida de tramas",
+        "slm": "Pérdida sintética",
+        "loopback": "Loopback"
+      },
+      "summary": {
+        "mep": "MEP: {{mep}} | Nivel: {{level}} | MEG: {{meg}}",
+        "ccm": "CCM: {{ccm}} | Prioridad: {{priority}}",
+        "ccmTagged": "CCM: {{ccm}} | Prioridad: {{priority}} (etiquetado)",
+        "frame": "Trama: {{size}} B | Intervalo: {{interval}} ms | Recuento: {{count}}",
+        "duration": "Duración: {{duration}} s"
+      }
     }
   }
 }
