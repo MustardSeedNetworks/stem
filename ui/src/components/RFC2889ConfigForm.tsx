@@ -4,12 +4,17 @@
  *              Migrated to react-hook-form + valibot per #325.
  */
 
-import { AlertTriangle, Info, Network } from 'lucide-react';
+import { Network } from 'lucide-react';
 import type { ReactElement } from 'react';
+import { useTranslation } from 'react-i18next';
+import type { FrameSizeOption } from '../forms/frameSizes';
 import { useConfigForm } from '../forms/useConfigForm';
 import { RFC2889ConfigSchema } from '../schemas/configs';
 import { CollapsibleSection } from './CollapsibleSection';
+import { FieldError } from './FieldError';
+import { FormSection } from './FormSection';
 import { HelpIcon } from './HelpIcon';
+import { TestSummary } from './TestSummary';
 
 /** RFC 2889 test configuration parameters */
 export interface RFC2889Config {
@@ -40,36 +45,28 @@ export const defaultRFC2889Config: RFC2889Config = {
   pattern: 0,
 };
 
-const FRAME_SIZE_OPTIONS: Array<{ value: number; label: string }> = [
-  { value: 64, label: '64 B (min)' },
-  { value: 128, label: '128 B' },
-  { value: 256, label: '256 B' },
-  { value: 512, label: '512 B' },
-  { value: 1024, label: '1024 B' },
-  { value: 1280, label: '1280 B' },
-  { value: 1518, label: '1518 B (max)' },
+/** Switch benchmarking stops at the standard MTU; no jumbo. */
+const FRAME_SIZE_OPTIONS: FrameSizeOption[] = [
+  { value: 64, qualifier: 'frameSizeMin' },
+  { value: 128, qualifier: 'frameSize' },
+  { value: 256, qualifier: 'frameSize' },
+  { value: 512, qualifier: 'frameSize' },
+  { value: 1024, qualifier: 'frameSize' },
+  { value: 1280, qualifier: 'frameSize' },
+  { value: 1518, qualifier: 'frameSizeMax' },
 ];
 
-const PATTERN_OPTIONS: Array<{ value: number; label: string; description: string }> = [
-  { value: 0, label: 'Full Mesh', description: 'All ports to all ports' },
-  { value: 1, label: 'Pair', description: 'Port pairs (1→2, 3→4, etc.)' },
-  { value: 2, label: 'Broadcast', description: 'One port to all others' },
+/** Wire values, with the key that names each for the operator. */
+const PATTERN_OPTIONS: Array<{ value: number; key: string }> = [
+  { value: 0, key: 'patternFullMesh' },
+  { value: 1, key: 'patternPair' },
+  { value: 2, key: 'patternBroadcast' },
 ];
 
 interface RFC2889ConfigFormProps {
   config: RFC2889Config;
   setConfig: (config: RFC2889Config) => void;
   selectedTests: string[];
-}
-
-function FieldError({ message }: { message?: string }): ReactElement | null {
-  if (!message) return null;
-  return (
-    <div className="mt-tight text-xs text-status-error flex items-center gap-tight">
-      <AlertTriangle className="w-3 h-3" />
-      {message}
-    </div>
-  );
 }
 
 export function RFC2889ConfigForm({
@@ -89,6 +86,7 @@ export function RFC2889ConfigForm({
     watch,
     formState: { errors },
   } = form;
+  const { t } = useTranslation('settings');
 
   if (!hasRFC2889Tests) {
     return null;
@@ -118,16 +116,12 @@ export function RFC2889ConfigForm({
       defaultOpen={true}
     >
       <div className="stack-lg">
-        <div className="stack">
-          <div className="text-xs font-semibold text-text-muted uppercase tracking-wide">
-            Test Parameters
-          </div>
-
+        <FormSection title={t('testConfig.rfc2889.params.title')}>
           <div className="grid grid-cols-2 gap-default">
             <div>
               <label htmlFor="rfc2889-duration" className="flex items-center gap-tight label">
-                Duration (s)
-                <HelpIcon tooltip="Duration for each test iteration in seconds." />
+                {t('testConfig.rfc2889.params.duration')}
+                <HelpIcon tooltip={t('testConfig.rfc2889.params.durationHelp')} />
               </label>
               <input
                 id="rfc2889-duration"
@@ -141,8 +135,8 @@ export function RFC2889ConfigForm({
 
             <div>
               <label htmlFor="rfc2889-warmup" className="flex items-center gap-tight label">
-                Warmup (s)
-                <HelpIcon tooltip="Warmup period before measurement begins." />
+                {t('testConfig.rfc2889.params.warmup')}
+                <HelpIcon tooltip={t('testConfig.rfc2889.params.warmupHelp')} />
               </label>
               <input
                 id="rfc2889-warmup"
@@ -154,37 +148,33 @@ export function RFC2889ConfigForm({
               <FieldError message={errors.warmup?.message} />
             </div>
           </div>
-        </div>
+        </FormSection>
 
         <div>
           <label htmlFor="rfc2889-framesize" className="flex items-center gap-tight label">
-            Frame Size
-            <HelpIcon tooltip="Ethernet frame size for testing." />
+            {t('testConfig.rfc2889.params.frameSize')}
+            <HelpIcon tooltip={t('testConfig.rfc2889.params.frameSizeHelp')} />
           </label>
           <select
             id="rfc2889-framesize"
             {...register('frameSize', { valueAsNumber: true })}
             className="mt-tight w-full"
           >
-            {FRAME_SIZE_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
+            {FRAME_SIZE_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {t(`testConfig.common.${option.qualifier}`, { size: option.value })}
               </option>
             ))}
           </select>
           <FieldError message={errors.frameSize?.message} />
         </div>
 
-        <div className="stack">
-          <div className="text-xs font-semibold text-text-muted uppercase tracking-wide">
-            Switch Configuration
-          </div>
-
+        <FormSection title={t('testConfig.rfc2889.switch.title')}>
           <div className="grid grid-cols-2 gap-default">
             <div>
               <label htmlFor="rfc2889-portcount" className="flex items-center gap-tight label">
-                Port Count
-                <HelpIcon tooltip="Number of switch ports to test." />
+                {t('testConfig.rfc2889.switch.portCount')}
+                <HelpIcon tooltip={t('testConfig.rfc2889.switch.portCountHelp')} />
               </label>
               <input
                 id="rfc2889-portcount"
@@ -198,30 +188,30 @@ export function RFC2889ConfigForm({
 
             <div>
               <label htmlFor="rfc2889-pattern" className="flex items-center gap-tight label">
-                Traffic Pattern
-                <HelpIcon tooltip="How traffic is distributed across ports." />
+                {t('testConfig.rfc2889.switch.pattern')}
+                <HelpIcon tooltip={t('testConfig.rfc2889.switch.patternHelp')} />
               </label>
               <select
                 id="rfc2889-pattern"
                 {...register('pattern', { valueAsNumber: true })}
                 className="mt-tight w-full"
               >
-                {PATTERN_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
+                {PATTERN_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {t(`testConfig.rfc2889.switch.${option.key}` as never)}
                   </option>
                 ))}
               </select>
               <FieldError message={errors.pattern?.message} />
             </div>
           </div>
-        </div>
+        </FormSection>
 
         {hasCaching || hasLearning ? (
           <div>
             <label htmlFor="rfc2889-addresscount" className="flex items-center gap-tight label">
-              Address Count
-              <HelpIcon tooltip="Number of MAC addresses for learning/caching tests. RFC 2889 recommends testing at 1, 10, 100, 1000, 10000 addresses." />
+              {t('testConfig.rfc2889.switch.addressCount')}
+              <HelpIcon tooltip={t('testConfig.rfc2889.switch.addressCountHelp')} />
             </label>
             <input
               id="rfc2889-addresscount"
@@ -236,8 +226,8 @@ export function RFC2889ConfigForm({
 
         <div>
           <label htmlFor="rfc2889-loss" className="flex items-center gap-tight label">
-            Acceptable Loss (%)
-            <HelpIcon tooltip="Maximum acceptable frame loss percentage. RFC 2889 specifies 0%." />
+            {t('testConfig.rfc2889.switch.loss')}
+            <HelpIcon tooltip={t('testConfig.rfc2889.switch.lossHelp')} />
           </label>
           <input
             id="rfc2889-loss"
@@ -249,34 +239,33 @@ export function RFC2889ConfigForm({
           <FieldError message={errors.acceptableLoss?.message} />
         </div>
 
-        <div className="pad-sm rounded-lg bg-surface-base border border-surface-border">
-          <div className="flex items-center gap-compact label mb-2">
-            <Info className="w-4 h-4" />
-            Test Summary
+        <TestSummary>
+          <div>
+            {t('testConfig.common.selectedTests')}:{' '}
+            {[
+              hasForwarding && t('testConfig.rfc2889.tests.forwarding'),
+              hasCaching && t('testConfig.rfc2889.tests.caching'),
+              hasLearning && t('testConfig.rfc2889.tests.learning'),
+              hasBroadcast && t('testConfig.rfc2889.tests.broadcast'),
+              hasCongestion && t('testConfig.rfc2889.tests.congestion'),
+            ]
+              .filter(Boolean)
+              .join(', ')}
           </div>
-          <div className="text-xs text-text-muted stack-xs">
-            <div>
-              Selected tests:{' '}
-              {[
-                hasForwarding && 'Forwarding',
-                hasCaching && 'Caching',
-                hasLearning && 'Learning',
-                hasBroadcast && 'Broadcast',
-                hasCongestion && 'Congestion',
-              ]
-                .filter(Boolean)
-                .join(', ')}
-            </div>
-            <div>Frame size: {frameSize} bytes</div>
-            <div>
-              Ports: {portCount} | Pattern:{' '}
-              {PATTERN_OPTIONS.find((p) => p.value === pattern)?.label}
-            </div>
-            <div>
-              Duration: {duration}s + {warmup}s warmup
-            </div>
+          <div>{t('testConfig.rfc2889.summary.frameSize', { size: frameSize })}</div>
+          <div>
+            {t('testConfig.rfc2889.summary.ports', {
+              ports: portCount,
+              pattern: t(
+                `testConfig.rfc2889.switch.${
+                  PATTERN_OPTIONS.find((option) => option.value === pattern)?.key ??
+                  'patternFullMesh'
+                }` as never,
+              ),
+            })}
           </div>
-        </div>
+          <div>{t('testConfig.rfc2889.summary.duration', { duration, warmup })}</div>
+        </TestSummary>
       </div>
     </CollapsibleSection>
   );

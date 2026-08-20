@@ -3,12 +3,17 @@
  * @description Migrated to react-hook-form + valibot per #325.
  */
 
-import { AlertTriangle, Gauge, Info } from 'lucide-react';
+import { Gauge } from 'lucide-react';
 import type { ReactElement } from 'react';
+import { useTranslation } from 'react-i18next';
+import type { FrameSizeOption } from '../forms/frameSizes';
 import { useConfigForm } from '../forms/useConfigForm';
 import { Y1731ConfigSchema } from '../schemas/configs';
 import { CollapsibleSection } from './CollapsibleSection';
+import { FieldError } from './FieldError';
+import { FormSection } from './FormSection';
 import { HelpIcon } from './HelpIcon';
+import { TestSummary } from './TestSummary';
 
 /** Y.1731 test configuration parameters */
 export interface Y1731Config {
@@ -48,29 +53,24 @@ const CCM_INTERVAL_OPTIONS: Array<{ value: number; label: string }> = [
   { value: 600000, label: '10 min' },
 ];
 
-const FRAME_SIZE_OPTIONS: Array<{ value: number; label: string }> = [
-  { value: 64, label: '64 B (min)' },
-  { value: 128, label: '128 B' },
-  { value: 256, label: '256 B' },
-  { value: 512, label: '512 B' },
-  { value: 1024, label: '1024 B' },
-  { value: 1518, label: '1518 B (max)' },
+/**
+ * OAM measurement frames are deliberately a subset of the sweep sizes: no
+ * 1280 and no jumbo. Kept local rather than filtered out of the shared list,
+ * so the set is stated rather than inferred from an exclusion.
+ */
+const FRAME_SIZE_OPTIONS: FrameSizeOption[] = [
+  { value: 64, qualifier: 'frameSizeMin' },
+  { value: 128, qualifier: 'frameSize' },
+  { value: 256, qualifier: 'frameSize' },
+  { value: 512, qualifier: 'frameSize' },
+  { value: 1024, qualifier: 'frameSize' },
+  { value: 1518, qualifier: 'frameSizeMax' },
 ];
 
 interface Y1731ConfigFormProps {
   config: Y1731Config;
   setConfig: (config: Y1731Config) => void;
   selectedTests: string[];
-}
-
-function FieldError({ message }: { message?: string }): ReactElement | null {
-  if (!message) return null;
-  return (
-    <div className="mt-tight text-xs text-status-error flex items-center gap-tight">
-      <AlertTriangle className="w-3 h-3" />
-      {message}
-    </div>
-  );
 }
 
 export function Y1731ConfigForm({
@@ -90,6 +90,7 @@ export function Y1731ConfigForm({
     watch,
     formState: { errors },
   } = form;
+  const { t } = useTranslation('settings');
 
   if (!hasY1731Tests) {
     return null;
@@ -117,22 +118,18 @@ export function Y1731ConfigForm({
       title={
         <div className="flex items-center gap-compact">
           <Gauge className="w-4 h-4" />
-          <span>Y.1731 OAM Configuration</span>
+          <span>{t('testConfig.y1731.title')}</span>
         </div>
       }
       defaultOpen={true}
     >
       <div className="stack-lg">
-        <div className="stack">
-          <div className="text-xs font-semibold text-text-muted uppercase tracking-wide">
-            MEP/MEG Configuration
-          </div>
-
+        <FormSection title={t('testConfig.y1731.mep.title')}>
           <div className="grid grid-cols-3 gap-default">
             <div>
               <label htmlFor="y1731-mepid" className="flex items-center gap-tight label">
-                MEP ID
-                <HelpIcon tooltip="Maintenance End Point identifier (1-8191)." />
+                {t('testConfig.y1731.mep.mepId')}
+                <HelpIcon tooltip={t('testConfig.y1731.mep.mepIdHelp')} />
               </label>
               <input
                 id="y1731-mepid"
@@ -146,8 +143,8 @@ export function Y1731ConfigForm({
 
             <div>
               <label htmlFor="y1731-meglevel" className="flex items-center gap-tight label">
-                MEG Level
-                <HelpIcon tooltip="Maintenance Entity Group level (0-7). Higher = wider domain." />
+                {t('testConfig.y1731.mep.megLevel')}
+                <HelpIcon tooltip={t('testConfig.y1731.mep.megLevelHelp')} />
               </label>
               <input
                 id="y1731-meglevel"
@@ -161,8 +158,8 @@ export function Y1731ConfigForm({
 
             <div>
               <label htmlFor="y1731-megid" className="flex items-center gap-tight label">
-                MEG ID
-                <HelpIcon tooltip="Maintenance Entity Group identifier string." />
+                {t('testConfig.y1731.mep.megId')}
+                <HelpIcon tooltip={t('testConfig.y1731.mep.megIdHelp')} />
               </label>
               <input
                 id="y1731-megid"
@@ -174,18 +171,14 @@ export function Y1731ConfigForm({
               <FieldError message={errors.megId?.message} />
             </div>
           </div>
-        </div>
+        </FormSection>
 
-        <div className="stack">
-          <div className="text-xs font-semibold text-text-muted uppercase tracking-wide">
-            OAM Parameters
-          </div>
-
+        <FormSection title={t('testConfig.y1731.oam.title')}>
           <div className="grid grid-cols-2 gap-default">
             <div>
               <label htmlFor="y1731-ccm" className="flex items-center gap-tight label">
-                CCM Interval
-                <HelpIcon tooltip="Continuity Check Message interval per Y.1731." />
+                {t('testConfig.y1731.oam.ccm')}
+                <HelpIcon tooltip={t('testConfig.y1731.oam.ccmHelp')} />
               </label>
               <select
                 id="y1731-ccm"
@@ -203,8 +196,8 @@ export function Y1731ConfigForm({
 
             <div>
               <label htmlFor="y1731-priority" className="flex items-center gap-tight label">
-                Priority
-                <HelpIcon tooltip="802.1p priority value (0-7). 6-7 typically for OAM." />
+                {t('testConfig.y1731.oam.priority')}
+                <HelpIcon tooltip={t('testConfig.y1731.oam.priorityHelp')} />
               </label>
               <input
                 id="y1731-priority"
@@ -222,38 +215,34 @@ export function Y1731ConfigForm({
               id="y1731-tagged"
               type="checkbox"
               {...register('priorityTagged')}
-              aria-label="Use 802.1Q priority tagging on OAM frames"
+              aria-label={t('testConfig.y1731.oam.taggedAria')}
               className="rounded border-surface-border"
             />
             <label
               htmlFor="y1731-tagged"
-              title="Add an IEEE 802.1Q VLAN tag with the selected priority to all Y.1731 OAM frames"
+              title={t('testConfig.y1731.oam.taggedTitle')}
               className="text-sm text-text-primary"
             >
-              Use priority tagging (802.1Q)
+              {t('testConfig.y1731.oam.tagged')}
             </label>
           </div>
-        </div>
+        </FormSection>
 
-        <div className="stack">
-          <div className="text-xs font-semibold text-text-muted uppercase tracking-wide">
-            Measurement Parameters
-          </div>
-
+        <FormSection title={t('testConfig.y1731.measurement.title')}>
           <div className="grid grid-cols-2 gap-default">
             <div>
               <label htmlFor="y1731-framesize" className="flex items-center gap-tight label">
-                Frame Size
-                <HelpIcon tooltip="OAM frame size for measurements." />
+                {t('testConfig.y1731.measurement.frameSize')}
+                <HelpIcon tooltip={t('testConfig.y1731.measurement.frameSizeHelp')} />
               </label>
               <select
                 id="y1731-framesize"
                 {...register('frameSize', { valueAsNumber: true })}
                 className="mt-tight w-full"
               >
-                {FRAME_SIZE_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
+                {FRAME_SIZE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {t(`testConfig.common.${option.qualifier}`, { size: option.value })}
                   </option>
                 ))}
               </select>
@@ -262,8 +251,8 @@ export function Y1731ConfigForm({
 
             <div>
               <label htmlFor="y1731-interval" className="flex items-center gap-tight label">
-                Measurement Interval (ms)
-                <HelpIcon tooltip="Interval between measurement probes." />
+                {t('testConfig.y1731.measurement.interval')}
+                <HelpIcon tooltip={t('testConfig.y1731.measurement.intervalHelp')} />
               </label>
               <input
                 id="y1731-interval"
@@ -279,8 +268,8 @@ export function Y1731ConfigForm({
           <div className="grid grid-cols-2 gap-default">
             <div>
               <label htmlFor="y1731-count" className="flex items-center gap-tight label">
-                Frames per Interval
-                <HelpIcon tooltip="Number of measurement frames per interval." />
+                {t('testConfig.y1731.measurement.count')}
+                <HelpIcon tooltip={t('testConfig.y1731.measurement.countHelp')} />
               </label>
               <input
                 id="y1731-count"
@@ -294,8 +283,8 @@ export function Y1731ConfigForm({
 
             <div>
               <label htmlFor="y1731-duration" className="flex items-center gap-tight label">
-                Duration (s)
-                <HelpIcon tooltip="Total measurement duration." />
+                {t('testConfig.y1731.measurement.duration')}
+                <HelpIcon tooltip={t('testConfig.y1731.measurement.durationHelp')} />
               </label>
               <input
                 id="y1731-duration"
@@ -307,41 +296,45 @@ export function Y1731ConfigForm({
               <FieldError message={errors.duration?.message} />
             </div>
           </div>
-        </div>
+        </FormSection>
 
-        <div className="pad-sm rounded-lg bg-surface-base border border-surface-border">
-          <div className="flex items-center gap-compact label mb-2">
-            <Info className="w-4 h-4" />
-            Test Summary
+        <TestSummary>
+          <div>
+            {t('testConfig.common.selectedTests')}:{' '}
+            {[
+              hasDelay && t('testConfig.y1731.tests.delay'),
+              hasLoss && t('testConfig.y1731.tests.loss'),
+              hasSLM && t('testConfig.y1731.tests.slm'),
+              hasLoopback && t('testConfig.y1731.tests.loopback'),
+            ]
+              .filter(Boolean)
+              .join(', ')}
           </div>
-          <div className="text-xs text-text-muted stack-xs">
-            <div>
-              Selected tests:{' '}
-              {[
-                hasDelay && 'Delay Measurement',
-                hasLoss && 'Frame Loss',
-                hasSLM && 'Synthetic Loss',
-                hasLoopback && 'Loopback',
-              ]
-                .filter(Boolean)
-                .join(', ')}
-            </div>
-            <div>
-              MEP: {mepId} | Level: {megLevel} | MEG: {megId}
-            </div>
-            <div>
-              CCM:{' '}
-              {CCM_INTERVAL_OPTIONS.find((c) => c.value === ccmInterval)?.label ||
-                `${ccmInterval}ms`}{' '}
-              | Priority: {priority}
-              {priorityTagged ? ' (tagged)' : ''}
-            </div>
-            <div>
-              Frame: {frameSize}B | Interval: {intervalMs}ms | Count: {count}
-            </div>
-            <div>Duration: {duration}s</div>
+          <div>
+            {t('testConfig.y1731.summary.mep', { mep: mepId, level: megLevel, meg: megId })}
           </div>
-        </div>
+          <div>
+            {t(
+              priorityTagged
+                ? 'testConfig.y1731.summary.ccmTagged'
+                : 'testConfig.y1731.summary.ccm',
+              {
+                ccm:
+                  CCM_INTERVAL_OPTIONS.find((option) => option.value === ccmInterval)?.label ??
+                  `${ccmInterval}ms`,
+                priority,
+              },
+            )}
+          </div>
+          <div>
+            {t('testConfig.y1731.summary.frame', {
+              size: frameSize,
+              interval: intervalMs,
+              count,
+            })}
+          </div>
+          <div>{t('testConfig.y1731.summary.duration', { duration })}</div>
+        </TestSummary>
       </div>
     </CollapsibleSection>
   );

@@ -372,6 +372,144 @@
         "sla": "SLA: FLR≤{{flr}}%, FD≤{{fd}}ms, FDV≤{{fdv}}ms",
         "vlan": "VLAN {{vlan}} / PCP {{pcp}}"
       }
+    },
+    "trafficgen": {
+      "title": "Traffic Generator Configuration",
+      "traffic": {
+        "title": "Traffic Parameters",
+        "frameSize": "Frame Size",
+        "frameSizeHelp": "Ethernet frame size including FCS.",
+        "rate": "Rate (% of line rate)",
+        "rateHelp": "Traffic rate as percentage of interface line rate.",
+        "duration": "Duration (s)",
+        "durationHelp": "Traffic generation duration.",
+        "warmup": "Warmup (s)",
+        "warmupHelp": "Warmup period before measurement."
+      },
+      "stream": {
+        "title": "Stream Configuration",
+        "id": "Stream ID",
+        "idHelp": "Unique identifier for this traffic stream."
+      },
+      "burst": {
+        "title": "Burst Mode",
+        "enable": "Enable burst mode",
+        "enableTitle": "Send frames in short bursts separated by idle gaps rather than at a continuous rate; useful for testing buffer behavior",
+        "enableAria": "Enable burst mode traffic generation",
+        "size": "Burst Size (frames)",
+        "sizeHelp": "Number of frames per burst.",
+        "gap": "Inter-Burst Gap (µs)",
+        "gapHelp": "Gap between bursts in microseconds."
+      },
+      "vlan": {
+        "title": "VLAN Configuration",
+        "id": "VLAN ID",
+        "idHelp": "VLAN ID (0 = untagged).",
+        "priority": "VLAN Priority",
+        "priorityHelp": "802.1p priority (0-7)."
+      },
+      "mac": {
+        "title": "MAC Addresses (Optional)",
+        "src": "Source MAC",
+        "srcHelp": "Source MAC address (leave empty for auto). Format: AA:BB:CC:DD:EE:FF.",
+        "dst": "Destination MAC",
+        "dstHelp": "Destination MAC address (leave empty for broadcast). Format: AA:BB:CC:DD:EE:FF."
+      },
+      "tests": {
+        "customStream": "Custom Stream",
+        "burstMode": "Burst Mode",
+        "multiStream": "Multi-Stream"
+      },
+      "summary": {
+        "frame": "Frame: {{size}}B @ {{rate}}% line rate (~{{throughput}})",
+        "vlan": "VLAN: {{vlan}} (priority {{priority}})",
+        "burst": "Burst: {{frames}} frames, {{gap}}µs gap",
+        "duration": "Duration: {{duration}}s + {{warmup}}s warmup"
+      }
+    },
+    "y1731": {
+      "title": "Y.1731 OAM Configuration",
+      "mep": {
+        "title": "MEP/MEG Configuration",
+        "mepId": "MEP ID",
+        "mepIdHelp": "Maintenance End Point identifier (1-8191).",
+        "megLevel": "MEG Level",
+        "megLevelHelp": "Maintenance Entity Group level (0-7). Higher = wider domain.",
+        "megId": "MEG ID",
+        "megIdHelp": "Maintenance Entity Group identifier string."
+      },
+      "oam": {
+        "title": "OAM Parameters",
+        "ccm": "CCM Interval",
+        "ccmHelp": "Continuity Check Message interval per Y.1731.",
+        "priority": "Priority",
+        "priorityHelp": "802.1p priority value (0-7). 6-7 typically for OAM.",
+        "tagged": "Use priority tagging (802.1Q)",
+        "taggedTitle": "Add an IEEE 802.1Q VLAN tag with the selected priority to all Y.1731 OAM frames",
+        "taggedAria": "Use 802.1Q priority tagging on OAM frames"
+      },
+      "measurement": {
+        "title": "Measurement Parameters",
+        "frameSize": "Frame Size",
+        "frameSizeHelp": "OAM frame size for measurements.",
+        "interval": "Measurement Interval (ms)",
+        "intervalHelp": "Interval between measurement probes.",
+        "count": "Frames per Interval",
+        "countHelp": "Number of measurement frames per interval.",
+        "duration": "Duration (s)",
+        "durationHelp": "Total measurement duration."
+      },
+      "tests": {
+        "delay": "Delay Measurement",
+        "loss": "Frame Loss",
+        "slm": "Synthetic Loss",
+        "loopback": "Loopback"
+      },
+      "summary": {
+        "mep": "MEP: {{mep}} | Level: {{level}} | MEG: {{meg}}",
+        "ccm": "CCM: {{ccm}} | Priority: {{priority}}",
+        "ccmTagged": "CCM: {{ccm}} | Priority: {{priority}} (tagged)",
+        "frame": "Frame: {{size}}B | Interval: {{interval}}ms | Count: {{count}}",
+        "duration": "Duration: {{duration}}s"
+      }
+    },
+    "rfc2889": {
+      "title": "RFC 2889 Configuration",
+      "params": {
+        "title": "Test Parameters",
+        "duration": "Duration (s)",
+        "durationHelp": "Duration for each test iteration in seconds.",
+        "warmup": "Warmup (s)",
+        "warmupHelp": "Warmup period before measurement begins.",
+        "frameSize": "Frame Size",
+        "frameSizeHelp": "Ethernet frame size for testing."
+      },
+      "switch": {
+        "title": "Switch Configuration",
+        "portCount": "Port Count",
+        "portCountHelp": "Number of switch ports to test.",
+        "pattern": "Traffic Pattern",
+        "patternHelp": "How traffic is distributed across ports.",
+        "patternFullMesh": "Full Mesh",
+        "patternPair": "Pair",
+        "patternBroadcast": "Broadcast",
+        "addressCount": "Address Count",
+        "addressCountHelp": "Number of MAC addresses for learning/caching tests. RFC 2889 recommends testing at 1, 10, 100, 1000, 10000 addresses.",
+        "loss": "Acceptable Loss (%)",
+        "lossHelp": "Maximum acceptable frame loss percentage. RFC 2889 specifies 0%."
+      },
+      "tests": {
+        "forwarding": "Forwarding",
+        "caching": "Caching",
+        "learning": "Learning",
+        "broadcast": "Broadcast",
+        "congestion": "Congestion"
+      },
+      "summary": {
+        "frameSize": "Frame size: {{size}} bytes",
+        "ports": "Ports: {{ports}} | Pattern: {{pattern}}",
+        "duration": "Duration: {{duration}}s + {{warmup}}s warmup"
+      }
     }
   }
 }

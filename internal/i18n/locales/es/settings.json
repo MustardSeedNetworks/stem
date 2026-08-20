@@ -372,6 +372,144 @@
         "sla": "SLA: FLR≤{{flr}} %, FD≤{{fd}} ms, FDV≤{{fdv}} ms",
         "vlan": "VLAN {{vlan}} / PCP {{pcp}}"
       }
+    },
+    "trafficgen": {
+      "title": "Configuración del generador de tráfico",
+      "traffic": {
+        "title": "Parámetros de tráfico",
+        "frameSize": "Tamaño de trama",
+        "frameSizeHelp": "Tamaño de la trama Ethernet, FCS incluido.",
+        "rate": "Tasa (% de la tasa de línea)",
+        "rateHelp": "Tasa de tráfico como porcentaje de la tasa de línea de la interfaz.",
+        "duration": "Duración (s)",
+        "durationHelp": "Duración de la generación de tráfico.",
+        "warmup": "Calentamiento (s)",
+        "warmupHelp": "Periodo de calentamiento antes de medir."
+      },
+      "stream": {
+        "title": "Configuración del flujo",
+        "id": "ID del flujo",
+        "idHelp": "Identificador único de este flujo de tráfico."
+      },
+      "burst": {
+        "title": "Modo ráfaga",
+        "enable": "Activar el modo ráfaga",
+        "enableTitle": "Enviar tramas en ráfagas cortas separadas por huecos de inactividad en lugar de a tasa continua; útil para probar el comportamiento de los búferes",
+        "enableAria": "Activar la generación de tráfico en modo ráfaga",
+        "size": "Tamaño de ráfaga (tramas)",
+        "sizeHelp": "Número de tramas por ráfaga.",
+        "gap": "Hueco entre ráfagas (µs)",
+        "gapHelp": "Hueco entre ráfagas en microsegundos."
+      },
+      "vlan": {
+        "title": "Configuración de VLAN",
+        "id": "VLAN ID",
+        "idHelp": "VLAN ID (0 = sin etiquetar).",
+        "priority": "Prioridad de VLAN",
+        "priorityHelp": "Prioridad 802.1p (0-7)."
+      },
+      "mac": {
+        "title": "Direcciones MAC (opcional)",
+        "src": "MAC de origen",
+        "srcHelp": "Dirección MAC de origen (vacío = automática). Formato: AA:BB:CC:DD:EE:FF.",
+        "dst": "MAC de destino",
+        "dstHelp": "Dirección MAC de destino (vacío = difusión). Formato: AA:BB:CC:DD:EE:FF."
+      },
+      "tests": {
+        "customStream": "Flujo personalizado",
+        "burstMode": "Modo ráfaga",
+        "multiStream": "Multiflujo"
+      },
+      "summary": {
+        "frame": "Trama: {{size}} B @ {{rate}} % de la tasa de línea (~{{throughput}})",
+        "vlan": "VLAN: {{vlan}} (prioridad {{priority}})",
+        "burst": "Ráfaga: {{frames}} tramas, hueco de {{gap}} µs",
+        "duration": "Duración: {{duration}} s + {{warmup}} s de calentamiento"
+      }
+    },
+    "y1731": {
+      "title": "Configuración OAM Y.1731",
+      "mep": {
+        "title": "Configuración de MEP/MEG",
+        "mepId": "MEP ID",
+        "mepIdHelp": "Identificador del Maintenance End Point (1-8191).",
+        "megLevel": "Nivel de MEG",
+        "megLevelHelp": "Nivel del Maintenance Entity Group (0-7). Mayor = dominio más amplio.",
+        "megId": "MEG ID",
+        "megIdHelp": "Cadena identificadora del Maintenance Entity Group."
+      },
+      "oam": {
+        "title": "Parámetros OAM",
+        "ccm": "Intervalo de CCM",
+        "ccmHelp": "Intervalo de los Continuity Check Message según Y.1731.",
+        "priority": "Prioridad",
+        "priorityHelp": "Valor de prioridad 802.1p (0-7). Normalmente 6-7 para OAM.",
+        "tagged": "Usar etiquetado de prioridad (802.1Q)",
+        "taggedTitle": "Añadir una etiqueta VLAN IEEE 802.1Q con la prioridad elegida a todas las tramas OAM Y.1731",
+        "taggedAria": "Usar el etiquetado de prioridad 802.1Q en las tramas OAM"
+      },
+      "measurement": {
+        "title": "Parámetros de medición",
+        "frameSize": "Tamaño de trama",
+        "frameSizeHelp": "Tamaño de las tramas OAM usadas para medir.",
+        "interval": "Intervalo de medición (ms)",
+        "intervalHelp": "Intervalo entre sondas de medición.",
+        "count": "Tramas por intervalo",
+        "countHelp": "Número de tramas de medición por intervalo.",
+        "duration": "Duración (s)",
+        "durationHelp": "Duración total de la medición."
+      },
+      "tests": {
+        "delay": "Medición de retardo",
+        "loss": "Pérdida de tramas",
+        "slm": "Pérdida sintética",
+        "loopback": "Loopback"
+      },
+      "summary": {
+        "mep": "MEP: {{mep}} | Nivel: {{level}} | MEG: {{meg}}",
+        "ccm": "CCM: {{ccm}} | Prioridad: {{priority}}",
+        "ccmTagged": "CCM: {{ccm}} | Prioridad: {{priority}} (etiquetado)",
+        "frame": "Trama: {{size}} B | Intervalo: {{interval}} ms | Recuento: {{count}}",
+        "duration": "Duración: {{duration}} s"
+      }
+    },
+    "rfc2889": {
+      "title": "Configuración RFC 2889",
+      "params": {
+        "title": "Parámetros de la prueba",
+        "duration": "Duración (s)",
+        "durationHelp": "Duración de cada iteración de la prueba, en segundos.",
+        "warmup": "Calentamiento (s)",
+        "warmupHelp": "Periodo de calentamiento antes de empezar a medir.",
+        "frameSize": "Tamaño de trama",
+        "frameSizeHelp": "Tamaño de la trama Ethernet usada en la prueba."
+      },
+      "switch": {
+        "title": "Configuración del switch",
+        "portCount": "Número de puertos",
+        "portCountHelp": "Número de puertos del switch a probar.",
+        "pattern": "Patrón de tráfico",
+        "patternHelp": "Cómo se reparte el tráfico entre los puertos.",
+        "patternFullMesh": "Malla completa",
+        "patternPair": "Por pares",
+        "patternBroadcast": "Difusión",
+        "addressCount": "Número de direcciones",
+        "addressCountHelp": "Número de direcciones MAC para las pruebas de aprendizaje y caché. RFC 2889 recomienda probar con 1, 10, 100, 1000 y 10000 direcciones.",
+        "loss": "Pérdida aceptable (%)",
+        "lossHelp": "Porcentaje máximo de pérdida de tramas aceptable. RFC 2889 especifica 0 %."
+      },
+      "tests": {
+        "forwarding": "Reenvío",
+        "caching": "Caché",
+        "learning": "Aprendizaje",
+        "broadcast": "Difusión",
+        "congestion": "Congestión"
+      },
+      "summary": {
+        "frameSize": "Tamaño de trama: {{size}} bytes",
+        "ports": "Puertos: {{ports}} | Patrón: {{pattern}}",
+        "duration": "Duración: {{duration}} s + {{warmup}} s de calentamiento"
+      }
     }
   }
 }
