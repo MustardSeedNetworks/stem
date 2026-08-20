@@ -372,6 +372,60 @@
         "sla": "SLA: FLR≤{{flr}} %, FD≤{{fd}} ms, FDV≤{{fdv}} ms",
         "vlan": "VLAN {{vlan}} / PCP {{pcp}}"
       }
+    },
+    "trafficgen": {
+      "title": "Configuración del generador de tráfico",
+      "traffic": {
+        "title": "Parámetros de tráfico",
+        "frameSize": "Tamaño de trama",
+        "frameSizeHelp": "Tamaño de la trama Ethernet, FCS incluido.",
+        "rate": "Tasa (% de la tasa de línea)",
+        "rateHelp": "Tasa de tráfico como porcentaje de la tasa de línea de la interfaz.",
+        "duration": "Duración (s)",
+        "durationHelp": "Duración de la generación de tráfico.",
+        "warmup": "Calentamiento (s)",
+        "warmupHelp": "Periodo de calentamiento antes de medir."
+      },
+      "stream": {
+        "title": "Configuración del flujo",
+        "id": "ID del flujo",
+        "idHelp": "Identificador único de este flujo de tráfico."
+      },
+      "burst": {
+        "title": "Modo ráfaga",
+        "enable": "Activar el modo ráfaga",
+        "enableTitle": "Enviar tramas en ráfagas cortas separadas por huecos de inactividad en lugar de a tasa continua; útil para probar el comportamiento de los búferes",
+        "enableAria": "Activar la generación de tráfico en modo ráfaga",
+        "size": "Tamaño de ráfaga (tramas)",
+        "sizeHelp": "Número de tramas por ráfaga.",
+        "gap": "Hueco entre ráfagas (µs)",
+        "gapHelp": "Hueco entre ráfagas en microsegundos."
+      },
+      "vlan": {
+        "title": "Configuración de VLAN",
+        "id": "VLAN ID",
+        "idHelp": "VLAN ID (0 = sin etiquetar).",
+        "priority": "Prioridad de VLAN",
+        "priorityHelp": "Prioridad 802.1p (0-7)."
+      },
+      "mac": {
+        "title": "Direcciones MAC (opcional)",
+        "src": "MAC de origen",
+        "srcHelp": "Dirección MAC de origen (vacío = automática). Formato: AA:BB:CC:DD:EE:FF.",
+        "dst": "MAC de destino",
+        "dstHelp": "Dirección MAC de destino (vacío = difusión). Formato: AA:BB:CC:DD:EE:FF."
+      },
+      "tests": {
+        "customStream": "Flujo personalizado",
+        "burstMode": "Modo ráfaga",
+        "multiStream": "Multiflujo"
+      },
+      "summary": {
+        "frame": "Trama: {{size}} B @ {{rate}} % de la tasa de línea (~{{throughput}})",
+        "vlan": "VLAN: {{vlan}} (prioridad {{priority}})",
+        "burst": "Ráfaga: {{frames}} tramas, hueco de {{gap}} µs",
+        "duration": "Duración: {{duration}} s + {{warmup}} s de calentamiento"
+      }
     }
   }
 }

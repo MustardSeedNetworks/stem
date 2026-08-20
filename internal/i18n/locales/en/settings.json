@@ -372,6 +372,60 @@
         "sla": "SLA: FLR≤{{flr}}%, FD≤{{fd}}ms, FDV≤{{fdv}}ms",
         "vlan": "VLAN {{vlan}} / PCP {{pcp}}"
       }
+    },
+    "trafficgen": {
+      "title": "Traffic Generator Configuration",
+      "traffic": {
+        "title": "Traffic Parameters",
+        "frameSize": "Frame Size",
+        "frameSizeHelp": "Ethernet frame size including FCS.",
+        "rate": "Rate (% of line rate)",
+        "rateHelp": "Traffic rate as percentage of interface line rate.",
+        "duration": "Duration (s)",
+        "durationHelp": "Traffic generation duration.",
+        "warmup": "Warmup (s)",
+        "warmupHelp": "Warmup period before measurement."
+      },
+      "stream": {
+        "title": "Stream Configuration",
+        "id": "Stream ID",
+        "idHelp": "Unique identifier for this traffic stream."
+      },
+      "burst": {
+        "title": "Burst Mode",
+        "enable": "Enable burst mode",
+        "enableTitle": "Send frames in short bursts separated by idle gaps rather than at a continuous rate; useful for testing buffer behavior",
+        "enableAria": "Enable burst mode traffic generation",
+        "size": "Burst Size (frames)",
+        "sizeHelp": "Number of frames per burst.",
+        "gap": "Inter-Burst Gap (µs)",
+        "gapHelp": "Gap between bursts in microseconds."
+      },
+      "vlan": {
+        "title": "VLAN Configuration",
+        "id": "VLAN ID",
+        "idHelp": "VLAN ID (0 = untagged).",
+        "priority": "VLAN Priority",
+        "priorityHelp": "802.1p priority (0-7)."
+      },
+      "mac": {
+        "title": "MAC Addresses (Optional)",
+        "src": "Source MAC",
+        "srcHelp": "Source MAC address (leave empty for auto). Format: AA:BB:CC:DD:EE:FF.",
+        "dst": "Destination MAC",
+        "dstHelp": "Destination MAC address (leave empty for broadcast). Format: AA:BB:CC:DD:EE:FF."
+      },
+      "tests": {
+        "customStream": "Custom Stream",
+        "burstMode": "Burst Mode",
+        "multiStream": "Multi-Stream"
+      },
+      "summary": {
+        "frame": "Frame: {{size}}B @ {{rate}}% line rate (~{{throughput}})",
+        "vlan": "VLAN: {{vlan}} (priority {{priority}})",
+        "burst": "Burst: {{frames}} frames, {{gap}}µs gap",
+        "duration": "Duration: {{duration}}s + {{warmup}}s warmup"
+      }
     }
   }
 }
