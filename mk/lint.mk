@@ -55,7 +55,7 @@ lint-go: ## Run Go linter (golangci-lint)
 	@GOLANGCI_LINT="$$(go env GOPATH)/bin/golangci-lint"; \
 	if [ ! -f "$$GOLANGCI_LINT" ]; then \
 		printf "📦 Installing golangci-lint v2...\n"; \
-		go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.13.0; \
+		go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.13.1; \
 	fi; \
 	$$GOLANGCI_LINT run --allow-parallel-runners ./...
 	@printf "$(GREEN)✓ Go lint passed$(RESET)\n"
@@ -174,7 +174,7 @@ fix: ## Auto-fix Go and frontend linting issues
 	@printf "$(BOLD)🔧 Auto-fixing code...$(RESET)\n"
 	@GOLANGCI_LINT="$$(go env GOPATH)/bin/golangci-lint"; \
 	if [ ! -f "$$GOLANGCI_LINT" ]; then \
-		go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.13.0; \
+		go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.13.1; \
 	fi; \
 	$$GOLANGCI_LINT run --fix ./...
 	@gofmt -w -s .
