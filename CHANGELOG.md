@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.22](https://github.com/MustardSeedNetworks/stem/compare/v0.24.21...v0.24.22) (2026-08-21)
+
+
+### Miscellaneous
+
+* **deps:** update github actions ([#680](https://github.com/MustardSeedNetworks/stem/issues/680)) ([a9219b0](https://github.com/MustardSeedNetworks/stem/commit/a9219b0edeb3c073ec6768c859d06bf08eb42909))
+* **deps:** update module honnef.co/go/tools/cmd/staticcheck to v0.8.1 ([#706](https://github.com/MustardSeedNetworks/stem/issues/706)) ([3996b48](https://github.com/MustardSeedNetworks/stem/commit/3996b4895ef945659bcdef44f43e9d592b37b7b4))
+
 ## [0.24.21](https://github.com/MustardSeedNetworks/stem/compare/v0.24.20...v0.24.21) (2026-08-21)
 
 
