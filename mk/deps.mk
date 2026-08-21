@@ -77,7 +77,7 @@ tools-go: ## Install Go development tools
 	@printf "  Installing goimports...\n"
 	go install golang.org/x/tools/cmd/goimports@v0.49.0
 	@printf "  Installing staticcheck...\n"
-	go install honnef.co/go/tools/cmd/staticcheck@v0.8.0
+	go install honnef.co/go/tools/cmd/staticcheck@v0.8.1
 	@printf "  Installing gitleaks...\n"
 	go install github.com/zricethezav/gitleaks/v8@v8.30.1
 	@printf "  Installing gotestsum...\n"
