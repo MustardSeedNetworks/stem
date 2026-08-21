@@ -47,8 +47,7 @@ func validateStruct(w http.ResponseWriter, dto any) bool {
 	if err == nil {
 		return true
 	}
-	var verrs validator.ValidationErrors
-	if errors.As(err, &verrs) {
+	if verrs, ok := errors.AsType[validator.ValidationErrors](err); ok {
 		WriteInvalidRequest(w, formatValidationErrors(verrs))
 		return false
 	}

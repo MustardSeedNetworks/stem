@@ -897,7 +897,6 @@ func TestSecurityHeadersMiddleware_HSTSWithTLS(t *testing.T) {
 		CipherSuite:                 tls.TLS_AES_128_GCM_SHA256,
 		CurveID:                     0,
 		NegotiatedProtocol:          "",
-		NegotiatedProtocolIsMutual:  false,
 		ServerName:                  "",
 		PeerCertificates:            nil,
 		VerifiedChains:              nil,
