@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.20](https://github.com/MustardSeedNetworks/stem/compare/v0.24.19...v0.24.20) (2026-08-21)
+
+
+### Bug Fixes
+
+* **test:** run the React Compiler in vitest, so tests exercise what ships ([#697](https://github.com/MustardSeedNetworks/stem/issues/697)) ([5271812](https://github.com/MustardSeedNetworks/stem/commit/5271812f46b3fa9b07dbd453c3f4d93ce7fff675))
+
 ## [0.24.19](https://github.com/MustardSeedNetworks/stem/compare/v0.24.18...v0.24.19) (2026-08-20)
 
 
