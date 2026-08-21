@@ -8,10 +8,8 @@ import {
   createContext,
   type ReactElement,
   type ReactNode,
-  useCallback,
   useContext,
   useEffect,
-  useMemo,
   useState,
 } from 'react';
 import type {
@@ -294,17 +292,17 @@ export function ModuleSettingsProvider({ children }: ModuleSettingsProviderProps
     saveToStorage(modules);
   }, [modules]);
 
-  const toggleModule = useCallback((moduleName: string, enabled: boolean) => {
+  const toggleModule = (moduleName: string, enabled: boolean) => {
     setModules((prev) => prev.map((mod) => (mod.name === moduleName ? { ...mod, enabled } : mod)));
-  }, []);
+  };
 
-  const toggleAutoStart = useCallback((moduleName: string, enabled: boolean) => {
+  const toggleAutoStart = (moduleName: string, enabled: boolean) => {
     setModules((prev) =>
       prev.map((mod) => (mod.name === moduleName ? { ...mod, autoStart: enabled } : mod)),
     );
-  }, []);
+  };
 
-  const toggleTest = useCallback((moduleName: string, testId: string, enabled: boolean) => {
+  const toggleTest = (moduleName: string, testId: string, enabled: boolean) => {
     setModules((prev) =>
       prev.map((mod) =>
         mod.name === moduleName
@@ -315,39 +313,36 @@ export function ModuleSettingsProvider({ children }: ModuleSettingsProviderProps
           : mod,
       ),
     );
-  }, []);
+  };
 
-  const setModuleStatus = useCallback((moduleName: string, status: ModuleStatus) => {
+  const setModuleStatus = (moduleName: string, status: ModuleStatus) => {
     setModuleStatuses((prev) => ({ ...prev, [moduleName]: status }));
-  }, []);
+  };
 
-  const setModuleResults = useCallback((moduleName: string, results: ModuleTestResults | null) => {
+  const setModuleResults = (moduleName: string, results: ModuleTestResults | null) => {
     setModuleResultsState((prev) => ({ ...prev, [moduleName]: results }));
-  }, []);
+  };
 
-  const updateModuleResults = useCallback(
-    (moduleName: string, updater: (prev: ModuleTestResults | null) => ModuleTestResults | null) => {
-      setModuleResultsState((prev) => ({
-        ...prev,
-        [moduleName]: updater(prev[moduleName] ?? null),
-      }));
-    },
-    [],
-  );
+  const updateModuleResults = (
+    moduleName: string,
+    updater: (prev: ModuleTestResults | null) => ModuleTestResults | null,
+  ) => {
+    setModuleResultsState((prev) => ({
+      ...prev,
+      [moduleName]: updater(prev[moduleName] ?? null),
+    }));
+  };
 
-  const clearModuleResults = useCallback((moduleName: string) => {
+  const clearModuleResults = (moduleName: string) => {
     setModuleResultsState((prev) => ({ ...prev, [moduleName]: null }));
-  }, []);
+  };
 
-  const getEnabledTests = useCallback(
-    (moduleName: string): ModuleTest[] => {
-      const mod = modules.find((m) => m.name === moduleName);
-      return mod?.tests.filter((t) => t.enabled) ?? [];
-    },
-    [modules],
-  );
+  const getEnabledTests = (moduleName: string): ModuleTest[] => {
+    const mod = modules.find((m) => m.name === moduleName);
+    return mod?.tests.filter((t) => t.enabled) ?? [];
+  };
 
-  const getAllEnabledTests = useCallback((): Array<{
+  const getAllEnabledTests = (): Array<{
     module: string;
     test: ModuleTest;
   }> => {
@@ -362,45 +357,28 @@ export function ModuleSettingsProvider({ children }: ModuleSettingsProviderProps
       }
     }
     return result;
-  }, [modules]);
+  };
 
-  const resetToDefaults = useCallback(() => {
+  const resetToDefaults = () => {
     setModules(defaultModules);
     localStorage.removeItem(STORAGE_KEY);
-  }, []);
+  };
 
-  const value = useMemo(
-    () => ({
-      modules,
-      moduleStatuses,
-      moduleResults,
-      toggleModule,
-      toggleAutoStart,
-      toggleTest,
-      setModuleStatus,
-      setModuleResults,
-      updateModuleResults,
-      clearModuleResults,
-      getEnabledTests,
-      getAllEnabledTests,
-      resetToDefaults,
-    }),
-    [
-      modules,
-      moduleStatuses,
-      moduleResults,
-      toggleModule,
-      toggleAutoStart,
-      toggleTest,
-      setModuleStatus,
-      setModuleResults,
-      updateModuleResults,
-      clearModuleResults,
-      getEnabledTests,
-      getAllEnabledTests,
-      resetToDefaults,
-    ],
-  );
+  const value = {
+    modules,
+    moduleStatuses,
+    moduleResults,
+    toggleModule,
+    toggleAutoStart,
+    toggleTest,
+    setModuleStatus,
+    setModuleResults,
+    updateModuleResults,
+    clearModuleResults,
+    getEnabledTests,
+    getAllEnabledTests,
+    resetToDefaults,
+  };
 
   return <ModuleSettingsContext.Provider value={value}>{children}</ModuleSettingsContext.Provider>;
 }
