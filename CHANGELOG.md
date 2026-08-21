@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.21](https://github.com/MustardSeedNetworks/stem/compare/v0.24.20...v0.24.21) (2026-08-21)
+
+
+### Bug Fixes
+
+* **ui:** default RecordRow to unknown state, not ok ([#674](https://github.com/MustardSeedNetworks/stem/issues/674)) ([b3ae1e2](https://github.com/MustardSeedNetworks/stem/commit/b3ae1e2a73284d1e8c2213fc708a4ec17889cabd))
+
+
+### Code Refactoring
+
+* **contexts:** drop the memos the React Compiler already provides ([#702](https://github.com/MustardSeedNetworks/stem/issues/702)) ([a9ef05c](https://github.com/MustardSeedNetworks/stem/commit/a9ef05caf7b01457df973af992a5dd1da12213fe))
+
+
+### Continuous Integration
+
+* refuse to start tests while orphaned test binaries are running ([#701](https://github.com/MustardSeedNetworks/stem/issues/701)) ([5e6def4](https://github.com/MustardSeedNetworks/stem/commit/5e6def4b06d69da0dbec7aa6e98cd274d590bf9e))
+
+
+### Miscellaneous
+
+* **deps:** update dependency @babel/core to v8 ([#695](https://github.com/MustardSeedNetworks/stem/issues/695)) ([93a80fe](https://github.com/MustardSeedNetworks/stem/commit/93a80fe56e3ebaf5bdc1ffd52c396c55edcfbd3a))
+
 ## [0.24.20](https://github.com/MustardSeedNetworks/stem/compare/v0.24.19...v0.24.20) (2026-08-21)
 
 
