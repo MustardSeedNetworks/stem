@@ -14,13 +14,20 @@
 
 .PHONY: test test-all test-backend test-backend-quiet test-frontend test-frontend-quiet \
         test-coverage test-coverage-html c-test c-test-asan c-fuzz smoke-test \
-        test-e2e test-e2e-ui test-e2e-install
+        test-e2e test-e2e-ui test-e2e-install check-stale-tests
 
 # =============================================================================
 # Main Test Targets
 # =============================================================================
 
-test: ## Run unit tests (backend + frontend)
+# check-stale-tests refuses to start while orphaned test binaries from an
+# earlier run are still holding the machine. Go's -test.timeout cannot kill a
+# binary stuck in a cgo call, so they accumulate silently and make every
+# subsequent timing meaningless — see the script for what that cost once.
+check-stale-tests:
+	@./scripts/check-stale-tests.sh
+
+test: check-stale-tests ## Run unit tests (backend + frontend)
 	@printf "$(BOLD)$(CYAN)┌─ Unit Tests ─────────────────────────────────────────────────────────────────┐$(RESET)\n"
 	@printf "$(CYAN)│$(RESET) $(BOLD)[1/2]$(RESET) Backend (Go)                                                          $(CYAN)│$(RESET)\n"
 	$(call timer-start,test-backend)
@@ -32,14 +39,14 @@ test: ## Run unit tests (backend + frontend)
 	$(call timer-end,test-frontend,Frontend tests)
 	@printf "$(CYAN)└──────────────────────────────────────────────────────────────────────────────┘$(RESET)\n"
 
-test-all: test c-test test-e2e ## Run ALL tests (Go + C + E2E)
+test-all: check-stale-tests test c-test test-e2e ## Run ALL tests (Go + C + E2E)
 	@echo "All tests complete"
 
 # =============================================================================
 # Backend Tests
 # =============================================================================
 
-test-backend: ## Run Go tests with progress
+test-backend: check-stale-tests ## Run Go tests with progress
 	@printf "\n$(BOLD)🧪 Running backend tests...$(RESET)\n"
 	@PKGS=$$(go list ./... | grep -v '/ui$$'); \
 	PKG_COUNT=$$(echo "$$PKGS" | wc -l | tr -d ' '); \
