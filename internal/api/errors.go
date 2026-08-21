@@ -343,8 +343,7 @@ func WriteError(w http.ResponseWriter, apiErr *Error) {
 // It attempts to convert the error to an Error; if not possible,
 // it treats it as an internal error.
 func HandleError(w http.ResponseWriter, err error) {
-	var apiErr *Error
-	if errors.As(err, &apiErr) {
+	if apiErr, ok := errors.AsType[*Error](err); ok {
 		WriteError(w, apiErr)
 		return
 	}
