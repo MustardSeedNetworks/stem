@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.30](https://github.com/MustardSeedNetworks/stem/compare/v0.24.29...v0.24.30) (2026-08-22)
+
+
+### Continuous Integration
+
+* serialise Release Please so concurrent runs stop racing the ref ([#733](https://github.com/MustardSeedNetworks/stem/issues/733)) ([3f0dcc7](https://github.com/MustardSeedNetworks/stem/commit/3f0dcc71e778469b972ab8d70046bd41c45b366c))
+
 ## [0.24.29](https://github.com/MustardSeedNetworks/stem/compare/v0.24.28...v0.24.29) (2026-08-22)
 
 
