@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.24](https://github.com/MustardSeedNetworks/stem/compare/v0.24.23...v0.24.24) (2026-08-22)
+
+
+### Continuous Integration
+
+* exempt bots from the issue-title lint ([#710](https://github.com/MustardSeedNetworks/stem/issues/710)) ([68e3b64](https://github.com/MustardSeedNetworks/stem/commit/68e3b64bdb78fd91d292d288d0d6fbb7a142c107))
+
+
+### Miscellaneous
+
+* **deps:** update dependency @biomejs/biome to v2.5.9 ([#711](https://github.com/MustardSeedNetworks/stem/issues/711)) ([90b606d](https://github.com/MustardSeedNetworks/stem/commit/90b606dc415dac259ee9414e0d5a47cdb9f26598))
+
 ## [0.24.23](https://github.com/MustardSeedNetworks/stem/compare/v0.24.22...v0.24.23) (2026-08-21)
 
 
