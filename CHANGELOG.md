@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.26](https://github.com/MustardSeedNetworks/stem/compare/v0.24.25...v0.24.26) (2026-08-22)
+
+
+### Bug Fixes
+
+* **deps:** update dependency i18next to v26.4.0 ([#721](https://github.com/MustardSeedNetworks/stem/issues/721)) ([38500b9](https://github.com/MustardSeedNetworks/stem/commit/38500b9089d587fef9a6679ced829efd567d5ab1))
+* **deps:** update dependency immer to v11.1.18 ([#718](https://github.com/MustardSeedNetworks/stem/issues/718)) ([755d9fb](https://github.com/MustardSeedNetworks/stem/commit/755d9fb72f73a4d4f1be1a110cfb6e7f5e83794b))
+* **deps:** update dependency react-i18next to v17.0.12 ([#719](https://github.com/MustardSeedNetworks/stem/issues/719)) ([ce03e5a](https://github.com/MustardSeedNetworks/stem/commit/ce03e5a3c7081fc97c48f97405c64273ae9d11ec))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#724](https://github.com/MustardSeedNetworks/stem/issues/724)) ([f41b705](https://github.com/MustardSeedNetworks/stem/commit/f41b70525b4bc0ba170839fc6fe0499420104dda))
+* **deps:** update dependency @biomejs/biome to v2.5.10 ([#715](https://github.com/MustardSeedNetworks/stem/issues/715)) ([cc597be](https://github.com/MustardSeedNetworks/stem/commit/cc597beeb1aeb21f959306326fdb8e6590977093))
+* **deps:** update dependency @vitejs/plugin-react to v6.1.0 ([#720](https://github.com/MustardSeedNetworks/stem/issues/720)) ([7c65a9e](https://github.com/MustardSeedNetworks/stem/commit/7c65a9ed959681b1bc7142c8590b59c8f6d1d2f3))
+* **deps:** update frontend toolchain ([#716](https://github.com/MustardSeedNetworks/stem/issues/716)) ([8079bac](https://github.com/MustardSeedNetworks/stem/commit/8079bac9eeac772f48e3a6fcf2495ebcf8ade36c))
+* **deps:** update storybook monorepo to v10.5.10 ([#717](https://github.com/MustardSeedNetworks/stem/issues/717)) ([2bbe0e3](https://github.com/MustardSeedNetworks/stem/commit/2bbe0e32d0c22e02b3fe22b3a4843d3b6d93b470))
+
 ## [0.24.25](https://github.com/MustardSeedNetworks/stem/compare/v0.24.24...v0.24.25) (2026-08-22)
 
 
