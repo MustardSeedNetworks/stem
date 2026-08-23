@@ -223,15 +223,13 @@ func (m *Manager) generateTokenWithType(username, tokenType string, duration tim
 	claims := &Claims{
 		Username:  username,
 		TokenType: tokenType,
-		RegisteredClaims: jwt.RegisteredClaims{
-			Audience:  jwt.ClaimStrings(nil),
-			ExpiresAt: jwt.NewNumericDate(now.Add(duration)),
-			IssuedAt:  jwt.NewNumericDate(now),
-			NotBefore: jwt.NewNumericDate(now),
-			Issuer:    m.issuer,
-			Subject:   username,
-			ID:        tokenID,
-		},
+		Audience:  jwt.ClaimStrings(nil),
+		ExpiresAt: jwt.NewNumericDate(now.Add(duration)),
+		IssuedAt:  jwt.NewNumericDate(now),
+		NotBefore: jwt.NewNumericDate(now),
+		Issuer:    m.issuer,
+		Subject:   username,
+		ID:        tokenID,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
