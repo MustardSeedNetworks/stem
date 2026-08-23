@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.33](https://github.com/MustardSeedNetworks/stem/compare/v0.24.32...v0.24.33) (2026-08-23)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#743](https://github.com/MustardSeedNetworks/stem/issues/743)) ([864073d](https://github.com/MustardSeedNetworks/stem/commit/864073d93d05d919a081d5732d95d064a34fd8df))
+* **deps:** update dependency @vitejs/plugin-react to v6.1.0 ([#738](https://github.com/MustardSeedNetworks/stem/issues/738)) ([9a15360](https://github.com/MustardSeedNetworks/stem/commit/9a15360331d92b7a5ab0b71779dcf4760fe4b952))
+
 ## [0.24.32](https://github.com/MustardSeedNetworks/stem/compare/v0.24.31...v0.24.32) (2026-08-23)
 
 
