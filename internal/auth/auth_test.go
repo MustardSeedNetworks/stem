@@ -1755,15 +1755,13 @@ func TestRevokeToken_ClaimsWithNilExpiresAt(t *testing.T) {
 	claimsWithNilExpiry := &auth.Claims{
 		Username:  claims.Username,
 		TokenType: claims.TokenType,
-		RegisteredClaims: jwt.RegisteredClaims{
-			Issuer:    claims.Issuer,
-			Subject:   claims.Subject,
-			Audience:  claims.Audience,
-			ExpiresAt: nil, // Nil expiration.
-			NotBefore: claims.NotBefore,
-			IssuedAt:  claims.IssuedAt,
-			ID:        claims.ID,
-		},
+		Issuer:    claims.Issuer,
+		Subject:   claims.Subject,
+		Audience:  claims.Audience,
+		ExpiresAt: nil, // Nil expiration.
+		NotBefore: claims.NotBefore,
+		IssuedAt:  claims.IssuedAt,
+		ID:        claims.ID,
 	}
 
 	// Should not panic.
