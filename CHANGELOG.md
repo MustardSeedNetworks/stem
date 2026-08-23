@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.34](https://github.com/MustardSeedNetworks/stem/compare/v0.24.33...v0.24.34) (2026-08-23)
+
+
+### Miscellaneous
+
+* **deps:** move to Go 1.27.0 ([#745](https://github.com/MustardSeedNetworks/stem/issues/745)) ([11c8d1f](https://github.com/MustardSeedNetworks/stem/commit/11c8d1fa624f1dae91ac1966a423a53da3f6314e))
+
 ## [0.24.33](https://github.com/MustardSeedNetworks/stem/compare/v0.24.32...v0.24.33) (2026-08-23)
 
 
