@@ -79,11 +79,15 @@ export const TextareaExample: Story = {
 export const SelectExample: Story = {
   name: 'Select',
   render: () => (
-    <Select label="Mode" defaultValue="reflect">
-      <option value="reflect">Reflector</option>
-      <option value="benchmark">RFC 2544</option>
-      <option value="y1564">Y.1564</option>
-    </Select>
+    <Select
+      label="Mode"
+      defaultValue="reflect"
+      options={[
+        { value: 'reflect', label: 'Reflector' },
+        { value: 'benchmark', label: 'RFC 2544' },
+        { value: 'y1564', label: 'Y.1564' },
+      ]}
+    />
   ),
 };
 
