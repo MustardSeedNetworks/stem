@@ -31,7 +31,8 @@
     "copied": "Copied!",
     "settingUp": "Setting up...",
     "completeSetup": "Complete Setup",
-    "copyTooltip": "Copy to clipboard"
+    "copyTooltip": "Copy to clipboard",
+    "copyPassword": "Copy password to clipboard"
   },
   "role": {
     "title": "Choose this stem's role",

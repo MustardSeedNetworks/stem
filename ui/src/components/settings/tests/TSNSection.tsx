@@ -62,7 +62,7 @@ export function TSNSection({
       title={
         <div className="flex items-center gap-compact">
           <Cpu className="w-4 h-4" aria-hidden="true" />
-          <span>{t('settings:tests.tsn.title', 'TSN 802.1Qbv')}</span>
+          <span>{t('tests.tsn.title')}</span>
           <span className="caption text-text-muted">({selectedCount}/4)</span>
         </div>
       }

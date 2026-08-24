@@ -65,7 +65,7 @@ export function RFC2544Section({
       title={
         <div className="flex items-center gap-compact">
           <Zap className="w-4 h-4" aria-hidden="true" />
-          <span>{t('settings:tests.rfc2544.title', 'RFC 2544 Tests')}</span>
+          <span>{t('tests.rfc2544.title')}</span>
           <span className="caption text-text-muted">({selectedCount}/6)</span>
         </div>
       }

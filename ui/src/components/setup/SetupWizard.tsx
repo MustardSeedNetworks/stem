@@ -166,15 +166,8 @@ export function SetupWizard({
           {/* Role selection */}
           <div className="mb-section stack">
             <div>
-              <p className="text-xs font-semibold text-text-muted">
-                {t('role.title', "Choose this stem's role")}
-              </p>
-              <p className="text-xs text-text-muted mt-tight">
-                {t(
-                  'role.subtitle',
-                  'Each stem instance runs as either a passive Reflector or an active Test Master. You can switch roles later from the header.',
-                )}
-              </p>
+              <p className="text-xs font-semibold text-text-muted">{t('role.title')}</p>
+              <p className="text-xs text-text-muted mt-tight">{t('role.subtitle')}</p>
             </div>
 
             <label className="flex items-start gap-default pad-sm rounded-xl border border-surface-border cursor-pointer hover:bg-surface-base transition-colors">
@@ -189,13 +182,10 @@ export function SetupWizard({
               <div>
                 <span className="label flex items-center gap-compact">
                   <Repeat className="w-4 h-4" />
-                  {t('role.reflector.title', 'Reflector')}
+                  {t('role.reflector.title')}
                 </span>
                 <p className="text-xs text-text-muted mt-tight">
-                  {t(
-                    'role.reflector.description',
-                    'Passive loopback — bounces frames back to a Test Master for end-to-end measurement.',
-                  )}
+                  {t('role.reflector.description')}
                 </p>
               </div>
             </label>
@@ -212,13 +202,10 @@ export function SetupWizard({
               <div>
                 <span className="label flex items-center gap-compact">
                   <Target className="w-4 h-4" />
-                  {t('role.testMaster.title', 'Test Master')}
+                  {t('role.testMaster.title')}
                 </span>
                 <p className="text-xs text-text-muted mt-tight">
-                  {t(
-                    'role.testMaster.description',
-                    'Active testing — runs RFC 2544, Y.1564, Y.1731, MEF, TSN, and traffic-generation modules.',
-                  )}
+                  {t('role.testMaster.description')}
                 </p>
               </div>
             </label>
@@ -278,11 +265,8 @@ export function SetupWizard({
                           type="button"
                           onClick={handleCopyPassword}
                           className="shrink-0 p-1.5 rounded-md text-text-muted hover:text-text-primary hover:bg-surface-base border border-surface-border"
-                          title={t(
-                            'buttons.copyTooltip',
-                            'Copy the generated password to the clipboard so you can save it in a password manager',
-                          )}
-                          aria-label={t('buttons.copy', 'Copy password to clipboard')}
+                          title={t('buttons.copyTooltip')}
+                          aria-label={t('buttons.copyPassword')}
                         >
                           <Copy className="w-3.5 h-3.5" />
                         </button>

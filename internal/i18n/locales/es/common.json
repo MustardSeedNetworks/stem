@@ -50,6 +50,7 @@
     "clickToReconnect": "Haga clic para reconectar",
     "tapToReconnect": "Toque para reconectar",
     "tapToReconnectHint": "Reconectar con el backend del stem",
+    "stopping": "Deteniendo...",
     "testStarting": "Iniciando: {{test}}",
     "testRunning": "Ejecutando: {{test}}",
     "testCompleted": "Completado: {{test}}",

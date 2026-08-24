@@ -38,14 +38,14 @@ export function ModeSection({
   onModeChange,
   className,
 }: ModeSectionProps): React.JSX.Element {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['common', 'settings']);
 
   return (
     <CollapsibleSection
       title={
         <div className="flex items-center gap-compact">
           <Monitor className="w-4 h-4" aria-hidden="true" />
-          <span>{t('settings:mode.title', 'Mode')}</span>
+          <span>{t('settings:mode.title')}</span>
         </div>
       }
       defaultOpen={true}

@@ -63,7 +63,7 @@ export function RFC2889Section({
       title={
         <div className="flex items-center gap-compact">
           <Cpu className="w-4 h-4" aria-hidden="true" />
-          <span>{t('settings:tests.rfc2889.title', 'RFC 2889 LAN Switch')}</span>
+          <span>{t('tests.rfc2889.title')}</span>
           <span className="caption text-text-muted">({selectedCount}/5)</span>
         </div>
       }
