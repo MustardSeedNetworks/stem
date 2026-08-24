@@ -20,6 +20,7 @@ import {
   WifiOff,
 } from 'lucide-react';
 import type { ReactElement } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { StemRole } from '../contexts/RoleContext';
 import type { InterfaceInfo, Stats } from '../types/api';
 import { RoleChip } from './RoleChip';
@@ -63,6 +64,8 @@ export function TopBar({
   onStopTest,
   testProgress,
 }: TopBarProps): ReactElement {
+  const { t } = useTranslation('common');
+
   return (
     <div className="px-4 sm:px-6 lg:px-8 pt-6 pb-inline stack-lg">
       {/* Top strip: connection status + role chip + theme/refresh/logout */}
@@ -71,11 +74,11 @@ export function TopBar({
           <div className={`status-badge ${connected ? 'success' : 'error'}`}>
             {connected ? (
               <>
-                <Wifi className="h-3 w-3" /> Connected
+                <Wifi className="h-3 w-3" /> {t('status.connected')}
               </>
             ) : (
               <>
-                <WifiOff className="h-3 w-3" /> Disconnected
+                <WifiOff className="h-3 w-3" /> {t('status.disconnected')}
               </>
             )}
           </div>
@@ -87,8 +90,12 @@ export function TopBar({
             data-testid="header-theme-toggle"
             onClick={onToggleTheme}
             className="pad-xs rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover"
-            title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-            aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            title={
+              isDark ? t('accessibility.switchToLightMode') : t('accessibility.switchToDarkMode')
+            }
+            aria-label={
+              isDark ? t('accessibility.switchToLightMode') : t('accessibility.switchToDarkMode')
+            }
           >
             {isDark ? (
               <Sun className="h-5 w-5" aria-hidden="true" />
@@ -100,8 +107,8 @@ export function TopBar({
             type="button"
             onClick={onRefresh}
             className="pad-xs rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover"
-            title="Refresh interfaces"
-            aria-label="Refresh interfaces"
+            title={t('tooltips.chrome.refresh')}
+            aria-label={t('accessibility.refreshInterfaces')}
           >
             <RefreshCw className="h-5 w-5" aria-hidden="true" />
           </button>
@@ -109,8 +116,8 @@ export function TopBar({
             type="button"
             onClick={onLogout}
             className="pad-xs rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover"
-            title="Logout"
-            aria-label="Logout"
+            title={t('tooltips.chrome.logout')}
+            aria-label={t('buttons.logout')}
             data-testid="logout-button"
           >
             <LogOut className="h-5 w-5" aria-hidden="true" />
@@ -130,9 +137,9 @@ export function TopBar({
               setSelectedInterface(e.target.value)
             }
             className="w-48"
-            aria-label="Select network interface"
+            aria-label={t('accessibility.selectInterface')}
           >
-            <option value="">Select Interface</option>
+            <option value="">{t('accessibility.selectInterface')}</option>
             {interfaces.map((iface) => (
               <option key={iface.name} value={iface.name}>
                 {iface.name} ({iface.speed}Mbps)
@@ -206,20 +213,25 @@ export function TopBar({
                   className="w-2 h-2 rounded-full bg-status-success animate-pulse"
                   aria-hidden="true"
                 />
-                {stats.testStatus === 'starting' ? 'Starting' : 'Running'}:{' '}
-                {stats.currentTest || mode}
+                {stats.testStatus === 'starting'
+                  ? t('status.testStarting', { test: stats.currentTest || mode })
+                  : t('status.testRunning', { test: stats.currentTest || mode })}
               </output>
             ) : null}
             {stats.testStatus === 'completed' ? (
-              <output className="status-badge info">Completed: {stats.currentTest}</output>
+              <output className="status-badge info">
+                {t('status.testCompleted', { test: stats.currentTest })}
+              </output>
             ) : null}
             {stats.testStatus === 'error' ? (
               <output className="status-badge error" role="alert">
-                Error: {stats.currentTest || 'Test failed'}
+                {t('status.testError', { test: stats.currentTest || t('status.failed') })}
               </output>
             ) : null}
             {stats.testStatus === 'cancelled' ? (
-              <output className="status-badge warning">Stopped: {stats.currentTest}</output>
+              <output className="status-badge warning">
+                {t('status.testStopped', { test: stats.currentTest })}
+              </output>
             ) : null}
           </div>
         </div>

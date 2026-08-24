@@ -49,7 +49,12 @@
     "waiting": "Waiting",
     "clickToReconnect": "Click to reconnect",
     "tapToReconnect": "Tap to reconnect",
-    "tapToReconnectHint": "Reconnect to the stem backend"
+    "tapToReconnectHint": "Reconnect to the stem backend",
+    "testStarting": "Starting: {{test}}",
+    "testRunning": "Running: {{test}}",
+    "testCompleted": "Completed: {{test}}",
+    "testError": "Error: {{test}}",
+    "testStopped": "Stopped: {{test}}"
   },
   "results": {
     "pass": "PASS",
@@ -74,7 +79,8 @@
     "dashboard": "Dashboard",
     "tests": "Tests",
     "noResults": "No results found",
-    "success": "Success"
+    "success": "Success",
+    "profiles": "Profiles"
   },
   "time": {
     "seconds": "{{count}}s",
@@ -115,7 +121,10 @@
     "closeSettings": "Close settings",
     "openHistory": "Open test history",
     "refreshInterfaces": "Refresh interfaces",
-    "selectProfile": "Select profile"
+    "selectProfile": "Select profile",
+    "collapseSidebar": "Collapse sidebar",
+    "expandSidebar": "Expand sidebar",
+    "closeMenu": "Close menu"
   },
   "sections": {
     "modules": "Test Modules",
@@ -205,12 +214,12 @@
     "select": "Select Profile"
   },
   "tooltips": {
-    "header": {
+    "chrome": {
       "refresh": "Rescan available network interfaces and reload current status",
-      "history": "Open the test history drawer to review past results, metrics, and errors",
       "help": "Open the help drawer with test references, tutorials, and a glossary",
       "settings": "Open the settings drawer to configure modules, interfaces, and thresholds",
-      "logout": "Sign out of the current session"
+      "logout": "Sign out of the current session",
+      "profiles": "Open the profiles drawer to manage saved test configurations"
     }
   }
 }
