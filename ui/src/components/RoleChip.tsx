@@ -78,16 +78,10 @@ export const RoleChip: FC<RoleChipProps> = ({ className = '' }) => {
     pendingRole === 'test_master'
       ? 'role.confirm.toTestMaster.title'
       : 'role.confirm.toReflector.title';
-  const confirmTitleDefault =
-    pendingRole === 'test_master' ? 'Switch to Test Master?' : 'Switch to Reflector?';
   const confirmMessageKey =
     pendingRole === 'test_master'
       ? 'role.confirm.toTestMaster.message'
       : 'role.confirm.toReflector.message';
-  const confirmMessageDefault =
-    pendingRole === 'test_master'
-      ? 'The current Reflector will stop. Any in-progress tests will be cancelled.'
-      : 'Any in-progress test will be cancelled. This stem will start as a Reflector.';
 
   return (
     <div className={`inline-flex flex-col items-start gap-tight ${className}`}>
@@ -153,8 +147,8 @@ export const RoleChip: FC<RoleChipProps> = ({ className = '' }) => {
         isOpen={pendingRole !== null}
         onConfirm={handleConfirm}
         onCancel={handleCancel}
-        title={t(confirmTitleKey, confirmTitleDefault)}
-        message={t(confirmMessageKey, confirmMessageDefault)}
+        title={t(confirmTitleKey)}
+        message={t(confirmMessageKey)}
         confirmLabel={t('role.confirm.confirmLabel')}
         cancelLabel={t('buttons.cancel')}
         confirmTone="violet"

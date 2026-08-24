@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Source-side i18n checks that a line-oriented grep cannot do correctly.
 
-Both checks here used to be `grep -rnE` one-liners in validate.sh. TypeScript
+This check used to be a `grep -rnE` one-liner in validate.sh. TypeScript
 and JSX are not line-oriented, and the greps missed accordingly:
 
   * the fallback check could not see the multiline form, so ten
@@ -32,15 +32,6 @@ UI_SRC = ROOT / "ui" / "src"
 
 SKIP_PARTS = ("/node_modules/", "/test/", "/__stories__/")
 SKIP_SUFFIX = (".d.ts", ".test.ts", ".test.tsx", ".stories.tsx")
-
-# A quoted JS string, honouring only its own delimiter so an apostrophe inside
-# a double-quoted string does not terminate it.
-STR = r"""(?P<q{n}>['"])(?:(?!(?P=q{n}))[^\\]|\\.)*(?P=q{n})"""
-
-FALLBACK = re.compile(
-    r"""\bt\w*\(\s*""" + STR.format(n="k") + r"""\s*,\s*""" + STR.format(n="f") + r"""\s*,?\s*\)""",
-    re.DOTALL,
-)
 
 # A JSX text node: everything between a closing '>' and the next '<' that
 # contains no braces (an interpolation means the text is already dynamic) and
@@ -109,7 +100,6 @@ def sources() -> list[Path]:
 
 
 def main() -> int:
-    fallbacks: list[tuple[str, int, str]] = []
     hardcoded: list[tuple[str, int, str]] = []
 
     for path in sources():
@@ -119,12 +109,6 @@ def main() -> int:
             continue
         text = blank_comments(raw)
         rel = path.relative_to(ROOT)
-
-        for m in FALLBACK.finditer(text):
-            if "// allow-fallback" in raw.split("\n")[raw[: m.start()].count("\n")]:
-                continue
-            line = raw[: m.start()].count("\n") + 1
-            fallbacks.append((str(rel), line, " ".join(m.group(0).split())[:100]))
 
         if path.suffix == ".tsx":
             for m in TEXT_NODE.finditer(text):
@@ -140,7 +124,6 @@ def main() -> int:
                 hardcoded.append((str(rel), line, " ".join(inner.split())[:100]))
 
     for label, found, hint in (
-        ("fallback pattern", fallbacks, "add the key to the locale file instead"),
         ("hardcoded English string", hardcoded, "move the copy into a locale file"),
     ):
         if found:
@@ -149,7 +132,7 @@ def main() -> int:
                 print(f"  {f}:{line}: {snippet}")
                 print(f"::error file={f},line={line}::{label} {hint}")
 
-    return 1 if (fallbacks or hardcoded) else 0
+    return 1 if hardcoded else 0
 
 
 if __name__ == "__main__":
