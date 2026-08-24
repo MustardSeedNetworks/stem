@@ -27,7 +27,6 @@
     }
   },
   "buttons": {
-    "copy": "Copiar",
     "copied": "¡Copiado!",
     "settingUp": "Configurando...",
     "completeSetup": "Completar Configuración",

@@ -150,35 +150,22 @@ check_no_empty_values() {
 # -----------------------------------------------------------------------------
 # Check: no fallback patterns (t('key', 'English fallback'))
 # -----------------------------------------------------------------------------
-check_no_fallback_patterns() {
-  section "No t('key', 'fallback') patterns in $UI_SRC_DIR"
-  [ ! -d "$UI_SRC_DIR" ] && { warn "UI_SRC_DIR=$UI_SRC_DIR does not exist; skipping"; return; }
+check_source_i18n() {
+  section "Source i18n (t() fallbacks + hardcoded English)"
+  [ ! -d "$UI_SRC_DIR" ] && { warn "UI_SRC_DIR missing; skipping"; return; }
 
-  # Match t('key', '...something...') with single OR double quotes for both
-  # arguments. Ignore: t(key) [single arg], t('key', { interpolation }) [object].
-  # The interpolation form starts with { not a quote.
-  # Word-boundary `\bt\(` so identifiers ending in `t` (e.g.
-  # headers.set('Accept', 'application/json')) don't false-match.
-  local hits
-  hits=$(grep -rnE "\\bt\\(\\s*['\"][^'\"]+['\"]\\s*,\\s*['\"]" "$UI_SRC_DIR" \
-    --include='*.ts' --include='*.tsx' 2>/dev/null \
-    | grep -v "// allow-fallback") || true
-
-  if [ -n "$hits" ]; then
-    local count
-    count=$(echo "$hits" | wc -l | tr -d ' ')
-    ratchet_fail "$count fallback pattern(s) t('key', 'string') — banned per I18N_CONVENTIONS:"
-    echo "$hits" | sed 's/^/      /'
-    while IFS= read -r line; do
-      local file
-      file=$(echo "$line" | cut -d: -f1)
-      local lineno
-      lineno=$(echo "$line" | cut -d: -f2)
-      annotate "$file" "line $lineno: fallback pattern banned — add key to locale file instead"
-    done <<<"$hits"
-  else
-    ok "no fallback patterns"
+  # Both of these used to be `grep -rnE` one-liners here. TypeScript and JSX
+  # are not line-oriented and the greps missed accordingly: ten multiline
+  # t(\n 'key',\n 'fallback',\n) sites were invisible, and the hardcoded-text
+  # check reported one of AuthGate's four English strings. check-source.py
+  # blanks comments and matches across lines instead.
+  local out
+  if ! out=$(python3 "scripts/i18n/check-source.py" 2>&1); then
+    fail "source i18n violations:"
+    echo "$out" | sed 's/^/      /'
+    return
   fi
+  ok "no t() fallbacks, no hardcoded English JSX text"
 }
 
 # -----------------------------------------------------------------------------
@@ -354,45 +341,6 @@ check_plural_completeness() {
 # -----------------------------------------------------------------------------
 # Check: hardcoded English text in JSX (warn-only — regex is fuzzy)
 # -----------------------------------------------------------------------------
-check_hardcoded_jsx() {
-  section "Hardcoded English JSX text"
-  [ ! -d "$UI_SRC_DIR" ] && { warn "UI_SRC_DIR missing; skipping"; return; }
-
-  # Heuristic: JSX text nodes starting with an uppercase letter followed by
-  # lowercase letters and a space — typical English sentence pattern.
-  #
-  # This blocks rather than warns. It spent the project's life as warn-only
-  # and flagged TopBar the whole time; TopBar shipped with no useTranslation
-  # at all until #750. A warning nobody acts on is not a gate.
-  #
-  # The trailing filter drops lines whose first non-space character starts a
-  # comment. Prose inside a JSDoc example ("*   <p>Hidden by default</p>") is
-  # not shipped copy, and baselining that noise instead of excluding it would
-  # be enshrining a false positive.
-  local hits
-  hits=$(grep -rnE ">[A-Z][a-z]+ [a-zA-Z]" "$UI_SRC_DIR" \
-    --include='*.tsx' 2>/dev/null \
-    | grep -v "// allow-hardcoded" \
-    | grep -v ".stories.tsx" \
-    | grep -v "/test/" \
-    | grep -v ".test.tsx" \
-    | grep -vE ':[0-9]+: *(\*|//)') || true
-
-  if [ -n "$hits" ]; then
-    local count
-    count=$(echo "$hits" | wc -l | tr -d ' ')
-    fail "$count hardcoded JSX string(s) — move the copy into a locale file:"
-    echo "$hits" | sed 's/^/      /'
-    while IFS= read -r line; do
-      local file lineno
-      file=$(echo "$line" | cut -d: -f1)
-      lineno=$(echo "$line" | cut -d: -f2)
-      annotate "$file" "line $lineno: hardcoded English — add key to locale file instead"
-    done <<< "$hits"
-  else
-    ok "no hardcoded JSX text detected"
-  fi
-}
 
 # -----------------------------------------------------------------------------
 # Check: source-code t() calls have matching EN locale keys.
@@ -414,10 +362,8 @@ check_key_usage() {
   # without an immediate cleanup burden. Use a plain string instead of
   # an array because bash 3.2 (macOS default) errors on `${empty[@]}`
   # under `set -u`.
-  local extra=""
-  [ "$RATCHET" -eq 1 ] && extra="--ratchet"
   local out
-  if ! out=$(python3 "$script" $extra 2>&1); then
+  if ! out=$(python3 "$script" 2>&1); then
     fail "check-keys.py found t() calls referencing missing keys:"
     echo "$out" | head -40 | sed 's/^/      /'
     return
@@ -469,12 +415,10 @@ check_locked_versions() {
 # Main
 # -----------------------------------------------------------------------------
 QUICK=0
-RATCHET=0
 ONLY_CHECK=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --quick)   QUICK=1; shift ;;
-    --ratchet) RATCHET=1; shift ;;
     --check)   ONLY_CHECK="$2"; shift 2 ;;
     --help|-h)
       sed -n '2,30p' "$0"
@@ -484,15 +428,6 @@ while [ $# -gt 0 ]; do
   esac
 done
 
-# Helper used by the two ratchet-eligible checks to downgrade fail → warn.
-ratchet_fail() {
-  if [ "$RATCHET" -eq 1 ]; then
-    warn "$1"
-  else
-    fail "$1"
-  fi
-}
-
 run_check() {
   local fn="$1"
   [ -n "$ONLY_CHECK" ] && [ "$ONLY_CHECK" != "${fn#check_}" ] && return
@@ -501,14 +436,13 @@ run_check() {
 
 run_check check_key_parity
 run_check check_no_empty_values
-run_check check_no_fallback_patterns
+run_check check_source_i18n
 run_check check_banned_vocab
 run_check check_glossary_preservation
 run_check check_interpolation_parity
 run_check check_plural_completeness
 run_check check_key_usage
 run_check check_locked_versions
-[ "$QUICK" -eq 0 ] && run_check check_hardcoded_jsx
 
 # -----------------------------------------------------------------------------
 # Summary

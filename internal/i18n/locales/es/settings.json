@@ -39,7 +39,11 @@
     "daysRemaining": "Días restantes",
     "deviceId": "ID de dispositivo",
     "enabledFeatures": "Funciones habilitadas",
-    "loading": "Cargando estado de la licencia..."
+    "loading": "Cargando estado de la licencia...",
+    "notActivated": "No Activada",
+    "activating": "Activando...",
+    "startTrialDays": "Iniciar Prueba de {{days}} Días",
+    "trialTooltip": "Habilite todas las funciones con licencia durante {{days}} días sin clave de licencia; la prueba solo puede iniciarse una vez por dispositivo"
   },
   "advanced": {
     "logLevel": "Nivel de Registro",

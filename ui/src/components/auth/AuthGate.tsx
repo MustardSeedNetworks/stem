@@ -150,7 +150,7 @@ export function AuthGate(): ReactElement {
                 <p className="text-sm text-text-muted">{t('security:login.mfaContinue')}</p>
                 <div>
                   <label htmlFor="stem-login-mfa" className="text-xs font-semibold text-text-muted">
-                    Verification code
+                    {t('security:mfa.setup.codeLabel')}
                   </label>
                   <input
                     id="stem-login-mfa"

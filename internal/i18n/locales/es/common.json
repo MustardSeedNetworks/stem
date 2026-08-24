@@ -25,7 +25,9 @@
     "export": "Exportar",
     "generate": "Generar",
     "search": "Buscar",
-    "filter": "Filtrar"
+    "filter": "Filtrar",
+    "selectAll": "Seleccionar Todo",
+    "deselectAll": "Deseleccionar Todo"
   },
   "status": {
     "connected": "Conectado",
@@ -82,7 +84,9 @@
     "tests": "Pruebas",
     "noResults": "No se encontraron resultados",
     "success": "Exito",
-    "profiles": "Perfiles"
+    "profiles": "Perfiles",
+    "testResults": "Resultados de la Prueba",
+    "interfaceDetails": "Detalles de la Interfaz"
   },
   "time": {
     "seconds": "{{count}}s",
@@ -126,7 +130,8 @@
     "selectProfile": "Seleccionar perfil",
     "collapseSidebar": "Contraer barra lateral",
     "expandSidebar": "Expandir barra lateral",
-    "closeMenu": "Cerrar menú"
+    "closeMenu": "Cerrar menú",
+    "skipToContent": "Saltar al contenido principal"
   },
   "sections": {
     "modules": "Modulos de Prueba",
@@ -154,7 +159,8 @@
     "tips": "Consejos",
     "issues": "Problemas Comunes",
     "params": "Parámetros",
-    "metrics": "Metricas de Salida"
+    "metrics": "Metricas de Salida",
+    "clickForDetails": "Haga clic para más detalles"
   },
   "errorBoundary": {
     "title": "Algo salio mal",
@@ -204,17 +210,6 @@
     "testCount_other": "Se encontraron {{count}} pruebas",
     "glossaryEntryCount_one": "{{count}} entrada",
     "glossaryEntryCount_other": "{{count}} entradas"
-  },
-  "interface": {
-    "networkInterfaces": "Interfaces de red",
-    "noInterfaces": "No se encontraron interfaces",
-    "select": "Seleccionar interfaz"
-  },
-  "profile": {
-    "current": "Perfil",
-    "manage": "Gestionar",
-    "noProfiles": "Sin perfiles",
-    "select": "Seleccionar perfil"
   },
   "tooltips": {
     "chrome": {

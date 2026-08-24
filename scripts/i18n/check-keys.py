@@ -81,14 +81,22 @@ def extract_t_calls() -> set[tuple[str, str, int, str]]:
     `const { t: tDevices } = useTranslation('devices')`) attribute
     their calls to the correct namespace.
     """
-    # Match all useTranslation('ns') declarations, capturing the
-    # destructured alias name. Two forms:
-    #   const { t } = useTranslation('common');           → alias 't' -> 'common'
-    #   const { t: tDevices } = useTranslation('devices'); → 'tDevices' -> 'devices'
+    # Match all useTranslation(...) declarations, capturing the
+    # destructured alias name. Three forms:
+    #   const { t } = useTranslation('common');            → alias 't'  -> {common}
+    #   const { t: tDevices } = useTranslation('devices'); → 'tDevices' -> {devices}
+    #   const { t } = useTranslation(['help', 'common']);  → alias 't'  -> {help, common}
+    #
+    # The array form used to match nothing, so every bare key in such a file
+    # fell through to the global default namespace. That is why the four
+    # help-drawer keys were reported missing from common.json while being
+    # reported unreferenced in help.json — one bug, seen from both ends.
     USE_TRANSLATION = re.compile(
-        r"""const\s*\{\s*t(?:\s*:\s*([A-Za-z]+))?\s*[,}].*?useTranslation\s*\(\s*['"]([a-z]+)['"]""",
+        r"""const\s*\{\s*t(?:\s*:\s*([A-Za-z]+))?\s*[,}]"""
+        r"""(?:(?!useTranslation).)*?useTranslation\s*\(\s*(\[[^\]]*\]|['"][a-z]+['"])""",
         re.DOTALL,
     )
+    NS_LITERAL = re.compile(r"""['"]([a-z]+)['"]""")
     # Tighter T_CALL that captures the alias function name (group 1)
     # plus the literal key (group 2).
     T_CALL_LOCAL = re.compile(
@@ -116,8 +124,11 @@ def extract_t_calls() -> set[tuple[str, str, int, str]]:
         alias_to_namespaces: dict[str, set[str]] = {}
         for m in USE_TRANSLATION.finditer(text):
             alias = m.group(1) or "t"
-            ns = m.group(2)
-            alias_to_namespaces.setdefault(alias, set()).add(ns)
+            # i18next treats the first array entry as the default namespace,
+            # but a bare key may resolve against any of them, and the lookup
+            # below already tries every candidate.
+            for ns in NS_LITERAL.findall(m.group(2)):
+                alias_to_namespaces.setdefault(alias, set()).add(ns)
         if "t" not in alias_to_namespaces:
             # Default: bare `t(` outside any useTranslation call falls back
             # to common, mirroring i18next's defaultNamespace.

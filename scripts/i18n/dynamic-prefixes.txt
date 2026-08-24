@@ -165,3 +165,19 @@ pages:measure.
 pages:reflector.
 pages:serviceTest.
 pages:trafficGen.
+
+# Test-config option labels are looked up by template literal, e.g.
+#   t(`testConfig.common.${option.qualifier}`, { size: option.value })
+#   t(`testConfig.y1564.vlan.pcp${priority}`)
+# so no static analyzer can see the concrete key. See RFC2544ConfigForm,
+# RFC2889ConfigForm, RFC6349ConfigForm, Y1564ConfigForm, TSNConfigForm and
+# TrafficGenConfigForm.
+settings:testConfig.common.
+settings:testConfig.rfc2544.summary.
+settings:testConfig.rfc2889.
+settings:testConfig.rfc6349.tcp.
+settings:testConfig.tsn.summary.
+settings:testConfig.y1564.vlan.
+# Y1731ConfigForm picks between .ccm and .ccmTagged with a ternary and passes
+# the resulting variable to t(), so the analyzer sees t(expr), not a literal.
+settings:testConfig.y1731.summary.

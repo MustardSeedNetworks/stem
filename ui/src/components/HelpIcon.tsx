@@ -6,6 +6,7 @@
 import { HelpCircle } from 'lucide-react';
 import type { ReactElement } from 'react';
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface HelpIconProps {
   tooltip: string;
@@ -20,6 +21,7 @@ export function HelpIcon({
   className = '',
   size = 'sm',
 }: HelpIconProps): ReactElement {
+  const { t } = useTranslation('common');
   const [showTooltip, setShowTooltip] = useState(false);
   const [tooltipPosition, setTooltipPosition] = useState<'top' | 'bottom'>('top');
   const iconRef = useRef<HTMLButtonElement>(null);
@@ -82,7 +84,7 @@ export function HelpIcon({
           {tooltip}
           {onClick ? (
             <span className="block text-brand-primary mt-tight text-[10px]">
-              Click for more details
+              {t('help.clickForDetails')}
             </span>
           ) : null}
           {/* Tooltip Arrow */}

@@ -159,12 +159,12 @@ export function TopBar({
               {isStoppingTest ? (
                 <>
                   <RefreshCw className="w-4 h-4 animate-spin" aria-hidden="true" />
-                  Stopping...
+                  {t('status.stopping')}
                 </>
               ) : (
                 <>
                   <Square className="w-4 h-4" aria-hidden="true" />
-                  Stop Test
+                  {t('buttons.stopTest')}
                 </>
               )}
             </button>
@@ -180,12 +180,12 @@ export function TopBar({
               {isStartingTest ? (
                 <>
                   <RefreshCw className="w-4 h-4 animate-spin" aria-hidden="true" />
-                  Starting...
+                  {t('status.starting')}
                 </>
               ) : (
                 <>
                   <Play className="w-4 h-4" aria-hidden="true" />
-                  Start Test
+                  {t('buttons.runTest')}
                 </>
               )}
             </button>

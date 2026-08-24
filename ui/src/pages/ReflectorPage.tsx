@@ -87,12 +87,13 @@ interface InterfaceDetailsProps {
 }
 
 function InterfaceDetails({ iface }: InterfaceDetailsProps): ReactElement {
+  const { t } = useTranslation('common');
   const stateClassName = iface.state === 'up' ? 'text-status-success' : 'text-status-error';
   return (
     <div className="card mb-2">
       <div className="card-header">
         <Wifi className="w-4 h-4" />
-        Interface Details
+        {t('labels.interfaceDetails')}
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-comfortable text-sm">
         <div>

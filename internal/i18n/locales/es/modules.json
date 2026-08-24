@@ -122,5 +122,9 @@
       "rfc6349_tcp": "RFC 6349 TCP Throughput",
       "tsn_timing": "TSN Timing"
     }
+  },
+  "labels": {
+    "delayMinAvgMax": "Retardo (mín/prom/máx)",
+    "lossNearFar": "Pérdida (cerca/lejos)"
   }
 }

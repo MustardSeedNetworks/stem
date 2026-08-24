@@ -21,6 +21,10 @@ interface LicenseInfo {
   expiresAt: string;
 }
 
+/** Length of the no-key trial, in days. Interpolated into the copy so the
+    number lives in one place rather than in three locale strings. */
+const TRIAL_DAYS = 14;
+
 const tierNames: Record<number, string> = {
   0: 'Invalid',
   1: 'Reflector',
@@ -41,6 +45,7 @@ interface LicenseStatusProps {
 }
 
 function LicenseStatusBadge({ licenseInfo }: LicenseStatusProps): ReactElement {
+  const { t } = useTranslation(['common', 'settings']);
   return (
     <div className="flex items-center gap-compact">
       {licenseInfo.activated ? (
@@ -51,7 +56,7 @@ function LicenseStatusBadge({ licenseInfo }: LicenseStatusProps): ReactElement {
       ) : (
         <span className="status-badge warning">
           <AlertTriangle className="w-3 h-3" />
-          Not Activated
+          {t('settings:license.notActivated')}
         </span>
       )}
       {licenseInfo.activated ? (
@@ -160,11 +165,11 @@ function ActivationForm({
       >
         {loading ? (
           <>
-            <Loader2 className="w-4 h-4 animate-spin" /> Activating...
+            <Loader2 className="w-4 h-4 animate-spin" /> {t('settings:license.activating')}
           </>
         ) : (
           <>
-            <Shield className="w-4 h-4" /> Activate License
+            <Shield className="w-4 h-4" /> {t('settings:license.activate')}
           </>
         )}
       </button>
@@ -174,11 +179,11 @@ function ActivationForm({
           type="button"
           onClick={onStartTrial}
           disabled={loading}
-          title="Enable all licensed features for 14 days without a license key; trial can only be started once per device"
+          title={t('settings:license.trialTooltip', { days: TRIAL_DAYS })}
           className="btn btn-secondary w-full"
         >
           <Clock className="w-4 h-4" />
-          Start 14-Day Trial
+          {t('settings:license.startTrialDays', { days: TRIAL_DAYS })}
         </button>
       ) : null}
     </div>

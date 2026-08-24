@@ -452,7 +452,7 @@ export const SidebarLayout: FC<SidebarLayoutProps> = ({
         href="#main-content"
         className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-row focus:rounded-lg focus:bg-brand-primary focus:text-text-inverse focus:outline-none"
       >
-        Skip to main content
+        {t('accessibility.skipToContent')}
       </a>
 
       <MobileTopBar mobileOpen={mobileOpen} toggleMobile={() => setMobileOpen(!mobileOpen)} />

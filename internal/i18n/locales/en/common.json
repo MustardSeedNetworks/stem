@@ -25,7 +25,9 @@
     "export": "Export",
     "generate": "Generate",
     "search": "Search",
-    "filter": "Filter"
+    "filter": "Filter",
+    "selectAll": "Select All",
+    "deselectAll": "Deselect All"
   },
   "status": {
     "connected": "Connected",
@@ -82,7 +84,9 @@
     "tests": "Tests",
     "noResults": "No results found",
     "success": "Success",
-    "profiles": "Profiles"
+    "profiles": "Profiles",
+    "testResults": "Test Results",
+    "interfaceDetails": "Interface Details"
   },
   "time": {
     "seconds": "{{count}}s",
@@ -126,7 +130,8 @@
     "selectProfile": "Select profile",
     "collapseSidebar": "Collapse sidebar",
     "expandSidebar": "Expand sidebar",
-    "closeMenu": "Close menu"
+    "closeMenu": "Close menu",
+    "skipToContent": "Skip to main content"
   },
   "sections": {
     "modules": "Test Modules",
@@ -154,7 +159,8 @@
     "tips": "Tips",
     "issues": "Common Issues",
     "params": "Parameters",
-    "metrics": "Output Metrics"
+    "metrics": "Output Metrics",
+    "clickForDetails": "Click for more details"
   },
   "errorBoundary": {
     "title": "Something went wrong",
@@ -204,17 +210,6 @@
     "testCount_other": "Found {{count}} tests",
     "glossaryEntryCount_one": "{{count}} entry",
     "glossaryEntryCount_other": "{{count}} entries"
-  },
-  "interface": {
-    "networkInterfaces": "Network Interfaces",
-    "noInterfaces": "No interfaces found",
-    "select": "Select Interface"
-  },
-  "profile": {
-    "current": "Profile",
-    "manage": "Manage",
-    "noProfiles": "No profiles",
-    "select": "Select Profile"
   },
   "tooltips": {
     "chrome": {
