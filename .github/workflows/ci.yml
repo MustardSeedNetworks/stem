@@ -789,6 +789,14 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      # The t()-fallback rules are semgrep rules, not grep. Every text-based
+      # version of that check had a blind spot — the last one missed English
+      # copy assigned to a const and passed as the fallback argument, which
+      # semgrep catches by propagating the constant. Pinned exact, per the
+      # dependency policy; the fleet SAST job pins its own copy separately.
+      - name: Install semgrep
+        run: pipx install semgrep==1.168.0
+
       - name: Validate i18n (parity, glossary, banned vocab, etc.)
         # Previously a placeholder that printed "✅ i18n validation complete"
         # without checking anything. Replaced with the canonical shared script

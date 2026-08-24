@@ -54,16 +54,10 @@ export const RoleGuard: FC<RoleGuardProps> = ({ requires, moduleName, children }
     requires === 'test_master'
       ? 'role.confirm.toTestMaster.title'
       : 'role.confirm.toReflector.title';
-  const confirmTitleDefault =
-    requires === 'test_master' ? 'Switch to Test Master?' : 'Switch to Reflector?';
   const confirmMessageKey =
     requires === 'test_master'
       ? 'role.confirm.toTestMaster.message'
       : 'role.confirm.toReflector.message';
-  const confirmMessageDefault =
-    requires === 'test_master'
-      ? 'The current Reflector will stop. Any in-progress tests will be cancelled.'
-      : 'Any in-progress test will be cancelled. This stem will start as a Reflector.';
 
   return (
     <>
@@ -87,8 +81,8 @@ export const RoleGuard: FC<RoleGuardProps> = ({ requires, moduleName, children }
         isOpen={confirmOpen}
         onConfirm={handleConfirm}
         onCancel={handleCancel}
-        title={t(confirmTitleKey, confirmTitleDefault)}
-        message={t(confirmMessageKey, confirmMessageDefault)}
+        title={t(confirmTitleKey)}
+        message={t(confirmMessageKey)}
         confirmLabel={t('role.confirm.confirmLabel')}
         cancelLabel={t('buttons.cancel')}
         confirmTone="violet"

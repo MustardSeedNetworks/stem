@@ -150,22 +150,39 @@ check_no_empty_values() {
 # -----------------------------------------------------------------------------
 # Check: no fallback patterns (t('key', 'English fallback'))
 # -----------------------------------------------------------------------------
+check_semgrep_i18n() {
+  section "Structural i18n (t() fallbacks)"
+  local rules="scripts/i18n/semgrep-i18n.yml"
+  [ ! -f "$rules" ] && { warn "$rules missing; skipping"; return; }
+  # Semgrep parses TypeScript and propagates constants, so it sees fallbacks
+  # that no line-based check can: the multiline call form, a fallback quoted
+  # with the other delimiter, and — the one that defeated two hand-written
+  # detectors — English copy assigned to a const and passed as the argument.
+  local out
+  if ! out=$(python3 scripts/i18n/semgrep-i18n.py 2>&1); then
+    fail "banned t() fallback patterns:"
+    echo "$out" | sed 's/^/      /' | head -40
+    return
+  fi
+  [ -n "$out" ] && warn "$out"
+  ok "no t() fallback patterns"
+}
+
 check_source_i18n() {
-  section "Source i18n (t() fallbacks + hardcoded English)"
+  section "Hardcoded English JSX text"
   [ ! -d "$UI_SRC_DIR" ] && { warn "UI_SRC_DIR missing; skipping"; return; }
 
-  # Both of these used to be `grep -rnE` one-liners here. TypeScript and JSX
-  # are not line-oriented and the greps missed accordingly: ten multiline
-  # t(\n 'key',\n 'fallback',\n) sites were invisible, and the hardcoded-text
-  # check reported one of AuthGate's four English strings. check-source.py
-  # blanks comments and matches across lines instead.
+  # This used to be a `grep -rnE` one-liner here, which only matched text
+  # starting on the same line as the closing `>` — it reported one of
+  # AuthGate's four English strings. check-source.py blanks comments and
+  # matches across lines instead.
   local out
   if ! out=$(python3 "scripts/i18n/check-source.py" 2>&1); then
-    fail "source i18n violations:"
+    fail "hardcoded English JSX text:"
     echo "$out" | sed 's/^/      /'
     return
   fi
-  ok "no t() fallbacks, no hardcoded English JSX text"
+  ok "no hardcoded English JSX text"
 }
 
 # -----------------------------------------------------------------------------
@@ -432,6 +449,7 @@ run_check() {
 
 run_check check_key_parity
 run_check check_no_empty_values
+run_check check_semgrep_i18n
 run_check check_source_i18n
 run_check check_banned_vocab
 run_check check_glossary_preservation
