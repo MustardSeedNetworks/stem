@@ -1,6 +1,4 @@
-import type { PartialStoryFn } from '@storybook/csf';
-import type { ReactRenderer } from '@storybook/react';
-import type { Meta, StoryObj } from '@storybook/react-vite';
+import type { Decorator, Meta, StoryObj } from '@storybook/react-vite';
 import type { ReactElement } from 'react';
 import { CollapsibleSection } from '../CollapsibleSection';
 import { StatusBadge } from '../ui/StatusBadge';
@@ -32,6 +30,13 @@ function Row({
     </div>
   );
 }
+
+/** The section collapses to its title, so give it a width to collapse within. */
+const withMinWidth: Decorator = (StoryComponent) => (
+  <div className="min-w-[400px]">
+    <StoryComponent />
+  </div>
+);
 
 const meta: Meta<typeof CollapsibleSection> = {
   title: 'Components/CollapsibleSection',
@@ -70,13 +75,7 @@ const meta: Meta<typeof CollapsibleSection> = {
       description: 'Visual variant - default has border, compact is for inside cards',
     },
   },
-  decorators: [
-    (StoryComponent: PartialStoryFn<ReactRenderer>): ReactElement => (
-      <div className="min-w-[400px]">
-        <StoryComponent />
-      </div>
-    ),
-  ],
+  decorators: [withMinWidth],
 };
 
 export default meta;
