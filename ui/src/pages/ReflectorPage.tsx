@@ -148,17 +148,12 @@ function PlatformBanner({ reason, onSwitchToTestMaster }: PlatformBannerProps): 
     <Alert status="warning" className="flex-wrap" data-testid="reflector-platform-banner">
       <div className="flex flex-1 flex-wrap items-center gap-default">
         <span className="flex-1 min-w-[16rem]">
-          <strong className="font-semibold">
-            {t('role.platform.bannerTitle', 'Reflector mode is not available on this platform.')}
-          </strong>{' '}
-          {t(
-            'role.platform.bannerBody',
-            'macOS and Windows builds use the pure-Go networking stack, which supports Test Master mode but not the line-rate Reflector dataplane. Use the Linux build to act as a Reflector node, or switch this stem to Test Master mode.',
-          )}
+          <strong className="font-semibold">{t('role.platform.bannerTitle')}</strong>{' '}
+          {t('role.platform.bannerBody')}
           {reason ? <span className="ml-tight opacity-80">({reason})</span> : null}
         </span>
         <Button variant="outline" tone="violet" size="sm" onClick={onSwitchToTestMaster}>
-          {t('role.platform.switchToTestMaster', 'Switch to Test Master')}
+          {t('role.platform.switchToTestMaster')}
         </Button>
       </div>
     </Alert>
@@ -179,19 +174,17 @@ function RunningStatus({ testStatus }: RunningStatusProps): ReactElement | null 
     return (
       <output className="status-badge success flex items-center gap-compact">
         <span className="w-2 h-2 rounded-full bg-status-success animate-pulse" aria-hidden="true" />
-        {testStatus === 'starting'
-          ? t('status.starting', 'Starting')
-          : t('status.running', 'Running')}
+        {testStatus === 'starting' ? t('status.starting') : t('status.running')}
       </output>
     );
   }
   if (testStatus === 'cancelled') {
-    return <output className="status-badge warning">{t('status.stopped', 'Stopped')}</output>;
+    return <output className="status-badge warning">{t('status.stopped')}</output>;
   }
   if (testStatus === 'error') {
     return (
       <output className="status-badge error" role="alert">
-        {t('status.error', 'Error')}
+        {t('status.error')}
       </output>
     );
   }
@@ -220,10 +213,7 @@ export function ReflectorPage(): ReactElement {
   const reflectorRunning = stats.testStatus === 'running' || stats.testStatus === 'starting';
   const { supported: reflectorSupported, reason: platformReasonRaw } = capabilities.reflector;
   const platformReason = platformReasonRaw ?? '';
-  const unsupportedTooltip = t(
-    'role.platform.startDisabledTooltip',
-    'Reflector mode is not available on this platform. Use the Linux build to act as a Reflector node.',
-  );
+  const unsupportedTooltip = t('role.platform.startDisabledTooltip');
 
   /* The platform check is the honest "unknown": on macOS and Windows the
      reflector dataplane does not exist, so its counters are not zero, they are
@@ -297,12 +287,12 @@ export function ReflectorPage(): ReactElement {
               {isStoppingReflector ? (
                 <>
                   <RefreshCw className="w-4 h-4 animate-spin" aria-hidden="true" />
-                  {t('status.stopped', 'Stopping...')}
+                  {t('status.stopping')}
                 </>
               ) : (
                 <>
                   <Square className="w-4 h-4" aria-hidden="true" />
-                  {t('buttons.stop', 'Stop')} Reflector
+                  {t('buttons.stop')} Reflector
                 </>
               )}
             </button>
@@ -320,12 +310,12 @@ export function ReflectorPage(): ReactElement {
               {isStartingReflector ? (
                 <>
                   <RefreshCw className="w-4 h-4 animate-spin" aria-hidden="true" />
-                  {t('status.starting', 'Starting...')}
+                  {t('status.starting')}
                 </>
               ) : (
                 <>
                   <Play className="w-4 h-4" aria-hidden="true" />
-                  {t('buttons.start', 'Start')} Reflector
+                  {t('buttons.start')} Reflector
                 </>
               )}
             </button>

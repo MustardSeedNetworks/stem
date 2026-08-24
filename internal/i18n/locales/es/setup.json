@@ -31,7 +31,8 @@
     "copied": "¡Copiado!",
     "settingUp": "Configurando...",
     "completeSetup": "Completar Configuración",
-    "copyTooltip": "Copiar al portapapeles"
+    "copyTooltip": "Copiar al portapapeles",
+    "copyPassword": "Copiar contraseña al portapapeles"
   },
   "role": {
     "title": "Elija el rol de este stem",

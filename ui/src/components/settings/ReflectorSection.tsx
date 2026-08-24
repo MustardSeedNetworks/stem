@@ -52,14 +52,14 @@ export function ReflectorSection({
   onProfileChange,
   className,
 }: ReflectorSectionProps): React.JSX.Element {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['common', 'settings']);
 
   return (
     <CollapsibleSection
       title={
         <div className="flex items-center gap-compact">
           <Settings2 className="w-4 h-4" aria-hidden="true" />
-          <span>{t('settings:reflector.title', 'Reflector Profile')}</span>
+          <span>{t('settings:reflector.title')}</span>
         </div>
       }
       defaultOpen={true}

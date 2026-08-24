@@ -49,7 +49,7 @@ export function MEFSection({ selectedTests, onToggleTest }: TestSectionProps): R
       title={
         <div className="flex items-center gap-compact">
           <Settings2 className="w-4 h-4" aria-hidden="true" />
-          <span>{t('settings:tests.mef.title', 'MEF Service')}</span>
+          <span>{t('tests.mef.title')}</span>
           <span className="caption text-text-muted">({selectedCount}/3)</span>
         </div>
       }

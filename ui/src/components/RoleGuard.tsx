@@ -45,13 +45,10 @@ export const RoleGuard: FC<RoleGuardProps> = ({ requires, moduleName, children }
   const bannerMessage =
     requires === 'test_master'
       ? t('role.guard.needTestMaster', {
-          module: moduleName ?? t('role.testMaster', 'Test Master'),
+          module: moduleName ?? t('role.testMaster'),
           defaultValue: `This stem is currently configured as Reflector. Switch to Test Master to run ${moduleName ?? 'this module'}.`,
         })
-      : t(
-          'role.guard.needReflector',
-          'This stem is currently configured as Test Master. Switch to Reflector to use the loopback reflector.',
-        );
+      : t('role.guard.needReflector');
 
   const confirmTitleKey =
     requires === 'test_master'
@@ -82,7 +79,7 @@ export const RoleGuard: FC<RoleGuardProps> = ({ requires, moduleName, children }
           onClick={handleSwitchClick}
           className="inline-flex items-center gap-tight rounded-md border border-status-warning/40 bg-surface-raised px-2.5 py-compact text-xs font-medium text-text-primary hover:bg-surface-hover transition-colors"
         >
-          {t('role.guard.switchAction', 'Switch role')}
+          {t('role.guard.switchAction')}
         </button>
       </div>
 
@@ -92,8 +89,8 @@ export const RoleGuard: FC<RoleGuardProps> = ({ requires, moduleName, children }
         onCancel={handleCancel}
         title={t(confirmTitleKey, confirmTitleDefault)}
         message={t(confirmMessageKey, confirmMessageDefault)}
-        confirmLabel={t('role.confirm.confirmLabel', 'Switch role')}
-        cancelLabel={t('buttons.cancel', 'Cancel')}
+        confirmLabel={t('role.confirm.confirmLabel')}
+        cancelLabel={t('buttons.cancel')}
         confirmTone="violet"
       />
 

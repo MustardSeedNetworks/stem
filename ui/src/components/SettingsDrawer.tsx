@@ -82,7 +82,7 @@ export function SettingsDrawer({
   trafficGenConfig,
   setTrafficGenConfig,
 }: SettingsDrawerProps): React.ReactElement | null {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['common', 'settings']);
   const { role } = useRole();
   const [viewMode, setViewMode] = useState<ViewMode>('standard');
 
@@ -113,8 +113,8 @@ export function SettingsDrawer({
         type="button"
         className="fixed inset-0 bg-scrim/50 z-40 cursor-default"
         onClick={onClose}
-        title={t('accessibility.closeSettings', 'Close settings drawer')}
-        aria-label={t('accessibility.closeSettings', 'Close settings drawer')}
+        title={t('accessibility.closeSettings')}
+        aria-label={t('accessibility.closeSettings')}
       />
 
       {/* Drawer */}
@@ -129,15 +129,15 @@ export function SettingsDrawer({
         {/* Header */}
         <div className="sticky top-0 bg-surface-raised border-b border-surface-border px-4 py-row-lg flex-between">
           <h2 id="settings-drawer-title" className="heading-3 text-text-primary">
-            {t('settings:title', 'Settings')}
+            {t('settings:title')}
           </h2>
           <button
             type="button"
             onClick={onClose}
             data-testid="settings-drawer-close"
             className={cn(spacing.pad.sm, 'hover:bg-surface-hover', radius.lg, 'transition-colors')}
-            title={t('accessibility.closeSettings', 'Close settings')}
-            aria-label={t('accessibility.closeSettings', 'Close settings')}
+            title={t('accessibility.closeSettings')}
+            aria-label={t('accessibility.closeSettings')}
           >
             <X className="w-5 h-5 text-text-muted" aria-hidden="true" />
           </button>
@@ -234,19 +234,16 @@ interface ViewToggleProps {
 }
 
 function ViewToggle({ viewMode, onViewModeChange }: ViewToggleProps): React.ReactElement {
-  const { t } = useTranslation();
+  const { t } = useTranslation(['common', 'settings']);
 
   return (
     <div className={cn('flex-between', spacing.pad.sm, 'bg-surface-base', radius.lg, 'mb-2')}>
-      <span className="body-small text-text-muted">{t('settings:viewBy', 'View by')}:</span>
+      <span className="body-small text-text-muted">{t('settings:viewBy')}:</span>
       <div className={cn('flex', radius.lg, 'overflow-hidden border border-surface-border')}>
         <button
           type="button"
           onClick={(): void => onViewModeChange('standard')}
-          title={t(
-            'settings:viewStandardHint',
-            'Group settings by configuration section (mode, interface, thresholds)',
-          )}
+          title={t('settings:viewStandardHint')}
           className={cn(
             'flex items-center gap-tight px-3 py-compact-md caption',
             viewMode === 'standard'
@@ -255,15 +252,12 @@ function ViewToggle({ viewMode, onViewModeChange }: ViewToggleProps): React.Reac
           )}
         >
           <List className="w-3 h-3" aria-hidden="true" />
-          {t('settings:viewStandard', 'Standard')}
+          {t('settings:viewStandard')}
         </button>
         <button
           type="button"
           onClick={(): void => onViewModeChange('module')}
-          title={t(
-            'settings:viewModuleHint',
-            'Group settings by test module (Benchmark, ServiceTest, TrafficGen, Measure, Certify)',
-          )}
+          title={t('settings:viewModuleHint')}
           className={cn(
             'flex items-center gap-tight px-3 py-compact-md caption',
             viewMode === 'module'
@@ -272,7 +266,7 @@ function ViewToggle({ viewMode, onViewModeChange }: ViewToggleProps): React.Reac
           )}
         >
           <Grid className="w-3 h-3" aria-hidden="true" />
-          {t('settings:viewModule', 'Module')}
+          {t('settings:viewModule')}
         </button>
       </div>
     </div>

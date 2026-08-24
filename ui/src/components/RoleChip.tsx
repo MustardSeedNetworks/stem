@@ -93,10 +93,10 @@ export const RoleChip: FC<RoleChipProps> = ({ className = '' }) => {
     <div className={`inline-flex flex-col items-start gap-tight ${className}`}>
       <fieldset
         className="inline-flex items-center gap-0 rounded-lg border border-surface-border bg-surface-raised p-0.5"
-        aria-label={t('role.label', 'Stem role')}
+        aria-label={t('role.label')}
         aria-busy={isSwitchingRole}
       >
-        <legend className="sr-only">{t('role.label', 'Stem role')}</legend>
+        <legend className="sr-only">{t('role.label')}</legend>
         {ROLE_OPTIONS.map((option) => {
           const Icon = option.icon;
           const active = role === option.id;
@@ -135,12 +135,12 @@ export const RoleChip: FC<RoleChipProps> = ({ className = '' }) => {
           data-testid="role-chip-error"
           className="inline-flex items-center gap-compact rounded-md border border-status-error/40 bg-status-error/10 px-cell py-compact text-xs text-status-error"
         >
-          <span className="font-medium">{t('role.switchError.label', 'Role switch failed:')}</span>
+          <span className="font-medium">{t('role.switchError.label')}</span>
           <span className="font-normal text-text-primary">{roleSwitchError}</span>
           <button
             type="button"
             onClick={clearRoleSwitchError}
-            aria-label={t('role.switchError.dismiss', 'Dismiss')}
+            aria-label={t('role.switchError.dismiss')}
             className="inline-flex h-4 w-4 items-center justify-center rounded text-status-error/80 hover:bg-status-error/20 hover:text-status-error focus:outline-none focus-visible:ring-2 focus-visible:ring-status-error"
             data-testid="role-chip-error-dismiss"
           >
@@ -155,8 +155,8 @@ export const RoleChip: FC<RoleChipProps> = ({ className = '' }) => {
         onCancel={handleCancel}
         title={t(confirmTitleKey, confirmTitleDefault)}
         message={t(confirmMessageKey, confirmMessageDefault)}
-        confirmLabel={t('role.confirm.confirmLabel', 'Switch role')}
-        cancelLabel={t('buttons.cancel', 'Cancel')}
+        confirmLabel={t('role.confirm.confirmLabel')}
+        cancelLabel={t('buttons.cancel')}
         confirmTone="violet"
       />
     </div>

@@ -62,7 +62,7 @@ export function TrafficGenSection({
       title={
         <div className="flex items-center gap-compact">
           <Radio className="w-4 h-4" aria-hidden="true" />
-          <span>{t('settings:tests.trafficgen.title', 'Traffic Generator')}</span>
+          <span>{t('tests.trafficgen.title')}</span>
         </div>
       }
     >
