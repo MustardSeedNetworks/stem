@@ -54,7 +54,8 @@
     "testRunning": "Running: {{test}}",
     "testCompleted": "Completed: {{test}}",
     "testError": "Error: {{test}}",
-    "testStopped": "Stopped: {{test}}"
+    "testStopped": "Stopped: {{test}}",
+    "loadingModules": "Loading modules..."
   },
   "results": {
     "pass": "PASS",
@@ -137,7 +138,8 @@
     "continue": "Press Enter to continue...",
     "confirm": "Are you sure? (y/n): ",
     "selectTest": "Select a test type:",
-    "selectInterface": "Select a network interface:"
+    "selectInterface": "Select a network interface:",
+    "commandSearch": "Search pages and actions…"
   },
   "help": {
     "usage": "Usage",

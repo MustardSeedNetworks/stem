@@ -38,6 +38,11 @@
   "login": {
     "mfaTitle": "Two-factor authentication",
     "mfaPrompt": "Enter the code from your authenticator app.",
-    "submitButton": "Verify"
+    "submitButton": "Verify",
+    "signInTitle": "Sign in to continue",
+    "signInSubtitle": "Authenticate with your Stem credentials.",
+    "mfaContinue": "Enter the code from your authenticator app to continue.",
+    "useDifferentAccount": "Use different account",
+    "forgotPassword": "Forgot password?"
   }
 }

@@ -6,6 +6,7 @@
  */
 
 import { type ReactElement, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { HelpIcon } from './HelpIcon';
 
 // Module definitions matching the Go backend
@@ -188,6 +189,7 @@ export function ModuleSelector({
   selectedTests,
   setSelectedTests,
 }: ModuleSelectorProps): ReactElement {
+  const { t } = useTranslation('common');
   const [modules, setModules] = useState<Module[]>([]);
   const [expandedModule, setExpandedModule] = useState<string | null>('benchmark');
   const [loading, setLoading] = useState(true);
@@ -260,7 +262,7 @@ export function ModuleSelector({
   };
 
   if (loading) {
-    return <div className="text-center py-8 text-text-muted">Loading modules...</div>;
+    return <div className="text-center py-8 text-text-muted">{t('status.loadingModules')}</div>;
   }
 
   if (error) {

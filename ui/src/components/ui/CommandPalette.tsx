@@ -9,6 +9,7 @@
 import { Command } from 'cmdk';
 import { HelpCircle, Moon, Search, Settings as SettingsIcon, Sun } from 'lucide-react';
 import { type FC, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import type { SidebarNavGroup } from '../../ui/Sidebar';
 
@@ -41,6 +42,7 @@ export const CommandPalette: FC<CommandPaletteProps> = ({
   onToggleTheme,
   isDark,
 }) => {
+  const { t } = useTranslation('common');
   const navigate = useNavigate();
   const [value, setValue] = useState('');
 
@@ -87,7 +89,7 @@ export const CommandPalette: FC<CommandPaletteProps> = ({
             autoFocus={true}
             value={value}
             onValueChange={setValue}
-            placeholder="Search pages and actions…"
+            placeholder={t('prompts.commandSearch')}
             className="flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-muted focus:outline-none"
           />
           <kbd className="hidden sm:inline-flex items-center rounded border border-surface-border px-1.5 py-0.5 text-[11px] text-text-muted">
@@ -96,7 +98,7 @@ export const CommandPalette: FC<CommandPaletteProps> = ({
         </div>
         <Command.List className="max-h-[60vh] overflow-y-auto px-cell py-row text-sm">
           <Command.Empty className="px-3 py-6 text-center text-text-muted">
-            No matches.
+            {t('labels.noResults')}
           </Command.Empty>
 
           {groups.map((group) => (
@@ -141,7 +143,7 @@ export const CommandPalette: FC<CommandPaletteProps> = ({
                 className="flex cursor-pointer items-center gap-default rounded-md px-3 py-row text-text-primary aria-selected:bg-surface-hover"
               >
                 <SettingsIcon className="h-4 w-4 text-text-muted" aria-hidden="true" />
-                <span>Open Settings</span>
+                <span>{t('accessibility.openSettings')}</span>
               </Command.Item>
             ) : null}
             {onOpenHelp ? (
@@ -151,7 +153,7 @@ export const CommandPalette: FC<CommandPaletteProps> = ({
                 className="flex cursor-pointer items-center gap-default rounded-md px-3 py-row text-text-primary aria-selected:bg-surface-hover"
               >
                 <HelpCircle className="h-4 w-4 text-text-muted" aria-hidden="true" />
-                <span>Open Help</span>
+                <span>{t('accessibility.openHelp')}</span>
               </Command.Item>
             ) : null}
             {onToggleTheme ? (
@@ -165,7 +167,11 @@ export const CommandPalette: FC<CommandPaletteProps> = ({
                 ) : (
                   <Moon className="h-4 w-4 text-text-muted" aria-hidden="true" />
                 )}
-                <span>{isDark ? 'Switch to light mode' : 'Switch to dark mode'}</span>
+                <span>
+                  {isDark
+                    ? t('accessibility.switchToLightMode')
+                    : t('accessibility.switchToDarkMode')}
+                </span>
               </Command.Item>
             ) : null}
             {extraActions.map((action) => {

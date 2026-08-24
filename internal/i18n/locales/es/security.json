@@ -38,6 +38,11 @@
   "login": {
     "mfaTitle": "Autenticación de dos factores",
     "mfaPrompt": "Ingrese el código de su aplicación de autenticación.",
-    "submitButton": "Verificar"
+    "submitButton": "Verificar",
+    "signInTitle": "Inicie sesión para continuar",
+    "signInSubtitle": "Autentíquese con sus credenciales de Stem.",
+    "mfaContinue": "Introduzca el código de su aplicación de autenticación para continuar.",
+    "useDifferentAccount": "Usar otra cuenta",
+    "forgotPassword": "¿Olvidó su contraseña?"
   }
 }
