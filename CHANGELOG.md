@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.36](https://github.com/MustardSeedNetworks/stem/compare/v0.24.35...v0.24.36) (2026-08-24)
+
+
+### Bug Fixes
+
+* **i18n:** localize the last hardcoded strings and make the check block ([#762](https://github.com/MustardSeedNetworks/stem/issues/762)) ([c06b1f4](https://github.com/MustardSeedNetworks/stem/commit/c06b1f4074945250ff97945fb75d9a92798d5c2f))
+* **i18n:** remove banned t('key', 'fallback') sites ([#756](https://github.com/MustardSeedNetworks/stem/issues/756)) ([cf53a4f](https://github.com/MustardSeedNetworks/stem/commit/cf53a4fcd668c459b2e1f0f4cc0c83835a3935e0))
+* **ui:** typecheck Storybook stories ([#758](https://github.com/MustardSeedNetworks/stem/issues/758)) ([de4712b](https://github.com/MustardSeedNetworks/stem/commit/de4712b1e70b0041c7da663f0bdf23a629e53817))
+
+
+### Miscellaneous
+
+* **deps:** update dependency @biomejs/biome to v2.5.10 ([#757](https://github.com/MustardSeedNetworks/stem/issues/757)) ([0dc7d0a](https://github.com/MustardSeedNetworks/stem/commit/0dc7d0ae5358d538ff0caea682bbdff98a66465a))
+
 ## [0.24.35](https://github.com/MustardSeedNetworks/stem/compare/v0.24.34...v0.24.35) (2026-08-24)
 
 
