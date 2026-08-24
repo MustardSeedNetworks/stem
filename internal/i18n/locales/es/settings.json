@@ -35,7 +35,11 @@
     "expiresAt": "Expira",
     "activate": "Activar Licencia",
     "startTrial": "Iniciar Prueba",
-    "enterKey": "Ingrese clave de licencia"
+    "enterKey": "Ingrese clave de licencia",
+    "daysRemaining": "Días restantes",
+    "deviceId": "ID de dispositivo",
+    "enabledFeatures": "Funciones habilitadas",
+    "loading": "Cargando estado de la licencia..."
   },
   "advanced": {
     "logLevel": "Nivel de Registro",

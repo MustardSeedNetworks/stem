@@ -35,7 +35,11 @@
     "expiresAt": "Expires",
     "activate": "Activate License",
     "startTrial": "Start Trial",
-    "enterKey": "Enter license key"
+    "enterKey": "Enter license key",
+    "daysRemaining": "Days Remaining",
+    "deviceId": "Device ID",
+    "enabledFeatures": "Enabled Features",
+    "loading": "Loading license status..."
   },
   "advanced": {
     "logLevel": "Log Level",

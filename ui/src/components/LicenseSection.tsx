@@ -62,6 +62,7 @@ function LicenseStatusBadge({ licenseInfo }: LicenseStatusProps): ReactElement {
 }
 
 function LicenseDetails({ licenseInfo }: LicenseStatusProps): ReactElement | null {
+  const { t } = useTranslation(['common', 'settings']);
   if (!licenseInfo.activated) {
     return null;
   }
@@ -74,7 +75,7 @@ function LicenseDetails({ licenseInfo }: LicenseStatusProps): ReactElement | nul
       </div>
       {licenseInfo.isTrialMode ? (
         <div className="flex justify-between">
-          <span className="text-text-muted">Days Remaining</span>
+          <span className="text-text-muted">{t('settings:license.daysRemaining')}</span>
           <span className="font-medium text-status-warning">{licenseInfo.daysRemaining} days</span>
         </div>
       ) : null}
@@ -85,7 +86,7 @@ function LicenseDetails({ licenseInfo }: LicenseStatusProps): ReactElement | nul
         </div>
       )}
       <div className="flex justify-between">
-        <span className="text-text-muted">Device ID</span>
+        <span className="text-text-muted">{t('settings:license.deviceId')}</span>
         <span className="font-mono text-xs">{licenseInfo.deviceHash.slice(0, 8)}...</span>
       </div>
     </div>
@@ -93,13 +94,14 @@ function LicenseDetails({ licenseInfo }: LicenseStatusProps): ReactElement | nul
 }
 
 function LicenseFeatures({ licenseInfo }: LicenseStatusProps): ReactElement | null {
+  const { t } = useTranslation(['common', 'settings']);
   if (!licenseInfo.features || licenseInfo.features.length === 0) {
     return null;
   }
 
   return (
     <div>
-      <div className="text-sm text-text-muted mb-2">Enabled Features</div>
+      <div className="text-sm text-text-muted mb-2">{t('settings:license.enabledFeatures')}</div>
       <div className="flex flex-wrap gap-tight">
         {licenseInfo.features.map((feature) => (
           <span
@@ -131,9 +133,10 @@ function ActivationForm({
   onActivate,
   onStartTrial,
 }: ActivationFormProps): ReactElement {
+  const { t } = useTranslation(['common', 'settings']);
   return (
     <div className="border-t border-surface-border pt-section stack">
-      <div className="text-sm font-medium">Activate License</div>
+      <div className="text-sm font-medium">{t('settings:license.activate')}</div>
 
       <div>
         <input
@@ -207,7 +210,7 @@ function MessageDisplay({ error, success }: MessageDisplayProps): ReactElement |
 }
 
 export function LicenseSection(): ReactElement {
-  useTranslation();
+  const { t } = useTranslation(['common', 'settings']);
   const [licenseInfo, setLicenseInfo] = useState<LicenseInfo | null>(null);
   const [licenseKey, setLicenseKey] = useState('');
   const [loading, setLoading] = useState(false);
@@ -315,7 +318,7 @@ export function LicenseSection(): ReactElement {
             <LicenseFeatures licenseInfo={licenseInfo} />
           </div>
         ) : (
-          <div className="text-sm text-text-muted">Loading license status...</div>
+          <div className="text-sm text-text-muted">{t('settings:license.loading')}</div>
         )}
 
         {showActivationForm ? (

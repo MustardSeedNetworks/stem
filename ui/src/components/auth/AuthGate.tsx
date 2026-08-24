@@ -13,6 +13,7 @@ import { valibotResolver } from '@hookform/resolvers/valibot';
 import { Lock } from 'lucide-react';
 import { type ReactElement, useCallback, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { LoginSchema, MfaVerifySchema } from '../../schemas/auth';
 import { useAuthStore } from '../../stores/auth-store';
@@ -20,6 +21,7 @@ import { RecoveryForm } from '../recovery/RecoveryForm';
 import { SetupWizard } from '../setup/SetupWizard';
 
 export function AuthGate(): ReactElement {
+  const { t } = useTranslation(['security', 'common']);
   // Authentication state + flows live in the auth-store (tokens are in httpOnly
   // cookies, inaccessible to JS; the store mirrors a boolean flag to
   // localStorage). Render reads state via selectors; handlers call store
@@ -140,14 +142,12 @@ export function AuthGate(): ReactElement {
               className="flex items-center gap-compact heading-3 text-text-primary"
             >
               <Lock className="w-5 h-5 text-brand-primary" />
-              Sign in to continue
+              {t('security:login.signInTitle')}
             </h2>
-            <p className="text-sm text-text-muted">Authenticate with your Stem credentials.</p>
+            <p className="text-sm text-text-muted">{t('security:login.signInSubtitle')}</p>
             {mfaPending ? (
               <form className="mt-6 stack-lg" onSubmit={mfaForm.handleSubmit(handleMFAVerify)}>
-                <p className="text-sm text-text-muted">
-                  Enter the code from your authenticator app to continue.
-                </p>
+                <p className="text-sm text-text-muted">{t('security:login.mfaContinue')}</p>
                 <div>
                   <label htmlFor="stem-login-mfa" className="text-xs font-semibold text-text-muted">
                     Verification code
@@ -187,7 +187,7 @@ export function AuthGate(): ReactElement {
                   }}
                   className="w-full mt-inline text-sm text-text-muted hover:text-brand-primary"
                 >
-                  Use different account
+                  {t('security:login.useDifferentAccount')}
                 </button>
               </form>
             ) : (
@@ -255,7 +255,7 @@ export function AuthGate(): ReactElement {
                     onClick={() => setShowRecoveryForm(true)}
                     className="w-full mt-content text-sm text-text-muted hover:text-brand-primary"
                   >
-                    Forgot password?
+                    {t('security:login.forgotPassword')}
                   </button>
                 ) : null}
               </form>

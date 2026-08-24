@@ -55,7 +55,8 @@
     "testRunning": "Ejecutando: {{test}}",
     "testCompleted": "Completado: {{test}}",
     "testError": "Error: {{test}}",
-    "testStopped": "Detenido: {{test}}"
+    "testStopped": "Detenido: {{test}}",
+    "loadingModules": "Cargando módulos..."
   },
   "results": {
     "pass": "APROBADO",
@@ -138,7 +139,8 @@
     "continue": "Presione Enter para continuar...",
     "confirm": "Esta seguro? (s/n): ",
     "selectTest": "Seleccione un tipo de prueba:",
-    "selectInterface": "Seleccione una interfaz de red:"
+    "selectInterface": "Seleccione una interfaz de red:",
+    "commandSearch": "Buscar páginas y acciones…"
   },
   "help": {
     "usage": "Uso",

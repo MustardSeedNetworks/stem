@@ -355,26 +355,40 @@ check_plural_completeness() {
 # Check: hardcoded English text in JSX (warn-only — regex is fuzzy)
 # -----------------------------------------------------------------------------
 check_hardcoded_jsx() {
-  section "Hardcoded English JSX text (warn-only)"
+  section "Hardcoded English JSX text"
   [ ! -d "$UI_SRC_DIR" ] && { warn "UI_SRC_DIR missing; skipping"; return; }
 
   # Heuristic: JSX text nodes starting with an uppercase letter followed by
   # lowercase letters and a space — typical English sentence pattern.
-  # Allowlist common technical strings (single capitalized word, glossary terms).
+  #
+  # This blocks rather than warns. It spent the project's life as warn-only
+  # and flagged TopBar the whole time; TopBar shipped with no useTranslation
+  # at all until #750. A warning nobody acts on is not a gate.
+  #
+  # The trailing filter drops lines whose first non-space character starts a
+  # comment. Prose inside a JSDoc example ("*   <p>Hidden by default</p>") is
+  # not shipped copy, and baselining that noise instead of excluding it would
+  # be enshrining a false positive.
   local hits
   hits=$(grep -rnE ">[A-Z][a-z]+ [a-zA-Z]" "$UI_SRC_DIR" \
     --include='*.tsx' 2>/dev/null \
     | grep -v "// allow-hardcoded" \
     | grep -v ".stories.tsx" \
     | grep -v "/test/" \
-    | grep -v ".test.tsx") || true
+    | grep -v ".test.tsx" \
+    | grep -vE ':[0-9]+: *(\*|//)') || true
 
   if [ -n "$hits" ]; then
     local count
     count=$(echo "$hits" | wc -l | tr -d ' ')
-    warn "$count possible hardcoded JSX strings (heuristic; manual review needed):"
-    echo "$hits" | head -10 | sed 's/^/      /'
-    [ "$count" -gt 10 ] && printf "      ... and %d more\n" $((count - 10))
+    fail "$count hardcoded JSX string(s) — move the copy into a locale file:"
+    echo "$hits" | sed 's/^/      /'
+    while IFS= read -r line; do
+      local file lineno
+      file=$(echo "$line" | cut -d: -f1)
+      lineno=$(echo "$line" | cut -d: -f2)
+      annotate "$file" "line $lineno: hardcoded English — add key to locale file instead"
+    done <<< "$hits"
   else
     ok "no hardcoded JSX text detected"
   fi
