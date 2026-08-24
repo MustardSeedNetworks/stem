@@ -358,10 +358,6 @@ check_key_usage() {
     warn "python3 not found; skipping check-keys.py"
     return
   fi
-  # Propagate --ratchet so newly-added repos can absorb check-keys.py
-  # without an immediate cleanup burden. Use a plain string instead of
-  # an array because bash 3.2 (macOS default) errors on `${empty[@]}`
-  # under `set -u`.
   local out
   if ! out=$(python3 "$script" 2>&1); then
     fail "check-keys.py found t() calls referencing missing keys:"
@@ -375,7 +371,7 @@ check_key_usage() {
     wcount=$(echo "$out" | grep -c "^  [^✓]" || echo 0)
     warn "$wcount unused EN locale key(s) (informational; not failing — too noisy until catch-up)"
   fi
-  ok "every t() call resolves to an EN locale key (or all errors demoted under --ratchet)"
+  ok "every t() call resolves to an EN locale key"
 }
 
 # -----------------------------------------------------------------------------

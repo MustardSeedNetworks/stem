@@ -242,17 +242,14 @@ def main() -> int:
             unused.append((ns, k))
 
     # Report.
-    ratchet = "--ratchet" in sys.argv
     code = 0
     if missing:
-        level = "warning" if ratchet else "error"
-        print(f"::{level}::{len(missing)} t() call(s) reference keys missing from EN locale:")
+        print(f"::error::{len(missing)} t() call(s) reference keys missing from EN locale:")
         for ns, key, line, file in sorted(missing)[:30]:
             print(f"  {file}:{line}: t('{ns}:{key}') — not in {ns}.json")
         if len(missing) > 30:
             print(f"  … and {len(missing) - 30} more")
-        if not ratchet:
-            code = 1
+        code = 1
     else:
         print("✓ every t() call has a matching EN locale key")
 
@@ -263,16 +260,12 @@ def main() -> int:
         # PR time. To allow a genuinely dynamic-lookup key that the
         # static analyzer can't see, add a prefix entry to
         # dynamic-prefixes.txt with a one-line WHY comment.
-        # --ratchet downgrades to warn for callers that want to defer
-        # cleanup; the validator passes --ratchet through.
-        level = "warning" if ratchet else "error"
-        print(f"::{level}::{len(unused)} EN locale key(s) not referenced by any t() call:")
+        print(f"::error::{len(unused)} EN locale key(s) not referenced by any t() call:")
         for ns, key in sorted(unused)[:30]:
             print(f"  {ns}.json: {key}")
         if len(unused) > 30:
             print(f"  … and {len(unused) - 30} more")
-        if not ratchet:
-            code = 1
+        code = 1
     else:
         print("✓ every EN locale key is referenced by at least one t() call")
 

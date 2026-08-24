@@ -794,10 +794,10 @@ jobs:
         # without checking anything. Replaced with the canonical shared script
         # in scripts/i18n/ — identical to seed and niac.
         #
-        # --ratchet demotes the pre-existing-debt checks (no-fallback-patterns
-        # and locked-versions) from fail to warn. Drop --ratchet once Phase 3
-        # cleanup brings both counts to zero across seed/stem/niac.
-        # See scripts/i18n/README.md and
+        # Runs unflagged: --ratchet used to demote every fixed check to an
+        # annotation, so the job went green while the tree carried 74 banned
+        # fallback sites and a version assertion that was wrong in all three
+        # repos. See scripts/i18n/README.md and
         # msn-docs-internal/05-Engineering/I18N_CONVENTIONS.md.
         run: ./scripts/i18n/validate.sh
 
