@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.35](https://github.com/MustardSeedNetworks/stem/compare/v0.24.34...v0.24.35) (2026-08-24)
+
+
+### Bug Fixes
+
+* **i18n:** assert exact pins instead of a hardcoded version target ([#749](https://github.com/MustardSeedNetworks/stem/issues/749)) ([128760b](https://github.com/MustardSeedNetworks/stem/commit/128760be4eca30e1efcb5cc5e28f9ed4119e068e))
+
 ## [0.24.34](https://github.com/MustardSeedNetworks/stem/compare/v0.24.33...v0.24.34) (2026-08-23)
 
 
