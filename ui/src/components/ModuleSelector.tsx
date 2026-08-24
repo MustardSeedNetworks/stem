@@ -331,7 +331,7 @@ export function ModuleSelector({
                   title={`Select every test in ${mod.displayName} (${mod.tests.length} test${mod.tests.length === 1 ? '' : 's'})`}
                   className="text-xs text-status-info hover:underline"
                 >
-                  Select All
+                  {t('buttons.selectAll')}
                 </button>
                 <span className="text-text-muted">|</span>
                 <button
@@ -340,7 +340,7 @@ export function ModuleSelector({
                   title={`Clear all test selections in ${mod.displayName}`}
                   className="text-xs text-text-muted hover:underline"
                 >
-                  Deselect All
+                  {t('buttons.deselectAll')}
                 </button>
               </div>
 

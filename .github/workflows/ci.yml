@@ -799,7 +799,7 @@ jobs:
         # cleanup brings both counts to zero across seed/stem/niac.
         # See scripts/i18n/README.md and
         # msn-docs-internal/05-Engineering/I18N_CONVENTIONS.md.
-        run: ./scripts/i18n/validate.sh --ratchet
+        run: ./scripts/i18n/validate.sh
 
   # ============================================================================
   # Documentation Checks

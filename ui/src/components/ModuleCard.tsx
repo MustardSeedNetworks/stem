@@ -304,6 +304,7 @@ function ServiceFlowResultsTable({ results }: { results: ServiceFlowResult[] }):
 
 /** Renders OAM measurement results for Y.1731 style tests */
 function OamResultsTable({ results }: { results: OamMeasurementResult[] }): ReactElement {
+  const { t } = useTranslation('modules');
   return (
     <div className="stack-sm">
       {results.map((measurement) => (
@@ -331,7 +332,7 @@ function OamResultsTable({ results }: { results: OamMeasurementResult[] }): Reac
           {measurement.status !== 'pending' && (
             <div className="grid grid-cols-3 gap-compact text-xs">
               <div>
-                <div className="text-text-muted">Delay (min/avg/max)</div>
+                <div className="text-text-muted">{t('labels.delayMinAvgMax')}</div>
                 <div className="font-mono">
                   {measurement.delayMin ?? '—'}/{measurement.delayAvg ?? '—'}/
                   {measurement.delayMax ?? '—'}μs
@@ -344,7 +345,7 @@ function OamResultsTable({ results }: { results: OamMeasurementResult[] }): Reac
                 </div>
               </div>
               <div>
-                <div className="text-text-muted">Loss (near/far)</div>
+                <div className="text-text-muted">{t('labels.lossNearFar')}</div>
                 <div className="font-mono">
                   {measurement.lossNear ?? '—'}%/{measurement.lossFar ?? '—'}%
                 </div>

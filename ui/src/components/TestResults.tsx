@@ -9,6 +9,7 @@
 
 import { Activity, AlertTriangle } from 'lucide-react';
 import type { ReactElement } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { Stats, TestResult } from '../types/api';
 
 function formatNumber(num: number): string {
@@ -42,6 +43,7 @@ export interface TestResultsProps {
 }
 
 export function TestResults({ testStatus, result }: TestResultsProps): ReactElement {
+  const { t } = useTranslation('common');
   // Show placeholder messages when no result data
   if (!result) {
     let message: string;
@@ -69,7 +71,7 @@ export function TestResults({ testStatus, result }: TestResultsProps): ReactElem
       <div className="card">
         <div className="card-header">
           <AlertTriangle className="w-4 h-4" />
-          Test Results
+          {t('labels.testResults')}
         </div>
         <div className="text-center py-centered text-text-muted">
           <p>{message}</p>
@@ -85,7 +87,7 @@ export function TestResults({ testStatus, result }: TestResultsProps): ReactElem
     <div className="card">
       <div className="card-header">
         <Activity className="w-4 h-4" />
-        Test Results
+        {t('labels.testResults')}
       </div>
 
       {/* Test Header */}

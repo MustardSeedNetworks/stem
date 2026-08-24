@@ -39,7 +39,11 @@
     "daysRemaining": "Days Remaining",
     "deviceId": "Device ID",
     "enabledFeatures": "Enabled Features",
-    "loading": "Loading license status..."
+    "loading": "Loading license status...",
+    "notActivated": "Not Activated",
+    "activating": "Activating...",
+    "startTrialDays": "Start {{days}}-Day Trial",
+    "trialTooltip": "Enable all licensed features for {{days}} days without a license key; trial can only be started once per device"
   },
   "advanced": {
     "logLevel": "Log Level",

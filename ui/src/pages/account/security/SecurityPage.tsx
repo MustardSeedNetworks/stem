@@ -29,7 +29,7 @@ import { TotpSetupModal } from './TotpSetupModal';
 export { _isMFARequired as isMFARequired };
 
 export function SecurityPage(): ReactElement {
-  const { t } = useTranslation('security');
+  const { t } = useTranslation(['security', 'common']);
   const [status, setStatus] = useState<MFAStatusResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -105,7 +105,7 @@ export function SecurityPage(): ReactElement {
   }, [refresh, t]);
 
   if (loading) {
-    return <div className="text-text-muted">Loading...</div>;
+    return <div className="text-text-muted">{t('common:status.loading')}</div>;
   }
 
   return (
