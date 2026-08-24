@@ -174,8 +174,8 @@ const SidebarHeader: FC<SidebarHeaderProps> = ({ collapsed, onCollapse }) => {
           type="button"
           onClick={onCollapse}
           className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors lg:flex hidden"
-          title="Collapse sidebar"
-          aria-label="Collapse sidebar"
+          title={t('accessibility.collapseSidebar')}
+          aria-label={t('accessibility.collapseSidebar')}
         >
           <ChevronLeft className={iconSizes.md} />
         </button>
@@ -236,62 +236,66 @@ const SidebarFooter: FC<SidebarFooterProps> = ({
   onOpenProfiles,
   onExpand,
   surfaceTestIds,
-}) => (
-  <div className={`px-3 py-4 border-t border-surface-border ${collapsed ? 'text-center' : ''}`}>
-    <div className={`${collapsed ? 'stack-sm' : 'flex items-center gap-compact'} mb-heading`}>
-      {onOpenHelp ? (
-        <FooterIconButton
-          collapsed={collapsed}
-          onClick={onOpenHelp}
-          icon={HelpCircle}
-          label="Help"
-          title="Open help"
-          data-testid={surfaceTestIds ? 'sidebar-help-button' : undefined}
+}) => {
+  const { t } = useTranslation();
+
+  return (
+    <div className={`px-3 py-4 border-t border-surface-border ${collapsed ? 'text-center' : ''}`}>
+      <div className={`${collapsed ? 'stack-sm' : 'flex items-center gap-compact'} mb-heading`}>
+        {onOpenHelp ? (
+          <FooterIconButton
+            collapsed={collapsed}
+            onClick={onOpenHelp}
+            icon={HelpCircle}
+            label={t('labels.help')}
+            title={t('tooltips.chrome.help')}
+            data-testid={surfaceTestIds ? 'sidebar-help-button' : undefined}
+          />
+        ) : null}
+        {onOpenSettings ? (
+          <FooterIconButton
+            collapsed={collapsed}
+            onClick={onOpenSettings}
+            icon={Settings}
+            label={t('labels.settings')}
+            title={t('tooltips.chrome.settings')}
+            data-testid={surfaceTestIds ? 'sidebar-settings-button' : undefined}
+          />
+        ) : null}
+      </div>
+
+      {onOpenProfiles && !collapsed ? (
+        <FullWidthDrawerButton
+          onClick={onOpenProfiles}
+          icon={Users}
+          label={t('labels.profiles')}
+          title={t('tooltips.chrome.profiles')}
         />
       ) : null}
-      {onOpenSettings ? (
-        <FooterIconButton
-          collapsed={collapsed}
-          onClick={onOpenSettings}
-          icon={Settings}
-          label="Settings"
-          title="Open settings"
-          data-testid={surfaceTestIds ? 'sidebar-settings-button' : undefined}
-        />
+
+      {version ? (
+        <div className={`text-xs font-mono text-text-muted ${collapsed ? '' : 'flex-between'}`}>
+          {!collapsed ? <span>{t('labels.version')}</span> : null}
+          <span>{version}</span>
+        </div>
+      ) : null}
+      {/* Whose tool this is, under what it is. Quiet by design: the product mark
+        at the top of the rail is the one that has to be recognised. */}
+      <MsnMark collapsed={collapsed} className="mt-3" />
+      {collapsed ? (
+        <button
+          type="button"
+          onClick={onExpand}
+          className="mt-inline p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
+          title={t('accessibility.expandSidebar')}
+          aria-label={t('accessibility.expandSidebar')}
+        >
+          <ChevronRight className={iconSizes.md} />
+        </button>
       ) : null}
     </div>
-
-    {onOpenProfiles && !collapsed ? (
-      <FullWidthDrawerButton
-        onClick={onOpenProfiles}
-        icon={Users}
-        label="Profiles"
-        title="Manage profiles"
-      />
-    ) : null}
-
-    {version ? (
-      <div className={`text-xs font-mono text-text-muted ${collapsed ? '' : 'flex-between'}`}>
-        {!collapsed ? <span>Version</span> : null}
-        <span>{version}</span>
-      </div>
-    ) : null}
-    {/* Whose tool this is, under what it is. Quiet by design: the product mark
-        at the top of the rail is the one that has to be recognised. */}
-    <MsnMark collapsed={collapsed} className="mt-3" />
-    {collapsed ? (
-      <button
-        type="button"
-        onClick={onExpand}
-        className="mt-inline p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
-        title="Expand sidebar"
-        aria-label="Expand sidebar"
-      >
-        <ChevronRight className={iconSizes.md} />
-      </button>
-    ) : null}
-  </div>
-);
+  );
+};
 
 interface SidebarBodyProps {
   groups: SidebarNavGroup[];
@@ -416,6 +420,8 @@ export const SidebarLayout: FC<SidebarLayoutProps> = ({
     setMobileOpen(false);
   }, []);
 
+  const { t } = useTranslation();
+
   const isActive = (path: string) =>
     location.pathname === path || (path !== '/' && location.pathname.startsWith(path));
 
@@ -456,7 +462,7 @@ export const SidebarLayout: FC<SidebarLayoutProps> = ({
           type="button"
           className="lg:hidden fixed inset-0 z-40 bg-scrim/60 backdrop-blur-sm"
           onClick={() => setMobileOpen(false)}
-          aria-label="Close menu"
+          aria-label={t('accessibility.closeMenu')}
         />
       ) : null}
 
