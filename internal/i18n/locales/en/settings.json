@@ -30,20 +30,22 @@
     "resultsPath": "Results path"
   },
   "license": {
-    "status": "License Status",
-    "type": "License Type",
-    "expiresAt": "Expires",
     "activate": "Activate License",
-    "startTrial": "Start Trial",
-    "enterKey": "Enter license key",
+    "activateTooltip": "Validate the license key against this device and unlock the licensed features",
+    "activating": "Activating...",
     "daysRemaining": "Days Remaining",
     "deviceId": "Device ID",
     "enabledFeatures": "Enabled Features",
+    "enterKey": "Enter license key",
+    "expiresAt": "Expires",
     "loading": "Loading license status...",
     "notActivated": "Not Activated",
-    "activating": "Activating...",
+    "sectionTitle": "License",
+    "startTrial": "Start Trial",
     "startTrialDays": "Start {{days}}-Day Trial",
-    "trialTooltip": "Enable all licensed features for {{days}} days without a license key; trial can only be started once per device"
+    "status": "License Status",
+    "trialTooltip": "Enable all licensed features for {{days}} days without a license key; trial can only be started once per device",
+    "type": "License Type"
   },
   "advanced": {
     "logLevel": "Log Level",
@@ -59,11 +61,21 @@
     "testMasterDesc": "Run network tests"
   },
   "reflector": {
-    "title": "Reflector Profile",
     "all": "All Traffic",
     "allDesc": "Reflect all incoming traffic",
+    "profiles": {
+      "all": "All",
+      "allDesc": "All signature types",
+      "custom": "Custom",
+      "customDesc": "Manual configuration",
+      "msn": "MSN",
+      "msnDesc": "Mustard Seed signatures",
+      "netally": "NetAlly",
+      "netallyDesc": "ITO signatures only"
+    },
     "tagged": "Tagged Only",
     "taggedDesc": "Only reflect VLAN-tagged traffic",
+    "title": "Reflector Profile",
     "untagged": "Untagged Only",
     "untaggedDesc": "Only reflect untagged traffic"
   },

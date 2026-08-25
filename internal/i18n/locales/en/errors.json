@@ -37,17 +37,19 @@
     "notRunning": "Reflector is not running"
   },
   "license": {
-    "invalid": "Invalid license",
-    "expired": "License expired",
-    "notActivated": "License not activated",
     "activationFailed": "License activation failed",
-    "trialExpired": "Trial period expired",
-    "tierTooLow": "This feature requires the {{tier}} tier",
-    "upgradeHint": "Start a 14-day {{tier}} trial with `stem license trial`, or activate a {{tier}} key with `stem license activate -k <KEY>`.",
-    "tierGateTooltip": "Requires the {{tier}} tier",
-    "featureUnavailable": "{{feature}} is not available on your current tier",
     "currentTier": "Current tier: {{tier}}",
-    "loading": "Checking license…"
+    "expired": "License expired",
+    "featureUnavailable": "{{feature}} is not available on your current tier",
+    "invalid": "Invalid license",
+    "keyRequired": "Enter a license key",
+    "loading": "Checking license…",
+    "notActivated": "License not activated",
+    "tierGateTooltip": "Requires the {{tier}} tier",
+    "tierTooLow": "This feature requires the {{tier}} tier",
+    "trialExpired": "Trial period expired",
+    "trialStartFailed": "Could not start the trial",
+    "upgradeHint": "Start a 14-day {{tier}} trial with `stem license trial`, or activate a {{tier}} key with `stem license activate -k <KEY>`."
   },
   "validation": {
     "required": "{{field}} is required",

@@ -45,7 +45,7 @@ interface LicenseStatusProps {
 }
 
 function LicenseStatusBadge({ licenseInfo }: LicenseStatusProps): ReactElement {
-  const { t } = useTranslation(['common', 'settings']);
+  const { t } = useTranslation(['common', 'settings', 'errors']);
   return (
     <div className="flex items-center gap-compact">
       {licenseInfo.activated ? (
@@ -67,7 +67,7 @@ function LicenseStatusBadge({ licenseInfo }: LicenseStatusProps): ReactElement {
 }
 
 function LicenseDetails({ licenseInfo }: LicenseStatusProps): ReactElement | null {
-  const { t } = useTranslation(['common', 'settings']);
+  const { t } = useTranslation(['common', 'settings', 'errors']);
   if (!licenseInfo.activated) {
     return null;
   }
@@ -99,7 +99,7 @@ function LicenseDetails({ licenseInfo }: LicenseStatusProps): ReactElement | nul
 }
 
 function LicenseFeatures({ licenseInfo }: LicenseStatusProps): ReactElement | null {
-  const { t } = useTranslation(['common', 'settings']);
+  const { t } = useTranslation(['common', 'settings', 'errors']);
   if (!licenseInfo.features || licenseInfo.features.length === 0) {
     return null;
   }
@@ -138,7 +138,7 @@ function ActivationForm({
   onActivate,
   onStartTrial,
 }: ActivationFormProps): ReactElement {
-  const { t } = useTranslation(['common', 'settings']);
+  const { t } = useTranslation(['common', 'settings', 'errors']);
   return (
     <div className="border-t border-surface-border pt-section stack">
       <div className="text-sm font-medium">{t('settings:license.activate')}</div>
@@ -160,7 +160,7 @@ function ActivationForm({
         type="button"
         onClick={onActivate}
         disabled={loading || !licenseKey.trim()}
-        title="Validate the license key against this device and unlock the licensed features"
+        title={t('settings:license.activateTooltip')}
         className="btn btn-primary w-full"
       >
         {loading ? (
@@ -215,7 +215,7 @@ function MessageDisplay({ error, success }: MessageDisplayProps): ReactElement |
 }
 
 export function LicenseSection(): ReactElement {
-  const { t } = useTranslation(['common', 'settings']);
+  const { t } = useTranslation(['common', 'settings', 'errors']);
   const [licenseInfo, setLicenseInfo] = useState<LicenseInfo | null>(null);
   const [licenseKey, setLicenseKey] = useState('');
   const [loading, setLoading] = useState(false);
@@ -242,7 +242,7 @@ export function LicenseSection(): ReactElement {
 
   const handleActivate = async (): Promise<void> => {
     if (!licenseKey.trim()) {
-      setError('Please enter a license key');
+      setError(t('errors:license.keyRequired'));
       return;
     }
 
@@ -266,10 +266,10 @@ export function LicenseSection(): ReactElement {
           // Handle error silently
         });
       } else {
-        setError(data.message || 'Activation failed');
+        setError(data.message || t('errors:license.activationFailed'));
       }
     } catch {
-      setError('Failed to connect to server');
+      setError(t('errors:network.connectionFailed'));
     } finally {
       setLoading(false);
     }
@@ -293,10 +293,10 @@ export function LicenseSection(): ReactElement {
           // Handle error silently
         });
       } else {
-        setError(data.message || 'Failed to start trial');
+        setError(data.message || t('errors:license.trialStartFailed'));
       }
     } catch {
-      setError('Failed to connect to server');
+      setError(t('errors:network.connectionFailed'));
     } finally {
       setLoading(false);
     }
@@ -310,7 +310,7 @@ export function LicenseSection(): ReactElement {
       title={
         <div className="flex items-center gap-compact">
           <Key className="w-4 h-4" />
-          <span>License</span>
+          <span>{t('settings:license.sectionTitle')}</span>
         </div>
       }
       defaultOpen={true}
