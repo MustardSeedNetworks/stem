@@ -16,6 +16,16 @@ on:
   # accept PRs and then wait forever for a check that never fires.
   merge_group:
   workflow_dispatch:
+  # Weekly, for the C jobs only — see their `if:` conditions.
+  #
+  # Both are path-filtered on src/** and include/**, which is right for cost
+  # and wrong for confidence: nothing had touched a C file in long enough that
+  # the *blocking* dataplane-safety gate was red on main and simply not
+  # running. Every green "CI Complete" in that window was green because the job
+  # was skipped, which the aggregator correctly counts as success. A weekly run
+  # puts a floor under how long that can hide. See #780.
+  schedule:
+    - cron: '0 7 * * 1'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -373,7 +383,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 16
     needs: changes
-    if: needs.changes.outputs.c == 'true' || needs.changes.outputs.workflows == 'true'
+    if: >-
+      needs.changes.outputs.c == 'true' || needs.changes.outputs.workflows == 'true'
+      || github.event_name == 'schedule'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -408,6 +420,17 @@ jobs:
             echo "has_c=false" >> "$GITHUB_OUTPUT"
             echo "No C source files found, skipping C lint"
           fi
+
+      # cppcheck comes from apt, so its version tracks the runner image and can
+      # move without anything in this repo changing — which matters because its
+      # findings differ between versions, and that is why #777 left it
+      # advisory. Recording it in the log is the prerequisite for pinning it
+      # (#776): a pin has to be to a version someone actually measured.
+      - name: Record cppcheck version
+        if: steps.check-c.outputs.has_c == 'true'
+        run: |
+          cppcheck --version
+          apt-cache policy cppcheck
 
       - name: Generate compile_commands.json
         if: steps.check-c.outputs.has_c == 'true'
@@ -514,7 +537,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: changes
-    if: needs.changes.outputs.c == 'true' || needs.changes.outputs.workflows == 'true'
+    if: >-
+      needs.changes.outputs.c == 'true' || needs.changes.outputs.workflows == 'true'
+      || github.event_name == 'schedule'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
