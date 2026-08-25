@@ -16,36 +16,20 @@ interface ReflectorSectionProps extends SettingsSectionProps {
   onProfileChange: (profile: ReflectorProfile) => void;
 }
 
-const REFLECTOR_PROFILES = [
-  {
-    id: 'netally' as const,
-    nameKey: 'settings.reflector.netally',
-    nameDefault: 'NetAlly',
-    descKey: 'settings.reflector.netallyDesc',
-    descDefault: 'ITO signatures only',
-  },
-  {
-    id: 'msn' as const,
-    nameKey: 'settings.reflector.msn',
-    nameDefault: 'MSN',
-    descKey: 'settings.reflector.msnDesc',
-    descDefault: 'Mustard Seed signatures',
-  },
-  {
-    id: 'all' as const,
-    nameKey: 'settings.reflector.all',
-    nameDefault: 'All',
-    descKey: 'settings.reflector.allDesc',
-    descDefault: 'All signature types',
-  },
-  {
-    id: 'custom' as const,
-    nameKey: 'settings.reflector.custom',
-    nameDefault: 'Custom',
-    descKey: 'settings.reflector.customDesc',
-    descDefault: 'Manual configuration',
-  },
-] as const;
+/* The keys used to read `settings.reflector.netally` — a dot, which i18next
+   parses as a path inside the default `common` namespace, not as the `settings`
+   namespace. None of the eight resolved, so every label fell through to its
+   hardcoded English default in both locales. They are nested under `.profiles`
+   because `reflector.all` already means "All Traffic".
+
+   The `t(key, default)` fallback that hid it is gone: that is the banned
+   pattern, and semgrep misses this shape because the fallback was an object
+   property rather than a literal argument.
+
+   Keys are written out literally below rather than carried on the array, so
+   the key checker can see them — the dynamic form is what let eight
+   nonexistent keys sit here unnoticed. */
+const REFLECTOR_PROFILE_IDS = ['netally', 'msn', 'all', 'custom'] as const;
 
 export function ReflectorSection({
   profile,
@@ -53,6 +37,25 @@ export function ReflectorSection({
   className,
 }: ReflectorSectionProps): React.JSX.Element {
   const { t } = useTranslation(['common', 'settings']);
+
+  const profiles: Record<ReflectorProfile, { name: string; description: string }> = {
+    netally: {
+      name: t('settings:reflector.profiles.netally'),
+      description: t('settings:reflector.profiles.netallyDesc'),
+    },
+    msn: {
+      name: t('settings:reflector.profiles.msn'),
+      description: t('settings:reflector.profiles.msnDesc'),
+    },
+    all: {
+      name: t('settings:reflector.profiles.all'),
+      description: t('settings:reflector.profiles.allDesc'),
+    },
+    custom: {
+      name: t('settings:reflector.profiles.custom'),
+      description: t('settings:reflector.profiles.customDesc'),
+    },
+  };
 
   return (
     <CollapsibleSection
@@ -66,9 +69,9 @@ export function ReflectorSection({
       className={className}
     >
       <div className="stack-sm">
-        {REFLECTOR_PROFILES.map((p) => (
+        {REFLECTOR_PROFILE_IDS.map((id) => (
           <label
-            key={p.id}
+            key={id}
             className={cn(
               'flex items-center gap-default',
               spacing.pad.sm,
@@ -79,15 +82,13 @@ export function ReflectorSection({
             <input
               type="radio"
               name="reflectorProfile"
-              checked={profile === p.id}
-              onChange={(): void => onProfileChange(p.id)}
+              checked={profile === id}
+              onChange={(): void => onProfileChange(id)}
               className="w-4 h-4 accent-brand-primary"
             />
             <div>
-              <div className="body-small font-medium text-text-primary">
-                {t(p.nameKey, p.nameDefault)}
-              </div>
-              <div className="caption text-text-muted">{t(p.descKey, p.descDefault)}</div>
+              <div className="body-small font-medium text-text-primary">{profiles[id].name}</div>
+              <div className="caption text-text-muted">{profiles[id].description}</div>
             </div>
           </label>
         ))}

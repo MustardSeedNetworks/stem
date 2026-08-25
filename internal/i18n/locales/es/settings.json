@@ -30,20 +30,22 @@
     "resultsPath": "Ruta de resultados"
   },
   "license": {
-    "status": "Estado de Licencia",
-    "type": "Tipo de Licencia",
-    "expiresAt": "Expira",
     "activate": "Activar Licencia",
-    "startTrial": "Iniciar Prueba",
-    "enterKey": "Ingrese clave de licencia",
+    "activateTooltip": "Valide la clave de licencia con este dispositivo y desbloquee las funciones licenciadas",
+    "activating": "Activando...",
     "daysRemaining": "Días restantes",
     "deviceId": "ID de dispositivo",
     "enabledFeatures": "Funciones habilitadas",
+    "enterKey": "Ingrese clave de licencia",
+    "expiresAt": "Expira",
     "loading": "Cargando estado de la licencia...",
     "notActivated": "No Activada",
-    "activating": "Activando...",
+    "sectionTitle": "Licencia",
+    "startTrial": "Iniciar Prueba",
     "startTrialDays": "Iniciar Prueba de {{days}} Días",
-    "trialTooltip": "Habilite todas las funciones con licencia durante {{days}} días sin clave de licencia; la prueba solo puede iniciarse una vez por dispositivo"
+    "status": "Estado de Licencia",
+    "trialTooltip": "Habilite todas las funciones con licencia durante {{days}} días sin clave de licencia; la prueba solo puede iniciarse una vez por dispositivo",
+    "type": "Tipo de Licencia"
   },
   "advanced": {
     "logLevel": "Nivel de Registro",
@@ -59,11 +61,21 @@
     "testMasterDesc": "Ejecutar pruebas de red"
   },
   "reflector": {
-    "title": "Perfil de Reflector",
     "all": "Todo el Trafico",
     "allDesc": "Reflejar todo el trafico entrante",
+    "profiles": {
+      "all": "Todas",
+      "allDesc": "Todos los tipos de firma",
+      "custom": "Personalizado",
+      "customDesc": "Configuración manual",
+      "msn": "MSN",
+      "msnDesc": "Firmas de Mustard Seed",
+      "netally": "NetAlly",
+      "netallyDesc": "Solo firmas ITO"
+    },
     "tagged": "Solo Etiquetado",
     "taggedDesc": "Solo reflejar trafico VLAN etiquetado",
+    "title": "Perfil de Reflector",
     "untagged": "Solo Sin Etiqueta",
     "untaggedDesc": "Solo reflejar trafico sin etiqueta"
   },

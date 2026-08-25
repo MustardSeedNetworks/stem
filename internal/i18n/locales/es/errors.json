@@ -37,17 +37,19 @@
     "notRunning": "Reflector no está en ejecución"
   },
   "license": {
-    "invalid": "Licencia invalida",
-    "expired": "Licencia expirada",
-    "notActivated": "Licencia no activada",
     "activationFailed": "Error en la activacion de licencia",
-    "trialExpired": "Periodo de prueba expirado",
-    "tierTooLow": "Esta función requiere el nivel {{tier}}",
-    "upgradeHint": "Inicia una prueba gratuita de {{tier}} de 14 días con `stem license trial`, o activa una clave {{tier}} con `stem license activate -k <CLAVE>`.",
-    "tierGateTooltip": "Requiere el nivel {{tier}}",
-    "featureUnavailable": "{{feature}} no está disponible en tu nivel actual",
     "currentTier": "Nivel actual: {{tier}}",
-    "loading": "Verificando licencia…"
+    "expired": "Licencia expirada",
+    "featureUnavailable": "{{feature}} no está disponible en tu nivel actual",
+    "invalid": "Licencia invalida",
+    "keyRequired": "Introduzca una clave de licencia",
+    "loading": "Verificando licencia…",
+    "notActivated": "Licencia no activada",
+    "tierGateTooltip": "Requiere el nivel {{tier}}",
+    "tierTooLow": "Esta función requiere el nivel {{tier}}",
+    "trialExpired": "Periodo de prueba expirado",
+    "trialStartFailed": "No se pudo iniciar la prueba",
+    "upgradeHint": "Inicia una prueba gratuita de {{tier}} de 14 días con `stem license trial`, o activa una clave {{tier}} con `stem license activate -k <CLAVE>`."
   },
   "validation": {
     "required": "{{field}} es requerido",
