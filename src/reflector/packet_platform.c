@@ -86,9 +86,9 @@ static int open_udp_guard(const char *ifname, uint16_t port)
     const struct sock_filter code[] = {BPF_STMT(BPF_RET | BPF_K, 0)};
     const struct sock_fprog  filter = {.len = 1, .filter = (struct sock_filter *)code};
     struct sockaddr_in       addr   = {
-        .sin_family      = AF_INET,
-        .sin_port        = htons(port),
-        .sin_addr.s_addr = htonl(INADDR_ANY),
+                .sin_family      = AF_INET,
+                .sin_port        = htons(port),
+                .sin_addr.s_addr = htonl(INADDR_ANY),
     };
     if (setsockopt(fd, SOL_SOCKET, SO_BINDTODEVICE, ifname, strlen(ifname) + 1) < 0 ||
         setsockopt(fd, SOL_SOCKET, SO_ATTACH_FILTER, &filter, sizeof(filter)) < 0 ||
@@ -440,7 +440,7 @@ int packet_platform_recv_batch(worker_ctx_t *wctx, packet_t *pkts, int max_pkts)
             pctx->current_block_offset  = 0;
             pctx->current_frame_offset  = 0;
             pctx->block_release_pending = false;
-            block = (struct tpacket_block_desc *)((uint8_t *)pctx->rx_ring +
+            block                       = (struct tpacket_block_desc *)((uint8_t *)pctx->rx_ring +
                                                   (pctx->current_block_idx * PACKET_BLOCK_SIZE));
         }
 
