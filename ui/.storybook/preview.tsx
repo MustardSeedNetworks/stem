@@ -1,4 +1,5 @@
 import type { Preview } from '@storybook/react-vite';
+import { RoleProvider } from '../src/contexts/RoleContext';
 import '../src/index.css';
 
 const preview: Preview = {
@@ -28,10 +29,17 @@ const preview: Preview = {
   },
 
   decorators: [
+    /* RoleProvider wraps every story because the shell components read the
+       role, and useRole throws outside a provider rather than falling back.
+       SettingsDrawer and all eight SetupWizard stories crashed on exactly
+       that — invisible until the runner started rendering them, since a story
+       that throws still typechecks, lints and builds. */
     (Story) => (
-      <div className="font-sans antialiased">
-        <Story />
-      </div>
+      <RoleProvider>
+        <div className="font-sans antialiased">
+          <Story />
+        </div>
+      </RoleProvider>
     ),
   ],
 
