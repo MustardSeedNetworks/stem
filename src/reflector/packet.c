@@ -195,12 +195,12 @@ ALWAYS_INLINE bool is_ito_packet(const uint8_t *data, uint32_t len,
         bool matches = (filter == SIG_FILTER_ALL || filter == SIG_FILTER_ITO ||
                         filter == SIG_FILTER_PROBEOT) &&
                        memcmp(ito_sig, ITO_SIG_PROBEOT, ITO_SIG_LEN) == 0;
-        matches      = matches || ((filter == SIG_FILTER_ALL || filter == SIG_FILTER_ITO ||
-                                    filter == SIG_FILTER_DATAOT) &&
-                                   memcmp(ito_sig, ITO_SIG_DATAOT, ITO_SIG_LEN) == 0);
-        matches      = matches || ((filter == SIG_FILTER_ALL || filter == SIG_FILTER_ITO ||
-                                    filter == SIG_FILTER_LATENCY) &&
-                                   memcmp(ito_sig, ITO_SIG_LATENCY, ITO_SIG_LEN) == 0);
+        matches = matches || ((filter == SIG_FILTER_ALL || filter == SIG_FILTER_ITO ||
+                               filter == SIG_FILTER_DATAOT) &&
+                              memcmp(ito_sig, ITO_SIG_DATAOT, ITO_SIG_LEN) == 0);
+        matches = matches || ((filter == SIG_FILTER_ALL || filter == SIG_FILTER_ITO ||
+                               filter == SIG_FILTER_LATENCY) &&
+                              memcmp(ito_sig, ITO_SIG_LATENCY, ITO_SIG_LEN) == 0);
         if (matches) {
             DEBUG_LOG("ITO packet matched! len=%u", len);
             return true;

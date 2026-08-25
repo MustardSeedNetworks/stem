@@ -73,15 +73,6 @@ typedef struct __attribute__((packed)) {
     uint8_t  flags;                      /* Flags */
 } rfc2544_payload_t;
 
-/* Complete packet template */
-typedef struct {
-    eth_header_t      eth;
-    ip_header_t       ip;
-    udp_header_t      udp;
-    rfc2544_payload_t payload;
-    /* Padding follows */
-} rfc2544_packet_t;
-
 /* ============================================================================
  * Checksum Calculation
  * ============================================================================ */
@@ -190,8 +181,8 @@ rfc2544_payload_t *rfc2544_create_packet_template(uint8_t *buffer, uint32_t fram
     /* Fill padding with pattern */
     uint8_t *padding = buffer + sizeof(eth_header_t) + sizeof(ip_header_t) + sizeof(udp_header_t) +
                        sizeof(rfc2544_payload_t);
-    size_t   padding_len = frame_size - sizeof(eth_header_t) - sizeof(ip_header_t) -
-                           sizeof(udp_header_t) - sizeof(rfc2544_payload_t);
+    size_t padding_len = frame_size - sizeof(eth_header_t) - sizeof(ip_header_t) -
+                         sizeof(udp_header_t) - sizeof(rfc2544_payload_t);
 
     for (size_t i = 0; i < padding_len; i++) {
         padding[i] = (uint8_t)(i & 0xFF);
@@ -696,8 +687,8 @@ y1564_payload_t *y1564_create_packet_template(uint8_t *buffer, uint32_t frame_si
     /* Fill padding with pattern */
     uint8_t *padding = buffer + sizeof(eth_header_t) + sizeof(ip_header_t) + sizeof(udp_header_t) +
                        sizeof(y1564_payload_t);
-    size_t   padding_len = frame_size - sizeof(eth_header_t) - sizeof(ip_header_t) -
-                           sizeof(udp_header_t) - sizeof(y1564_payload_t);
+    size_t padding_len = frame_size - sizeof(eth_header_t) - sizeof(ip_header_t) -
+                         sizeof(udp_header_t) - sizeof(y1564_payload_t);
 
     for (size_t i = 0; i < padding_len; i++) {
         padding[i] = (uint8_t)(i & 0xFF);
