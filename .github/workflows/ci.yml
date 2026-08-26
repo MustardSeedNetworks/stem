@@ -906,6 +906,11 @@ jobs:
       # msn-docs-internal/05-Engineering/I18N_CONVENTIONS.md.
       - name: Validate i18n (parity, glossary, banned vocab, etc.)
         uses: MustardSeedNetworks/.github/.github/actions/i18n-validate@e6d74ebd42168c9b89f2b93f14841f58b90edece # v1.5.0
+        with:
+          # The action defaults to internal/i18n/locales, which is where these
+          # lived while they sat inside a dead Go package. They belong to the
+          # frontend and now live with it.
+          locales-dir: ui/locales
 
   # ============================================================================
   # Documentation Checks

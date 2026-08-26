@@ -20,7 +20,7 @@ Modules own workflows and delegate to subsystems:
 
 ## Frontend Patterns
 
-- **i18n**: Use `useTranslation('namespace')` - namespaces in `internal/i18n/locales/`
+- **i18n**: Use `useTranslation('namespace')` - namespaces in `ui/locales/`
 - **Theme**: Import tokens from `ui/src/styles/theme.ts`
 - **State**: Zustand stores in `ui/src/stores/`
 
