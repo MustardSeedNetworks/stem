@@ -50,6 +50,10 @@ lint-linux-image: ## Build the Linux lint container image
 LINT_LINUX_TAG ?= 1.0.0
 LINT_LINUX_CONTEXT ?= ../.github/tools/lint-linux
 
+# internal/api/server_port_fallback_windows.go decides whether a bind failed
+# on Windows' WSAEADDRINUSE, and a host running the default `./...` lint never
+# type-checks a windows-tagged file at all — it would ship unlinted forever
+# without this second pass (#782).
 lint-go: ## Run Go linter (golangci-lint)
 	@printf "$(BOLD)🔍 Running Go linter (golangci-lint)...$(RESET)\n"
 	@GOLANGCI_LINT="$$(go env GOPATH)/bin/golangci-lint"; \
@@ -57,7 +61,8 @@ lint-go: ## Run Go linter (golangci-lint)
 		printf "📦 Installing golangci-lint v2...\n"; \
 		go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.13.1; \
 	fi; \
-	$$GOLANGCI_LINT run --allow-parallel-runners ./...
+	$$GOLANGCI_LINT run --allow-parallel-runners ./... && \
+	GOOS=windows $$GOLANGCI_LINT run --allow-parallel-runners ./internal/api/...
 	@printf "$(GREEN)✓ Go lint passed$(RESET)\n"
 
 lint-frontend: ## Run frontend linter (Biome)

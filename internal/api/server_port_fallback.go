@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 package api
 
 // server_port_fallback.go provides bindWithFallback, a helper that opens a
@@ -5,14 +7,17 @@ package api
 // is already in use. This keeps `stem web` runnable for developers who
 // have another service squatting on 8444 without changing the documented
 // default port (see #69).
+//
+// isAddrInUse, the predicate that decides whether a bind failure means the
+// port is merely taken (walk on) rather than fatal (permission denied,
+// invalid address, etc.), is platform-specific: see
+// server_port_fallback_unix.go and server_port_fallback_windows.go.
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net"
 	"strconv"
-	"syscall"
 
 	"github.com/MustardSeedNetworks/stem/internal/logging"
 )
@@ -55,35 +60,4 @@ func bindWithFallback(ctx context.Context, host string, port int) (net.Listener,
 		"bind %s:%d and +1..+%d all in use",
 		host, port, portFallbackMaxOffset,
 	)
-}
-
-// isAddrInUse reports whether err indicates the address-in-use condition.
-// It checks [syscall.EADDRINUSE] via [errors.Is] (works on Linux/macOS) and
-// falls back to a string match for platforms whose listener wrapping does
-// not unwrap to the syscall errno.
-func isAddrInUse(err error) bool {
-	if errors.Is(err, syscall.EADDRINUSE) {
-		return true
-	}
-	var opErr *net.OpError
-	if errors.As(err, &opErr) && opErr.Err != nil {
-		return containsAddrInUse(opErr.Err.Error())
-	}
-	return false
-}
-
-// containsAddrInUse looks for the canonical address-in-use substring.
-// Split out so it can be unit-tested independently of platform errno
-// behaviour.
-func containsAddrInUse(msg string) bool {
-	const needle = "address already in use"
-	if len(msg) < len(needle) {
-		return false
-	}
-	for i := 0; i+len(needle) <= len(msg); i++ {
-		if msg[i:i+len(needle)] == needle {
-			return true
-		}
-	}
-	return false
 }

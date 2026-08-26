@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: BUSL-1.1
+
 package api
 
 // server_port_fallback_internal_test.go exercises bindWithFallback and
@@ -12,7 +14,6 @@ import (
 	"net"
 	"strconv"
 	"strings"
-	"syscall"
 	"testing"
 )
 
@@ -57,15 +58,6 @@ func TestBindWithFallback_FallsBackOneStep(t *testing.T) {
 
 	if bound != taken+1 {
 		t.Fatalf("expected fallback to port %d, got %d", taken+1, bound)
-	}
-}
-
-// TestIsAddrInUse_RecognisesSyscall confirms isAddrInUse matches a wrapped
-// EADDRINUSE.
-func TestIsAddrInUse_RecognisesSyscall(t *testing.T) {
-	wrapped := &net.OpError{Op: "listen", Err: syscall.EADDRINUSE}
-	if !isAddrInUse(wrapped) {
-		t.Fatalf("expected isAddrInUse to match EADDRINUSE")
 	}
 }
 
