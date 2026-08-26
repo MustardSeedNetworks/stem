@@ -37,7 +37,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
-      '@locales': fileURLToPath(new URL('../internal/i18n/locales', import.meta.url)),
+      '@locales': fileURLToPath(new URL('./locales', import.meta.url)),
     },
     // Force module deduplication for i18next + react-i18next. Vitest's
     // jsdom environment otherwise creates separate i18next instances

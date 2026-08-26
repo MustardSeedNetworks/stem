@@ -4,7 +4,7 @@
  * The rest of the suite renders components without initialising i18n, so a
  * `t()` call that resolves to nothing still "passes": the raw key is a
  * non-empty string and testid assertions never look at it (#654). These tests
- * import the real i18n instance — the same `internal/i18n/locales` JSON the
+ * import the real i18n instance — the same `ui/locales` JSON the
  * browser loads — and assert on the visible strings in both locales, so a key
  * that is missing, misspelled or absent from `es` fails here rather than
  * shipping as an English word on a Spanish screen.

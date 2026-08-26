@@ -4,7 +4,7 @@
  * #759: wrecking every EN locale file failed only 14 of 201 tests, because the
  * suite asserts on testids rather than text. A key can go missing, or ship
  * untranslated, and CI stays green. These tests assert the visible strings in
- * both locales against the real `internal/i18n/locales` JSON.
+ * both locales against the real `ui/locales` JSON.
  *
  * The login surface is first because it is the one screen every user sees, and
  * until #762 it had no `t()` calls at all.
