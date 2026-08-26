@@ -3,6 +3,7 @@
 ## Module System
 
 Modules own workflows and delegate to subsystems:
+
 - **Benchmark** (Red) - RFC 2544 tests
 - **ServiceTest** (Orange) - Y.1564/MEF tests
 - **TrafficGen** (Yellow) - Custom traffic generation
@@ -12,7 +13,7 @@ Modules own workflows and delegate to subsystems:
 ## Key Subsystems
 
 | Subsystem | Path | Purpose |
-|-----------|------|---------|
+| --- | --- | --- |
 | testmaster | `internal/testmaster/` | Test execution engine |
 | reflector | `internal/reflector/` | Packet reflection |
 | server | `internal/server/` | REST API handlers |
@@ -20,7 +21,7 @@ Modules own workflows and delegate to subsystems:
 
 ## Frontend Patterns
 
-- **i18n**: Use `useTranslation('namespace')` - namespaces in `internal/i18n/locales/`
+- **i18n**: Use `useTranslation('namespace')` - namespaces in `ui/locales/`
 - **Theme**: Import tokens from `ui/src/styles/theme.ts`
 - **State**: Zustand stores in `ui/src/stores/`
 

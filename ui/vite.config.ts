@@ -62,7 +62,7 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@': fileURLToPath(new URL('./src', import.meta.url)),
-        '@locales': fileURLToPath(new URL('../internal/i18n/locales', import.meta.url)),
+        '@locales': fileURLToPath(new URL('./locales', import.meta.url)),
       },
       // Force a single copy of these so duplicate transitive versions don't
       // bloat the bundle or break React's single-instance invariants.

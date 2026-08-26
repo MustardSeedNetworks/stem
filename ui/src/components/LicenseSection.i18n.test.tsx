@@ -3,7 +3,7 @@
  *
  * #759: wrecking every EN locale file failed only 19 of 206 tests, because the
  * suite asserts on testids and on English hardcoded in components. These assert
- * visible strings in both locales against the real `internal/i18n/locales`
+ * visible strings in both locales against the real `ui/locales`
  * JSON, so a key that goes missing or ships untranslated fails here.
  *
  * The error paths are covered too: five of this component's user-visible

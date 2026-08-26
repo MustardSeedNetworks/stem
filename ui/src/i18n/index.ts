@@ -2,7 +2,7 @@
  * i18n Configuration
  *
  * Configures react-i18next for internationalization.
- * Translations are loaded from the shared locales directory (internal/i18n/locales).
+ * Translations are loaded from the shared locales directory (ui/locales).
  *
  * Supported languages:
  * - English (en) - default
