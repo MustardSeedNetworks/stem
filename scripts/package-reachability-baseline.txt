@@ -1,0 +1,10 @@
+
+# A dead chain: nothing imports backup, and only backup imports database.
+internal/backup                      # unwired — nothing imports it
+internal/database                    # unwired — imported only by internal/backup, itself unwired
+internal/services/orchestrator/config # unwired — nothing imports it
+
+# Deleted by #798; the entries stay until that lands, since the gate only
+# fails on packages NOT listed and a shrinking list is always fine.
+internal/i18n                        # dead Go; its locales/ move to ui/ in #798
+internal/metrics                     # unwired Prometheus instrumentation; deleted in #798
