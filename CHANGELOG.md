@@ -5,6 +5,49 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.37](https://github.com/MustardSeedNetworks/stem/compare/v0.24.36...v0.24.37) (2026-08-26)
+
+
+### Features
+
+* **ci:** run the 37 Storybook stories, and gate on them ([#781](https://github.com/MustardSeedNetworks/stem/issues/781)) ([e123353](https://github.com/MustardSeedNetworks/stem/commit/e123353843769c4ac0e68d79b7bb5ec59fcd8bb9)), closes [#640](https://github.com/MustardSeedNetworks/stem/issues/640)
+
+
+### Bug Fixes
+
+* **ci:** make clang-format enforce, and cppcheck report honestly ([#777](https://github.com/MustardSeedNetworks/stem/issues/777)) ([5be254f](https://github.com/MustardSeedNetworks/stem/commit/5be254f2473841000c13d10c613208bddfeb1af4)), closes [#776](https://github.com/MustardSeedNetworks/stem/issues/776)
+* **ci:** request the workflows scope for the release-please token ([#787](https://github.com/MustardSeedNetworks/stem/issues/787)) ([fdbc425](https://github.com/MustardSeedNetworks/stem/commit/fdbc42524362d6b831e48230451011571acd88b6))
+* **deps:** update dependency @tanstack/react-query to v5.102.0 ([#785](https://github.com/MustardSeedNetworks/stem/issues/785)) ([a2433f2](https://github.com/MustardSeedNetworks/stem/commit/a2433f2b4f516a9964da8eec85a7cb63ae325482))
+* **deps:** update dependency react-hook-form to v7.86.0 ([#771](https://github.com/MustardSeedNetworks/stem/issues/771)) ([2f1e940](https://github.com/MustardSeedNetworks/stem/commit/2f1e940750ef8161fff4206ebda9a9d6cb1b754e))
+* **deps:** update module github.com/mustardseednetworks/foundation to v0.5.1 ([#770](https://github.com/MustardSeedNetworks/stem/issues/770)) ([dd4b9b7](https://github.com/MustardSeedNetworks/stem/commit/dd4b9b73ef1c34877216afa29052d88091427c7e))
+* **deps:** update module github.com/mustardseednetworks/foundation to v0.5.2 ([#772](https://github.com/MustardSeedNetworks/stem/issues/772)) ([3fc7a34](https://github.com/MustardSeedNetworks/stem/commit/3fc7a340e8e55709a6fad37a1c9cff5fe34909e3))
+* **i18n:** make the gate tell the truth ([#764](https://github.com/MustardSeedNetworks/stem/issues/764)) ([eb78b30](https://github.com/MustardSeedNetworks/stem/commit/eb78b3035447d7ec507f555b1d50426d6b71a40d))
+* **i18n:** use semgrep for the fallback rules instead of hand-written regex ([#767](https://github.com/MustardSeedNetworks/stem/issues/767)) ([5176bde](https://github.com/MustardSeedNetworks/stem/commit/5176bde90f519152900f78f174bc126ba34af8e5))
+
+
+### Tests
+
+* **i18n:** assert real locale copy on the four uncovered surfaces ([#778](https://github.com/MustardSeedNetworks/stem/issues/778)) ([a50dc0c](https://github.com/MustardSeedNetworks/stem/commit/a50dc0c452c2339ed77bda91beb835cf1c784cd2)), closes [#759](https://github.com/MustardSeedNetworks/stem/issues/759)
+* **i18n:** assert real locale copy on the login screen and the sidebar ([#769](https://github.com/MustardSeedNetworks/stem/issues/769)) ([b14cf92](https://github.com/MustardSeedNetworks/stem/commit/b14cf92be0225b0127dfb7aaf3796d2db8d784e6))
+
+
+### Continuous Integration
+
+* run the C gates weekly, and record the cppcheck version ([#783](https://github.com/MustardSeedNetworks/stem/issues/783)) ([98b8557](https://github.com/MustardSeedNetworks/stem/commit/98b8557f5ec7de778e420bf98e40df160ecaac37)), closes [#780](https://github.com/MustardSeedNetworks/stem/issues/780) [#776](https://github.com/MustardSeedNetworks/stem/issues/776)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#766](https://github.com/MustardSeedNetworks/stem/issues/766)) ([fe1007d](https://github.com/MustardSeedNetworks/stem/commit/fe1007da3ce07f4dd6fe3ff843d9c7eba997aea4))
+* **deps:** lock file maintenance ([#768](https://github.com/MustardSeedNetworks/stem/issues/768)) ([d6b0908](https://github.com/MustardSeedNetworks/stem/commit/d6b09082501cb54d094184783953efe3c6821942))
+* **deps:** lock file maintenance ([#775](https://github.com/MustardSeedNetworks/stem/issues/775)) ([2bf2cac](https://github.com/MustardSeedNetworks/stem/commit/2bf2cac1029bf4a970f994ecd4a79d592ee1b239))
+* **deps:** lock file maintenance ([#784](https://github.com/MustardSeedNetworks/stem/issues/784)) ([87146b0](https://github.com/MustardSeedNetworks/stem/commit/87146b05e32b4536d8d0d2dbe1585d990d99fa16))
+* **deps:** lock file maintenance ([#786](https://github.com/MustardSeedNetworks/stem/issues/786)) ([a8869ae](https://github.com/MustardSeedNetworks/stem/commit/a8869aee967240bd0d2804578ffa40b4bd958e95))
+* **deps:** lock file maintenance ([#788](https://github.com/MustardSeedNetworks/stem/issues/788)) ([2860684](https://github.com/MustardSeedNetworks/stem/commit/2860684342a70705635d46d2b7df6ccdfc9d7a6c))
+* **deps:** update dependency fast-uri to v4.1.3 ([#789](https://github.com/MustardSeedNetworks/stem/issues/789)) ([824b665](https://github.com/MustardSeedNetworks/stem/commit/824b66507e5ce40db6122fc5e5de4979f21594ba))
+* **i18n:** adopt the shared gate from MustardSeedNetworks/.github ([#774](https://github.com/MustardSeedNetworks/stem/issues/774)) ([3e6b3e6](https://github.com/MustardSeedNetworks/stem/commit/3e6b3e6f393021e4983399739dc8a6b3c8d482cc)), closes [#773](https://github.com/MustardSeedNetworks/stem/issues/773)
+* **i18n:** remove the --ratchet remnants ([#765](https://github.com/MustardSeedNetworks/stem/issues/765)) ([b74a419](https://github.com/MustardSeedNetworks/stem/commit/b74a4190be982ef89f84a780ae1bc1a61d8bfc30))
+
 ## [0.24.36](https://github.com/MustardSeedNetworks/stem/compare/v0.24.35...v0.24.36) (2026-08-24)
 
 
