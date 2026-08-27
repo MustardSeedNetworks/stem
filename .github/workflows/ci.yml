@@ -399,9 +399,11 @@ jobs:
           # gcc-14 is required for -std=c23: gcc-13 only knows -std=c2x,
           # and rejecting that flag is what made the compile database
           # unbuildable. libbpf-dev supplies the bpf/bpf.h that the AF_XDP
-          # sources include; without it clang-tidy reported the missing
-          # header as a finding on every file that pulls it in.
-          packages: cppcheck bear gcc-14 libbpf-dev
+          # sources include, and libxdp-dev the xdp/xsk.h that
+          # src/reflector/xdp_platform.c includes. Without them the build
+          # stops at a missing header, and clang-tidy previously reported
+          # that as a finding on every file pulling it in.
+          packages: cppcheck bear gcc-14 libbpf-dev libxdp-dev
 
       - name: Set clang-18 as default and verify versions
         run: |
