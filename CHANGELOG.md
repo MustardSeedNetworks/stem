@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.40](https://github.com/MustardSeedNetworks/stem/compare/v0.24.39...v0.24.40) (2026-08-27)
+
+
+### Bug Fixes
+
+* **deps:** update dependency lucide-react to v1.34.0 ([#805](https://github.com/MustardSeedNetworks/stem/issues/805)) ([2793db0](https://github.com/MustardSeedNetworks/stem/commit/2793db0d73de377910546727db2a7eff25b9c9e6))
+* **deps:** update module github.com/go-webauthn/webauthn to v0.18.0 ([#810](https://github.com/MustardSeedNetworks/stem/issues/810)) ([10ebdbb](https://github.com/MustardSeedNetworks/stem/commit/10ebdbb5c59fffccdfef90e0378c2f60d158f482))
+
+
+### Code Refactoring
+
+* **logging:** give the failed-login tracker an owner instead of a global ([#808](https://github.com/MustardSeedNetworks/stem/issues/808)) ([d7b406a](https://github.com/MustardSeedNetworks/stem/commit/d7b406ad3a756570b8b38c39e765e89145f9100c)), closes [#797](https://github.com/MustardSeedNetworks/stem/issues/797) [#807](https://github.com/MustardSeedNetworks/stem/issues/807)
+
+
+### Continuous Integration
+
+* **lint:** stop discarding the Linux lint result, and bump the image ([#809](https://github.com/MustardSeedNetworks/stem/issues/809)) ([b947f6d](https://github.com/MustardSeedNetworks/stem/commit/b947f6d84a88b6de371bae9a266bb1ceb2e35512))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#811](https://github.com/MustardSeedNetworks/stem/issues/811)) ([04de264](https://github.com/MustardSeedNetworks/stem/commit/04de26435113c78dfc5878d629a30349dcee2ffa))
+
 ## [0.24.39](https://github.com/MustardSeedNetworks/stem/compare/v0.24.38...v0.24.39) (2026-08-27)
 
 
