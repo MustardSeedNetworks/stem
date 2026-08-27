@@ -37,9 +37,9 @@ lint-linux: ## Lint cgo/linux-tagged files in a Linux container (macOS gap)
 		printf "$(YELLOW)⚠ 'container' not installed — brew install container$(RESET)\n"; exit 1; }
 	@container system start >/dev/null 2>&1 || true
 	@printf "$(BOLD)🐧 Linting linux/cgo-tagged files in a container...$(RESET)\n"
-	@container run --rm -v "$(CURDIR)":/src -w /src msn-lint-linux:$(LINT_LINUX_TAG) \
-		run --max-issues-per-linter=0 --max-same-issues=0 ./... \
-		2>&1 | grep -v '^level=warning' || true
+	@container run --rm --memory 4G --cpus 4 -v "$(CURDIR)":/src -w /src \
+		msn-lint-linux:$(LINT_LINUX_TAG) \
+		run --max-issues-per-linter=0 --max-same-issues=0 ./...
 	@printf "$(GREEN)✓ Linux/cgo lint complete$(RESET)\n"
 
 # Build the Linux lint image. Dockerfile lives in MustardSeedNetworks/.github
@@ -47,7 +47,7 @@ lint-linux: ## Lint cgo/linux-tagged files in a Linux container (macOS gap)
 lint-linux-image: ## Build the Linux lint container image
 	@container build -t msn-lint-linux:$(LINT_LINUX_TAG) $(LINT_LINUX_CONTEXT)
 
-LINT_LINUX_TAG ?= 1.0.0
+LINT_LINUX_TAG ?= 1.1.0
 LINT_LINUX_CONTEXT ?= ../.github/tools/lint-linux
 
 # internal/api/server_port_fallback_windows.go decides whether a bind failed
