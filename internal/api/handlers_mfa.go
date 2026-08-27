@@ -252,7 +252,7 @@ func (s *Server) handleLoginTOTP(w http.ResponseWriter, r *http.Request) {
 
 	logging.AuditMFAAttempt(r.Context(), r, username, logging.MFAFactorTOTP,
 		logging.MFAResultSuccess, "login completed")
-	logging.AuditLoginSuccess(r.Context(), r, username, username)
+	s.auditor.LoginSuccess(r.Context(), r, username, username)
 
 	writeJSON(w, AuthLoginResponse{
 		Token:        accessToken,
@@ -445,7 +445,7 @@ func (s *Server) handleWebAuthnLoginFinish(w http.ResponseWriter, r *http.Reques
 	}
 
 	logging.AuditWebAuthnLogin(r.Context(), r, username, logging.MFAResultSuccess, "login completed")
-	logging.AuditLoginSuccess(r.Context(), r, username, username)
+	s.auditor.LoginSuccess(r.Context(), r, username, username)
 
 	writeJSON(w, AuthLoginResponse{
 		Token:        accessToken,
@@ -482,7 +482,7 @@ func (s *Server) loginWithMFAGate(w http.ResponseWriter, r *http.Request) {
 	accessToken, refreshToken, err := s.authManager.AuthenticateWithRefresh(
 		r.Context(), req.Username, req.Password)
 	if err != nil {
-		logging.AuditLoginFailure(r.Context(), r, req.Username, err.Error())
+		s.auditor.LoginFailure(r.Context(), r, req.Username, err.Error())
 		s.writeAuthError(w, err)
 		return
 	}
@@ -513,7 +513,7 @@ func (s *Server) loginWithMFAGate(w http.ResponseWriter, r *http.Request) {
 	if newSessionID := sessionIDFromJWT(accessToken); newSessionID != "" {
 		s.csrfManager.RevokeToken(newSessionID)
 	}
-	logging.AuditLoginSuccess(r.Context(), r, req.Username, req.Username)
+	s.auditor.LoginSuccess(r.Context(), r, req.Username, req.Username)
 	writeJSON(w, AuthLoginResponse{
 		Token:        accessToken,
 		RefreshToken: refreshToken,

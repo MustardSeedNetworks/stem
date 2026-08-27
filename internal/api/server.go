@@ -141,6 +141,7 @@ type Server struct {
 	authManager          *auth.Manager
 	currentModule        string
 	authLimiter          *ratelimit.RateLimiter     // Rate limiter for auth endpoints (5/min)
+	auditor              *logging.Auditor           // Owns the failed-login tracker and its cleanup loop
 	apiLimiter           *ratelimit.RateLimiter     // Rate limiter for standard API endpoints (100/min)
 	tlsConfig            tlsutil.Config             // TLS configuration for HTTPS
 	cookieConfig         auth.CookieConfig          // Cookie configuration for secure auth
@@ -281,6 +282,7 @@ func NewServer(port int) (*Server, error) {
 	s.authManager = authMgr
 	s.currentModule = ""
 	s.authLimiter = ratelimit.NewAuthRateLimiter()
+	s.auditor = logging.NewAuditor()
 	s.apiLimiter = ratelimit.NewAPIRateLimiter()
 	s.tlsConfig = tlsutil.Config{
 		Enabled:  true,
@@ -781,6 +783,11 @@ func (s *Server) Shutdown() error {
 	// Stop rate limiter cleanup goroutines.
 	if s.authLimiter != nil {
 		s.authLimiter.Stop()
+	}
+
+	// Stop the failed-login tracker cleanup goroutine.
+	if s.auditor != nil {
+		s.auditor.Stop()
 	}
 	if s.apiLimiter != nil {
 		s.apiLimiter.Stop()
