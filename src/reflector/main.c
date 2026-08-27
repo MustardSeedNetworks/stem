@@ -162,7 +162,9 @@ int main(int argc, char **argv)
             filter_dst_mac = false;
         } else if (strcmp(argv[i], "--oui") == 0) {
             if (i + 1 < argc) {
-                unsigned int b0, b1, b2;
+                unsigned int b0;
+                unsigned int b1;
+                unsigned int b2;
                 if (sscanf(argv[++i], "%x:%x:%x", &b0, &b1, &b2) != 3 || b0 > 255 || b1 > 255 ||
                     b2 > 255) {
                     fprintf(stderr, "Invalid OUI format: %s (use XX:XX:XX)\n", argv[i]);
@@ -288,12 +290,17 @@ int main(int argc, char **argv)
         printf("\n");
     }
 
-    struct timespec start, now, last_stats;
+    struct timespec start;
+    struct timespec now;
+    struct timespec last_stats;
     clock_gettime(CLOCK_MONOTONIC, &start);
     last_stats = start;
 
     while (g_running) {
-        sleep(1);
+        /* nanosleep() rather than sleep(): sleep() interacts with per-process
+           alarm state and is not thread-safe. */
+        const struct timespec tick = {.tv_sec = 1, .tv_nsec = 0};
+        nanosleep(&tick, NULL);
 
         clock_gettime(CLOCK_MONOTONIC, &now);
         double elapsed = (now.tv_sec - start.tv_sec) + (now.tv_nsec - start.tv_nsec) / 1e9;

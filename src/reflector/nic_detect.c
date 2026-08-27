@@ -199,7 +199,8 @@ int get_nic_speed(const char *ifname)
  */
 void print_nic_recommendations(const char *ifname)
 {
-    uint16_t vendor_id = 0, device_id = 0;
+    uint16_t vendor_id      = 0;
+    uint16_t device_id      = 0;
     int      nic_speed      = get_nic_speed(ifname);
     bool     dpdk_installed = is_dpdk_available();
 
@@ -290,7 +291,8 @@ void print_nic_recommendations(const char *ifname)
  */
 void print_af_packet_warning(const char *ifname)
 {
-    uint16_t vendor_id = 0, device_id = 0;
+    uint16_t vendor_id = 0;
+    uint16_t device_id = 0;
     int      nic_speed = get_nic_speed(ifname);
 
     reflector_log(LOG_WARN, "");

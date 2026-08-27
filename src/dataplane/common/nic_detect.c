@@ -16,7 +16,6 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 
-#include <dirent.h>
 #include <net/if.h>
 #include <unistd.h>
 
@@ -253,42 +252,30 @@ int rfc2544_list_interfaces(nic_info_t *interfaces, uint32_t max_count)
 
     uint32_t count = 0;
 
-#ifdef __linux__
-    DIR *dir = opendir("/sys/class/net");
-    if (!dir) {
+    /*
+     * if_nameindex() is POSIX and thread-safe, and enumerates interfaces
+     * directly. It replaces two worse things: a readdir() walk of
+     * /sys/class/net, which shares stream state across threads and was
+     * Linux-only, and the macOS branch that guessed at a hardcoded en0..en3
+     * list and therefore missed any interface not named that way.
+     */
+    struct if_nameindex *ifs = if_nameindex();
+    if (ifs == NULL) {
         return -errno;
     }
 
-    struct dirent *entry;
-    while ((entry = readdir(dir)) != NULL && count < max_count) {
-        /* Skip . and .. */
-        if (entry->d_name[0] == '.') {
+    for (const struct if_nameindex *ifp = ifs; ifp->if_index != 0 && count < max_count; ifp++) {
+        /* Skip loopback: "lo" on Linux, "lo0" on the BSDs and macOS. */
+        if (strcmp(ifp->if_name, "lo") == 0 || strcmp(ifp->if_name, "lo0") == 0) {
             continue;
         }
 
-        /* Skip loopback */
-        if (strcmp(entry->d_name, "lo") == 0) {
-            continue;
-        }
-
-        /* Get interface info */
-        if (rfc2544_detect_nic(entry->d_name, &interfaces[count]) == 0) {
+        if (rfc2544_detect_nic(ifp->if_name, &interfaces[count]) == 0) {
             count++;
         }
     }
 
-    closedir(dir);
-#else
-    /* macOS: Use ifconfig or similar */
-    /* For simplicity, check common interface names */
-    const char *common_interfaces[] = {"en0", "en1", "en2", "en3", NULL};
-
-    for (int i = 0; common_interfaces[i] && count < max_count; i++) {
-        if (rfc2544_detect_nic(common_interfaces[i], &interfaces[count]) == 0) {
-            count++;
-        }
-    }
-#endif
+    if_freenameindex(ifs);
 
     return (int)count;
 }

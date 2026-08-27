@@ -507,5 +507,5 @@ int main(void)
 
     TEST_SUMMARY();
 
-    return test_failures;
+    return test_failed;
 }

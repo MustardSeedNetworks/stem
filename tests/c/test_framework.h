@@ -18,7 +18,7 @@
  *       TEST_SUITE("My Tests");
  *       RUN_TEST(my_test_name);
  *       TEST_SUMMARY();
- *       return test_failures;
+ *       return test_failed;
  *   }
  */
 
@@ -54,10 +54,6 @@ static int         test_total      = 0;
 static int         test_assertions = 0;
 static const char *current_suite   = "Default";
 static const char *current_test    = NULL;
-
-/* Alias for compatibility */
-#define test_failures test_failed
-#define test_count    test_total
 
 /* ============================================================================
  * Test Macros

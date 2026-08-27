@@ -93,8 +93,6 @@ seq_tracker_t *rfc2544_seq_tracker_create(uint32_t capacity);
 void           rfc2544_seq_tracker_record(seq_tracker_t *tracker, uint32_t seq_num);
 void           rfc2544_seq_tracker_destroy(seq_tracker_t *tracker);
 
-uint64_t calc_max_pps(uint64_t line_rate_bps, uint32_t frame_size);
-
 /* External context access (defined in core.c) */
 extern const platform_ops_t *rfc2544_get_platform(const rfc2544_ctx_t *ctx);
 extern worker_ctx_t         *rfc2544_get_worker(rfc2544_ctx_t *ctx, int index);
@@ -320,8 +318,10 @@ static int y1564_run_step(rfc2544_ctx_t *ctx, const y1564_service_t *service, do
     }
 
     /* Get MAC and IP addresses */
-    uint8_t  src_mac[6], dst_mac[6];
-    uint32_t src_ip, dst_ip;
+    uint8_t  src_mac[6];
+    uint8_t  dst_mac[6];
+    uint32_t src_ip;
+    uint32_t dst_ip;
     rfc2544_get_macs(ctx, src_mac, dst_mac);
     rfc2544_get_ips(ctx, &src_ip, &dst_ip);
 

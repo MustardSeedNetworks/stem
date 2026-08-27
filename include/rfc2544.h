@@ -1591,7 +1591,7 @@ typedef struct {
     double   max_gate_deviation_ns; /* Maximum gate deviation */
     double   avg_gate_deviation_ns; /* Average gate deviation */
     bool     gate_timing_passed;    /* Gate timing passed */
-} tsn_timing_result_t_v2;
+} tsn_timing_result_v2_t;
 
 /* TSN per-class result */
 typedef struct {
@@ -1637,7 +1637,7 @@ typedef struct {
 
 /* TSN full test result */
 typedef struct {
-    tsn_timing_result_t_v2 timing_result;      /* Gate timing results */
+    tsn_timing_result_v2_t timing_result;      /* Gate timing results */
     tsn_isolation_result_t isolation_result;   /* Isolation results */
     tsn_latency_result_t   latency_results[8]; /* Per-class latency */
     tsn_ptp_result_t       ptp_result;         /* PTP sync results */
@@ -1889,7 +1889,7 @@ void mef_print_results(const mef_config_result_t *config_result,
  * Run TSN gate timing test
  */
 int tsn_gate_timing_test(rfc2544_ctx_t *ctx, const tsn_config_t *config,
-                         tsn_timing_result_t_v2 *result);
+                         tsn_timing_result_v2_t *result);
 
 /**
  * Run TSN traffic class isolation test
@@ -1938,7 +1938,7 @@ int tsn_verify_gcl(const gate_control_list_t *gcl);
 /**
  * Print TSN timing results
  */
-void tsn_print_timing_results(const tsn_timing_result_t_v2 *result);
+void tsn_print_timing_results(const tsn_timing_result_v2_t *result);
 
 /**
  * Print TSN isolation results

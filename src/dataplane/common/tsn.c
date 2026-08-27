@@ -176,7 +176,7 @@ int tsn_verify_gcl(const gate_control_list_t *gcl)
  * ============================================================================ */
 
 int tsn_gate_timing_test(rfc2544_ctx_t *ctx, const tsn_config_t *config,
-                         tsn_timing_result_t_v2 *result)
+                         tsn_timing_result_v2_t *result)
 {
     if (!ctx || !config || !result) {
         return -EINVAL;
@@ -511,7 +511,7 @@ int tsn_full_test(rfc2544_ctx_t *ctx, const tsn_config_t *config, tsn_full_resul
  * Print Functions
  * ============================================================================ */
 
-void tsn_print_timing_results(const tsn_timing_result_t_v2 *result)
+void tsn_print_timing_results(const tsn_timing_result_v2_t *result)
 {
     if (!result) {
         return;

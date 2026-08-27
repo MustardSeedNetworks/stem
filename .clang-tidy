@@ -41,11 +41,27 @@ Checks: >
   -cert-msc54-cpp,
   -cert-sig30-c,
   -clang-analyzer-optin.performance.Padding,
+  -clang-analyzer-valist.Uninitialized,
   -clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,
   -misc-include-cleaner,
   -performance-no-int-to-ptr,
   -readability-identifier-length,
   -readability-magic-numbers
+
+# clang-analyzer-valist.Uninitialized is excluded above because it is an
+# analyzer bug under C23, not a finding. C23 made va_start's second parameter
+# optional and the analyzer does not model the new expansion, so it reports a
+# textbook-correct va_start/va_end pair as uninitialized. Reproduced on Ubuntu
+# LLVM 21.1.8: the nine-line case below fires under -std=c23 and is clean under
+# -std=c17 on the same compiler.
+#
+#   void mylog(const char *fmt, ...) {
+#       va_list args; va_start(args, fmt);
+#       vfprintf(stderr, fmt, args);   /* <- reported only under -std=c23 */
+#       va_end(args);
+#   }
+#
+# Re-test on a clang bump; drop this line when the analyzer models C23 va_start.
 
 # Treat warnings as errors for strict enforcement
 WarningsAsErrors: '*'
@@ -68,12 +84,26 @@ CheckOptions:
     value: lower_case
   - key: readability-identifier-naming.MacroDefinitionCase
     value: UPPER_CASE
+  # Function-like macros that exist to read as a call keep function casing.
+  # y1564_log wraps a logging call; spelling it Y1564_LOG at every call site
+  # would advertise an implementation detail the callers should not care about.
+  # libFuzzer dispatches on this exact symbol name -- it is defined by the
+  # fuzzing runtime, not by us, so the case style is not ours to choose.
+  - key: readability-identifier-naming.FunctionIgnoredRegexp
+    value: '^LLVMFuzzer[A-Za-z]+$'
+  - key: readability-identifier-naming.MacroDefinitionIgnoredRegexp
+    value: '^(y1564_log|likely|unlikely)$'
   - key: readability-identifier-naming.TypedefCase
     value: lower_case
   - key: readability-identifier-naming.TypedefSuffix
     value: _t
+  # lower_case, not UPPER_CASE. In C this rule matches `static const` objects —
+  # lookup tables and ops structs such as imix_simple and xdp_platform_ops.
+  # UPPER_CASE is the convention for macros and enum constants; const objects
+  # are lower_case. Spelling ten tables SCREAMING_CASE would make the code less
+  # idiomatic to satisfy a rule aimed at a different kind of constant.
   - key: readability-identifier-naming.GlobalConstantCase
-    value: UPPER_CASE
+    value: lower_case
   
   # Allow certain common patterns
   - key: readability-braces-around-statements.ShortStatementLines
