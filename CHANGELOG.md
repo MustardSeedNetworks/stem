@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.39](https://github.com/MustardSeedNetworks/stem/compare/v0.24.38...v0.24.39) (2026-08-27)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @tanstack/react-query to v5.102.1 ([#793](https://github.com/MustardSeedNetworks/stem/issues/793)) ([185762e](https://github.com/MustardSeedNetworks/stem/commit/185762e153f00c91da6e1cab4e13662eef5cfb11))
+* **deps:** update dependency @tanstack/react-query to v5.102.2 ([#800](https://github.com/MustardSeedNetworks/stem/issues/800)) ([5f93c37](https://github.com/MustardSeedNetworks/stem/commit/5f93c37461d2d2a8a6a9d0894e0b88e4d6de9b4b))
+
+
+### Code Refactoring
+
+* remove two dead packages, move locales to the frontend ([#798](https://github.com/MustardSeedNetworks/stem/issues/798)) ([99725cd](https://github.com/MustardSeedNetworks/stem/commit/99725cd686e52b622bbd54d20c54515c351fa1ee))
+
+
+### Continuous Integration
+
+* **dead-code:** make one step actually gate, on reachability ([#799](https://github.com/MustardSeedNetworks/stem/issues/799)) ([7b80648](https://github.com/MustardSeedNetworks/stem/commit/7b80648ee70b86768a68836db6ad35904435b954))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#795](https://github.com/MustardSeedNetworks/stem/issues/795)) ([55ddcfc](https://github.com/MustardSeedNetworks/stem/commit/55ddcfc2ea431c2a91f963133a588dced062d802))
+* **deps:** lock file maintenance ([#804](https://github.com/MustardSeedNetworks/stem/issues/804)) ([0588faf](https://github.com/MustardSeedNetworks/stem/commit/0588faf246fb04e48d27fec572bed1deb7a19e3b))
+* **deps:** update dependency @types/react-dom to v19.2.5 ([#802](https://github.com/MustardSeedNetworks/stem/issues/802)) ([b099584](https://github.com/MustardSeedNetworks/stem/commit/b0995848dbc7180208b8841dbe4eed2efd7193e4))
+* **deps:** update module github.com/securego/gosec/v2/cmd/gosec to v2.29.0 ([#794](https://github.com/MustardSeedNetworks/stem/issues/794)) ([4e1dec0](https://github.com/MustardSeedNetworks/stem/commit/4e1dec030a85bc71ea5cb37d2e9a2a76e0c8104f))
+* **deps:** update node.js to v26.8.0 ([#801](https://github.com/MustardSeedNetworks/stem/issues/801)) ([a5c6732](https://github.com/MustardSeedNetworks/stem/commit/a5c6732133f649f8aee1d8d7763cfe135e8007ae))
+* **deps:** update node.js to v26.8.1 ([#803](https://github.com/MustardSeedNetworks/stem/issues/803)) ([fe8c54e](https://github.com/MustardSeedNetworks/stem/commit/fe8c54e176682240f45b2ef19c472c5f675c7fdb))
+
 ## [0.24.38](https://github.com/MustardSeedNetworks/stem/compare/v0.24.37...v0.24.38) (2026-08-26)
 
 
