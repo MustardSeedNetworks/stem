@@ -1,6 +1,6 @@
 {
   "name": "stem-ui",
-  "version": "0.24.40",
+  "version": "0.24.41",
   "private": true,
   "type": "module",
   "description": "The Stem WebUI - Network Performance Testing - Mustard Seed Networks",
