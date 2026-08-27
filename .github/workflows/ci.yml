@@ -1096,10 +1096,21 @@ jobs:
             -o bin/stem-${{ matrix.os }}-${{ matrix.arch }} \
             ./cmd/stem/
 
+      # `|| true` made this catch nothing: a binary that will not execute, or
+      # one whose /__version reports "unknown" because the ldflags were never
+      # injected, both passed silently. That second case is exactly the
+      # Universal Build Contract rule this step exists to enforce, so the
+      # output is asserted rather than merely produced.
       - name: Verify binary
         if: matrix.os == 'linux' && matrix.arch == 'amd64' || matrix.os == 'darwin'
         run: |
-          ./bin/stem-${{ matrix.os }}-${{ matrix.arch }} version || true
+          set -euo pipefail
+          out=$(./bin/stem-${{ matrix.os }}-${{ matrix.arch }} version)
+          echo "$out"
+          if printf '%s' "$out" | grep -qi 'unknown'; then
+            echo "::error::version output contains 'unknown' — build metadata was not injected"
+            exit 1
+          fi
 
       - name: Verify UIBuildHash embedded (Universal Build Contract)
         # Static check: binary must contain the md5 hash of the embedded
