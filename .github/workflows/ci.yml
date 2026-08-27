@@ -969,12 +969,22 @@ jobs:
   # ============================================================================
   build:
     name: Build (${{ matrix.os }}-${{ matrix.arch }})
-    needs: [changes, backend, frontend]
+    needs: [changes, build-ui, backend, frontend]
     runs-on: ${{ matrix.runner }}
     # Measured p95 ~50s (2026-08-15 runs); 8m gives comfortable headroom for
     # cold-cache Go setup + artifact download.
     timeout-minutes: 8
-    # always() lets the if: evaluate when backend was skipped upstream.
+    # always() lets the if: evaluate when an upstream job was skipped —
+    # without it the implicit success() on a job-level if: would skip this
+    # job whenever any `needs` entry was skipped.
+    #
+    # The gate is build-ui, not frontend. These jobs consume the frontend-dist
+    # artifact; the frontend job is the UI's *test* suite and produces nothing
+    # they read. Requiring `frontend == 'success'` meant a backend-only PR —
+    # where the path filter correctly skips frontend — skipped Build, the
+    # Darwin compile check and E2E entirely, while CI Complete still went
+    # green. Gating on the artifact's producer says what these jobs actually
+    # need, and `frontend != failure` still blocks on a real UI test failure.
     # Note: matrix.required draft-skip was attempted here originally but
     # GitHub Actions rejects `matrix` in job-level if: (the matrix context
     # isn't bound until after the strategy expands). All matrix rows run
@@ -990,7 +1000,8 @@ jobs:
     # paying for a macOS runner on every PR.
     if: |
       always() &&
-      needs.frontend.result == 'success' &&
+      needs.build-ui.result == 'success' &&
+      (needs.frontend.result == 'success' || needs.frontend.result == 'skipped') &&
       (needs.backend.result == 'success' || needs.backend.result == 'skipped')
     strategy:
       fail-fast: false
@@ -1098,10 +1109,11 @@ jobs:
     runs-on: ubuntu-latest
     # Measured p95 ~45s (2026-08-15 runs); 5m gives comfortable headroom.
     timeout-minutes: 5
-    needs: [changes, backend, frontend]
+    needs: [changes, build-ui, backend, frontend]
     if: |
       always() &&
-      needs.frontend.result == 'success' &&
+      needs.build-ui.result == 'success' &&
+      (needs.frontend.result == 'success' || needs.frontend.result == 'skipped') &&
       (needs.backend.result == 'success' || needs.backend.result == 'skipped')
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -1128,7 +1140,7 @@ jobs:
   e2e:
     name: E2E Browser Tests
     runs-on: ubuntu-latest
-    needs: [changes, backend, frontend]
+    needs: [changes, build-ui, backend, frontend]
     # NOT sized from p95. A job budget has to exceed its apt step's worst case
     # (10 min) plus the real work (~4m40s measured), or a slow mirror becomes
     # indistinguishable from a hung test. Sized to p95 the way this was, niac's
@@ -1137,11 +1149,22 @@ jobs:
     # the mechanism behind #664.
     timeout-minutes: 25
     # Skipped on draft PRs (slow); also skipped if no frontend/backend changed.
-    # always() lets the if: evaluate when backend was skipped upstream.
+    # always() lets the if: evaluate when an upstream job was skipped —
+    # without it the implicit success() on a job-level if: would skip this
+    # job whenever any `needs` entry was skipped.
+    #
+    # The gate is build-ui, not frontend. These jobs consume the frontend-dist
+    # artifact; the frontend job is the UI's *test* suite and produces nothing
+    # they read. Requiring `frontend == 'success'` meant a backend-only PR —
+    # where the path filter correctly skips frontend — skipped Build, the
+    # Darwin compile check and E2E entirely, while CI Complete still went
+    # green. Gating on the artifact's producer says what these jobs actually
+    # need, and `frontend != failure` still blocks on a real UI test failure.
     if: |
       always() &&
       (github.event_name != 'pull_request' || github.event.pull_request.draft == false) &&
-      needs.frontend.result == 'success' &&
+      needs.build-ui.result == 'success' &&
+      (needs.frontend.result == 'success' || needs.frontend.result == 'skipped') &&
       (needs.backend.result == 'success' || needs.backend.result == 'skipped')
 
     steps:
