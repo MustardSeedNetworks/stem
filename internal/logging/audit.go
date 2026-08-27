@@ -137,19 +137,58 @@ type FailedLoginTracker struct {
 	attempts map[string][]time.Time // key: IP address or username
 }
 
-// version provides lazy-initialized singleton access using [sync.OnceValue].
-// Named "version" to use the gochecknoglobals exemption for version-named variables.
-// This is the audit tracker version/instance for this package.
-var version = sync.OnceValue(func() *FailedLoginTracker {
-	return &FailedLoginTracker{
-		attempts: make(map[string][]time.Time),
-	}
-})
+// Auditor owns the failed-login tracker and the goroutine that prunes it.
+//
+// The tracker used to be a package-level singleton named "version", chosen so
+// gochecknoglobals would allow-list it (#797). Giving it an owner removes the
+// global and, more usefully, gives CleanupOldAttempts somewhere to be called
+// from: it had no production caller at all, so every key the tracker ever saw
+// was retained for the process lifetime.
+type Auditor struct {
+	tracker  *FailedLoginTracker
+	done     chan struct{}
+	stopOnce sync.Once
+}
 
-// getFailedLoginTrackerInternal returns the singleton FailedLoginTracker instance,
-// initializing it on first call.
-func getFailedLoginTrackerInternal() *FailedLoginTracker {
-	return version()
+// NewAuditor returns an Auditor and starts its cleanup goroutine. Callers own
+// the result and must Stop it.
+func NewAuditor() *Auditor {
+	a := &Auditor{
+		tracker:  &FailedLoginTracker{attempts: make(map[string][]time.Time)},
+		done:     make(chan struct{}),
+		stopOnce: sync.Once{},
+	}
+
+	go a.cleanupLoop()
+
+	return a
+}
+
+// Stop stops the cleanup goroutine. Safe to call multiple times.
+func (a *Auditor) Stop() {
+	a.stopOnce.Do(func() {
+		close(a.done)
+	})
+}
+
+// Tracker exposes the failed-login tracker so tests can assert on its state.
+func (a *Auditor) Tracker() *FailedLoginTracker {
+	return a.tracker
+}
+
+// cleanupLoop periodically drops attempt records that have aged out.
+func (a *Auditor) cleanupLoop() {
+	ticker := time.NewTicker(AttemptCleanupInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			a.tracker.CleanupOldAttempts()
+		case <-a.done:
+			return
+		}
+	}
 }
 
 // Failed login tracking constants.
@@ -282,8 +321,9 @@ func AuditPasswordChange(
 	})
 }
 
-// AuditLoginSuccess logs a successful login event.
-func AuditLoginSuccess(ctx context.Context, r *http.Request, userID, username string) {
+// LoginSuccess logs a successful login event and clears that client's failed
+// attempts.
+func (a *Auditor) LoginSuccess(ctx context.Context, r *http.Request, userID, username string) {
 	LogSecurityEvent(ctx, &SecurityEvent{
 		Timestamp:         time.Time{},
 		EventType:         EventLoginSuccess,
@@ -303,12 +343,12 @@ func AuditLoginSuccess(ctx context.Context, r *http.Request, userID, username st
 	})
 
 	// Clear failed login attempts for this IP on successful login.
-	getFailedLoginTrackerInternal().ClearAttempts(GetClientIP(r))
+	a.tracker.ClearAttempts(GetClientIP(r))
 }
 
-// AuditLoginFailure logs a failed login attempt.
+// LoginFailure logs a failed login attempt.
 // Returns true if the failure triggered a suspicious activity alert.
-func AuditLoginFailure(ctx context.Context, r *http.Request, username, reason string) bool {
+func (a *Auditor) LoginFailure(ctx context.Context, r *http.Request, username, reason string) bool {
 	ipAddress := GetClientIP(r)
 
 	LogSecurityEvent(ctx, &SecurityEvent{
@@ -330,7 +370,7 @@ func AuditLoginFailure(ctx context.Context, r *http.Request, username, reason st
 	})
 
 	// Track this failed attempt and check for suspicious activity.
-	return getFailedLoginTrackerInternal().RecordFailedAttempt(ctx, r, ipAddress, username)
+	return a.tracker.RecordFailedAttempt(ctx, r, ipAddress, username)
 }
 
 // AuditTokenInvalid logs a token validation failure.
@@ -599,17 +639,4 @@ func (t *FailedLoginTracker) CleanupOldAttempts() {
 			t.attempts[key] = recentAttempts
 		}
 	}
-}
-
-// GetFailedLoginTracker returns the global failed login tracker for testing purposes.
-func GetFailedLoginTracker() *FailedLoginTracker {
-	return getFailedLoginTrackerInternal()
-}
-
-// ResetFailedLoginTracker resets the global failed login tracker (for testing only).
-func ResetFailedLoginTracker() {
-	tracker := getFailedLoginTrackerInternal()
-	tracker.mu.Lock()
-	defer tracker.mu.Unlock()
-	tracker.attempts = make(map[string][]time.Time)
 }

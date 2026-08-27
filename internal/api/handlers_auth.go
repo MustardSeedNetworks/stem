@@ -40,7 +40,7 @@ func (s *Server) handleAuthLogin(w http.ResponseWriter, r *http.Request) {
 	accessToken, refreshToken, err := s.authManager.AuthenticateWithRefresh(r.Context(), req.Username, req.Password)
 	if err != nil {
 		// Audit log the failed login attempt.
-		logging.AuditLoginFailure(r.Context(), r, req.Username, err.Error())
+		s.auditor.LoginFailure(r.Context(), r, req.Username, err.Error())
 		s.writeAuthError(w, err)
 		return
 	}
@@ -59,7 +59,7 @@ func (s *Server) handleAuthLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Audit log the successful login.
-	logging.AuditLoginSuccess(r.Context(), r, req.Username, req.Username)
+	s.auditor.LoginSuccess(r.Context(), r, req.Username, req.Username)
 
 	// Also return tokens in response body for API clients.
 	writeJSON(w, AuthLoginResponse{

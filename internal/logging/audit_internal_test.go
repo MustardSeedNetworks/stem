@@ -189,15 +189,16 @@ func TestLogSecurityEvent_SetsTimestamp(t *testing.T) {
 	}
 }
 
-func TestAuditLoginSuccess(t *testing.T) {
+func TestAuditor_LoginSuccess(t *testing.T) {
 	handler := setupTestLogger()
-	ResetFailedLoginTracker()
+	auditor := NewAuditor()
+	t.Cleanup(auditor.Stop)
 	defer handler.Reset()
 
 	req := createTestRequest(http.MethodPost, "/api/auth/login")
 	ctx := context.Background()
 
-	AuditLoginSuccess(ctx, req, "user-123", "admin")
+	auditor.LoginSuccess(ctx, req, "user-123", "admin")
 
 	output := handler.String()
 	if !strings.Contains(output, "login_success") {
@@ -211,8 +212,9 @@ func TestAuditLoginSuccess(t *testing.T) {
 	}
 }
 
-func TestAuditLoginSuccess_ClearsFailedAttempts(t *testing.T) {
-	ResetFailedLoginTracker()
+func TestAuditor_LoginSuccess_ClearsFailedAttempts(t *testing.T) {
+	auditor := NewAuditor()
+	t.Cleanup(auditor.Stop)
 	handler := setupTestLogger()
 	defer handler.Reset()
 
@@ -222,31 +224,32 @@ func TestAuditLoginSuccess_ClearsFailedAttempts(t *testing.T) {
 
 	// Record some failed attempts first.
 	for range 3 {
-		AuditLoginFailure(ctx, req, "testuser", "wrong password")
+		auditor.LoginFailure(ctx, req, "testuser", "wrong password")
 	}
 
 	// Verify attempts were recorded.
-	if GetFailedLoginTracker().GetAttemptCount(ipAddress) != 3 {
+	if auditor.Tracker().GetAttemptCount(ipAddress) != 3 {
 		t.Error("expected 3 failed attempts recorded")
 	}
 
 	// Successful login should clear attempts.
-	AuditLoginSuccess(ctx, req, "user-123", "testuser")
+	auditor.LoginSuccess(ctx, req, "user-123", "testuser")
 
-	if GetFailedLoginTracker().GetAttemptCount(ipAddress) != 0 {
+	if auditor.Tracker().GetAttemptCount(ipAddress) != 0 {
 		t.Error("expected failed attempts to be cleared after successful login")
 	}
 }
 
-func TestAuditLoginFailure(t *testing.T) {
+func TestAuditor_LoginFailure(t *testing.T) {
 	handler := setupTestLogger()
-	ResetFailedLoginTracker()
+	auditor := NewAuditor()
+	t.Cleanup(auditor.Stop)
 	defer handler.Reset()
 
 	req := createTestRequest(http.MethodPost, "/api/auth/login")
 	ctx := context.Background()
 
-	triggered := AuditLoginFailure(ctx, req, "baduser", "invalid credentials")
+	triggered := auditor.LoginFailure(ctx, req, "baduser", "invalid credentials")
 
 	output := handler.String()
 	if !strings.Contains(output, "login_failure") {
@@ -263,9 +266,10 @@ func TestAuditLoginFailure(t *testing.T) {
 	}
 }
 
-func TestAuditLoginFailure_TriggersSuspiciousActivity(t *testing.T) {
+func TestAuditor_LoginFailure_TriggersSuspiciousActivity(t *testing.T) {
 	handler := setupTestLogger()
-	ResetFailedLoginTracker()
+	auditor := NewAuditor()
+	t.Cleanup(auditor.Stop)
 	defer handler.Reset()
 
 	req := createTestRequest(http.MethodPost, "/api/auth/login")
@@ -274,7 +278,7 @@ func TestAuditLoginFailure_TriggersSuspiciousActivity(t *testing.T) {
 	// Generate enough failures to trigger suspicious activity.
 	var triggered bool
 	for range FailedLoginThreshold {
-		triggered = AuditLoginFailure(ctx, req, "attacker", "wrong password")
+		triggered = auditor.LoginFailure(ctx, req, "attacker", "wrong password")
 	}
 
 	if !triggered {
@@ -459,8 +463,9 @@ func TestAuditSuspiciousActivity(t *testing.T) {
 }
 
 func TestFailedLoginTracker_RecordAndCount(t *testing.T) {
-	ResetFailedLoginTracker()
-	tracker := GetFailedLoginTracker()
+	auditor := NewAuditor()
+	t.Cleanup(auditor.Stop)
+	tracker := auditor.Tracker()
 
 	req := createTestRequest(http.MethodPost, "/api/auth/login")
 	ctx := context.Background()
@@ -482,8 +487,9 @@ func TestFailedLoginTracker_RecordAndCount(t *testing.T) {
 }
 
 func TestFailedLoginTracker_ClearAttempts(t *testing.T) {
-	ResetFailedLoginTracker()
-	tracker := GetFailedLoginTracker()
+	auditor := NewAuditor()
+	t.Cleanup(auditor.Stop)
+	tracker := auditor.Tracker()
 
 	req := createTestRequest(http.MethodPost, "/api/auth/login")
 	ctx := context.Background()
@@ -507,8 +513,9 @@ func TestFailedLoginTracker_ClearAttempts(t *testing.T) {
 }
 
 func TestFailedLoginTracker_CleanupOldAttempts(t *testing.T) {
-	ResetFailedLoginTracker()
-	tracker := GetFailedLoginTracker()
+	auditor := NewAuditor()
+	t.Cleanup(auditor.Stop)
+	tracker := auditor.Tracker()
 
 	// Manually insert an old attempt.
 	tracker.mu.Lock()
@@ -664,19 +671,40 @@ func TestGetClientIP_RemoteAddr(t *testing.T) {
 	}
 }
 
-func TestResetFailedLoginTracker(t *testing.T) {
-	tracker := GetFailedLoginTracker()
+// TestNewAuditorIsolatesTrackers is the regression guard for #797: the tracker
+// used to be a package global, so every caller shared one. If a global is
+// reintroduced, the second auditor sees the first one's attempts and this fails.
+func TestNewAuditorIsolatesTrackers(t *testing.T) {
+	first := NewAuditor()
+	t.Cleanup(first.Stop)
+	second := NewAuditor()
+	t.Cleanup(second.Stop)
+
+	if first.Tracker() == second.Tracker() {
+		t.Fatal("two auditors share one tracker; the global is back")
+	}
+
 	req := createTestRequest(http.MethodPost, "/api/auth/login")
 	ctx := context.Background()
+	const key = "isolation-key"
 
-	// Add some attempts.
-	tracker.RecordFailedAttempt(ctx, req, "test-ip", "user")
+	first.Tracker().RecordFailedAttempt(ctx, req, key, "user")
 
-	// Reset.
-	ResetFailedLoginTracker()
-
-	// Should be empty now.
-	if count := tracker.GetAttemptCount("test-ip"); count != 0 {
-		t.Errorf("expected 0 after reset, got %d", count)
+	if count := first.Tracker().GetAttemptCount(key); count != 1 {
+		t.Errorf("first auditor recorded %d attempts, want 1", count)
 	}
+	if count := second.Tracker().GetAttemptCount(key); count != 0 {
+		t.Errorf("second auditor saw %d attempts from the first, want 0", count)
+	}
+}
+
+// TestAuditorStopIsIdempotent covers the shutdown path: Server.Shutdown may run
+// more than once, and closing an already-closed channel panics.
+func TestAuditorStopIsIdempotent(t *testing.T) {
+	t.Parallel()
+
+	auditor := NewAuditor()
+
+	auditor.Stop()
+	auditor.Stop()
 }
