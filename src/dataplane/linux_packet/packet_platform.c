@@ -29,6 +29,8 @@
 #include <net/if.h>
 #include <unistd.h>
 
+#include "stem_errno.h"
+
 /* worker_ctx_t and rfc2544_ctx_t are defined in rfc2544_internal.h */
 
 typedef struct {
@@ -95,7 +97,7 @@ static int enable_hw_timestamping(platform_ctx_t *pctx, const char *ifname)
     if (ioctl(pctx->sock_fd, SIOCSHWTSTAMP, &ifr) < 0) {
         /* Hardware timestamping not supported - fall back to software */
         fprintf(stderr, "[packet] HW timestamping not available: %s (using software timestamps)\n",
-                strerror(errno));
+                stem_strerror(errno));
         return -1;
     }
 
@@ -106,7 +108,7 @@ static int enable_hw_timestamping(platform_ctx_t *pctx, const char *ifname)
 
     if (setsockopt(pctx->sock_fd, SOL_SOCKET, SO_TIMESTAMPING, &timestamping_flags,
                    sizeof(timestamping_flags)) < 0) {
-        fprintf(stderr, "[packet] SO_TIMESTAMPING failed: %s\n", strerror(errno));
+        fprintf(stderr, "[packet] SO_TIMESTAMPING failed: %s\n", stem_strerror(errno));
         return -1;
     }
 

@@ -269,11 +269,7 @@ bool custom_is_valid_response(const uint8_t *data, uint32_t len, const char *sig
     memcpy(padded_sig, signature, sig_len);
 
     /* Check signature */
-    if (memcmp(payload->signature, padded_sig, RFC2544_SIG_LEN) != 0) {
-        return false;
-    }
-
-    return true;
+    return memcmp(payload->signature, padded_sig, RFC2544_SIG_LEN) == 0;
 }
 
 /**
@@ -364,11 +360,7 @@ bool rfc2544_is_valid_response(const uint8_t *data, uint32_t len)
                                     sizeof(udp_header_t));
 
     /* Check signature */
-    if (memcmp(payload->signature, RFC2544_SIGNATURE, RFC2544_SIG_LEN) != 0) {
-        return false;
-    }
-
-    return true;
+    return memcmp(payload->signature, RFC2544_SIGNATURE, RFC2544_SIG_LEN) == 0;
 }
 
 /**
@@ -741,11 +733,7 @@ bool y1564_is_valid_response(const uint8_t *data, uint32_t len)
                                   sizeof(udp_header_t));
 
     /* Check signature */
-    if (memcmp(payload->signature, Y1564_SIGNATURE, Y1564_SIG_LEN) != 0) {
-        return false;
-    }
-
-    return true;
+    return memcmp(payload->signature, Y1564_SIGNATURE, Y1564_SIG_LEN) == 0;
 }
 
 /**

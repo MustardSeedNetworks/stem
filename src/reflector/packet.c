@@ -35,7 +35,10 @@ static pthread_once_t cpu_detect_once = PTHREAD_ONCE_INIT;
  */
 static void detect_cpu_features(void)
 {
-    unsigned int eax, ebx, ecx, edx;
+    unsigned int eax;
+    unsigned int ebx;
+    unsigned int ecx;
+    unsigned int edx;
 
     /* Check for SSE2 (CPUID.01H:EDX.SSE2[bit 26]) */
     if (__get_cpuid(1, &eax, &ebx, &ecx, &edx)) {
@@ -423,7 +426,8 @@ __attribute__((unused)) static ALWAYS_INLINE void reflect_packet_inplace_scalar(
 
     /* Swap IP addresses (4 bytes each) - use memcpy for alignment safety */
     uint32_t ip_offset = ETH_HDR_LEN;
-    uint32_t ip_src_val, ip_dst_val;
+    uint32_t ip_src_val;
+    uint32_t ip_dst_val;
     memcpy(&ip_src_val, &data[ip_offset + IP_SRC_OFFSET], 4);
     memcpy(&ip_dst_val, &data[ip_offset + IP_DST_OFFSET], 4);
     memcpy(&data[ip_offset + IP_SRC_OFFSET], &ip_dst_val, 4);
@@ -431,7 +435,8 @@ __attribute__((unused)) static ALWAYS_INLINE void reflect_packet_inplace_scalar(
 
     /* Swap UDP ports (2 bytes each) - use memcpy for alignment safety */
     uint32_t udp_offset = ETH_HDR_LEN + ip_hdr_len;
-    uint16_t udp_src_val, udp_dst_val;
+    uint16_t udp_src_val;
+    uint16_t udp_dst_val;
     memcpy(&udp_src_val, &data[udp_offset + UDP_SRC_PORT_OFFSET], 2);
     memcpy(&udp_dst_val, &data[udp_offset + UDP_DST_PORT_OFFSET], 2);
     memcpy(&data[udp_offset + UDP_SRC_PORT_OFFSET], &udp_dst_val, 2);
@@ -642,7 +647,8 @@ void reflect_packet_with_mode(uint8_t *data, uint32_t len, reflect_mode_t mode,
 
     /* Swap IP addresses */
     uint32_t ip_offset = ETH_HDR_LEN;
-    uint32_t ip_src_val, ip_dst_val;
+    uint32_t ip_src_val;
+    uint32_t ip_dst_val;
     memcpy(&ip_src_val, &data[ip_offset + IP_SRC_OFFSET], 4);
     memcpy(&ip_dst_val, &data[ip_offset + IP_DST_OFFSET], 4);
     memcpy(&data[ip_offset + IP_SRC_OFFSET], &ip_dst_val, 4);
@@ -665,7 +671,8 @@ void reflect_packet_with_mode(uint8_t *data, uint32_t len, reflect_mode_t mode,
     }
 
     uint32_t udp_offset = ETH_HDR_LEN + ip_hdr_len;
-    uint16_t udp_src_val, udp_dst_val;
+    uint16_t udp_src_val;
+    uint16_t udp_dst_val;
     memcpy(&udp_src_val, &data[udp_offset + UDP_SRC_PORT_OFFSET], 2);
     memcpy(&udp_dst_val, &data[udp_offset + UDP_DST_PORT_OFFSET], 2);
     memcpy(&data[udp_offset + UDP_SRC_PORT_OFFSET], &udp_dst_val, 2);
@@ -1100,7 +1107,8 @@ void reflect_packet_ipv6(uint8_t *data, uint32_t len, reflect_mode_t mode, bool 
     }
 
     /* Swap UDP ports */
-    uint16_t udp_src_val, udp_dst_val;
+    uint16_t udp_src_val;
+    uint16_t udp_dst_val;
     memcpy(&udp_src_val, &data[udp_offset + UDP_SRC_PORT_OFFSET], 2);
     memcpy(&udp_dst_val, &data[udp_offset + UDP_DST_PORT_OFFSET], 2);
     memcpy(&data[udp_offset + UDP_SRC_PORT_OFFSET], &udp_dst_val, 2);

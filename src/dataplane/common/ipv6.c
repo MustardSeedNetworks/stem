@@ -70,7 +70,8 @@ int rfc2544_ipv6_configure(rfc2544_ctx_t *ctx, const ipv6_config_t *config)
     memcpy(&ctx->config.ipv6, config, sizeof(ipv6_config_t));
     ctx->config.ip_mode = IP_MODE_V6;
 
-    char src_str[INET6_ADDRSTRLEN], dst_str[INET6_ADDRSTRLEN];
+    char src_str[INET6_ADDRSTRLEN];
+    char dst_str[INET6_ADDRSTRLEN];
     ipv6_to_string(config->src_addr, src_str, sizeof(src_str));
     ipv6_to_string(config->dst_addr, dst_str, sizeof(dst_str));
 

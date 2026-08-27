@@ -34,6 +34,7 @@
 #include <unistd.h>
 
 #include "reflector.h"
+#include "stem_errno.h"
 
 /* Ring buffer configuration - tuned for performance */
 #define PACKET_RING_FRAMES  4096
@@ -117,7 +118,7 @@ int packet_platform_set_guard_port(worker_ctx_t *wctx, uint16_t port)
     int fd = port == 0 ? -1 : open_udp_guard(wctx->config->ifname, port);
     if (port != 0 && fd < 0 && errno != EADDRINUSE) {
         reflector_log(LOG_ERROR, "Failed to bind filtered UDP guard port %u: %s", port,
-                      strerror(errno));
+                      stem_strerror(errno));
         return -1;
     }
     if (port != 0 && fd < 0) {
@@ -212,12 +213,13 @@ int packet_platform_init(reflector_ctx_t *rctx, worker_ctx_t *wctx)
     /* Create AF_PACKET socket */
     pctx->sock_fd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
     if (pctx->sock_fd < 0) {
-        reflector_log(LOG_ERROR, "Failed to create AF_PACKET socket: %s", strerror(errno));
+        reflector_log(LOG_ERROR, "Failed to create AF_PACKET socket: %s", stem_strerror(errno));
         free(pctx);
         return -1;
     }
     if (ignore_outgoing_packets(pctx->sock_fd) < 0) {
-        reflector_log(LOG_ERROR, "Failed to suppress outgoing packet capture: %s", strerror(errno));
+        reflector_log(LOG_ERROR, "Failed to suppress outgoing packet capture: %s",
+                      stem_strerror(errno));
         close(pctx->sock_fd);
         free(pctx);
         return -1;
@@ -233,7 +235,7 @@ int packet_platform_init(reflector_ctx_t *rctx, worker_ctx_t *wctx)
         pctx->sock_fd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
         if (pctx->sock_fd < 0 || ignore_outgoing_packets(pctx->sock_fd) < 0 ||
             try_tpacket_v2(pctx) < 0) {
-            reflector_log(LOG_ERROR, "Failed to setup TPACKET_V2: %s", strerror(errno));
+            reflector_log(LOG_ERROR, "Failed to setup TPACKET_V2: %s", stem_strerror(errno));
             if (pctx->sock_fd >= 0) {
                 close(pctx->sock_fd);
             }
@@ -257,7 +259,7 @@ int packet_platform_init(reflector_ctx_t *rctx, worker_ctx_t *wctx)
                              MAP_SHARED | MAP_POPULATE, pctx->sock_fd, 0);
     }
     if (pctx->rx_ring == MAP_FAILED) {
-        reflector_log(LOG_WARN, "Failed to mmap ring buffers: %s", strerror(errno));
+        reflector_log(LOG_WARN, "Failed to mmap ring buffers: %s", stem_strerror(errno));
         reflector_log(LOG_INFO, "Using simple recv/send mode (slower but more compatible)");
         use_simple_mode    = true;
         pctx->rx_ring      = NULL;
@@ -280,7 +282,7 @@ int packet_platform_init(reflector_ctx_t *rctx, worker_ctx_t *wctx)
     sll.sll_ifindex        = wctx->config->ifindex;
 
     if (bind(pctx->sock_fd, (struct sockaddr *)&sll, sizeof(sll)) < 0) {
-        reflector_log(LOG_ERROR, "Failed to bind AF_PACKET socket: %s", strerror(errno));
+        reflector_log(LOG_ERROR, "Failed to bind AF_PACKET socket: %s", stem_strerror(errno));
         munmap(pctx->rx_ring, pctx->rx_ring_size);
         close(pctx->sock_fd);
         free(pctx);
@@ -311,7 +313,7 @@ int packet_platform_init(reflector_ctx_t *rctx, worker_ctx_t *wctx)
     int qdisc_bypass = 1;
     if (setsockopt(pctx->sock_fd, SOL_PACKET, PACKET_QDISC_BYPASS, &qdisc_bypass,
                    sizeof(qdisc_bypass)) < 0) {
-        reflector_log(LOG_WARN, "Failed to enable QDISC bypass: %s", strerror(errno));
+        reflector_log(LOG_WARN, "Failed to enable QDISC bypass: %s", stem_strerror(errno));
     } else {
         reflector_log(LOG_INFO, "PACKET_QDISC_BYPASS enabled (faster TX)");
     }
@@ -321,7 +323,7 @@ int packet_platform_init(reflector_ctx_t *rctx, worker_ctx_t *wctx)
         uint32_t fanout_arg = (getpid() & 0xffff) | (PACKET_FANOUT_HASH << 16);
         if (setsockopt(pctx->sock_fd, SOL_PACKET, PACKET_FANOUT, &fanout_arg, sizeof(fanout_arg)) <
             0) {
-            reflector_log(LOG_WARN, "Failed to enable PACKET_FANOUT: %s", strerror(errno));
+            reflector_log(LOG_WARN, "Failed to enable PACKET_FANOUT: %s", stem_strerror(errno));
         } else {
             reflector_log(LOG_INFO, "PACKET_FANOUT enabled (multi-queue distribution)");
         }
@@ -330,7 +332,7 @@ int packet_platform_init(reflector_ctx_t *rctx, worker_ctx_t *wctx)
     /* Enable SO_BUSY_POLL for lower latency (50 microseconds) */
     int busy_poll = 50;
     if (setsockopt(pctx->sock_fd, SOL_SOCKET, SO_BUSY_POLL, &busy_poll, sizeof(busy_poll)) < 0) {
-        reflector_log(LOG_WARN, "Failed to enable busy polling: %s", strerror(errno));
+        reflector_log(LOG_WARN, "Failed to enable busy polling: %s", stem_strerror(errno));
     } else {
         reflector_log(LOG_INFO, "SO_BUSY_POLL enabled (low latency mode)");
     }

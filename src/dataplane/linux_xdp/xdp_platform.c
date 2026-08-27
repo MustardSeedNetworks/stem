@@ -37,6 +37,8 @@
 #include <xdp/libxdp.h>
 #include <xdp/xsk.h>
 
+#include "stem_errno.h"
+
 /* worker_ctx_t and rfc2544_ctx_t are defined in rfc2544_internal.h */
 
 typedef struct {
@@ -199,7 +201,7 @@ static int xdp_init(rfc2544_ctx_t *ctx, worker_ctx_t *wctx)
     ret = xsk_umem__create(&pctx->umem, pctx->umem_area, pctx->umem_size, &pctx->fill_ring,
                            &pctx->comp_ring, &umem_cfg);
     if (ret) {
-        fprintf(stderr, "[xdp] Failed to create UMEM: %s\n", strerror(-ret));
+        fprintf(stderr, "[xdp] Failed to create UMEM: %s\n", stem_strerror(-ret));
         frame_alloc_cleanup(&pctx->frame_alloc);
         munmap(pctx->umem_area, pctx->umem_size);
         free(pctx);
@@ -224,7 +226,7 @@ static int xdp_init(rfc2544_ctx_t *ctx, worker_ctx_t *wctx)
         ret = xsk_socket__create(&pctx->xsk, ctx->config.interface, wctx->queue_id, pctx->umem,
                                  &pctx->rx_ring, &pctx->tx_ring, &xsk_cfg);
         if (ret) {
-            fprintf(stderr, "[xdp] Failed to create XDP socket: %s\n", strerror(-ret));
+            fprintf(stderr, "[xdp] Failed to create XDP socket: %s\n", stem_strerror(-ret));
             xsk_umem__delete(pctx->umem);
             frame_alloc_cleanup(&pctx->frame_alloc);
             munmap(pctx->umem_area, pctx->umem_size);

@@ -6,6 +6,7 @@
 
 #include <errno.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -43,6 +44,7 @@
 #endif
 
 #include "reflector.h"
+#include "stem_errno.h"
 
 /* Current log level */
 static log_level_t current_log_level = LOG_INFO;
@@ -91,7 +93,7 @@ int get_interface_index(const char *ifname)
     unsigned int ifindex = if_nametoindex(ifname);
     if (ifindex == 0) {
         int saved_errno = errno;
-        reflector_log(LOG_ERROR, "Interface %s not found: %s", ifname, strerror(saved_errno));
+        reflector_log(LOG_ERROR, "Interface %s not found: %s", ifname, stem_strerror(saved_errno));
         errno = saved_errno;
         return -1;
     }
@@ -104,13 +106,14 @@ int get_interface_index(const char *ifname)
 int get_interface_mac(const char *ifname, uint8_t mac[6])
 {
 #ifdef __linux__
-    int          fd, ret;
+    int          fd;
+    int          ret;
     struct ifreq ifr;
 
     fd = socket(AF_INET, SOCK_DGRAM, 0);
     if (fd < 0) {
         int saved_errno = errno;
-        reflector_log(LOG_ERROR, "Failed to create socket: %s", strerror(saved_errno));
+        reflector_log(LOG_ERROR, "Failed to create socket: %s", stem_strerror(saved_errno));
         errno = saved_errno;
         return -1;
     }
@@ -122,7 +125,7 @@ int get_interface_mac(const char *ifname, uint8_t mac[6])
     if (ret < 0) {
         int saved_errno = errno;
         reflector_log(LOG_ERROR, "Failed to get MAC address for %s: %s", ifname,
-                      strerror(saved_errno));
+                      stem_strerror(saved_errno));
         close(fd);
         errno = saved_errno;
         return -1;
@@ -137,7 +140,7 @@ int get_interface_mac(const char *ifname, uint8_t mac[6])
 
     if (getifaddrs(&ifap) != 0) {
         int saved_errno = errno;
-        reflector_log(LOG_ERROR, "Failed to get interface list: %s", strerror(saved_errno));
+        reflector_log(LOG_ERROR, "Failed to get interface list: %s", stem_strerror(saved_errno));
         errno = saved_errno;
         return -1;
     }
@@ -173,7 +176,8 @@ int get_interface_mac(const char *ifname, uint8_t mac[6])
 int get_num_rx_queues(const char *ifname)
 {
 #ifdef __linux__
-    int                     fd, ret;
+    int                     fd;
+    int                     ret;
     struct ifreq            ifr;
     struct ethtool_channels channels;
 
@@ -196,7 +200,7 @@ int get_num_rx_queues(const char *ifname)
     if (ret < 0) {
         int saved_errno = errno;
         reflector_log(LOG_WARN, "Failed to query channels for %s, assuming 1 queue: %s", ifname,
-                      strerror(saved_errno));
+                      stem_strerror(saved_errno));
         errno = saved_errno;
         return 1;
     }
@@ -258,13 +262,14 @@ uint64_t get_timestamp_ns(void)
  */
 int set_interface_promisc(const char *ifname, bool enable)
 {
-    int          fd, ret;
+    int          fd;
+    int          ret;
     struct ifreq ifr;
 
     fd = socket(AF_INET, SOCK_DGRAM, 0);
     if (fd < 0) {
         int saved_errno = errno;
-        reflector_log(LOG_ERROR, "Failed to create socket: %s", strerror(saved_errno));
+        reflector_log(LOG_ERROR, "Failed to create socket: %s", stem_strerror(saved_errno));
         errno = saved_errno;
         return -1;
     }
@@ -276,7 +281,7 @@ int set_interface_promisc(const char *ifname, bool enable)
     ret = ioctl(fd, SIOCGIFFLAGS, &ifr);
     if (ret < 0) {
         int saved_errno = errno;
-        reflector_log(LOG_ERROR, "Failed to get interface flags: %s", strerror(saved_errno));
+        reflector_log(LOG_ERROR, "Failed to get interface flags: %s", stem_strerror(saved_errno));
         close(fd);
         errno = saved_errno;
         return -1;
@@ -293,7 +298,7 @@ int set_interface_promisc(const char *ifname, bool enable)
     ret = ioctl(fd, SIOCSIFFLAGS, &ifr);
     if (ret < 0) {
         int saved_errno = errno;
-        reflector_log(LOG_ERROR, "Failed to set interface flags: %s", strerror(saved_errno));
+        reflector_log(LOG_ERROR, "Failed to set interface flags: %s", stem_strerror(saved_errno));
         close(fd);
         errno = saved_errno;
         return -1;
@@ -310,7 +315,8 @@ int set_interface_promisc(const char *ifname, bool enable)
  */
 bool is_interface_up(const char *ifname)
 {
-    int          fd, ret;
+    int          fd;
+    int          ret;
     struct ifreq ifr;
 
     fd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -331,6 +337,33 @@ bool is_interface_up(const char *ifname)
     return (ifr.ifr_flags & IFF_UP) != 0;
 }
 
+#ifdef __linux__
+/*
+ * Reentrant user lookup. getpwnam() returns a pointer into storage shared by
+ * every thread in the process, so a concurrent lookup can overwrite the result
+ * out from under this one -- in the privilege-dropping path, which is the last
+ * place that should read another thread's uid.
+ *
+ * Returns false when the name does not resolve or the buffer is too small; the
+ * caller then falls through to the next candidate, ending at 65534. Failing
+ * closed like that is safe here because every fallback is less privileged.
+ */
+static bool lookup_user(const char *name, uid_t *uid, gid_t *gid)
+{
+    struct passwd  pwd;
+    struct passwd *result = NULL;
+    char           buf[1024];
+
+    if (getpwnam_r(name, &pwd, buf, sizeof buf, &result) != 0 || result == NULL) {
+        return false;
+    }
+
+    *uid = result->pw_uid;
+    *gid = result->pw_gid;
+    return true;
+}
+#endif /* __linux__ -- only drop_privileges() below uses this */
+
 /*
  * Drop unnecessary privileges after socket/interface initialization
  * On Linux: Tries to drop to 'nobody' user if running as root
@@ -345,22 +378,13 @@ int drop_privileges(void)
         return 0;
     }
 
-    /* Look up 'nobody' user dynamically using getpwnam() */
-    uid_t          nobody_uid;
-    gid_t          nobody_gid;
-    struct passwd *pw = getpwnam("nobody");
+    /* Look up 'nobody' dynamically; see lookup_user() for why not getpwnam() */
+    uid_t nobody_uid;
+    gid_t nobody_gid;
 
-    if (pw != NULL) {
-        nobody_uid = pw->pw_uid;
-        nobody_gid = pw->pw_gid;
-    } else {
-        /* Fallback to standard 'nobody' UID/GID if getpwnam fails */
+    if (!lookup_user("nobody", &nobody_uid, &nobody_gid)) {
         reflector_log(LOG_WARN, "User 'nobody' not found, trying 'nfsnobody'");
-        pw = getpwnam("nfsnobody");
-        if (pw != NULL) {
-            nobody_uid = pw->pw_uid;
-            nobody_gid = pw->pw_gid;
-        } else {
+        if (!lookup_user("nfsnobody", &nobody_uid, &nobody_gid)) {
             /* Last resort: use common default values */
             reflector_log(LOG_WARN, "No unprivileged user found, using UID/GID 65534");
             nobody_uid = 65534;
@@ -371,14 +395,15 @@ int drop_privileges(void)
     /* Drop supplementary groups */
     if (setgroups(0, NULL) < 0) {
         int saved_errno = errno;
-        reflector_log(LOG_WARN, "Failed to drop supplementary groups: %s", strerror(saved_errno));
+        reflector_log(LOG_WARN, "Failed to drop supplementary groups: %s",
+                      stem_strerror(saved_errno));
         /* Continue - not fatal */
     }
 
     /* Drop group privileges */
     if (setgid(nobody_gid) < 0) {
         int saved_errno = errno;
-        reflector_log(LOG_WARN, "Failed to drop group privileges: %s", strerror(saved_errno));
+        reflector_log(LOG_WARN, "Failed to drop group privileges: %s", stem_strerror(saved_errno));
         errno = saved_errno;
         return -1;
     }
@@ -386,7 +411,7 @@ int drop_privileges(void)
     /* Drop user privileges */
     if (setuid(nobody_uid) < 0) {
         int saved_errno = errno;
-        reflector_log(LOG_WARN, "Failed to drop user privileges: %s", strerror(saved_errno));
+        reflector_log(LOG_WARN, "Failed to drop user privileges: %s", stem_strerror(saved_errno));
         errno = saved_errno;
         return -1;
     }

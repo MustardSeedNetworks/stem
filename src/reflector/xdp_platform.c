@@ -29,6 +29,7 @@
 #include <xdp/xsk.h>
 
 #include "reflector.h"
+#include "stem_errno.h"
 
 /* Shared BPF resources across all workers (only worker 0 initializes) */
 /* Use atomic operations for thread-safe access between workers */
@@ -83,7 +84,7 @@ static int configure_umem(struct platform_ctx *pctx, void *buffer, uint64_t size
                                &pctx->xsk_info.umem.cq, &cfg);
 
     if (ret) {
-        reflector_log(LOG_ERROR, "Failed to create UMEM: %s", strerror(-ret));
+        reflector_log(LOG_ERROR, "Failed to create UMEM: %s", stem_strerror(-ret));
         return ret;
     }
 
@@ -157,7 +158,7 @@ static int load_xdp_program(worker_ctx_t *wctx)
     /* Load BPF program into kernel */
     ret = bpf_object__load(pctx->bpf_obj);
     if (ret) {
-        reflector_log(LOG_ERROR, "Failed to load BPF object: %s", strerror(-ret));
+        reflector_log(LOG_ERROR, "Failed to load BPF object: %s", stem_strerror(-ret));
         bpf_object__close(pctx->bpf_obj);
         return ret;
     }
@@ -188,7 +189,7 @@ static int load_xdp_program(worker_ctx_t *wctx)
     uint32_t key = 0;
     ret          = bpf_map_update_elem(pctx->mac_map_fd, &key, cfg->mac, BPF_ANY);
     if (ret) {
-        reflector_log(LOG_ERROR, "Failed to update MAC map: %s", strerror(-ret));
+        reflector_log(LOG_ERROR, "Failed to update MAC map: %s", stem_strerror(-ret));
         bpf_object__close(pctx->bpf_obj);
         return ret;
     }
@@ -201,7 +202,7 @@ static int load_xdp_program(worker_ctx_t *wctx)
         ret = bpf_map_update_elem(pctx->sig_map_fd, signatures[i], &sig_value, BPF_ANY);
         if (ret) {
             reflector_log(LOG_ERROR, "Failed to update sig_map for %s: %s", signatures[i],
-                          strerror(-ret));
+                          stem_strerror(-ret));
             bpf_object__close(pctx->bpf_obj);
             return ret;
         }
@@ -225,7 +226,7 @@ static int load_xdp_program(worker_ctx_t *wctx)
         reflector_log(LOG_WARN, "Failed to attach in driver mode, trying SKB mode");
         ret = bpf_xdp_attach(cfg->ifindex, pctx->prog_fd, XDP_FLAGS_SKB_MODE, NULL);
         if (ret) {
-            reflector_log(LOG_ERROR, "Failed to attach XDP program: %s", strerror(-ret));
+            reflector_log(LOG_ERROR, "Failed to attach XDP program: %s", stem_strerror(-ret));
             bpf_object__close(pctx->bpf_obj);
             return ret;
         }
@@ -256,7 +257,7 @@ static int init_xsk(worker_ctx_t *wctx)
                              &xsk_cfg);
 
     if (ret) {
-        reflector_log(LOG_ERROR, "Failed to create XSK socket: %s", strerror(-ret));
+        reflector_log(LOG_ERROR, "Failed to create XSK socket: %s", stem_strerror(-ret));
         return ret;
     }
 
@@ -266,7 +267,7 @@ static int init_xsk(worker_ctx_t *wctx)
         uint32_t queue_id = wctx->queue_id;
         ret               = bpf_map_update_elem(pctx->xsks_map_fd, &queue_id, &xsk_fd, BPF_ANY);
         if (ret) {
-            reflector_log(LOG_ERROR, "Failed to update XSK map: %s", strerror(-ret));
+            reflector_log(LOG_ERROR, "Failed to update XSK map: %s", stem_strerror(-ret));
             xsk_socket__delete(pctx->xsk_info.xsk);
             return ret;
         }
@@ -331,7 +332,7 @@ int xdp_platform_init(reflector_ctx_t *rctx, worker_ctx_t *wctx)
 
     if (umem_buffer == MAP_FAILED) {
         int saved_errno = errno;
-        reflector_log(LOG_ERROR, "Failed to allocate UMEM: %s", strerror(saved_errno));
+        reflector_log(LOG_ERROR, "Failed to allocate UMEM: %s", stem_strerror(saved_errno));
         free(pctx);
         wctx->pctx = NULL; /* Prevent use-after-free */
         return saved_errno ? -saved_errno : -ENOMEM;
@@ -473,7 +474,8 @@ int xdp_platform_recv_batch(worker_ctx_t *wctx, packet_t *pkts, int max_pkts)
  */
 static int xdp_recycle_completed_tx(struct platform_ctx *pctx)
 {
-    uint32_t idx_cq, idx_fq;
+    uint32_t idx_cq;
+    uint32_t idx_fq;
 
     /* Poll completion queue to see what TX completed */
     int completed = xsk_ring_cons__peek(&pctx->xsk_info.umem.cq, BATCH_SIZE, &idx_cq);

@@ -126,19 +126,11 @@ void rfc2544_seq_tracker_stats(const seq_tracker_t *tracker, uint32_t expected, 
                                uint32_t *lost, double *loss_pct);
 void rfc2544_seq_tracker_destroy(seq_tracker_t *tracker);
 
-uint64_t calc_max_pps(uint64_t line_rate_bps, uint32_t frame_size);
-
-/* Forward declarations for y1564.c */
-int  y1564_config_test(rfc2544_ctx_t *ctx, const y1564_service_t *service,
-                       y1564_config_result_t *result);
-int  y1564_perf_test(rfc2544_ctx_t *ctx, const y1564_service_t *service, uint32_t duration_sec,
-                     y1564_perf_result_t *result);
-int  y1564_multi_service_test(rfc2544_ctx_t *ctx, const y1564_service_t *services,
-                              uint32_t service_count, y1564_config_result_t *config_results,
-                              y1564_perf_result_t *perf_results);
-void y1564_print_results(const y1564_config_result_t *config_results,
-                         const y1564_perf_result_t *perf_results, uint32_t service_count,
-                         stats_format_t format);
+/*
+ * calc_max_pps comes from rfc2544_internal.h and the y1564_* entry points from
+ * rfc2544.h; both are included above. Re-declaring them here duplicated the
+ * signatures with nothing keeping the copies in step with the originals.
+ */
 
 /* struct rfc2544_ctx is defined in rfc2544_internal.h */
 
