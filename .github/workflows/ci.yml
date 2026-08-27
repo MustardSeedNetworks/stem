@@ -144,6 +144,50 @@ jobs:
   # ============================================================================
   # Backend (Go)
   # ============================================================================
+  # ===========================================================================
+  # Backend (Windows)
+  # ===========================================================================
+  # stem had zero Windows jobs: Windows existed only in GoReleaser, so the
+  # first time a *_windows.go file was compiled was while cutting a release.
+  # There are two of them -- internal/api/server_port_fallback_windows.go and
+  # internal/truststore/truststore_windows.go.
+  #
+  # TestIsAddrInUse_RecognisesWinsock had never executed on any runner. That is
+  # the #782 class: syscall.EADDRINUSE is not WSAEADDRINUSE, so the port
+  # fallback silently never walked on Windows. Only a real Winsock error object
+  # proves the check, which is why the cross-GOOS vet is kept as the cheap
+  # fast-fail rather than promoted to the gate.
+  #
+  # CGO_ENABLED=0: no Npcap on this runner. Build and vet still cover every
+  # package compiling; the test step is scoped to the two packages that have
+  # Windows-specific code. The truststore tests are ValidateCertFile parsing
+  # only -- install/uninstall shell out to certutil.exe and need elevation, and
+  # nothing here calls them.
+  backend-windows:
+    name: Backend (Windows)
+    runs-on: windows-latest
+    timeout-minutes: 20
+    needs: changes
+    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.ci_infra == 'true'
+    env:
+      CGO_ENABLED: "0"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: ./.github/actions/setup-go
+
+      - name: Build
+        run: go build ./...
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test (Windows-specific packages)
+        run: go test ./internal/api/ ./internal/truststore/ -run 'IsAddrInUse|BindWithFallback|ValidateCertFile' -v
+
   backend:
     name: Backend (Go)
     runs-on: ubuntu-latest
@@ -1378,6 +1422,7 @@ jobs:
       - changes
       - build-ui
       - backend
+      - backend-windows
       - race
       - frontend
       - storybook
