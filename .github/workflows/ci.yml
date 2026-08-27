@@ -371,6 +371,21 @@ jobs:
       - name: Type check
         run: npm run typecheck
 
+      # This job built and linted the frontend but never ran its tests. 34 test
+      # files and 218 cases existed and executed zero times in CI; the only
+      # frontend test commands anywhere in this workflow were the Storybook
+      # ones. They all pass — measured locally at 218/218 in ~7s — so this is
+      # a gate that was simply never wired, not a suite that was failing.
+      #
+      # `npm run test`, not `test:coverage`: the thresholds in vitest.config.ts
+      # (88/80/92/88) are not currently met — the real numbers are 69.06
+      # statements, 63.22 branches, 46.68 functions, 72.03 lines. That is
+      # genuine coverage debt that accrued while this gate was off, and closing
+      # it is test-writing work, not a CI change. Lowering the thresholds to
+      # today's numbers would redefine the standard rather than meet it.
+      - name: Run unit tests
+        run: npm run test
+
       - name: Build
         run: npm run build
 
