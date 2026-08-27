@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.41](https://github.com/MustardSeedNetworks/stem/compare/v0.24.40...v0.24.41) (2026-08-27)
+
+
+### Bug Fixes
+
+* **c:** clear the 83 clang-tidy findings and make the C lint gate blocking ([#831](https://github.com/MustardSeedNetworks/stem/issues/831)) ([36d6409](https://github.com/MustardSeedNetworks/stem/commit/36d64098ca07c59b7a7e39660a6da60de947efbb)), closes [#830](https://github.com/MustardSeedNetworks/stem/issues/830)
+* **c:** repair the C toolchain so clang-tidy analyses real code ([#823](https://github.com/MustardSeedNetworks/stem/issues/823)) ([ffc9124](https://github.com/MustardSeedNetworks/stem/commit/ffc9124037a52654825221f9536cce63e1694094))
+* **deps:** update dependency @tanstack/react-query to v5.102.3 ([#832](https://github.com/MustardSeedNetworks/stem/issues/832)) ([dfbde63](https://github.com/MustardSeedNetworks/stem/commit/dfbde6360e6755a2b1505dfc4ac87b97c97f1655))
+
+
+### Continuous Integration
+
+* adopt shared-workflow v1.8.0 ([#817](https://github.com/MustardSeedNetworks/stem/issues/817)) ([4ff8a09](https://github.com/MustardSeedNetworks/stem/commit/4ff8a0903159a4c35a2cdc974bff6567116e4d58))
+* assert the version smoke test instead of discarding it ([#827](https://github.com/MustardSeedNetworks/stem/issues/827)) ([f11d26c](https://github.com/MustardSeedNetworks/stem/commit/f11d26cc366813c39803e12dde93427a5ddd97c5))
+* make .nvmrc the only source for the Node version ([#819](https://github.com/MustardSeedNetworks/stem/issues/819)) ([f23bcf8](https://github.com/MustardSeedNetworks/stem/commit/f23bcf8bbecd5265277d1e2c4a67a30ad60f157c))
+* make gate implementations trigger the gates they implement ([#812](https://github.com/MustardSeedNetworks/stem/issues/812)) ([cd2617b](https://github.com/MustardSeedNetworks/stem/commit/cd2617bc3b0614c2261030da961e59946552db67))
+* refuse to release a tag whose commit never passed CI ([#821](https://github.com/MustardSeedNetworks/stem/issues/821)) ([17d3f0a](https://github.com/MustardSeedNetworks/stem/commit/17d3f0a9cba3887ae30b91ef9967059f32721bde))
+* run the frontend unit tests that CI never ran ([#825](https://github.com/MustardSeedNetworks/stem/issues/825)) ([68624e5](https://github.com/MustardSeedNetworks/stem/commit/68624e548e16a0f189c5dd1b42eaf5bc6ecf87fd))
+* stop backend-only PRs from skipping Build, Darwin and E2E ([#813](https://github.com/MustardSeedNetworks/stem/issues/813)) ([ab68ea3](https://github.com/MustardSeedNetworks/stem/commit/ab68ea38715dab673d35a5165f4f08e0a9184278))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#834](https://github.com/MustardSeedNetworks/stem/issues/834)) ([4aab961](https://github.com/MustardSeedNetworks/stem/commit/4aab961c6e1c0212272128fa883a43ab6e7290c0))
+* **deps:** update dependency @types/node to v26.3.0 ([#833](https://github.com/MustardSeedNetworks/stem/issues/833)) ([364a8d7](https://github.com/MustardSeedNetworks/stem/commit/364a8d7624a790f540986b83b8d86f4773d17135))
+
 ## [0.24.40](https://github.com/MustardSeedNetworks/stem/compare/v0.24.39...v0.24.40) (2026-08-27)
 
 
