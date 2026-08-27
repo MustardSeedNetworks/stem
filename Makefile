@@ -137,7 +137,16 @@ BINARY_NAME := bin/$(BINARY)
 # =============================================================================
 
 # C compiler settings - C23 standard
+#
+# `CC := gcc` was a hard assignment, so it silently overrode the environment:
+# CI exported CC=gcc-13 and got plain `gcc` anyway, which is why its logs read
+# "gcc: error: unrecognized command-line option '-std=c23'". Only override
+# make's built-in default, leaving an explicit environment or command-line CC
+# to win. `CC ?= gcc` does NOT do this — make's built-in has origin `default`,
+# not `undefined`, so `?=` would leave CC as `cc`.
+ifeq ($(origin CC),default)
 CC := gcc
+endif
 CFLAGS := -D_GNU_SOURCE -D_DEFAULT_SOURCE -std=c23 -Wall -Wextra -Wpedantic -O3 -march=native -pthread -Iinclude
 C_LDFLAGS := -pthread -lm
 

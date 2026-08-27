@@ -413,7 +413,14 @@ jobs:
         timeout-minutes: 10
         uses: MustardSeedNetworks/.github/.github/actions/apt-install@37513d7fbaacf4a7adaab1ac1514f021115868d1 # v1.4.0
         with:
-          packages: cppcheck bear
+          # gcc-14 is required for -std=c23: gcc-13 only knows -std=c2x,
+          # and rejecting that flag is what made the compile database
+          # unbuildable. libbpf-dev supplies the bpf/bpf.h that the AF_XDP
+          # sources include, and libxdp-dev the xdp/xsk.h that
+          # src/reflector/xdp_platform.c includes. Without them the build
+          # stops at a missing header, and clang-tidy previously reported
+          # that as a finding on every file pulling it in.
+          packages: cppcheck bear gcc-14 libbpf-dev libxdp-dev
 
       - name: Set clang-18 as default and verify versions
         run: |
@@ -425,7 +432,7 @@ jobs:
           # Verify versions
           clang --version
           clang-tidy --version
-          gcc-13 --version
+          gcc-14 --version
 
       - name: Check if C files exist
         id: check-c
@@ -449,27 +456,27 @@ jobs:
           cppcheck --version
           apt-cache policy cppcheck
 
+      # The hand-written single-entry fallback that used to live here is gone.
+      # It is what let this step "succeed" while producing a database covering
+      # one file, so clang-tidy analysed almost nothing and reported the
+      # resulting parse failures as tens of thousands of findings.
+      #
+      # `|| true` on bear is gone for the same reason: a compile database that
+      # cannot be built is a broken toolchain, not an advisory condition.
       - name: Generate compile_commands.json
         if: steps.check-c.outputs.has_c == 'true'
+        env:
+          CC: gcc-14
         run: |
-          # Create compile_commands.json for clang-tidy
-          cat > compile_commands.json << 'EOF'
-          [
-            {
-              "directory": "${{ github.workspace }}",
-              "command": "gcc-13 -std=c23 -Wall -Wextra -Wpedantic -Iinclude -c src/dataplane/common/core.c",
-              "file": "src/dataplane/common/core.c"
-            }
-          ]
-          EOF
-          
-          # Use bear to generate proper compile_commands.json if Makefile exists
-          if [ -f "Makefile" ]; then
-            # Update CC to use gcc-13 for C23 support
-            export CC=gcc-13
-            # Generate compile database
-            bear -- make dataplane || true
+          set -euo pipefail
+          bear -- make dataplane
+          entries=$(jq 'length' compile_commands.json)
+          echo "compile_commands.json entries: ${entries}"
+          if [ "${entries}" -lt 1 ]; then
+            echo "::error::compile_commands.json is empty — clang-tidy would analyse nothing"
+            exit 1
           fi
+          jq -r '.[].file' compile_commands.json
 
       # Pinned exact, and deliberately not the distro package. clang-format's
       # default style shifts between releases, so an unpinned binary means the
