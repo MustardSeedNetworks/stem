@@ -32,6 +32,24 @@ export default defineConfig({
   optimizeDeps: {
     include: ['aria-query'],
   },
+  server: {
+    /* No watcher. This is a one-shot run, so nothing should be recompiling
+       mid-suite -- but the watcher fired anyway on CI and invalidated the
+       module graph underneath a running test:
+
+         [vitest] Vite unexpectedly reloaded a test. This may cause tests to
+                  fail, lead to flaky behaviour or duplicated test runs.
+         Failed to import .../addon-vitest/dist/vitest-plugin/setup-file.js
+         Caused by: Vitest failed to find the runner.
+
+       One file (Button.stories.tsx) died while the other 37 passed, and it
+       cleared on retry -- the signature of a race, not a broken story. It has
+       never reproduced locally, so this targets the reported cause rather than
+       a diagnosis: with no watcher there is no mid-run invalidation to lose the
+       runner to. `fileParallelism: false` below already removed a separate
+       contention class; this is not that one. */
+    watch: null,
+  },
   test: {
     projects: [
       {
