@@ -1067,7 +1067,7 @@ void reflect_packet_ipv6(uint8_t *data, uint32_t len, reflect_mode_t mode, bool 
 
     uint16_t outer_etype = (data[ETH_TYPE_OFFSET] << 8) | data[ETH_TYPE_OFFSET + 1];
     if (outer_etype == ETH_P_8021Q || outer_etype == ETH_P_8021AD) {
-        ip_offset   = ETH_HDR_LEN + VLAN_HDR_LEN;
+        ip_offset = ETH_HDR_LEN + VLAN_HDR_LEN;
     }
 
     /* Verify minimum length for IPv6 */
@@ -1117,9 +1117,9 @@ void reflect_packet_ipv6(uint8_t *data, uint32_t len, reflect_mode_t mode, bool 
     /* Recalculate UDP checksum if software fallback enabled */
     /* Note: IPv6 UDP checksum is mandatory */
     if (software_checksum) {
-        const uint8_t *ip6h = data + ip_offset;
-        uint8_t *udph    = data + udp_offset;
-        uint16_t udp_len = ntohs(*(uint16_t *)(udph + 4));
+        const uint8_t *ip6h    = data + ip_offset;
+        uint8_t       *udph    = data + udp_offset;
+        uint16_t       udp_len = ntohs(*(uint16_t *)(udph + 4));
 
         if (len >= udp_offset + udp_len) {
             uint16_t *udp_check = (uint16_t *)(udph + 6);

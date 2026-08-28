@@ -136,9 +136,9 @@ static void populate_fill_queue(struct platform_ctx *pctx, uint32_t num)
  */
 static int load_xdp_program(worker_ctx_t *wctx)
 {
-    struct platform_ctx *pctx = wctx->pctx;
-    const reflector_config_t *cfg = wctx->config;
-    int                  ret;
+    struct platform_ctx      *pctx = wctx->pctx;
+    const reflector_config_t *cfg  = wctx->config;
+    int                       ret;
 
     /* Check if BPF object file exists */
     if (access("src/xdp/filter.bpf.o", F_OK) != 0) {
@@ -287,8 +287,8 @@ static int init_xsk(worker_ctx_t *wctx)
 int xdp_platform_init(reflector_ctx_t *rctx, worker_ctx_t *wctx)
 {
     (void)rctx; /* May be used for multi-worker coordination in future */
-    const reflector_config_t *cfg = wctx->config;
-    struct platform_ctx *pctx = calloc(1, sizeof(*pctx));
+    const reflector_config_t *cfg  = wctx->config;
+    struct platform_ctx      *pctx = calloc(1, sizeof(*pctx));
     if (!pctx) {
         reflector_log(LOG_ERROR, "Failed to allocate platform context");
         return -ENOMEM;
