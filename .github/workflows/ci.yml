@@ -1245,13 +1245,19 @@ jobs:
     name: E2E Browser Tests
     runs-on: ubuntu-latest
     needs: [changes, build-ui, backend, frontend]
-    # NOT sized from p95. A job budget has to exceed its apt step's worst case
-    # (10 min) plus the real work (~4m40s measured), or a slow mirror becomes
-    # indistinguishable from a hung test. Sized to p95 the way this was, niac's
-    # equivalent job died mid-Playwright and the merge queue ejected a release
-    # PR for what looked like a test failure (niac-go#1350, run 32161326698) —
-    # the mechanism behind #664.
-    timeout-minutes: 25
+    # Pinned by tag AND digest, as release.yml pins goreleaser-cross. The image
+    # carries the browsers and webkit's OS dependencies, so nothing is installed
+    # from apt on the test critical path.
+    #
+    # --ipc=host: Chromium exhausts the default 64MB /dev/shm and crashes.
+    container:
+      image: mcr.microsoft.com/playwright:v1.62.1-noble@sha256:dcc5531e97840b9b5e794f2814476b21571c5124a3fca2267d73041f56e7580e
+      options: --ipc=host
+    # The budget no longer has to cover an apt worst case, because there is no
+    # apt step. Kept generous rather than trimmed to p95: sizing this job to p95
+    # is what let niac's equivalent die mid-Playwright and get a release PR
+    # ejected from the merge queue as if a test had failed (niac-go#1350).
+    timeout-minutes: 20
     # Skipped on draft PRs (slow); also skipped if no frontend/backend changed.
     # always() lets the if: evaluate when an upstream job was skipped —
     # without it the implicit success() on a job-level if: would skip this
@@ -1293,46 +1299,26 @@ jobs:
       - name: Build backend
         run: CGO_ENABLED=0 go build -o bin/stem ./cmd/stem/
 
-      # Restore always; save only from the default branch. Caches are scoped
-      # per ref, so a PR that saves writes its own copy that dies on merge —
-      # see the comment in .github/actions/setup-go for the incident.
-      - name: Restore Playwright browsers
-        id: playwright-cache
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('ui/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-playwright-
-
-      - name: Install Playwright OS dependencies
-        timeout-minutes: 10
-        # apt packages only, not cacheable — always runs regardless of whether
-        # the browser binaries above were restored from cache. Not removable:
-        # the runner image ships none of webkit's GStreamer/font stack (181
-        # packages, 114 MB on a clean run).
-        #
-        # A stalled Ubuntu mirror once hung apt for 28 minutes and ate the
-        # whole job budget without running a test (job 95068053052), because
-        # apt waits forever on a dead connection by default. Bound apt's own
-        # network waits, then retry the transient case.
-        uses: MustardSeedNetworks/.github/.github/actions/apt-install@a146506fd53fe5e01fdc01892dd838c10081d183 # v1.9.0
-        with:
-          command: cd ui && npx playwright install-deps
-
-      - name: Install Playwright browsers
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
+      # No browser install, no apt, no cache: the pinned image ships webkit's
+      # GStreamer/font stack and the browser binaries already. That removes the
+      # step that produced the failure this replaces -- a stalled Ubuntu mirror
+      # hung apt until the job budget expired without running a test (job
+      # 95068053052, and again on main run 33148318638), which is
+      # indistinguishable from a hung suite. Retries only widened the window.
+      #
+      # The image tag and @playwright/test must move together or the browsers
+      # will not match the client; the check below makes that a loud failure
+      # rather than a subtle one.
+      - name: Playwright version matches the container image
         working-directory: ui
-        # Per E2E_CONVENTIONS: chromium (Chrome+Edge) and webkit (Safari).
-        # --with-deps omitted — OS deps are installed unconditionally above.
-        run: npx playwright install chromium webkit
-
-      - name: Save Playwright browsers (default branch only)
-        if: steps.playwright-cache.outputs.cache-hit != 'true' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
-        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('ui/package-lock.json') }}
+        run: |
+          want=1.62.1
+          got=$(npx playwright --version | awk '{print $NF}')
+          if [ "$got" != "$want" ]; then
+            echo "::error::Playwright $got does not match the container image ($want) — bump the container: image tag+digest together with @playwright/test"
+            exit 1
+          fi
+          echo "Playwright $got matches the image"
 
       - name: Start backend server
         env:
