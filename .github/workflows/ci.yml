@@ -228,7 +228,7 @@ jobs:
         # (actions/runner-images Ubuntu2404-Readme.md) — only the packages
         # not already on the image are installed here.
         timeout-minutes: 10
-        uses: MustardSeedNetworks/.github/.github/actions/apt-install@37513d7fbaacf4a7adaab1ac1514f021115868d1 # v1.4.0
+        uses: MustardSeedNetworks/.github/.github/actions/apt-install@a146506fd53fe5e01fdc01892dd838c10081d183 # v1.9.0
         with:
           packages: libbpf-dev libelf-dev libxdp-dev zlib1g-dev
 
@@ -247,7 +247,7 @@ jobs:
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
         with:
-          version: v2.13.1
+          version: v2.13.2
           # Full-tree lint verified clean on 2026-08-14. Keep CI aligned with
           # the repository-wide zero-warning policy.
           args: --timeout=5m
@@ -366,7 +366,7 @@ jobs:
         # (actions/runner-images Ubuntu2404-Readme.md) — only the packages
         # not already on the image are installed here.
         timeout-minutes: 10
-        uses: MustardSeedNetworks/.github/.github/actions/apt-install@37513d7fbaacf4a7adaab1ac1514f021115868d1 # v1.4.0
+        uses: MustardSeedNetworks/.github/.github/actions/apt-install@a146506fd53fe5e01fdc01892dd838c10081d183 # v1.9.0
         with:
           packages: libbpf-dev libelf-dev libxdp-dev zlib1g-dev
 
@@ -470,7 +470,7 @@ jobs:
         # preinstalled on ubuntu-24.04 (actions/runner-images
         # Ubuntu2404-Readme.md) — only cppcheck and bear are installed here.
         timeout-minutes: 10
-        uses: MustardSeedNetworks/.github/.github/actions/apt-install@37513d7fbaacf4a7adaab1ac1514f021115868d1 # v1.4.0
+        uses: MustardSeedNetworks/.github/.github/actions/apt-install@a146506fd53fe5e01fdc01892dd838c10081d183 # v1.9.0
         with:
           # gcc-14 is required for -std=c23: gcc-13 only knows -std=c2x,
           # and rejecting that flag is what made the compile database
@@ -633,7 +633,7 @@ jobs:
         # clang-18 ships preinstalled on ubuntu-24.04 (actions/runner-images
         # Ubuntu2404-Readme.md) — only cppcheck is installed here.
         timeout-minutes: 10
-        uses: MustardSeedNetworks/.github/.github/actions/apt-install@37513d7fbaacf4a7adaab1ac1514f021115868d1 # v1.4.0
+        uses: MustardSeedNetworks/.github/.github/actions/apt-install@a146506fd53fe5e01fdc01892dd838c10081d183 # v1.9.0
         with:
           packages: cppcheck
 
@@ -704,7 +704,7 @@ jobs:
       # bundling them leaves the apt half with no step budget and no dpkg lock
       # bound. seed lost a whole 15-minute job budget to exactly that.
       - name: Install Chromium OS dependencies
-        uses: MustardSeedNetworks/.github/.github/actions/apt-install@37513d7fbaacf4a7adaab1ac1514f021115868d1 # v1.4.0
+        uses: MustardSeedNetworks/.github/.github/actions/apt-install@a146506fd53fe5e01fdc01892dd838c10081d183 # v1.9.0
         timeout-minutes: 10
         with:
           # cd ui explicitly: the job's defaults.run.working-directory does not
@@ -755,13 +755,13 @@ jobs:
           govulncheck ./...
 
       - name: Run gosec
-        uses: securego/gosec@9e75c0576c9878035d4221392108d458abe10fc3 # v2.28.0
+        uses: securego/gosec@deb54465fea23d19a77f037e11e6589021f8501d # v2.29.0
         continue-on-error: true
         with:
           args: "-fmt sarif -out gosec-results.sarif ./..."
 
       - name: Upload gosec results
-        uses: github/codeql-action/upload-sarif@db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28 # v4.37.8
+        uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9
         if: always() && hashFiles('gosec-results.sarif') != ''
         continue-on-error: true
         with:
@@ -808,7 +808,7 @@ jobs:
           exit-code: '0'
 
       - name: Upload Trivy results
-        uses: github/codeql-action/upload-sarif@db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28 # v4.37.8
+        uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9
         if: always() && hashFiles('trivy-results.sarif') != ''
         continue-on-error: true
         with:
@@ -846,7 +846,7 @@ jobs:
   # Defined once in MustardSeedNetworks/.github (fleet-shared); ci-complete
   # still needs: [semgrep]. Edit the pinned version / config policy there.
   semgrep:
-    uses: MustardSeedNetworks/.github/.github/workflows/semgrep.yml@3c9b3aadab847d2faab5116c6af07eb05d978d62 # v1.8.0
+    uses: MustardSeedNetworks/.github/.github/workflows/semgrep.yml@a146506fd53fe5e01fdc01892dd838c10081d183 # v1.9.0
     permissions:
       contents: read
       # v1.8.0 publishes the all-severity SARIF to code scanning. The
@@ -862,7 +862,7 @@ jobs:
   # Defined once in MustardSeedNetworks/.github (fleet-shared); ci-complete
   # still needs: [ci-conformance].
   ci-conformance:
-    uses: MustardSeedNetworks/.github/.github/workflows/ci-conformance.yml@3c9b3aadab847d2faab5116c6af07eb05d978d62 # v1.8.0
+    uses: MustardSeedNetworks/.github/.github/workflows/ci-conformance.yml@a146506fd53fe5e01fdc01892dd838c10081d183 # v1.9.0
     permissions:
       contents: read
 
@@ -995,7 +995,7 @@ jobs:
       # repos. See scripts/i18n/README.md and
       # msn-docs-internal/05-Engineering/I18N_CONVENTIONS.md.
       - name: Validate i18n (parity, glossary, banned vocab, etc.)
-        uses: MustardSeedNetworks/.github/.github/actions/i18n-validate@e6d74ebd42168c9b89f2b93f14841f58b90edece # v1.5.0
+        uses: MustardSeedNetworks/.github/.github/actions/i18n-validate@a146506fd53fe5e01fdc01892dd838c10081d183 # v1.9.0
         with:
           # The action defaults to internal/i18n/locales, which is where these
           # lived while they sat inside a dead Go package. They belong to the
@@ -1313,7 +1313,7 @@ jobs:
         # whole job budget without running a test (job 95068053052), because
         # apt waits forever on a dead connection by default. Bound apt's own
         # network waits, then retry the transient case.
-        uses: MustardSeedNetworks/.github/.github/actions/apt-install@37513d7fbaacf4a7adaab1ac1514f021115868d1 # v1.4.0
+        uses: MustardSeedNetworks/.github/.github/actions/apt-install@a146506fd53fe5e01fdc01892dd838c10081d183 # v1.9.0
         with:
           command: cd ui && npx playwright install-deps
 
