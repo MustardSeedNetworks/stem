@@ -123,7 +123,7 @@ static uint64_t __attribute__((unused)) rate_to_pps(double rate_mbps, uint32_t f
 {
     /* Wire size includes preamble (8) + IFG (12) = 20 bytes */
     uint32_t wire_size       = frame_size + 20;
-    uint64_t bits_per_packet = wire_size * 8;
+    uint64_t bits_per_packet = (uint64_t)wire_size * 8;
     uint64_t bits_per_sec    = (uint64_t)(rate_mbps * 1e6);
     return bits_per_sec / bits_per_packet;
 }

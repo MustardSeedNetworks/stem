@@ -188,6 +188,9 @@ ALWAYS_INLINE bool is_ito_packet(const uint8_t *data, uint32_t len,
     if (unlikely(debug_count++ < 3)) {
         char sig_str[8];
         memcpy(sig_str, custom_sig, 7);
+        /* cppcheck-suppress unreadVariable ; consumed by DEBUG_LOG below, which
+           compiles to ((void)0) in the non-debug build (reflector.h), so
+           cppcheck sees the terminator written and never read. */
         sig_str[7] = '\0';
         DEBUG_LOG("UDP payload signature (offset 0): '%s'", sig_str);
     }
@@ -1060,14 +1063,11 @@ static uint16_t calculate_udp6_checksum(const uint8_t *ip6h, const uint8_t *udph
 void reflect_packet_ipv6(uint8_t *data, uint32_t len, reflect_mode_t mode, bool software_checksum)
 {
     /* Determine if VLAN tagged */
-    uint16_t inner_etype = 0;
-    uint32_t ip_offset   = ETH_HDR_LEN;
+    uint32_t ip_offset = ETH_HDR_LEN;
 
     uint16_t outer_etype = (data[ETH_TYPE_OFFSET] << 8) | data[ETH_TYPE_OFFSET + 1];
     if (outer_etype == ETH_P_8021Q || outer_etype == ETH_P_8021AD) {
         ip_offset   = ETH_HDR_LEN + VLAN_HDR_LEN;
-        inner_etype = (data[ETH_HDR_LEN + 2] << 8) | data[ETH_HDR_LEN + 3];
-        (void)inner_etype; /* Suppress unused warning */
     }
 
     /* Verify minimum length for IPv6 */
@@ -1117,7 +1117,7 @@ void reflect_packet_ipv6(uint8_t *data, uint32_t len, reflect_mode_t mode, bool 
     /* Recalculate UDP checksum if software fallback enabled */
     /* Note: IPv6 UDP checksum is mandatory */
     if (software_checksum) {
-        uint8_t *ip6h    = data + ip_offset;
+        const uint8_t *ip6h = data + ip_offset;
         uint8_t *udph    = data + udp_offset;
         uint16_t udp_len = ntohs(*(uint16_t *)(udph + 4));
 

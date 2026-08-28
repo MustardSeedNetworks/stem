@@ -124,7 +124,7 @@ static void populate_fill_queue(struct platform_ctx *pctx, uint32_t num)
     }
 
     for (uint32_t i = 0; i < num; i++) {
-        uint64_t addr                                             = i * pctx->frame_size;
+        uint64_t addr                                             = (uint64_t)i * pctx->frame_size;
         *xsk_ring_prod__fill_addr(&pctx->xsk_info.umem.fq, idx++) = addr;
     }
 
@@ -137,7 +137,7 @@ static void populate_fill_queue(struct platform_ctx *pctx, uint32_t num)
 static int load_xdp_program(worker_ctx_t *wctx)
 {
     struct platform_ctx *pctx = wctx->pctx;
-    reflector_config_t  *cfg  = wctx->config;
+    const reflector_config_t *cfg = wctx->config;
     int                  ret;
 
     /* Check if BPF object file exists */
@@ -287,7 +287,7 @@ static int init_xsk(worker_ctx_t *wctx)
 int xdp_platform_init(reflector_ctx_t *rctx, worker_ctx_t *wctx)
 {
     (void)rctx; /* May be used for multi-worker coordination in future */
-    reflector_config_t  *cfg  = wctx->config;
+    const reflector_config_t *cfg = wctx->config;
     struct platform_ctx *pctx = calloc(1, sizeof(*pctx));
     if (!pctx) {
         reflector_log(LOG_ERROR, "Failed to allocate platform context");
@@ -305,7 +305,7 @@ int xdp_platform_init(reflector_ctx_t *rctx, worker_ctx_t *wctx)
     pctx->prog_fd      = -1;
 
     /* Allocate UMEM buffer */
-    uint64_t umem_size = pctx->num_frames * pctx->frame_size;
+    uint64_t umem_size = (uint64_t)pctx->num_frames * pctx->frame_size;
     void    *umem_buffer;
 
     /* Try huge pages if enabled in config (better TLB utilization) */
