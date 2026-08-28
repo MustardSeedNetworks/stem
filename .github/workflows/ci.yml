@@ -1253,6 +1253,13 @@ jobs:
     container:
       image: mcr.microsoft.com/playwright:v1.62.1-noble@sha256:dcc5531e97840b9b5e794f2814476b21571c5124a3fca2267d73041f56e7580e
       options: --ipc=host
+    # Explicit bash. In a container GitHub falls back to `sh -e`, and the steps
+    # here use bash-isms -- `for i in {1..30}` and `$((i < 5 ? 1 : 2))` -- which
+    # under sh do not expand and exit 2 immediately. The readiness loop failed
+    # in 0.07s and read as "server failed to start".
+    defaults:
+      run:
+        shell: bash
     # The budget no longer has to cover an apt worst case, because there is no
     # apt step. Kept generous rather than trimmed to p95: sizing this job to p95
     # is what let niac's equivalent die mid-Playwright and get a release PR
