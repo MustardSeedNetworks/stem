@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.43](https://github.com/MustardSeedNetworks/stem/compare/v0.24.42...v0.24.43) (2026-08-28)
+
+
+### Continuous Integration
+
+* use the App Client ID instead of the deprecated app-id input ([#842](https://github.com/MustardSeedNetworks/stem/issues/842)) ([7bacd8d](https://github.com/MustardSeedNetworks/stem/commit/7bacd8d9248d64052ce053003b95cfa174fafa72))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#845](https://github.com/MustardSeedNetworks/stem/issues/845)) ([3a11db1](https://github.com/MustardSeedNetworks/stem/commit/3a11db1223367fddc924a5bdc49f4c123cd0aeb7))
+
 ## [0.24.42](https://github.com/MustardSeedNetworks/stem/compare/v0.24.41...v0.24.42) (2026-08-28)
 
 
