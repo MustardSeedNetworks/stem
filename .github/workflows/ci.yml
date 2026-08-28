@@ -582,9 +582,38 @@ jobs:
       # about this tree, and a gate whose verdict depends on the image is not
       # a gate. #776 tracks pinning it; until then this reports honestly rather
       # than pretending.
-      - name: Run cppcheck (C only, advisory until pinned — see #776)
+      # BLOCKING as of #858. It was advisory and exiting non-zero, so real C
+      # findings could not stop a merge. 51 findings were triaged; the code
+      # fixes and the four suppressions below are the whole of it.
+      #
+      # -D__linux__ --platform=unix64 is a correctness fix, not a convenience:
+      # -U__APPLE__ removes the Apple branch but never selects a platform, so
+      # cppcheck was analysing the fallback stubs and reporting their dead
+      # branches as defects. It accounted for 5 of 9 knownConditionTrueFalse.
+      #
+      # Each suppression is justified, and none is a category we simply found
+      # noisy. unreadVariable and variableScope are deliberately NOT suppressed
+      # -- unreadVariable is what found the dead inner_etype in
+      # reflect_packet_ipv6, so it earns its place.
+      #
+      #   unusedStructMember      cppcheck analyses one translation unit at a
+      #                           time and cannot see cross-TU use. All 25 were
+      #                           false: rfc2544_payload_t::signature is read in
+      #                           packet.c:175/225/230/272, and platform_ops::name
+      #                           is assigned in all three platform backends.
+      #   knownConditionTrueFalse 4 remain after the platform fix, all false.
+      #                           `checksum == 0` (x2) is RFC 768: a computed
+      #                           zero must go on the wire as 0xFFFF, and
+      #                           removing that branch would be a protocol bug.
+      #                           `debug_count++ < 3` (x2) is a static
+      #                           rate-limiter cppcheck evaluates per call.
+      #   constParameterPointer   Public API signatures (y1564_color_test and
+      #   constParameterCallback  friends) and ops-vtable callbacks. Adding
+      #                           const means changing headers and possibly
+      #                           casting function pointers -- an API change,
+      #                           tracked separately, not a lint fix.
+      - name: Run cppcheck (C only)
         if: steps.check-c.outputs.has_c == 'true'
-        continue-on-error: true
         run: |
           cppcheck --version
           echo "Running cppcheck for C code..."
@@ -593,8 +622,14 @@ jobs:
             --language=c \
             --enable=warning,style,performance,portability \
             -U__APPLE__ \
+            -D__linux__ \
+            --platform=unix64 \
             --suppress=missingIncludeSystem \
             --suppress=unusedFunction \
+            --suppress=unusedStructMember \
+            --suppress=knownConditionTrueFalse \
+            --suppress=constParameterPointer \
+            --suppress=constParameterCallback \
             --inline-suppr \
             --error-exitcode=1 \
             --template='{file}:{line}: {severity}: {message} [{id}]' \

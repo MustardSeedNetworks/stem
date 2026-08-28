@@ -303,12 +303,12 @@ int main(int argc, char **argv)
         nanosleep(&tick, NULL);
 
         clock_gettime(CLOCK_MONOTONIC, &now);
-        double elapsed = (now.tv_sec - start.tv_sec) + (now.tv_nsec - start.tv_nsec) / 1e9;
         double since_last =
             (now.tv_sec - last_stats.tv_sec) + (now.tv_nsec - last_stats.tv_nsec) / 1e9;
 
         /* Print stats at interval */
         if (since_last >= g_stats_interval) {
+            double elapsed = (now.tv_sec - start.tv_sec) + (now.tv_nsec - start.tv_nsec) / 1e9;
             reflector_stats_t stats;
             reflector_get_stats(&g_rctx, &stats);
 

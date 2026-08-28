@@ -185,7 +185,7 @@ extern const platform_ops_t *get_packet_platform_ops(void);
 extern const platform_ops_t *get_dpdk_platform_ops(void);
 #endif
 
-static const platform_ops_t *select_platform(rfc2544_ctx_t *ctx)
+static const platform_ops_t *select_platform(const rfc2544_ctx_t *ctx)
 {
 #if HAVE_DPDK
     if (ctx->config.use_dpdk) {
@@ -267,7 +267,7 @@ uint64_t rfc2544_calc_pps(uint64_t line_rate, uint32_t frame_size)
 {
     /* Ethernet overhead: preamble (8) + IFG (12) = 20 bytes */
     uint32_t wire_size       = frame_size + 20;
-    uint64_t bits_per_packet = wire_size * 8;
+    uint64_t bits_per_packet = (uint64_t)wire_size * 8;
     return line_rate / bits_per_packet;
 }
 
@@ -607,7 +607,7 @@ int rfc2544_run(rfc2544_ctx_t *ctx)
         frame_sizes[num_sizes++] = ctx->config.frame_size;
     } else {
         /* Standard sizes */
-        uint32_t std_sizes[] = RFC2544_FRAME_SIZES;
+        const uint32_t std_sizes[] = RFC2544_FRAME_SIZES;
         for (int i = 0; i < RFC2544_FRAME_SIZE_COUNT; i++) {
             frame_sizes[num_sizes++] = std_sizes[i];
         }
