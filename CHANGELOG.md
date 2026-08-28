@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.44](https://github.com/MustardSeedNetworks/stem/compare/v0.24.43...v0.24.44) (2026-08-28)
+
+
+### Bug Fixes
+
+* **ci:** download the artifact the gate actually produces ([#850](https://github.com/MustardSeedNetworks/stem/issues/850)) ([9f95dc7](https://github.com/MustardSeedNetworks/stem/commit/9f95dc70f7097d74e71100fb1d81777276bc0956)), closes [#849](https://github.com/MustardSeedNetworks/stem/issues/849)
+
+
+### Continuous Integration
+
+* fail loudly when a SARIF upload fails ([#852](https://github.com/MustardSeedNetworks/stem/issues/852)) ([f51dc17](https://github.com/MustardSeedNetworks/stem/commit/f51dc17e494f90730c2eabb8ff2195f4e8cf69c5)), closes [#851](https://github.com/MustardSeedNetworks/stem/issues/851)
+* **storybook:** render real strings, and stop losing the runner mid-run ([#848](https://github.com/MustardSeedNetworks/stem/issues/848)) ([b4cf3fe](https://github.com/MustardSeedNetworks/stem/commit/b4cf3fe868703a5e47a646844ce20e4b47462fe4)), closes [#847](https://github.com/MustardSeedNetworks/stem/issues/847)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#853](https://github.com/MustardSeedNetworks/stem/issues/853)) ([b80343c](https://github.com/MustardSeedNetworks/stem/commit/b80343c0c90bf5f5475da2581e490365bc0f8204))
+* **deps:** lock file maintenance ([#856](https://github.com/MustardSeedNetworks/stem/issues/856)) ([5aa9801](https://github.com/MustardSeedNetworks/stem/commit/5aa98013397f9fa32baa4e1cd4f97a4beabc547a))
+* **deps:** update dependency js-yaml to v5.4.0 ([#855](https://github.com/MustardSeedNetworks/stem/issues/855)) ([e7722d4](https://github.com/MustardSeedNetworks/stem/commit/e7722d47c783a793c82e51523d54d78f410ad794))
+* **deps:** update module github.com/golangci/golangci-lint/v2/cmd/golangci-lint to v2.13.2 ([#837](https://github.com/MustardSeedNetworks/stem/issues/837)) ([187ab9a](https://github.com/MustardSeedNetworks/stem/commit/187ab9ade8b0aef66a6fce30417474410086e35a))
+
 ## [0.24.43](https://github.com/MustardSeedNetworks/stem/compare/v0.24.42...v0.24.43) (2026-08-28)
 
 
