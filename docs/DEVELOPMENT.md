@@ -44,7 +44,7 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md) for detailed architecture documentation
 ## Common Tasks
 
 | Task | Command |
-|------|---------|
+| ------ | ------- |
 | Build all | `make build` |
 | Run tests | `make test` |
 | Lint Go | `make lint-go` |
@@ -85,7 +85,7 @@ There is nothing to re-baseline. Because the comparison is always against the
 current merge base, a genuine improvement becomes the new baseline the moment
 it merges — no committed constant, and so no step to forget.
 
-If a change *deliberately* trades reflect throughput for something else, say so
+If a change _deliberately_ trades reflect throughput for something else, say so
 in the PR body and raise the allowance for that run:
 
 ```bash
