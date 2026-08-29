@@ -678,6 +678,13 @@ jobs:
           sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-18 100
           clang --version
 
+      # The ASAN step below only catches memory faults. A logical assertion
+      # failure is caught by the process exit status, so that link is gated
+      # first — it was broken until 2026-08-29 and made every C assertion in
+      # this job unable to fail the build.
+      - name: C test harness contract (blocking)
+        run: make c-test-harness-contract CC=clang
+
       - name: Packet-parser tests under ASAN/UBSan (blocking)
         run: make c-test-asan CC=clang
 

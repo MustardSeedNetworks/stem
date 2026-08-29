@@ -117,7 +117,7 @@ test-coverage-html: test-coverage ## Generate HTML coverage report
 # C Tests (Linux only)
 # =============================================================================
 
-c-test: ## Build and run C unit tests
+c-test: c-test-harness-contract ## Build and run C unit tests
 ifeq ($(UNAME),Linux)
 	@echo "Building C tests..."
 	mkdir -p bin
@@ -146,6 +146,9 @@ else ifeq ($(UNAME),Darwin)
 else
 	@echo "C tests require Linux or macOS"
 endif
+
+c-test-harness-contract: ## Prove a failed C assertion exits nonzero
+	./scripts/check-c-test-harness.sh
 
 # Sanitizer flags for the safety targets: drop -O3/-march=native, add ASAN +
 # UBSan and debug frames. The dataplane parser is the one place attacker bytes
