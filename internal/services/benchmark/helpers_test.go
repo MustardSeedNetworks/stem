@@ -417,16 +417,13 @@ func TestConfigureContextNilContext(t *testing.T) {
 		},
 	}
 
-	// With nil context, this will either panic or return an error.
-	// Using recover to handle either case.
-	defer func() {
-		_ = recover() // Just capture any panic.
-	}()
-
+	// "Error or panic" is not a contract. An executor with no dataplane
+	// context is misconfigured on every platform and must say so the same way,
+	// so this asserts the exact error and never recovers -- an unexpected panic
+	// is a failure, not an accepted outcome.
 	err := benchmark.ConfigureContextForTest(exec, cfg)
-	// If we get here without panic, verify it returned an error.
-	if err == nil {
-		t.Error("configureContext with nil ctx should return error or panic")
+	if !errors.Is(err, modtypes.ErrInvalidConfig) {
+		t.Fatalf("configureContext with nil ctx: got %v, want ErrInvalidConfig", err)
 	}
 }
 
@@ -555,14 +552,9 @@ func TestExecuteConfigureContextError(t *testing.T) {
 
 	for _, testType := range validTests {
 		t.Run(testType, func(t *testing.T) {
-			// Use recover in case configureContext panics.
-			defer func() {
-				_ = recover()
-			}()
-
 			result, err := exec.Execute(testType, cfg)
-			if err == nil {
-				t.Error("Execute should return error when configureContext fails")
+			if !errors.Is(err, modtypes.ErrInvalidConfig) {
+				t.Fatalf("Execute with nil ctx: got %v, want ErrInvalidConfig", err)
 			}
 			verifyErrorResult(t, result, testType)
 		})
@@ -583,7 +575,7 @@ func TestConfigureContextWithDuration(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(_ *testing.T) {
+		t.Run(tt.name, func(t *testing.T) {
 			cfg := &modtypes.TestConfig{
 				Interface: "lo",
 				FrameSize: 64,
@@ -591,12 +583,10 @@ func TestConfigureContextWithDuration(t *testing.T) {
 				Params:    nil,
 			}
 
-			// Will panic or return error due to nil ctx.
-			defer func() {
-				_ = recover()
-			}()
-
-			_ = benchmark.ConfigureContextForTest(exec, cfg)
+			err := benchmark.ConfigureContextForTest(exec, cfg)
+			if !errors.Is(err, modtypes.ErrInvalidConfig) {
+				t.Fatalf("duration %d: got %v, want ErrInvalidConfig", tt.duration, err)
+			}
 		})
 	}
 }
@@ -615,7 +605,7 @@ func TestConfigureContextWithWarmupHelper(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(_ *testing.T) {
+		t.Run(tt.name, func(t *testing.T) {
 			cfg := &modtypes.TestConfig{
 				Interface: "lo",
 				FrameSize: 64,
@@ -625,12 +615,10 @@ func TestConfigureContextWithWarmupHelper(t *testing.T) {
 				},
 			}
 
-			// Will panic or return error due to nil ctx.
-			defer func() {
-				_ = recover()
-			}()
-
-			_ = benchmark.ConfigureContextForTest(exec, cfg)
+			err := benchmark.ConfigureContextForTest(exec, cfg)
+			if !errors.Is(err, modtypes.ErrInvalidConfig) {
+				t.Fatalf("warmup %d: got %v, want ErrInvalidConfig", tt.warmup, err)
+			}
 		})
 	}
 }
