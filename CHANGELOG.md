@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.46](https://github.com/MustardSeedNetworks/stem/compare/v0.24.45...v0.24.46) (2026-08-29)
+
+
+### Features
+
+* **ci:** gate the reflect hot path against throughput regressions ([#867](https://github.com/MustardSeedNetworks/stem/issues/867)) ([ea55737](https://github.com/MustardSeedNetworks/stem/commit/ea55737370a921c3b1c202b6736b1f18f8daeea7))
+
+
+### Continuous Integration
+
+* drop the Codecov upload, keep the local coverage gate ([#865](https://github.com/MustardSeedNetworks/stem/issues/865)) ([ad1f3d2](https://github.com/MustardSeedNetworks/stem/commit/ad1f3d277c3e2cbc6188f883de69080afd7ad02a)), closes [#864](https://github.com/MustardSeedNetworks/stem/issues/864)
+
 ## [0.24.45](https://github.com/MustardSeedNetworks/stem/compare/v0.24.44...v0.24.45) (2026-08-28)
 
 
