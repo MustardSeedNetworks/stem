@@ -13,7 +13,8 @@
 # =============================================================================
 
 .PHONY: test test-all test-backend test-backend-quiet test-frontend test-frontend-quiet \
-        test-coverage test-coverage-html c-test c-test-asan c-fuzz smoke-test \
+        test-coverage test-coverage-html c-test c-test-asan c-fuzz c-bench \
+        c-bench-compare smoke-test \
         test-e2e test-e2e-ui test-e2e-install check-stale-tests
 
 # =============================================================================
@@ -175,6 +176,29 @@ c-fuzz: ## Fuzz the dataplane packet parser under libFuzzer+ASAN (FUZZ_SECONDS=6
 		-o bin/fuzz_packet tests/c/fuzz_packet.c src/dataplane/common/packet.c
 	@echo "Fuzzing packet parser for $(FUZZ_SECONDS)s..."
 	ASAN_OPTIONS=detect_leaks=0 ./bin/fuzz_packet -max_total_time=$(FUZZ_SECONDS) -print_final_stats=1
+
+# =============================================================================
+# C Performance Gate
+# =============================================================================
+#
+# stem measures network performance, so a throughput regression in the reflect
+# path is a correctness regression -- and nothing else in the suite would catch
+# one (#860). c-bench reports current rates; c-bench-compare is the gate.
+
+C_BENCH_SRCS := bench/bench_reflect.c \
+	src/reflector/packet.c \
+	src/reflector/netally.c \
+	src/reflector/util.c
+
+c-bench: ## Build + run the reflect-path microbenchmark (reports packets/sec)
+	@echo "Building reflect benchmark..."
+	mkdir -p bin
+	$(CC) $(CFLAGS) -o bin/bench_reflect $(C_BENCH_SRCS) $(C_LDFLAGS)
+	@echo "Running reflect benchmark..."
+	./bin/bench_reflect
+
+c-bench-compare: ## Compare reflect-path throughput against a baseline revision (BASELINE_REF=...)
+	scripts/bench-compare.sh $(BASELINE_REF)
 
 smoke-test: ## Run smoke tests (requires root, Linux only)
 ifeq ($(UNAME),Linux)

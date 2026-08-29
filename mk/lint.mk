@@ -99,8 +99,8 @@ ifeq ($(UNAME),Linux)
 		echo "compile_commands.json not found. Generate with: bear -- make dataplane c-test"; \
 		exit 1; \
 	fi; \
-	find src include tests -type f \( -name '*.c' -o -name '*.h' \) | xargs clang-format --dry-run --Werror; \
-	find src include tests -type f -name '*.c' | xargs clang-tidy -p $$clang_tidy_db -warnings-as-errors=*
+	find src include tests bench -type f \( -name '*.c' -o -name '*.h' \) | xargs clang-format --dry-run --Werror; \
+	find src include tests bench -type f -name '*.c' | xargs clang-tidy -p $$clang_tidy_db -warnings-as-errors=*
 	@printf "$(GREEN)✓ C lint complete$(RESET)\n"
 else
 	@echo "C linting requires Linux"
@@ -165,7 +165,7 @@ ifeq ($(UNAME),Linux)
 		echo "clang-format not found; install it to format C code."; \
 		exit 1; \
 	fi
-	find src include tests -type f \( -name '*.c' -o -name '*.h' \) | xargs clang-format -i
+	find src include tests bench -type f \( -name '*.c' -o -name '*.h' \) | xargs clang-format -i
 	@printf "$(GREEN)✓ C code formatted$(RESET)\n"
 else
 	@echo "C formatting requires Linux"
