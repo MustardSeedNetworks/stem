@@ -81,6 +81,7 @@ jobs:
               - 'src/**'
               - 'include/**'
               - 'tests/c/**'
+              - 'bench/**'
               - '.clang-tidy'
               - '.clang-format'
             docs:
@@ -539,7 +540,7 @@ jobs:
         if: steps.check-c.outputs.has_c == 'true'
         run: |
           clang-format --version
-          find src include tests/c \( -name '*.c' -o -name '*.h' \) -print0 2>/dev/null | \
+          find src include tests/c bench \( -name '*.c' -o -name '*.h' \) -print0 2>/dev/null | \
             xargs -0 clang-format --dry-run --Werror --style=file
 
       # Blocking as of #830. It was advisory while the toolchain was broken and
@@ -550,7 +551,7 @@ jobs:
         if: steps.check-c.outputs.has_c == 'true'
         run: |
           echo "Running clang-tidy with C23 checks..."
-          find src include tests/c \( -name '*.c' -o -name '*.h' \) -print0 2>/dev/null | \
+          find src include tests/c bench \( -name '*.c' -o -name '*.h' \) -print0 2>/dev/null | \
             xargs -0 clang-tidy \
               --config-file=.clang-tidy \
               --extra-arg=-std=c23 \
@@ -1443,6 +1444,53 @@ jobs:
           path: server.log
 
   # ============================================================================
+  # Reflect-Path Performance Gate
+  # ============================================================================
+  # stem measures network performance, so a throughput regression in the reflect
+  # path is a correctness regression -- and until #860 nothing in CI would catch
+  # one: tests/c/ covers behaviour, tests/load/ drives the HTTP API, and the
+  # sanitizer targets cover memory safety.
+  #
+  # The comparison is same-runner A/B: the baseline revision and the PR head are
+  # both built and measured on this runner, in this job. Absolute packets-per-
+  # second is a property of the machine, so a recorded constant would false-
+  # positive whenever the runner class or its neighbours changed. A/B also means
+  # a genuine improvement re-baselines itself on merge, with no committed figure
+  # to remember to update.
+  #
+  # The gate fails closed -- a build that does not compile, a binary that does
+  # not run, or output with no BENCH records all fail the job.
+  c-bench:
+    name: C Performance (reflect path)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: changes
+    if: >-
+      needs.changes.outputs.c == 'true' || needs.changes.outputs.ci_infra == 'true'
+      || github.event_name == 'schedule'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The baseline is a merge-base, so the comparison needs real history:
+          # a shallow clone has no commit to diff against and the gate would
+          # skip on every run.
+          fetch-depth: 0
+
+      - name: Install gcc-14
+        # ubuntu-24.04's default gcc is 13, which only knows -std=c2x and
+        # rejects the -std=c23 the Makefile and this benchmark use. Same reason
+        # c-lint installs it.
+        timeout-minutes: 10
+        uses: MustardSeedNetworks/.github/.github/actions/apt-install@a146506fd53fe5e01fdc01892dd838c10081d183 # v1.9.0
+        with:
+          packages: gcc-14
+
+      - name: Compare reflect-path throughput against the merge base
+        env:
+          CC: gcc-14
+        run: scripts/bench-compare.sh
+
+  # ============================================================================
   # CI Complete — dispatcher / branch-protection aggregator
   # ============================================================================
   # Every required-status-check on `main` is consolidated into this single
@@ -1479,6 +1527,7 @@ jobs:
       - storybook
       - c-lint
       - dataplane-safety
+      - c-bench
       - security
       - semgrep
       - ci-conformance
