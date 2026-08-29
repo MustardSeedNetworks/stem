@@ -138,4 +138,6 @@ int main(void)
     RUN_TEST(null_and_zero_length_are_rejected);
     RUN_TEST(extractors_safe_on_short_frames);
     TEST_SUMMARY();
+
+    return TEST_EXIT_STATUS();
 }

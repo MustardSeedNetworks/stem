@@ -18,7 +18,7 @@
  *       TEST_SUITE("My Tests");
  *       RUN_TEST(my_test_name);
  *       TEST_SUMMARY();
- *       return test_failed;
+ *       return TEST_EXIT_STATUS();
  *   }
  */
 
@@ -106,6 +106,15 @@ static const char *current_test    = NULL;
             printf(TERM_RED TERM_BOLD "Some tests failed!" TERM_RESET "\n");               \
         }                                                                                  \
     } while (0)
+
+/* Process exit status for a test executable.
+ *
+ * Every `main` must `return TEST_EXIT_STATUS();`. Falling off the end of `main`
+ * returns success, so a suite that printed "Some tests failed!" would still be
+ * green in CI. Returning `test_failed` directly is also wrong: the status is
+ * truncated to its low 8 bits, so exactly 256 failures would report success.
+ * scripts/check-c-test-harness.sh gates both mistakes. */
+#define TEST_EXIT_STATUS() (test_failed == 0 ? EXIT_SUCCESS : EXIT_FAILURE)
 
 /* ============================================================================
  * Assertion Macros
