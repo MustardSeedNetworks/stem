@@ -1476,7 +1476,18 @@ jobs:
           # skip on every run.
           fetch-depth: 0
 
+      - name: Install gcc-14
+        # ubuntu-24.04's default gcc is 13, which only knows -std=c2x and
+        # rejects the -std=c23 the Makefile and this benchmark use. Same reason
+        # c-lint installs it.
+        timeout-minutes: 10
+        uses: MustardSeedNetworks/.github/.github/actions/apt-install@a146506fd53fe5e01fdc01892dd838c10081d183 # v1.9.0
+        with:
+          packages: gcc-14
+
       - name: Compare reflect-path throughput against the merge base
+        env:
+          CC: gcc-14
         run: scripts/bench-compare.sh
 
   # ============================================================================

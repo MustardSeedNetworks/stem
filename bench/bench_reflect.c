@@ -99,8 +99,13 @@ static void build_ipv6_udp(uint8_t frame[FRAME_LEN])
 
 static void build_netally_probe(uint8_t frame[FRAME_LEN])
 {
+    /* A fixed-length wire signature, not a C string: the field carries exactly
+     * ITO_SIG_LEN bytes with no terminator. Spelled as a byte array rather than
+     * a string literal so that is explicit in the type. */
+    static const uint8_t signature[ITO_SIG_LEN] = {'P', 'R', 'O', 'B', 'E', 'O', 'T'};
+
     build_ipv4_udp(frame);
-    memcpy(frame + UDP_OFFSET + UDP_HDR_LEN + ITO_SIG_OFFSET, "PROBEOT", ITO_SIG_LEN);
+    memcpy(frame + UDP_OFFSET + UDP_HDR_LEN + ITO_SIG_OFFSET, signature, sizeof(signature));
 }
 
 /*
