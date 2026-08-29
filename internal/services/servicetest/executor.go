@@ -3,7 +3,6 @@
 package servicetest
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
@@ -88,7 +87,7 @@ func (e *Executor) Execute(testType string, cfg *modtypes.TestConfig) (*modtypes
 	}
 
 	if e.ctx == nil {
-		return nil, errors.New("dataplane context is not configured")
+		return nil, fmt.Errorf("%w: executor has no dataplane context", modtypes.ErrInvalidConfig)
 	}
 
 	// Configure the context.
@@ -200,7 +199,7 @@ func (e *Executor) runMEF(testType string, cfg *modtypes.TestConfig) (any, error
 // configureContext sets up the dataplane context from test config.
 func (e *Executor) configureContext(cfg *modtypes.TestConfig) error {
 	if e.ctx == nil {
-		return errors.New("dataplane context is not configured")
+		return fmt.Errorf("%w: executor has no dataplane context", modtypes.ErrInvalidConfig)
 	}
 
 	dpCfg := &dataplane.Config{
