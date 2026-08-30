@@ -164,6 +164,41 @@ jobs:
   # Windows-specific code. The truststore tests are ValidateCertFile parsing
   # only -- install/uninstall shell out to certutil.exe and need elevation, and
   # nothing here calls them.
+  # ===========================================================================
+  # Backend (macOS)
+  # ===========================================================================
+  # stem publishes a darwin/arm64 archive but cross-compiled every Darwin build
+  # on Ubuntu, so internal/truststore/truststore_darwin.go -- the only file
+  # behind `//go:build darwin` -- was never compiled by CI at all. A break in it
+  # surfaced at release time, on a platform nobody had run.
+  #
+  # Deliberately small: build and vet the tree, and run the truststore tests,
+  # which is the package that has a Darwin implementation. It shells out to
+  # `security` rather than linking a framework, so the runner needs no keychain
+  # access and no signing identity.
+  backend-darwin:
+    name: Backend (macOS)
+    runs-on: macos-latest
+    needs: changes
+    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.ci_infra == 'true'
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: ./.github/actions/setup-go
+
+      - name: Build
+        run: go build ./...
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test truststore
+        run: go test -race ./internal/truststore/...
+
   backend-windows:
     name: Backend (Windows)
     runs-on: windows-latest
@@ -1540,6 +1575,7 @@ jobs:
       - changes
       - build-ui
       - backend
+      - backend-darwin
       - backend-windows
       - race
       - frontend
