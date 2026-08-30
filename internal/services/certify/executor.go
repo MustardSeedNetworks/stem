@@ -93,6 +93,13 @@ func (e *Executor) Execute(testType string, cfg *modtypes.TestConfig) (*modtypes
 		return nil, modtypes.ErrInvalidConfig
 	}
 
+	// Every branch of the switch below dereferences e.ctx. On the stub build a
+	// nil receiver is harmless; on cgo+linux it panics. Same contract as the
+	// sibling executors: no dataplane context is a misconfigured executor.
+	if e.ctx == nil {
+		return nil, fmt.Errorf("%w: executor has no dataplane context", modtypes.ErrInvalidConfig)
+	}
+
 	result := &modtypes.Result{
 		TestType:   testType,
 		ModuleName: ModuleName,

@@ -94,18 +94,20 @@ func (e *Executor) Execute(testType string, cfg *modtypes.TestConfig) (*modtypes
 		Data:       nil,
 	}
 
-	// Configure the context if available.
-	if e.ctx != nil {
-		err := e.configureContext(cfg)
-		if err != nil {
-			result.Error = err.Error()
-			return result, fmt.Errorf("failed to configure context: %w", err)
-		}
+	// This used to be wrapped in `if e.ctx != nil`, which protected the
+	// configure step and then dereferenced e.ctx unconditionally in the switch
+	// below -- so a nil context skipped configuration only to panic a few lines
+	// later on the cgo+linux build. configureContext rejects a nil context, so
+	// configuring unconditionally is what actually makes Execute safe.
+	err := e.configureContext(cfg)
+	if err != nil {
+		result.Error = err.Error()
+		return result, fmt.Errorf("failed to configure context: %w", err)
+	}
 
-		// Set frame size if provided.
-		if cfg.FrameSize > 0 {
-			e.ctx.SetFrameSize(cfg.FrameSize)
-		}
+	// Set frame size if provided.
+	if cfg.FrameSize > 0 {
+		e.ctx.SetFrameSize(cfg.FrameSize)
 	}
 
 	var data any
@@ -144,6 +146,16 @@ func (e *Executor) Execute(testType string, cfg *modtypes.TestConfig) (*modtypes
 
 // configureContext sets up the dataplane context from test config.
 func (e *Executor) configureContext(cfg *modtypes.TestConfig) error {
+	// The two dataplane builds disagree about a nil context: the stub's
+	// Configure ignores its receiver and returns ErrNotSupported, while the
+	// cgo+linux one takes c.mu and panics. Tests papered over that by
+	// accepting "error or panic" as equally correct, which is not a contract.
+	// An executor without a dataplane context is a misconfigured executor on
+	// every platform, so say so once, here.
+	if e.ctx == nil {
+		return fmt.Errorf("%w: executor has no dataplane context", modtypes.ErrInvalidConfig)
+	}
+
 	dpCfg := &dataplane.Config{
 		Interface:      cfg.Interface,
 		LineRate:       0,
