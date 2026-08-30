@@ -72,3 +72,64 @@ describe('rail <-> header label agreement', () => {
     expect(byPath.get('/tests/benchmark')).toBe('Benchmark');
   });
 });
+
+describe('usePages', () => {
+  it('lands on the reflector', () => {
+    const { result } = renderHook(() => usePages());
+
+    expect(result.current[0]?.path).toBe('/reflector');
+  });
+
+  it('declares every path exactly once', () => {
+    const { result } = renderHook(() => usePages());
+    const paths = result.current.map((p) => p.path);
+
+    expect(new Set(paths).size).toBe(paths.length);
+  });
+
+  it('gives every page an icon and a component', () => {
+    const { result } = renderHook(() => usePages());
+
+    for (const page of result.current) {
+      expect(page.icon, `${page.path} icon`).toBeTruthy();
+      expect(page.component, `${page.path} component`).toBeDefined();
+    }
+  });
+});
+
+describe('usePages — lazy routes', () => {
+  // Path -> the module and named export the registry lazy-loads. Kept
+  // explicit so a renamed export fails here rather than on the operator's
+  // first navigation; the coverage assertion below stops it going stale.
+  const lazyRoutes: Record<string, () => Promise<Record<string, unknown>>> = {
+    '/tests/benchmark': () => import('./pages/BenchmarkPage'),
+    '/tests/servicetest': () => import('./pages/ServiceTestPage'),
+    '/tests/trafficgen': () => import('./pages/TrafficGenPage'),
+    '/tests/measure': () => import('./pages/MeasurePage'),
+    '/tests/certify': () => import('./pages/CertifyPage'),
+    '/history': () => import('./pages/HistoryPage'),
+    '/account/security': () => import('./pages/account/security/SecurityPage'),
+  };
+  const exportNames: Record<string, string> = {
+    '/tests/benchmark': 'BenchmarkPage',
+    '/tests/servicetest': 'ServiceTestPage',
+    '/tests/trafficgen': 'TrafficGenPage',
+    '/tests/measure': 'MeasurePage',
+    '/tests/certify': 'CertifyPage',
+    '/history': 'HistoryPage',
+    '/account/security': 'SecurityPage',
+  };
+
+  it('covers every non-eager route', () => {
+    const { result } = renderHook(() => usePages());
+    const deferred = result.current.map((p) => p.path).filter((path) => path !== '/reflector');
+
+    expect(deferred.sort()).toEqual(Object.keys(lazyRoutes).sort());
+  });
+
+  it.each(Object.keys(lazyRoutes))('%s still exports the component it lazy-loads', async (path) => {
+    const mod = await lazyRoutes[path]();
+
+    expect(mod[exportNames[path]], `${path}: ${exportNames[path]}`).toBeTypeOf('function');
+  });
+});

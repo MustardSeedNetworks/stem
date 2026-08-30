@@ -84,6 +84,44 @@ describe('auth-store: login / MFA', () => {
     expect(useAuthStore.getState().mfaPending).toBeNull();
   });
 
+  it('gives login and MFA verification a deadline', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(jsonResponse({ token: 'a' }));
+    await useAuthStore.getState().login('admin', 'pw');
+    expect((fetchMock.mock.calls[0][1] as RequestInit).signal).toBeInstanceOf(AbortSignal);
+
+    useAuthStore.setState({ mfaPending: { mfaToken: 'tok', factor: 'totp' } });
+    await useAuthStore.getState().verifyMfa('123456');
+    expect((fetchMock.mock.calls[1][1] as RequestInit).signal).toBeInstanceOf(AbortSignal);
+  });
+
+  it('distinguishes a server that did not answer from one it could not reach', async () => {
+    vi.spyOn(globalThis, 'fetch').mockRejectedValue(
+      new DOMException('The operation timed out.', 'TimeoutError'),
+    );
+
+    const result = await useAuthStore.getState().login('admin', 'pw');
+
+    expect(result).toEqual({
+      status: 'error',
+      message: 'The authentication server did not respond. Check the connection and try again.',
+    });
+    // Without a deadline this never settles: loginLoading stays true and the
+    // form stays disabled with no error and no retry.
+    expect(useAuthStore.getState().loginLoading).toBe(false);
+    expect(useAuthStore.getState().loginError).toMatch(/did not respond/);
+  });
+
+  it('still reports an unreachable server distinctly', async () => {
+    vi.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('Failed to fetch'));
+
+    const result = await useAuthStore.getState().login('admin', 'pw');
+
+    expect(result).toEqual({
+      status: 'error',
+      message: 'Unable to reach authentication server.',
+    });
+  });
+
   it('cancelMfa drops the pending challenge and clears the error', () => {
     useAuthStore.setState({
       mfaPending: { mfaToken: 'tok', factor: 'totp' },

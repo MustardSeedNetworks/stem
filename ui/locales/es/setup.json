@@ -46,11 +46,12 @@
     }
   },
   "errors": {
-    "passwordTooShort": "La contraseña debe tener al menos {{count}} caracteres",
-    "passwordMismatch": "Las contraseñas no coinciden",
-    "setupFailed": "La configuración falló",
     "loginFailed": "Configuración completa pero el inicio de sesión falló. Por favor inicie sesión manualmente.",
-    "networkError": "No se puede conectar al servidor. Por favor intente de nuevo."
+    "networkError": "No se puede conectar al servidor. Por favor intente de nuevo.",
+    "passwordMismatch": "Las contraseñas no coinciden",
+    "passwordTooShort": "La contraseña debe tener al menos {{count}} caracteres",
+    "setupFailed": "La configuración falló",
+    "timeout": "El servidor no respondió. Compruebe la conexión e inténtelo de nuevo."
   },
   "footer": {
     "copyright": "© {{year}} Mustard Seed Networks. Todos los derechos reservados."

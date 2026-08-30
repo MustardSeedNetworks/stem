@@ -70,9 +70,16 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov'],
       exclude: ['node_modules/', 'src/test/', '**/*.d.ts', '**/*.config.*', 'dist/'],
-      // Anti-regression floor (set ~2pp below current measurement).
-      // Already comfortably above CLAUDE.md's 50% minimum. Current:
-      // lines 91, branches 84, functions 94, stmts 91.
+      // TARGETS, not a measurement of today. The comment here used to claim
+      // "current: lines 91, branches 84, functions 94" — numbers no run has
+      // produced. Measured on this commit: lines 79.61, branches 67.67,
+      // functions 60.90, statements 79.61 (was 77.97 / 67.24 / 58.71 / 77.97
+      // before this change).
+      //
+      // Because of that gap, CI runs `npm test`, not `npm run test:coverage`
+      // — wiring the gate today would fail every PR. The numbers are being
+      // ratcheted up slice by slice (#824); the thresholds below stay where
+      // they are and the gate goes on when the measurement reaches them.
       thresholds: {
         lines: 88,
         branches: 80,
