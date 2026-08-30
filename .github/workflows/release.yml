@@ -234,10 +234,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          curl -sSfL -o syft.tar.gz \
+          # Downloaded into a temp dir rather than the workspace, matching the
+          # Cosign step below and seed's equivalent. *.tar.gz is gitignored, so
+          # this was not what goreleaser validation was being skipped for -- it
+          # is hygiene, not the fix.
+          syft_dir=$(mktemp -d)
+          trap 'rm -rf "$syft_dir"' EXIT
+          curl -sSfL -o "$syft_dir/syft.tar.gz" \
             "https://github.com/anchore/syft/releases/download/v${SYFT_VERSION}/syft_${SYFT_VERSION}_linux_amd64.tar.gz"
-          echo "${SYFT_SHA256}  syft.tar.gz" | sha256sum -c -
-          tar -xzf syft.tar.gz -C /usr/local/bin syft
+          echo "${SYFT_SHA256}  $syft_dir/syft.tar.gz" | sha256sum -c -
+          tar -xzf "$syft_dir/syft.tar.gz" -C /usr/local/bin syft
           chmod +x /usr/local/bin/syft
 
       # Downloaded and executed in a job holding contents: write and
@@ -262,6 +268,22 @@ jobs:
       # Anything that is not a pushed, non-dry-run tag is a snapshot. See the
       # publish predicate below: the two conditions are exact complements, so
       # exactly one of these steps runs on every path through this job.
+      # goreleaser validates that it is building from a clean tree at the
+      # expected tag. Asserting it here first means a step that drops a file in
+      # the workspace fails with a message naming the file, rather than as a
+      # goreleaser error whose easiest fix is to skip validation again -- which
+      # is how --skip=validate came to sit on the publish path.
+      - name: Assert the workspace is clean before goreleaser
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "::error::the workspace is dirty before goreleaser; a build step left files behind:"
+            git status --porcelain
+            exit 1
+          fi
+          echo "workspace clean"
+
       - name: Run goreleaser (snapshot/dry-run)
         if: ${{ github.event_name != 'push' || inputs.dry_run }}
         env:
@@ -276,12 +298,13 @@ jobs:
         env:
           UI_BUILD_HASH: ${{ needs.build-ui.outputs.ui_hash }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        # --skip=validate: the UI build downloaded into internal/api/ui/
-        # overwrites tracked stubs (index.html with the prior bundle's
-        # hashed asset refs), which goreleaser would otherwise flag as
-        # "git is in a dirty state". PR-level CI validates the same
-        # content via the dry-run snapshot.
-        run: goreleaser release --clean --skip=validate
+        # Validation is on: it is what checks the build is running from a clean
+        # tree at the expected tag, on the path that produces signed, attested,
+        # published artifacts. The comment that used to sit here blamed the UI
+        # artifact, but internal/api/ui/* is gitignored and only .gitkeep is
+        # tracked, so that cannot dirty the tree. No other source is known --
+        # which is why the step above asserts it rather than assuming it.
+        run: goreleaser release --clean
 
       - name: Capture artifact hashes for SLSA provenance
         if: ${{ github.event_name == 'push' && !inputs.dry_run }}
