@@ -96,6 +96,33 @@ export const SetupWizardSchema = v.pipe(
  * operator writes the token to a file on the server, the user pastes
  * the token here, then enters and confirms a new password.
  */
+/**
+ * RecoveryInstructionsSchema — body of GET /api/v1/recovery/instructions.
+ *
+ * Validated rather than cast because the panel renders `steps` directly: a 200
+ * whose body lacks it (a proxy page, a changed contract) crashed the whole
+ * recovery form, which is the one way back into a locked-out account.
+ */
+export const RecoveryInstructionsSchema = v.object({
+  triggerFile: v.string(),
+  tokenFile: v.string(),
+  expiryTime: v.string(),
+  steps: v.array(v.string()),
+});
+
+export type RecoveryInstructions = v.InferOutput<typeof RecoveryInstructionsSchema>;
+
+/**
+ * parseRecoveryInstructions — returns the parsed instructions, or null when the
+ * body is not the expected shape. Null renders no panel, which is the same as
+ * the endpoint being unavailable: instructions are a convenience, and losing
+ * them must not block recovery.
+ */
+export function parseRecoveryInstructions(body: unknown): RecoveryInstructions | null {
+  const result = v.safeParse(RecoveryInstructionsSchema, body);
+  return result.success ? result.output : null;
+}
+
 export const RecoveryCompleteSchema = v.pipe(
   v.object({
     token: v.pipe(
