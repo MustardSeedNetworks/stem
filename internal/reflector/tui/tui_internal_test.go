@@ -3,6 +3,7 @@
 package tui
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -268,30 +269,95 @@ func TestHandleKeyEventQuitUppercase(t *testing.T) {
 	}
 }
 
+// newTestApp builds an app that is fully usable without tview's event loop.
+//
+// build() creates the views and pages Run() used to create inline, and
+// queueDraw runs updates synchronously instead of handing them to an
+// application that is not running. Between them, the key handlers below can be
+// exercised for real rather than skipped.
+func newTestApp(t *testing.T, dp *dataplane.Dataplane) *App {
+	t.Helper()
+
+	app := New(dp)
+	app.queueDraw = func(fn func()) { fn() }
+	app.build()
+	return app
+}
+
 func TestHandleKeyEventReset(t *testing.T) {
-	// Skip this test as it requires a non-nil dataplane.
-	// The resetStats function calls dp.ResetStats() which panics on nil dp.
-	t.Skip("requires non-nil dataplane")
+	app := newTestApp(t, &dataplane.Dataplane{})
+	before := app.startTime
+
+	if got := app.handleKeyEvent(tcell.NewEventKey(tcell.KeyRune, 'r', tcell.ModNone)); got != nil {
+		t.Error("handleKeyEvent('r') should consume the event")
+	}
+
+	// resetStats restarts the uptime clock; that is the observable half of it
+	// with the stub dataplane, whose ResetStats is a no-op.
+	if !app.startTime.After(before) {
+		t.Errorf("startTime not restarted: before %v, after %v", before, app.startTime)
+	}
 }
 
 func TestHandleKeyEventPause(t *testing.T) {
-	// Skip - togglePause uses QueueUpdateDraw which blocks without running app.
-	t.Skip("requires running tview application")
+	app := newTestApp(t, nil)
+
+	if got := app.handleKeyEvent(tcell.NewEventKey(tcell.KeyRune, 'p', tcell.ModNone)); got != nil {
+		t.Error("handleKeyEvent('p') should consume the event")
+	}
+	if !app.isPaused() {
+		t.Error("'p' should pause")
+	}
+
+	app.handleKeyEvent(tcell.NewEventKey(tcell.KeyRune, 'p', tcell.ModNone))
+	if app.isPaused() {
+		t.Error("'p' again should resume")
+	}
 }
 
 func TestHandleKeyEventHelp(t *testing.T) {
-	// Skip - toggleExtendedHelp uses QueueUpdateDraw which blocks without running app.
-	t.Skip("requires running tview application")
+	app := newTestApp(t, nil)
+
+	if got := app.handleKeyEvent(tcell.NewEventKey(tcell.KeyRune, 'h', tcell.ModNone)); got != nil {
+		t.Error("handleKeyEvent('h') should consume the event")
+	}
+	if !app.showExtHelp {
+		t.Error("'h' should turn extended help on")
+	}
+
+	app.handleKeyEvent(tcell.NewEventKey(tcell.KeyRune, 'h', tcell.ModNone))
+	if app.showExtHelp {
+		t.Error("'h' again should turn extended help off")
+	}
 }
 
 func TestHandleKeyEventQuestionMark(t *testing.T) {
-	// Skip - toggleExtendedHelp uses QueueUpdateDraw which blocks without running app.
-	t.Skip("requires running tview application")
+	app := newTestApp(t, nil)
+
+	if got := app.handleKeyEvent(tcell.NewEventKey(tcell.KeyRune, '?', tcell.ModNone)); got != nil {
+		t.Error("handleKeyEvent('?') should consume the event")
+	}
+	if !app.showExtHelp {
+		t.Error("'?' should turn extended help on")
+	}
 }
 
 func TestHandleKeyEventNumberKeys(t *testing.T) {
-	// Skip - setProfile uses QueueUpdateDraw which blocks without running app.
-	t.Skip("requires running tview application")
+	profiles := GetPredefinedProfiles()
+
+	for i, want := range profiles {
+		key := rune('1' + i)
+		t.Run(string(key), func(t *testing.T) {
+			app := newTestApp(t, nil)
+
+			if got := app.handleKeyEvent(tcell.NewEventKey(tcell.KeyRune, key, tcell.ModNone)); got != nil {
+				t.Errorf("handleKeyEvent(%q) should consume the event", key)
+			}
+			if app.filterActive != want.Name {
+				t.Errorf("filterActive = %q, want %q", app.filterActive, want.Name)
+			}
+		})
+	}
 }
 
 func TestHandleKeyEventFilter(t *testing.T) {
@@ -319,18 +385,37 @@ func TestHandleKeyEventFilterUppercase(t *testing.T) {
 }
 
 func TestHandleKeyEventRUppercase(t *testing.T) {
-	// Skip - requires dataplane.
-	t.Skip("requires non-nil dataplane")
+	app := newTestApp(t, &dataplane.Dataplane{})
+	before := app.startTime
+
+	if got := app.handleKeyEvent(tcell.NewEventKey(tcell.KeyRune, 'R', tcell.ModNone)); got != nil {
+		t.Error("handleKeyEvent('R') should consume the event")
+	}
+	if !app.startTime.After(before) {
+		t.Error("'R' should reset stats like 'r'")
+	}
 }
 
 func TestHandleKeyEventPUppercase(t *testing.T) {
-	// Skip - togglePause uses QueueUpdateDraw.
-	t.Skip("requires running tview application")
+	app := newTestApp(t, nil)
+
+	if got := app.handleKeyEvent(tcell.NewEventKey(tcell.KeyRune, 'P', tcell.ModNone)); got != nil {
+		t.Error("handleKeyEvent('P') should consume the event")
+	}
+	if !app.isPaused() {
+		t.Error("'P' should pause like 'p'")
+	}
 }
 
 func TestHandleKeyEventHUppercase(t *testing.T) {
-	// Skip - toggleExtendedHelp uses QueueUpdateDraw.
-	t.Skip("requires running tview application")
+	app := newTestApp(t, nil)
+
+	if got := app.handleKeyEvent(tcell.NewEventKey(tcell.KeyRune, 'H', tcell.ModNone)); got != nil {
+		t.Error("handleKeyEvent('H') should consume the event")
+	}
+	if !app.showExtHelp {
+		t.Error("'H' should toggle extended help like 'h'")
+	}
 }
 
 func TestHandleKeyEventUnhandled(t *testing.T) {
@@ -346,26 +431,36 @@ func TestHandleKeyEventUnhandled(t *testing.T) {
 }
 
 func TestHandleKeyEventNumberKeyProfile(t *testing.T) {
-	// Skip - setProfile uses QueueUpdateDraw which blocks without running app.
-	t.Skip("requires running tview application")
+	app := newTestApp(t, nil)
+
+	app.handleKeyEvent(tcell.NewEventKey(tcell.KeyRune, '2', tcell.ModNone))
+
+	want := GetPredefinedProfiles()[1]
+	if app.currentProfile.Name != want.Name {
+		t.Errorf("currentProfile = %q, want %q", app.currentProfile.Name, want.Name)
+	}
+	// The header is redrawn through the same path, so it must now name the
+	// profile the key selected.
+	if header := app.headerView.GetText(true); !strings.Contains(header, want.Name) {
+		t.Errorf("header %q does not mention profile %q", header, want.Name)
+	}
 }
 
 // =============================================================================
 // showProfileSelector Tests
 // =============================================================================
 
-func TestShowProfileSelector(_ *testing.T) {
-	app := New(nil)
-
-	// showProfileSelector should not panic with nil pages.
-	// It will fail at runtime but we're testing that it doesn't panic during the call itself.
-	defer func() {
-		if r := recover(); r != nil {
-			_ = r // Expected - pages might not be fully initialized.
-		}
-	}()
+func TestShowProfileSelector(t *testing.T) {
+	app := newTestApp(t, nil)
 
 	app.showProfileSelector()
+
+	// The old version swallowed any panic and asserted nothing, so it passed
+	// whether or not the page switch happened -- and with an empty Pages it
+	// never did.
+	if front, _ := app.pages.GetFrontPage(); front != "profiles" {
+		t.Errorf("front page = %q, want \"profiles\"", front)
+	}
 }
 
 // =============================================================================
@@ -373,13 +468,38 @@ func TestShowProfileSelector(_ *testing.T) {
 // =============================================================================
 
 func TestSetProfile(t *testing.T) {
-	// Skip - setProfile uses QueueUpdateDraw which blocks without running app.
-	t.Skip("requires running tview application")
+	app := newTestApp(t, nil)
+	want := GetPredefinedProfiles()[2]
+
+	app.setProfile(want)
+
+	if app.filterActive != want.Name {
+		t.Errorf("filterActive = %q, want %q", app.filterActive, want.Name)
+	}
+	if header := app.headerView.GetText(true); !strings.Contains(header, want.Name) {
+		t.Errorf("header %q does not mention profile %q", header, want.Name)
+	}
 }
 
 func TestSetProfileCustom(t *testing.T) {
-	// Skip - setProfile uses QueueUpdateDraw which blocks without running app.
-	t.Skip("requires running tview application")
+	app := newTestApp(t, nil)
+	custom := FilterProfile{
+		Name:        "custom-profile",
+		Description: "hand-rolled",
+		ITO:         true,
+		RFC2544:     false,
+		Y1564:       false,
+		MSN:         true,
+	}
+
+	app.setProfile(custom)
+
+	if app.currentProfile != custom {
+		t.Errorf("currentProfile = %+v, want %+v", app.currentProfile, custom)
+	}
+	if header := app.headerView.GetText(true); !strings.Contains(header, custom.Name) {
+		t.Errorf("header %q does not mention profile %q", header, custom.Name)
+	}
 }
 
 // Test direct field manipulation (without setProfile method).
@@ -1372,19 +1492,19 @@ func TestNewWithFilterAndStubDataplane(t *testing.T) {
 // Note: This test can't fully exercise resetStats because it calls updateStats
 // which requires a running TUI. But we can test that it doesn't panic.
 func TestResetStatsWithStubDataplane(t *testing.T) {
-	dp := &dataplane.Dataplane{}
-	app := New(dp)
+	app := newTestApp(t, &dataplane.Dataplane{})
+	before := app.startTime
 
-	// Set a start time.
-	_ = app.startTime // Acknowledge we know about startTime.
+	app.resetStats()
 
-	// Wait a tiny bit to ensure time progresses.
-	time.Sleep(time.Millisecond)
-
-	// resetStats will panic because it tries to call updateStats which needs views.
-	// We can only test that the dataplane's ResetStats is called.
-	// Since we can't easily test this without views, skip the actual call.
-	t.Skip("resetStats requires views to be initialized")
+	if !app.startTime.After(before) {
+		t.Errorf("startTime not restarted: before %v, after %v", before, app.startTime)
+	}
+	// The stats view is redrawn through the same call, so it must have content
+	// rather than remaining the empty string a never-updated view returns.
+	if app.statsView.GetText(true) == "" {
+		t.Error("resetStats left the stats view empty")
+	}
 }
 
 // TestAppWithDataplaneInterface tests that dp.Interface() is called correctly.
