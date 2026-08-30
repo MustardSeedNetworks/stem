@@ -11,6 +11,7 @@ import { type SubmitHandler, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { type StemRole, useRole } from '../../contexts/RoleContext';
 import { SetupWizardSchema } from '../../schemas/auth';
+import { isDeadlineExceeded, requestDeadline } from '../../utils/http';
 
 /** Minimum password length (matches backend validation) */
 const MIN_PASSWORD_LENGTH = 12;
@@ -105,6 +106,7 @@ export function SetupWizard({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password, setupToken }),
+        signal: requestDeadline(),
       });
       if (!response.ok) {
         const data = await (response.json() as Promise<{
@@ -124,8 +126,8 @@ export function SetupWizard({
         return;
       }
       onComplete();
-    } catch {
-      setSubmitError(t('errors.networkError'));
+    } catch (err) {
+      setSubmitError(isDeadlineExceeded(err) ? t('errors.timeout') : t('errors.networkError'));
     }
   };
 

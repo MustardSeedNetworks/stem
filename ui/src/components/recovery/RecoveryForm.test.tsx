@@ -222,7 +222,10 @@ describe('validation', () => {
     await user.type(screen.getByLabelText('Confirm Password'), `${VALID_PASSWORD}-typo`);
     await user.click(screen.getByRole('button', { name: 'Reset Password' }));
 
-    await waitFor(() => expect(submitCall()).toBeUndefined());
+    // The message has to reach the operator, not just block the submit: a
+    // form that silently does nothing on click reads as broken.
+    await waitFor(() => expect(screen.getByText(/do not match/i)).toBeInTheDocument());
+    expect(submitCall()).toBeUndefined();
     expect(onRecoveryComplete).not.toHaveBeenCalled();
   });
 

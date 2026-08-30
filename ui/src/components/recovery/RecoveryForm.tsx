@@ -250,15 +250,6 @@ export function RecoveryForm({
     }
   };
 
-  // Cross-field error (passwords don't match) from valibot v.check().
-  const rootErrors = errors.root;
-  const crossFieldError = rootErrors
-    ? Object.values(rootErrors).find(
-        (e): e is { message: string } =>
-          typeof e === 'object' && e !== null && 'message' in e && typeof e.message === 'string',
-      )
-    : undefined;
-
   return (
     <div
       className={cn('fixed inset-0 z-50 bg-scrim/60 backdrop-blur-sm', layout.flex.center, 'pad')}
@@ -380,13 +371,6 @@ export function RecoveryForm({
             hidePasswordLabel={t('buttons.hidePassword')}
             fieldError={errors.confirmPassword}
           />
-
-          {/* Cross-field error (passwords don't match) */}
-          {crossFieldError && (
-            <div role="alert" className={cn(alert.base, alert.variant.error)}>
-              {crossFieldError.message}
-            </div>
-          )}
 
           {/* Submit error (network / server) */}
           {submitError !== null && (

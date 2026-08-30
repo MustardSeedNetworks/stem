@@ -46,11 +46,12 @@
     }
   },
   "errors": {
-    "passwordTooShort": "Password must be at least {{count}} characters",
-    "passwordMismatch": "Passwords do not match",
-    "setupFailed": "Setup failed",
     "loginFailed": "Setup complete but login failed. Please sign in manually.",
-    "networkError": "Unable to reach server. Please try again."
+    "networkError": "Unable to reach server. Please try again.",
+    "passwordMismatch": "Passwords do not match",
+    "passwordTooShort": "Password must be at least {{count}} characters",
+    "setupFailed": "Setup failed",
+    "timeout": "The server did not respond. Check the connection and try again."
   },
   "footer": {
     "copyright": "© {{year}} Mustard Seed Networks. All rights reserved."

@@ -28,6 +28,7 @@ import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { getQueryClient } from '../lib/queryClient';
 import { isValidAuthResponse } from '../types/api';
+import { isDeadlineExceeded, requestDeadline } from '../utils/http';
 
 const AUTH_FLAG_KEY = 'stem-authenticated';
 
@@ -164,6 +165,7 @@ export const useAuthStore = create<AuthStore>()(
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, password }),
+            signal: requestDeadline(),
           });
           if (!response.ok) {
             const message = (await response.text()) || 'Authentication failed';
@@ -187,8 +189,10 @@ export const useAuthStore = create<AuthStore>()(
           writeAuthFlag(true);
           set({ isAuthenticated: true, loginError: null }, false, 'login/ok');
           return { status: 'ok' };
-        } catch {
-          const message = 'Unable to reach authentication server.';
+        } catch (err) {
+          const message = isDeadlineExceeded(err)
+            ? 'The authentication server did not respond. Check the connection and try again.'
+            : 'Unable to reach authentication server.';
           set({ loginError: message }, false, 'login/network-error');
           return { status: 'error', message };
         } finally {
@@ -208,6 +212,7 @@ export const useAuthStore = create<AuthStore>()(
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ mfaToken: pending.mfaToken, code }),
+            signal: requestDeadline(),
           });
           if (!response.ok) {
             const message = (await response.text()) || 'Verification failed';
@@ -222,8 +227,10 @@ export const useAuthStore = create<AuthStore>()(
           writeAuthFlag(true);
           set({ isAuthenticated: true, mfaPending: null, loginError: null }, false, 'verifyMfa/ok');
           return { status: 'ok' };
-        } catch {
-          const message = 'Unable to reach verification endpoint.';
+        } catch (err) {
+          const message = isDeadlineExceeded(err)
+            ? 'The verification endpoint did not respond. Check the connection and try again.'
+            : 'Unable to reach verification endpoint.';
           set({ loginError: message }, false, 'verifyMfa/network-error');
           return { status: 'error', message };
         } finally {
@@ -238,6 +245,7 @@ export const useAuthStore = create<AuthStore>()(
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, password }),
+            signal: requestDeadline(),
           });
           if (!response.ok) {
             return false;

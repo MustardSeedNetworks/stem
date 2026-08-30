@@ -88,7 +88,14 @@ export const SetupWizardSchema = v.pipe(
     ),
     confirmPassword: v.string(),
   }),
-  v.check((c) => c.password === c.confirmPassword, 'Passwords do not match'),
+  // Forwarded onto confirmPassword deliberately. A bare v.check() produces an
+  // issue with no path, and the react-hook-form resolver cannot attach a
+  // path-less issue to a field: the form did not block, submitted with no
+  // values at all, and the message could never render anywhere.
+  v.forward(
+    v.check((c) => c.password === c.confirmPassword, 'Passwords do not match'),
+    ['confirmPassword'],
+  ),
 );
 
 /**
@@ -137,5 +144,12 @@ export const RecoveryCompleteSchema = v.pipe(
     ),
     confirmPassword: v.string(),
   }),
-  v.check((c) => c.password === c.confirmPassword, 'Passwords do not match'),
+  // Forwarded onto confirmPassword deliberately. A bare v.check() produces an
+  // issue with no path, and the react-hook-form resolver cannot attach a
+  // path-less issue to a field: the form did not block, submitted with no
+  // values at all, and the message could never render anywhere.
+  v.forward(
+    v.check((c) => c.password === c.confirmPassword, 'Passwords do not match'),
+    ['confirmPassword'],
+  ),
 );
