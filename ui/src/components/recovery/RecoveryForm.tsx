@@ -16,7 +16,11 @@ import {
   useForm,
 } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { RecoveryCompleteSchema } from '../../schemas/auth';
+import {
+  parseRecoveryInstructions,
+  RecoveryCompleteSchema,
+  type RecoveryInstructions,
+} from '../../schemas/auth';
 import {
   alert,
   button,
@@ -39,14 +43,6 @@ interface RecoveryFormProps {
   remainingTime?: number;
   /** File path instructions */
   tokenFilePath?: string;
-}
-
-/** Recovery instructions from API */
-interface RecoveryInstructions {
-  triggerFile: string;
-  tokenFile: string;
-  expiryTime: string;
-  steps: string[];
 }
 
 interface RecoveryFormFields {
@@ -194,8 +190,10 @@ export function RecoveryForm({
       try {
         const response = await fetch('/api/v1/recovery/instructions');
         if (response.ok) {
-          const data = await (response.json() as Promise<RecoveryInstructions>);
-          setInstructions(data);
+          // Validated, not cast: the panel renders steps directly, so a 200
+          // whose body lacks it took the whole form down. A malformed body is
+          // treated the same as an unavailable endpoint -- no panel.
+          setInstructions(parseRecoveryInstructions(await response.json()));
         }
       } catch {
         // Instructions are optional, don't error
