@@ -109,11 +109,14 @@ export const SetupWizardSchema = v.pipe(
  * Validated rather than cast because the panel renders `steps` directly: a 200
  * whose body lacks it (a proxy page, a changed contract) crashed the whole
  * recovery form, which is the one way back into a locked-out account.
+ *
+ * Only `steps` is required, because only `steps` is rendered. The handler also
+ * sends triggerFile, tokenFile and expiryTime; requiring them here meant a
+ * change to a field this panel never displays would fail validation and take
+ * the instructions away — on the one screen that gets a locked-out operator
+ * back in. Validate what you use.
  */
 export const RecoveryInstructionsSchema = v.object({
-  triggerFile: v.string(),
-  tokenFile: v.string(),
-  expiryTime: v.string(),
   steps: v.array(v.string()),
 });
 

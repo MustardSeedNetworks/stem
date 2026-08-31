@@ -116,6 +116,19 @@ describe('recovery instructions', () => {
     expect(screen.queryByText('Recovery Instructions')).not.toBeInTheDocument();
   });
 
+  it('still shows the steps when a field the panel never renders is missing', async () => {
+    // The handler also sends triggerFile, tokenFile and expiryTime. None of
+    // them is displayed here, so a change to one of them must not take the
+    // instructions away from a locked-out operator.
+    fetchMock.mockImplementationOnce(() =>
+      Promise.resolve(jsonResponse({ steps: ['touch /var/lib/stem/.recovery'] })),
+    );
+
+    renderForm();
+
+    expect(await screen.findByText('touch /var/lib/stem/.recovery')).toBeInTheDocument();
+  });
+
   it('renders the form anyway when instructions cannot be fetched', async () => {
     // Instructions are a convenience; losing them must not block recovery.
     fetchMock.mockImplementationOnce(() => Promise.reject(new Error('offline')));
