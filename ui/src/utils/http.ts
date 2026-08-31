@@ -16,15 +16,17 @@ export function requestDeadline(): AbortSignal {
 }
 
 /**
- * True when a rejected fetch was our own deadline firing rather than a
- * transport failure — the two need different copy, since a timeout means the
- * server was reachable and did not answer.
+ * True when `signal` is the reason a request failed — our own deadline firing
+ * rather than a transport failure. The two need different copy, since a
+ * timeout means the server was reachable and did not answer.
+ *
+ * Asked of the signal, not of the rejection. Engines disagree on the error:
+ * Chromium rejects an aborted fetch with `TimeoutError`, WebKit with
+ * `AbortError`. Matching on the name meant Safari users saw WebKit's internal
+ * "Fetch is aborted" text instead of the sentence written for them — the same
+ * defect as seed#2256. Nothing else holds these signals, so `aborted` means
+ * the deadline expired.
  */
-export function isDeadlineExceeded(err: unknown): boolean {
-  // Checked by name rather than by instanceof: AbortSignal.timeout rejects
-  // with a DOMException, which is not an instance of Error in every realm the
-  // app and its tests run in.
-  return (
-    typeof err === 'object' && err !== null && (err as { name?: unknown }).name === 'TimeoutError'
-  );
+export function deadlineExpired(signal: AbortSignal): boolean {
+  return signal.aborted;
 }

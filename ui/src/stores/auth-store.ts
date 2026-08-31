@@ -28,7 +28,7 @@ import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { getQueryClient } from '../lib/queryClient';
 import { isValidAuthResponse } from '../types/api';
-import { isDeadlineExceeded, requestDeadline } from '../utils/http';
+import { deadlineExpired, requestDeadline } from '../utils/http';
 
 const AUTH_FLAG_KEY = 'stem-authenticated';
 
@@ -159,13 +159,15 @@ export const useAuthStore = create<AuthStore>()(
 
       login: async (username, password): Promise<LoginResult> => {
         set({ loginLoading: true, loginError: null }, false, 'login/start');
+        // Declared outside the try so the catch can consult it.
+        const deadline = requestDeadline();
         try {
           const response = await fetch('/api/v1/auth/login', {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, password }),
-            signal: requestDeadline(),
+            signal: deadline,
           });
           if (!response.ok) {
             const message = (await response.text()) || 'Authentication failed';
@@ -189,8 +191,8 @@ export const useAuthStore = create<AuthStore>()(
           writeAuthFlag(true);
           set({ isAuthenticated: true, loginError: null }, false, 'login/ok');
           return { status: 'ok' };
-        } catch (err) {
-          const message = isDeadlineExceeded(err)
+        } catch {
+          const message = deadlineExpired(deadline)
             ? 'The authentication server did not respond. Check the connection and try again.'
             : 'Unable to reach authentication server.';
           set({ loginError: message }, false, 'login/network-error');
@@ -206,13 +208,14 @@ export const useAuthStore = create<AuthStore>()(
           return { status: 'error', message: 'No MFA challenge in progress.' };
         }
         set({ loginLoading: true, loginError: null }, false, 'verifyMfa/start');
+        const deadline = requestDeadline();
         try {
           const response = await fetch('/api/v1/auth/login/totp', {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ mfaToken: pending.mfaToken, code }),
-            signal: requestDeadline(),
+            signal: deadline,
           });
           if (!response.ok) {
             const message = (await response.text()) || 'Verification failed';
@@ -227,8 +230,8 @@ export const useAuthStore = create<AuthStore>()(
           writeAuthFlag(true);
           set({ isAuthenticated: true, mfaPending: null, loginError: null }, false, 'verifyMfa/ok');
           return { status: 'ok' };
-        } catch (err) {
-          const message = isDeadlineExceeded(err)
+        } catch {
+          const message = deadlineExpired(deadline)
             ? 'The verification endpoint did not respond. Check the connection and try again.'
             : 'Unable to reach verification endpoint.';
           set({ loginError: message }, false, 'verifyMfa/network-error');
@@ -239,13 +242,14 @@ export const useAuthStore = create<AuthStore>()(
       },
 
       performLogin: async (username, password): Promise<boolean> => {
+        const deadline = requestDeadline();
         try {
           const response = await fetch('/api/v1/auth/login', {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, password }),
-            signal: requestDeadline(),
+            signal: deadline,
           });
           if (!response.ok) {
             return false;

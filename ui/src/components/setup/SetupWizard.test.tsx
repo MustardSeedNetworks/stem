@@ -10,6 +10,7 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RoleContextValue } from '../../contexts/RoleContext';
+import * as http from '../../utils/http';
 import { SetupWizard } from './SetupWizard';
 
 const { roleContext } = vi.hoisted(() => ({
@@ -186,9 +187,18 @@ describe('SetupWizard — validation and errors', () => {
   });
 
   it('reports a hung server instead of leaving the button disabled forever', async () => {
+    // The deadline is driven for real. Hand-building an error named
+    // TimeoutError would test a shape neither engine produces for an aborted
+    // fetch -- Chromium raises TimeoutError, WebKit AbortError -- and agree
+    // with an implementation that is wrong on Safari.
+    const controller = new AbortController();
+    vi.spyOn(http, 'requestDeadline').mockReturnValue(controller.signal);
     vi.stubGlobal(
       'fetch',
-      vi.fn().mockRejectedValue(new DOMException('The operation timed out.', 'TimeoutError')),
+      vi.fn().mockImplementation(() => {
+        controller.abort();
+        return Promise.reject(new DOMException('Fetch is aborted', 'AbortError'));
+      }),
     );
     renderWizard();
     await fillPassword();
