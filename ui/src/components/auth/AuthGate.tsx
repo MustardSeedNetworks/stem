@@ -127,7 +127,14 @@ export function AuthGate(): ReactElement {
       ) : null}
 
       {/* Login Modal - shown after setup complete or if setup not needed */}
-      {!isAuthenticated && setupChecked && !setupStatus?.needsSetup && !showRecoveryForm ? (
+      {/* The recovery condition is repeated rather than reduced to
+          !showRecoveryForm: the two branches must be exhaustive. Asking for
+          recovery while it is unavailable used to satisfy neither, and the
+          operator got an empty page with no way back to the login form. */}
+      {!isAuthenticated &&
+      setupChecked &&
+      !setupStatus?.needsSetup &&
+      !(showRecoveryForm && recoveryStatus?.active) ? (
         <div className="fixed inset-0 z-50 flex-center bg-scrim/60 backdrop-blur-sm">
           <div
             ref={loginModalRef}
