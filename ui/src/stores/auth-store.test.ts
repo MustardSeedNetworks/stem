@@ -14,6 +14,7 @@ vi.mock('../lib/queryClient', () => ({
   getQueryClient: () => ({ cancelQueries, clear }),
 }));
 
+import * as http from '../utils/http';
 import { authFetch, useAuthStore } from './auth-store';
 
 const AUTH_FLAG_KEY = 'stem-authenticated';
@@ -95,9 +96,18 @@ describe('auth-store: login / MFA', () => {
   });
 
   it('distinguishes a server that did not answer from one it could not reach', async () => {
-    vi.spyOn(globalThis, 'fetch').mockRejectedValue(
-      new DOMException('The operation timed out.', 'TimeoutError'),
-    );
+    // The deadline is driven for real rather than simulated by hand-building
+    // an error named TimeoutError. That shape is not what either engine
+    // produces for an aborted fetch -- Chromium raises TimeoutError, WebKit
+    // AbortError -- so a test written that way agrees with an implementation
+    // that is wrong on Safari. Here the injected signal is genuinely aborted
+    // and the code reads it, which is what production does.
+    const controller = new AbortController();
+    vi.spyOn(http, 'requestDeadline').mockReturnValue(controller.signal);
+    vi.spyOn(globalThis, 'fetch').mockImplementation(() => {
+      controller.abort();
+      return Promise.reject(new DOMException('Fetch is aborted', 'AbortError'));
+    });
 
     const result = await useAuthStore.getState().login('admin', 'pw');
 

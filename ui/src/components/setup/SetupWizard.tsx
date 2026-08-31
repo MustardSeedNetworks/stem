@@ -11,7 +11,7 @@ import { type SubmitHandler, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { type StemRole, useRole } from '../../contexts/RoleContext';
 import { SetupWizardSchema } from '../../schemas/auth';
-import { isDeadlineExceeded, requestDeadline } from '../../utils/http';
+import { deadlineExpired, requestDeadline } from '../../utils/http';
 
 /** Minimum password length (matches backend validation) */
 const MIN_PASSWORD_LENGTH = 12;
@@ -101,12 +101,14 @@ export function SetupWizard({
 
   const onSubmit: SubmitHandler<SetupFormFields> = async ({ password }) => {
     setSubmitError(null);
+    // Declared outside the try so the catch can read it.
+    const deadline = requestDeadline();
     try {
       const response = await fetch('/api/v1/setup/complete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password, setupToken }),
-        signal: requestDeadline(),
+        signal: deadline,
       });
       if (!response.ok) {
         const data = await (response.json() as Promise<{
@@ -126,8 +128,8 @@ export function SetupWizard({
         return;
       }
       onComplete();
-    } catch (err) {
-      setSubmitError(isDeadlineExceeded(err) ? t('errors.timeout') : t('errors.networkError'));
+    } catch {
+      setSubmitError(deadlineExpired(deadline) ? t('errors.timeout') : t('errors.networkError'));
     }
   };
 
