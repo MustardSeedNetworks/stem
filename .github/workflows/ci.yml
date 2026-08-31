@@ -1062,6 +1062,18 @@ jobs:
           pipx install zizmor==1.29.0
           zizmor --min-severity high --color always .github/workflows/
 
+      # actionlint and zizmor check the workflows as workflows. Neither knows
+      # what THIS one means: which `if:` decides that a run signs and publishes
+      # rather than building a throwaway snapshot. A run that published when it
+      # should not would still be green, because publishing is the success
+      # path. seed's equivalent gate caught two regressions in its first week.
+      #
+      # The self-test runs the checker against mutated copies of the workflow
+      # and fails if any is accepted -- a guard nobody tests is a guard nobody
+      # knows works.
+      - name: Verify release workflow contract
+        run: ./scripts/test-check-release-workflow-contract.sh
+
 
   # ============================================================================
   # Internationalization (i18n) Validation
