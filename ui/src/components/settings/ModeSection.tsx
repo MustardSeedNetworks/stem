@@ -16,20 +16,22 @@ interface ModeSectionProps extends SettingsSectionProps {
   onModeChange: (mode: OperatingMode) => void;
 }
 
+// Namespace-qualified with a colon, like the title above. A dot makes
+// i18next look in the DEFAULT namespace (common) for a key literally named
+// "settings.mode.reflector", which does not exist -- so every option fell
+// through to its hardcoded English default and Spanish rendered "Reflector
+// Mode" under a translated heading. The defaults are gone with it: a fallback
+// that fires silently is what hid this, and one that cannot fire is dead.
 const MODES = [
   {
     id: 'reflector' as const,
-    nameKey: 'settings.mode.reflector',
-    nameDefault: 'Reflector Mode',
-    descKey: 'settings.mode.reflectorDesc',
-    descDefault: 'Packet reflection (Tier 1)',
+    nameKey: 'settings:mode.reflector',
+    descKey: 'settings:mode.reflectorDesc',
   },
   {
     id: 'test_master' as const,
-    nameKey: 'settings.mode.testMaster',
-    nameDefault: 'Test Master Mode',
-    descKey: 'settings.mode.testMasterDesc',
-    descDefault: 'Network testing (Tier 2)',
+    nameKey: 'settings:mode.testMaster',
+    descKey: 'settings:mode.testMasterDesc',
   },
 ] as const;
 
@@ -71,11 +73,9 @@ export function ModeSection({
             />
             <div>
               <div className="body-small font-medium text-text-primary">
-                {t(modeOption.nameKey, modeOption.nameDefault)}
+                {t(modeOption.nameKey)}
               </div>
-              <div className="caption text-text-muted">
-                {t(modeOption.descKey, modeOption.descDefault)}
-              </div>
+              <div className="caption text-text-muted">{t(modeOption.descKey)}</div>
             </div>
           </label>
         ))}
