@@ -80,6 +80,13 @@ type App struct {
 	filterActive   string        // Current filter profile name.
 	currentProfile FilterProfile // Current filter profile settings.
 	showExtHelp    bool          // Show extended help.
+
+	// queueDraw schedules a UI update on tview's event loop. nil means "use
+	// the application's own QueueUpdateDraw", which is what production wants;
+	// it is a field so a test can run the update synchronously instead.
+	// QueueUpdateDraw blocks until a running application drains the queue, and
+	// that block is the single reason eleven key-handler tests were skipped.
+	queueDraw func(func())
 }
 
 // New creates a new TUI application.
@@ -101,6 +108,7 @@ func New(dp *dataplane.Dataplane) *App {
 		filterActive:   FilterAll,
 		currentProfile: GetPredefinedProfiles()[0], // Default to "all".
 		showExtHelp:    false,
+		queueDraw:      nil,
 	}
 }
 
@@ -118,8 +126,13 @@ func NewWithFilter(dp *dataplane.Dataplane, filterProfile string) *App {
 	return a
 }
 
-// Run starts the TUI.
-func (a *App) Run() error {
+// build constructs the views, layout and key bindings.
+//
+// Split out of Run so the application can be brought into a usable state
+// without entering tview's event loop. Run did both, which is why every test
+// that touched a key handler had to skip: the handlers write through views
+// that only Run created, and it never returned.
+func (a *App) build() {
 	// Create main stats panel.
 	a.statsView = tview.NewTextView().
 		SetDynamicColors(true).
@@ -170,6 +183,11 @@ func (a *App) Run() error {
 
 	// Key bindings.
 	a.app.SetInputCapture(a.handleKeyEvent)
+}
+
+// Run builds the TUI and enters tview's event loop, blocking until it exits.
+func (a *App) Run() error {
+	a.build()
 
 	// Start stats update goroutine.
 	go a.updateLoop()
@@ -295,6 +313,15 @@ func (a *App) createProfileSelector() {
 	a.pages.AddPage("profiles", modal, true, false)
 }
 
+// draw schedules fn on the UI thread.
+func (a *App) draw(fn func()) {
+	if a.queueDraw != nil {
+		a.queueDraw(fn)
+		return
+	}
+	a.app.QueueUpdateDraw(fn)
+}
+
 // showProfileSelector shows the profile selection modal.
 func (a *App) showProfileSelector() {
 	a.pages.SwitchToPage("profiles")
@@ -310,7 +337,7 @@ func (a *App) setProfileState(p FilterProfile) {
 // setProfile sets the active filter profile.
 func (a *App) setProfile(p FilterProfile) {
 	a.setProfileState(p)
-	a.app.QueueUpdateDraw(func() {
+	a.draw(func() {
 		a.updateHeaderStatus()
 	})
 }
@@ -324,7 +351,7 @@ func (a *App) toggleExtendedHelpState() {
 // toggleExtendedHelp toggles extended help display.
 func (a *App) toggleExtendedHelp() {
 	a.toggleExtendedHelpState()
-	a.app.QueueUpdateDraw(func() {
+	a.draw(func() {
 		a.updateHelpText()
 	})
 }
@@ -349,7 +376,7 @@ func (a *App) togglePauseState() {
 func (a *App) togglePause() {
 	a.togglePauseState()
 
-	a.app.QueueUpdateDraw(func() {
+	a.draw(func() {
 		a.updateHeaderStatus()
 		a.updateHelpText()
 	})
@@ -566,7 +593,7 @@ func (a *App) updateStats() {
 	latText := GenerateLatencyText(input)
 
 	// Update views on main thread.
-	a.app.QueueUpdateDraw(func() {
+	a.draw(func() {
 		a.statsView.SetText(statsText)
 		a.sigView.SetText(sigText)
 		a.latView.SetText(latText)
