@@ -50,6 +50,7 @@ before:
 builds:
   - id: stem-linux-native-amd64
     main: ./cmd/stem
+    mod_timestamp: "{{ .CommitTimestamp }}"
     binary: stem
     env:
       - CGO_ENABLED=1
@@ -62,11 +63,12 @@ builds:
       - -s -w
       - -X github.com/MustardSeedNetworks/stem/internal/version.Version={{.Version}}
       - -X github.com/MustardSeedNetworks/stem/internal/version.Commit={{.Commit}}
-      - -X github.com/MustardSeedNetworks/stem/internal/version.BuildTime={{.Date}}
+      - -X github.com/MustardSeedNetworks/stem/internal/version.BuildTime={{.CommitDate}}
       - -X github.com/MustardSeedNetworks/stem/internal/version.UIBuildHash={{.Env.UI_BUILD_HASH}}
 
   - id: stem-linux-portable-amd64
     main: ./cmd/stem
+    mod_timestamp: "{{ .CommitTimestamp }}"
     binary: stem
     env:
       - CGO_ENABLED=0
@@ -79,6 +81,7 @@ builds:
 
   - id: stem-linux-portable-arm64
     main: ./cmd/stem
+    mod_timestamp: "{{ .CommitTimestamp }}"
     binary: stem
     env:
       - CGO_ENABLED=0
@@ -91,6 +94,7 @@ builds:
 
   - id: stem-darwin
     main: ./cmd/stem
+    mod_timestamp: "{{ .CommitTimestamp }}"
     binary: stem
     env:
       - CGO_ENABLED=0
@@ -104,6 +108,7 @@ builds:
 
   - id: stem-windows
     main: ./cmd/stem
+    mod_timestamp: "{{ .CommitTimestamp }}"
     binary: stem
     env:
       - CGO_ENABLED=0
