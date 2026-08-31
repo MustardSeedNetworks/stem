@@ -5,6 +5,58 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.47](https://github.com/MustardSeedNetworks/stem/compare/v0.24.46...v0.24.47) (2026-08-31)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @tanstack/react-query to v5.102.5 ([#868](https://github.com/MustardSeedNetworks/stem/issues/868)) ([cb46c17](https://github.com/MustardSeedNetworks/stem/commit/cb46c1710837cfc4ca2bfc1cc96e0b44ee24cdc4))
+* **deps:** update dependency @tanstack/react-query to v5.102.6 ([#876](https://github.com/MustardSeedNetworks/stem/issues/876)) ([218272e](https://github.com/MustardSeedNetworks/stem/commit/218272e28f24920e3b4c5ff6efda88ad5b2fcfda))
+* **deps:** update dependency @tanstack/react-query to v5.102.7 ([#885](https://github.com/MustardSeedNetworks/stem/issues/885)) ([4342084](https://github.com/MustardSeedNetworks/stem/commit/4342084140d9ed45237fdc961fdd1a6e3ed829b3))
+* **deps:** update dependency @tanstack/react-query to v5.102.8 ([#899](https://github.com/MustardSeedNetworks/stem/issues/899)) ([dfb8107](https://github.com/MustardSeedNetworks/stem/commit/dfb810726fc64bfba32772f27577498e5b08bf07))
+* **i18n:** address the mode keys by namespace, not by a dotted prefix ([#923](https://github.com/MustardSeedNetworks/stem/issues/923)) ([7491506](https://github.com/MustardSeedNetworks/stem/commit/7491506aa109aea3db4892e7dc57051c08d93ee2))
+* **recovery:** validate the instructions fields the panel actually renders ([#919](https://github.com/MustardSeedNetworks/stem/issues/919)) ([350c504](https://github.com/MustardSeedNetworks/stem/commit/350c50438cac10e566c0aa5cda06f6c4f23cae10))
+* **services:** reject a nil dataplane context instead of panicking on it ([#873](https://github.com/MustardSeedNetworks/stem/issues/873)) ([3fe3cba](https://github.com/MustardSeedNetworks/stem/commit/3fe3cbae3aff587af69ef3efaf8cc7c6d2b73eeb))
+* **test:** make failed C assertions fail the process ([#871](https://github.com/MustardSeedNetworks/stem/issues/871)) ([95236ac](https://github.com/MustardSeedNetworks/stem/commit/95236acc47439fe6b8d1d488255704180202c856)), closes [#870](https://github.com/MustardSeedNetworks/stem/issues/870)
+* **ui:** detect the deadline from the signal, not the error name ([#917](https://github.com/MustardSeedNetworks/stem/issues/917)) ([72da76c](https://github.com/MustardSeedNetworks/stem/commit/72da76c28c6e25e06c644f2df9d56d418d267915))
+* **ui:** validate the recovery-instructions body instead of casting it ([#896](https://github.com/MustardSeedNetworks/stem/issues/896)) ([2045212](https://github.com/MustardSeedNetworks/stem/commit/204521211d614f4f6e3fc36ac436c3575469e5ce)), closes [#895](https://github.com/MustardSeedNetworks/stem/issues/895)
+
+
+### Tests
+
+* **tui:** make the key handlers testable and delete twelve skips ([#911](https://github.com/MustardSeedNetworks/stem/issues/911)) ([3973f28](https://github.com/MustardSeedNetworks/stem/commit/3973f28ceb2dc11ace57c2b2f321459d1972cdf7))
+* turn off Node's unused webstorage global instead of warning per file ([#875](https://github.com/MustardSeedNetworks/stem/issues/875)) ([54776ed](https://github.com/MustardSeedNetworks/stem/commit/54776ed72cff8ba09a66be93189352a5858f69be)), closes [#874](https://github.com/MustardSeedNetworks/stem/issues/874)
+* **ui:** cover AuthGate and RoleChip, and make AuthGate's branches exhaustive ([#915](https://github.com/MustardSeedNetworks/stem/issues/915)) ([d3c2984](https://github.com/MustardSeedNetworks/stem/commit/d3c2984f56b53b9afe01bc49cae92d6a7ea27048))
+* **ui:** cover the history store, logger, API guards and RoleGuard ([#888](https://github.com/MustardSeedNetworks/stem/issues/888)) ([c08bf56](https://github.com/MustardSeedNetworks/stem/commit/c08bf563082ed8515888cc10431d98822ad3f63a)), closes [#887](https://github.com/MustardSeedNetworks/stem/issues/887)
+* **ui:** cover the role and module-settings contexts ([#894](https://github.com/MustardSeedNetworks/stem/issues/894)) ([622a109](https://github.com/MustardSeedNetworks/stem/commit/622a10946ea095421a65493c0485fbd27bfa095e)), closes [#893](https://github.com/MustardSeedNetworks/stem/issues/893)
+* **ui:** coverage slice 4 — and two defects it found ([#909](https://github.com/MustardSeedNetworks/stem/issues/909)) ([2f1b293](https://github.com/MustardSeedNetworks/stem/commit/2f1b2937776f592a84ec4911953784c04186670b))
+
+
+### Continuous Integration
+
+* build and test stem on macOS ([#901](https://github.com/MustardSeedNetworks/stem/issues/901)) ([c50c4c6](https://github.com/MustardSeedNetworks/stem/commit/c50c4c6360a8276217075a6be92bba3376990007)), closes [#900](https://github.com/MustardSeedNetworks/stem/issues/900)
+* delete the provenance-backfill release path ([#890](https://github.com/MustardSeedNetworks/stem/issues/890)) ([dab8da0](https://github.com/MustardSeedNetworks/stem/commit/dab8da023b02f55952e8cc626891b86efef1c691)), closes [#889](https://github.com/MustardSeedNetworks/stem/issues/889)
+* fail the build on open High CodeQL alerts ([#892](https://github.com/MustardSeedNetworks/stem/issues/892)) ([b6e0bb5](https://github.com/MustardSeedNetworks/stem/commit/b6e0bb56d05d16fa03e5c07f11e5697f930a6910)), closes [#891](https://github.com/MustardSeedNetworks/stem/issues/891)
+* gate stem's release workflow on its publish contract ([#921](https://github.com/MustardSeedNetworks/stem/issues/921)) ([5d4fe1b](https://github.com/MustardSeedNetworks/stem/commit/5d4fe1b8c05a4618e52dfef510fb4eec1a12f8cf))
+* make release builds reproducible ([#925](https://github.com/MustardSeedNetworks/stem/issues/925)) ([d553c13](https://github.com/MustardSeedNetworks/stem/commit/d553c13cddffb25f121b19612c5804b69e6c7956))
+* pin the dead-code analysis tools ([#903](https://github.com/MustardSeedNetworks/stem/issues/903)) ([6963ad9](https://github.com/MustardSeedNetworks/stem/commit/6963ad970ad9da803e17744107cbbf727f64f2d0)), closes [#902](https://github.com/MustardSeedNetworks/stem/issues/902)
+* publish with goreleaser validation enabled and assert the tree is clean ([#884](https://github.com/MustardSeedNetworks/stem/issues/884)) ([b02cef8](https://github.com/MustardSeedNetworks/stem/commit/b02cef84e18b5fda9e48aa0bcad4f421aa3d74a7)), closes [#883](https://github.com/MustardSeedNetworks/stem/issues/883)
+* require a pushed tag for a real release ([#882](https://github.com/MustardSeedNetworks/stem/issues/882)) ([4ccc868](https://github.com/MustardSeedNetworks/stem/commit/4ccc868f5efb1672a86b15d90330c660c9a2228d)), closes [#881](https://github.com/MustardSeedNetworks/stem/issues/881)
+* stop checkout persisting credentials into the workspace ([#898](https://github.com/MustardSeedNetworks/stem/issues/898)) ([42490bd](https://github.com/MustardSeedNetworks/stem/commit/42490bd964d592705813e3647bdbb430c71b69d3)), closes [#897](https://github.com/MustardSeedNetworks/stem/issues/897)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#877](https://github.com/MustardSeedNetworks/stem/issues/877)) ([5a7a459](https://github.com/MustardSeedNetworks/stem/commit/5a7a4594d0f51fd35a1ee345075aacca82a6d084))
+* **deps:** lock file maintenance ([#879](https://github.com/MustardSeedNetworks/stem/issues/879)) ([137f9c9](https://github.com/MustardSeedNetworks/stem/commit/137f9c90fedf12d6cb0ea4fdbe291bb8b82d66a5))
+* **deps:** update dependency @biomejs/biome to v2.5.11 ([#912](https://github.com/MustardSeedNetworks/stem/issues/912)) ([d909a04](https://github.com/MustardSeedNetworks/stem/commit/d909a048758712afe3043192e382dac99c464016))
+* **deps:** update dependency @biomejs/biome to v2.5.11 ([#913](https://github.com/MustardSeedNetworks/stem/issues/913)) ([0d61458](https://github.com/MustardSeedNetworks/stem/commit/0d61458ff6101c16831008355928d4576216110c))
+* **deps:** update dependency @testing-library/react to v16.3.3 ([#905](https://github.com/MustardSeedNetworks/stem/issues/905)) ([a2a9201](https://github.com/MustardSeedNetworks/stem/commit/a2a9201fcdee77181b64bcc3cd2720c55a06077e))
+* **deps:** update dependency @types/node to v26.4.0 ([#880](https://github.com/MustardSeedNetworks/stem/issues/880)) ([d96235e](https://github.com/MustardSeedNetworks/stem/commit/d96235e4b46a3a2cece74f9657b409f69a0ae8ee))
+* **deps:** update dependency js-yaml to v5.4.1 ([#878](https://github.com/MustardSeedNetworks/stem/issues/878)) ([603be9c](https://github.com/MustardSeedNetworks/stem/commit/603be9ce8aa9e4b29d7f9b40b5df525e76f4d27b))
+* **deps:** update dependency lint-staged to v17.4.1 ([#886](https://github.com/MustardSeedNetworks/stem/issues/886)) ([ec32f60](https://github.com/MustardSeedNetworks/stem/commit/ec32f60029c381558a0a95ae22603a014daa8ac6))
+* **npm:** soak package releases for seven days before resolving them ([#907](https://github.com/MustardSeedNetworks/stem/issues/907)) ([7539c06](https://github.com/MustardSeedNetworks/stem/commit/7539c069e127b28d9a846074ecbf2f24716af59b))
+
 ## [0.24.46](https://github.com/MustardSeedNetworks/stem/compare/v0.24.45...v0.24.46) (2026-08-29)
 
 
