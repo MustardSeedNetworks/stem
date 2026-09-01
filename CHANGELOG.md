@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.48](https://github.com/MustardSeedNetworks/stem/compare/v0.24.47...v0.24.48) (2026-09-01)
+
+
+### Bug Fixes
+
+* **ci:** make the issue-title gate clear itself and accept the house style ([#930](https://github.com/MustardSeedNetworks/stem/issues/930)) ([7c54ab2](https://github.com/MustardSeedNetworks/stem/commit/7c54ab26d35c0c7058ee2b7933f49939e27675b3))
+
+
+### Continuous Integration
+
+* never cancel a CI run on main ([#928](https://github.com/MustardSeedNetworks/stem/issues/928)) ([f12df4b](https://github.com/MustardSeedNetworks/stem/commit/f12df4b8dd49c9131e2457028670480447e8fdf4))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#904](https://github.com/MustardSeedNetworks/stem/issues/904)) ([4b7b0e1](https://github.com/MustardSeedNetworks/stem/commit/4b7b0e1743fcc528d735d5d329b255157dbecca6))
+
 ## [0.24.47](https://github.com/MustardSeedNetworks/stem/compare/v0.24.46...v0.24.47) (2026-08-31)
 
 
