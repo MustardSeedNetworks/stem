@@ -108,7 +108,10 @@ sample_bench() {
     exit 1
   fi
   # Only the BENCH records; anything else on stdout is ignored, not trusted.
-  awk '$1 == "BENCH" && NF == 3 { print $2, $3 }' "$raw" >>"$WORKDIR/all_$label"
+  # Round number is kept so the comparison can ask whether a regression
+  # reproduces, rather than trusting one aggregate number.
+  awk -v r="$round" '$1 == "BENCH" && NF == 3 { print r, $2, $3 }' \
+    "$raw" >>"$WORKDIR/all_$label"
 }
 
 # Measures both sides, INTERLEAVED, and writes the best result per case.
@@ -143,8 +146,26 @@ measure_both() {
     fi
   done
 
+  # How many rounds saw this case regress past the limit? A real regression is
+  # present every round; noise is not. This is what the verdict keys on.
+  MAX_REGRESSION="$MAX_REGRESSION" BENCH_RUNS="$BENCH_RUNS" awk '
+    FNR == NR { base[$1 "\x1f" $2] = $3; next }
+    { cur[$1 "\x1f" $2] = $3 }
+    END {
+      limit = ENVIRON["MAX_REGRESSION"] + 0
+      for (k in base) {
+        split(k, p, "\x1f")
+        if (!(k in cur) || base[k] <= 0) continue
+        delta = (cur[k] - base[k]) / base[k] * 100
+        if (delta < -limit) bad[p[2]]++
+        seen[p[2]]++
+      }
+      for (name in seen) print name, (name in bad ? bad[name] : 0), seen[name]
+    }
+  ' "$WORKDIR/all_baseline" "$WORKDIR/all_current" | sort >"$WORKDIR/rounds.txt"
+
   for label in baseline current; do
-    awk '{ if (!($1 in best) || $2 > best[$1]) best[$1] = $2 }
+    awk '{ if (!($2 in best) || $3 > best[$2]) best[$2] = $3 }
          END { for (name in best) print name, best[name] }' \
       "$WORKDIR/all_$label" | sort >"$WORKDIR/$label.txt"
 
@@ -186,7 +207,7 @@ if [ ! -f "$BASELINE_TREE/bench/bench_reflect.c" ]; then
   build_bench "$REPO_ROOT" current
   : >"$WORKDIR/all_current"
   for round in $(seq 1 "$BENCH_RUNS"); do sample_bench current "$round"; done
-  awk '{ if (!($1 in best) || $2 > best[$1]) best[$1] = $2 }
+  awk '{ if (!($2 in best) || $3 > best[$2]) best[$2] = $3 }
        END { for (name in best) print name, best[name] }' \
     "$WORKDIR/all_current" | sort >"$WORKDIR/current.txt"
   echo
@@ -200,8 +221,10 @@ build_bench "$REPO_ROOT" current
 measure_both
 
 echo
-MAX_REGRESSION="$MAX_REGRESSION" ADVISORY_CASES="$ADVISORY_CASES" awk '
-  FNR == NR { base[$1] = $2; next }
+MAX_REGRESSION="$MAX_REGRESSION" ADVISORY_CASES="$ADVISORY_CASES" \
+BENCH_RUNS="$BENCH_RUNS" awk '
+  FILENAME == ARGV[1] { badrounds[$1] = $2; totalrounds[$1] = $3; next }
+  FILENAME == ARGV[2] { base[$1] = $2; next }
   {
     cur[$1] = $2
   }
@@ -223,7 +246,22 @@ MAX_REGRESSION="$MAX_REGRESSION" ADVISORY_CASES="$ADVISORY_CASES" awk '
         continue
       }
       delta = (cur[name] - base[name]) / base[name] * 100
-      regressed = (delta < -limit)
+      # A regression must show up in EVERY round to count. Interleaving put
+      # both sides in the same time window, but a runner can still drop into a
+      # slow mode for one round and drag a single side down with it -- that is
+      # what produced -20.8% on reflect_ipv6 with byte-identical benchmarked
+      # sources, after the same machine had already produced -16.6% on
+      # reflect_inplace_v4 and 0.1% on reflect_ipv6. Real slowdowns reproduce;
+      # a runner hiccup does not.
+      rounds = (name in totalrounds) ? totalrounds[name] : 0
+      bad = (name in badrounds) ? badrounds[name] : 0
+      regressed = (delta < -limit) && (rounds > 0) && (bad == rounds)
+      if ((delta < -limit) && !regressed) {
+        flaky = 1
+        printf "%-26s %15.0f %15.0f %8.1f%% %s\n", name, base[name], cur[name],
+               delta, "NOISE(" bad "/" rounds ")"
+        continue
+      }
       if (regressed && (name in advisory)) {
         verdict = "ADVISORY"
         advised = 1
@@ -243,6 +281,11 @@ MAX_REGRESSION="$MAX_REGRESSION" ADVISORY_CASES="$ADVISORY_CASES" awk '
       print  "If this is a deliberate trade-off, say so in the PR body and raise"
       print  "BENCH_MAX_REGRESSION_PCT for that job -- do not silence the gate."
       exit 1
+    }
+    if (flaky) {
+      printf "\nNOISE: a case was slower on the best-of-%d summary but did NOT\n", ENVIRON["BENCH_RUNS"] + 0
+      print  "regress in every round. A real slowdown reproduces; a runner"
+      print  "dropping into a slow mode for one round does not. Not failing."
     }
     if (advised) {
       printf "\nADVISORY: a case listed in ADVISORY_CASES regressed. Not failing the\n"
