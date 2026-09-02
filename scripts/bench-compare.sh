@@ -27,12 +27,37 @@
 #
 # Environment:
 #   BENCH_MAX_REGRESSION_PCT  allowed slowdown per case (default 15)
+#   BENCH_RUNS                measurements per side, best taken (default 3)
 #   CC                        compiler (default gcc)
 
 set -euo pipefail
 
 BASELINE_REF="${1:-}"
 MAX_REGRESSION="${BENCH_MAX_REGRESSION_PCT:-15}"
+BENCH_RUNS="${BENCH_RUNS:-3}"
+
+# Cases that report but do not block.
+#
+# reflect_inplace_v4 cannot currently measure itself. Evidence, all on one idle
+# machine with byte-identical code on both sides (#965):
+#
+#   - the same binary run ten times produced 93.8M-175.3M pps, a 1.87x spread
+#   - the slow mode survives all 7 of the benchmark's own internal REPEATS, so
+#     it is fixed at process start rather than varying per repeat
+#   - it tracks process layout: padding the environment moved the result
+#     between 110M and 175M with nothing else changed
+#   - aligning the frame buffer to 64 bytes did not fix it, so the buffer's
+#     own alignment is not the cause
+#
+# Interleaving fixed the six other cases -- they now agree within 0.5% -- but
+# not this one. Blocking on a case that cannot measure would fail roughly one
+# PR in three for no reason, and a gate people re-run until it goes green is a
+# gate nobody reads. It stays measured and printed; it just does not fail the
+# build until #965 explains it.
+#
+# This list should stay empty. Adding to it needs the same standard: evidence
+# that the case cannot measure, not that a change made it slower.
+ADVISORY_CASES="${ADVISORY_CASES:-reflect_inplace_v4}"
 CC="${CC:-gcc}"
 
 REPO_ROOT="$(git rev-parse --show-toplevel)"
@@ -63,32 +88,73 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# Builds and runs the benchmark in $1, writing "name pps" lines to $2.
-run_bench() {
-  local tree="$1" out="$2" label="$3"
-  local bin="$WORKDIR/bench_$label"
-
+# Builds the benchmark in $1 to a binary labelled $2.
+build_bench() {
+  local tree="$1" label="$2"
   echo "==> building benchmark for $label"
-  if ! ( cd "$tree" && "$CC" "${BENCH_CFLAGS[@]}" -o "$bin" "${BENCH_SRCS[@]}" -pthread -lm ); then
+  if ! ( cd "$tree" && "$CC" "${BENCH_CFLAGS[@]}" -o "$WORKDIR/bench_$label" \
+           "${BENCH_SRCS[@]}" -pthread -lm ); then
     echo "FAIL: benchmark did not compile for $label" >&2
     exit 1
   fi
+}
 
-  echo "==> running benchmark for $label"
-  if ! "$bin" >"$WORKDIR/raw_$label" 2>/dev/null; then
-    echo "FAIL: benchmark did not run cleanly for $label" >&2
+# Runs the $1 binary once, appending "name pps" records to its sample file.
+sample_bench() {
+  local label="$1" round="$2"
+  local raw="$WORKDIR/raw_${label}_${round}"
+  if ! "$WORKDIR/bench_$label" >"$raw" 2>/dev/null; then
+    echo "FAIL: benchmark did not run cleanly for $label (round $round)" >&2
     exit 1
   fi
-
   # Only the BENCH records; anything else on stdout is ignored, not trusted.
-  awk '$1 == "BENCH" && NF == 3 { print $2, $3 }' "$WORKDIR/raw_$label" >"$out"
+  awk '$1 == "BENCH" && NF == 3 { print $2, $3 }' "$raw" >>"$WORKDIR/all_$label"
+}
 
-  if [ ! -s "$out" ]; then
-    echo "FAIL: benchmark produced no BENCH records for $label" >&2
-    echo "--- raw output ---" >&2
-    cat "$WORKDIR/raw_$label" >&2
-    exit 1
-  fi
+# Measures both sides, INTERLEAVED, and writes the best result per case.
+#
+# Two separate problems make a single measurement per side unusable, and they
+# need different answers (#965):
+#
+#   Within a side: reflect_inplace_v4 is bimodal on some hosts. The same
+#   binary, run ten times back to back on an idle machine, produced 93.8M-
+#   175.3M pps -- a 1.87x spread with no code difference at all. Best-of-N
+#   fixes that, because interference only ever makes a run slower, so the
+#   fastest observation is the closest to what the code can do.
+#
+#   Across sides: the machine drifts during the job. Measuring all of the
+#   baseline and then all of the current made that drift look like a
+#   regression -- one observed round had all six other cases "regress" by
+#   16-23% simultaneously, which no code change can do. Interleaving puts both
+#   sides in the same time window so a slow patch hits them equally, and the
+#   order alternates each round so neither side is permanently second.
+measure_both() {
+  : >"$WORKDIR/all_baseline"
+  : >"$WORKDIR/all_current"
+
+  echo "==> measuring, best of $BENCH_RUNS interleaved rounds"
+  for round in $(seq 1 "$BENCH_RUNS"); do
+    if [ $((round % 2)) -eq 1 ]; then
+      sample_bench baseline "$round"
+      sample_bench current "$round"
+    else
+      sample_bench current "$round"
+      sample_bench baseline "$round"
+    fi
+  done
+
+  for label in baseline current; do
+    awk '{ if (!($1 in best) || $2 > best[$1]) best[$1] = $2 }
+         END { for (name in best) print name, best[name] }' \
+      "$WORKDIR/all_$label" | sort >"$WORKDIR/$label.txt"
+
+    if [ ! -s "$WORKDIR/$label.txt" ]; then
+      echo "FAIL: benchmark produced no BENCH records for $label" >&2
+      echo "--- raw output ---" >&2
+      cat "$WORKDIR/raw_${label}_1" >&2
+      exit 1
+    fi
+  done
 }
 
 if [ -z "$BASELINE_REF" ]; then
@@ -117,24 +183,32 @@ if [ ! -f "$BASELINE_TREE/bench/bench_reflect.c" ]; then
   echo "SKIP: the baseline revision predates bench/bench_reflect.c."
   echo "      Nothing to compare against; the gate becomes effective from the"
   echo "      next change to the reflect path."
-  run_bench "$REPO_ROOT" "$WORKDIR/current.txt" current
+  build_bench "$REPO_ROOT" current
+  : >"$WORKDIR/all_current"
+  for round in $(seq 1 "$BENCH_RUNS"); do sample_bench current "$round"; done
+  awk '{ if (!($1 in best) || $2 > best[$1]) best[$1] = $2 }
+       END { for (name in best) print name, best[name] }' \
+    "$WORKDIR/all_current" | sort >"$WORKDIR/current.txt"
   echo
   echo "current measurements:"
   awk '{ printf "  %-26s %15.0f pps\n", $1, $2 }' "$WORKDIR/current.txt"
   exit 0
 fi
 
-run_bench "$BASELINE_TREE" "$WORKDIR/baseline.txt" baseline
-run_bench "$REPO_ROOT" "$WORKDIR/current.txt" current
+build_bench "$BASELINE_TREE" baseline
+build_bench "$REPO_ROOT" current
+measure_both
 
 echo
-MAX_REGRESSION="$MAX_REGRESSION" awk '
+MAX_REGRESSION="$MAX_REGRESSION" ADVISORY_CASES="$ADVISORY_CASES" awk '
   FNR == NR { base[$1] = $2; next }
   {
     cur[$1] = $2
   }
   END {
     limit = ENVIRON["MAX_REGRESSION"] + 0
+    split(ENVIRON["ADVISORY_CASES"], adv, " ")
+    for (i in adv) if (adv[i] != "") advisory[adv[i]] = 1
     failed = 0
     printf "%-26s %15s %15s %9s\n", "case", "baseline pps", "current pps", "change"
     for (name in base) {
@@ -149,8 +223,14 @@ MAX_REGRESSION="$MAX_REGRESSION" awk '
         continue
       }
       delta = (cur[name] - base[name]) / base[name] * 100
-      verdict = (delta < -limit) ? "FAIL" : "ok"
-      if (verdict == "FAIL") failed = 1
+      regressed = (delta < -limit)
+      if (regressed && (name in advisory)) {
+        verdict = "ADVISORY"
+        advised = 1
+      } else {
+        verdict = regressed ? "FAIL" : "ok"
+        if (regressed) failed = 1
+      }
       printf "%-26s %15.0f %15.0f %8.1f%% %s\n", name, base[name], cur[name], delta, verdict
     }
     for (name in cur) {
@@ -164,6 +244,12 @@ MAX_REGRESSION="$MAX_REGRESSION" awk '
       print  "BENCH_MAX_REGRESSION_PCT for that job -- do not silence the gate."
       exit 1
     }
-    print "\nOK: no reflect-path case regressed beyond the allowed margin."
+    if (advised) {
+      printf "\nADVISORY: a case listed in ADVISORY_CASES regressed. Not failing the\n"
+      print  "build, because that case cannot currently measure itself reliably --"
+      print  "see the comment above ADVISORY_CASES and #965. Every other case is"
+      print  "still blocking."
+    }
+    print "\nOK: no blocking reflect-path case regressed beyond the allowed margin."
   }
 ' "$WORKDIR/baseline.txt" "$WORKDIR/current.txt"
