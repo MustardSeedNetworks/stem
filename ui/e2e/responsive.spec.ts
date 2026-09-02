@@ -113,3 +113,73 @@ test.describe('Responsive Design', () => {
     ).toBeGreaterThan(0);
   });
 });
+
+/**
+ * Mobile navigation.
+ *
+ * #639 asked why no phone or tablet layout is exercised. Half of that was
+ * already wrong — the tests above drive 375px and 768px viewports and assert
+ * overflow, touch-target size and font size. What genuinely could not be
+ * tested was the part the issue cares most about: "a control that is
+ * unreachable behind a collapsed nav".
+ *
+ * Below the `lg` breakpoint the desktop rail is `display:none`, so every
+ * existing spec's `sidebar-*` locator is unclickable, and the mobile drawer
+ * that replaces it rendered with no test ids at all (`body(false)`). There was
+ * no way in. The toggle now carries `mobile-nav-toggle` and the drawer
+ * `mobile-sidebar`.
+ *
+ * These run with `hasTouch` so the taps are real touch events rather than
+ * synthetic mouse clicks — a target that only responds to a mouse would pass
+ * a click and fail a tap.
+ */
+test.describe('Mobile navigation', () => {
+  test.use({ viewport: viewports.mobile, hasTouch: true, isMobile: true });
+
+  test.beforeEach(async ({ page }) => {
+    await skipSetupWizard(page);
+    await page.goto('/');
+    // Wait for the shell to finish hydrating before interacting. On webkit the
+    // toggle was still being detached and re-attached when a tap landed
+    // ("element was detached from the DOM, retrying"), which chromium never
+    // showed. Settling on the first paint of real page content is the
+    // difference between testing the app and testing its mount.
+    await expect(page.getByTestId('page-header-title')).toBeVisible();
+  });
+
+  test('the desktop rail is not reachable at a phone width', async ({ page }) => {
+    // The premise every other assertion here rests on. If this ever fails,
+    // the mobile drawer is redundant and these tests are testing nothing.
+    await expect(page.getByTestId('sidebar-settings-button')).toBeHidden();
+  });
+
+  test('the drawer opens on tap and exposes the module links', async ({ page }) => {
+    const drawer = page.getByTestId('mobile-sidebar');
+    const toggle = page.getByTestId('mobile-nav-toggle');
+
+    await expect(toggle).toBeVisible();
+    await toggle.tap();
+
+    await expect(drawer).toBeInViewport();
+    await expect(drawer.getByRole('button', { name: 'Benchmark', exact: true })).toBeVisible();
+  });
+
+  test('a module link in the drawer navigates', async ({ page }) => {
+    await page.getByTestId('mobile-nav-toggle').tap();
+
+    const drawer = page.getByTestId('mobile-sidebar');
+    await drawer.getByRole('button', { name: 'Benchmark', exact: true }).tap();
+
+    await expect(page).toHaveURL(/\/tests\/benchmark$/);
+    await expect(page.getByTestId('page-header-title')).toHaveText('Benchmark');
+  });
+
+  test('the toggle is labelled for its current state, in the active locale', async ({ page }) => {
+    const toggle = page.getByTestId('mobile-nav-toggle');
+
+    // Both attributes were hardcoded English regardless of locale.
+    await expect(toggle).toHaveAttribute('aria-label', 'Open menu');
+    await toggle.tap();
+    await expect(toggle).toHaveAttribute('aria-label', 'Close menu');
+  });
+});
