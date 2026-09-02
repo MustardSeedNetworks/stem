@@ -642,7 +642,7 @@ export function ModuleCard({
     <div
       className={cn(
         'border rounded-xl overflow-hidden transition-all',
-        // Recessed surface, not `opacity-60`: dimming the layer dimmed the
+        // Recessed surface rather than a layer-opacity dim, which dropped the
         // results-table headers to 2.44:1, under the 4.5:1 AA needs (#931).
         // Dim the colour token, not the layer.
         config.enabled ? 'border-surface-border' : 'border-transparent bg-surface-hover',
