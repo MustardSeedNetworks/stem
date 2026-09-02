@@ -389,8 +389,14 @@ const MobileTopBar: FC<MobileTopBarProps> = ({ mobileOpen, toggleMobile }) => {
         type="button"
         onClick={toggleMobile}
         className="pad-xs rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
-        title={mobileOpen ? 'Close menu' : 'Open menu'}
-        aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
+        // The only way into the navigation below the lg breakpoint, and it had
+        // no test id — so mobile navigation could not be driven at all (#639).
+        data-testid="mobile-nav-toggle"
+        // Was hardcoded English in both attributes. `accessibility.closeMenu`
+        // already existed and is used by the scrim two elements down; only
+        // `openMenu` was missing.
+        title={mobileOpen ? t('accessibility.closeMenu') : t('accessibility.openMenu')}
+        aria-label={mobileOpen ? t('accessibility.closeMenu') : t('accessibility.openMenu')}
       >
         {mobileOpen ? <X className={iconSizes.lg} /> : <Menu className={iconSizes.lg} />}
       </button>
@@ -467,6 +473,12 @@ export const SidebarLayout: FC<SidebarLayoutProps> = ({
       ) : null}
 
       <aside
+        // Both asides are always in the DOM; only CSS decides which is shown.
+        // The desktop copy carries the `sidebar-*` ids (surfaceTestIds=true)
+        // and this one carries none, which is what stops strict mode matching
+        // two of everything. Naming the container itself is enough to scope a
+        // mobile spec to the copy the operator can actually reach.
+        data-testid="mobile-sidebar"
         className={`lg:hidden fixed top-0 left-0 z-50 h-full w-72 bg-surface-raised/95 backdrop-blur-xl border-r border-surface-border transform transition-transform duration-300 ease-in-out ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
