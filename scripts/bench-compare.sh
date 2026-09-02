@@ -35,6 +35,29 @@ set -euo pipefail
 BASELINE_REF="${1:-}"
 MAX_REGRESSION="${BENCH_MAX_REGRESSION_PCT:-15}"
 BENCH_RUNS="${BENCH_RUNS:-3}"
+
+# Cases that report but do not block.
+#
+# reflect_inplace_v4 cannot currently measure itself. Evidence, all on one idle
+# machine with byte-identical code on both sides (#965):
+#
+#   - the same binary run ten times produced 93.8M-175.3M pps, a 1.87x spread
+#   - the slow mode survives all 7 of the benchmark's own internal REPEATS, so
+#     it is fixed at process start rather than varying per repeat
+#   - it tracks process layout: padding the environment moved the result
+#     between 110M and 175M with nothing else changed
+#   - aligning the frame buffer to 64 bytes did not fix it, so the buffer's
+#     own alignment is not the cause
+#
+# Interleaving fixed the six other cases -- they now agree within 0.5% -- but
+# not this one. Blocking on a case that cannot measure would fail roughly one
+# PR in three for no reason, and a gate people re-run until it goes green is a
+# gate nobody reads. It stays measured and printed; it just does not fail the
+# build until #965 explains it.
+#
+# This list should stay empty. Adding to it needs the same standard: evidence
+# that the case cannot measure, not that a change made it slower.
+ADVISORY_CASES="${ADVISORY_CASES:-reflect_inplace_v4}"
 CC="${CC:-gcc}"
 
 REPO_ROOT="$(git rev-parse --show-toplevel)"
@@ -177,13 +200,15 @@ build_bench "$REPO_ROOT" current
 measure_both
 
 echo
-MAX_REGRESSION="$MAX_REGRESSION" awk '
+MAX_REGRESSION="$MAX_REGRESSION" ADVISORY_CASES="$ADVISORY_CASES" awk '
   FNR == NR { base[$1] = $2; next }
   {
     cur[$1] = $2
   }
   END {
     limit = ENVIRON["MAX_REGRESSION"] + 0
+    split(ENVIRON["ADVISORY_CASES"], adv, " ")
+    for (i in adv) if (adv[i] != "") advisory[adv[i]] = 1
     failed = 0
     printf "%-26s %15s %15s %9s\n", "case", "baseline pps", "current pps", "change"
     for (name in base) {
@@ -198,8 +223,14 @@ MAX_REGRESSION="$MAX_REGRESSION" awk '
         continue
       }
       delta = (cur[name] - base[name]) / base[name] * 100
-      verdict = (delta < -limit) ? "FAIL" : "ok"
-      if (verdict == "FAIL") failed = 1
+      regressed = (delta < -limit)
+      if (regressed && (name in advisory)) {
+        verdict = "ADVISORY"
+        advised = 1
+      } else {
+        verdict = regressed ? "FAIL" : "ok"
+        if (regressed) failed = 1
+      }
       printf "%-26s %15.0f %15.0f %8.1f%% %s\n", name, base[name], cur[name], delta, verdict
     }
     for (name in cur) {
@@ -213,6 +244,12 @@ MAX_REGRESSION="$MAX_REGRESSION" awk '
       print  "BENCH_MAX_REGRESSION_PCT for that job -- do not silence the gate."
       exit 1
     }
-    print "\nOK: no reflect-path case regressed beyond the allowed margin."
+    if (advised) {
+      printf "\nADVISORY: a case listed in ADVISORY_CASES regressed. Not failing the\n"
+      print  "build, because that case cannot currently measure itself reliably --"
+      print  "see the comment above ADVISORY_CASES and #965. Every other case is"
+      print  "still blocking."
+    }
+    print "\nOK: no blocking reflect-path case regressed beyond the allowed margin."
   }
 ' "$WORKDIR/baseline.txt" "$WORKDIR/current.txt"
