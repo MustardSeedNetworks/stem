@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.50](https://github.com/MustardSeedNetworks/stem/compare/v0.24.49...v0.24.50) (2026-09-02)
+
+
+### Bug Fixes
+
+* **ui:** converge mfaApi's CSRF handling onto lib/csrf ([#957](https://github.com/MustardSeedNetworks/stem/issues/957)) ([6b0e9ac](https://github.com/MustardSeedNetworks/stem/commit/6b0e9ac3a9d7a70fd23b710da497851aeb929fee))
+
+
+### Miscellaneous
+
+* **e2e:** scope the ambiguous locators instead of picking an index ([#960](https://github.com/MustardSeedNetworks/stem/issues/960)) ([5b99275](https://github.com/MustardSeedNetworks/stem/commit/5b99275799bc0c5e389a6f85c20567b4dfb09327))
+* **ui:** split the result tables out of ModuleCard ([#958](https://github.com/MustardSeedNetworks/stem/issues/958)) ([bb7e5b5](https://github.com/MustardSeedNetworks/stem/commit/bb7e5b595958b8fb258d34bee7bc05e6770d7ef5)), closes [#946](https://github.com/MustardSeedNetworks/stem/issues/946)
+
 ## [0.24.49](https://github.com/MustardSeedNetworks/stem/compare/v0.24.48...v0.24.49) (2026-09-02)
 
 
