@@ -476,6 +476,14 @@ func (s *Server) loginWithMFAGate(w http.ResponseWriter, r *http.Request) {
 	if !decodeJSONStrict(w, r, &req, maxRequestBodySize) {
 		return
 	}
+	// Empty credentials are a malformed request, not a failed login. Without
+	// this they reached AuthenticateWithRefresh, failed, and were recorded as
+	// an audit event and a failed-login attempt — so an unauthenticated
+	// caller could fill the suspicious-activity tracker with requests that
+	// were never credentials.
+	if !validateStruct(w, &req) {
+		return
+	}
 
 	// Step 1: verify the password. This is the same call the original
 	// handler made and will rehash bcrypt → Argon2id on success.

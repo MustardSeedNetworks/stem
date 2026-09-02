@@ -17,58 +17,6 @@ import (
 // refreshMultiplier. Shared by the login, refresh, and MFA auth handlers.
 const refreshMultiplier = 24 // Refresh token lasts 24x longer than access token
 
-// handleAuthLogin issues JWT tokens for valid credentials.
-// Sets httpOnly cookies for browser auth and returns tokens for API clients.
-//
-// Rotates the CSRF token on successful authentication (#87): any token
-// previously bound to this session ID is revoked and a fresh one will be
-// minted on the next call to GET /api/v1/auth/csrf-token. Rotating on
-// every login defends against session-fixation flavored CSRF attacks
-// where an attacker primes a token before tricking the user into
-// authenticating.
-func (s *Server) handleAuthLogin(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		WriteMethodNotAllowed(w)
-		return
-	}
-
-	var req AuthLoginRequest
-	if !decodeJSONStrict(w, r, &req, maxRequestBodySize) {
-		return
-	}
-
-	accessToken, refreshToken, err := s.authManager.AuthenticateWithRefresh(r.Context(), req.Username, req.Password)
-	if err != nil {
-		// Audit log the failed login attempt.
-		s.auditor.LoginFailure(r.Context(), r, req.Username, err.Error())
-		s.writeAuthError(w, err)
-		return
-	}
-
-	// Set httpOnly cookies for secure browser-based auth.
-	sessionDuration := s.authManager.SessionDuration()
-	auth.SetAccessTokenCookie(w, accessToken, sessionDuration, s.cookieConfig)
-	auth.SetRefreshTokenCookie(w, refreshToken, sessionDuration*refreshMultiplier, s.cookieConfig)
-
-	// Rotate the CSRF token: revoke any token bound to the new session
-	// ID (the JWT payload). The next /api/v1/auth/csrf-token call mints
-	// a fresh one. Done before audit logging so an error here does not
-	// disturb the audit trail.
-	if newSessionID := sessionIDFromJWT(accessToken); newSessionID != "" {
-		s.csrfManager.RevokeToken(newSessionID)
-	}
-
-	// Audit log the successful login.
-	s.auditor.LoginSuccess(r.Context(), r, req.Username, req.Username)
-
-	// Also return tokens in response body for API clients.
-	writeJSON(w, AuthLoginResponse{
-		Token:        accessToken,
-		RefreshToken: refreshToken,
-		ExpiresAt:    time.Now().Add(sessionDuration).Unix(),
-	})
-}
-
 // sessionIDFromJWT derives the CSRF session key from a raw access-token
 // string, using the same sha256(bearer) keying as auth.GetSessionIDFromRequest
 // so a token minted for a request (keyed off the cookie) can be revoked here by
@@ -170,8 +118,7 @@ func (s *Server) handleAuthRefresh(w http.ResponseWriter, r *http.Request) {
 		if !decodeJSONStrict(w, r, &req, maxRequestBodySize) {
 			return // Error already written.
 		}
-		if req.RefreshToken == "" {
-			WriteInvalidRequest(w, "Missing refresh token")
+		if !validateStruct(w, &req) {
 			return
 		}
 		refreshToken = req.RefreshToken
