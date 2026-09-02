@@ -5,6 +5,46 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.49](https://github.com/MustardSeedNetworks/stem/compare/v0.24.48...v0.24.49) (2026-09-02)
+
+
+### Features
+
+* **api:** enforce the DTO validation rules that were never run ([#942](https://github.com/MustardSeedNetworks/stem/issues/942)) ([6e3c385](https://github.com/MustardSeedNetworks/stem/commit/6e3c3858c620534c8af9c5aafbc4590d43833f0b)), closes [#268](https://github.com/MustardSeedNetworks/stem/issues/268)
+
+
+### Bug Fixes
+
+* **a11y:** make the Storybook accessibility gate blocking ([#939](https://github.com/MustardSeedNetworks/stem/issues/939)) ([e4c8a5e](https://github.com/MustardSeedNetworks/stem/commit/e4c8a5e1ac58a51ff92ebcb5b808a5a6660c945e))
+* **auth:** key failed-login tracking on the peer, not a spoofable header ([#938](https://github.com/MustardSeedNetworks/stem/issues/938)) ([f94faa7](https://github.com/MustardSeedNetworks/stem/commit/f94faa74fddd46c63d30b11c1bb07464b133fd83)), closes [#807](https://github.com/MustardSeedNetworks/stem/issues/807)
+* **build:** let the C lint step build its own compile database ([#936](https://github.com/MustardSeedNetworks/stem/issues/936)) ([9e569e3](https://github.com/MustardSeedNetworks/stem/commit/9e569e3d3319a1ac5fe8581ead2e8cf917a60525)), closes [#655](https://github.com/MustardSeedNetworks/stem/issues/655)
+* **ci:** make the TODO tracker report real TODOs ([#933](https://github.com/MustardSeedNetworks/stem/issues/933)) ([339cb9f](https://github.com/MustardSeedNetworks/stem/commit/339cb9f588fbf8b7105bbe34ad4c4b9773a5de77))
+* **ci:** retry the playwright browser download ([#932](https://github.com/MustardSeedNetworks/stem/issues/932)) ([fa03a7c](https://github.com/MustardSeedNetworks/stem/commit/fa03a7c4a24e0ba41ef4652ab996af5e595c7886)), closes [#661](https://github.com/MustardSeedNetworks/stem/issues/661)
+* **i18n:** translate the reflector page copy the detector cannot see ([#937](https://github.com/MustardSeedNetworks/stem/issues/937)) ([1fdf108](https://github.com/MustardSeedNetworks/stem/commit/1fdf10836c167f2f845f3b53cdfb34aeb302b517)), closes [#779](https://github.com/MustardSeedNetworks/stem/issues/779)
+* **ui:** send the CSRF token when switching role ([#952](https://github.com/MustardSeedNetworks/stem/issues/952)) ([321939d](https://github.com/MustardSeedNetworks/stem/commit/321939d35e034ff7869404eb833bc5bcc46e66cc)), closes [#638](https://github.com/MustardSeedNetworks/stem/issues/638)
+
+
+### Code Refactoring
+
+* **auth:** delete the unused role-aware user store ([#934](https://github.com/MustardSeedNetworks/stem/issues/934)) ([9976795](https://github.com/MustardSeedNetworks/stem/commit/9976795b9a74f9e71099ee4408e243b367881a8f)), closes [#344](https://github.com/MustardSeedNetworks/stem/issues/344)
+
+
+### Documentation
+
+* **performance:** document the end-to-end testing workflows Stem supports ([#945](https://github.com/MustardSeedNetworks/stem/issues/945)) ([84e3591](https://github.com/MustardSeedNetworks/stem/commit/84e3591ef5017cca91ad3128c79a2cd4b16a7fc0))
+
+
+### Tests
+
+* **e2e:** assert the module page title by test id and exact text ([#940](https://github.com/MustardSeedNetworks/stem/issues/940)) ([970123c](https://github.com/MustardSeedNetworks/stem/commit/970123c916903ccbb208470d78bef8dd1753d7d4)), closes [#663](https://github.com/MustardSeedNetworks/stem/issues/663)
+* **e2e:** cover RFC 2544 sub-test selection through the settings drawer ([#947](https://github.com/MustardSeedNetworks/stem/issues/947)) ([b163b9f](https://github.com/MustardSeedNetworks/stem/commit/b163b9f8b10c3226b8026d2676cba0fb8248274d)), closes [#642](https://github.com/MustardSeedNetworks/stem/issues/642)
+* **e2e:** make mobile navigation reachable, and test it ([#950](https://github.com/MustardSeedNetworks/stem/issues/950)) ([d7dff27](https://github.com/MustardSeedNetworks/stem/commit/d7dff278e0a6beee8f1c72a30fdf0166c8443811)), closes [#639](https://github.com/MustardSeedNetworks/stem/issues/639)
+
+
+### Miscellaneous
+
+* **tokens:** make the opacity advisory mean what it says ([#944](https://github.com/MustardSeedNetworks/stem/issues/944)) ([8bf93d5](https://github.com/MustardSeedNetworks/stem/commit/8bf93d58024671ccc8927177838bb8ea9f97b7e9))
+
 ## [0.24.48](https://github.com/MustardSeedNetworks/stem/compare/v0.24.47...v0.24.48) (2026-09-01)
 
 
