@@ -289,7 +289,7 @@ func rfc2544TutorialSummarySteps() []TutorialStep {
 		{
 			Title:   "Combining Tests",
 			Content: `For comprehensive validation, run all RFC 2544 tests together:`,
-			Command: "stem test -i eth0 -t throughput,latency,frame_loss,back_to_back",
+			Command: "stem test -i eth0 -t rfc2544_throughput,rfc2544_latency,rfc2544_frame_loss,rfc2544_back_to_back",
 			Expected: `Running RFC 2544 test suite...
 [Complete results for all tests]`,
 			Tip: "Save results with --output report.json for documentation",

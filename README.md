@@ -45,7 +45,7 @@ the same install.
 ## Quick Start
 
 ```bash
-# Install (Linux/macOS, requires Go 1.26+)
+# Install (Linux/macOS, requires Go 1.27+)
 git clone https://github.com/MustardSeedNetworks/stem
 cd stem
 make build
@@ -53,12 +53,12 @@ make build
 # Run as a reflector on eth0
 sudo ./bin/stem reflect -i eth0
 
-# Run a throughput test
-sudo ./bin/stem test -t throughput -i eth0 --target 192.0.2.10
+# Run a throughput test against a host running `stem reflect`
+# (test type names are exact — see `stem list-tests`)
+sudo ./bin/stem test -t rfc2544_throughput -i eth0
 
-# List tests by standard, or by module
+# List every test type, grouped by module
 ./bin/stem list-tests
-./bin/stem list-tests --by-module
 
 # Start the web UI (HTTPS by default)
 sudo ./bin/stem web -p 8444
@@ -75,14 +75,15 @@ sudo ./bin/stem tui
 |---------|---------|
 | `stem version` | Show version + build metadata |
 | `stem reflect -i <iface>` | Start the reflector |
-| `stem test -t <type> -i <iface>` | Run a single test |
+| `stem test -t <type> -i <iface>` | Run one or more tests (comma-separated) |
 | `stem web -p <port>` | Start the web UI + REST API |
 | `stem tui` | Launch the TUI dashboard |
 | `stem license --status` | Show license tier + activation state |
-| `stem list-tests [--by-module]` | Catalogue all supported tests |
+| `stem list-tests` | Catalogue all supported tests, grouped by module |
 | `stem help modules` | Module + test type reference |
 
-Run `stem <cmd> --help` for flags.
+Run `stem <cmd> --help` for flags. End-to-end workflows, safety limits and
+result interpretation: [docs/PERFORMANCE_TESTING.md](docs/PERFORMANCE_TESTING.md).
 
 ## Architecture
 
