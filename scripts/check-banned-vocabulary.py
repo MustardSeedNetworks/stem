@@ -60,9 +60,29 @@ def load_exclusions(path: Path) -> list[str]:
     return patterns
 
 
-def tracked_files(root: Path) -> list[str]:
+def candidate_files(root: Path) -> list[str]:
+    """Every file the gate should read: tracked, plus untracked-but-not-ignored.
+
+    `--others --exclude-standard` is the load-bearing part. With `ls-files` alone
+    a file written but not yet `git add`ed was invisible, so the gate reported
+    "passed" at exactly the moment it was most useful — the normal loop is write
+    the doc, run the gate, commit, and in that order the gate could not see the
+    doc (#951).
+
+    `--exclude-standard` keeps .gitignore honoured, which is why this is still
+    not a directory walk: build output and vendored trees stay out.
+    """
     result = subprocess.run(
-        ["git", "-C", str(root), "ls-files", "-z"],
+        [
+            "git",
+            "-C",
+            str(root),
+            "ls-files",
+            "-z",
+            "--cached",
+            "--others",
+            "--exclude-standard",
+        ],
         check=True,
         capture_output=True,
     )
@@ -96,7 +116,7 @@ def scan(config: Config) -> list[tuple[str, int, str]]:
     terms = patterns_for(load_terms(config.terms))
     exclusions = load_exclusions(config.exclusions)
     findings: list[tuple[str, int, str]] = []
-    for relative in tracked_files(config.root):
+    for relative in candidate_files(config.root):
         if excluded(relative, exclusions):
             continue
         for number, line in enumerate(text_lines(config.root / relative), start=1):

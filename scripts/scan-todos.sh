@@ -47,7 +47,12 @@ readonly PATTERN='(//|/\*|^[[:space:]]*\*)[[:space:]]*(TODO|FIXME|HACK|XXX)([^A-
 # no idea what is gitignored, and a plain walk picks up build output: the
 # untracked `ui/storybook-static/` bundle alone contributes 22 TODOs that
 # belong to Storybook's own vendored source, not to this repository.
-git ls-files -z -- \
+#
+# --others --exclude-standard adds files that exist but are not staged yet,
+# which `ls-files` alone cannot see. Without them a TODO written into a new file
+# was invisible until one push later (#951). --exclude-standard means the
+# storybook-static reasoning above still holds: gitignored trees stay out.
+git ls-files -z --cached --others --exclude-standard -- \
   '*.go' '*.ts' '*.tsx' '*.js' '*.jsx' \
   ':!:vendor/**' ':!:**/node_modules/**' |
   xargs -0 grep -nE "$PATTERN" /dev/null 2>/dev/null || true

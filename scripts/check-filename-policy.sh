@@ -37,7 +37,11 @@ while IFS= read -r f; do
 # inside the repo (./.cache/go/pkg/mod), so a find(1) sweep would trip on
 # third-party handlers_*.go in the module cache (a false positive). git ls-files
 # inherently ignores the cache, build artifacts, and anything gitignored.
-done < <(git ls-files -- \
+#
+# --others --exclude-standard includes files not staged yet, so a newly written
+# handlers_*.go is caught before it is committed rather than one push later
+# (#951). --exclude-standard preserves the module-cache reasoning above.
+done < <(git ls-files --cached --others --exclude-standard -- \
 	':(glob)**/handlers_*.go' ':(glob)**/jobs_*.go' \
 	':(exclude)internal/api/**' ':(exclude)vendor/**')
 violations=$(printf '%s' "$violations" | sed '/^[[:space:]]*$/d' | sort)
