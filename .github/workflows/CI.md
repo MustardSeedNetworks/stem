@@ -99,8 +99,68 @@ The npm version is still declared in the composite; `packageManager` in
 
 ```bash
 gh pr create --fill
-gh pr merge --auto --squash --delete-branch
+gh pr merge --auto --squash
 ```
+
+**Not `--delete-branch`.** `main` has a merge queue, and gh refuses outright:
+
+```text
+X Cannot use `-d` or `--delete-branch` when merge queue enabled
+```
+
+The command fails, auto-merge is not enabled, and the PR sits there looking
+ready. Delete the branch after it lands, or leave it to the repo's
+auto-delete setting.
+
+### When a PR is queued but nothing happens
+
+Reading the state, in order — each answers a different question:
+
+```bash
+gh pr checks <N>                      # PR-level checks (deduped to the latest run)
+gh pr view <N> --json state,mergeStateStatus,autoMergeRequest
+gh api graphql -f query='{repository(owner:"MustardSeedNetworks",name:"stem"){
+  mergeQueue(branch:"main"){entries(first:20){nodes{position state pullRequest{number}}}}}}' \
+  --jq '.data.repository.mergeQueue.entries.nodes[]|"\(.position) \(.state) #\(.pullRequest.number)"'
+```
+
+Two readings that look alarming and are not:
+
+- **`autoMergeRequest` is null while the PR is in the queue.** That is how it
+  reports; it does not mean auto-merge was cleared. Check the queue before
+  concluding anything.
+- **`gh pr view --json statusCheckRollup` shows an old FAILURE** alongside a
+  newer SUCCESS for the same check name. The rollup lists every run; `gh pr
+  checks` dedupes to the latest, and branch protection uses the latest.
+
+The one that is real: **the PR is `CLEAN`, its checks are green, and it is not
+in the queue.** It left without merging. Re-enqueue it with
+
+```bash
+gh pr merge <N> --auto --squash
+```
+
+which works — `already queued to merge` only comes back when the PR is still
+in the queue, in which case there is nothing to recover.
+
+### Why the queue can crawl
+
+Every merge-group batch runs the **full** suite (path filtering is disabled for
+`merge_group` on purpose — the queue exists to test the merged result). The
+queue also builds several entries speculatively at once, so N batches in flight
+means N full CI runs competing with the CI runs of every open PR. With enough
+PRs open at the same time, merge-group runs sit in `queued` and never start,
+and entries age out of the queue.
+
+If the queue is not draining, check whether anything is actually running before
+assuming a queue defect:
+
+```bash
+gh run list --limit 40 --json status --jq '.[].status' | sort | uniq -c
+```
+
+`queued` far outnumbering `in_progress` is runner saturation, not a stuck
+queue. The remedy is fewer PRs in flight at once.
 
 Fix issues locally first:
 
