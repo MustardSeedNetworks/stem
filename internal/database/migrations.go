@@ -25,7 +25,7 @@ type migrationDef struct {
 
 // migrationCount is the number of migrations defined in getMigrationDefs.
 // Update this constant when adding new migrations.
-const migrationCount = 9
+const migrationCount = 10
 
 // getMigrationDefs returns migration definitions without versions.
 // IMPORTANT: Never modify existing migrations, only add new ones.
@@ -41,6 +41,7 @@ func getMigrationDefs() []migrationDef {
 	defs = append(defs, migrationTestSummaries())
 	defs = append(defs, migrationProfiles())
 	defs = append(defs, migrationSessions())
+	defs = append(defs, migrationDropUsers())
 	return defs
 }
 
@@ -237,6 +238,32 @@ func migrationSessions() migrationDef {
 			CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token_id);
 			CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(username);
 			CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires_at);
+		`,
+	}
+}
+
+// migrationDropUsers removes the users table created by migration 2.
+//
+// stem is single-principal: credentials come from STEM_AUTH_USERNAME /
+// STEM_AUTH_PASSWORD, and the role-aware UserStore that was the table's only
+// reader was deleted in #344 as dead code. Nothing has read or written this
+// table since; `FROM/INTO/UPDATE users` has no match in the tree.
+//
+// It is dropped rather than left inert because it carries a password_hash
+// column, and a credential table with no reader implies an authentication
+// path the product does not have -- the same reason the store itself went.
+//
+// This is a new migration rather than an edit to migrationUsers(), because
+// version is computed as index + 1: removing an entry would renumber every
+// migration after it, and a database already at version 9 would silently
+// treat the renumbered ones as applied.
+func migrationDropUsers() migrationDef {
+	return migrationDef{
+		Description: "Drop the unused users table",
+		Up: `
+			DROP INDEX IF EXISTS idx_users_username;
+			DROP INDEX IF EXISTS idx_users_active;
+			DROP TABLE IF EXISTS users;
 		`,
 	}
 }
