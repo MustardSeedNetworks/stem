@@ -138,9 +138,6 @@
 
   /* Module Colors - The Stem specific */
 
-  /* Gauge/Progress Colors (for SVG) */
-  --gauge-amber: #d97706;
-  --gauge-orange: #ea580c;
 }
 
 .dark {
@@ -167,9 +164,6 @@
 
   /* Module Colors - Lightened for dark backgrounds */
 
-  /* Gauge/Progress Colors (for SVG) */
-  --gauge-amber: #fbbf24;
-  --gauge-orange: #fb923c;
 }
 
 body {
