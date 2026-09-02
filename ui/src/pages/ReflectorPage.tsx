@@ -229,20 +229,22 @@ export function ReflectorPage(): ReactElement {
         : 'ok';
 
   const rollupHeadline = !reflectorSupported
-    ? 'Reflector counters are not available on this platform'
+    ? t('reflector.unsupported')
     : stats.testStatus === 'error'
-      ? stats.errorMessage || 'The reflector stopped with an error'
+      ? stats.errorMessage || t('reflector.stoppedWithError')
       : stats.testStatus === 'cancelled'
-        ? 'The last reflector run was cancelled'
+        ? t('reflector.runCancelled')
         : reflectorRunning
-          ? `Reflecting on ${selectedInterface || 'the selected interface'}`
-          : 'Reflector is idle';
+          ? t('reflector.reflectingOn', {
+              interface: selectedInterface || t('reflector.selectedInterfaceFallback'),
+            })
+          : t('reflector.idle');
 
   const rollupBody = !reflectorSupported
     ? platformReason || unsupportedTooltip
     : reflectorRunning
       ? undefined
-      : 'Pick an interface and start the reflector for a test master to measure against.';
+      : t('reflector.idleBody');
 
   const handleSwitchToTestMaster = (): void => {
     setRole('test_master');
@@ -258,9 +260,12 @@ export function ReflectorPage(): ReactElement {
         headline={rollupHeadline}
         body={rollupBody}
         figures={[
-          { label: 'Received', value: formatNumber(stats.packetsReceived) },
-          { label: 'Sent', value: formatNumber(stats.packetsSent) },
-          { label: 'Rate', value: `${formatNumber(stats.currentPps)} pps` },
+          { label: t('reflector.figures.received'), value: formatNumber(stats.packetsReceived) },
+          { label: t('reflector.figures.sent'), value: formatNumber(stats.packetsSent) },
+          {
+            label: t('reflector.figures.rate'),
+            value: `${formatNumber(stats.currentPps)} ${t('units.pps')}`,
+          },
         ]}
       />
 
@@ -293,7 +298,7 @@ export function ReflectorPage(): ReactElement {
               ) : (
                 <>
                   <Square className="w-4 h-4" aria-hidden="true" />
-                  {t('buttons.stop')} Reflector
+                  {t('reflector.stopButton')}
                 </>
               )}
             </button>
@@ -316,7 +321,7 @@ export function ReflectorPage(): ReactElement {
               ) : (
                 <>
                   <Play className="w-4 h-4" aria-hidden="true" />
-                  {t('buttons.start')} Reflector
+                  {t('reflector.startButton')}
                 </>
               )}
             </button>
@@ -346,34 +351,36 @@ export function ReflectorPage(): ReactElement {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-comfortable">
           <StatsCard
             icon={<Activity className="w-4 h-4" />}
-            title="Packets Received"
+            title={t('reflector.stats.packetsReceived')}
             value={formatNumber(stats.packetsReceived)}
-            subvalue={`${formatNumber(stats.bytesReceived)} bytes`}
+            subvalue={`${formatNumber(stats.bytesReceived)} ${t('units.bytes')}`}
             testId="stats-packets-received"
           />
           <StatsCard
             icon={<Activity className="w-4 h-4" />}
-            title="Packets Sent"
+            title={t('reflector.stats.packetsSent')}
             value={formatNumber(stats.packetsSent)}
-            subvalue={`${formatNumber(stats.bytesSent)} bytes`}
+            subvalue={`${formatNumber(stats.bytesSent)} ${t('units.bytes')}`}
             testId="stats-packets-sent"
           />
           <StatsCard
             icon={<Gauge className="w-4 h-4" />}
-            title="Current Rate"
-            value={`${formatNumber(stats.currentPps)} pps`}
-            subvalue={`${stats.currentMbps.toFixed(2)} Mbps`}
+            title={t('reflector.stats.currentRate')}
+            value={`${formatNumber(stats.currentPps)} ${t('units.pps')}`}
+            subvalue={`${stats.currentMbps.toFixed(2)} ${t('units.mbps')}`}
             testId="stats-current-rate"
           />
           <div className="card" data-testid="stats-uptime">
             <div className="card-header">
               <Clock className="w-4 h-4" />
-              Uptime
+              {t('reflector.stats.uptime')}
             </div>
             <div className="card-value font-mono">{formatUptime(stats.uptime)}</div>
             <div className="card-subvalue">
-              Status:{' '}
-              <span className={getStatusClassName(stats.testStatus)}>{stats.testStatus}</span>
+              {t('reflector.stats.statusLabel')}{' '}
+              <span className={getStatusClassName(stats.testStatus)}>
+                {t(`status.${stats.testStatus}`)}
+              </span>
             </div>
           </div>
         </div>

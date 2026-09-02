@@ -181,3 +181,10 @@ settings:testConfig.y1564.vlan.
 # Y1731ConfigForm picks between .ccm and .ccmTagged with a ternary and passes
 # the resulting variable to t(), so the analyzer sees t(expr), not a literal.
 settings:testConfig.y1731.summary.
+
+# common.statusRollup.* — StatusRollup resolves its state kicker through a
+# RollupState -> key map (STATE_LABEL_KEYS in ui/src/ui/StatusRollup.tsx), so
+# the analyzer sees t(STATE_LABEL_KEYS[state]), not four literals. The map is
+# `satisfies Record<RollupState, string>`, so a missing state is a type error
+# rather than a silently absent label.
+common:statusRollup.
