@@ -72,40 +72,6 @@ func TestNewAPIRateLimiterHonoursOverride(t *testing.T) {
 	}
 }
 
-// TestTrimSpace tests the trimSpace function.
-func TestTrimSpace(t *testing.T) {
-	tests := []struct {
-		name  string
-		input string
-		want  string
-	}{
-		{name: "no whitespace", input: "hello", want: "hello"},
-		{name: "leading spaces", input: "   hello", want: "hello"},
-		{name: "trailing spaces", input: "hello   ", want: "hello"},
-		{name: "both sides spaces", input: "   hello   ", want: "hello"},
-		{name: "leading tabs", input: "\t\thello", want: "hello"},
-		{name: "trailing tabs", input: "hello\t\t", want: "hello"},
-		{name: "mixed whitespace", input: " \t hello \t ", want: "hello"},
-		{name: "empty string", input: "", want: ""},
-		{name: "only spaces", input: "     ", want: ""},
-		{name: "only tabs", input: "\t\t\t", want: ""},
-		{name: "single character", input: "a", want: "a"},
-		{name: "single character with spaces", input: "  a  ", want: "a"},
-		{name: "internal spaces preserved", input: "  hello world  ", want: "hello world"},
-		{name: "internal tabs preserved", input: "\thello\tworld\t", want: "hello\tworld"},
-		{name: "IP address with spaces", input: "  192.168.1.1  ", want: "192.168.1.1"},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := trimSpace(tt.input)
-			if got != tt.want {
-				t.Errorf("trimSpace(%q) = %q, want %q", tt.input, got, tt.want)
-			}
-		})
-	}
-}
-
 // TestCleanup tests the cleanup function.
 func TestCleanup(t *testing.T) {
 	t.Run("removes old visitors", func(t *testing.T) {

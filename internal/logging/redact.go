@@ -5,6 +5,7 @@ package logging
 import (
 	"context"
 	"fmt"
+	"net"
 	"net/http"
 	"regexp"
 	"strings"
@@ -226,4 +227,65 @@ func GetClientIP(r *http.Request) string {
 		addr = addr[:idx]
 	}
 	return addr
+}
+
+// SecurityClientIP returns the client address that may be used for security
+// decisions: rate-limit buckets, failed-login counters, ban lists.
+//
+// It is the counterpart to [GetClientIP], and the difference is the whole
+// point. GetClientIP returns whatever the client claimed, which is right for
+// a log field and wrong for anything that decides. This returns the immediate
+// TCP peer, and honours X-Forwarded-For / X-Real-IP only when that peer is a
+// loopback address — the common single-host reverse-proxy deployment, where
+// the proxy is the only thing that can set the header.
+//
+// It fails closed: an unparseable peer address is not loopback, so forwarding
+// headers are ignored rather than trusted from an unknown source.
+//
+// For deployments behind a NON-loopback reverse proxy this still collapses
+// every client onto the proxy's address. That needs a trusted-proxy CIDR
+// setting, which stem does not have yet; sharing one bucket is the safe
+// failure (it over-counts), whereas trusting the header is the unsafe one
+// (an attacker rotates it and is never counted at all).
+func SecurityClientIP(r *http.Request) string {
+	remoteIP, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		// RemoteAddr does not always carry a port (httptest, unix sockets).
+		remoteIP = r.RemoteAddr
+	}
+
+	if !isLoopbackIP(remoteIP) {
+		return remoteIP
+	}
+	if forwarded := forwardedClientIP(r); forwarded != "" {
+		return forwarded
+	}
+	return remoteIP
+}
+
+// forwardedClientIP returns the client IP conveyed by X-Forwarded-For or
+// X-Real-IP, or "" if neither carries a usable value. Callers MUST gate its
+// use on the immediate peer being trusted.
+func forwardedClientIP(r *http.Request) string {
+	// X-Forwarded-For wins; the leftmost entry is the original client.
+	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
+		first, _, _ := strings.Cut(xff, ",")
+		if ip := strings.TrimSpace(first); ip != "" {
+			return ip
+		}
+	}
+	if xri := strings.TrimSpace(r.Header.Get("X-Real-IP")); xri != "" {
+		return xri
+	}
+	return ""
+}
+
+// isLoopbackIP reports whether s is an IPv4 or IPv6 loopback address.
+// Unparseable input is not loopback, so the caller fails closed.
+func isLoopbackIP(s string) bool {
+	ip := net.ParseIP(s)
+	if ip == nil {
+		return false
+	}
+	return ip.IsLoopback()
 }
