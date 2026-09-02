@@ -1602,7 +1602,30 @@ jobs:
         with:
           packages: gcc-14
 
+      # Reports, does not block — see #965.
+      #
+      # The comparison is sound in design (same runner, same job, interleaved
+      # rounds since #966) but the hosted runners cannot currently measure
+      # this benchmark reliably enough to gate on. Measured, byte-identical
+      # code on both sides:
+      #
+      #   the same binary run ten times      93.8M - 175.3M pps, a 1.87x spread
+      #   three PRs blocked in one day       -16.7%, -16.6%, -20.8%, on three
+      #                                      DIFFERENT cases, each time with all
+      #                                      four benchmarked sources identical
+      #                                      to main and the hot function
+      #                                      compiling to identical machine code
+      #
+      # In that time it produced no true positives. A gate that fails roughly
+      # one PR in three for no reason is one people re-run until it goes green,
+      # which is worse than no gate: it teaches the team to ignore a red check.
+      #
+      # `continue-on-error` rather than deleting the step, because the numbers
+      # are still worth printing and the local `scripts/bench-compare.sh` still
+      # exits non-zero on a regression. Restore the gate — remove this line —
+      # once #965 makes the measurement trustworthy.
       - name: Compare reflect-path throughput against the merge base
+        continue-on-error: true
         env:
           CC: gcc-14
         run: scripts/bench-compare.sh
