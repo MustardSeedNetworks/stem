@@ -80,7 +80,7 @@ lint-frontend-quiet:
 		exit $$STATUS; \
 	fi
 
-lint-c: ## Run C linter (clang-tidy, Linux only)
+lint-c: ## Run C linter (clang-format + clang-tidy, Linux only)
 ifeq ($(UNAME),Linux)
 	@printf "$(BOLD)🔍 Running C linter (clang-tidy)...$(RESET)\n"
 	@if ! command -v clang-format >/dev/null 2>&1; then \
@@ -91,19 +91,33 @@ ifeq ($(UNAME),Linux)
 		echo "clang-tidy not found; install it to enforce linting."; \
 		exit 1; \
 	fi
-	@if [ -f build/compile_commands.json ]; then \
-		clang_tidy_db=build; \
-	elif [ -f compile_commands.json ]; then \
-		clang_tidy_db=.; \
-	else \
-		echo "compile_commands.json not found. Generate with: bear -- make dataplane c-test"; \
-		exit 1; \
+	find src include tests/c bench -type f \( -name '*.c' -o -name '*.h' \) -print0 | \
+		xargs -0 clang-format --dry-run --Werror --style=file
+# The compile database is generated here rather than demanded from the caller.
+# It used to just print "Generate with: bear -- make dataplane c-test" and
+# exit 1, which meant the repo's own check script could not pass on a clean
+# tree without an undocumented manual step (#655).
+#
+# Generation and clang-tidy share one recipe line deliberately: each line is
+# its own shell, so an `exit 0` in a separate line would skip nothing — the
+# clang-tidy line would still run, against a database that is not there.
+	@set -e; \
+	if [ ! -f build/compile_commands.json ] && [ ! -f compile_commands.json ]; then \
+		if command -v bear >/dev/null 2>&1; then \
+			printf "  generating compile_commands.json (bear -- make dataplane)\n"; \
+			CC=$${CC:-gcc-14} bear -- $(MAKE) dataplane; \
+		else \
+			echo "bear not found — skipping clang-tidy. clang-format above still ran."; \
+			echo "Install bear, or run: bear -- make dataplane"; \
+			exit 0; \
+		fi; \
 	fi; \
-	find src include tests bench -type f \( -name '*.c' -o -name '*.h' \) | xargs clang-format --dry-run --Werror; \
-	find src include tests bench -type f -name '*.c' | xargs clang-tidy -p $$clang_tidy_db -warnings-as-errors=*
+	if [ -f build/compile_commands.json ]; then clang_tidy_db=build; else clang_tidy_db=.; fi; \
+	find src include tests/c bench -type f -name '*.c' -print0 | \
+		xargs -0 clang-tidy -p "$$clang_tidy_db" -warnings-as-errors=*
 	@printf "$(GREEN)✓ C lint complete$(RESET)\n"
 else
-	@echo "C linting requires Linux"
+	@echo "C linting requires Linux (the dataplane backends are Linux-only); CI is the authority here."
 endif
 
 lint-md: ## Lint markdown files with markdownlint
