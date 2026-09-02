@@ -49,7 +49,7 @@ _project_specs/
 # ─── Application Binaries ────────────────────────────────────────────────────
 # ─── Build & Package Artifacts ───────────────────────────────────────────────
 # ─── Build Directories ───────────────────────────────────────────────────────
-# ─── C/DPDK Build Artifacts ──────────────────────────────────────────────────
+# ─── C Build Artifacts ───────────────────────────────────────────────────────
 # ─── Configuration Overrides ─────────────────────────────────────────────────
 # ─── Database & Runtime Data ─────────────────────────────────────────────────
 # ─── Debug & Development ─────────────────────────────────────────────────────
@@ -59,7 +59,7 @@ _project_specs/
 # ─── Go Workspace & Dependencies ─────────────────────────────────────────────
 # ─── Logs ────────────────────────────────────────────────────────────────────
 # ║ Network performance testing and orchestration platform                    ║
-# ║ Stack: Go, C (DPDK), TypeScript/React (UI), Playwright                   ║
+# ║ Stack: Go, C (AF_XDP/AF_PACKET), TypeScript/React (UI), Playwright       ║
 # ║ Stem - .gitignore                                                         ║
 # ─── Temporary Files ─────────────────────────────────────────────────────────
 # ─── Test Results ────────────────────────────────────────────────────────────
@@ -69,7 +69,6 @@ _project_specs/
 # Certificates (generated at runtime)
 # Debug output
 # Dependencies
-# DPDK-specific
 # Generated headers
 # Local overrides (defaults should be version controlled)
 # Logs
@@ -80,7 +79,11 @@ CLAUDE.md
 config.yaml
 configs/*.local.json
 configs/*.local.yaml
-core.*
+# Core dumps are core.<pid>. A bare `core.*` also matches core.c / core.cpp,
+# which hid src/reflector/core.c and src/dataplane/common/core.c from every
+# ripgrep-based audit -- git kept them because they are tracked, so nothing
+# looked wrong.
+core.[0-9]*
 coverage.html
 coverage.txt
 data/

@@ -82,7 +82,7 @@ func buildTUIReflectorConfig(iface string) *reflectorConfig.Config {
 		Reflection: reflectorConfig.ReflectConfig{
 			Mode: DefaultReflectionMode,
 		},
-		Platform: reflectorConfig.PlatformConfig{UseDPDK: false, UseAFXDP: true, DPDKArgs: ""},
+		Platform: reflectorConfig.PlatformConfig{UseAFXDP: true},
 		Stats:    reflectorConfig.StatsConfig{Format: "text", Interval: 0},
 	}
 }

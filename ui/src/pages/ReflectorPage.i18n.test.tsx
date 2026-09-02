@@ -50,7 +50,6 @@ const eth0 = {
   driver: 'ixgbe',
   state: 'up',
   xdp: true,
-  dpdk: false,
   score: 92,
 } as InterfaceInfo;
 

@@ -14,7 +14,6 @@ export interface InterfaceInfo {
   driver: string;
   physical: boolean;
   xdp: boolean;
-  dpdk: boolean;
   score: number;
   mtu: number;
   ipv4: string;

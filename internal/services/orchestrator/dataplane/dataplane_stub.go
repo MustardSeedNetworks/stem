@@ -555,8 +555,6 @@ type Config struct {
 	MeasureLatency bool
 	UsePacing      bool
 	BatchSize      uint32
-	UseDPDK        bool
-	DPDKArgs       string
 }
 
 // Context holds the test execution context and state.

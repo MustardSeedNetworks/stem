@@ -22,7 +22,7 @@
 ### Hardware Requirements
 
 | Component | Minimum | Recommended |
-|-----------|---------|-------------|
+| ----------- | --------- | ------------- |
 | CPU | 2 cores | 4+ cores |
 | RAM | 4 GB | 8+ GB |
 | Storage | 1 GB | 10+ GB |
@@ -31,8 +31,8 @@
 ### Software Requirements
 
 | Software | Version | Notes |
-|----------|---------|-------|
-| Linux | Kernel 5.4+ | Required for DPDK/XDP |
+| ---------- | --------- | ------- |
+| Linux | Kernel 5.4+ | Required for AF_XDP |
 | macOS | 12+ | Development/testing only |
 | Go | 1.25+ | For building from source |
 | Node.js | 25+ | For building WebUI |
@@ -87,7 +87,7 @@ sudo cp bin/stem /usr/local/bin/
 ### Environment Variables (Required)
 
 | Variable | Description | Example |
-|----------|-------------|---------|
+| ---------- | ------------- | --------- |
 | `STEM_AUTH_USERNAME` | WebUI username | `admin` |
 | `STEM_AUTH_PASSWORD` | WebUI password | `secure-password-here` |
 | `STEM_JWT_SECRET` | JWT signing secret (256-bit) | Auto-generated if not set |
@@ -95,7 +95,7 @@ sudo cp bin/stem /usr/local/bin/
 ### Environment Variables (Optional)
 
 | Variable | Description | Default |
-|----------|-------------|---------|
+| ---------- | ------------- | --------- |
 | `STEM_LOG_LEVEL` | Log level (debug, info, warn, error) | `info` |
 | `STEM_LOG_FORMAT` | Log format (json, text) | `json` |
 | `STEM_DATA_DIR` | Data directory path | `~/.stem` |
@@ -284,7 +284,7 @@ server {
 ### Health Endpoints
 
 | Endpoint | Purpose | Expected Response |
-|----------|---------|-------------------|
+| ---------- | --------- | ------------------- |
 | `/health/live` | Liveness probe | 200 OK |
 | `/health/ready` | Readiness probe | 200 OK |
 | `/api/v1/health` | Detailed health | JSON status |
@@ -293,7 +293,7 @@ server {
 
 Prometheus metrics available at `/metrics` (when enabled):
 
-```
+```text
 stem_packets_received_total
 stem_packets_sent_total
 stem_bytes_received_total
@@ -318,6 +318,7 @@ Logs are output in JSON format by default:
 ```
 
 Security events include:
+
 - `auth_failure` - Failed login attempts
 - `auth_success` - Successful logins
 - `token_expired` - Token expiration
@@ -376,5 +377,5 @@ stem web -p 8444
 
 ---
 
-*The Stem - Network Performance Testing*
-*Mustard Seed Networks*
+_The Stem - Network Performance Testing_
+_Mustard Seed Networks_

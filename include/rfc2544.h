@@ -466,9 +466,7 @@ typedef struct {
     uint32_t batch_size; /* TX batch size */
 
     /* Platform selection */
-    bool  use_dpdk;     /* Use DPDK for packet I/O */
-    bool  force_packet; /* Force AF_PACKET (for veth/testing) */
-    char *dpdk_args;    /* DPDK EAL arguments */
+    bool force_packet; /* Force AF_PACKET (for veth/testing) */
 
     /* IMIX configuration */
     imix_config_t imix; /* IMIX traffic profile */

@@ -32,7 +32,6 @@ when running tests from another location.
 The reflector supports multiple performance modes:
 • AF_PACKET: Standard Linux socket mode, good for up to ~1-2 Mpps
 • AF_XDP: High-performance eBPF mode, good for ~5-10 Mpps
-• DPDK: Maximum performance mode, capable of line-rate on 10G+ links
 
 The appropriate mode is selected automatically based on available system capabilities,
 or can be specified manually.`,
@@ -71,7 +70,7 @@ or can be specified manually.`,
 				Type:       TypeString,
 				Default:    ValueAuto,
 				Required:   false,
-				TechDesc:   "Dataplane mode: auto, af_packet, af_xdp, dpdk",
+				TechDesc:   "Dataplane mode: auto, af_packet, af_xdp",
 				LaymanDesc: "Performance mode - 'auto' picks the best available",
 			},
 			{
@@ -103,11 +102,6 @@ or can be specified manually.`,
 				Desc:    "Start reflector with web UI on custom port",
 				Command: "stem reflect -i eth0 -w 9000",
 				Output:  "Reflector started, Web UI at http://localhost:9000",
-			},
-			{
-				Desc:    "Start reflector in DPDK mode",
-				Command: "stem reflect -i eth0 --mode dpdk",
-				Output:  "Reflector started in DPDK mode",
 			},
 			{
 				Desc:    "Start reflector without web UI",

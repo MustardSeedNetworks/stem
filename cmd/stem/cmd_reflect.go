@@ -207,7 +207,7 @@ func buildReflectorConfig(parsed *reflectCmdArgs, sigFilter string) *reflectorCo
 		Reflection: reflectorConfig.ReflectConfig{
 			Mode: getReflectionMode(parsed.profile),
 		},
-		Platform: reflectorConfig.PlatformConfig{UseDPDK: false, UseAFXDP: true, DPDKArgs: ""},
+		Platform: reflectorConfig.PlatformConfig{UseAFXDP: true},
 		Stats:    reflectorConfig.StatsConfig{Format: "text", Interval: 0},
 	}
 

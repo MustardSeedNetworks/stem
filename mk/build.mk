@@ -69,7 +69,6 @@ quick: ## Quick current-host Go rebuild (assumes UI is already built)
 C_COMMON_SRCS := $(wildcard src/dataplane/common/*.c)
 C_PACKET_SRCS := $(wildcard src/dataplane/linux_packet/*.c)
 C_XDP_SRCS    := $(wildcard src/dataplane/linux_xdp/*.c)
-C_DPDK_SRCS   := $(wildcard src/dataplane/linux_dpdk/*.c)
 
 # Build C dataplane library (default: AF_PACKET on Linux, common libs on macOS)
 dataplane: ## Build C dataplane (Linux: AF_PACKET, macOS: common libs only)

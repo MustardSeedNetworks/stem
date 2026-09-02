@@ -16,7 +16,6 @@ export interface InterfaceInfo {
   driver: string;
   physical: boolean;
   xdp: boolean;
-  dpdk: boolean;
   score: number;
   /** True when the interface is plausibly testable (up + has IP, not virtual). */
   usable: boolean;

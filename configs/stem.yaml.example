@@ -80,11 +80,7 @@ modules:
 
 # Data plane configuration
 dataplane:
-  backend: af_packet        # af_packet, af_xdp, or dpdk
-  dpdk:
-    pci_devices: []
-    memory_mb: 1024
-    huge_pages: 512
+  backend: af_packet        # af_packet or af_xdp
 
 # License configuration
 license:

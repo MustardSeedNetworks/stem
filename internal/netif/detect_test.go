@@ -51,20 +51,6 @@ func TestCheckXDPSupport(t *testing.T) {
 	}
 }
 
-func TestCheckDPDKSupport(t *testing.T) {
-	// Test known DPDK drivers count.
-	dpdkDrivers := []string{
-		"ixgbe", "i40e", "ice", "mlx5_core", "mlx4_en",
-		"bnxt_en", "nfp", "virtio_net", "igb",
-		"e1000", "e1000e", "fm10k",
-	}
-
-	// Verify DPDK driver list count.
-	if len(dpdkDrivers) != 12 {
-		t.Error("DPDK driver list should have 12 known drivers")
-	}
-}
-
 func TestDetectInterfaces(t *testing.T) {
 	// This test verifies the function runs without error.
 	interfaces, err := netif.DetectInterfaces()
@@ -115,7 +101,6 @@ func TestInterfaceInfoStruct(t *testing.T) {
 	info.Driver = "e1000e"
 	info.Physical = true
 	info.XDPSupport = false
-	info.DPDKSupport = true
 	info.Score = 150
 	info.MTU = 1500
 	info.IPv4 = "192.168.1.100"
@@ -144,9 +129,6 @@ func TestInterfaceInfoStruct(t *testing.T) {
 	}
 	if info.Driver != "e1000e" {
 		t.Errorf("Expected Driver to be 'e1000e', got '%s'", info.Driver)
-	}
-	if !info.DPDKSupport {
-		t.Error("Expected DPDKSupport to be true")
 	}
 	if info.Score != 150 {
 		t.Errorf("Expected Score to be 150, got %d", info.Score)
@@ -190,7 +172,7 @@ func TestInterfaceStateDetection(t *testing.T) {
 	}
 }
 
-// Test XDP and DPDK driver coverage.
+// Test XDP driver coverage.
 func TestXDPDriverCoverage(t *testing.T) {
 	// These are the drivers we claim support XDP.
 	xdpDrivers := []string{
@@ -202,23 +184,6 @@ func TestXDPDriverCoverage(t *testing.T) {
 		t.Run(driver, func(t *testing.T) {
 			if driver == "" {
 				t.Error("Empty driver in XDP list")
-			}
-		})
-	}
-}
-
-func TestDPDKDriverCoverage(t *testing.T) {
-	// These are the drivers we claim support DPDK.
-	dpdkDrivers := []string{
-		"ixgbe", "i40e", "ice", "mlx5_core", "mlx4_en",
-		"bnxt_en", "nfp", "virtio_net", "igb",
-		"e1000", "e1000e", "fm10k",
-	}
-
-	for _, driver := range dpdkDrivers {
-		t.Run(driver, func(t *testing.T) {
-			if driver == "" {
-				t.Error("Empty driver in DPDK list")
 			}
 		})
 	}
@@ -313,19 +278,18 @@ func TestInterfaceScoringSorted(t *testing.T) {
 // TestInterfaceInfoJSON tests that InterfaceInfo can be marshaled to JSON.
 func TestInterfaceInfoJSON(t *testing.T) {
 	info := netif.InterfaceInfo{
-		Name:        "eth0",
-		MAC:         "00:11:22:33:44:55",
-		Speed:       1000,
-		Duplex:      "full",
-		State:       "up",
-		Driver:      "e1000e",
-		Physical:    true,
-		XDPSupport:  false,
-		DPDKSupport: true,
-		Score:       150,
-		MTU:         1500,
-		IPv4:        "192.168.1.100",
-		IPv6:        "2001:db8::1",
+		Name:       "eth0",
+		MAC:        "00:11:22:33:44:55",
+		Speed:      1000,
+		Duplex:     "full",
+		State:      "up",
+		Driver:     "e1000e",
+		Physical:   true,
+		XDPSupport: false,
+		Score:      150,
+		MTU:        1500,
+		IPv4:       "192.168.1.100",
+		IPv6:       "2001:db8::1",
 	}
 
 	// Use json package to verify struct tags work.
@@ -345,7 +309,6 @@ func TestInterfaceInfoJSON(t *testing.T) {
 		`"driver":"e1000e"`,
 		`"physical":true`,
 		`"xdp":false`,
-		`"dpdk":true`,
 		`"score":150`,
 		`"mtu":1500`,
 		`"ipv4":"192.168.1.100"`,

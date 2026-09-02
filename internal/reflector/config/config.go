@@ -70,9 +70,7 @@ type ReflectConfig struct {
 
 // PlatformConfig holds platform-specific settings.
 type PlatformConfig struct {
-	UseDPDK  bool   `yaml:"use_dpdk"`
-	UseAFXDP bool   `yaml:"use_af_xdp"` // Use AF_XDP (default on Linux)
-	DPDKArgs string `yaml:"dpdk_args"`
+	UseAFXDP bool `yaml:"use_af_xdp"` // Use AF_XDP (default on Linux)
 }
 
 // StatsConfig holds statistics settings.
@@ -102,7 +100,7 @@ func LoadFile(path string) (*Config, error) {
 		TUI:             TUIConfig{Enabled: false},
 		Filtering:       FilterConfig{Port: 0, FilterOUI: false, OUI: "", FilterMAC: false},
 		Reflection:      ReflectConfig{Mode: ""},
-		Platform:        PlatformConfig{UseDPDK: false, UseAFXDP: true, DPDKArgs: ""},
+		Platform:        PlatformConfig{UseAFXDP: true},
 		Stats:           StatsConfig{Format: "", Interval: 0},
 	}
 	unmarshalErr := yaml.Unmarshal(data, cfg)

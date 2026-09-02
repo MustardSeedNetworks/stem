@@ -64,7 +64,7 @@ jobs:
               'Certify (RFC 2889/6349/TSN)': 'module: certify',
               'TestMaster': 'component: testmaster',
               'License': 'component: license',
-              'C Dataplane (DPDK/AF_PACKET/AF_XDP)': 'component: dataplane',
+              'C Dataplane (AF_XDP/AF_PACKET)': 'component: dataplane',
               'CLI': 'component: cli',
               'Installation/Deployment': 'area: build',
               'Documentation': 'area: docs',

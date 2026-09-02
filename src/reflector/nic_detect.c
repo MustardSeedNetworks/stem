@@ -2,16 +2,14 @@
  * nic_detect.c - Runtime NIC detection and performance recommendations
  *
  * Detects NIC capabilities and recommends optimal configuration:
- * - Checks NIC vendor/model for DPDK compatibility
- * - Checks if DPDK libraries are installed
- * - Recommends appropriate driver (AF_XDP, DPDK, AF_PACKET)
+ * - Identifies the NIC vendor/model from PCI IDs
+ * - Reports link speed
+ * - Recommends the appropriate backend (AF_XDP, AF_PACKET)
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include <dlfcn.h>
 
 #include "reflector.h"
 
@@ -22,24 +20,24 @@
 #include <unistd.h>
 #endif
 
-/* Known DPDK-compatible NIC vendors */
+/* Known NIC vendors, for naming the card and judging whether it is fast
+ * enough to be worth warning about when we fall back to AF_PACKET. */
 typedef struct {
     uint16_t    vendor_id;
     const char *vendor_name;
-    const char *dpdk_driver;
     bool        high_perf; /* True if 25G+ capable */
 } nic_vendor_t;
 
-static const nic_vendor_t dpdk_compatible_nics[] = {
-    {0x8086, "Intel", "igb_uio/vfio-pci", true},    /* Intel (ixgbe, i40e, ice) */
-    {0x15b3, "Mellanox/NVIDIA", "mlx5_core", true}, /* Mellanox ConnectX */
-    {0x14e4, "Broadcom", "vfio-pci", true},         /* Broadcom NetXtreme */
-    {0x1077, "QLogic", "vfio-pci", false},          /* QLogic */
-    {0x177d, "Cavium", "vfio-pci", true},           /* Cavium ThunderX */
-    {0x1d6a, "Aquantia", "vfio-pci", false},        /* Aquantia */
-    {0x1c36, "Amazon ENA", "ena", true},            /* AWS ENA */
-    {0x1af4, "Virtio", "virtio-pci", false},        /* Virtio (VMs) */
-    {0, NULL, NULL, false}                          /* Sentinel */
+static const nic_vendor_t known_nic_vendors[] = {
+    {0x8086, "Intel", true},           /* Intel (ixgbe, i40e, ice) */
+    {0x15b3, "Mellanox/NVIDIA", true}, /* Mellanox ConnectX */
+    {0x14e4, "Broadcom", true},        /* Broadcom NetXtreme */
+    {0x1077, "QLogic", false},         /* QLogic */
+    {0x177d, "Cavium", true},          /* Cavium ThunderX */
+    {0x1d6a, "Aquantia", false},       /* Aquantia */
+    {0x1c36, "Amazon ENA", true},      /* AWS ENA */
+    {0x1af4, "Virtio", false},         /* Virtio (VMs) */
+    {0, NULL, false}                   /* Sentinel */
 };
 
 /* Known high-speed NIC models */
@@ -145,34 +143,6 @@ int get_nic_vendor(const char *ifname, uint16_t *vendor_id, uint16_t *device_id)
 }
 
 /*
- * Check if DPDK libraries are installed
- */
-bool is_dpdk_available(void)
-{
-    /* Try to dlopen libdpdk */
-    void *handle = dlopen("librte_eal.so", RTLD_LAZY);
-    if (handle) {
-        dlclose(handle);
-        return true;
-    }
-
-    /* Try versioned library names */
-    handle = dlopen("librte_eal.so.24", RTLD_LAZY);
-    if (handle) {
-        dlclose(handle);
-        return true;
-    }
-
-    handle = dlopen("librte_eal.so.23", RTLD_LAZY);
-    if (handle) {
-        dlclose(handle);
-        return true;
-    }
-
-    return false;
-}
-
-/*
  * Get NIC speed in Mbps from sysfs
  */
 int get_nic_speed(const char *ifname)
@@ -199,18 +169,17 @@ int get_nic_speed(const char *ifname)
  */
 void print_nic_recommendations(const char *ifname)
 {
-    uint16_t vendor_id      = 0;
-    uint16_t device_id      = 0;
-    int      nic_speed      = get_nic_speed(ifname);
-    bool     dpdk_installed = is_dpdk_available();
+    uint16_t vendor_id = 0;
+    uint16_t device_id = 0;
+    int      nic_speed = get_nic_speed(ifname);
 
     /* Try to get NIC vendor info */
     if (get_nic_vendor(ifname, &vendor_id, &device_id) == 0) {
         /* Look up vendor */
         const nic_vendor_t *vendor = NULL;
-        for (int i = 0; dpdk_compatible_nics[i].vendor_name; i++) {
-            if (dpdk_compatible_nics[i].vendor_id == vendor_id) {
-                vendor = &dpdk_compatible_nics[i];
+        for (int i = 0; known_nic_vendors[i].vendor_name; i++) {
+            if (known_nic_vendors[i].vendor_id == vendor_id) {
+                vendor = &known_nic_vendors[i];
                 break;
             }
         }
@@ -244,22 +213,9 @@ void print_nic_recommendations(const char *ifname)
 
         /* Recommendations based on NIC and speed */
         if (nic_speed >= 25000 && vendor && vendor->high_perf) {
-            /* High-speed NIC detected */
-            if (!dpdk_installed) {
-                reflector_log(LOG_WARN, "");
-                reflector_log(LOG_WARN, "=== PERFORMANCE RECOMMENDATION ===");
-                reflector_log(LOG_WARN, "Your NIC supports 25G+ speeds!");
-                reflector_log(LOG_WARN, "For maximum performance, install DPDK:");
-                reflector_log(LOG_WARN, "");
-                reflector_log(LOG_WARN, "  Ubuntu/Debian: sudo apt install dpdk dpdk-dev");
-                reflector_log(LOG_WARN, "  RHEL/Fedora:   sudo dnf install dpdk dpdk-devel");
-                reflector_log(LOG_WARN, "");
-                reflector_log(LOG_WARN, "Then run with: ./reflector --dpdk %s", ifname);
-                reflector_log(LOG_WARN, "===================================");
-                reflector_log(LOG_WARN, "");
-            } else {
-                reflector_log(LOG_INFO, "DPDK is installed - use --dpdk for 100G+ performance");
-            }
+            /* AF_XDP is the fastest backend this build has. Say what the
+             * ceiling is rather than implying the card's full rate. */
+            reflector_log(LOG_INFO, "Using AF_XDP; expect ~40 Gbps, below this NIC's line rate");
         } else if (nic_speed >= 10000) {
             /* 10G NIC - AF_XDP is fine */
             reflector_log(LOG_INFO, "Using AF_XDP (optimal for 10-40G)");
@@ -277,8 +233,7 @@ void print_nic_recommendations(const char *ifname)
 #ifdef __APPLE__
     reflector_log(LOG_INFO, "Platform: macOS BPF (suitable for development/testing)");
     if (nic_speed > 1000) {
-        reflector_log(LOG_INFO,
-                      "Tip: For production 10G+ speeds, use a Linux server with AF_XDP or DPDK");
+        reflector_log(LOG_INFO, "Tip: For production 10G+ speeds, use a Linux server with AF_XDP");
     }
 #endif
 }
@@ -322,22 +277,17 @@ void print_af_packet_warning(const char *ifname)
     /* Check NIC and give specific recommendations */
     if (get_nic_vendor(ifname, &vendor_id, &device_id) == 0) {
         const nic_vendor_t *vendor = NULL;
-        for (int i = 0; dpdk_compatible_nics[i].vendor_name; i++) {
-            if (dpdk_compatible_nics[i].vendor_id == vendor_id) {
-                vendor = &dpdk_compatible_nics[i];
+        for (int i = 0; known_nic_vendors[i].vendor_name; i++) {
+            if (known_nic_vendors[i].vendor_id == vendor_id) {
+                vendor = &known_nic_vendors[i];
                 break;
             }
         }
 
         if (vendor && vendor->high_perf && nic_speed >= 25000) {
             reflector_log(LOG_WARN, "");
-            reflector_log(LOG_WARN, "For your %s NIC at %dG, consider DPDK for line-rate:",
+            reflector_log(LOG_WARN, "Your %s NIC runs at %dG; AF_XDP is the fastest backend here.",
                           vendor->vendor_name, nic_speed / 1000);
-            reflector_log(LOG_WARN, "  1. Install DPDK: sudo apt install dpdk dpdk-dev");
-            reflector_log(LOG_WARN, "  2. Rebuild: make clean && make");
-            reflector_log(LOG_WARN, "  3. Bind NIC: sudo dpdk-devbind.py --bind=vfio-pci %s",
-                          ifname);
-            reflector_log(LOG_WARN, "  4. Run: sudo ./reflector --dpdk %s", ifname);
         }
     }
 }
@@ -355,13 +305,8 @@ void print_recommended_nics(void)
     reflector_log(LOG_INFO, "  - Intel E810 (25G/100G) - Best Intel XDP performance");
     reflector_log(LOG_INFO, "  - Mellanox ConnectX-5/6 (25G-200G) - Native XDP");
     reflector_log(LOG_INFO, "");
-    reflector_log(LOG_INFO, "For DPDK (100G+ line-rate):");
-    reflector_log(LOG_INFO, "  - Intel E810 (100G) - Full DPDK support");
-    reflector_log(LOG_INFO, "  - Mellanox ConnectX-6/7 (100G-400G) - Industry standard");
-    reflector_log(LOG_INFO, "  - Broadcom BCM57500 (100G) - Good DPDK support");
-    reflector_log(LOG_INFO, "");
     reflector_log(LOG_INFO, "Avoid for high performance:");
-    reflector_log(LOG_INFO, "  - Realtek NICs (no XDP/DPDK support)");
+    reflector_log(LOG_INFO, "  - Realtek NICs (no XDP support)");
     reflector_log(LOG_INFO, "  - USB NICs (kernel bottleneck)");
     reflector_log(LOG_INFO, "  - Older Intel 1G NICs (e1000, no XDP)");
     reflector_log(LOG_INFO, "");

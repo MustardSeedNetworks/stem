@@ -219,8 +219,6 @@ func (e *Executor) configureContext(cfg *modtypes.TestConfig) error {
 		MeasureLatency: false,
 		UsePacing:      false,
 		BatchSize:      0,
-		UseDPDK:        false,
-		DPDKArgs:       "",
 	}
 
 	if cfg.Duration > 0 {

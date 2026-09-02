@@ -60,7 +60,7 @@ excluded_tools: []
 initial_prompt: |
   The Stem - Network Performance Testing Appliance
 
-  Backend: Go 1.25+ with CGO for DPDK/AF_PACKET dataplane
+  Backend: Go 1.27+ with CGO for the AF_XDP/AF_PACKET dataplane
   Frontend: React 19 + TypeScript 5.9 + Vite
 
   Key directories:

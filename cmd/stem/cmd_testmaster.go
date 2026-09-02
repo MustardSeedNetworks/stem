@@ -195,8 +195,6 @@ func createTestConfig(flags *testCmdFlags) *testmasterDP.Config {
 		MeasureLatency: true,
 		UsePacing:      false,
 		BatchSize:      0,
-		UseDPDK:        false,
-		DPDKArgs:       "",
 	}
 }
 

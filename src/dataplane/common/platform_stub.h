@@ -5,7 +5,7 @@
  *
  * Provides type stubs so common dataplane code (pacing, protocol logic,
  * IMIX patterns, etc.) can compile on macOS for development and testing.
- * Network I/O backends (AF_PACKET, AF_XDP, DPDK) remain Linux-only.
+ * Network I/O backends (AF_PACKET, AF_XDP) remain Linux-only.
  *
  * Usage: compile with -DSTUB_PLATFORM to activate stubs.
  */

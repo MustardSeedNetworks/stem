@@ -551,8 +551,6 @@ type Config struct {
 	MeasureLatency bool
 	UsePacing      bool
 	BatchSize      uint32
-	UseDPDK        bool
-	DPDKArgs       string
 }
 
 // Stats for real-time monitoring.

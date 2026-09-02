@@ -116,7 +116,7 @@ You can run the reflector on:
 			},
 			{
 				Title: "High-Performance Mode",
-				Content: `For maximum performance, use AF_XDP or DPDK mode:
+				Content: `For maximum performance, use AF_XDP mode:
 
 AF_XDP mode (requires kernel 5.x+):`,
 				Command:  "stem reflect -i eth0 --mode af_xdp",
@@ -525,7 +525,7 @@ Check interface settings:`,
 				Content:  `Network testing often requires root privileges:`,
 				Command:  "sudo stem reflect -i eth0",
 				Expected: "Reflector starts successfully",
-				Tip:      "AF_XDP and DPDK modes especially require elevated privileges",
+				Tip:      "AF_XDP mode especially requires elevated privileges",
 			},
 		},
 	}

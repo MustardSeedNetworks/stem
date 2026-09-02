@@ -207,8 +207,6 @@ type Config struct {
 	Verbose      bool         `yaml:"verbose"`
 
 	// Platform.
-	UseDPDK  bool   `yaml:"use_dpdk"`
-	DPDKArgs string `yaml:"dpdk_args"`
 
 	// Rate control.
 	UsePacing bool   `yaml:"use_pacing"`
@@ -470,8 +468,6 @@ func DefaultConfig() *Config {
 		MeasureLatency: true,
 		OutputFormat:   FormatText,
 		Verbose:        false,
-		UseDPDK:        false,
-		DPDKArgs:       "",
 		UsePacing:      true,
 		BatchSize:      defaultBatchSize,
 
