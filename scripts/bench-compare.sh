@@ -27,12 +27,14 @@
 #
 # Environment:
 #   BENCH_MAX_REGRESSION_PCT  allowed slowdown per case (default 15)
+#   BENCH_RUNS                measurements per side, best taken (default 3)
 #   CC                        compiler (default gcc)
 
 set -euo pipefail
 
 BASELINE_REF="${1:-}"
 MAX_REGRESSION="${BENCH_MAX_REGRESSION_PCT:-15}"
+BENCH_RUNS="${BENCH_RUNS:-3}"
 CC="${CC:-gcc}"
 
 REPO_ROOT="$(git rev-parse --show-toplevel)"
@@ -74,14 +76,38 @@ run_bench() {
     exit 1
   fi
 
-  echo "==> running benchmark for $label"
-  if ! "$bin" >"$WORKDIR/raw_$label" 2>/dev/null; then
-    echo "FAIL: benchmark did not run cleanly for $label" >&2
-    exit 1
-  fi
+  # Best-of-N, not a single measurement.
+  #
+  # reflect_inplace_v4 is bimodal on some hosts: the SAME binary, run ten times
+  # back to back on an idle machine, produced 93.8M-175.3M pps -- a 1.87x
+  # spread with no code difference at all (#965). A single measurement per side
+  # therefore cannot tell a real regression from which mode the run landed in,
+  # and because bench-compare runs the baseline first and the current tree
+  # second, the bias is systematic rather than random: it failed the same PR
+  # twice with -16.7% and -16.6% on code whose compiled hot path was identical.
+  #
+  # Taking the maximum is the right summary for throughput: interference only
+  # ever makes a run slower, so the fastest observation is the closest to what
+  # the code can do. This is the standard microbenchmark answer, and it costs
+  # N-1 extra runs of a benchmark that takes about a second.
+  echo "==> running benchmark for $label (best of $BENCH_RUNS)"
+  : >"$WORKDIR/all_$label"
+  for run in $(seq 1 "$BENCH_RUNS"); do
+    if ! "$bin" >"$WORKDIR/raw_${label}_${run}" 2>/dev/null; then
+      echo "FAIL: benchmark did not run cleanly for $label (run $run)" >&2
+      exit 1
+    fi
+    # Only the BENCH records; anything else on stdout is ignored, not trusted.
+    awk '$1 == "BENCH" && NF == 3 { print $2, $3 }' \
+      "$WORKDIR/raw_${label}_${run}" >>"$WORKDIR/all_$label"
+  done
 
-  # Only the BENCH records; anything else on stdout is ignored, not trusted.
-  awk '$1 == "BENCH" && NF == 3 { print $2, $3 }' "$WORKDIR/raw_$label" >"$out"
+  # Keep the highest pps seen per case.
+  awk '{ if (!($1 in best) || $2 > best[$1]) best[$1] = $2 }
+       END { for (name in best) print name, best[name] }' \
+    "$WORKDIR/all_$label" | sort >"$out"
+
+  cp "$WORKDIR/raw_${label}_1" "$WORKDIR/raw_$label"
 
   if [ ! -s "$out" ]; then
     echo "FAIL: benchmark produced no BENCH records for $label" >&2
