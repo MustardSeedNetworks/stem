@@ -21,6 +21,7 @@ the same install.
 ## Features
 
 ### Reflector (always available)
+
 - High-performance packet reflection on AF_PACKET, AF_XDP, or DPDK
 - Signature detection for NetAlly, RFC 2544/Y.1564 testers, MSN
 - Profile presets: NetAlly, MSN, All, Custom
@@ -29,7 +30,7 @@ the same install.
 ### Test modules
 
 | Module | Standard | Test Types |
-|--------|----------|------------|
+| --- | --- | --- |
 | **Benchmark** | RFC 2544 | throughput, latency, frame loss, back-to-back |
 | **ServiceTest** | ITU-T Y.1564, MEF 48/49 | config + performance test, full service test |
 | **TrafficGen** | custom | scriptable stream generation |
@@ -37,6 +38,7 @@ the same install.
 | **Certify** | RFC 2889 / RFC 6349 / IEEE 802.1Qbv | LAN switch certification, TCP throughput, TSN gate-timing |
 
 ### Interfaces
+
 - **CLI** — scriptable `stem <cmd>` for CI integration
 - **TUI** — single-screen Bubbletea dashboard for ad-hoc use
 - **Web UI** — React/TypeScript control plane on port 8444 (HTTPS by default; 8043 plaintext redirector)
@@ -45,7 +47,7 @@ the same install.
 ## Quick Start
 
 ```bash
-# Install (Linux/macOS, requires Go 1.26+)
+# Install (Linux/macOS, requires Go 1.27+)
 git clone https://github.com/MustardSeedNetworks/stem
 cd stem
 make build
@@ -53,12 +55,12 @@ make build
 # Run as a reflector on eth0
 sudo ./bin/stem reflect -i eth0
 
-# Run a throughput test
-sudo ./bin/stem test -t throughput -i eth0 --target 192.0.2.10
+# Run a throughput test against a host running `stem reflect`
+# (test type names are exact — see `stem list-tests`)
+sudo ./bin/stem test -t rfc2544_throughput -i eth0
 
-# List tests by standard, or by module
+# List every test type, grouped by module
 ./bin/stem list-tests
-./bin/stem list-tests --by-module
 
 # Start the web UI (HTTPS by default)
 sudo ./bin/stem web -p 8444
@@ -72,21 +74,22 @@ sudo ./bin/stem tui
 ## Commands
 
 | Command | Purpose |
-|---------|---------|
+| --- | --- |
 | `stem version` | Show version + build metadata |
 | `stem reflect -i <iface>` | Start the reflector |
-| `stem test -t <type> -i <iface>` | Run a single test |
+| `stem test -t <type> -i <iface>` | Run one or more tests (comma-separated) |
 | `stem web -p <port>` | Start the web UI + REST API |
 | `stem tui` | Launch the TUI dashboard |
 | `stem license --status` | Show license tier + activation state |
-| `stem list-tests [--by-module]` | Catalogue all supported tests |
+| `stem list-tests` | Catalogue all supported tests, grouped by module |
 | `stem help modules` | Module + test type reference |
 
-Run `stem <cmd> --help` for flags.
+Run `stem <cmd> --help` for flags. End-to-end workflows, safety limits and
+result interpretation: [docs/PERFORMANCE_TESTING.md](docs/PERFORMANCE_TESTING.md).
 
 ## Architecture
 
-```
+```text
 ui/src/             → React/TypeScript control plane (Vite)
                           ↓ npm run build
 internal/api/ui/    → Built assets (embedded via go:embed)
@@ -121,13 +124,14 @@ Tiered model. License keys are 16-character alphanumeric
 via hardware fingerprint.
 
 | Tier | Features | Key Prefix |
-|------|----------|------------|
+| --- | --- | --- |
 | Trial | Full features, 14 days | (no key needed) |
 | Tier 1 | Reflector only | `1001-*` |
 | Tier 2 | Reflector + full test suite | `2001-*` |
 | Tier 3 | Enterprise (planned) | `3001-*` |
 
 Start a trial via web UI Settings → License → Start Trial, or:
+
 ```bash
 stem license trial
 ```
@@ -135,7 +139,7 @@ stem license trial
 ## Build
 
 | Command | Purpose |
-|---------|---------|
+| --- | --- |
 | `make build` | Full build (frontend + Go backend; C dataplane on Linux) |
 | `make test` | Go tests |
 | `make lint` | golangci-lint + Biome + clang-tidy + cppcheck |
@@ -152,7 +156,7 @@ DPDK 25.11.2 LTS (optional, Linux).
 ## REST API (selected)
 
 | Endpoint | Method | Purpose |
-|----------|--------|---------|
+| --- | --- | --- |
 | `/__version` | GET | Build metadata (no auth) |
 | `/api/health` | GET | Server liveness |
 | `/api/interfaces` | GET | List network interfaces |

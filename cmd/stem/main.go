@@ -189,8 +189,8 @@ USAGE:
     stem <command> [options]
 
 COMMANDS:
-    reflect      Start packet reflector (Tier 1 license)
-    test         Run network tests (Tier 2 license required)
+    reflect      Start packet reflector (Reflector tier)
+    test         Run network tests (Professional tier)
     web          Start WebUI server
     tui          Start terminal UI dashboard
     license      Manage license activation
@@ -212,8 +212,8 @@ TEST OPTIONS:
     -t, --type         Test type (see 'stem list-tests' for all options)
     -d, --duration     Test duration in seconds (default: 60)
     --frame-sizes      Comma-separated frame sizes (default: 64,128,256,512,1024,1280,1518)
-    --resolution       Binary search resolution %% (default: 0.1)
-    --max-loss         Maximum acceptable loss %% (default: 0.0)
+    --resolution       Binary search resolution % (default: 0.1)
+    --max-loss         Maximum acceptable loss % (default: 0.0)
     --warmup           Warmup period in seconds (default: 2)
     --trials           Number of trials per test (default: 3)
     --json             Output results in JSON format
@@ -224,7 +224,7 @@ Y.1564 OPTIONS:
     --eir              Excess Information Rate in Mbps
     --fd-threshold     Frame Delay threshold in ms (default: 10)
     --fdv-threshold    Frame Delay Variation threshold in ms (default: 5)
-    --flr-threshold    Frame Loss Rate threshold %% (default: 0.01)
+    --flr-threshold    Frame Loss Rate threshold % (default: 0.01)
 
 WEB OPTIONS:
     -p, --port         HTTPS port (default: 8444)
@@ -241,10 +241,10 @@ EXAMPLES:
     stem reflect -i eth0 --profile netally
 
     # RFC 2544 throughput test
-    stem test -i eth0 -t throughput -d 60
+    stem test -i eth0 -t rfc2544_throughput -d 60
 
     # RFC 2544 full suite
-    stem test -i eth0 -t throughput,latency,frame_loss,back_to_back
+    stem test -i eth0 -t rfc2544_throughput,rfc2544_latency,rfc2544_frame_loss,rfc2544_back_to_back
 
     # Y.1564 service test
     stem test -i eth0 -t y1564 --cir 100 --eir 50
