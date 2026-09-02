@@ -113,10 +113,11 @@ func (s *Server) handleModeUpdate(w http.ResponseWriter, r *http.Request) {
 	if !decodeJSONStrict(w, r, &req, maxRequestBodySize) {
 		return
 	}
-
-	if req.Mode != modeReflector && req.Mode != modeTestMaster {
+	// The accepted values live on the DTO as `oneof=reflector test_master`.
+	// They used to be repeated here as an if, which is how the tag and the
+	// check get to disagree.
+	if !validateStruct(w, &req) {
 		logging.Warn("mode update failed: invalid mode", "mode", req.Mode)
-		WriteInvalidRequest(w, "Invalid mode (must be 'reflector' or 'test_master')")
 		return
 	}
 

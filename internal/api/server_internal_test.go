@@ -3855,7 +3855,10 @@ func TestHandleSetupCompleteMethodNotAllowed(t *testing.T) {
 	}
 }
 
-// TestHandleAuthLoginMethodNotAllowed tests handleAuthLogin with wrong method.
+// TestHandleAuthLoginMethodNotAllowed tests the login endpoint with the wrong
+// method. It used to call handleAuthLogin, which no route reached — the
+// /api/v1/auth/login route has pointed at loginWithMFAGate since MFA landed,
+// so this asserted 405 against a handler that could not receive a request.
 func TestHandleAuthLoginMethodNotAllowed(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "loginmethoduser")
 	t.Setenv("STEM_AUTH_PASSWORD", "loginmethodpass123")
@@ -3865,7 +3868,7 @@ func TestHandleAuthLoginMethodNotAllowed(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/login", nil)
 	w := httptest.NewRecorder()
 
-	s.handleAuthLogin(w, req)
+	s.loginWithMFAGate(w, req)
 
 	if w.Code != http.StatusMethodNotAllowed {
 		t.Errorf("Expected status 405, got %d", w.Code)

@@ -56,9 +56,10 @@ func validateStruct(w http.ResponseWriter, dto any) bool {
 }
 
 // formatValidationErrors collapses a ValidationErrors slice into a single
-// line like `username: required; port: gte`. Each entry uses the json-tag
-// name (configured via jsonFieldName above) so the client sees the field
-// they sent, not the Go struct field.
+// line like `username: is required; mode: must be one of [reflector
+// test_master]`. Each entry uses the json-tag name (configured via
+// jsonFieldName above) so the client sees the field they sent, not the Go
+// struct field.
 func formatValidationErrors(verrs validator.ValidationErrors) string {
 	parts := make([]string, 0, len(verrs))
 	for _, fe := range verrs {
@@ -68,7 +69,56 @@ func formatValidationErrors(verrs validator.ValidationErrors) string {
 		if idx := strings.IndexByte(ns, '.'); idx >= 0 {
 			ns = ns[idx+1:]
 		}
-		parts = append(parts, fmt.Sprintf("%s: %s", ns, fe.Tag()))
+		parts = append(parts, fmt.Sprintf("%s: %s", ns, describeValidationTag(fe)))
 	}
 	return "validation failed: " + strings.Join(parts, "; ")
+}
+
+// describeValidationTag renders a failing rule as something an operator can
+// act on. Without this the response says `mode: oneof`, which names the
+// library's rule rather than the mistake — a downgrade from the hand-written
+// checks this validator replaced, and the reason those checks were worth
+// keeping until now.
+//
+// Unknown tags fall through to the tag name, which is still better than
+// nothing and keeps new rules from silently rendering as an empty string.
+func describeValidationTag(fe validator.FieldError) string {
+	switch fe.Tag() {
+	case "required":
+		return "is required"
+	case "oneof":
+		return "must be one of [" + fe.Param() + "]"
+	case "min":
+		return "must be at least " + fe.Param() + lengthOrValueSuffix(fe)
+	case "max":
+		return "must be at most " + fe.Param() + lengthOrValueSuffix(fe)
+	case "gte":
+		return "must be >= " + fe.Param()
+	case "lte":
+		return "must be <= " + fe.Param()
+	case "email":
+		return "must be a valid email address"
+	case "url":
+		return "must be a valid URL"
+	default:
+		return fe.Tag()
+	}
+}
+
+// lengthOrValueSuffix distinguishes "at least 8 characters" from "at least 8",
+// because min/max mean length on strings and slices but magnitude on numbers.
+func lengthOrValueSuffix(fe validator.FieldError) string {
+	// An if-chain rather than a switch on purpose: a tagged switch trips
+	// exhaustive (it wants all ~25 reflect.Kind cases enumerated, which would
+	// say nothing) and an untagged one trips staticcheck's QF1002. Every kind
+	// not named here is a number, where min/max mean magnitude and no suffix
+	// reads correctly.
+	kind := fe.Kind()
+	if kind == reflect.String {
+		return " characters"
+	}
+	if kind == reflect.Slice || kind == reflect.Array || kind == reflect.Map {
+		return " items"
+	}
+	return ""
 }

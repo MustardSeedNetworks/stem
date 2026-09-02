@@ -98,6 +98,12 @@ func (s *Server) handleRecoveryComplete(w http.ResponseWriter, r *http.Request) 
 	if !decodeJSONStrict(w, r, &req, maxRequestBodySize) {
 		return
 	}
+	// Shape only. The real password policy (length / zxcvbn / HIBP) is
+	// validatePasswordOrReject below; `min=8` here just stops an obviously
+	// empty submission from consuming the single-use recovery token.
+	if !validateStruct(w, &req) {
+		return
+	}
 
 	// Validate the recovery token.
 	if !s.recoveryTokenManager.ValidateAndConsume(req.Token) {
