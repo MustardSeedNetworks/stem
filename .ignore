@@ -89,8 +89,10 @@ node_modules/
 # Logs
 logs/
 
-# Data
-data/
+# Data. Anchored: a bare `data/` matches at any depth, which hid all 13
+# tracked files under ui/src/data/help/ from ripgrep. .gitignore already
+# carries a `!ui/src/data/` negation for the same reason.
+/data/
 
 # Agent artifacts
 .gemini/

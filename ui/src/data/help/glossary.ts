@@ -164,7 +164,7 @@ export const glossary: Record<string, GlossaryEntry> = {
     techDef:
       'Linux kernel technology for high-performance packet processing before the network stack.',
     laymanDef: 'Fast-path technology that processes packets super quickly.',
-    related: ['afxdp', 'dpdk'],
+    related: ['afxdp'],
   },
   afxdp: {
     term: 'AF_XDP',
@@ -172,15 +172,7 @@ export const glossary: Record<string, GlossaryEntry> = {
     category: 'Technology',
     techDef: 'Linux socket type for zero-copy packet processing using XDP.',
     laymanDef: 'Way to handle network packets extremely fast in Linux.',
-    related: ['xdp', 'dpdk'],
-  },
-  dpdk: {
-    term: 'DPDK',
-    fullName: 'Data Plane Development Kit',
-    category: 'Technology',
-    techDef: 'Set of libraries for fast packet processing by bypassing the kernel.',
-    laymanDef: 'Technology for super-fast networking, used in carriers and data centers.',
-    related: ['xdp', 'afxdp'],
+    related: ['xdp'],
   },
   tos: {
     term: 'ToS',

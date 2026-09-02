@@ -64,8 +64,7 @@ export const tutorials: Record<string, Tutorial> = {
         content: `Packet reflection returns received frames back to the sender, enabling round-trip measurements. The reflector can operate in several modes:
 
 - AF_PACKET: Standard Linux sockets (1-2 Mpps)
-- AF_XDP: Fast kernel bypass (5-10 Mpps)
-- DPDK: Maximum performance (15-40+ Mpps)`,
+- AF_XDP: Fast kernel bypass (5-10 Mpps)`,
       },
       {
         title: 'Basic Reflector Setup',

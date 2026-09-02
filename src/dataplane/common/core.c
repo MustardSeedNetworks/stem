@@ -181,19 +181,8 @@ extern const platform_ops_t *get_xdp_platform_ops(void);
 extern const platform_ops_t *get_packet_platform_ops(void);
 #endif
 
-#if HAVE_DPDK
-extern const platform_ops_t *get_dpdk_platform_ops(void);
-#endif
-
 static const platform_ops_t *select_platform(const rfc2544_ctx_t *ctx)
 {
-#if HAVE_DPDK
-    if (ctx->config.use_dpdk) {
-        rfc2544_log(LOG_INFO, "Platform: DPDK (line-rate mode)");
-        return get_dpdk_platform_ops();
-    }
-#endif
-
 #if PLATFORM_LINUX
     /* Force AF_PACKET for veth/testing compatibility */
     if (ctx->config.force_packet) {

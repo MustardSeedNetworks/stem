@@ -19,9 +19,6 @@
 #include "reflector.h"
 
 /* Forward declarations */
-#if HAVE_DPDK
-extern const platform_ops_t *get_dpdk_platform_ops(void);
-#endif
 #if HAVE_AF_XDP
 extern const platform_ops_t *get_xdp_platform_ops(void);
 #endif
@@ -388,15 +385,7 @@ int reflector_init(reflector_ctx_t *rctx, const char *ifname)
 int reflector_start(reflector_ctx_t *rctx)
 {
 #ifdef __linux__
-    if (rctx->config.use_dpdk) {
-#if HAVE_DPDK
-        platform_ops = get_dpdk_platform_ops();
-        reflector_log(LOG_INFO, "Platform: DPDK (100G line-rate mode)");
-#else
-        reflector_log(LOG_ERROR, "DPDK was requested but is not available in this build");
-        return -ENOTSUP;
-#endif
-    } else if (rctx->config.use_af_xdp) {
+    if (rctx->config.use_af_xdp) {
 #if HAVE_AF_XDP
         platform_ops = get_xdp_platform_ops();
         reflector_log(LOG_INFO, "Platform: AF_XDP (high-performance zero-copy mode)");
