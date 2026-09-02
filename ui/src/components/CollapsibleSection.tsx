@@ -115,6 +115,12 @@ export function CollapsibleSection({
     >
       <button
         type="button"
+        // The section carries `testId`; its disclosure control carried none,
+        // so the only way to expand a collapsed section from a test was to
+        // match the header by accessible name — which is exactly the
+        // substring-matching trap in #663. It is why driving the settings
+        // drawer's standard-view sections was left untested in #642.
+        data-testid={testId === undefined ? undefined : `${testId}-toggle`}
         onClick={(): void => setIsOpen(!isOpen)}
         className={cn(
           'w-full transition-colors',

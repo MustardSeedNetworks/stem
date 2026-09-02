@@ -86,6 +86,17 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           secure: false,
         },
+        // `/__version` is not under /api, so it was not proxied and the dev
+        // server answered it with the SPA shell. useBuildVersion logged
+        // "Failed to fetch /__version: status 404" on every poll, and the two
+        // smoke specs that assert the build metadata could not pass locally
+        // at all — CI never noticed because it points E2E_BASE_URL straight
+        // at the daemon and skips this server entirely.
+        '/__version': {
+          target: 'https://localhost:8444',
+          changeOrigin: true,
+          secure: false,
+        },
       },
     },
     build: {
