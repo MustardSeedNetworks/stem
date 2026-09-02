@@ -65,56 +65,73 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# Builds and runs the benchmark in $1, writing "name pps" lines to $2.
-run_bench() {
-  local tree="$1" out="$2" label="$3"
-  local bin="$WORKDIR/bench_$label"
-
+# Builds the benchmark in $1 to a binary labelled $2.
+build_bench() {
+  local tree="$1" label="$2"
   echo "==> building benchmark for $label"
-  if ! ( cd "$tree" && "$CC" "${BENCH_CFLAGS[@]}" -o "$bin" "${BENCH_SRCS[@]}" -pthread -lm ); then
+  if ! ( cd "$tree" && "$CC" "${BENCH_CFLAGS[@]}" -o "$WORKDIR/bench_$label" \
+           "${BENCH_SRCS[@]}" -pthread -lm ); then
     echo "FAIL: benchmark did not compile for $label" >&2
     exit 1
   fi
+}
 
-  # Best-of-N, not a single measurement.
-  #
-  # reflect_inplace_v4 is bimodal on some hosts: the SAME binary, run ten times
-  # back to back on an idle machine, produced 93.8M-175.3M pps -- a 1.87x
-  # spread with no code difference at all (#965). A single measurement per side
-  # therefore cannot tell a real regression from which mode the run landed in,
-  # and because bench-compare runs the baseline first and the current tree
-  # second, the bias is systematic rather than random: it failed the same PR
-  # twice with -16.7% and -16.6% on code whose compiled hot path was identical.
-  #
-  # Taking the maximum is the right summary for throughput: interference only
-  # ever makes a run slower, so the fastest observation is the closest to what
-  # the code can do. This is the standard microbenchmark answer, and it costs
-  # N-1 extra runs of a benchmark that takes about a second.
-  echo "==> running benchmark for $label (best of $BENCH_RUNS)"
-  : >"$WORKDIR/all_$label"
-  for run in $(seq 1 "$BENCH_RUNS"); do
-    if ! "$bin" >"$WORKDIR/raw_${label}_${run}" 2>/dev/null; then
-      echo "FAIL: benchmark did not run cleanly for $label (run $run)" >&2
-      exit 1
-    fi
-    # Only the BENCH records; anything else on stdout is ignored, not trusted.
-    awk '$1 == "BENCH" && NF == 3 { print $2, $3 }' \
-      "$WORKDIR/raw_${label}_${run}" >>"$WORKDIR/all_$label"
-  done
-
-  # Keep the highest pps seen per case.
-  awk '{ if (!($1 in best) || $2 > best[$1]) best[$1] = $2 }
-       END { for (name in best) print name, best[name] }' \
-    "$WORKDIR/all_$label" | sort >"$out"
-
-  cp "$WORKDIR/raw_${label}_1" "$WORKDIR/raw_$label"
-
-  if [ ! -s "$out" ]; then
-    echo "FAIL: benchmark produced no BENCH records for $label" >&2
-    echo "--- raw output ---" >&2
-    cat "$WORKDIR/raw_$label" >&2
+# Runs the $1 binary once, appending "name pps" records to its sample file.
+sample_bench() {
+  local label="$1" round="$2"
+  local raw="$WORKDIR/raw_${label}_${round}"
+  if ! "$WORKDIR/bench_$label" >"$raw" 2>/dev/null; then
+    echo "FAIL: benchmark did not run cleanly for $label (round $round)" >&2
     exit 1
   fi
+  # Only the BENCH records; anything else on stdout is ignored, not trusted.
+  awk '$1 == "BENCH" && NF == 3 { print $2, $3 }' "$raw" >>"$WORKDIR/all_$label"
+}
+
+# Measures both sides, INTERLEAVED, and writes the best result per case.
+#
+# Two separate problems make a single measurement per side unusable, and they
+# need different answers (#965):
+#
+#   Within a side: reflect_inplace_v4 is bimodal on some hosts. The same
+#   binary, run ten times back to back on an idle machine, produced 93.8M-
+#   175.3M pps -- a 1.87x spread with no code difference at all. Best-of-N
+#   fixes that, because interference only ever makes a run slower, so the
+#   fastest observation is the closest to what the code can do.
+#
+#   Across sides: the machine drifts during the job. Measuring all of the
+#   baseline and then all of the current made that drift look like a
+#   regression -- one observed round had all six other cases "regress" by
+#   16-23% simultaneously, which no code change can do. Interleaving puts both
+#   sides in the same time window so a slow patch hits them equally, and the
+#   order alternates each round so neither side is permanently second.
+measure_both() {
+  : >"$WORKDIR/all_baseline"
+  : >"$WORKDIR/all_current"
+
+  echo "==> measuring, best of $BENCH_RUNS interleaved rounds"
+  for round in $(seq 1 "$BENCH_RUNS"); do
+    if [ $((round % 2)) -eq 1 ]; then
+      sample_bench baseline "$round"
+      sample_bench current "$round"
+    else
+      sample_bench current "$round"
+      sample_bench baseline "$round"
+    fi
+  done
+
+  for label in baseline current; do
+    awk '{ if (!($1 in best) || $2 > best[$1]) best[$1] = $2 }
+         END { for (name in best) print name, best[name] }' \
+      "$WORKDIR/all_$label" | sort >"$WORKDIR/$label.txt"
+
+    if [ ! -s "$WORKDIR/$label.txt" ]; then
+      echo "FAIL: benchmark produced no BENCH records for $label" >&2
+      echo "--- raw output ---" >&2
+      cat "$WORKDIR/raw_${label}_1" >&2
+      exit 1
+    fi
+  done
 }
 
 if [ -z "$BASELINE_REF" ]; then
@@ -143,15 +160,21 @@ if [ ! -f "$BASELINE_TREE/bench/bench_reflect.c" ]; then
   echo "SKIP: the baseline revision predates bench/bench_reflect.c."
   echo "      Nothing to compare against; the gate becomes effective from the"
   echo "      next change to the reflect path."
-  run_bench "$REPO_ROOT" "$WORKDIR/current.txt" current
+  build_bench "$REPO_ROOT" current
+  : >"$WORKDIR/all_current"
+  for round in $(seq 1 "$BENCH_RUNS"); do sample_bench current "$round"; done
+  awk '{ if (!($1 in best) || $2 > best[$1]) best[$1] = $2 }
+       END { for (name in best) print name, best[name] }' \
+    "$WORKDIR/all_current" | sort >"$WORKDIR/current.txt"
   echo
   echo "current measurements:"
   awk '{ printf "  %-26s %15.0f pps\n", $1, $2 }' "$WORKDIR/current.txt"
   exit 0
 fi
 
-run_bench "$BASELINE_TREE" "$WORKDIR/baseline.txt" baseline
-run_bench "$REPO_ROOT" "$WORKDIR/current.txt" current
+build_bench "$BASELINE_TREE" baseline
+build_bench "$REPO_ROOT" current
+measure_both
 
 echo
 MAX_REGRESSION="$MAX_REGRESSION" awk '
