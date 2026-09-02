@@ -11,10 +11,9 @@ import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 export type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | 'full';
 
-export interface ModalProps {
+interface ModalBaseProps {
   isOpen: boolean;
   onClose: () => void;
-  title?: string;
   children: ReactNode;
   size?: ModalSize;
   showCloseButton?: boolean;
@@ -22,6 +21,20 @@ export interface ModalProps {
   closeOnEscape?: boolean;
   className?: string;
 }
+
+/**
+ * A dialog must have an accessible name. `title` renders a visible heading and
+ * labels the dialog by it; `ariaLabel` names a dialog that draws its own
+ * heading (ConfirmModal) or has none at all.
+ *
+ * Expressed as a union so a nameless dialog does not compile. `title` was
+ * optional, and the titleless path rendered `role="dialog"` with neither
+ * aria-label nor aria-labelledby — a screen reader announced "dialog" and
+ * nothing else (#931).
+ */
+type ModalNaming = { title: string; ariaLabel?: string } | { title?: undefined; ariaLabel: string };
+
+export type ModalProps = ModalBaseProps & ModalNaming;
 
 const sizeClasses: Record<ModalSize, string> = {
   sm: 'max-w-sm',
@@ -35,6 +48,7 @@ export const Modal: FC<ModalProps> = ({
   isOpen,
   onClose,
   title,
+  ariaLabel,
   children,
   size = 'md',
   showCloseButton = true,
@@ -84,6 +98,7 @@ export const Modal: FC<ModalProps> = ({
         role="dialog"
         aria-modal="true"
         aria-labelledby={title ? 'modal-title' : undefined}
+        aria-label={title ? undefined : ariaLabel}
         onKeyDown={handleContentKeyDown}
       >
         {title || showCloseButton ? (

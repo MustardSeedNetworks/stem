@@ -55,7 +55,11 @@
   --color-text-disabled: #8a938c;
 
   /* ---- status (constant across products and modes) ------------------- */
-  --color-status-success: #2f7d4f;
+  /* was #2f7d4f — 4.42:1 on its own 10% wash (#eaf2ed) and 4.31:1 on the
+     running-row variant (#e8efe9), so status pills failed WCAG AA for 12px
+     text on the surface they are designed to sit on. 5.06:1 now, matching the
+     margin the warning token was darkened to. */
+  --color-status-success: #2a7146;
   --color-status-warning: #8a6208; /* darkened from #d4a017: 3.82:1 → 5.1:1 */
   --color-status-error: #b93a3a;
   --color-status-info: #1263a8;

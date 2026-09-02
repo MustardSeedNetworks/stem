@@ -66,10 +66,14 @@ export const WithFooter: Story = {
   },
 };
 
+// A chrome-less dialog still has to be announced as something. `ariaLabel` is
+// how it gets a name without drawing a heading; before #931 this story rendered
+// role="dialog" with no name at all, which is what the a11y gate now catches.
 export const NoTitleNoCloseButton: Story = {
   args: {
     isOpen: true,
     showCloseButton: false,
+    ariaLabel: 'Run details',
     onClose: () => undefined,
     children: <SampleBody />,
   },
