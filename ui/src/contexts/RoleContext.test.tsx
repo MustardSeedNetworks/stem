@@ -12,6 +12,7 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { invalidateCsrfToken } from '../lib/csrf';
 import { ROLE_ENDPOINT, ROLE_STORAGE_KEY, RoleProvider, useRole } from './RoleContext';
 
 function wrapper({ children }: { children: ReactNode }) {
@@ -53,8 +54,63 @@ function modeResponse(mode: string, previous = 'reflector'): Response {
 
 let fetchMock: ReturnType<typeof vi.fn>;
 
+/**
+ * The mode POST is preceded by a CSRF token fetch, because /api/v1/mode is a
+ * mutating route behind the CSRF manager. These helpers keep the assertions
+ * about the mode call rather than about call ordering — before the header was
+ * added, every one of these tests read `fetchMock.mock.calls[0]` and would
+ * have passed just as happily on a request the daemon answers with 403.
+ */
+const CSRF_ENDPOINT = '/api/v1/auth/csrf-token';
+
+function csrfResponse(token = 'test-csrf-token'): Response {
+  return new Response(JSON.stringify({ token }), {
+    status: 200,
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
+
+/** The arguments of the POST to /api/v1/mode, whichever call index it landed on. */
+function modeCall(): [string, RequestInit] {
+  const call = fetchMock.mock.calls.find(([url]) => url === ROLE_ENDPOINT);
+  if (call === undefined) {
+    throw new Error(
+      `no request to ${ROLE_ENDPOINT}; saw ${JSON.stringify(fetchMock.mock.calls.map(([u]) => u))}`,
+    );
+  }
+  return call as [string, RequestInit];
+}
+
+/** Answers the CSRF endpoint, then hands out `replies` to the mode calls in order. */
+function respondWithSequence(...replies: Array<Response | Promise<Response>>): void {
+  const queue = [...replies];
+  fetchMock.mockImplementation(async (url: string) => {
+    if (url === CSRF_ENDPOINT) {
+      return csrfResponse();
+    }
+    const next = queue.shift();
+    if (next === undefined) {
+      throw new Error('mode call made with no reply queued');
+    }
+    return next;
+  });
+}
+
+/** Answers the CSRF endpoint, and everything else with `modeReply`. */
+function respondWith(modeReply: Response | (() => Promise<Response>)): void {
+  fetchMock.mockImplementation(async (url: string) => {
+    if (url === CSRF_ENDPOINT) {
+      return csrfResponse();
+    }
+    return typeof modeReply === 'function' ? modeReply() : modeReply;
+  });
+}
+
 beforeEach(() => {
   window.localStorage.clear();
+  // The token is cached for the session; without this a test inherits the
+  // previous test's token and never exercises the fetch.
+  invalidateCsrfToken();
   fetchMock = vi.fn();
   vi.stubGlobal('fetch', fetchMock);
 });
@@ -92,18 +148,39 @@ describe('initial role', () => {
 
 describe('switching succeeds', () => {
   it('posts the requested mode to the endpoint', async () => {
-    fetchMock.mockResolvedValue(modeResponse('test_master'));
+    respondWith(modeResponse('test_master'));
     const { result } = renderRole();
 
     act(() => result.current.setRole('test_master'));
     await waitFor(() => expect(result.current.isSwitchingRole).toBe(false));
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const [url, init] = modeCall();
     expect(url).toBe(ROLE_ENDPOINT);
     expect(init.method).toBe('POST');
     expect(init.credentials).toBe('include');
     expect(JSON.parse(init.body as string)).toEqual({ mode: 'test_master' });
+  });
+
+  it('sends the CSRF token, without which the daemon answers 403', async () => {
+    // The defect this guards. /api/v1/mode is a mutating route behind the CSRF
+    // manager, and this POST carried no X-Csrf-Token: every role switch from
+    // the header chip or the RoleGuard banner came back
+    //   403  CSRF validation failed  error="CSRF token missing"
+    // in a real browser. Nothing caught it because the only E2E covering the
+    // path mocks the endpoint with route.fulfill, and a mock accepts a request
+    // whether or not it carries the header.
+    respondWith(modeResponse('test_master'));
+    const { result } = renderRole();
+
+    act(() => result.current.setRole('test_master'));
+    await waitFor(() => expect(result.current.isSwitchingRole).toBe(false));
+
+    const [, init] = modeCall();
+    const headers = init.headers as Record<string, string>;
+    expect(headers['X-Csrf-Token']).toBe('test-csrf-token');
+
+    // And the token came from the endpoint rather than being invented.
+    expect(fetchMock.mock.calls.map(([url]) => url)).toContain(CSRF_ENDPOINT);
   });
 
   it('adopts the mode the server echoed, not the one requested', async () => {
@@ -112,7 +189,7 @@ describe('switching succeeds', () => {
     // Start from test_master and have the server answer reflector, so the
     // assertion cannot pass by the role simply never changing.
     window.localStorage.setItem(ROLE_STORAGE_KEY, 'test_master');
-    fetchMock.mockResolvedValue(modeResponse('reflector', 'test_master'));
+    respondWith(modeResponse('reflector', 'test_master'));
     const { result } = renderRole();
     expect(result.current.role).toBe('test_master');
 
@@ -123,7 +200,7 @@ describe('switching succeeds', () => {
   });
 
   it('persists the new role', async () => {
-    fetchMock.mockResolvedValue(modeResponse('test_master'));
+    respondWith(modeResponse('test_master'));
     const { result } = renderRole();
 
     act(() => result.current.setRole('test_master'));
@@ -175,7 +252,7 @@ describe('switching fails', () => {
       'Role switch failed (HTTP 502)',
     ],
   ])('surfaces %s', async (_label, response, expected) => {
-    fetchMock.mockResolvedValue(response);
+    respondWith(response);
     const { result } = renderRole();
 
     act(() => result.current.setRole('test_master'));
@@ -186,7 +263,7 @@ describe('switching fails', () => {
   it('leaves the role unchanged when the switch is refused', async () => {
     // The important half: a stem that failed to become Test Master must not
     // render as one.
-    fetchMock.mockResolvedValue(new Response('nope', { status: 500 }));
+    respondWith(new Response('nope', { status: 500 }));
     const { result } = renderRole();
 
     act(() => result.current.setRole('test_master'));
@@ -210,7 +287,7 @@ describe('switching fails', () => {
 
   it('rejects a 200 whose body is not the expected shape', async () => {
     // A proxy returning an HTML success page must not be read as a role change.
-    fetchMock.mockResolvedValue(
+    respondWith(
       new Response(JSON.stringify({ status: 'fine' }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
@@ -227,20 +304,19 @@ describe('switching fails', () => {
   });
 
   it('clears a previous error when a new switch starts', async () => {
-    fetchMock.mockResolvedValueOnce(new Response('nope', { status: 500 }));
+    respondWithSequence(new Response('nope', { status: 500 }), modeResponse('test_master'));
     const { result } = renderRole();
 
     act(() => result.current.setRole('test_master'));
     await waitFor(() => expect(result.current.roleSwitchError).not.toBeNull());
 
-    fetchMock.mockResolvedValueOnce(modeResponse('test_master'));
     act(() => result.current.setRole('test_master'));
 
     expect(result.current.roleSwitchError).toBeNull();
   });
 
   it('clears the error on request', async () => {
-    fetchMock.mockResolvedValue(new Response('nope', { status: 500 }));
+    respondWith(new Response('nope', { status: 500 }));
     const { result } = renderRole();
 
     act(() => result.current.setRole('test_master'));
@@ -260,17 +336,14 @@ describe('overlapping switches', () => {
     let settleFirst: (r: Response) => void = () => undefined;
     let settleSecond: (r: Response) => void = () => undefined;
 
-    fetchMock
-      .mockReturnValueOnce(
-        new Promise<Response>((resolve) => {
-          settleFirst = resolve;
-        }),
-      )
-      .mockReturnValueOnce(
-        new Promise<Response>((resolve) => {
-          settleSecond = resolve;
-        }),
-      );
+    respondWithSequence(
+      new Promise<Response>((resolve) => {
+        settleFirst = resolve;
+      }),
+      new Promise<Response>((resolve) => {
+        settleSecond = resolve;
+      }),
+    );
 
     const { result } = renderRole();
 
@@ -295,17 +368,14 @@ describe('overlapping switches', () => {
     let settleFirst: (r: Response) => void = () => undefined;
     let settleSecond: (r: Response) => void = () => undefined;
 
-    fetchMock
-      .mockReturnValueOnce(
-        new Promise<Response>((resolve) => {
-          settleFirst = resolve;
-        }),
-      )
-      .mockReturnValueOnce(
-        new Promise<Response>((resolve) => {
-          settleSecond = resolve;
-        }),
-      );
+    respondWithSequence(
+      new Promise<Response>((resolve) => {
+        settleFirst = resolve;
+      }),
+      new Promise<Response>((resolve) => {
+        settleSecond = resolve;
+      }),
+    );
 
     const { result } = renderRole();
 

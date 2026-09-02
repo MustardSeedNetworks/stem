@@ -38,9 +38,9 @@ import {
   parseModeUpdateResponse,
   type StemRole,
 } from '@/schemas/role';
+import { fetchWithCsrf } from '../lib/csrf';
 
-export type { ModeUpdateResponse, StemRole };
-export { DEFAULT_ROLE };
+export type { DEFAULT_ROLE, ModeUpdateResponse, StemRole };
 
 export const ROLE_STORAGE_KEY = 'stem-role';
 export const ROLE_ENDPOINT = '/api/v1/mode';
@@ -81,13 +81,16 @@ type SwitchResult =
 async function requestModeSwitch(next: StemRole): Promise<SwitchResult> {
   let response: Response;
   try {
-    response = await fetch(ROLE_ENDPOINT, {
+    // fetchWithCsrf, not fetch: /api/v1/mode is a mutating route behind the
+    // CSRF manager, and this call omitted the header entirely — every role
+    // switch from the header chip or the RoleGuard banner came back 403
+    // "CSRF token missing".
+    response = await fetchWithCsrf(ROLE_ENDPOINT, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json',
       },
-      credentials: 'include',
       body: JSON.stringify({ mode: next }),
     });
   } catch (err: unknown) {
