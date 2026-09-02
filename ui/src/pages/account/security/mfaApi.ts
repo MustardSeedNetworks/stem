@@ -5,10 +5,16 @@
  * introduced in Wave 3 (#85). The client mirrors the established
  * ApiError-based pattern from src/api/profiles.ts.
  *
- * CSRF: state-changing POSTs MUST carry the X-Csrf-Token header. The
- * helper `fetchCsrfToken` is called once per UI session and cached;
- * the caller threads it through the request headers.
+ * CSRF: state-changing POSTs go through `fetchWithCsrf` from lib/csrf, which
+ * attaches X-Csrf-Token and re-fetches once on a 403. This module used to carry
+ * its own `fetchCsrfToken` and thread the token through every method signature.
+ * Two implementations of one thing is how the two get to disagree, and they did:
+ * the shared helper caches the token and retries on 403 because the daemon
+ * rotates it on login, and the local copy did neither — so MFA enrolment
+ * attempted after a session rotation failed where a role switch recovered (#953).
  */
+
+import { fetchWithCsrf } from '../../../lib/csrf';
 
 const API_BASE = '/api/v1';
 
@@ -55,26 +61,12 @@ export function isMFARequired(value: LoginResponse): value is MFARequiredRespons
   return (value as MFARequiredResponse).mfaRequired === true;
 }
 
-/** Fetch the current session's CSRF token. */
-export async function fetchCsrfToken(): Promise<string> {
-  const response = await fetch(`${API_BASE}/auth/csrf-token`, {
-    credentials: 'include',
-  });
-  if (!response.ok) {
-    throw new MFAError(response.status, `Failed to fetch CSRF token: ${response.status}`);
-  }
-  const data = (await response.json()) as { token: string };
-  return data.token;
-}
-
-async function postJSON<T>(path: string, body: unknown, csrf: string): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, {
+// fetchWithCsrf returns the Response rather than throwing, so MFAError's status
+// mapping stays here where the MFA surface's error semantics live.
+async function postJSON<T>(path: string, body: unknown): Promise<T> {
+  const response = await fetchWithCsrf(`${API_BASE}${path}`, {
     method: 'POST',
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Csrf-Token': csrf,
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body ?? {}),
   });
   if (!response.ok) {
@@ -98,22 +90,19 @@ async function getJSON<T>(path: string): Promise<T> {
 export const mfaApi = {
   status: (): Promise<MFAStatusResponse> => getJSON<MFAStatusResponse>('/auth/mfa/status'),
 
-  totpSetup: (csrf: string): Promise<TotpSetupResponse> =>
-    postJSON<TotpSetupResponse>('/auth/totp/setup', {}, csrf),
+  totpSetup: (): Promise<TotpSetupResponse> => postJSON<TotpSetupResponse>('/auth/totp/setup', {}),
 
-  totpVerify: (code: string, csrf: string): Promise<{ success: boolean; totpEnabled: boolean }> =>
-    postJSON<{ success: boolean; totpEnabled: boolean }>('/auth/totp/verify', { code }, csrf),
+  totpVerify: (code: string): Promise<{ success: boolean; totpEnabled: boolean }> =>
+    postJSON<{ success: boolean; totpEnabled: boolean }>('/auth/totp/verify', { code }),
 
   totpDisable: (
     password: string,
     code: string,
-    csrf: string,
   ): Promise<{ success: boolean; totpEnabled: boolean }> =>
-    postJSON<{ success: boolean; totpEnabled: boolean }>(
-      '/auth/totp/disable',
-      { password, code },
-      csrf,
-    ),
+    postJSON<{ success: boolean; totpEnabled: boolean }>('/auth/totp/disable', {
+      password,
+      code,
+    }),
 
   loginTotp: (mfaToken: string, code: string): Promise<AuthLoginResponse> => {
     // CSRF-exempt path — same exemption rationale as /auth/login.
@@ -131,16 +120,14 @@ export const mfaApi = {
     });
   },
 
-  webauthnRegisterBegin: (csrf: string): Promise<PublicKeyCredentialCreationOptions> =>
-    postJSON<PublicKeyCredentialCreationOptions>('/auth/webauthn/register/begin', {}, csrf),
+  webauthnRegisterBegin: (): Promise<PublicKeyCredentialCreationOptions> =>
+    postJSON<PublicKeyCredentialCreationOptions>('/auth/webauthn/register/begin', {}),
 
   webauthnRegisterFinish: (
     credential: PublicKeyCredential,
-    csrf: string,
   ): Promise<{ success: boolean; credentialId: string }> =>
     postJSON<{ success: boolean; credentialId: string }>(
       '/auth/webauthn/register/finish',
       credential,
-      csrf,
     ),
 };

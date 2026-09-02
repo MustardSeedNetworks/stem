@@ -15,7 +15,7 @@ import { useState } from 'react';
 import { type SubmitHandler, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { TotpSetupVerifySchema } from '../../../schemas/auth';
-import { fetchCsrfToken, mfaApi, type TotpSetupResponse } from './mfaApi';
+import { mfaApi, type TotpSetupResponse } from './mfaApi';
 
 interface Props {
   setup: TotpSetupResponse;
@@ -44,8 +44,7 @@ export function TotpSetupModal({ setup, onComplete, onCancel }: Props): ReactEle
   const onSubmit: SubmitHandler<TotpVerifyForm> = async ({ code }) => {
     setSubmitError(null);
     try {
-      const csrf = await fetchCsrfToken();
-      await mfaApi.totpVerify(code, csrf);
+      await mfaApi.totpVerify(code);
       await onComplete();
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : 'Verification failed');
