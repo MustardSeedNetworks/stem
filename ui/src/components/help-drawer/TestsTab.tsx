@@ -33,7 +33,7 @@ export function TestsTab({
 
   if (filteredTests) {
     return (
-      <div className="stack-sm">
+      <div className="stack-sm" data-testid="help-drawer-tests">
         <p className="text-xs text-text-muted mb-heading">
           {t('plurals.testCount', { ns: 'common', count: filteredTests.length })}
         </p>
@@ -50,7 +50,9 @@ export function TestsTab({
   }
 
   return (
-    <div className="stack-lg">
+    // Named so a spec can assert on what the tab lists without matching loose
+    // text across the whole drawer (#941).
+    <div className="stack-lg" data-testid="help-drawer-tests">
       <p className="text-sm text-text-muted">{t('tests.intro')}</p>
       {categoryOrder.map((catId) => {
         const category = categories[catId];

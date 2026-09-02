@@ -274,7 +274,9 @@ export function ModuleSelector({
   }
 
   return (
-    <div className="stack-sm">
+    // Named so a spec can assert on which modules are listed without matching
+    // loose text across the whole settings drawer (#941).
+    <div className="stack-sm" data-testid="module-selector">
       {modules.map((mod) => (
         <div key={mod.name} className="border border-surface-border rounded-lg overflow-hidden">
           {/* Module Header */}

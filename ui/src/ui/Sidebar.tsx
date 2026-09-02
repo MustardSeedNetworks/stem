@@ -490,6 +490,10 @@ export const SidebarLayout: FC<SidebarLayoutProps> = ({
         /* 252px, a vertical rail gradient, and a hairline right edge. The
            previous 1px solid surface-border drew a hard line down the page;
            the rail should read as a different plane, not a bordered box. */
+        // Named for the same reason as the mobile copy above: both asides are
+        // always in the DOM, so a spec asserting on sidebar copy has to say
+        // which surface it means rather than picking an index (#941).
+        data-testid="desktop-sidebar"
         className={`hidden lg:flex fixed top-0 left-0 z-40 h-full flex-col bg-gradient-to-b from-rail-from to-rail-to backdrop-blur-xl border-r border-hairline transition-all duration-300 ease-in-out ${
           collapsed ? 'w-16' : 'w-[252px]'
         }`}
