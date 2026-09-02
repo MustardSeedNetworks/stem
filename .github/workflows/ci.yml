@@ -1102,6 +1102,11 @@ jobs:
       - name: Verify TODO scanner
         run: ./scripts/test-scan-todos.sh
 
+      # Same reasoning for the token-discipline rules: FAMILY_OPACITY_DIM
+      # matched 13 things and meant 2 of them until #657, because nothing
+      # exercised it against cases it should ignore.
+      - name: Verify token-discipline rules
+        run: ./scripts/test-check-token-discipline.sh
 
   # ============================================================================
   # Internationalization (i18n) Validation

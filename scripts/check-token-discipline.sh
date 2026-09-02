@@ -144,8 +144,23 @@ advise RAW_FLEX_CENTER 'flex items-center justify-center' 'Use flex-center'
 advise FAMILY_RAW_HEX \
   '#([0-9a-fA-F]{6}([0-9a-fA-F]{2})?|[0-9a-fA-F]{0,3}[a-fA-F][0-9a-fA-F]{0,3})\b' \
   'Raw hex outside theme/ — define it in ui/src/theme and reference the token'
+# Narrowed to what the message actually describes: a TEXT layer dimmed with
+# opacity, where the label fails contrast while it is explaining itself. It
+# used to match any `opacity-{0..60}` anywhere, which made 13 of its 13 hits
+# things it does not mean (#657):
+#
+#   disabled:opacity-50  — WCAG 1.4.3 exempts inactive components, and axe
+#                          skips disabled form controls. 8 of the 13.
+#   opacity-25 on <circle>/<path> — spinner decoration, carries no text. 2.
+#   opacity-0            — a hidden element, not a dimmed one. 1.
+#
+# The two real ones were ModuleCard's disabled-card and disabled-row dims,
+# which the a11y gate independently caught as a 2.44:1 contrast failure (#931).
+#
+# So: no variant prefix (`disabled:`, `hover:`, `group-*:` …), not opacity-0,
+# and not on an SVG shape.
 advise FAMILY_OPACITY_DIM \
-  '\bopacity-(0|5|10|20|25|30|40|50|60)\b' \
+  '(?<![-:\w])(?!(?<=className=")opacity-[0-9]+")opacity-(5|10|20|25|30|40|50|60)\b' \
   'Dim the colour token, not the layer — a dimmed label fails contrast while it explains itself'
 advise FAMILY_SMALL_TARGET \
   '\b(w|h)-(2|3|4|5|6|7|8|9|10)\b(?=[^"`]*(?:onClick|role="button"|<button|<input))' \
