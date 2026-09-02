@@ -51,12 +51,21 @@ interface RFC2544ConfigFormProps {
   config: RFC2544Config;
   setConfig: (config: RFC2544Config) => void;
   selectedTests: string[];
+  /**
+   * Overrides the root test id. This form is rendered in two places at once —
+   * the benchmark page and the settings drawer's RFC 2544 section — and it
+   * used to hardcode `rfc2544-config-form` in both, so with the drawer open
+   * the id matched two live elements and any locator using it was a
+   * strict-mode violation waiting for someone to open the drawer (#642).
+   */
+  testId?: string;
 }
 
 export function RFC2544ConfigForm({
   config,
   setConfig,
   selectedTests,
+  testId = 'rfc2544-config-form',
 }: RFC2544ConfigFormProps): ReactElement | null {
   const { t } = useTranslation('settings');
   const hasRFC2544Tests = selectedTests.some((id) => id.startsWith('rfc2544'));
@@ -111,7 +120,7 @@ export function RFC2544ConfigForm({
   const hasBackToBack = selectedTests.includes('rfc2544_back_to_back');
 
   return (
-    <div data-testid="rfc2544-config-form" className="stack-lg">
+    <div data-testid={testId} className="stack-lg">
       <FormSection title={t('testConfig.rfc2544.duration.title')}>
         <div>
           <label htmlFor="rfc2544-duration" className="flex items-center gap-tight label">

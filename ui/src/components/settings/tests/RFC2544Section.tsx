@@ -87,6 +87,7 @@ export function RFC2544Section({
         {hasSelectedTests && (
           <div className="border-t border-surface-border pt-section">
             <RFC2544ConfigForm
+              testId="rfc2544-config-form-drawer"
               config={config}
               setConfig={onConfigChange}
               selectedTests={selectedTests}
