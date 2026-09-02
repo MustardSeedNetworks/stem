@@ -15,7 +15,6 @@ import { useTranslation } from 'react-i18next';
 import { TotpDisableSchema } from '../../../schemas/auth';
 import {
   isMFARequired as _isMFARequired,
-  fetchCsrfToken,
   MFAError,
   type MFAStatusResponse,
   mfaApi,
@@ -60,8 +59,7 @@ export function SecurityPage(): ReactElement {
   const handleEnableTOTP = useCallback(async (): Promise<void> => {
     setError(null);
     try {
-      const csrf = await fetchCsrfToken();
-      const data = await mfaApi.totpSetup(csrf);
+      const data = await mfaApi.totpSetup();
       setSetupData(data);
       setSetupOpen(true);
     } catch (err) {
@@ -81,8 +79,7 @@ export function SecurityPage(): ReactElement {
     setPasskeyMsg(null);
     setError(null);
     try {
-      const csrf = await fetchCsrfToken();
-      const options = await mfaApi.webauthnRegisterBegin(csrf);
+      const options = await mfaApi.webauthnRegisterBegin();
       // The server returns the WebAuthn options in JSON; the browser
       // needs ArrayBuffer values for challenge/user.id. Cast and let
       // the browser API handle the rest — we rely on the operator's
@@ -93,7 +90,7 @@ export function SecurityPage(): ReactElement {
       if (!credential) {
         throw new MFAError(0, 'No credential returned by browser');
       }
-      await mfaApi.webauthnRegisterFinish(credential, csrf);
+      await mfaApi.webauthnRegisterFinish(credential);
       setPasskeyMsg(t('passkeys.successMessage'));
       await refresh();
     } catch (err) {
@@ -214,8 +211,7 @@ function DisableTotpButton({ onDisabled }: DisableTotpButtonProps): ReactElement
   const onSubmit: SubmitHandler<TotpDisableForm> = async ({ password, code }) => {
     setSubmitError(null);
     try {
-      const csrf = await fetchCsrfToken();
-      await mfaApi.totpDisable(password, code, csrf);
+      await mfaApi.totpDisable(password, code);
       setOpen(false);
       reset();
       await onDisabled();
