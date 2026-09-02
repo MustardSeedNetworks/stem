@@ -591,8 +591,7 @@ function ModuleExpandedContent({
               className={cn(
                 'flex items-center gap-default pad-xs rounded-lg cursor-pointer transition-colors',
                 'hover:bg-surface-hover',
-                // The unchecked box already says "off"; dimming the row on
-                // top of it only cost contrast. See the card comment above.
+                // The unchecked box already says "off"; dimming cost contrast.
                 test.enabled ? '' : 'text-text-muted',
               )}
             >
@@ -643,13 +642,9 @@ export function ModuleCard({
     <div
       className={cn(
         'border rounded-xl overflow-hidden transition-all',
-        // Recessed surface rather than `opacity-60`. Dimming the layer dims
-        // the text with it: the results table's muted headers composited
-        // against the page ground at 2.44:1, well under the 4.5:1 WCAG AA
-        // needs for 12px text. A disabled card still has to be readable —
-        // that is what tells the operator which module they turned off. Same
-        // rule as the FAMILY_OPACITY_DIM advisory in #657: dim the colour
-        // token, not the layer.
+        // Recessed surface, not `opacity-60`: dimming the layer dimmed the
+        // results-table headers to 2.44:1, under the 4.5:1 AA needs (#931).
+        // Dim the colour token, not the layer.
         config.enabled ? 'border-surface-border' : 'border-transparent bg-surface-hover',
         'bg-surface-raised',
       )}
