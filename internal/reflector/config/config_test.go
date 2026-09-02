@@ -28,7 +28,7 @@ func TestConfigStruct(t *testing.T) {
 		TUI:             config.TUIConfig{Enabled: false},
 		Filtering:       config.FilterConfig{Port: 0, FilterOUI: false, OUI: "", FilterMAC: false},
 		Reflection:      config.ReflectConfig{Mode: ""},
-		Platform:        config.PlatformConfig{UseDPDK: false, UseAFXDP: false, DPDKArgs: ""},
+		Platform:        config.PlatformConfig{UseAFXDP: false},
 		Stats:           config.StatsConfig{Format: "", Interval: 0},
 	}
 
@@ -90,20 +90,10 @@ func TestReflectConfig(t *testing.T) {
 }
 
 func TestPlatformConfig(t *testing.T) {
-	cfg := config.PlatformConfig{
-		UseDPDK:  true,
-		UseAFXDP: true,
-		DPDKArgs: "-l 0-3 -n 4",
-	}
+	cfg := config.PlatformConfig{UseAFXDP: true}
 
-	if !cfg.UseDPDK {
-		t.Error("Expected UseDPDK true")
-	}
 	if !cfg.UseAFXDP {
 		t.Error("Expected UseAFXDP true")
-	}
-	if cfg.DPDKArgs != "-l 0-3 -n 4" {
-		t.Errorf("Expected DPDKArgs '-l 0-3 -n 4', got '%s'", cfg.DPDKArgs)
 	}
 }
 
@@ -223,7 +213,7 @@ func TestValidate(t *testing.T) {
 				TUI:             config.TUIConfig{Enabled: false},
 				Filtering:       config.FilterConfig{Port: 0, FilterOUI: false, OUI: "", FilterMAC: false},
 				Reflection:      config.ReflectConfig{Mode: ""},
-				Platform:        config.PlatformConfig{UseDPDK: false, UseAFXDP: false, DPDKArgs: ""},
+				Platform:        config.PlatformConfig{UseAFXDP: false},
 				Stats:           config.StatsConfig{Format: "", Interval: 0},
 			},
 			wantErr: true,
@@ -239,7 +229,7 @@ func TestValidate(t *testing.T) {
 				TUI:             config.TUIConfig{Enabled: false},
 				Filtering:       config.FilterConfig{Port: 0, FilterOUI: true, OUI: "invalid", FilterMAC: false},
 				Reflection:      config.ReflectConfig{Mode: "all"},
-				Platform:        config.PlatformConfig{UseDPDK: false, UseAFXDP: false, DPDKArgs: ""},
+				Platform:        config.PlatformConfig{UseAFXDP: false},
 				Stats:           config.StatsConfig{Format: "text", Interval: 0},
 			},
 			wantErr: true,
@@ -255,7 +245,7 @@ func TestValidate(t *testing.T) {
 				TUI:             config.TUIConfig{Enabled: false},
 				Filtering:       config.FilterConfig{Port: 0, FilterOUI: false, OUI: "00:c0:17", FilterMAC: false},
 				Reflection:      config.ReflectConfig{Mode: "invalid"},
-				Platform:        config.PlatformConfig{UseDPDK: false, UseAFXDP: false, DPDKArgs: ""},
+				Platform:        config.PlatformConfig{UseAFXDP: false},
 				Stats:           config.StatsConfig{Format: "text", Interval: 0},
 			},
 			wantErr: true,
@@ -271,7 +261,7 @@ func TestValidate(t *testing.T) {
 				TUI:             config.TUIConfig{Enabled: false},
 				Filtering:       config.FilterConfig{Port: 0, FilterOUI: false, OUI: "00:c0:17", FilterMAC: false},
 				Reflection:      config.ReflectConfig{Mode: "all"},
-				Platform:        config.PlatformConfig{UseDPDK: false, UseAFXDP: false, DPDKArgs: ""},
+				Platform:        config.PlatformConfig{UseAFXDP: false},
 				Stats:           config.StatsConfig{Format: "invalid", Interval: 0},
 			},
 			wantErr: true,
@@ -287,7 +277,7 @@ func TestValidate(t *testing.T) {
 				TUI:             config.TUIConfig{Enabled: false},
 				Filtering:       config.FilterConfig{Port: 0, FilterOUI: false, OUI: "00:c0:17", FilterMAC: false},
 				Reflection:      config.ReflectConfig{Mode: "all"},
-				Platform:        config.PlatformConfig{UseDPDK: false, UseAFXDP: false, DPDKArgs: ""},
+				Platform:        config.PlatformConfig{UseAFXDP: false},
 				Stats:           config.StatsConfig{Format: "text", Interval: 0},
 			},
 			wantErr: true,
@@ -303,7 +293,7 @@ func TestValidate(t *testing.T) {
 				TUI:             config.TUIConfig{Enabled: false},
 				Filtering:       config.FilterConfig{Port: 0, FilterOUI: false, OUI: "00:c0:17", FilterMAC: false},
 				Reflection:      config.ReflectConfig{Mode: "all"},
-				Platform:        config.PlatformConfig{UseDPDK: false, UseAFXDP: false, DPDKArgs: ""},
+				Platform:        config.PlatformConfig{UseAFXDP: false},
 				Stats:           config.StatsConfig{Format: "text", Interval: 0},
 			},
 			wantErr: true,
@@ -319,7 +309,7 @@ func TestValidate(t *testing.T) {
 				TUI:             config.TUIConfig{Enabled: false},
 				Filtering:       config.FilterConfig{Port: 0, FilterOUI: false, OUI: "00:c0:17", FilterMAC: false},
 				Reflection:      config.ReflectConfig{Mode: "all"},
-				Platform:        config.PlatformConfig{UseDPDK: false, UseAFXDP: false, DPDKArgs: ""},
+				Platform:        config.PlatformConfig{UseAFXDP: false},
 				Stats:           config.StatsConfig{Format: "text", Interval: 0},
 			},
 			wantErr: false,
@@ -380,7 +370,7 @@ func TestParseOUI(t *testing.T) {
 				TUI:             config.TUIConfig{Enabled: false},
 				Filtering:       config.FilterConfig{Port: 0, FilterOUI: false, OUI: tt.oui, FilterMAC: false},
 				Reflection:      config.ReflectConfig{Mode: ""},
-				Platform:        config.PlatformConfig{UseDPDK: false, UseAFXDP: false, DPDKArgs: ""},
+				Platform:        config.PlatformConfig{UseAFXDP: false},
 				Stats:           config.StatsConfig{Format: "", Interval: 0},
 			}
 			got, err := cfg.ParseOUI()
@@ -417,7 +407,7 @@ func TestReflectModeInt(t *testing.T) {
 				TUI:             config.TUIConfig{Enabled: false},
 				Filtering:       config.FilterConfig{Port: 0, FilterOUI: false, OUI: "", FilterMAC: false},
 				Reflection:      config.ReflectConfig{Mode: tt.mode},
-				Platform:        config.PlatformConfig{UseDPDK: false, UseAFXDP: false, DPDKArgs: ""},
+				Platform:        config.PlatformConfig{UseAFXDP: false},
 				Stats:           config.StatsConfig{Format: "", Interval: 0},
 			}
 			got := cfg.ReflectModeInt()
@@ -509,7 +499,7 @@ func BenchmarkValidate(b *testing.B) {
 		TUI:             config.TUIConfig{Enabled: false},
 		Filtering:       config.FilterConfig{Port: 0, FilterOUI: false, OUI: "00:c0:17", FilterMAC: false},
 		Reflection:      config.ReflectConfig{Mode: "all"},
-		Platform:        config.PlatformConfig{UseDPDK: false, UseAFXDP: false, DPDKArgs: ""},
+		Platform:        config.PlatformConfig{UseAFXDP: false},
 		Stats:           config.StatsConfig{Format: "text", Interval: 0},
 	}
 
@@ -527,7 +517,7 @@ func BenchmarkParseOUI(b *testing.B) {
 		TUI:             config.TUIConfig{Enabled: false},
 		Filtering:       config.FilterConfig{Port: 0, FilterOUI: false, OUI: "00:c0:17", FilterMAC: false},
 		Reflection:      config.ReflectConfig{Mode: ""},
-		Platform:        config.PlatformConfig{UseDPDK: false, UseAFXDP: false, DPDKArgs: ""},
+		Platform:        config.PlatformConfig{UseAFXDP: false},
 		Stats:           config.StatsConfig{Format: "", Interval: 0},
 	}
 

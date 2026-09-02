@@ -69,12 +69,6 @@ void print_usage(const char *prog)
     fprintf(stderr, "  --json              Output results in JSON format\n");
     fprintf(stderr, "  --csv               Output results in CSV format\n");
 
-#if HAVE_DPDK
-    fprintf(stderr, "\nDPDK Options (line-rate mode):\n");
-    fprintf(stderr, "  --dpdk              Use DPDK for packet I/O\n");
-    fprintf(stderr, "  --dpdk-args ARGS    Pass arguments to DPDK EAL\n");
-#endif
-
     fprintf(stderr, "\nPlatform Options:\n");
     fprintf(stderr, "  --force-packet      Force AF_PACKET (for veth/testing)\n");
 
@@ -184,16 +178,6 @@ int main(int argc, char **argv)
             config.output_format = STATS_FORMAT_JSON;
         } else if (strcmp(argv[i], "--csv") == 0) {
             config.output_format = STATS_FORMAT_CSV;
-#if HAVE_DPDK
-        } else if (strcmp(argv[i], "--dpdk") == 0) {
-            config.use_dpdk = true;
-        } else if (strcmp(argv[i], "--dpdk-args") == 0) {
-            if (i + 1 >= argc) {
-                fprintf(stderr, "Missing value for %s\n", argv[i]);
-                return 1;
-            }
-            config.dpdk_args = argv[++i];
-#endif
         } else if (strcmp(argv[i], "--force-packet") == 0) {
             config.force_packet = true;
         } else {

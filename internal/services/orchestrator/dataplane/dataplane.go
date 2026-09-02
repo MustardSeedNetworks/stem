@@ -743,9 +743,6 @@ typedef struct {
 
     bool use_pacing;
     uint32_t batch_size;
-
-    bool use_dpdk;
-    char *dpdk_args;
 } rfc2544_config_t;
 
 // External C functions
@@ -873,7 +870,6 @@ type Context struct {
 	stats     Stats
 	config    Config
 	frameSize uint32
-	dpdkArgs  *C.char
 }
 
 // NewContext creates a new RFC2544 test context.
@@ -920,26 +916,10 @@ func (c *Context) Configure(cfg *Config) error {
 	ccfg.measure_latency = C.bool(cfg.MeasureLatency)
 	ccfg.use_pacing = C.bool(cfg.UsePacing)
 	ccfg.batch_size = C.uint32_t(cfg.BatchSize)
-	ccfg.use_dpdk = C.bool(cfg.UseDPDK)
 
-	var nextDPDKArgs *C.char
-	if cfg.DPDKArgs != "" {
-		nextDPDKArgs = C.CString(cfg.DPDKArgs)
-		ccfg.dpdk_args = nextDPDKArgs
-	}
-
-	ret := C.rfc2544_configure(c.ctx, ccfg)
-
-	if ret < 0 {
-		if nextDPDKArgs != nil {
-			C.free(unsafe.Pointer(nextDPDKArgs))
-		}
+	if ret := C.rfc2544_configure(c.ctx, ccfg); ret < 0 {
 		return fmt.Errorf("configure failed: %d", ret)
 	}
-	if c.dpdkArgs != nil {
-		C.free(unsafe.Pointer(c.dpdkArgs))
-	}
-	c.dpdkArgs = nextDPDKArgs
 
 	return nil
 }
@@ -986,10 +966,6 @@ func (c *Context) Close() {
 	if c.ctx != nil {
 		C.rfc2544_cleanup(c.ctx)
 		c.ctx = nil
-	}
-	if c.dpdkArgs != nil {
-		C.free(unsafe.Pointer(c.dpdkArgs))
-		c.dpdkArgs = nil
 	}
 }
 

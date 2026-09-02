@@ -362,32 +362,6 @@ func TestCheckXDPSupport(t *testing.T) {
 	}
 }
 
-// TestCheckDPDKSupport tests the checkDPDKSupport function.
-func TestCheckDPDKSupport(t *testing.T) {
-	tests := []struct {
-		name      string
-		ifaceName string
-	}{
-		{name: "loopback interface", ifaceName: "lo"},
-		{name: "invalid interface name", ifaceName: ""},
-		{name: "path traversal attempt", ifaceName: "../etc/passwd"},
-		{name: "non-existent interface", ifaceName: "nonexistent_xyz"},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Just verify it doesn't panic.
-			result := checkDPDKSupport(tt.ifaceName)
-			// Invalid names should return false since driver will be "unknown".
-			if tt.ifaceName == "" || tt.ifaceName == "../etc/passwd" {
-				if result {
-					t.Errorf("checkDPDKSupport(%q) = true, want false for invalid name", tt.ifaceName)
-				}
-			}
-		})
-	}
-}
-
 // TestCalculateScore tests the calculateScore function.
 func TestCalculateScore(t *testing.T) {
 	tests := []struct {
@@ -433,27 +407,6 @@ func TestCalculateScore(t *testing.T) {
 			expected: 250, // 100 (physical) + 100 (speed) + 50 (XDP)
 		},
 		{
-			name: "physical interface with DPDK",
-			info: buildInterfaceInfo(func(info *InterfaceInfo) {
-				info.State = "up"
-				info.Physical = true
-				info.Speed = 10000
-				info.DPDKSupport = true
-			}),
-			expected: 230, // 100 (physical) + 100 (speed) + 30 (DPDK)
-		},
-		{
-			name: "physical interface with XDP and DPDK",
-			info: buildInterfaceInfo(func(info *InterfaceInfo) {
-				info.State = "up"
-				info.Physical = true
-				info.Speed = 10000
-				info.XDPSupport = true
-				info.DPDKSupport = true
-			}),
-			expected: 280, // 100 (physical) + 100 (speed) + 50 (XDP) + 30 (DPDK)
-		},
-		{
 			name: "interface with IPv4",
 			info: buildInterfaceInfo(func(info *InterfaceInfo) {
 				info.State = "up"
@@ -480,11 +433,10 @@ func TestCalculateScore(t *testing.T) {
 				info.Physical = true
 				info.Speed = 100000 // 100G
 				info.XDPSupport = true
-				info.DPDKSupport = true
 				info.IPv4 = "10.0.0.1"
 				info.Duplex = "full"
 			}),
-			expected: 1195, // 100 (physical) + 1000 (speed) + 50 (XDP) + 30 (DPDK) + 10 (IPv4) + 5 (full)
+			expected: 1165, // 100 (physical) + 1000 (speed) + 50 (XDP) + 10 (IPv4) + 5 (full)
 		},
 		{
 			name: "half duplex interface",
@@ -550,9 +502,6 @@ func TestConstants(t *testing.T) {
 	}
 	if scoreXDPSupport <= 0 {
 		t.Errorf("scoreXDPSupport = %d, want positive value", scoreXDPSupport)
-	}
-	if scoreDPDKSupport <= 0 {
-		t.Errorf("scoreDPDKSupport = %d, want positive value", scoreDPDKSupport)
 	}
 	if scoreHasIPv4 <= 0 {
 		t.Errorf("scoreHasIPv4 = %d, want positive value", scoreHasIPv4)
@@ -773,15 +722,6 @@ func TestCalculateScoreAdditionalCases(t *testing.T) {
 			expected: 50, // Only XDP bonus
 		},
 		{
-			name: "only DPDK support no physical",
-			info: buildInterfaceInfo(func(info *InterfaceInfo) {
-				info.State = "up"
-				info.Physical = false
-				info.DPDKSupport = true
-			}),
-			expected: 30, // Only DPDK bonus
-		},
-		{
 			name: "empty IPv4 and IPv6",
 			info: buildInterfaceInfo(func(info *InterfaceInfo) {
 				info.State = "up"
@@ -831,9 +771,6 @@ func TestInterfaceInfoDefaults(t *testing.T) {
 	}
 	if info.XDPSupport {
 		t.Error("Default XDPSupport should be false")
-	}
-	if info.DPDKSupport {
-		t.Error("Default DPDKSupport should be false")
 	}
 	if info.Score != 0 {
 		t.Errorf("Default Score should be 0, got %d", info.Score)
@@ -888,12 +825,6 @@ func TestScoringConstants(t *testing.T) {
 	// Physical bonus should be the base.
 	if scorePhysical != 100 {
 		t.Errorf("scorePhysical = %d, expected 100", scorePhysical)
-	}
-
-	// XDP should be worth more than DPDK (XDP is more efficient).
-	if scoreXDPSupport <= scoreDPDKSupport {
-		t.Errorf("XDP score (%d) should be greater than DPDK score (%d)",
-			scoreXDPSupport, scoreDPDKSupport)
 	}
 
 	// IPv4 and duplex are smaller bonuses.
@@ -970,14 +901,6 @@ func TestAllScoringCombinations(t *testing.T) {
 			expected: scoreXDPSupport,
 		},
 		{
-			name: "DPDK only",
-			info: buildInterfaceInfo(func(info *InterfaceInfo) {
-				info.State = "up"
-				info.DPDKSupport = true
-			}),
-			expected: scoreDPDKSupport,
-		},
-		{
 			name: "IPv4 only",
 			info: buildInterfaceInfo(func(info *InterfaceInfo) {
 				info.State = "up"
@@ -1000,11 +923,10 @@ func TestAllScoringCombinations(t *testing.T) {
 				info.Physical = true
 				info.Speed = 10000
 				info.XDPSupport = true
-				info.DPDKSupport = true
 				info.IPv4 = "1.2.3.4"
 				info.Duplex = "full"
 			}),
-			expected: scorePhysical + 100 + scoreXDPSupport + scoreDPDKSupport + scoreHasIPv4 + scoreFullDuplex,
+			expected: scorePhysical + 100 + scoreXDPSupport + scoreHasIPv4 + scoreFullDuplex,
 		},
 	}
 
@@ -1349,19 +1271,18 @@ func TestCalculateScoreWithVariousStates(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			info := InterfaceInfo{
-				Name:        "",
-				MAC:         "",
-				Speed:       0,
-				Duplex:      "",
-				State:       tc.state,
-				Driver:      "",
-				Physical:    false,
-				XDPSupport:  false,
-				DPDKSupport: false,
-				Score:       0,
-				MTU:         0,
-				IPv4:        "",
-				IPv6:        "",
+				Name:       "",
+				MAC:        "",
+				Speed:      0,
+				Duplex:     "",
+				State:      tc.state,
+				Driver:     "",
+				Physical:   false,
+				XDPSupport: false,
+				Score:      0,
+				MTU:        0,
+				IPv4:       "",
+				IPv6:       "",
 			}
 			score := calculateScore(info)
 			if score != tc.expected {

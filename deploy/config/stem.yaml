@@ -36,12 +36,8 @@ reflector:
 
 # Platform settings
 platform:
-  # Use DPDK for packet processing (requires DPDK installation)
-  use_dpdk: false
   # Use AF_XDP (default on Linux, faster than AF_PACKET)
   use_af_xdp: true
-  # DPDK EAL arguments
-  dpdk_args: ""
 
 # Statistics settings
 stats:

@@ -6,7 +6,6 @@
  * Detects available packet I/O mechanisms:
  * - AF_XDP (Linux, high performance)
  * - AF_PACKET (Linux, fallback)
- * - DPDK (Linux, line-rate)
  */
 
 #ifndef PLATFORM_CONFIG_H
@@ -47,24 +46,6 @@
 #endif
 #else
 #define HAVE_AF_XDP 0
-#endif
-
-/* ============================================================================
- * Linux: DPDK Detection
- * ============================================================================ */
-
-#ifdef __linux__
-#ifdef __has_include
-#if __has_include(<rte_eal.h>)
-#define HAVE_DPDK 1
-#else
-#define HAVE_DPDK 0
-#endif
-#else
-#define HAVE_DPDK 0
-#endif
-#else
-#define HAVE_DPDK 0
 #endif
 
 /* ============================================================================
@@ -133,7 +114,6 @@
  * --------         -----------    --------
  * AF_PACKET        ~100 Mbps      Testing, development
  * AF_XDP           ~40 Gbps       Production (10G-40G)
- * DPDK             100+ Gbps      Line-rate (100G+)
  */
 
 #endif /* PLATFORM_CONFIG_H */

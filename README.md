@@ -22,7 +22,7 @@ the same install.
 
 ### Reflector (always available)
 
-- High-performance packet reflection on AF_PACKET, AF_XDP, or DPDK
+- High-performance packet reflection on AF_PACKET or AF_XDP
 - Signature detection for NetAlly, RFC 2544/Y.1564 testers, MSN
 - Profile presets: NetAlly, MSN, All, Custom
 - Filter by signature, OUI, or UDP/TCP port
@@ -110,7 +110,7 @@ internal/
 ├── netif/          → Interface discovery
 ├── reflector/      → Reflector kernel-bypass plumbing
 └── version/        → Build metadata (injected via ldflags)
-src/dataplane/      → C dataplane (C23, Linux-only): DPDK / AF_XDP / AF_PACKET
+src/dataplane/      → C dataplane (C23, Linux-only): AF_XDP / AF_PACKET
 include/            → C headers
 ```
 
@@ -150,8 +150,7 @@ stem license trial
 | `make pkg` | macOS `.pkg` |
 | `make quick` | Backend-only dev iteration (do **not** ship) |
 
-Verified versions: **Go 1.26.6**, Node.js 26.5.0, golangci-lint v2.12.2,
-DPDK 25.11.2 LTS (optional, Linux).
+Verified versions: **Go 1.27.0**, Node.js 26.8.1, golangci-lint v2.13.2.
 
 ## REST API (selected)
 

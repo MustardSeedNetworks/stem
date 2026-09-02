@@ -30,9 +30,7 @@ Dataplane mode:
 .B af_packet
 (default, 1-2 Mpps),
 .B af_xdp
-(5-10 Mpps, requires kernel 5.x+),
-.B dpdk
-(15-40+ Mpps, requires DPDK).
+(5-10 Mpps, requires kernel 5.x+).
 .TP
 .BR \-\-profile " " \fIname\fR
 Signature profile to use:
@@ -62,10 +60,6 @@ Standard Linux packet sockets. Universal compatibility. Typically 1-2 Mpps.
 .B AF_XDP
 Linux kernel bypass using XDP. Requires kernel 5.x+ and driver support.
 Typically 5-10 Mpps with zero-copy drivers.
-.TP
-.B DPDK
-Full userspace networking via Data Plane Development Kit. Requires DPDK
-libraries and interface binding. Maximum performance: 15-40+ Mpps.
 .SH EXAMPLES
 .PP
 Start basic reflector:

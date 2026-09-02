@@ -11,7 +11,7 @@
 | Backend | Go 1.26.6 |
 | Frontend | React 19, TypeScript 6 |
 | Styling | Tailwind CSS v4 |
-| Data Plane | C23 (DPDK / AF_PACKET / AF_XDP), Linux |
+| Data Plane | C23 (AF_PACKET / AF_XDP), Linux |
 | Testing | Vitest, Playwright, Go test |
 | Linting | golangci-lint (golden config), Biome, clang-tidy |
 

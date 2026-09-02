@@ -123,10 +123,6 @@ function InterfaceDetails({ iface }: InterfaceDetailsProps): ReactElement {
           <div>{iface.xdp ? 'Yes' : 'No'}</div>
         </div>
         <div>
-          <div className="text-text-muted">DPDK Support</div>
-          <div>{iface.dpdk ? 'Yes' : 'No'}</div>
-        </div>
-        <div>
           <div className="text-text-muted">Score</div>
           <div>{iface.score}</div>
         </div>

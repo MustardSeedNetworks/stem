@@ -46,7 +46,6 @@ const STUB_INTERFACE = {
   driver: 'e2e',
   physical: true,
   xdp: false,
-  dpdk: false,
   score: 90,
   mtu: 1500,
   ipv4: '192.0.2.10',

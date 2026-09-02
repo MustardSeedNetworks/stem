@@ -276,9 +276,7 @@ typedef struct {
     bool           use_huge_pages;
     bool           software_checksum;
 
-    bool  use_dpdk;
-    bool  use_af_xdp;
-    char *dpdk_args;
+    bool use_af_xdp;
 
     uint16_t ito_port;
     bool     filter_oui;
@@ -358,7 +356,6 @@ int      get_interface_index(const char *ifname);
 int      get_interface_mac(const char *ifname, uint8_t mac[6]);
 int      get_num_rx_queues(const char *ifname);
 void     print_nic_recommendations(const char *ifname);
-bool     is_dpdk_available(void);
 int      get_nic_vendor(const char *ifname, uint16_t *vendor_id, uint16_t *device_id);
 int      get_nic_speed(const char *ifname);
 void     print_af_packet_warning(const char *ifname);

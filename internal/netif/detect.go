@@ -3,7 +3,7 @@
 // Package netif provides network interface detection and scoring.
 //
 // This package detects available network interfaces, gathers detailed
-// information about each (speed, driver, XDP/DPDK support), and calculates
+// information about each (speed, driver, XDP support), and calculates
 // a suitability score for network testing purposes.
 //
 // # Platform Dependencies
@@ -22,22 +22,15 @@
 //
 // # Capability Detection
 //
-// XDP and DPDK support are detected using driver name heuristics. This is
-// because there is no reliable runtime API to query these capabilities.
-// The detection uses known lists of drivers that support each technology:
-//
-// XDP-capable drivers:
+// XDP support is detected using a driver name heuristic, because there is no
+// reliable runtime API to query the capability:
 //
 //	ixgbe, i40e, ice, mlx5_core, mlx4_en, bnxt_en, nfp, virtio_net, igb, igc
 //
-// DPDK-capable drivers:
-//
-//	ixgbe, i40e, ice, mlx5_core, mlx4_en, bnxt_en, nfp, virtio_net, igb, e1000, e1000e, fm10k
-//
-// Limitations of driver heuristics:
-//   - May report false positives if driver is present but XDP/DPDK unavailable
+// Limitations of the heuristic:
+//   - May report false positives if the driver is present but XDP is unavailable
 //   - May report false negatives for newer drivers not in the list
-//   - Does not verify kernel XDP support or DPDK library availability
+//   - Does not verify kernel XDP support
 //   - Operators should verify capabilities before relying on them
 //
 // # Interface Scoring
@@ -47,7 +40,6 @@
 //	+100 points:     Physical interface that is UP
 //	+speed/100:      Speed bonus (10G = +100, 1G = +10, 100G = +1000)
 //	+50 points:      XDP support (driver-based detection)
-//	+30 points:      DPDK support (driver-based detection)
 //	+10 points:      Has IPv4 address assigned
 //	+5 points:       Full duplex mode
 //
@@ -61,7 +53,7 @@
 //   - Ensure target interface is UP before detection
 //   - On non-Linux systems, expect reduced functionality
 //   - Use explicit interface selection for production deployments
-//   - Verify XDP/DPDK capabilities independently if critical
+//   - Verify XDP capability independently if critical
 package netif
 
 import (
@@ -83,8 +75,6 @@ const (
 	scorePhysical = 100
 	// scoreXDPSupport is awarded to interfaces with AF_XDP capability.
 	scoreXDPSupport = 50
-	// scoreDPDKSupport is awarded to interfaces with DPDK capability.
-	scoreDPDKSupport = 30
 	// scoreHasIPv4 is awarded to interfaces with an IPv4 address assigned.
 	scoreHasIPv4 = 10
 	// scoreFullDuplex is awarded to interfaces running in full duplex mode.
@@ -98,20 +88,19 @@ const valueUnknown = "unknown"
 
 // InterfaceInfo contains detailed information about a network interface.
 type InterfaceInfo struct {
-	Name        string `json:"name"`
-	MAC         string `json:"mac"`
-	Speed       int    `json:"speed"`    // Mbps
-	Duplex      string `json:"duplex"`   // full, half, unknown
-	State       string `json:"state"`    // up, down
-	Driver      string `json:"driver"`   // ixgbe, mlx5_core, etc.
-	Physical    bool   `json:"physical"` // true for real NICs
-	XDPSupport  bool   `json:"xdp"`      // AF_XDP capable
-	DPDKSupport bool   `json:"dpdk"`     // DPDK capable
-	Score       int    `json:"score"`    // Auto-selection score
-	MTU         int    `json:"mtu"`      // Maximum transmission unit
-	IPv4        string `json:"ipv4"`     // Primary IPv4 address
-	IPv6        string `json:"ipv6"`     // Primary IPv6 address
-	Usable      bool   `json:"usable"`   // true if the interface is plausibly testable
+	Name       string `json:"name"`
+	MAC        string `json:"mac"`
+	Speed      int    `json:"speed"`    // Mbps
+	Duplex     string `json:"duplex"`   // full, half, unknown
+	State      string `json:"state"`    // up, down
+	Driver     string `json:"driver"`   // ixgbe, mlx5_core, etc.
+	Physical   bool   `json:"physical"` // true for real NICs
+	XDPSupport bool   `json:"xdp"`      // AF_XDP capable
+	Score      int    `json:"score"`    // Auto-selection score
+	MTU        int    `json:"mtu"`      // Maximum transmission unit
+	IPv4       string `json:"ipv4"`     // Primary IPv4 address
+	IPv6       string `json:"ipv6"`     // Primary IPv6 address
+	Usable     bool   `json:"usable"`   // true if the interface is plausibly testable
 }
 
 // isVirtualInterfaceName returns true when name starts with a known
@@ -192,20 +181,19 @@ func DetectInterfaces() ([]InterfaceInfo, error) {
 		}
 
 		info := InterfaceInfo{
-			Name:        iface.Name,
-			MAC:         iface.HardwareAddr.String(),
-			Speed:       0,
-			Duplex:      valueUnknown,
-			State:       "",
-			Driver:      "",
-			Physical:    isPhysical(iface.Name),
-			XDPSupport:  false,
-			DPDKSupport: false,
-			Score:       0,
-			MTU:         iface.MTU,
-			IPv4:        "",
-			IPv6:        "",
-			Usable:      false,
+			Name:       iface.Name,
+			MAC:        iface.HardwareAddr.String(),
+			Speed:      0,
+			Duplex:     valueUnknown,
+			State:      "",
+			Driver:     "",
+			Physical:   isPhysical(iface.Name),
+			XDPSupport: false,
+			Score:      0,
+			MTU:        iface.MTU,
+			IPv4:       "",
+			IPv6:       "",
+			Usable:     false,
 		}
 
 		// Check interface state.
@@ -224,7 +212,6 @@ func DetectInterfaces() ([]InterfaceInfo, error) {
 		info.Duplex = getDuplex(iface.Name)
 		info.Driver = getDriver(iface.Name)
 		info.XDPSupport = checkXDPSupport(iface.Name)
-		info.DPDKSupport = checkDPDKSupport(iface.Name)
 
 		// Calculate score.
 		info.Score = calculateScore(info)
@@ -351,18 +338,6 @@ func checkXDPSupport(name string) bool {
 	return slices.Contains(xdpDrivers, driver)
 }
 
-// checkDPDKSupport checks if the interface can be used with DPDK.
-func checkDPDKSupport(name string) bool {
-	// DPDK support is primarily determined by driver.
-	driver := getDriver(name)
-	dpdkDrivers := []string{
-		"ixgbe", "i40e", "ice", "mlx5_core", "mlx4_en",
-		"bnxt_en", "nfp", "virtio_net", "igb",
-		"e1000", "e1000e", "fm10k",
-	}
-	return slices.Contains(dpdkDrivers, driver)
-}
-
 // calculateScore calculates the auto-selection score for an interface.
 func calculateScore(info InterfaceInfo) int {
 	score := 0
@@ -383,11 +358,6 @@ func calculateScore(info InterfaceInfo) int {
 	// AF_XDP support bonus.
 	if info.XDPSupport {
 		score += scoreXDPSupport
-	}
-
-	// DPDK support bonus.
-	if info.DPDKSupport {
-		score += scoreDPDKSupport
 	}
 
 	// Has IPv4 address (configured).

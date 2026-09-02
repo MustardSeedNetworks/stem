@@ -32,7 +32,7 @@
 
 | Software | Version | Notes |
 |----------|---------|-------|
-| Linux | Kernel 5.4+ | Required for DPDK/XDP |
+| Linux | Kernel 5.4+ | Required for AF_XDP |
 | macOS | 12+ | Development/testing only |
 | Go | 1.25+ | For building from source |
 | Node.js | 25+ | For building WebUI |

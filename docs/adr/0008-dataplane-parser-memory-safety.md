@@ -5,7 +5,7 @@
 ## Context
 
 The Go services are memory-safe, but the performance dataplane is C
-(`src/dataplane/common/packet.c`, plus AF_PACKET/AF_XDP/DPDK platform layers).
+(`src/dataplane/common/packet.c`, plus AF_PACKET/AF_XDP platform layers).
 The RFC2544 / Y.1564 frame **validators** (`*_is_valid_response`) and the
 extractors built on them are the one place attacker-controlled bytes meet C: a
 received frame's length and contents are fully untrusted.

@@ -3,7 +3,7 @@
 // Package dataplane provides CGO bindings to the C reflector dataplane.
 //
 // This package wraps the high-performance C dataplane library, which uses
-// AF_PACKET, AF_XDP, or DPDK for line-rate packet reflection.
+// AF_PACKET or AF_XDP for line-rate packet reflection.
 package dataplane
 
 /*
@@ -23,9 +23,7 @@ static reflector_config_t make_config(
     int filter_oui,
     uint8_t oui0, uint8_t oui1, uint8_t oui2,
     int reflect_mode,
-    int use_dpdk,
-    int use_af_xdp,
-    const char *dpdk_args
+    int use_af_xdp
 ) {
     reflector_config_t config = {0};
     config.ito_port = ito_port;
@@ -34,9 +32,7 @@ static reflector_config_t make_config(
     config.oui[1] = oui1;
     config.oui[2] = oui2;
     config.reflect_mode = (reflect_mode_t)reflect_mode;
-    config.use_dpdk = use_dpdk ? true : false;
     config.use_af_xdp = use_af_xdp ? true : false;
-    config.dpdk_args = (char *)dpdk_args;
     return config;
 }
 
@@ -130,12 +126,11 @@ type ConfigUpdate struct {
 
 // Dataplane wraps the C reflector context.
 type Dataplane struct {
-	ctx      *C.reflector_ctx_t
-	cfg      *config.Config
-	running  bool
-	closed   bool
-	mu       sync.RWMutex
-	dpdkArgs *C.char // Store to prevent dangling pointer
+	ctx     *C.reflector_ctx_t
+	cfg     *config.Config
+	running bool
+	closed  bool
+	mu      sync.RWMutex
 }
 
 // New creates a new dataplane instance.
@@ -164,21 +159,11 @@ func New(cfg *config.Config) (*Dataplane, error) {
 	ifname := C.CString(cfg.Interface)
 	defer C.free(unsafe.Pointer(ifname))
 
-	var dpdkArgs *C.char
-	if cfg.Platform.DPDKArgs != "" {
-		dpdkArgs = C.CString(cfg.Platform.DPDKArgs)
-		dp.dpdkArgs = dpdkArgs // Store for cleanup in Close()
-	}
-
 	filterOUI := 0
 	if cfg.Filtering.FilterOUI {
 		filterOUI = 1
 	}
 
-	useDPDK := 0
-	if cfg.Platform.UseDPDK {
-		useDPDK = 1
-	}
 	useAFXDP := 0
 	if cfg.Platform.UseAFXDP {
 		useAFXDP = 1
@@ -190,17 +175,12 @@ func New(cfg *config.Config) (*Dataplane, error) {
 		C.int(filterOUI),
 		C.uint8_t(oui[0]), C.uint8_t(oui[1]), C.uint8_t(oui[2]),
 		C.int(cfg.ReflectModeInt()),
-		C.int(useDPDK),
 		C.int(useAFXDP),
-		dpdkArgs,
 	)
 
 	// Initialize reflector
 	ctx := C.uintptr_t(uintptr(unsafe.Pointer(dp.ctx)))
 	if C.init_reflector(ctx, ifname) < 0 {
-		if dp.dpdkArgs != nil {
-			C.free(unsafe.Pointer(dp.dpdkArgs))
-		}
 		C.free(unsafe.Pointer(dp.ctx))
 		return nil, fmt.Errorf("failed to initialize reflector on %s", cfg.Interface)
 	}
@@ -214,9 +194,7 @@ func New(cfg *config.Config) (*Dataplane, error) {
 	dp.ctx.config.filter_dst_mac = C.bool(cfg.Filtering.FilterMAC)
 	dp.ctx.config.reflect_mode = cConfig.reflect_mode
 	dp.ctx.config.sig_filter = C.sig_filter_t(sigFilter)
-	dp.ctx.config.use_dpdk = cConfig.use_dpdk
 	dp.ctx.config.use_af_xdp = cConfig.use_af_xdp
-	dp.ctx.config.dpdk_args = cConfig.dpdk_args
 
 	return dp, nil
 }
@@ -301,10 +279,6 @@ func (dp *Dataplane) Close() {
 		dp.ctx = nil
 	}
 	// Free stored C strings
-	if dp.dpdkArgs != nil {
-		C.free(unsafe.Pointer(dp.dpdkArgs))
-		dp.dpdkArgs = nil
-	}
 	dp.closed = true
 }
 

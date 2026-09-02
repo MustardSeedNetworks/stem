@@ -304,26 +304,6 @@ Fall back to AF_PACKET mode:
 			},
 			RelatedCmd: "stem help reflect",
 		},
-		"ERR_DPDK_NOT_AVAILABLE": {
-			Code:    "ERR_DPDK_NOT_AVAILABLE",
-			Message: "DPDK mode not available",
-			Cause:   "DPDK libraries not installed or interface not configured",
-			Solution: `DPDK requires:
-  - DPDK libraries installed
-  - Interface bound to DPDK driver
-  - Hugepages configured
-
-Check DPDK setup:
-  dpdk-devbind.py --status
-
-Fall back to AF_XDP or AF_PACKET:
-  stem reflect -i eth0 --mode af_xdp`,
-			Examples: []Example{
-				{Desc: "Check DPDK", Command: "dpdk-devbind.py --status", Output: ""},
-				{Desc: "Use AF_XDP", Command: "stem reflect -i eth0 --mode af_xdp", Output: ""},
-			},
-			RelatedCmd: "stem help reflect",
-		},
 	}
 }
 
