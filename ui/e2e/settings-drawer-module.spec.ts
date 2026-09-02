@@ -30,7 +30,9 @@ test.describe('Settings drawer module view', () => {
 
     await drawer.getByRole('button', { name: 'Module', exact: true }).click();
 
-    await expect(drawer.getByText(/benchmark/i).first()).toBeVisible();
-    await expect(drawer.getByText(/reflector/i).first()).toBeVisible();
+    // Module rows carry `module-toggle-<name>`. Matching the visible label by
+    // substring found several nodes per module, and `.first()` hid that.
+    await expect(drawer.getByTestId('module-toggle-benchmark')).toBeVisible();
+    await expect(drawer.getByTestId('module-toggle-reflector')).toBeVisible();
   });
 });

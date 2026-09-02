@@ -62,6 +62,7 @@ export function TestsTab({
         return (
           <CollapsibleSection
             key={catId}
+            testId={`help-category-${catId}`}
             title={
               <div className="flex items-center gap-compact">
                 {getCategoryIcon(catId)}

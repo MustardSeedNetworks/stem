@@ -36,8 +36,10 @@ test.describe('Help Drawer (smoke)', () => {
     const initialText = await drawer.textContent();
     expect((initialText ?? '').length).toBeGreaterThan(100);
 
-    // The default Tests tab lists a known standard.
-    await expect(drawer.getByText(/RFC 2544/i).first()).toBeVisible();
+    // The default Tests tab lists a known standard. Scoped to that category's
+    // section rather than matching "RFC 2544" anywhere in the drawer, which
+    // also hit each test card's body copy.
+    await expect(drawer.getByTestId('help-category-rfc2544')).toBeVisible();
 
     // Switch to the Glossary tab and confirm the view re-renders.
     await drawer.getByTestId('help-drawer-tab-glossary').click();

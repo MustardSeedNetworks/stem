@@ -487,6 +487,12 @@ export const SidebarLayout: FC<SidebarLayoutProps> = ({
       </aside>
 
       <aside
+        // The mobile copy above carries `mobile-sidebar`; this one carries
+        // `desktop-sidebar` for the same reason. Both asides are always in the
+        // DOM, so a spec that wants the visible one has to say which it means
+        // -- picking `.last()` encodes the render order instead, and silently
+        // follows it if that ever changes (#941).
+        data-testid="desktop-sidebar"
         /* 252px, a vertical rail gradient, and a hairline right edge. The
            previous 1px solid surface-border drew a hard line down the page;
            the rail should read as a different plane, not a bordered box. */
