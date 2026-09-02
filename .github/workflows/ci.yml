@@ -797,9 +797,23 @@ jobs:
           # reach inside a composite action's own steps.
           command: cd ui && node ./node_modules/playwright/cli.js install-deps chromium
 
+      # The download is retried for the same reason install-deps is: it fails
+      # intermittently with `Installation process exited with code: 100`, and
+      # an unretried failure here has taken down a merge-queue run and a push
+      # to main (which silently skipped a release, since release-please is
+      # workflow_run-gated on CI success).
       - name: Install Chromium
         timeout-minutes: 10
-        run: node ./node_modules/playwright/cli.js install chromium
+        run: |
+          for attempt in 1 2 3; do
+            if node ./node_modules/playwright/cli.js install chromium; then
+              exit 0
+            fi
+            echo "::warning::Chromium download failed (attempt ${attempt}/3)"
+            sleep $((attempt * 15))
+          done
+          echo "::error::Chromium download failed after 3 attempts"
+          exit 1
 
       - name: Run interaction and accessibility tests
         env:
