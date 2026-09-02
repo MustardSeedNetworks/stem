@@ -25,6 +25,20 @@ test.describe('RoleChip backend wiring', () => {
   test.beforeEach(async ({ page }) => {
     await skipSetupWizard(page);
 
+    // The mode POST now carries an X-Csrf-Token, so the switch first fetches
+    // one. Stubbed here for the same reason /api/v1/mode is: this spec is
+    // about the chip's wiring, and the token endpoint shares the API rate
+    // limiter with every other spec's traffic — leaving it live made the
+    // switch fail with "Failed to fetch CSRF token: HTTP 429" under
+    // parallelism rather than with the error the test is asserting.
+    await page.route('**/api/v1/auth/csrf-token', (route) => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ token: 'e2e-csrf-token' }),
+      });
+    });
+
     // Capabilities probe — both modes supported so the platform
     // guard does not pre-empt our spec.
     await page.route('**/api/v1/capabilities', (route) => {
