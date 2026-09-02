@@ -7,7 +7,7 @@
 ## Technology Stack
 
 | Layer | Technology |
-|-------|------------|
+| ------- | ------------ |
 | Backend | Go 1.26.6 |
 | Frontend | React 19, TypeScript 6 |
 | Styling | Tailwind CSS v4 |
@@ -17,7 +17,7 @@
 
 ## High-Level Architecture
 
-```
+```text
 ┌───────────────────────────────────────────────────────────────────────┐
 │  MODULE LAYER  (internal/services)                                     │
 │  Benchmark · ServiceTest · TrafficGen · Measure · Certify · Reflector  │
@@ -42,7 +42,7 @@ cannot ship without its policy. `GET /__capabilities` exposes the manifest.
 
 ## Directory Structure
 
-```
+```text
 stem/
 ├── cmd/
 │   ├── stem/                       # CLI entry point
@@ -71,7 +71,7 @@ stem/
 ## Modules
 
 | Module | Standard | Purpose |
-|--------|----------|---------|
+| -------- | ---------- | --------- |
 | Benchmark | RFC 2544 | Throughput, latency, frame loss |
 | ServiceTest | Y.1564 / MEF | Service activation testing |
 | TrafficGen | Custom | Traffic generation |
