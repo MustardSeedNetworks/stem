@@ -30,7 +30,29 @@ export default defineConfig({
      replaces the Vite config wholesale; stem's is merged from the function
      form in vite.config.ts. */
   optimizeDeps: {
-    include: ['aria-query'],
+    include: [
+      'aria-query',
+      /* Reached only from inside stories, so Vite's initial scan of the entry
+         graph does not see them. It discovers them once the first story that
+         uses one mounts, re-optimizes, and tells the browser to reload:
+
+           [vite] (client) dependencies optimized: @tanstack/react-query,
+                           zustand, zustand/middleware
+           [vite] (client) optimized dependencies changed. reloading
+
+         Locally the runner survives that reload. On CI it did not: the run
+         went silent at exactly that line and sat there until the job hit its
+         25-minute timeout (#955). Because a timed-out job reports as
+         `cancelled` rather than `failed`, and release-please is gated on
+         `conclusion == 'success'`, that silently skipped the v0.24.49 release
+         -- no red check anywhere, just a tag that never appeared.
+
+         Pre-bundling them means there is nothing left to discover, so the
+         mid-run reload cannot happen. Same reasoning as aria-query above. */
+      '@tanstack/react-query',
+      'zustand',
+      'zustand/middleware',
+    ],
   },
   server: {
     /* No watcher. This is a one-shot run, so nothing should be recompiling
