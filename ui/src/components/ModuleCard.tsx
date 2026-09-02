@@ -591,7 +591,8 @@ function ModuleExpandedContent({
               className={cn(
                 'flex items-center gap-default pad-xs rounded-lg cursor-pointer transition-colors',
                 'hover:bg-surface-hover',
-                test.enabled ? '' : 'opacity-60',
+                // The unchecked box already says "off"; dimming cost contrast.
+                test.enabled ? '' : 'text-text-muted',
               )}
             >
               <input
@@ -641,7 +642,10 @@ export function ModuleCard({
     <div
       className={cn(
         'border rounded-xl overflow-hidden transition-all',
-        config.enabled ? 'border-surface-border' : 'border-transparent opacity-60',
+        // Recessed surface, not `opacity-60`: dimming the layer dimmed the
+        // results-table headers to 2.44:1, under the 4.5:1 AA needs (#931).
+        // Dim the colour token, not the layer.
+        config.enabled ? 'border-surface-border' : 'border-transparent bg-surface-hover',
         'bg-surface-raised',
       )}
       style={{

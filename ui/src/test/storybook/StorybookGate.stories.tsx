@@ -37,12 +37,14 @@ function SharedControls({ defect, onSave }: SharedControlsProps) {
 
 const injectedDefect = import.meta.env.VITE_STORYBOOK_INJECT_DEFECT as Defect | undefined;
 
+// No local `a11y: { test: 'error' }` override. It used to carry one, which
+// meant this self-test passed on its own terms while every other story in the
+// repository ran under the report-only global (#931) — a guard that proves the
+// machinery works but not that it is switched on. Depending on the global
+// setting instead makes turning the gate back down fail this script.
 const meta = {
   title: 'Test/Storybook gate',
   component: SharedControls,
-  parameters: {
-    a11y: { test: 'error' },
-  },
 } satisfies Meta<typeof SharedControls>;
 
 export default meta;

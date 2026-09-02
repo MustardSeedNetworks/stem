@@ -42,7 +42,15 @@ const preview: Preview = {
       // 'todo' - show a11y violations in the test UI only
       // 'error' - fail CI on a11y violations
       // 'off' - skip a11y checks entirely
-      test: 'todo',
+      //
+      // Blocking. It was 'todo', which surfaces violations in the Storybook UI
+      // and cannot fail a build, so an accessibility regression anywhere in
+      // this repository's components passed (#931). The jsdom axe tests do not
+      // close the gap either: color-contrast samples rendered pixels through a
+      // canvas jsdom does not have, so axe returns it under 'incomplete'
+      // rather than as a pass or a failure. Storybook running real chromium is
+      // the only place it can be evaluated.
+      test: 'error',
     },
 
     backgrounds: {

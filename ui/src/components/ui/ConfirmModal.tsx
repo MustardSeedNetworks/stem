@@ -37,7 +37,16 @@ export const ConfirmModal: FC<ConfirmModalProps> = ({
   confirmTone = 'red',
   icon,
 }) => (
-  <Modal isOpen={isOpen} onClose={onCancel} size="sm" showCloseButton={false}>
+  <Modal
+    isOpen={isOpen}
+    onClose={onCancel}
+    size="sm"
+    showCloseButton={false}
+    // ariaLabel, not title: the heading below is drawn by this component
+    // alongside its icon, so Modal must not render a second one — but the
+    // dialog still needs a name, and had none (#931).
+    ariaLabel={title}
+  >
     <div className="stack-lg">
       <div className="flex items-center gap-default">
         {icon ?? <AlertTriangle className={`${iconSizes.xl} ${iconColorClass[confirmTone]}`} />}

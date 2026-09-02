@@ -257,11 +257,12 @@ export const Toggle: FC<ToggleProps> = ({
   ...props
 }) => {
   const toggleId = id || label.toLowerCase().replace(/\s+/g, '-');
+  const toggleLabelId = `${toggleId}-label`;
 
   return (
     <div className={`flex-between gap-comfortable ${containerClassName}`}>
       <div>
-        <label htmlFor={toggleId} className="label cursor-pointer">
+        <label htmlFor={toggleId} className="label cursor-pointer" id={toggleLabelId}>
           {label}
         </label>
         {description ? <p className="text-sm text-text-muted mt-0.5">{description}</p> : null}
@@ -270,6 +271,11 @@ export const Toggle: FC<ToggleProps> = ({
         type="button"
         role="switch"
         aria-checked={checked}
+        // The visible label points at the hidden input via htmlFor, so it
+        // never named this control: axe reported the switch as a button with
+        // no accessible name, and a screen reader announced "switch, not
+        // checked" and nothing else (#931).
+        aria-labelledby={toggleLabelId}
         onClick={() => {
           const input = document.getElementById(toggleId) as HTMLInputElement;
           if (input) {

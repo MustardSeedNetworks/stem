@@ -55,7 +55,16 @@ export const InputModal: FC<InputModalProps> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onCancel} size="sm" showCloseButton={false}>
+    <Modal
+      isOpen={isOpen}
+      onClose={onCancel}
+      size="sm"
+      showCloseButton={false}
+      // Same as ConfirmModal: the heading is drawn below, so the dialog is
+      // named rather than titled. It had no accessible name at all, and no
+      // story, so only the type change surfaced it (#931).
+      ariaLabel={title}
+    >
       <div className="stack-lg">
         <div>
           <h2 className="heading-3 text-text-primary">{title}</h2>
