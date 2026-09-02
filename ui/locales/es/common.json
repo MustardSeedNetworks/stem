@@ -135,7 +135,7 @@
     "skipToContent": "Saltar al contenido principal"
   },
   "sections": {
-    "modules": "Modulos de Prueba",
+    "modules": "Módulos de Prueba",
     "configuration": "Configuración",
     "results": "Resultados",
     "system": "Sistema",
@@ -176,7 +176,7 @@
     "reflector": "Reflector",
     "testMaster": "Test Master",
     "reflectorDescription": "Loopback pasivo — devuelve las tramas a un Test Master para medicion extremo a extremo.",
-    "testMasterDescription": "Pruebas activas — ejecuta modulos RFC 2544, Y.1564, Y.1731, MEF, TSN y generacion de trafico.",
+    "testMasterDescription": "Pruebas activas — ejecuta módulos RFC 2544, Y.1564, Y.1731, MEF, TSN y generación de tráfico.",
     "confirm": {
       "confirmLabel": "Cambiar rol",
       "toReflector": {

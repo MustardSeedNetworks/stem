@@ -73,8 +73,12 @@ test.describe('Language switching', () => {
     // es/common.json. Module names (Reflector, Benchmark, etc.) stay
     // English per the glossary, so they're not viable markers.
     // Scoped to the desktop aside for the same reason as the English case.
+    //
+    // Exact, not /M[oó]dulos/i. That character class accepted the string with
+    // or without its accent, and the catalog had it without -- so the spec
+    // passed while the comment above it described a value that did not exist.
     await expect(
-      page.getByTestId('desktop-sidebar').getByText(/M[oó]dulos de Prueba/i),
+      page.getByTestId('desktop-sidebar').getByText('Módulos de Prueba', { exact: true }),
     ).toBeVisible();
   });
 
