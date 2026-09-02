@@ -1081,6 +1081,13 @@ jobs:
       - name: Verify release workflow contract
         run: ./scripts/test-check-release-workflow-contract.sh
 
+      # Same reasoning: the TODO scanner is only useful if it distinguishes a
+      # real marker from `context.TODO()` or an `XXXX-XXXX` key placeholder.
+      # It did not, and four weeks of summary issues reported the same 15
+      # non-TODOs before anyone noticed.
+      - name: Verify TODO scanner
+        run: ./scripts/test-scan-todos.sh
+
 
   # ============================================================================
   # Internationalization (i18n) Validation

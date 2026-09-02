@@ -41,45 +41,22 @@ jobs:
       - name: Scan for TODO comments
         id: todos
         run: |
-          echo "Scanning for TODO/FIXME comments..."
-
-          # Create output file
           TODOS_FILE=$(mktemp)
-
-          # Scan Go files
-          grep -rn "TODO\|FIXME\|HACK\|XXX" \
-            --include="*.go" \
-            --exclude-dir=vendor \
-            --exclude-dir=.git \
-            . >> "$TODOS_FILE" 2>/dev/null || true
-
-          # Scan TypeScript/JavaScript files
-          grep -rn "TODO\|FIXME\|HACK\|XXX" \
-            --include="*.ts" \
-            --include="*.tsx" \
-            --include="*.js" \
-            --include="*.jsx" \
-            --exclude-dir=node_modules \
-            --exclude-dir=dist \
-            --exclude-dir=.git \
-            . >> "$TODOS_FILE" 2>/dev/null || true
-
-          # Count TODOs
+          ./scripts/scan-todos.sh > "$TODOS_FILE"
           TODO_COUNT=$(wc -l < "$TODOS_FILE" | tr -d ' ')
+
           echo "Found $TODO_COUNT TODO items"
           echo "count=$TODO_COUNT" >> "$GITHUB_OUTPUT"
-
-          # Save for later steps
           echo "todos_file=$TODOS_FILE" >> "$GITHUB_OUTPUT"
 
-          # Output summary
           if [ "$TODO_COUNT" -gt 0 ]; then
-            echo "### TODO Items Found: $TODO_COUNT" >> "$GITHUB_STEP_SUMMARY"
-            echo "" >> "$GITHUB_STEP_SUMMARY"
-            echo "| File | Line | Comment |" >> "$GITHUB_STEP_SUMMARY"
-            echo "|------|------|---------|" >> "$GITHUB_STEP_SUMMARY"
+            {
+              echo "### TODO Items Found: $TODO_COUNT"
+              echo ""
+              echo "| File | Line | Comment |"
+              echo "|------|------|---------|"
+            } >> "$GITHUB_STEP_SUMMARY"
             head -50 "$TODOS_FILE" | while IFS=: read -r file line content; do
-              # Escape pipe characters for markdown
               safe_content=$(echo "$content" | sed 's/|/\\|/g' | head -c 100)
               echo "| $file | $line | $safe_content |" >> "$GITHUB_STEP_SUMMARY"
             done
@@ -109,8 +86,9 @@ jobs:
         if: github.event_name == 'schedule' && steps.todos.outputs.count > 0
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TODO_COUNT: ${{ steps.todos.outputs.count }}
+          TODOS_FILE: ${{ steps.todos.outputs.todos_file }}
         run: |
-          # Check if summary issue already exists this week
           WEEK=$(date +%Y-W%V)
           EXISTING=$(gh issue list --label "type: chore" --search "TODO Summary $WEEK" --json number --jq '.[0].number' || echo "")
 
@@ -119,27 +97,42 @@ jobs:
             exit 0
           fi
 
-          # Create new summary issue
-          BODY="## Weekly TODO Summary
+          BODY=$(printf '%s\n' \
+            "## Weekly TODO Summary" \
+            "" \
+            "**Week:** $WEEK" \
+            "**Total TODOs:** $TODO_COUNT" \
+            "" \
+            "### Action Required" \
+            "Please review and either:" \
+            "1. Create specific issues for important TODOs" \
+            "2. Fix the TODO and remove the comment" \
+            "3. Add context if the TODO is intentional" \
+            "" \
+            "### TODO Locations" \
+            '```' \
+            "$(head -100 "$TODOS_FILE")" \
+            '```' \
+            "" \
+            "---" \
+            "_This issue was automatically created by the TODO Tracker workflow._")
 
-          **Week:** $WEEK
-          **Total TODOs:** ${{ steps.todos.outputs.count }}
-
-          ### Action Required
-          Please review and either:
-          1. Create specific issues for important TODOs
-          2. Fix the TODO and remove the comment
-          3. Add context if the TODO is intentional
-
-          ### TODO Locations
-          \`\`\`
-          $(head -100 ${{ steps.todos.outputs.todos_file }})
-          \`\`\`
-
-          ---
-          _This issue was automatically created by the TODO Tracker workflow._"
-
-          gh issue create \
-            --title "TODO Summary $WEEK: ${{ steps.todos.outputs.count }} items" \
+          # `gh issue create` has no --json; it prints the new issue URL.
+          NEW=$(gh issue create \
+            --title "TODO Summary $WEEK: $TODO_COUNT items" \
             --body "$BODY" \
-            --label "type: chore,status: needs-triage"
+            --label "type: chore,status: needs-triage")
+          NEW=${NEW##*/}
+
+          # Supersede prior weeks. Each summary is a snapshot of the same scan,
+          # so leaving them open piles up duplicates — four of them (#554,
+          # #650, #747, #926) had accumulated by 2026-W36.
+          gh issue list --label "type: chore" --state open --limit 100 \
+            --json number,title \
+            --jq '.[] | select(.title | startswith("TODO Summary")) | .number' |
+            while read -r old; do
+              if [ "$old" != "$NEW" ]; then
+                gh issue close "$old" --reason "not planned" \
+                  --comment "Superseded by #$NEW (TODO Summary $WEEK)."
+              fi
+            done
