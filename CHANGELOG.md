@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.52](https://github.com/MustardSeedNetworks/stem/compare/v0.24.51...v0.24.52) (2026-09-02)
+
+
+### Bug Fixes
+
+* **ci:** let the check gates see files that are not staged yet ([#956](https://github.com/MustardSeedNetworks/stem/issues/956)) ([035bc1a](https://github.com/MustardSeedNetworks/stem/commit/035bc1ad0483fcbb127bf6a8a1ad3566ef75ced7)), closes [#951](https://github.com/MustardSeedNetworks/stem/issues/951)
+
 ## [0.24.51](https://github.com/MustardSeedNetworks/stem/compare/v0.24.50...v0.24.51) (2026-09-02)
 
 
