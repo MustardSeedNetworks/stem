@@ -30,12 +30,24 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-# Comment opener, optional space, marker as a whole word. `*` is anchored to
-# line start so a multiplication does not read as a block-comment continuation.
-readonly PATTERN='(//|/\*|^[[:space:]]*\*|#)[[:space:]]*(TODO|FIXME|HACK|XXX)\b'
+# Comment opener, optional space, marker as a whole word.
+#
+# Portability: POSIX ERE only, so this works with GNU grep and BSD/macOS grep
+# alike and needs nothing that is not already on a bare runner. `\b` is a GNU
+# extension, so the word boundary after the marker is spelled out as "not a
+# word character, or end of line" -- which is also what stops `XXX` matching
+# inside `XXXX-XXXX-XXXX-XXXX`.
+#
+# `*` is anchored to line start so a multiplication does not read as a
+# block-comment continuation. `#` is not an alternative: it is not a comment
+# opener in any language scanned here, but it is a private-field sigil in TS.
+readonly PATTERN='(//|/\*|^[[:space:]]*\*)[[:space:]]*(TODO|FIXME|HACK|XXX)([^A-Za-z0-9_]|$)'
 
-rg --no-heading --line-number --color=never \
-  --glob '*.go' --glob '*.ts' --glob '*.tsx' --glob '*.js' --glob '*.jsx' \
-  --glob '!vendor/**' --glob '!node_modules/**' --glob '!dist/**' \
-  --glob '!**/scan-todos.sh' \
-  -e "$PATTERN" . 2>/dev/null | sed 's|^\./||' || true
+# The file list comes from `git ls-files`, not from a directory walk. grep has
+# no idea what is gitignored, and a plain walk picks up build output: the
+# untracked `ui/storybook-static/` bundle alone contributes 22 TODOs that
+# belong to Storybook's own vendored source, not to this repository.
+git ls-files -z -- \
+  '*.go' '*.ts' '*.tsx' '*.js' '*.jsx' \
+  ':!:vendor/**' ':!:**/node_modules/**' |
+  xargs -0 grep -nE "$PATTERN" /dev/null 2>/dev/null || true

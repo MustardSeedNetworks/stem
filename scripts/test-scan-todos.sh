@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # test-scan-todos.sh — proves scan-todos.sh catches real markers and ignores
 # the false-positive families that made four weekly summary issues worthless.
+#
+# It runs the real script against a throwaway repository rather than
+# re-implementing the pattern, so a change to the scanner is actually exercised.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -8,6 +11,9 @@ readonly SCANNER="$PWD/scripts/scan-todos.sh"
 
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
+
+mkdir -p "$work/scripts"
+cp "$SCANNER" "$work/scripts/scan-todos.sh"
 
 cat > "$work/should_match.go" <<'EOF'
 package p
@@ -41,21 +47,19 @@ cat > "$work/should_not_match.tsx" <<'EOF'
 export const F = () => <input placeholder="XXXX-XXXX-XXXX-XXXX" />;
 EOF
 
-cd "$work"
-git init --quiet .
-out=$(bash -c "cd '$work' && rg --no-heading --line-number --color=never \
-  --glob '*.go' --glob '*.ts' --glob '*.tsx' \
-  -e '(//|/\*|^[[:space:]]*\*|#)[[:space:]]*(TODO|FIXME|HACK|XXX)\b' . || true")
+git -C "$work" init --quiet
+git -C "$work" add -A
+out=$("$work/scripts/scan-todos.sh")
 
 fail=0
 expect_hit() {
-  if ! grep -q "$1" <<<"$out"; then
+  if ! printf '%s\n' "$out" | grep -qF "$1"; then
     echo "FAIL: expected a hit for: $1"
     fail=1
   fi
 }
 expect_miss() {
-  if grep -q "$1" <<<"$out"; then
+  if printf '%s\n' "$out" | grep -qF "$1"; then
     echo "FAIL: expected NO hit for: $1"
     fail=1
   fi
@@ -73,14 +77,9 @@ expect_miss 'Social Security Numbers'
 
 if [ "$fail" -ne 0 ]; then
   echo "--- scanner output was ---"
-  echo "$out"
+  printf '%s\n' "$out"
   echo "test-scan-todos: FAILED"
   exit 1
-fi
-
-# The real tree must be clean: every marker the old grep reported was bogus.
-if [ -n "$("$SCANNER")" ]; then
-  echo "note: scanner reports markers in the working tree (not a failure)"
 fi
 
 echo "test-scan-todos: PASS (5 real markers found, 3 false-positive families ignored)"
