@@ -30,7 +30,13 @@ test.describe('Settings drawer module view', () => {
 
     await drawer.getByRole('button', { name: 'Module', exact: true }).click();
 
-    await expect(drawer.getByText(/benchmark/i).first()).toBeVisible();
-    await expect(drawer.getByText(/reflector/i).first()).toBeVisible();
+    // Scoped to the module list rather than `.first()` of a drawer-wide text
+    // match. The index pick asserted against whichever node came first, which
+    // need not have been in the module list at all — "Module" appears in the
+    // view toggle directly above it (#941).
+    const modules = drawer.getByTestId('module-selector');
+    await expect(modules).toBeVisible();
+    await expect(modules).toContainText(/benchmark/i);
+    await expect(modules).toContainText(/reflector/i);
   });
 });

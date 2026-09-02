@@ -36,8 +36,13 @@ test.describe('Help Drawer (smoke)', () => {
     const initialText = await drawer.textContent();
     expect((initialText ?? '').length).toBeGreaterThan(100);
 
-    // The default Tests tab lists a known standard.
-    await expect(drawer.getByText(/RFC 2544/i).first()).toBeVisible();
+    // The default Tests tab lists a known standard. Asserted against the tab's
+    // own container rather than `.first()` of a drawer-wide text match: the
+    // index pick passed against whichever node happened to come first, which
+    // was not necessarily in the tests list at all (#941).
+    const testsPanel = drawer.getByTestId('help-drawer-tests');
+    await expect(testsPanel).toBeVisible();
+    await expect(testsPanel).toContainText(/RFC 2544/i);
 
     // Switch to the Glossary tab and confirm the view re-renders.
     await drawer.getByTestId('help-drawer-tab-glossary').click();
