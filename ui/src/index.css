@@ -117,27 +117,18 @@
      Primary: Forest Green (Stem Green) - stable, mature, trustworthy
      Accent: Mustard Gold - the "mustard seed" highlight
      ========================================================================== */
-
   /* Brand Colors — constant across light/dark (canonical 2026-05-22).
    * Stem product anchor is stem-500 (Material blue) — replaces pre-audit
    * Seed-green primary which had Stem visually identifying as a green
    * product. Stem is a performance-testing tool; blue is the universal
    * test/measurement language (Spirent, Viavi, Keysight, Fluke). */
-
   /* Surface Colors - Botanical-earth: warm cream palette (canonical 2026-05-22) */
-
   /* Text Colors - Botanical-earth (WCAG AA against warm cream surfaces) */
-
   /* Deeper surface — gradient terminus for the shell. */
-
   /* Status Colors - canonical anchors, constant across modes (2026-05-22) */
-
   /* Log level colors (Syslog/RFC 5424) — constant across light/dark. */
-
   /* Constant-across-modes utility colors. */
-
   /* Module Colors - The Stem specific */
-
 }
 
 .dark {
@@ -148,22 +139,15 @@
      Status colors remain constant (industry standard).
      Uses NEUTRAL dark colors (not blue-tinted slate).
      ========================================================================== */
-
   /* Brand Colors — constant across modes (no .dark override).
    * Lightening previously applied here violated the brand-constant rule
    * (canonical 2026-05-22). Foreground for AA on dark surfaces is
    * provided via text-accent below. */
-
   /* Surface Colors - Botanical-earth: deep green-black palette */
-
   /* Text Colors - Botanical-earth (WCAG AA against deep green-black surfaces) */
-
   /* Deeper surface for dark mode gradient terminus. */
-
   /* Status Colors - canonical anchors (same as light, constant by design) */
-
   /* Module Colors - Lightened for dark backgrounds */
-
 }
 
 body {
