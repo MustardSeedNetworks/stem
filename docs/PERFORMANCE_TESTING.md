@@ -3,8 +3,8 @@
 This guide covers the test workflows Stem actually ships. It deliberately does
 not describe Netperf-style request/response testing, Flowgrind, HTTP or DNS
 load generation, or hardware-timestamped latency — Stem does not do those, and
-the issues proposing them were reviewed and closed (#537, #540, #542, #543,
-#544, #545).
+the issues proposing them were reviewed and closed; see issues 537, 540, 542,
+543, 544 and 545 for the reasoning in each case.
 
 Everything below was checked against `stem version 0.24.48`. Where a command
 could not be executed on the machine this was written on, that is said plainly
@@ -18,7 +18,7 @@ Six modules, 29 test types. `stem list-tests` is the authoritative list; this
 table is the map.
 
 | Module | Standard | Test types |
-|---|---|---|
+| --- | --- | --- |
 | Benchmark | RFC 2544 | `rfc2544_throughput`, `rfc2544_latency`, `rfc2544_frame_loss`, `rfc2544_back_to_back`, `rfc2544_system_recovery`, `rfc2544_reset` |
 | ServiceTest | ITU-T Y.1564 / MEF | `y1564_config`, `y1564_perf`, `y1564`, `mef_config`, `mef_perf`, `mef` |
 | TrafficGen | custom | `custom_stream` |
@@ -50,7 +50,7 @@ The dataplane is C, built with build tags, and Linux-only. On macOS or
 Windows, or on a Linux build without CGO, every test command fails at
 initialisation:
 
-```
+```text
 Error: Failed to initialize dataplane: dataplane unavailable: dataplane operations require Linux with CGO enabled
 
 Platform: darwin/arm64
@@ -64,7 +64,7 @@ This is a hard gate, not a degraded mode. The WebUI, TUI, licensing, and
 ### Licence tier
 
 | Tier | Grants |
-|---|---|
+| --- | --- |
 | Reflector | `reflect` only |
 | Professional | `reflect` plus rfc2544, rfc2889, rfc6349, mef, tsn, y1564, y1731, api |
 
@@ -95,7 +95,7 @@ stem test -i eth0 -t rfc2544_throughput -d 60
 Defaults that matter, all visible in the run banner before traffic starts:
 
 | Flag | Default | Meaning |
-|---|---|---|
+| --- | --- | --- |
 | `--duration` / `-d` | 60 | seconds per trial |
 | `--frame-sizes` | `64,128,256,512,1024,1280,1518` | RFC 2544's frame-size ladder |
 | `--resolution` | 0.1 | binary-search resolution, % of line rate |
@@ -152,7 +152,7 @@ stem test -i eth0 -t rfc2544_throughput --csv
 What each RFC 2544 sub-test answers:
 
 | Test | The question | Read it as |
-|---|---|---|
+| --- | --- | --- |
 | `rfc2544_throughput` | fastest rate with loss at or under `--max-loss` | the number people quote; per frame size, not one figure |
 | `rfc2544_latency` | delay at a given load | latency at line rate and latency at idle are different claims |
 | `rfc2544_frame_loss` | loss across a load sweep | the shape matters — a cliff is a buffer, a ramp is a policer |
@@ -214,4 +214,5 @@ dataplane requires Linux with CGO on both the test master and the reflector,
 and this was written on macOS, where the gate above fires before any traffic
 is generated. Numbers and result shapes in section 5 describe what each test
 computes, not a captured run. Validating them end to end belongs on the Linux
-dev servers with a real link, per the platform rule in `CLAUDE.md`.
+dev servers with a real link, which is where platform-specific behaviour is
+meant to be verified.
