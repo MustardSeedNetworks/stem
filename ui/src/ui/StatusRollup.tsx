@@ -24,6 +24,7 @@
  *   />
  */
 import type { FC, ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export type RollupState = 'ok' | 'warn' | 'crit' | 'unknown';
 
@@ -80,12 +81,15 @@ const STATE_STYLES: Record<
   },
 };
 
-const STATE_LABELS: Record<RollupState, string> = {
-  ok: 'All clear',
-  warn: 'Degraded',
-  crit: 'Critical',
-  unknown: 'No data',
-};
+// Translation keys, not literals: this label is the first thing a reader sees
+// on the card, so leaving it English defeats the point of translating the
+// headline underneath it.
+const STATE_LABEL_KEYS = {
+  ok: 'statusRollup.allClear',
+  warn: 'statusRollup.degraded',
+  crit: 'statusRollup.critical',
+  unknown: 'statusRollup.noData',
+} as const satisfies Record<RollupState, string>;
 
 export const StatusRollup: FC<StatusRollupProps> = ({
   state,
@@ -95,6 +99,7 @@ export const StatusRollup: FC<StatusRollupProps> = ({
   actions,
   className = '',
 }) => {
+  const { t } = useTranslation();
   const styles = STATE_STYLES[state];
   const shown = figures.slice(0, 4);
 
@@ -116,7 +121,7 @@ export const StatusRollup: FC<StatusRollupProps> = ({
               aria-hidden="true"
               className={`h-2 w-2 rounded-full motion-safe:animate-pulse ${styles.dot}`}
             />
-            <span className={styles.kicker}>{STATE_LABELS[state]}</span>
+            <span className={styles.kicker}>{t(STATE_LABEL_KEYS[state])}</span>
           </p>
           <h2 className="mt-2 text-xl font-extrabold tracking-[-0.02em] text-text-primary">
             {headline}

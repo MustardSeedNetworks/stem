@@ -219,5 +219,34 @@
       "logout": "Sign out of the current session",
       "profiles": "Open the profiles drawer to manage saved test configurations"
     }
+  },
+  "statusRollup": {
+    "allClear": "All clear",
+    "degraded": "Degraded",
+    "critical": "Critical",
+    "noData": "No data"
+  },
+  "reflector": {
+    "startButton": "Start Reflector",
+    "stopButton": "Stop Reflector",
+    "unsupported": "Reflector counters are not available on this platform",
+    "stoppedWithError": "The reflector stopped with an error",
+    "runCancelled": "The last reflector run was cancelled",
+    "reflectingOn": "Reflecting on {{interface}}",
+    "selectedInterfaceFallback": "the selected interface",
+    "idle": "Reflector is idle",
+    "idleBody": "Pick an interface and start the reflector for a test master to measure against.",
+    "figures": {
+      "received": "Received",
+      "sent": "Sent",
+      "rate": "Rate"
+    },
+    "stats": {
+      "packetsReceived": "Packets Received",
+      "packetsSent": "Packets Sent",
+      "currentRate": "Current Rate",
+      "uptime": "Uptime",
+      "statusLabel": "Status:"
+    }
   }
 }

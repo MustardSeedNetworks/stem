@@ -219,5 +219,34 @@
       "logout": "Cerrar la sesión actual",
       "profiles": "Abrir el panel de perfiles para gestionar configuraciones de prueba guardadas"
     }
+  },
+  "statusRollup": {
+    "allClear": "Todo correcto",
+    "degraded": "Degradado",
+    "critical": "Crítico",
+    "noData": "Sin datos"
+  },
+  "reflector": {
+    "startButton": "Iniciar Reflector",
+    "stopButton": "Detener Reflector",
+    "unsupported": "Los contadores del Reflector no están disponibles en esta plataforma",
+    "stoppedWithError": "El Reflector se detuvo con un error",
+    "runCancelled": "La última ejecución del Reflector fue cancelada",
+    "reflectingOn": "Reflejando en {{interface}}",
+    "selectedInterfaceFallback": "la interfaz seleccionada",
+    "idle": "El Reflector está inactivo",
+    "idleBody": "Elija una interfaz e inicie el Reflector para que un test master pueda medir contra él.",
+    "figures": {
+      "received": "Recibidos",
+      "sent": "Enviados",
+      "rate": "Tasa"
+    },
+    "stats": {
+      "packetsReceived": "Paquetes Recibidos",
+      "packetsSent": "Paquetes Enviados",
+      "currentRate": "Tasa Actual",
+      "uptime": "Tiempo Activo",
+      "statusLabel": "Estado:"
+    }
   }
 }
