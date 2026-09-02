@@ -342,14 +342,24 @@ func (a *Auditor) LoginSuccess(ctx context.Context, r *http.Request, userID, use
 		PreviousAlgorithm: "",
 	})
 
-	// Clear failed login attempts for this IP on successful login.
-	a.tracker.ClearAttempts(GetClientIP(r))
+	// Clear failed login attempts for this client on successful login.
+	//
+	// Keyed on SecurityClientIP, not GetClientIP: this is a decision, and
+	// GetClientIP returns whatever the client claimed. Clearing on a
+	// client-supplied key would let an attacker wipe someone else's counter
+	// by sending their address in X-Forwarded-For.
+	a.tracker.ClearAttempts(SecurityClientIP(r))
 }
 
 // LoginFailure logs a failed login attempt.
 // Returns true if the failure triggered a suspicious activity alert.
 func (a *Auditor) LoginFailure(ctx context.Context, r *http.Request, username, reason string) bool {
+	// Two different addresses on purpose. The logged one is what the client
+	// claimed, which is useful behind a proxy and must never be trusted; the
+	// tracker key is the immediate peer, because an attacker who can choose
+	// their own bucket is never counted and the threshold never fires.
 	ipAddress := GetClientIP(r)
+	trackerKey := SecurityClientIP(r)
 
 	LogSecurityEvent(ctx, &SecurityEvent{
 		Timestamp:         time.Time{},
@@ -370,7 +380,7 @@ func (a *Auditor) LoginFailure(ctx context.Context, r *http.Request, username, r
 	})
 
 	// Track this failed attempt and check for suspicious activity.
-	return a.tracker.RecordFailedAttempt(ctx, r, ipAddress, username)
+	return a.tracker.RecordFailedAttempt(ctx, r, trackerKey, username)
 }
 
 // AuditTokenInvalid logs a token validation failure.
