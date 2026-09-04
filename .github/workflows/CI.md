@@ -175,7 +175,7 @@ make test-e2e  # Playwright E2E (requires the backend running)
 ### Backend
 
 ```bash
-make lint-go           # golangci-lint v2.13.1
+make lint-go           # golangci-lint v2.13.2
 make test-backend      # Go tests
 make test-coverage     # Coverage report
 make security-backend  # gosec + govulncheck
