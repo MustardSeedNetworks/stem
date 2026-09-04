@@ -1491,8 +1491,26 @@ jobs:
         working-directory: ui
         run: npm ci
 
+      # Same ldflags recipe as the release-path builds above. Without them the
+      # binary this suite drives reports /__version as "unknown" -- so the E2E
+      # tests exercise a build shape that could never ship, and any assertion
+      # about version or UI embedding would be meaningless. CLAUDE.md's build
+      # contract covers *any* `go build` in this file, not only release ones.
       - name: Build backend
-        run: CGO_ENABLED=0 go build -o bin/stem ./cmd/stem/
+        env:
+          CGO_ENABLED: '0'
+        run: |
+          VERSION=$(git describe --tags --always --dirty 2>/dev/null || echo "dev")
+          COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+          BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          UI_BUILD_HASH=$(find internal/api/ui -type f -exec md5sum {} \; 2>/dev/null | sort | md5sum 2>/dev/null | cut -d' ' -f1)
+          go build -trimpath -buildvcs=false \
+            -ldflags "-s -w \
+              -X github.com/MustardSeedNetworks/stem/internal/version.Version=${VERSION} \
+              -X github.com/MustardSeedNetworks/stem/internal/version.Commit=${COMMIT} \
+              -X github.com/MustardSeedNetworks/stem/internal/version.BuildTime=${BUILD_TIME} \
+              -X github.com/MustardSeedNetworks/stem/internal/version.UIBuildHash=${UI_BUILD_HASH}" \
+            -o bin/stem ./cmd/stem/
 
       # No browser install, no apt, no cache: the pinned image ships webkit's
       # GStreamer/font stack and the browser binaries already. That removes the
