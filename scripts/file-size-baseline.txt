@@ -1,1 +1,14 @@
-# path maximum-lines
+# Files over the size limit, with the maximum they may not grow past.
+# Seeded by ci/file-size-one-tier; shrink-only. One line: <path> <lines>
+internal/api/server_internal_test.go 4287
+internal/auth/auth_test.go 2277
+internal/help/help_test.go 1100
+internal/logging/logging_internal_test.go 1784
+internal/netif/detect_internal_test.go 1345
+internal/reflector/tui/tui_internal_test.go 1558
+internal/reflector/tui/tui_test.go 1674
+internal/services/benchmark/executor_test.go 1177
+internal/services/orchestrator/dataplane/dataplane.go 1163
+internal/services/orchestrator/tui/configs.go 1176
+internal/services/orchestrator/tui/tui.go 1077
+internal/services/servicetest/executor_test.go 2004
