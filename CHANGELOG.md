@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.53](https://github.com/MustardSeedNetworks/stem/compare/v0.24.52...v0.24.53) (2026-09-04)
+
+
+### Documentation
+
+* **ci:** correct the golangci-lint version CI.md tells you to run ([#984](https://github.com/MustardSeedNetworks/stem/issues/984)) ([eaa8149](https://github.com/MustardSeedNetworks/stem/commit/eaa8149b59655b08bc03c0ae46481608e83a9eaf)), closes [#983](https://github.com/MustardSeedNetworks/stem/issues/983)
+
+
+### Continuous Integration
+
+* give each main commit its own concurrency group ([#979](https://github.com/MustardSeedNetworks/stem/issues/979)) ([cdf9ee4](https://github.com/MustardSeedNetworks/stem/commit/cdf9ee4070f7a8a369700e199ab64d6e5bab8ee5)), closes [#978](https://github.com/MustardSeedNetworks/stem/issues/978)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#975](https://github.com/MustardSeedNetworks/stem/issues/975)) ([d8564eb](https://github.com/MustardSeedNetworks/stem/commit/d8564ebf1a3b0e2c881366186280d9b186d18894))
+* **deps:** lock file maintenance ([#977](https://github.com/MustardSeedNetworks/stem/issues/977)) ([af66269](https://github.com/MustardSeedNetworks/stem/commit/af66269176a36c89bbf74d8bfdf41fdbc9aff1a7))
+* **deps:** lock file maintenance ([#980](https://github.com/MustardSeedNetworks/stem/issues/980)) ([6602a99](https://github.com/MustardSeedNetworks/stem/commit/6602a99b3246c79f651bdcc46fde8d4560f7d7a6))
+* **deps:** update dependency @vitejs/plugin-react to v6.1.1 ([#985](https://github.com/MustardSeedNetworks/stem/issues/985)) ([070ed0a](https://github.com/MustardSeedNetworks/stem/commit/070ed0ab4debcee6964dd54beda59c8c5b70a3ec))
+* refresh Go dependencies to latest ([#974](https://github.com/MustardSeedNetworks/stem/issues/974)) ([3a48b8b](https://github.com/MustardSeedNetworks/stem/commit/3a48b8bebd3a0bd0ff112b782cd8996771c29afe)), closes [#973](https://github.com/MustardSeedNetworks/stem/issues/973)
+
 ## [0.24.52](https://github.com/MustardSeedNetworks/stem/compare/v0.24.51...v0.24.52) (2026-09-02)
 
 
