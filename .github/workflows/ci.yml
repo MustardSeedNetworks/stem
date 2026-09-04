@@ -1467,6 +1467,11 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          # The build below derives its version from `git describe --tags`.
+          # checkout fetches no tags by default, so describe fell through to
+          # --always and produced a bare SHA: the help drawer rendered
+          # "Stem vba2f4ab" and smoke.spec.ts:51 caught it against /v\d/.
+          fetch-tags: true
 
       # The container runs as root while the checkout is owned by another uid,
       # so git refuses the repo as "dubious ownership" and `go build` fails with
