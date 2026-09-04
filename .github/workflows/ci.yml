@@ -1468,10 +1468,14 @@ jobs:
         with:
           persist-credentials: false
           # The build below derives its version from `git describe --tags`.
-          # checkout fetches no tags by default, so describe fell through to
-          # --always and produced a bare SHA: the help drawer rendered
-          # "Stem vba2f4ab" and smoke.spec.ts:51 caught it against /v\d/.
-          fetch-tags: true
+          # `fetch-tags: true` alone was not enough (#991): at the default
+          # depth of 1 it fetches every tag *ref* but none of the commits they
+          # point to, so describe still cannot reach a tag and falls through
+          # to --always -- a bare SHA, "Stem vb739499", which smoke.spec.ts:51
+          # failed against /v\d/ on #1000. #991 only passed because its head
+          # happened to sit within reach of a tag. Full history is the only
+          # deterministic fix; it costs seconds on a repo this size.
+          fetch-depth: 0
 
       # The container runs as root while the checkout is owned by another uid,
       # so git refuses the repo as "dubious ownership" and `go build` fails with
