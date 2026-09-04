@@ -14,7 +14,7 @@ Stem's API serves RFC 2544 / Y.1564 / Y.1731 / 2889 / 6349 / MEF / TSN
 performance-test results and reflector control over HTTPS. All fields the
 API currently emits or accepts are already camelCase:
 
-```
+```bash
 grep -rnoE 'json:"[a-z][a-z0-9]*_[a-z0-9_]+[^"]*"' \
   internal/api internal/reflector --include='*.go' | grep -v _test | wc -l
 # → 0

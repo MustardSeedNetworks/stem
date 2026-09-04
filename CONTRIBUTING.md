@@ -54,7 +54,7 @@ Use descriptive branch names with prefixes:
 
 We use [Conventional Commits](https://www.conventionalcommits.org/). All commits must follow this format:
 
-```
+```text
 type(scope): description
 
 [optional body]
@@ -77,7 +77,7 @@ type(scope): description
 
 #### Examples
 
-```
+```text
 feat(benchmark): add RFC 2544 back-to-back test
 fix(reflector): resolve packet drop on high load
 docs: update installation instructions

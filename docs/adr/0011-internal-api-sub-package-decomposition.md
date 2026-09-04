@@ -31,7 +31,7 @@ The api transport layer wires leaves at construction time; no leaf knows about
 ### Completed slices
 
 | Slice | Package | PR |
-|-------|---------|-----|
+| ------- | --------- | ----- |
 | Rate limiter | `internal/api/ratelimit` | #451 |
 | SSE broadcaster | `internal/api/sse` | #452 |
 | TLS utilities | `internal/api/tlsutil` | #453 |
@@ -86,8 +86,8 @@ warning), and the response-header wiring stay in `internal/api`.
 
 ### Future slices (candidates)
 
-| Concern | Notes |
-|---------|-------|
+| Concern          | Notes                                                                                                                                      |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
 | Handler grouping | the 15 `handlers_*.go` are Server-coupled transport code, not stdlib leaves — needs a naming/grouping decision rather than the leaf recipe |
 
 ## Consequences

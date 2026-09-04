@@ -14,6 +14,7 @@
 **The premise of this audit request contains a fundamental misunderstanding.**
 
 The request describes Seed/Stem/NIAC as a "layered, opinionated reference architecture" where:
+
 - Seed = foundational patterns, primitives, templates
 - Stem = applied implementations built from Seed
 - NIAC = production-grade deployable systems
@@ -21,22 +22,25 @@ The request describes Seed/Stem/NIAC as a "layered, opinionated reference archit
 **This is incorrect.** These are **three independent products** from the same developer:
 
 | Repo | Actual Purpose | Domain |
-|------|----------------|--------|
+| ------ | ---------------- | -------- |
 | **Seed** | Network diagnostic appliance | Plug-in network analyzer |
 | **Stem** | Network performance testing | RFC 2544, Y.1564 testing |
 | **NIAC** | Network device simulator | SNMP device simulation |
 
 They share:
+
 - **Developer conventions** (coding style, tooling choices)
 - **Infrastructure patterns** (Makefile structure, CI/CD)
 - **UI framework** (React, Vite, Biome)
 
 They do NOT share:
+
 - Code inheritance
 - Shared libraries
 - Runtime dependencies
 
-**The correct framing:** These are **sibling products** that should maintain **convention consistency**, not architectural layering.
+**The correct framing:** These are **sibling products** that should maintain **convention consistency**, not
+architectural layering.
 
 ---
 
@@ -47,7 +51,7 @@ They do NOT share:
 ### Top 5 Remaining Issues
 
 | # | Issue | Severity | Impact |
-|---|-------|----------|--------|
+| --- | ------- | ---------- | -------- |
 | 1 | **Cruft files committed** | High | `.gitignore.tmp`, `.gitignore.new`, `coverage.out` in repos |
 | 2 | **LICENSE inconsistency** | High | Seed/Stem use BSL 1.1, NIAC uses MIT |
 | 3 | **Go module naming drift** | Medium | `niac-go` vs `niac` pattern |
@@ -62,7 +66,7 @@ They do NOT share:
 
 All three repos now follow the canonical structure:
 
-```
+```text
 {product}/
 ├── cmd/{product}/          ✓ All repos
 ├── internal/               ✓ All repos
@@ -104,7 +108,7 @@ All three repos now follow the canonical structure:
 ### 2.2 Root-Level Files
 
 | File | Seed | Stem | NIAC | Status |
-|------|------|------|------|--------|
+| ------ | ------ | ------ | ------ | -------- |
 | `.clang-format` | ✓ | ✓ | ✗ | ⚠️ NIAC missing (has no C code, acceptable) |
 | `.clang-tidy` | ✓ | ✓ | ✗ | ⚠️ NIAC missing (has no C code, acceptable) |
 | `.editorconfig` | ✓ | ✓ | ✓ | ✅ |
@@ -135,7 +139,7 @@ All three repos now follow the canonical structure:
 ### 2.3 File Naming (✅ GOOD)
 
 | Category | Convention | Status |
-|----------|------------|--------|
+| ---------- | ------------ | -------- |
 | Markdown docs | `SCREAMING_SNAKE.md` | ✅ Consistent |
 | Config files | `kebab-case.yaml` | ✅ Consistent |
 | Go files | `snake_case.go` | ✅ Consistent |
@@ -146,7 +150,7 @@ All three repos now follow the canonical structure:
 
 All three repos have identical mk/ structure:
 
-```
+```text
 mk/
 ├── build.mk
 ├── deps.mk
@@ -180,10 +184,10 @@ All three repos have identical package.json scripts:
 ### 2.6 UI Package Naming (✅ CONSISTENT)
 
 | Repo | Package Name |
-|------|--------------|
-| Seed | `seed-ui` |
-| Stem | `stem-ui` |
-| NIAC | `niac-ui` |
+| ---- | ------------ |
+| Seed | `seed-ui`    |
+| Stem | `stem-ui`    |
+| NIAC | `niac-ui`    |
 
 **Pattern:** `{product}-ui` ✅
 
@@ -194,7 +198,7 @@ All three repos have identical package.json scripts:
 ### 3.1 What Should Be Deleted
 
 | File | Repo | Reason |
-|------|------|--------|
+| ------ | ------ | -------- |
 | `.gitignore.new` | Seed, Stem | Temp file cruft |
 | `.gitignore.tmp` | Seed, Stem | Temp file cruft |
 | `coverage.out` | Seed, NIAC | Build artifact (should be gitignored) |
@@ -208,15 +212,15 @@ All three repos have identical package.json scripts:
 
 ### 3.2 What Should Be Added
 
-| Item | Repo | Reason |
-|------|------|--------|
-| `Dockerfile` | Stem, NIAC | Container deployment support |
-| `i18n/` | NIAC UI | Internationalization (low priority) |
+| Item         | Repo       | Reason                              |
+| ------------ | ---------- | ----------------------------------- |
+| `Dockerfile` | Stem, NIAC | Container deployment support        |
+| `i18n/`      | NIAC UI    | Internationalization (low priority) |
 
 ### 3.3 What Should Be Merged/Moved
 
 | From | To | Reason |
-|------|-----|--------|
+| ------ | ----- | -------- |
 | `SECURITY_REMEDIATION_PLAN.md` | `docs/archive/` | Internal tracking doc |
 | `config.yaml` (Seed root) | `configs/seed.yaml` | Consistent location |
 | `seed-dev.service` (deploy/) | `deploy/systemd/` | Consistent structure |
@@ -227,7 +231,7 @@ All three repos have identical package.json scripts:
 
 ### 4.1 Directory Structure (Canonical)
 
-```
+```text
 {product}/
 ├── cmd/{product}/              # Binary entry point
 ├── internal/                   # Private packages
@@ -280,7 +284,7 @@ All three repos have identical package.json scripts:
 
 ### 4.2 Root Config Files (Required)
 
-```
+```text
 .editorconfig
 .gitignore
 .gitleaks.toml
@@ -309,7 +313,7 @@ typos.toml
 ### 4.3 File Naming Rules
 
 | Type | Convention | Example |
-|------|------------|---------|
+| ------ | ------------ | --------- |
 | Markdown docs | SCREAMING_SNAKE | `API_REFERENCE.md` |
 | YAML configs | kebab-case | `docker-compose.yaml` |
 | Shell scripts | kebab-case | `build-release.sh` |
@@ -371,11 +375,13 @@ echo "*.coverage.out" >> /Users/krisarmstrong/Developer/stem/.gitignore
 ### Phase 2: License Decision (Requires Decision)
 
 **Current State:**
+
 - Seed: BSL 1.1
 - Stem: BSL 1.1
 - NIAC: MIT
 
 **Options:**
+
 1. Keep as-is (acceptable if intentional)
 2. Standardize all to BSL 1.1
 3. Standardize all to MIT
@@ -385,11 +391,13 @@ echo "*.coverage.out" >> /Users/krisarmstrong/Developer/stem/.gitignore
 ### Phase 3: Go Module Naming (Optional)
 
 **Current:**
+
 - `github.com/krisarmstrong/seed`
 - `github.com/krisarmstrong/stem`
 - `github.com/krisarmstrong/niac-go`
 
-**Recommendation:** Keep as-is. The `-go` suffix in NIAC is because it lives in a `go/` subdirectory (repo also has `java/`). This is intentional and appropriate.
+**Recommendation:** Keep as-is. The `-go` suffix in NIAC is because it lives in a `go/` subdirectory (repo also has
+`java/`). This is intentional and appropriate.
 
 ### Phase 4: Documentation Consolidation (Optional Improvement)
 
@@ -412,6 +420,7 @@ NIAC has 30 docs files vs Stem's 6. Consider:
 ### 6.1 Shared Conventions Package (OPTIONAL)
 
 Create a shared repo for:
+
 - `.golangci.yml` template
 - `biome.json` template
 - `Makefile` templates
@@ -426,10 +435,12 @@ Create a shared repo for:
 Could consolidate all three into a monorepo.
 
 **Pros:**
+
 - Single clone for all products
 - Shared CI/CD
 
 **Cons:**
+
 - Products are independent
 - Different release cycles
 - Increased complexity

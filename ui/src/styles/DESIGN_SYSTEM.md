@@ -7,7 +7,7 @@ tokens and component classes instead of scattered raw values.
 
 Three tiers, **one** source of truth for values, **one** derivation direction:
 
-```
+```text
 Primitive   Tailwind's built-in palette (blue-700 = #1976d2)     ← never referenced directly in app code
    ↓ alias
 Semantic    index.css @theme + :root/.dark                       ← THE source of truth for VALUES
