@@ -20,7 +20,7 @@ without adding it to `ci-complete`'s `needs:` list makes that job advisory.
 | `frontend` | React/TS checks | tsc typecheck, Biome, Vite build, Vitest, Storybook build |
 | `c-lint` | C dataplane lint (C23) | clang-format, clang-tidy |
 | `dataplane-safety` | C memory safety | ASAN + fuzz targets |
-| `security` | Security scans | govulncheck (hard gate), gosec, npm audit, gitleaks, Trivy |
+| `security` | Security scans | govulncheck (hard gate), gosec via golangci-lint (blocking gate; G103/G204/G304/G702 are SARIF-only via the standalone step), npm audit, gitleaks, Trivy |
 | `semgrep` | SAST | Semgrep rules |
 | `quality` | Code quality gates | banned vocabulary, file size ratchet, output escaping, sensitive files |
 | `workflow-lint` | Workflow static analysis | actionlint; zizmor (blocks on High) |
@@ -178,7 +178,7 @@ make test-e2e  # Playwright E2E (requires the backend running)
 make lint-go           # golangci-lint v2.13.2
 make test-backend      # Go tests
 make test-coverage     # Coverage report
-make security-backend  # gosec + govulncheck
+make security-backend  # gosec (blocking via golangci-lint; G103/G204/G304/G702 SARIF-only) + govulncheck
 ```
 
 ### Frontend
