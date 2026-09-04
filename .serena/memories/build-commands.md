@@ -3,7 +3,7 @@
 ## Quick Reference
 
 | Command | Purpose |
-|---------|---------|
+| --------- | --------- |
 | `make build` | Build all (Go + C dataplane) |
 | `make test` | Run all Go tests |
 | `make lint` | Run golangci-lint + clang-tidy |
@@ -31,6 +31,7 @@ go test -v ./internal/auth/...  # Test specific package
 ## Pre-commit
 
 The project has pre-commit hooks that run:
+
 - Secret detection (gitleaks)
 - Go linting
 - Sensitive file checks

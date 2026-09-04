@@ -25,7 +25,7 @@ License keys become **Ed25519-signed tokens**. The format (`signing.go`) is
 shared by convention across seed/stem/niac and the keygen tool — each repo owns
 its own copy (no master module), matching the harmonization rule:
 
-```
+```text
 MSN1.<base64url(payload)>.<base64url(signature)>
 ```
 
@@ -66,6 +66,7 @@ rule. A token presenting tier 3 or product code 3001 is now **rejected** (it
 falls through to "Invalid license tier" / product-code mismatch) — previously
 such tokens were grandfathered to Professional features. The keygen tool must no
 longer mint 3001 (cross-repo follow-up in msn-internal-tools/keygen).
+
 - The embedded public key is a **pre-launch** key generated for this change; it
   must be rotated via keygen before GA (regenerate the key + the contract vectors
   together).

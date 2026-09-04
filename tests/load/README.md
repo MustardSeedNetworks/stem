@@ -35,7 +35,7 @@ stem web -p 8080
 ## Test Scripts
 
 | Script | Purpose | Duration | VUs |
-|--------|---------|----------|-----|
+| -------- | --------- | ---------- | ----- |
 | `auth.js` | Authentication flow testing | ~7 min | 100 |
 | `api.js` | API endpoint stress testing | ~9 min | 100 |
 | `full.js` | Combined production simulation | ~10 min | 100+ |
@@ -84,17 +84,20 @@ k6 run --out influxdb=http://localhost:8086/k6 auth.js
 ## Performance Targets
 
 ### Authentication (`auth.js`)
+
 - Login: p99 < 100ms
 - Token refresh: p99 < 50ms
 - Error rate: < 1%
 
 ### API (`api.js`)
+
 - Health check: p99 < 50ms
 - Modules list: p99 < 100ms
 - Overall: p95 < 200ms, p99 < 500ms
 - Error rate: < 1%
 
 ### Full Suite (`full.js`)
+
 - Overall: p95 < 300ms, p99 < 1s
 - SSE connection: p99 < 2s
 - Error rate: < 2%
@@ -121,7 +124,7 @@ k6 run --out influxdb=http://localhost:8086/k6 auth.js
 
 ### Key Metrics
 
-```
+```text
 http_req_duration.............: avg=45ms   min=5ms   med=30ms   max=500ms  p(90)=80ms   p(95)=120ms
 http_req_failed...............: 0.50%   ✓ 5      ✗ 995
 http_reqs.....................: 1000    83.333/s
@@ -134,7 +137,7 @@ http_reqs.....................: 1000    83.333/s
 
 ### Threshold Failures
 
-```
+```text
 ✗ http_req_duration..............: avg=250ms min=50ms med=200ms max=5s p(95)=500ms p(99)=1500ms
     ✓ p(95)<300
     ✗ p(99)<1000
@@ -145,27 +148,35 @@ A ✗ next to a threshold indicates failure. Review the specific metric to ident
 ## Troubleshooting
 
 ### Connection Refused
-```
+
+```text
 ERRO[0001] request failed: dial tcp 127.0.0.1:8080: connect: connection refused
 ```
+
 Ensure the server is running and accessible at STEM_URL.
 
 ### Authentication Failed
-```
+
+```text
 WARN[0005] login status is 200: false
 ```
+
 Check STEM_USER and STEM_PASS environment variables match server configuration.
 
 ### Rate Limited
-```
+
+```text
 WARN[0030] Request rate limited
 ```
+
 Expected during rate limit testing. Not an error in normal operation.
 
 ### SSE Connection Failed
-```
+
+```text
 ERRO[0010] SSE connection failed
 ```
+
 Check firewall settings and ensure the SSE endpoint is accessible.
 
 ## Continuous Integration

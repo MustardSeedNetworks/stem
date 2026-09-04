@@ -8,7 +8,7 @@ A cross-repo security-invariant audit (seed/stem/niac) confirmed Stem's core
 posture from ADR-0004 holds: every mutating `/api` route goes through the
 capability registry (ADR-0001) and the global per-session `CSRFManager`
 (`server.go`, wrapping `s.mux`), and the `check-route-policy.sh` CI gate bans
-direct mux registration. The audit surfaced two *defense-in-depth* edges where
+direct mux registration. The audit surfaced two _defense-in-depth_ edges where
 the global CSRF middleware does not actively validate a token. Both are blocked
 against browser-driven CSRF by `SameSite=Strict` on the auth cookies; neither is
 an invariant violation, but both deserve a recorded decision so a future audit

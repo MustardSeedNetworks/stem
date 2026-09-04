@@ -1,12 +1,15 @@
 # GitHub Issues - Stem (2026-01-26)
 
 ## Security / Test Data
+
 - Title: Load tests default to weak password value
   Labels: security, tests
   Files: tests/load/api.js:38, tests/load/full.js:43
-  Body: Load tests fall back to "password" when STEM_PASS is not set. Require explicit env var or use a stronger placeholder to avoid accidental weak defaults.
+  Body: Load tests fall back to "password" when STEM_PASS is not set. Require explicit env var or use a stronger
+  placeholder to avoid accidental weak defaults.
 
 ## Lint / Hygiene
+
 - Title: Handle errors returned by os.Setenv
   Labels: lint, backend
   File: cmd/stem/main.go:1183

@@ -11,7 +11,7 @@
 All distribution channels are **locked down**:
 
 | Channel | Status | Notes |
-|---------|--------|-------|
+| --------- | -------- | ------- |
 | Container registry | DISABLED | No `container-push` target |
 | Public downloads | DISABLED | No public artifacts |
 | Package repos | DISABLED | .deb/.rpm stay local |
@@ -40,6 +40,7 @@ Before any public/commercial distribution:
 ### Existing License Code
 
 Stem has license infrastructure skeleton at `internal/license/`. Needs:
+
 - [ ] License key generation
 - [ ] Validation logic
 - [ ] Module-based feature gating
@@ -48,7 +49,7 @@ Stem has license infrastructure skeleton at `internal/license/`. Needs:
 ### Proposed License Tiers
 
 | Tier | Modules | Target |
-|------|---------|--------|
+| ------ | --------- | -------- |
 | Trial | All modules, 30-day limit | Evaluation |
 | Benchmark | RFC 2544 only | Basic testing |
 | Professional | All modules | Enterprise |
@@ -61,7 +62,7 @@ Stem has license infrastructure skeleton at `internal/license/`. Needs:
 Stem's modular architecture enables per-module licensing:
 
 | Module | Color | Could be separate license |
-|--------|-------|--------------------------|
+| -------- | ------- | -------------------------- |
 | Benchmark | Red | Base tier |
 | ServiceTest | Orange | Pro tier |
 | TrafficGen | Yellow | Pro tier |
@@ -75,6 +76,7 @@ Stem's modular architecture enables per-module licensing:
 When ready for commercial release:
 
 ### 1. Private Container Registry
+
 ```bash
 # Future - requires auth
 CONTAINER_REGISTRY=registry.mustardseednetworks.com
@@ -82,11 +84,13 @@ make container-push
 ```
 
 ### 2. Customer Portal
+
 - Authenticated download of .deb/.rpm
 - License key provisioning
 - Module activation
 
 ### 3. Appliance Image
+
 - Pre-installed on test equipment
 - Hardware-locked license
 - Calibration certificates
@@ -132,5 +136,5 @@ make build              # Embeds version via ldflags
 
 ---
 
-*Last updated: 2025-01-19*
-*Status: Development lockdown*
+_Last updated: 2025-01-19_
+_Status: Development lockdown_

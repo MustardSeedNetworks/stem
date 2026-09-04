@@ -15,7 +15,7 @@ scattering `go func()` launches through `Run` would repeat the same gap.
 
 seed solved the equivalent problem with a `BackgroundComponents` holder that
 exposes one ordered `Start(ctx)`/`Stop()` seam (seed `internal/api/background.go`).
-The harmonization directive is to match seed's *shape*, not copy its code. seed's
+The harmonization directive is to match seed's _shape_, not copy its code. seed's
 holder owns detached feature services (the reporting scheduler, the Wi-Fi
 visibility loop); stem's single background producer instead reads live `Server`
 state (the reflector executor and stats), so a verbatim port does not fit.
