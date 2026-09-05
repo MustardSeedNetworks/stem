@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.54](https://github.com/MustardSeedNetworks/stem/compare/v0.24.53...v0.24.54) (2026-09-05)
+
+
+### Bug Fixes
+
+* **deps:** update dependency react-router to v8.3.1 ([#993](https://github.com/MustardSeedNetworks/stem/issues/993)) ([f8bef6b](https://github.com/MustardSeedNetworks/stem/commit/f8bef6becbe825541d9214270e8cd71099eeda2c))
+
+
+### Documentation
+
+* clear the markdown debt that fails the docs gate on any touched file ([#989](https://github.com/MustardSeedNetworks/stem/issues/989)) ([dd33593](https://github.com/MustardSeedNetworks/stem/commit/dd33593479f85fac22a284e7b26dc5805913eac4)), closes [#988](https://github.com/MustardSeedNetworks/stem/issues/988)
+
+
+### Continuous Integration
+
+* arm auto-merge on the release PR ([#996](https://github.com/MustardSeedNetworks/stem/issues/996)) ([008f27f](https://github.com/MustardSeedNetworks/stem/commit/008f27faac166a4d8e43633ba7571997d1b6e624)), closes [#995](https://github.com/MustardSeedNetworks/stem/issues/995)
+* collapse the file-size gate to one enforced limit ([#998](https://github.com/MustardSeedNetworks/stem/issues/998)) ([626d8b2](https://github.com/MustardSeedNetworks/stem/commit/626d8b2dec54391e17fc3878c4cf4b865e80cb87)), closes [#997](https://github.com/MustardSeedNetworks/stem/issues/997)
+* exclude both G204 wordings from the gosec gate, matching seed ([#1000](https://github.com/MustardSeedNetworks/stem/issues/1000)) ([b313f27](https://github.com/MustardSeedNetworks/stem/commit/b313f27b93620d4ff21b63b2e52ef4a34f259bf8))
+* give the E2E build full history so git describe can reach a tag ([#1006](https://github.com/MustardSeedNetworks/stem/issues/1006)) ([968e1d7](https://github.com/MustardSeedNetworks/stem/commit/968e1d79eb947be8f9632149eb6941ba8be9822d)), closes [#1005](https://github.com/MustardSeedNetworks/stem/issues/1005)
+* inject the version ldflags into the E2E build ([#991](https://github.com/MustardSeedNetworks/stem/issues/991)) ([21cb621](https://github.com/MustardSeedNetworks/stem/commit/21cb621646666935f3ecdfa4bd7944d3166b91f4))
+* lint the Windows tree with GOOS=windows, gating new findings only ([#1003](https://github.com/MustardSeedNetworks/stem/issues/1003)) ([4a625e9](https://github.com/MustardSeedNetworks/stem/commit/4a625e9b2b5c44eca65b9114e8807a1e45729a26)), closes [#1001](https://github.com/MustardSeedNetworks/stem/issues/1001)
+* tell a registry outage apart from a vulnerability in npm audit ([#1004](https://github.com/MustardSeedNetworks/stem/issues/1004)) ([108102e](https://github.com/MustardSeedNetworks/stem/commit/108102e0856180cc9605e6e7bb624e4975e0f903)), closes [#1002](https://github.com/MustardSeedNetworks/stem/issues/1002)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1007](https://github.com/MustardSeedNetworks/stem/issues/1007)) ([b5448be](https://github.com/MustardSeedNetworks/stem/commit/b5448be2d89ba9a439b05b153454a3376758d411))
+* **deps:** lock file maintenance ([#987](https://github.com/MustardSeedNetworks/stem/issues/987)) ([b281a61](https://github.com/MustardSeedNetworks/stem/commit/b281a61252590210a9df190b3c8fb461104b607b))
+* **deps:** lock file maintenance ([#994](https://github.com/MustardSeedNetworks/stem/issues/994)) ([182134e](https://github.com/MustardSeedNetworks/stem/commit/182134e364b0f8980172efcc05dea98548d2ae96))
+
 ## [0.24.53](https://github.com/MustardSeedNetworks/stem/compare/v0.24.52...v0.24.53) (2026-09-04)
 
 
