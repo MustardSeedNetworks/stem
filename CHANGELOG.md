@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.56](https://github.com/MustardSeedNetworks/stem/compare/v0.24.55...v0.24.56) (2026-09-05)
+
+
+### Miscellaneous
+
+* **deps:** update dependency fast-uri to v4.1.4 ([#1013](https://github.com/MustardSeedNetworks/stem/issues/1013)) ([9bfd30f](https://github.com/MustardSeedNetworks/stem/commit/9bfd30fd26287fb6d3b49b458b2211e2bb17a2e8))
+
 ## [0.24.55](https://github.com/MustardSeedNetworks/stem/compare/v0.24.54...v0.24.55) (2026-09-05)
 
 
