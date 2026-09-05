@@ -12,6 +12,11 @@
 #
 # =============================================================================
 
+# Must match the markdownlint-cli2 bundled by DavidAnson/markdownlint-cli2-action
+# in .github/workflows/ci.yml; a newer or older local copy is a false clear
+# (MD060 table style landed in 0.23 and the local Homebrew copy was on 0.20).
+MARKDOWNLINT_CLI2_VERSION := 0.23.2
+
 .PHONY: lint lint-go lint-c lint-frontend lint-frontend-quiet lint-md \
         fmt fmt-go fmt-c fmt-frontend fmt-check fix fix-all
 
@@ -120,15 +125,9 @@ else
 	@echo "C linting requires Linux (the dataplane backends are Linux-only); CI is the authority here."
 endif
 
-lint-md: ## Lint markdown files with markdownlint
+lint-md: ## Lint markdown files with the same markdownlint-cli2 CI runs
 	@printf "$(BOLD)🔍 Linting markdown files...$(RESET)\n"
-	@if command -v markdownlint-cli2 > /dev/null 2>&1; then \
-		markdownlint-cli2 "**/*.md"; \
-	elif npx markdownlint-cli2 --help > /dev/null 2>&1; then \
-		npx markdownlint-cli2 "**/*.md"; \
-	else \
-		printf "$(YELLOW)SKIP: markdownlint-cli2 not installed (npm install -g markdownlint-cli2)$(RESET)\n"; \
-	fi
+	@npx --yes markdownlint-cli2@$(MARKDOWNLINT_CLI2_VERSION) "**/*.md"
 	@printf "$(GREEN)✓ Markdown lint complete$(RESET)\n"
 
 # =============================================================================
