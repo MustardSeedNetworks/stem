@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.55](https://github.com/MustardSeedNetworks/stem/compare/v0.24.54...v0.24.55) (2026-09-05)
+
+
+### Continuous Integration
+
+* give release-please's gh calls a repository ([#1009](https://github.com/MustardSeedNetworks/stem/issues/1009)) ([8263fa4](https://github.com/MustardSeedNetworks/stem/commit/8263fa41fb2a345c5bee6b2b2dd95e2ddb342b3d)), closes [#1008](https://github.com/MustardSeedNetworks/stem/issues/1008)
+
 ## [0.24.54](https://github.com/MustardSeedNetworks/stem/compare/v0.24.53...v0.24.54) (2026-09-05)
 
 
