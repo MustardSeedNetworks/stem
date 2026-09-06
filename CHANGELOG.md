@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.59](https://github.com/MustardSeedNetworks/stem/compare/v0.24.58...v0.24.59) (2026-09-06)
+
+
+### Bug Fixes
+
+* **deps:** update dependency react-hook-form to v7.87.0 ([#1023](https://github.com/MustardSeedNetworks/stem/issues/1023)) ([bf4cfdb](https://github.com/MustardSeedNetworks/stem/commit/bf4cfdb4a5a8bfcbce232d177904770a113c7835))
+
 ## [0.24.58](https://github.com/MustardSeedNetworks/stem/compare/v0.24.57...v0.24.58) (2026-09-06)
 
 
