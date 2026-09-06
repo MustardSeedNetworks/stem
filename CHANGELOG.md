@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.61](https://github.com/MustardSeedNetworks/stem/compare/v0.24.60...v0.24.61) (2026-09-06)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1029](https://github.com/MustardSeedNetworks/stem/issues/1029)) ([f10271e](https://github.com/MustardSeedNetworks/stem/commit/f10271e0a1daa6d24400ff97d7a6890d61491f2f))
+
 ## [0.24.60](https://github.com/MustardSeedNetworks/stem/compare/v0.24.59...v0.24.60) (2026-09-06)
 
 
