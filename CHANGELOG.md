@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.60](https://github.com/MustardSeedNetworks/stem/compare/v0.24.59...v0.24.60) (2026-09-06)
+
+
+### Continuous Integration
+
+* install the pinned golangci-lint when the local version differs ([#1026](https://github.com/MustardSeedNetworks/stem/issues/1026)) ([6377d59](https://github.com/MustardSeedNetworks/stem/commit/6377d590fbe3e25c630901c3a9eca3827b8476dd))
+
 ## [0.24.59](https://github.com/MustardSeedNetworks/stem/compare/v0.24.58...v0.24.59) (2026-09-06)
 
 
