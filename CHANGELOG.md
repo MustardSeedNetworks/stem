@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.58](https://github.com/MustardSeedNetworks/stem/compare/v0.24.57...v0.24.58) (2026-09-06)
+
+
+### Miscellaneous
+
+* **deps:** update pre-commit hook gitleaks/gitleaks to v8.30.1 ([#1018](https://github.com/MustardSeedNetworks/stem/issues/1018)) ([df60e4e](https://github.com/MustardSeedNetworks/stem/commit/df60e4e13283743140f547cc48dcff22b05c6f1e))
+* **deps:** update pre-commit hook igorshubovych/markdownlint-cli to v0.49.1 ([#1019](https://github.com/MustardSeedNetworks/stem/issues/1019)) ([a3c2dae](https://github.com/MustardSeedNetworks/stem/commit/a3c2daecffc5b09b4ee05ede22cae93f29a30f6a))
+* **deps:** update pre-commit hook koalaman/shellcheck-precommit to v0.11.0 ([#1020](https://github.com/MustardSeedNetworks/stem/issues/1020)) ([4fd8e45](https://github.com/MustardSeedNetworks/stem/commit/4fd8e453da257086befdd13bc22206b826b2a467))
+
 ## [0.24.57](https://github.com/MustardSeedNetworks/stem/compare/v0.24.56...v0.24.57) (2026-09-05)
 
 
