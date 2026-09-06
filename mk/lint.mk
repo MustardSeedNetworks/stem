@@ -17,6 +17,11 @@
 # (MD060 table style landed in 0.23 and the local Homebrew copy was on 0.20).
 MARKDOWNLINT_CLI2_VERSION := 0.23.2
 
+# Must match the golangci-lint pin in .github/workflows/ci.yml. The old rule
+# only installed when the binary was missing, so a stale local copy passed
+# what CI rejected (v2.13.1's embedlit rule was the last time this bit).
+GOLANGCI_LINT_VERSION := v2.13.2
+
 .PHONY: lint lint-go lint-c lint-frontend lint-frontend-quiet lint-md \
         fmt fmt-go fmt-c fmt-frontend fmt-check fix fix-all
 
@@ -62,9 +67,9 @@ LINT_LINUX_CONTEXT ?= ../.github/tools/lint-linux
 lint-go: ## Run Go linter (golangci-lint)
 	@printf "$(BOLD)🔍 Running Go linter (golangci-lint)...$(RESET)\n"
 	@GOLANGCI_LINT="$$(go env GOPATH)/bin/golangci-lint"; \
-	if [ ! -f "$$GOLANGCI_LINT" ]; then \
-		printf "📦 Installing golangci-lint v2...\n"; \
-		go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.13.2; \
+	if ! "$$GOLANGCI_LINT" version 2>/dev/null | grep -q "$(GOLANGCI_LINT_VERSION:v%=%)"; then \
+		printf "📦 Installing golangci-lint $(GOLANGCI_LINT_VERSION)...\n"; \
+		go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION); \
 	fi; \
 	$$GOLANGCI_LINT run --allow-parallel-runners ./... && \
 	GOOS=windows $$GOLANGCI_LINT run --allow-parallel-runners ./internal/api/...
@@ -192,7 +197,7 @@ fix: ## Auto-fix Go and frontend linting issues
 	@printf "$(BOLD)🔧 Auto-fixing code...$(RESET)\n"
 	@GOLANGCI_LINT="$$(go env GOPATH)/bin/golangci-lint"; \
 	if [ ! -f "$$GOLANGCI_LINT" ]; then \
-		go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.13.2; \
+		go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION); \
 	fi; \
 	$$GOLANGCI_LINT run --fix ./...
 	@gofmt -w -s .
