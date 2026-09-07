@@ -232,7 +232,7 @@ Faster learning = smoother experience for users joining the network.`,
 			{
 				Name:       "Learning Rate",
 				Unit:       "addresses per second",
-				GoodRange:  "1000+ for enterprise switches",
+				GoodRange:  "1000+ for campus and core switches",
 				BadMeaning: "May cause delays for new device connectivity",
 			},
 		},

@@ -255,7 +255,7 @@ EXAMPLES:
     # License management
     stem license --status
     stem license --trial
-    stem license --activate XXXX-XXXX-XXXX-XXXX
+    stem license --activate MSN1.<payload>.<signature>
 
 For more information: https://mustardseednetworks.com
 `)

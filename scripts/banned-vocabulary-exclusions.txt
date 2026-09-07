@@ -16,6 +16,7 @@ internal/services/orchestrator/dataplane/dataplane.go | MEF 23.1 Class-of-Servic
 internal/services/orchestrator/dataplane/dataplane_mef.go | MEF 23.1 Class-of-Service identifier
 
 # Policy documentation that must quote the banned terms to state the rule.
+docs/adr/0007-ed25519-signed-licenses.md | ADR amendment recording the tier-3 retirement; it must name the tier it retired
 ui/SHELL.md | states the banned-vocabulary policy and must name the terms
 docs/README.md | relocation index; the old filenames it maps are immutable history
 

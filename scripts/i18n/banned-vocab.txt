@@ -36,6 +36,12 @@ código abierto
 fuente abierta
 
 # --- legacy Stem tier names (renamed per LICENSE_STRATEGY)
+# "Enterprise" is banned in its TIER sense: tier 3 / product code 3001 was
+# retired (ADR-0007 amendment) and is rejected by internal/license/policy.go.
+# Enterprise is not a SKU — the commercial offering is quoted via /contact —
+# so if you are writing that copy, say "commercial" or name the offering, not
+# a tier.
 Premium
 Certify tier
 TestSuite
+Enterprise

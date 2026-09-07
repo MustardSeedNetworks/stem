@@ -173,7 +173,6 @@ TestMaster
 Pro
 Starter
 Free
-Enterprise
 Pro Bundle
 
 # --- file formats

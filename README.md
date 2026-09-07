@@ -119,22 +119,29 @@ separately on Linux for kernel-bypass workloads.
 
 ## Licensing
 
-Tiered model. License keys are 16-character alphanumeric
-(`XXXX-XXXX-XXXX-XXXX`), validated offline, bound to up to three devices
-via hardware fingerprint.
+Two tiers, plus a 14-day trial of the paid one.
 
-| Tier | Features | Key Prefix |
+| Tier | Price | What it unlocks |
 | --- | --- | --- |
-| Trial | Full features, 14 days | (no key needed) |
-| Tier 1 | Reflector only | `1001-*` |
-| Tier 2 | Reflector + full test suite | `2001-*` |
-| Tier 3 | Enterprise (planned) | `3001-*` |
+| Free (Reflector) | free | Reflector only — the host serves as a test endpoint for another Stem or a hardware tester |
+| Pro | $1,999/yr | Reflector plus RFC 2544, Y.1564, Y.1731, RFC 2889, RFC 6349, MEF and TSN, the REST API, and multi-user access |
+| Trial | free, 14 days | Pro features, no key required |
 
-Start a trial via web UI Settings → License → Start Trial, or:
+Licenses are Ed25519-signed tokens (`MSN1.<payload>.<signature>`, see
+[ADR-0007](docs/adr/0007-ed25519-signed-licenses.md)) verified entirely
+offline — there is no phone-home — and bound to three devices by default via a
+hardware fingerprint. The binary embeds only the public key, so a Stem build
+cannot mint a license.
+
+Start a trial from the web UI (Settings → License → Start Trial), or:
 
 ```bash
-stem license trial
+stem license --trial
 ```
+
+`stem license --status` prints the tier, trial days remaining, device ID and
+enabled features; `--activate <token>` activates a key and `--deactivate`
+releases the device.
 
 ## Build
 

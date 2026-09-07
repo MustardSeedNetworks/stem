@@ -28,8 +28,7 @@ const TRIAL_DAYS = 14;
 const tierNames: Record<number, string> = {
   0: 'Invalid',
   1: 'Reflector',
-  2: 'Test Suite',
-  3: 'Enterprise',
+  2: 'Professional',
 };
 
 function formatDate(dateStr: string): string {
@@ -148,11 +147,10 @@ function ActivationForm({
           type="text"
           value={licenseKey}
           onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-            onKeyChange(e.target.value.toUpperCase())
+            onKeyChange(e.target.value.trim())
           }
-          placeholder="XXXX-XXXX-XXXX-XXXX"
-          className="font-mono text-center tracking-wider"
-          maxLength={19}
+          placeholder="MSN1.<payload>.<signature>"
+          className="font-mono"
         />
       </div>
 
