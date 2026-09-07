@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.65](https://github.com/MustardSeedNetworks/stem/compare/v0.24.64...v0.24.65) (2026-09-07)
+
+
+### Documentation
+
+* delete the stale distribution roadmap and fix the install command ([#1044](https://github.com/MustardSeedNetworks/stem/issues/1044)) ([70038c3](https://github.com/MustardSeedNetworks/stem/commit/70038c30b54f83411ea32d0ce5d5ec00fd91484b)), closes [#1043](https://github.com/MustardSeedNetworks/stem/issues/1043)
+
 ## [0.24.64](https://github.com/MustardSeedNetworks/stem/compare/v0.24.63...v0.24.64) (2026-09-07)
 
 
