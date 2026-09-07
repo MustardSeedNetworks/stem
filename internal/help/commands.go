@@ -287,12 +287,12 @@ determines which features are available:
 		Usage: "stem license [subcommand] [flags]",
 		Flags: []FlagHelp{
 			{
-				Short:      "-k",
-				Long:       "--key",
+				Short:      "",
+				Long:       "--activate",
 				Type:       TypeString,
 				Default:    "",
 				Required:   false,
-				TechDesc:   "License key to activate (format: XXXX-XXXX-XXXX-XXXX)",
+				TechDesc:   "Signed license token to activate (format: MSN1.<payload>.<signature>)",
 				LaymanDesc: "Your license key from Mustard Seed Networks",
 			},
 			{
@@ -317,7 +317,7 @@ determines which features are available:
 		Examples: []Example{
 			{
 				Desc:    "Activate a license",
-				Command: "stem license -k ABCD-1234-EFGH-5678",
+				Command: "stem license --activate MSN1.<payload>.<signature>",
 				Output:  "License activated: Professional tier",
 			},
 			{

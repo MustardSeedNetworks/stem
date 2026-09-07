@@ -147,11 +147,10 @@ function ActivationForm({
           type="text"
           value={licenseKey}
           onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-            onKeyChange(e.target.value.toUpperCase())
+            onKeyChange(e.target.value.trim())
           }
-          placeholder="XXXX-XXXX-XXXX-XXXX"
-          className="font-mono text-center tracking-wider"
-          maxLength={19}
+          placeholder="MSN1.<payload>.<signature>"
+          className="font-mono"
         />
       </div>
 

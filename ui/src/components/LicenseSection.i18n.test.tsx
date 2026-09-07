@@ -67,7 +67,10 @@ describe('LicenseSection — real locale copy', () => {
 
     // The activate button is disabled until a key is present, so the failure
     // path is only reachable with one typed in.
-    await userEvent.type(screen.getByPlaceholderText('XXXX-XXXX-XXXX-XXXX'), 'AAAA-BBBB-CCCC-DDDD');
+    await userEvent.type(
+      screen.getByPlaceholderText('MSN1.<payload>.<signature>'),
+      'MSN1.eyJ2IjoxfQ.c2ln',
+    );
     stubLicense({ success: false, message: '' });
     const buttons = screen.getAllByRole('button', { name: /Activar Licencia/ });
     const activate = buttons[buttons.length - 1];

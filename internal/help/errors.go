@@ -121,14 +121,14 @@ func getLicenseErrors() map[string]ErrorHelp {
 			Message: "Valid license required",
 			Cause:   "No license key has been activated",
 			Solution: `Activate your license:
-  stem license -k XXXX-XXXX-XXXX-XXXX
+  stem license --activate MSN1.<payload>.<signature>
 
 Purchase a license at: https://mustardseednetworks.com
 
 Check current status:
   stem license --status`,
 			Examples: []Example{
-				{Desc: "Activate license", Command: "stem license -k ABCD-1234-EFGH-5678", Output: ""},
+				{Desc: "Activate license", Command: "stem license --activate MSN1.<payload>.<signature>", Output: ""},
 				{Desc: "Check status", Command: "stem license --status", Output: ""},
 			},
 			RelatedCmd: "stem help license",
@@ -137,13 +137,13 @@ Check current status:
 			Code:    "ERR_LICENSE_INVALID",
 			Message: "Invalid license key",
 			Cause:   "The provided license key is not valid",
-			Solution: `Check the key format: XXXX-XXXX-XXXX-XXXX
+			Solution: `Check the token format: MSN1.<payload>.<signature>
 
 Ensure no typos or extra characters.
 
 If you believe this is an error, contact support.`,
 			Examples: []Example{
-				{Desc: "Correct format", Command: "stem license -k ABCD-1234-EFGH-5678", Output: ""},
+				{Desc: "Correct format", Command: "stem license --activate MSN1.<payload>.<signature>", Output: ""},
 			},
 			RelatedCmd: "stem help license",
 		},
