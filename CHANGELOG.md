@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.67](https://github.com/MustardSeedNetworks/stem/compare/v0.24.66...v0.24.67) (2026-09-07)
+
+
+### Documentation
+
+* archive the two stale audit snapshots under docs/audits/ with an index ([#1050](https://github.com/MustardSeedNetworks/stem/issues/1050)) ([9442cb0](https://github.com/MustardSeedNetworks/stem/commit/9442cb0790383deea7576230fdd2c96f04a85578))
+
 ## [0.24.66](https://github.com/MustardSeedNetworks/stem/compare/v0.24.65...v0.24.66) (2026-09-07)
 
 
