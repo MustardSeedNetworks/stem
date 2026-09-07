@@ -28,8 +28,7 @@ const TRIAL_DAYS = 14;
 const tierNames: Record<number, string> = {
   0: 'Invalid',
   1: 'Reflector',
-  2: 'Test Suite',
-  3: 'Enterprise',
+  2: 'Professional',
 };
 
 function formatDate(dateStr: string): string {

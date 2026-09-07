@@ -25,7 +25,7 @@ func displayLicenseStatus(mgr *license.Manager) {
 		_, _ = fmt.Fprintln(os.Stdout, "\nTo start a 14-day trial:")
 		_, _ = fmt.Fprintln(os.Stdout, "  stem license --trial")
 		_, _ = fmt.Fprintln(os.Stdout, "\nTo activate with a license key:")
-		_, _ = fmt.Fprintln(os.Stdout, "  stem license --activate XXXX-XXXX-XXXX-XXXX")
+		_, _ = fmt.Fprintln(os.Stdout, "  stem license --activate MSN1.<payload>.<signature>")
 	case state.IsTrialMode:
 		remaining := mgr.TrialDaysRemaining()
 		_, _ = fmt.Fprintln(os.Stdout, "Status:    Trial Mode")

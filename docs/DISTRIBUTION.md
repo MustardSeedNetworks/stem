@@ -52,7 +52,7 @@ Stem has license infrastructure skeleton at `internal/license/`. Needs:
 | ------ | --------- | -------- |
 | Trial | All modules, 30-day limit | Evaluation |
 | Benchmark | RFC 2544 only | Basic testing |
-| Professional | All modules | Enterprise |
+| Professional | All modules | Large deployments |
 | OEM | White-label, custom modules | Partners |
 
 ---

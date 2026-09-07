@@ -12,9 +12,9 @@ import fnd "github.com/MustardSeedNetworks/foundation/pkg/license"
 
 // Stem licenses are Ed25519-signed tokens verified offline against an embedded
 // public key (the matching private key lives only in the keygen tool). Product
-// codes: 1001 = Reflector (tier 1), 2001 = Professional (tier 2). Enterprise
-// (code 3001 / tier 3) was retired 2026-06-16 — a token presenting it is
-// rejected, no grandfathering (pre-v1).
+// codes: 1001 = Reflector (tier 1), 2001 = Professional (tier 2). Tier 3
+// (code 3001) was retired 2026-06-16 — a token presenting it is rejected,
+// no grandfathering (pre-v1).
 const (
 	// productName identifies this binary in a signed payload. A token issued
 	// for another product (niac/seed) is rejected even if correctly signed.
@@ -93,8 +93,8 @@ func proFeatures() []string {
 
 // featuresForTier maps a signed wire-tier to the features Stem grants and the
 // product code expected for that tier. Only Reflector/Professional carry a
-// token; every other tier (including the retired Enterprise tier 3 and the
-// unlicensed tier 0) is rejected so a signed token can only grant what this
+// token; every other tier (including the retired tier 3 and the unlicensed
+// tier 0) is rejected so a signed token can only grant what this
 // build knows about. Passed to foundation as ProductPolicy.FeaturesForTier.
 func featuresForTier(wireTier int) ([]string, string, bool) {
 	switch Tier(wireTier) {
