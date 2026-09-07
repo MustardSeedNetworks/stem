@@ -1,5 +1,13 @@
 # Security Audit Report - The Stem v0.2.2
 
+> **Historical - superseded.** A point-in-time snapshot of v0.2.2 taken on
+> 2026-01-06 and retained unchanged as a record of what was true then. It is not
+> a statement about the security posture of the product today. The current
+> authentication review is
+> [../security/AUTH_AUDIT_2026-05-19.md](../security/AUTH_AUDIT_2026-05-19.md),
+> and `govulncheck` is a blocking CI gate with `gosec` running blocking inside
+> `golangci-lint`.
+
 **Date**: 2026-01-06
 **Auditor**: Claude Code (automated static analysis)
 **Scope**: Go codebase, dependencies, OWASP API Top 10

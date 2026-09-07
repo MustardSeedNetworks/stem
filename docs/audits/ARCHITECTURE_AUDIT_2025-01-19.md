@@ -1,5 +1,11 @@
 # Seed / Stem / NIAC Architecture Audit Report
 
+> **Historical - superseded.** A point-in-time snapshot taken on 2025-01-19 and
+> retained unchanged as a record of what was true then. It is not a description
+> of the product today. For the current architecture see
+> [../ARCHITECTURE.md](../ARCHITECTURE.md) and the decision records in
+> [../adr/](../adr/README.md).
+
 **Date:** 2025-01-19
 **Auditor:** Claude (Opus 4.5)
 **Role:** Senior Platform Architect, DevOps Lead, Documentation Systems Auditor
