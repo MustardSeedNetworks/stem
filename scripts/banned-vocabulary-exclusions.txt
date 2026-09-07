@@ -4,8 +4,8 @@
 # Immutable history and legal source text.
 CHANGELOG.md | release-please generated immutable release history
 LICENSE | unmodified proprietary legal source text
-docs/ARCHITECTURE_AUDIT_2025-01-19.md | dated audit snapshot retained as immutable history
-docs/SECURITY_AUDIT.md | dated security audit retained as immutable history
+docs/audits/ARCHITECTURE_AUDIT_2025-01-19.md | dated audit snapshot retained as immutable history
+docs/audits/SECURITY_AUDIT_2026-01-06.md | dated security audit retained as immutable history
 docs/security/AUTH_AUDIT_2026-05-19.md | dated security audit retained as immutable history
 
 # Protocol standard terminology, which is never translated or renamed.
