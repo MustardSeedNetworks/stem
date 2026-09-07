@@ -47,17 +47,26 @@
 
 ## Installation
 
-### Option 1: Pre-built Binary
+### Option 1: Signed package from a GitHub release
+
+Every tag publishes .deb, .rpm, Linux/macOS tarballs and Windows zips to
+[the releases page](https://github.com/MustardSeedNetworks/stem/releases),
+each with a cosign bundle, an SBOM and a SLSA provenance attestation. Asset
+names carry the version, so pin one rather than using `latest/download`.
 
 ```bash
-# Download latest release
-curl -LO https://github.com/MustardSeedNetworks/stem/releases/latest/download/stem-linux-amd64
+VERSION=0.24.63   # or the tag you want
 
-# Make executable
-chmod +x stem-linux-amd64
+# Debian/Ubuntu (arm64: stem_${VERSION}_arm64.deb)
+curl -LO https://github.com/MustardSeedNetworks/stem/releases/download/v${VERSION}/stem_${VERSION}_amd64.deb
+sudo dpkg -i stem_${VERSION}_amd64.deb
 
-# Move to PATH
-sudo mv stem-linux-amd64 /usr/local/bin/stem
+# RHEL/Fedora (arm64: stem-${VERSION}-1.aarch64.rpm)
+curl -LO https://github.com/MustardSeedNetworks/stem/releases/download/v${VERSION}/stem-${VERSION}-1.x86_64.rpm
+sudo rpm -i stem-${VERSION}-1.x86_64.rpm
+
+# Portable tarball (linux-amd64, linux-arm64, darwin-arm64)
+curl -LO https://github.com/MustardSeedNetworks/stem/releases/download/v${VERSION}/stem-${VERSION}-linux-amd64.tar.gz
 
 # Verify installation
 stem version
