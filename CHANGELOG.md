@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.64](https://github.com/MustardSeedNetworks/stem/compare/v0.24.63...v0.24.64) (2026-09-07)
+
+
+### Bug Fixes
+
+* retire the Enterprise tier and the old key format from every customer-facing surface ([#1038](https://github.com/MustardSeedNetworks/stem/issues/1038)) ([efb0d97](https://github.com/MustardSeedNetworks/stem/commit/efb0d97aaac64011c433b3aa4fe5abb1560ac589))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1041](https://github.com/MustardSeedNetworks/stem/issues/1041)) ([7b52b99](https://github.com/MustardSeedNetworks/stem/commit/7b52b990c206864211ce9a8723571beb3ed752f9))
+
 ## [0.24.63](https://github.com/MustardSeedNetworks/stem/compare/v0.24.62...v0.24.63) (2026-09-07)
 
 
