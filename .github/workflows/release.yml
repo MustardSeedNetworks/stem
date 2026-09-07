@@ -202,7 +202,7 @@ jobs:
         # metapackages) — only the packages not already in the image are
         # installed here.
         timeout-minutes: 10
-        uses: MustardSeedNetworks/.github/.github/actions/apt-install@a146506fd53fe5e01fdc01892dd838c10081d183 # v1.9.0
+        uses: MustardSeedNetworks/.github/.github/actions/apt-install@cd60ad04e0f305b3706481580091dc7f3e1863aa # v1.11.0
         with:
           packages: libbpf-dev libelf-dev libxdp-dev zlib1g-dev
           no-install-recommends: 'true'
