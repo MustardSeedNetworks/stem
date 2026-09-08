@@ -9,6 +9,7 @@ package ratelimit
 
 import (
 	"net/http"
+	"net/netip"
 	"os"
 	"strconv"
 	"strings"
@@ -87,6 +88,11 @@ type RateLimiter struct {
 	stopOnce      sync.Once     // Ensures Stop is called only once
 	globalLimiter *rate.Limiter // Fallback limiter when max visitors exceeded
 	maxVisitors   int           // Maximum number of IPs to track
+
+	// trustedProxies are the hops whose X-Forwarded-For may name the client
+	// a request is bucketed under (#962). Empty means loopback only, which
+	// is what NewRateLimiter leaves it at.
+	trustedProxies []netip.Prefix
 }
 
 // NewRateLimiter creates a new rate limiter with the specified rate (events per second) and burst.
@@ -100,13 +106,14 @@ func NewRateLimiter(r rate.Limit, burst int) *RateLimiter {
 	}
 
 	rl := &RateLimiter{
-		visitors:      make(map[string]*visitor),
-		mu:            sync.RWMutex{},
-		rate:          r,
-		burst:         burst,
-		done:          make(chan struct{}),
-		globalLimiter: rate.NewLimiter(globalRate, 1), // Very restrictive fallback
-		maxVisitors:   MaxVisitors,
+		visitors:       make(map[string]*visitor),
+		mu:             sync.RWMutex{},
+		rate:           r,
+		burst:          burst,
+		done:           make(chan struct{}),
+		globalLimiter:  rate.NewLimiter(globalRate, 1), // Very restrictive fallback
+		maxVisitors:    MaxVisitors,
+		trustedProxies: nil,
 	}
 
 	// Start background cleanup goroutine.
@@ -116,21 +123,27 @@ func NewRateLimiter(r rate.Limit, burst int) *RateLimiter {
 }
 
 // NewAuthRateLimiter creates a rate limiter configured for authentication endpoints.
-// Limits to 5 requests per minute with burst of 5.
-func NewAuthRateLimiter() *RateLimiter {
+// Limits to 5 requests per minute with burst of 5. trustedProxies is the
+// operator's [logging.TrustedProxiesEnv] list, so clients behind a configured
+// reverse proxy get their own bucket instead of sharing the proxy's.
+func NewAuthRateLimiter(trustedProxies []netip.Prefix) *RateLimiter {
 	// Convert per-minute rate to per-second for rate.Limit.
 	r := rate.Limit(float64(AuthRateLimit) / secondsPerMinute)
-	return NewRateLimiter(r, AuthBurstLimit)
+	rl := NewRateLimiter(r, AuthBurstLimit)
+	rl.trustedProxies = trustedProxies
+	return rl
 }
 
 // NewAPIRateLimiter creates a rate limiter configured for standard API endpoints.
 // Limits to 100 requests per minute with burst of 100, unless APIRateLimitEnv
 // raises it.
-func NewAPIRateLimiter() *RateLimiter {
+func NewAPIRateLimiter(trustedProxies []netip.Prefix) *RateLimiter {
 	limit := apiRateLimitFromEnv()
 	// Convert per-minute rate to per-second for rate.Limit.
 	r := rate.Limit(float64(limit) / secondsPerMinute)
-	return NewRateLimiter(r, limit)
+	rl := NewRateLimiter(r, limit)
+	rl.trustedProxies = trustedProxies
+	return rl
 }
 
 // apiRateLimitFromEnv resolves the per-minute API rate limit, honouring
@@ -284,7 +297,7 @@ func (rl *RateLimiter) Stop() {
 // Responds with 429 Too Many Requests when the limit is exceeded.
 func (rl *RateLimiter) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ip := ClientIP(r)
+		ip := logging.SecurityClientIP(r, rl.trustedProxies)
 
 		if !rl.Allow(ip) {
 			logging.Warn("Rate limit exceeded",
@@ -303,14 +316,4 @@ func (rl *RateLimiter) Middleware(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r)
 	})
-}
-
-// ClientIP extracts the client IP to bucket a request under.
-//
-// The derivation lives in internal/logging as [logging.SecurityClientIP] so
-// that the failed-login tracker keys on exactly the same thing this does.
-// It used to live here, and the tracker grew its own — spoofable — version
-// (#807). One implementation, one trust model.
-func ClientIP(r *http.Request) string {
-	return logging.SecurityClientIP(r)
 }

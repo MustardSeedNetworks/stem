@@ -174,10 +174,11 @@ prod scenario (direct internet binding).
    `feat(auth): WebAuthn passkey enrollment + login`.
 5. **HIBP breach-corpus check** at setup + password change. Proposed
    task: `feat(auth): zxcvbn password meter + HIBP breach check`.
-6. **Trusted-proxy CIDR config** so deployments behind real load
+6. ~~**Trusted-proxy CIDR config** so deployments behind real load
    balancers (not just localhost) can opt in to trusting forwarded
-   headers. Proposed task:
-   `feat(api): configurable trusted-proxy CIDRs for X-Forwarded-For`.
+   headers.~~ Shipped as `STEM_TRUSTED_PROXIES` (#962); the forwarding
+   header is also now read right to left, so a proxy that appends cannot
+   be used to spoof the key.
 7. **Magic-link recovery via email** — replace the file-trigger
    recovery flow with email-based magic links.
    Proposed task: `feat(auth): magic-link account recovery via email`.

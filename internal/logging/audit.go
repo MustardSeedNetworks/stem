@@ -8,6 +8,7 @@ package logging
 import (
 	"context"
 	"net/http"
+	"net/netip"
 	"sync"
 	"time"
 )
@@ -148,15 +149,21 @@ type Auditor struct {
 	tracker  *FailedLoginTracker
 	done     chan struct{}
 	stopOnce sync.Once
+
+	// trustedProxies are the hops whose forwarding headers may name the
+	// client the tracker counts against (#962). Empty means loopback only.
+	trustedProxies []netip.Prefix
 }
 
 // NewAuditor returns an Auditor and starts its cleanup goroutine. Callers own
-// the result and must Stop it.
-func NewAuditor() *Auditor {
+// the result and must Stop it. trustedProxies is the operator's
+// [TrustedProxiesEnv] list; nil keeps the loopback-only default.
+func NewAuditor(trustedProxies []netip.Prefix) *Auditor {
 	a := &Auditor{
-		tracker:  &FailedLoginTracker{attempts: make(map[string][]time.Time)},
-		done:     make(chan struct{}),
-		stopOnce: sync.Once{},
+		tracker:        &FailedLoginTracker{attempts: make(map[string][]time.Time)},
+		done:           make(chan struct{}),
+		stopOnce:       sync.Once{},
+		trustedProxies: trustedProxies,
 	}
 
 	go a.cleanupLoop()
@@ -348,7 +355,7 @@ func (a *Auditor) LoginSuccess(ctx context.Context, r *http.Request, userID, use
 	// GetClientIP returns whatever the client claimed. Clearing on a
 	// client-supplied key would let an attacker wipe someone else's counter
 	// by sending their address in X-Forwarded-For.
-	a.tracker.ClearAttempts(SecurityClientIP(r))
+	a.tracker.ClearAttempts(SecurityClientIP(r, a.trustedProxies))
 }
 
 // LoginFailure logs a failed login attempt.
@@ -359,7 +366,7 @@ func (a *Auditor) LoginFailure(ctx context.Context, r *http.Request, username, r
 	// tracker key is the immediate peer, because an attacker who can choose
 	// their own bucket is never counted and the threshold never fires.
 	ipAddress := GetClientIP(r)
-	trackerKey := SecurityClientIP(r)
+	trackerKey := SecurityClientIP(r, a.trustedProxies)
 
 	LogSecurityEvent(ctx, &SecurityEvent{
 		Timestamp:         time.Time{},

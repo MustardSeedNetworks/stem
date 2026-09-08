@@ -74,6 +74,7 @@ import (
 	"math"
 	"net"
 	"net/http"
+	"net/netip"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -146,6 +147,7 @@ type Server struct {
 	tlsConfig            tlsutil.Config             // TLS configuration for HTTPS
 	cookieConfig         auth.CookieConfig          // Cookie configuration for secure auth
 	corsAllowPrivate     bool                       // STEM_CORS_ALLOW_PRIVATE: reflect RFC1918 cross-origins (default off)
+	trustedProxies       []netip.Prefix             // STEM_TRUSTED_PROXIES: hops whose X-Forwarded-For may key security counters (default none)
 	routeManifest        []route                    // capability registry: routes registered via register() (route.go)
 	csrfManager          *auth.CSRFManager          // CSRF token manager for protection against CSRF attacks
 	setupTokenManager    *auth.SetupTokenManager    // Setup token manager for first-time setup security
@@ -245,6 +247,11 @@ func NewServer(port int) (*Server, error) {
 		return nil, fmt.Errorf("authentication setup failed: %w", err)
 	}
 
+	trustedProxies, err := trustedProxiesFromEnv()
+	if err != nil {
+		return nil, err
+	}
+
 	// HTTPS is required, unconditionally. Auth cookies hardcode Secure=true
 	// and browsers refuse them over plain HTTP. There is no HTTP listener
 	// at all — operators must use https://; typing the host without a
@@ -281,9 +288,10 @@ func NewServer(port int) (*Server, error) {
 	s.licenseManager = licMgr
 	s.authManager = authMgr
 	s.currentModule = ""
-	s.authLimiter = ratelimit.NewAuthRateLimiter()
-	s.auditor = logging.NewAuditor()
-	s.apiLimiter = ratelimit.NewAPIRateLimiter()
+	s.trustedProxies = trustedProxies
+	s.authLimiter = ratelimit.NewAuthRateLimiter(trustedProxies)
+	s.auditor = logging.NewAuditor(trustedProxies)
+	s.apiLimiter = ratelimit.NewAPIRateLimiter(trustedProxies)
 	s.tlsConfig = tlsutil.Config{
 		Enabled:  true,
 		CertFile: os.Getenv("STEM_TLS_CERT"),

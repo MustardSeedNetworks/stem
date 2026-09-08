@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/MustardSeedNetworks/stem/internal/logging"
+
 	"golang.org/x/time/rate"
 )
 
@@ -57,7 +59,7 @@ func TestAPIRateLimitFromEnv(t *testing.T) {
 func TestNewAPIRateLimiterHonoursOverride(t *testing.T) {
 	t.Setenv(APIRateLimitEnv, strconv.Itoa(APIRateLimit*4))
 
-	rl := NewAPIRateLimiter()
+	rl := NewAPIRateLimiter(nil)
 	defer rl.Stop()
 
 	ip := "10.0.0.201"
@@ -237,130 +239,38 @@ func TestCleanup(t *testing.T) {
 	})
 }
 
-// TestClientIPInternal tests the ClientIP function via white-box path.
-func TestClientIPInternal(t *testing.T) {
-	tests := []struct {
-		name       string
-		remoteAddr string
-		xff        string
-		xri        string
-		want       string
-	}{
-		{
-			name:       "simple remote addr",
-			remoteAddr: "192.168.1.1:12345",
-			xff:        "",
-			xri:        "",
-			want:       "192.168.1.1",
-		},
-		{
-			name:       "X-Forwarded-For single IP",
-			remoteAddr: "127.0.0.1:12345",
-			xff:        "203.0.113.195",
-			xri:        "",
-			want:       "203.0.113.195",
-		},
-		{
-			name:       "X-Forwarded-For multiple IPs",
-			remoteAddr: "127.0.0.1:12345",
-			xff:        "203.0.113.195, 70.41.3.18, 150.172.238.178",
-			xri:        "",
-			want:       "203.0.113.195",
-		},
-		{
-			name:       "X-Real-IP takes precedence over RemoteAddr",
-			remoteAddr: "127.0.0.1:12345",
-			xff:        "",
-			xri:        "198.51.100.42",
-			want:       "198.51.100.42",
-		},
-		{
-			name:       "X-Forwarded-For takes precedence over X-Real-IP",
-			remoteAddr: "127.0.0.1:12345",
-			xff:        "203.0.113.195",
-			xri:        "198.51.100.42",
-			want:       "203.0.113.195",
-		},
-		{
-			name:       "X-Forwarded-For with spaces",
-			remoteAddr: "127.0.0.1:12345",
-			xff:        "  203.0.113.195  ",
-			xri:        "",
-			want:       "203.0.113.195",
-		},
-		{
-			name:       "Remote addr without port",
-			remoteAddr: "192.168.1.1",
-			xff:        "",
-			xri:        "",
-			want:       "192.168.1.1",
-		},
-		{
-			name:       "IPv6 remote addr",
-			remoteAddr: "[::1]:12345",
-			xff:        "",
-			xri:        "",
-			want:       "::1",
-		},
-		{
-			name:       "empty X-Forwarded-For fallback to X-Real-IP",
-			remoteAddr: "127.0.0.1:12345",
-			xff:        "",
-			xri:        "10.0.0.1",
-			want:       "10.0.0.1",
-		},
-		{
-			name:       "whitespace-only X-Forwarded-For fallback to X-Real-IP",
-			remoteAddr: "127.0.0.1:12345",
-			xff:        "   ",
-			xri:        "10.0.0.1",
-			want:       "10.0.0.1",
-		},
-		{
-			// Security: non-loopback peers MUST NOT be able to spoof their
-			// source IP by sending forged X-Forwarded-For. Returns the actual
-			// TCP peer instead.
-			name:       "non-loopback peer cannot spoof X-Forwarded-For",
-			remoteAddr: "203.0.113.50:12345",
-			xff:        "1.2.3.4",
-			xri:        "",
-			want:       "203.0.113.50",
-		},
-		{
-			// Same as above, but with X-Real-IP.
-			name:       "non-loopback peer cannot spoof X-Real-IP",
-			remoteAddr: "203.0.113.50:12345",
-			xff:        "",
-			xri:        "1.2.3.4",
-			want:       "203.0.113.50",
-		},
-		{
-			// IPv6 loopback is also a trusted source for forwarding headers.
-			name:       "IPv6 loopback peer can forward client IP",
-			remoteAddr: "[::1]:12345",
-			xff:        "203.0.113.195",
-			xri:        "",
-			want:       "203.0.113.195",
-		},
+// The bucket key used to be derived here; it now has one home in
+// internal/logging (SecurityClientIP), where the table that used to live in
+// this file is kept. What is exercised here is that the limiter passes its
+// configured trust list to it.
+func TestAuthRateLimiterHonoursTrustedProxies(t *testing.T) {
+	trusted, err := logging.ParseTrustedProxies("10.0.0.0/24")
+	if err != nil {
+		t.Fatalf("ParseTrustedProxies() = %v", err)
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodGet, "/test", nil)
-			req.RemoteAddr = tt.remoteAddr
-			if tt.xff != "" {
-				req.Header.Set("X-Forwarded-For", tt.xff)
-			}
-			if tt.xri != "" {
-				req.Header.Set("X-Real-IP", tt.xri)
-			}
+	rl := NewAuthRateLimiter(trusted)
+	defer rl.Stop()
 
-			got := ClientIP(req)
-			if got != tt.want {
-				t.Errorf("ClientIP() = %q, want %q", got, tt.want)
-			}
-		})
+	// Two clients arriving through the trusted proxy are two buckets, so
+	// neither spends the other's burst.
+	behindProxy := requestFrom("10.0.0.5:1", "198.51.100.7")
+	if key := logging.SecurityClientIP(behindProxy, rl.trustedProxies); key != "198.51.100.7" {
+		t.Errorf("bucket key behind the trusted proxy = %q, want the forwarded client", key)
 	}
+
+	untrusted := requestFrom("203.0.113.9:1", "198.51.100.7")
+	if key := logging.SecurityClientIP(untrusted, rl.trustedProxies); key != "203.0.113.9" {
+		t.Errorf("bucket key from an untrusted peer = %q, want the peer", key)
+	}
+}
+
+// requestFrom builds a request from a peer, carrying a forwarding header.
+func requestFrom(remoteAddr, xff string) *http.Request {
+	r := httptest.NewRequest(http.MethodGet, "/test", nil)
+	r.RemoteAddr = remoteAddr
+	r.Header.Set("X-Forwarded-For", xff)
+	return r
 }
 
 // TestCleanupLoop tests the cleanup loop starts and stops properly.

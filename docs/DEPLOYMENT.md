@@ -108,6 +108,27 @@ sudo cp bin/stem /usr/local/bin/
 | `STEM_LOG_LEVEL` | Log level (debug, info, warn, error) | `info` |
 | `STEM_LOG_FORMAT` | Log format (json, text) | `json` |
 | `STEM_DATA_DIR` | Data directory path | `~/.stem` |
+| `STEM_TRUSTED_PROXIES` | Comma-separated CIDRs whose `X-Forwarded-For` may key rate limits and failed-login counters | unset (loopback only) |
+
+### Reverse Proxies
+
+Rate limiting and the failed-login tracker key on the immediate TCP peer, and
+believe `X-Forwarded-For` / `X-Real-IP` only from a hop they trust. Loopback is
+always trusted, so a reverse proxy on the same host needs no configuration.
+
+A proxy on another host — an ingress controller, a load balancer — is not
+trusted until it is named, and until then every client behind it shares one
+bucket. Name it with `STEM_TRUSTED_PROXIES`:
+
+```bash
+STEM_TRUSTED_PROXIES=10.0.0.0/24,192.168.7.5/32
+```
+
+The header is read right to left, discarding entries that are themselves
+trusted hops, because each proxy appends the address it saw and the leftmost
+entry is whatever the client chose to send. List only the addresses your own
+proxies connect from: `0.0.0.0/0` and `::/0` are refused at startup, since
+trusting every peer lets any client set its own rate-limit key.
 
 ### Setting Credentials
 
