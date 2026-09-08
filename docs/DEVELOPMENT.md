@@ -31,10 +31,13 @@ make test         # Run tests
 make lint         # Run linters (Go + C)
 
 # Frontend (cd ui/)
-npm run dev       # Start dev server (port 5173)
+npm run dev       # Start dev server (port 3000)
 npm run test      # Run unit tests
-npm run test:e2e  # Run E2E tests
 npm run lint      # Run Biome linter
+
+# E2E (from the repo root)
+./scripts/run-e2e.sh                    # builds stem, starts it, runs both browsers
+./scripts/run-e2e.sh --project=webkit   # one browser
 ```
 
 ## Project Structure

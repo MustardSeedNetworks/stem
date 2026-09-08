@@ -215,19 +215,19 @@ endif
 # E2E Tests
 # =============================================================================
 
-test-e2e: ## Run frontend E2E tests (requires backend running)
+test-e2e: ## Run frontend E2E tests (builds and starts stem itself)
 	@echo ""
 	@echo "🎭 Running E2E tests (Playwright)..."
 	@E2E_COUNT=$$(find ui/e2e -name "*.spec.ts" 2>/dev/null | wc -l | tr -d ' '); \
 	echo "   📦 Running $$E2E_COUNT spec files..."
 	@echo ""
-	@cd ui && npm run test:e2e
+	@./scripts/run-e2e.sh
 	@echo ""
 	@echo "✅ E2E tests complete"
 
 test-e2e-ui: ## Run E2E tests with Playwright UI
 	@echo "🎭 Starting Playwright UI mode..."
-	cd ui && npx playwright test --ui
+	@./scripts/run-e2e.sh --ui
 
 test-e2e-install: ## Install Playwright browsers
-	cd ui && npx playwright install --with-deps chromium
+	cd ui && npx playwright install --with-deps chromium webkit

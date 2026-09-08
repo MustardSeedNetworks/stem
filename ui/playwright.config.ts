@@ -3,6 +3,33 @@ import { defineConfig, devices } from '@playwright/test';
 import { AUTH_STORAGE_STATE } from './e2e/helpers/auth';
 
 /**
+ * The suite needs a running stem daemon, not the Vite dev server, so there is
+ * no sensible default to fall back to.
+ *
+ * The dev server is served over http://localhost:3000. stem's session cookies
+ * (stem_access, stem_refresh) are Secure, and WebKit will not send a Secure
+ * cookie to an insecure origin — every authenticated request 401s, the shell
+ * unmounts back to the login overlay, and specs fail on "element was detached
+ * from the DOM" (#959). Chromium masks it by treating http://localhost as a
+ * trustworthy origin. Defaulting to that URL meant the documented local
+ * command could never pass on WebKit, while CI — which sets E2E_BASE_URL to
+ * the daemon's HTTPS origin — was green throughout.
+ */
+function requireBaseURL(): string {
+  const fromEnv = process.env.E2E_BASE_URL;
+  if (fromEnv) {
+    return fromEnv;
+  }
+  throw new Error(
+    'E2E_BASE_URL is not set. Run the suite through ./scripts/run-e2e.sh, which ' +
+      'builds stem, starts it on a free port and exports E2E_BASE_URL:\n\n' +
+      '  ./scripts/run-e2e.sh --project=webkit\n\n' +
+      'To use a daemon you already have running, set it yourself:\n\n' +
+      '  E2E_BASE_URL=https://127.0.0.1:8444 npx playwright test\n',
+  );
+}
+
+/**
  * Playwright E2E Test Configuration
  *
  * End-to-end testing for Stem user flows:
@@ -40,11 +67,7 @@ export default defineConfig({
     ['json', { outputFile: 'playwright-report/results.json' }],
   ],
   use: {
-    // 3000, not Vite's 5173 default — vite.config.ts pins server.port to 3000.
-    // Both this and webServer.url said 5173, so a local `npm run test:e2e`
-    // always timed out waiting for a port nothing listens on. CI sets
-    // E2E_BASE_URL and skips webServer entirely, which hid it.
-    baseURL: process.env.E2E_BASE_URL || 'http://localhost:3000',
+    baseURL: requireBaseURL(),
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'on-first-retry',
@@ -71,13 +94,12 @@ export default defineConfig({
       use: { ...devices['Desktop Safari'] },
     },
   ],
-  // Run local dev server before tests if not in CI
-  webServer: process.env.CI
-    ? undefined
-    : {
-        command: 'npm run dev',
-        url: 'http://localhost:3000',
-        reuseExistingServer: !process.env.CI,
-        timeout: 120000,
-      },
+  // No webServer. There used to be one starting `npm run dev` on
+  // http://localhost:3000, which served a development React build over an
+  // insecure origin — neither is what ships, and WebKit cannot authenticate
+  // against it at all (see requireBaseURL above).
+  //
+  // scripts/run-e2e.sh is the entry point. It builds the UI and the binary,
+  // starts stem on a free port, waits for /__version, and exports
+  // E2E_BASE_URL — the same target CI drives.
 });
