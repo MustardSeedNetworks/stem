@@ -21,7 +21,6 @@
     "storybook": "storybook dev -p 6006",
     "test": "node --disable-warning=DEP0205 ./node_modules/vitest/vitest.mjs run --reporter=verbose",
     "test:coverage": "node --disable-warning=DEP0205 ./node_modules/vitest/vitest.mjs run --coverage --reporter=verbose",
-    "test:e2e": "NO_COLOR= node --disable-warning=DEP0205 ./node_modules/playwright/cli.js test --reporter=list",
     "test:storybook": "npm run build-storybook && npm run test:storybook:run",
     "test:storybook:contract": "../scripts/test-storybook-contract.sh",
     "test:storybook:run": "node --disable-warning=DEP0205 ./node_modules/vitest/vitest.mjs run --config vitest.storybook.config.ts --project=storybook",

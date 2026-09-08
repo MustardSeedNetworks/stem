@@ -19,7 +19,7 @@
     "test": "cd ui && npm run test",
     "test:watch": "cd ui && npm run test:watch",
     "test:coverage": "cd ui && npm run test:coverage",
-    "test:e2e": "cd ui && npm run test:e2e",
+    "test:e2e": "./scripts/run-e2e.sh",
     "storybook": "cd ui && npm run storybook",
     "build-storybook": "cd ui && npm run build-storybook"
   },
