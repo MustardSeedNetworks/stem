@@ -329,8 +329,9 @@ Logs are output in JSON format by default:
 {
   "time": "2026-01-06T12:00:00Z",
   "level": "INFO",
-  "msg": "Test started",
-  "test_type": "throughput",
+  "msg": "Starting test via module system",
+  "testType": "rfc2544_throughput",
+  "module": "benchmark",
   "interface": "eth0"
 }
 ```

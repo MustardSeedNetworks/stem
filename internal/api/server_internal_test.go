@@ -3243,63 +3243,38 @@ func TestApplyReflectorDataplaneUpdateVariations(t *testing.T) {
 	})
 }
 
-// TestHandleTestStartWithInterface tests handleTestStart with various interfaces.
-func TestHandleTestStartWithInterface(t *testing.T) {
+// TestTestTypeVocabularyResolves asserts the vocabulary the API speaks: every
+// name a start request may carry resolves to a module that will run it.
+//
+// This replaces subtests that posted the CLI's short names ("throughput",
+// "latency", "frame_loss") through handleTestStart and only t.Logf'd the
+// status, so they passed for every possible answer — including the
+// "unknown test type" 400 those names actually produced (#1069). The check is
+// made against the resolver rather than the handler deliberately: a resolved
+// type on a real interface starts the C dataplane, which is an integration
+// concern and not what this asserts.
+func TestTestTypeVocabularyResolves(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "startwithifaceuser")
 	t.Setenv("STEM_AUTH_PASSWORD", "startwithifacepass123")
 
 	s := newTestServer(t)
 
-	// Get a valid interface.
-	ifaces, ifaceErr := netif.DetectInterfaces()
-	if ifaceErr != nil || len(ifaces) == 0 {
-		t.Skip("No network interfaces available")
+	for _, testType := range []string{
+		defaultTestType,
+		"rfc2544_latency",
+		"rfc2544_frame_loss",
+		testTypeReflect,
+	} {
+		t.Run(testType, func(t *testing.T) {
+			mod, err := s.resolveTestModule(testType)
+			if err != nil {
+				t.Fatalf("resolveTestModule(%q) = %v; no module registers it", testType, err)
+			}
+			if mod.Name() == "" {
+				t.Errorf("resolveTestModule(%q) returned an unnamed module", testType)
+			}
+		})
 	}
-
-	testIface := ifaces[0].Name
-
-	t.Run("start with valid interface and throughput", func(t *testing.T) {
-		body := bytes.NewBufferString(`{"testType":"throughput","interface":"` + testIface + `"}`)
-		req := httptest.NewRequest(http.MethodPost, "/api/v1/test/start", body)
-		w := httptest.NewRecorder()
-
-		s.handleTestStart(w, req)
-
-		// May succeed or fail, but should not be 400 for valid interface.
-		t.Logf("handleTestStart response: %d", w.Code)
-	})
-
-	t.Run("start with valid interface and latency", func(t *testing.T) {
-		// Reset test state.
-		s.statsMu.Lock()
-		s.testStatus = statusIdle
-		s.currentTest = ""
-		s.statsMu.Unlock()
-
-		body := bytes.NewBufferString(`{"testType":"latency","interface":"` + testIface + `"}`)
-		req := httptest.NewRequest(http.MethodPost, "/api/v1/test/start", body)
-		w := httptest.NewRecorder()
-
-		s.handleTestStart(w, req)
-
-		t.Logf("handleTestStart (latency) response: %d", w.Code)
-	})
-
-	t.Run("start with frame_loss test", func(t *testing.T) {
-		// Reset test state.
-		s.statsMu.Lock()
-		s.testStatus = statusIdle
-		s.currentTest = ""
-		s.statsMu.Unlock()
-
-		body := bytes.NewBufferString(`{"testType":"frame_loss","interface":"` + testIface + `"}`)
-		req := httptest.NewRequest(http.MethodPost, "/api/v1/test/start", body)
-		w := httptest.NewRecorder()
-
-		s.handleTestStart(w, req)
-
-		t.Logf("handleTestStart (frame_loss) response: %d", w.Code)
-	})
 }
 
 // TestHandleLicenseVariations tests handleLicense variations.

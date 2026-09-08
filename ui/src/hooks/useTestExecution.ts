@@ -11,6 +11,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { RFC2544Config } from '../components/RFC2544ConfigForm';
 import type { RFC2889Config } from '../components/RFC2889ConfigForm';
 import type { RFC6349Config } from '../components/RFC6349ConfigForm';
@@ -73,13 +74,38 @@ function mapStatsPayload(payload: Partial<Stats>): Stats {
   };
 }
 
-/** Extract error message from response JSON, or return default */
-async function extractResponseError(response: Response, defaultMessage: string): Promise<string> {
+/** The 402 body POST /api/v1/test/start answers with when a standard is not licensed. */
+interface FeatureGateBody {
+  error?: string;
+  code?: string;
+  requiredFeature?: string;
+}
+
+/**
+ * Why a start failed, in the shape the render path needs.
+ *
+ * The 402 entitlement answer is not a generic failure: it carries the feature
+ * the licence is missing, so the operator is told what to buy rather than that
+ * something went wrong (#1070). The server's own `upgradeMessage` is CLI prose
+ * and is deliberately not rendered — the message is built from the translation
+ * catalog at the call site. Its `currentTier` is not rendered either: a fresh
+ * install reports "Invalid" (license.TierInvalid), which is a state name, not
+ * a tier an operator has heard of (#1095).
+ */
+export type TestStartFailure =
+  | { kind: 'message'; message?: string }
+  | { kind: 'featureGate'; feature?: string };
+
+/** Classify a failed start response from its body. */
+export async function classifyStartFailure(response: Response): Promise<TestStartFailure> {
   try {
-    const errorData = await (response.json() as Promise<{ error?: string }>);
-    return errorData?.error || defaultMessage;
+    const body = await (response.json() as Promise<FeatureGateBody>);
+    if (response.status === 402 && body?.code === 'TIER_TOO_LOW') {
+      return { kind: 'featureGate', feature: body.requiredFeature };
+    }
+    return { kind: 'message', message: body?.error };
   } catch {
-    return defaultMessage;
+    return { kind: 'message' };
   }
 }
 
@@ -140,6 +166,7 @@ export interface UseTestExecution {
  * returned object (and threaded into AppContext by the caller).
  */
 export function useTestExecution(): UseTestExecution {
+  const { t } = useTranslation(['common', 'errors']);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   // The Stem instance role drives the legacy `mode` state. RoleContext
   // persists the choice to localStorage and is mutated by the header
@@ -330,14 +357,18 @@ export function useTestExecution(): UseTestExecution {
 
       // Check for validation errors in response
       if (!response.ok) {
-        const errorMessage = await extractResponseError(response, 'Failed to start test');
-        setTestStartError(errorMessage);
+        const failure = await classifyStartFailure(response);
+        setTestStartError(
+          failure.kind === 'featureGate'
+            ? t('errors:test.featureGate', { feature: failure.feature })
+            : (failure.message ?? t('errors:test.failedToStart')),
+        );
         return;
       }
 
       // Status updates will come from polling - don't update optimistically
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to start test';
+      const message = error instanceof Error ? error.message : t('errors:test.failedToStart');
       setTestStartError(message);
     } finally {
       setIsStartingTest(false);
@@ -346,6 +377,7 @@ export function useTestExecution(): UseTestExecution {
     mode,
     reflectorProfile,
     isAuthenticated,
+    t,
     rfc2544Config,
     rfc2889Config,
     rfc6349Config,

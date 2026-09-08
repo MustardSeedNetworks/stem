@@ -29,7 +29,7 @@ func (s *Server) handleTestStart(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if req.TestType == "" {
-		req.TestType = testTypeThroughput
+		req.TestType = defaultTestType
 	}
 
 	mod, modErr := s.resolveTestModule(req.TestType)

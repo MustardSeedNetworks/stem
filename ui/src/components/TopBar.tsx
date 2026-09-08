@@ -196,6 +196,7 @@ export function TopBar({
               className="text-sm text-status-error flex items-center gap-compact"
               role="alert"
               aria-live="assertive"
+              data-testid="test-start-error"
             >
               <AlertTriangle className="w-4 h-4" aria-hidden="true" />
               {testStartError}
