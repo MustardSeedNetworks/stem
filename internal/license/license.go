@@ -21,18 +21,6 @@ type (
 	DeviceFingerprint = fnd.DeviceFingerprint
 )
 
-// NewManager creates a license manager rooted at Stem's default config
-// directory, verifying tokens against the embedded production key.
-func NewManager() (*Manager, error) {
-	return fnd.NewManager(fnd.NewProductionVerifier(Policy()), Policy())
-}
-
-// NewManagerWithDir creates a license manager that persists state in configDir.
-// Used by tests to isolate activation state in a temp directory.
-func NewManagerWithDir(configDir string) (*Manager, error) {
-	return fnd.NewManagerWithDir(fnd.NewProductionVerifier(Policy()), Policy(), configDir)
-}
-
 // FormatKey returns a signed token trimmed for display.
 func FormatKey(key string) string {
 	return fnd.FormatKey(key)

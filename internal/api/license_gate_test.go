@@ -19,9 +19,9 @@ import (
 // says, not whatever activation state the developer's ~/.config/stem holds.
 func proLicense(t testing.TB) *license.Manager {
 	t.Helper()
-	mgr, err := license.NewManagerWithDir(t.TempDir())
+	mgr, _, err := license.LoadFromDir(t.TempDir())
 	if err != nil {
-		t.Fatalf("NewManagerWithDir() error: %v", err)
+		t.Fatalf("LoadFromDir() error: %v", err)
 	}
 	if result := mgr.StartTrial(); !result.Success {
 		t.Fatalf("StartTrial() failed: %s", result.Message)
@@ -33,9 +33,9 @@ func proLicense(t testing.TB) *license.Manager {
 // which is what a fresh install answers with.
 func unlicensed(t testing.TB) *license.Manager {
 	t.Helper()
-	mgr, err := license.NewManagerWithDir(t.TempDir())
+	mgr, _, err := license.LoadFromDir(t.TempDir())
 	if err != nil {
-		t.Fatalf("NewManagerWithDir() error: %v", err)
+		t.Fatalf("LoadFromDir() error: %v", err)
 	}
 	return mgr
 }
@@ -124,5 +124,19 @@ func TestUnlicensedTestStopIsNotGated(t *testing.T) {
 
 	if w.Code == http.StatusPaymentRequired {
 		t.Error("test/stop answered 402; stopping a run is not a paid capability")
+	}
+}
+
+// TestUnwiredLicenseDeniesPaidStandards is the API half of #1068: a manager
+// that could not be built at all is not a licence. The paid standards are
+// refused exactly as they are for an unlicensed host, so a deployment whose
+// fingerprint cannot be computed runs as Free rather than as Pro.
+func TestUnwiredLicenseDeniesPaidStandards(t *testing.T) {
+	s := setupTestingTestServer(t)
+	s.UseLicenseForTest(nil)
+
+	w := startTest(t, s, getTestingAuthToken(t, s), "rfc2544_throughput")
+	if w.Code != http.StatusPaymentRequired {
+		t.Fatalf("status = %d, want 402: %s", w.Code, w.Body.String())
 	}
 }

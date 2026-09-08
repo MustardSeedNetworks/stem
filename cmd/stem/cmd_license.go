@@ -66,10 +66,17 @@ func licenseCmd(args []string) {
 		os.Exit(1)
 	}
 
-	mgr, err := license.NewManager()
+	mgr, loadStatus, err := license.Load()
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stdout, "Error: Failed to initialize license manager: %v\n", err)
 		os.Exit(1)
+	}
+	if !loadStatus.Usable() {
+		// The operator asked about licensing, so say what is on disk. The
+		// subcommands still run: --activate and --trial are how a damaged
+		// file is replaced.
+		_, _ = fmt.Fprintf(os.Stdout, "Warning: license file %s is %s; this host is entitled to Free features only\n",
+			license.DefaultLicensePath(), loadStatus)
 	}
 
 	switch {

@@ -11,6 +11,7 @@ package api
 
 import (
 	"net/http"
+	"slices"
 
 	"github.com/MustardSeedNetworks/stem/internal/license"
 	"github.com/MustardSeedNetworks/stem/internal/logging"
@@ -32,12 +33,15 @@ type FeatureGateResponse struct {
 
 // hasFeature reports whether the active license covers feature.
 //
-// A nil license manager means licensing is not wired at all (a developer build
-// whose manager failed to load, or a test that has not installed one) and
-// permits everything, so a broken licence file degrades to an unenforced
-// binary rather than an unusable one.
+// A nil license manager is not a licence: it means licensing could not be
+// wired at all, and the answer to "may this deployment run a paid standard" is
+// no. The Free grants stay available, so a host whose fingerprint cannot be
+// computed is still a reflector rather than a brick (#1068).
 func (s *Server) hasFeature(feature string) bool {
-	return s.licenseManager == nil || s.licenseManager.HasFeature(feature)
+	if s.licenseManager == nil {
+		return slices.Contains(license.FreeFeatures(), feature)
+	}
+	return s.licenseManager.HasFeature(feature)
 }
 
 // sendFeatureGate writes the 402 an unlicensed capability answers with, and

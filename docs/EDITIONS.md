@@ -91,9 +91,39 @@ a preference: air-gapped industrial and government deployments are a target.
 - `/__version` reports build metadata only. It does not report the tier, and a
   client must not infer entitlement from anything it can read unauthenticated.
 
-## 6. Open questions
+## 6. An unusable licence fails closed
+
+A licence Stem cannot read is not a licence. `license.Load` reports the state
+on disk as `loaded`, `missing`, `unreadable` or `malformed`, and everything
+that is not `loaded` or `missing` grants the Free features only:
+
+| On disk | API | CLI `stem test` | CLI `stem reflect` |
+| --- | --- | --- | --- |
+| Valid Pro key or active trial | Pro catalog | runs | runs |
+| No file (`missing`) | Free only | starts the 14-day trial | runs |
+| Present, cannot be opened (`unreadable`) | Free only | refused, names the file | runs, warns |
+| Present, will not decrypt or parse (`malformed`) | Free only | refused, names the file | runs, warns |
+| Read, past its end date | Free only | refused | runs, warns |
+
+Two consequences worth stating, because both were live defects (#1068):
+
+- Only a `missing` state starts a trial. A damaged file used to become a
+  14-day Professional trial, and starting one overwrote the operator's file.
+- `stem reflect` never starts a trial. Reflecting is the Free grant; spending
+  the trial to run it was wrong on a healthy install too.
+
+A manager that could not be built at all — a host whose device fingerprint
+cannot be computed — is treated the same way: `hasFeature` grants the Free
+list, so the host is still a reflector and not a brick. The reason is logged
+once at startup under `event=license.unusable`, not per request.
+
+The trial is still resettable by deleting the file: foundation keeps no record
+of a spent trial outside it. That is a foundation limitation, tracked
+separately.
+
+## 7. Open questions
 
 | Question | Owner | Needed by |
 | --- | --- | --- |
-| Whether Free should work with no key at all (today an unlicensed install grants nothing and the CLI silently starts the trial) | Product | v1 |
+| Whether Free should work with no key at all (today an unlicensed install grants nothing) | Product | v1 |
 | Whether the CLI check should be per-standard like the API's | Eng | v1 |

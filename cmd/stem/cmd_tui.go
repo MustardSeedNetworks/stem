@@ -8,8 +8,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/MustardSeedNetworks/stem/internal/license"
-	"github.com/MustardSeedNetworks/stem/internal/logging"
 	reflectorConfig "github.com/MustardSeedNetworks/stem/internal/reflector/config"
 	reflectorDP "github.com/MustardSeedNetworks/stem/internal/reflector/dataplane"
 	reflectorTUI "github.com/MustardSeedNetworks/stem/internal/reflector/tui"
@@ -25,18 +23,7 @@ func tuiReflectMode(iface string) error {
 		return errors.New("missing interface")
 	}
 
-	// Check license (Tier 1 minimum).
-	mgr, err := license.NewManager()
-	if err != nil {
-		logging.Warn("license manager initialization failed", "error", err)
-	}
-	if mgr != nil && !mgr.IsActivated() {
-		result := mgr.StartTrial()
-		if !result.Success {
-			_, _ = fmt.Fprintf(os.Stdout, "Error: %s\n", result.Message)
-			return fmt.Errorf("license trial failed: %s", result.Message)
-		}
-	}
+	reportReflectorLicense()
 
 	cfg := buildTUIReflectorConfig(iface)
 
@@ -89,23 +76,10 @@ func buildTUIReflectorConfig(iface string) *reflectorConfig.Config {
 
 // tuiTestMode runs the testmaster TUI mode.
 func tuiTestMode() error {
-	// Check license (Tier 2 required).
-	mgr, mgrErr := license.NewManager()
-	if mgrErr != nil {
-		logging.Warn("license manager initialization failed", "error", mgrErr)
-	}
-	if mgr != nil {
-		state := mgr.GetState()
-		if state == nil {
-			result := mgr.StartTrial()
-			if !result.Success {
-				_, _ = fmt.Fprintf(os.Stdout, "Error: %s\n", result.Message)
-				return fmt.Errorf("license trial failed: %s", result.Message)
-			}
-		} else if license.Tier(state.Tier) < license.TierProfessional && !state.IsTrialMode {
-			_, _ = fmt.Fprintln(os.Stdout, "Error: Professional TUI requires a Tier 2 (Professional) license")
-			return errors.New("license tier too low")
-		}
+	// The TUI runs the same paid standards the CLI does, so it asks the same
+	// question in the same place rather than keeping a second copy of it.
+	if !checkTestLicense() {
+		return errors.New("license check failed")
 	}
 
 	// Launch testmaster TUI.
