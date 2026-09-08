@@ -7,7 +7,7 @@ package help_test
 // enforces three invariants:
 //
 //   1. Every verb in main.go's dispatch switch has a CommandHelp entry in
-//      GetAllCommands(). install-ca / tui / list-tests were missing before
+//      GetAllCommands(). install-ca / list-tests were missing before
 //      PR-B — this catches the next gap automatically.
 //   2. Every CommandHelp has non-empty Name, Summary, Description, Usage,
 //      and at least one Example.
@@ -29,7 +29,7 @@ import (
 // GetAllCommands().
 func canonicalVerbs() []string {
 	return []string{
-		"reflect", "test", "web", "tui", "license", "list-tests",
+		"reflect", "test", "web", "license", "list-tests",
 		"help", "tutorial", "glossary", "version", "install-ca",
 	}
 }

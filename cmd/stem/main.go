@@ -4,14 +4,13 @@
 //
 // The main entry point for the stem command-line application.
 // Provides subcommands for reflector mode, test master mode, web interface,
-// TUI interface, and help/documentation access.
+// and help/documentation access.
 //
 // Usage:
 //
 //	stem reflect --interface eth0       # Reflector mode (Tier 1)
 //	stem test --type throughput         # Test Master mode (Tier 2)
 //	stem web --port 8444                # WebUI (HTTPS by default)
-//	stem tui                            # Terminal UI
 package main
 
 import (
@@ -26,11 +25,9 @@ import (
 
 // CLI constants.
 const (
-	ProductName            = "The Stem"
-	Company                = "Mustard Seed Networks"
-	DefaultProfile         = "all"
-	DefaultReflectionMode  = "all"
-	DefaultSignatureFilter = "all"
+	ProductName    = "The Stem"
+	Company        = "Mustard Seed Networks"
+	DefaultProfile = "all"
 )
 
 // Test result display constants.
@@ -146,10 +143,6 @@ func dispatchSubcommand(cmd string, args []string) bool {
 		}
 	case "web":
 		webCmd(args)
-	case "tui":
-		if cmdErr := tuiCmd(args); cmdErr != nil {
-			os.Exit(1)
-		}
 	case "license":
 		licenseCmd(args)
 	case "list-tests":
@@ -192,7 +185,6 @@ COMMANDS:
     reflect      Start packet reflector (Reflector tier)
     test         Run network tests (Professional tier)
     web          Start WebUI server
-    tui          Start terminal UI dashboard
     license      Manage license activation
     help         Get help on commands, tests, and concepts
     tutorial     Step-by-step learning guides

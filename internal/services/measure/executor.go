@@ -10,16 +10,16 @@ import (
 )
 
 const (
-	// Y.1731 defaults - aligned with TUI/WebUI.
+	// Y.1731 defaults - aligned with WebUI.
 	defaultMEPID       = 1
-	defaultMEGLevel    = 4            // Match TUI/WebUI: service level.
-	defaultCCMInterval = 1000         // Match TUI/WebUI: 1000ms (1s).
-	defaultPriority    = uint8(6)     // Match TUI/WebUI: priority 6.
-	defaultDuration    = 60           // Match TUI/WebUI: 60 seconds.
-	defaultIntervalMs  = 100          // Match TUI/WebUI: 100ms measurement cadence.
+	defaultMEGLevel    = 4            // Match WebUI: service level.
+	defaultCCMInterval = 1000         // Match WebUI: 1000ms (1s).
+	defaultPriority    = uint8(6)     // Match WebUI: priority 6.
+	defaultDuration    = 60           // Match WebUI: 60 seconds.
+	defaultIntervalMs  = 100          // Match WebUI: 100ms measurement cadence.
 	defaultCount       = 10           // 10 frames per interval.
-	defaultFrameSize   = 64           // Match TUI/WebUI: 64 bytes.
-	defaultMEGID       = "MSN-MEG-01" // Match TUI/WebUI default MEG ID.
+	defaultFrameSize   = 64           // Match WebUI: 64 bytes.
+	defaultMEGID       = "MSN-MEG-01" // Match WebUI default MEG ID.
 )
 
 // Executor wraps the Measure module with test execution capability.
@@ -142,7 +142,7 @@ func buildY1731Config(cfg *modtypes.TestConfig) *dataplane.Y1731Config {
 		IntervalMs:     modtypes.GetUint32Param(cfg.Params, "interval_ms", defaultIntervalMs),
 		Count:          modtypes.GetUint32Param(cfg.Params, "count", defaultCount),
 		FrameSize:      cfg.FrameSize,
-		PriorityTagged: modtypes.GetBoolParam(cfg.Params, "priority_tagged", true), // Match TUI/WebUI.
+		PriorityTagged: modtypes.GetBoolParam(cfg.Params, "priority_tagged", true), // Match WebUI.
 	}
 
 	if config.DurationSec == 0 {

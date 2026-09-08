@@ -703,7 +703,7 @@ func TestModuleEmbeddingInExecutor(t *testing.T) {
 
 // TestDefaultConstants verifies the default constant values.
 func TestDefaultConstants(t *testing.T) {
-	// Verify defaults match TUI/WebUI expectations per comments.
+	// Verify defaults match WebUI expectations per comments.
 	const (
 		expectedDefaultRatePct         = 100.0
 		expectedDefaultWarmupSec       = 2

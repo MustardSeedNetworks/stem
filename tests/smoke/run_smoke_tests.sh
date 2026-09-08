@@ -272,7 +272,6 @@ test_cli_help() {
     run_test "Test help" "${STEM_BIN} test --help"
     run_test "Web help" "${STEM_BIN} web --help"
     run_test "License help" "${STEM_BIN} license --help"
-    run_test "TUI help" "${STEM_BIN} tui --help"
 
     log_header "Help Content Verification"
     local help_output

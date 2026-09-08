@@ -712,7 +712,7 @@ func TestExecutorWithConfigs(t *testing.T) {
 
 // TestDefaultConstants verifies the Y.1731 default constants.
 func TestDefaultConstants(t *testing.T) {
-	// Verify constants match TUI/WebUI defaults as documented.
+	// Verify constants match WebUI defaults as documented.
 	if defaultMEPID != 1 {
 		t.Errorf("defaultMEPID = %d, want 1", defaultMEPID)
 	}

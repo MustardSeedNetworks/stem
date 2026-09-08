@@ -206,18 +206,6 @@ stem test -i eth0 -t throughput,latency,frame_loss
 stem test -i eth0 -t y1564 --cir 100 --eir 50
 ```
 
-### TUI Mode
-
-```bash
-# Reflector TUI
-stem tui --mode reflect -i eth0
-
-# Test Master TUI
-stem tui --mode test -i eth0
-```
-
----
-
 ## Production Deployment
 
 ### Systemd Service

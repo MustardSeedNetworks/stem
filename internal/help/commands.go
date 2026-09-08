@@ -9,7 +9,6 @@ func GetAllCommands() map[string]CommandHelp {
 		"reflect":    ReflectCommand(),
 		"test":       TestCommand(),
 		"web":        WebCommand(),
-		"tui":        TUICommand(),
 		"license":    LicenseCommand(),
 		"version":    VersionCommand(),
 		"help":       helpCommand(),
@@ -561,55 +560,5 @@ The two values must match.`,
 			},
 		},
 		SeeAlso: []string{"web"},
-	}
-}
-
-// TUICommand documents the tui subcommand.
-func TUICommand() CommandHelp {
-	return CommandHelp{
-		Name:    "tui",
-		Summary: "Start the terminal UI dashboard",
-		Description: `The tui command launches the interactive terminal dashboard. Two modes:
-• test     — orchestrator UI for running tests against a remote reflector
-             (the default when no mode is given).
-• reflect  — reflector UI showing live packet-reflection stats (requires
-             --interface).
-
-Keybindings are displayed in the dashboard footer. Press '?' for the
-extended help panel.`,
-		Usage: "stem tui [flags]",
-		Flags: []FlagHelp{
-			{
-				Short:      "",
-				Long:       "--mode",
-				Type:       TypeString,
-				Default:    "test",
-				Required:   false,
-				TechDesc:   "TUI mode: test (orchestrator) or reflect (reflector dashboard)",
-				LaymanDesc: "Which dashboard to launch (default: test orchestrator)",
-			},
-			{
-				Short:      "-i",
-				Long:       "--interface",
-				Type:       TypeString,
-				Default:    "",
-				Required:   false,
-				TechDesc:   "Network interface (required for reflect mode)",
-				LaymanDesc: "Which network port to use for reflect mode",
-			},
-		},
-		Examples: []Example{
-			{
-				Desc:    "Launch the test orchestrator dashboard",
-				Command: "stem tui",
-				Output:  "stem - Terminal UI (test mode)",
-			},
-			{
-				Desc:    "Launch the reflector dashboard on eth0",
-				Command: "stem tui --mode reflect -i eth0",
-				Output:  "stem - Terminal UI (reflect mode, eth0)",
-			},
-		},
-		SeeAlso: []string{"reflect", "test", "web"},
 	}
 }

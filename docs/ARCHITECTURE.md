@@ -58,8 +58,7 @@ stem/
 │   │   ├── modtypes/               # shared executor types (cycle-free)
 │   │   └── orchestrator/           # test execution engine
 │   │       ├── dataplane/          # Go bindings to the C dataplane (cgo on Linux)
-│   │       ├── config/             # test config
-│   │       └── tui/                # terminal UI
+│   │       └── config/            # test config
 │   ├── netif/  metrics/  logging/  version/  truststore/  oauth/  backup/  …
 │   └── web/                        # embedded UI build output (web/dist; no Go source)
 ├── src/                            # C source (C23): dataplane/ + reflector/
