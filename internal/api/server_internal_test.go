@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
-	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -3244,46 +3243,35 @@ func TestApplyReflectorDataplaneUpdateVariations(t *testing.T) {
 	})
 }
 
-// TestHandleTestStartWithInterface asserts the API's test-type vocabulary:
-// every name the request may carry is one the module registry indexes, so a
-// real interface never fails with "unknown test type". The subtests used to
-// post the CLI's short names ("throughput", "latency") and only t.Logf the
-// status, which passed for every possible answer (#1069).
-func TestHandleTestStartWithInterface(t *testing.T) {
+// TestTestTypeVocabularyResolves asserts the vocabulary the API speaks: every
+// name a start request may carry resolves to a module that will run it.
+//
+// This replaces subtests that posted the CLI's short names ("throughput",
+// "latency", "frame_loss") through handleTestStart and only t.Logf'd the
+// status, so they passed for every possible answer — including the
+// "unknown test type" 400 those names actually produced (#1069). The check is
+// made against the resolver rather than the handler deliberately: a resolved
+// type on a real interface starts the C dataplane, which is an integration
+// concern and not what this asserts.
+func TestTestTypeVocabularyResolves(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "startwithifaceuser")
 	t.Setenv("STEM_AUTH_PASSWORD", "startwithifacepass123")
 
 	s := newTestServer(t)
 
-	// Get a valid interface.
-	ifaces, ifaceErr := netif.DetectInterfaces()
-	if ifaceErr != nil || len(ifaces) == 0 {
-		t.Skip("No network interfaces available")
-	}
-
-	testIface := ifaces[0].Name
-
 	for _, testType := range []string{
-		"rfc2544_throughput",
+		defaultTestType,
 		"rfc2544_latency",
 		"rfc2544_frame_loss",
+		testTypeReflect,
 	} {
 		t.Run(testType, func(t *testing.T) {
-			s.statsMu.Lock()
-			s.testStatus = statusIdle
-			s.currentTest = ""
-			s.statsMu.Unlock()
-
-			body := bytes.NewBufferString(`{"testType":"` + testType + `","interface":"` + testIface + `"}`)
-			req := httptest.NewRequest(http.MethodPost, "/api/v1/test/start", body)
-			w := httptest.NewRecorder()
-
-			s.handleTestStart(w, req)
-
-			var resp map[string]any
-			_ = json.Unmarshal(w.Body.Bytes(), &resp)
-			if msg, _ := resp["message"].(string); msg == "Unknown or unsupported test type" {
-				t.Fatalf("%s is not registered by any module: %s", testType, w.Body.String())
+			mod, err := s.resolveTestModule(testType)
+			if err != nil {
+				t.Fatalf("resolveTestModule(%q) = %v; no module registers it", testType, err)
+			}
+			if mod.Name() == "" {
+				t.Errorf("resolveTestModule(%q) returned an unnamed module", testType)
 			}
 		})
 	}
