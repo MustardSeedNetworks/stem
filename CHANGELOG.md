@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.72](https://github.com/MustardSeedNetworks/stem/compare/v0.24.71...v0.24.72) (2026-09-08)
+
+
+### Features
+
+* **api:** trusted-proxy CIDRs for X-Forwarded-For ([#1064](https://github.com/MustardSeedNetworks/stem/issues/1064)) ([6c510fc](https://github.com/MustardSeedNetworks/stem/commit/6c510fc58becbee9a55a4c307fb441c124dc1e12)), closes [#962](https://github.com/MustardSeedNetworks/stem/issues/962)
+
 ## [0.24.71](https://github.com/MustardSeedNetworks/stem/compare/v0.24.70...v0.24.71) (2026-09-08)
 
 
