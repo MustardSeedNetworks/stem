@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.75](https://github.com/MustardSeedNetworks/stem/compare/v0.24.74...v0.24.75) (2026-09-08)
+
+
+### Bug Fixes
+
+* **license:** fail closed to Free when the licence is unusable ([#1076](https://github.com/MustardSeedNetworks/stem/issues/1076)) ([c4cc176](https://github.com/MustardSeedNetworks/stem/commit/c4cc176117e4142e239ab24a51e166d2cfa305b3)), closes [#1068](https://github.com/MustardSeedNetworks/stem/issues/1068)
+
+
+### Miscellaneous
+
+* **deps:** update dependency json-schema-to-typescript to v16 ([#986](https://github.com/MustardSeedNetworks/stem/issues/986)) ([15ff3f1](https://github.com/MustardSeedNetworks/stem/commit/15ff3f19a11b3521d8228eb5b1d5bcc74e4b5f55))
+
 ## [0.24.74](https://github.com/MustardSeedNetworks/stem/compare/v0.24.73...v0.24.74) (2026-09-08)
 
 
