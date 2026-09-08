@@ -24,7 +24,7 @@ func TestNewRateLimiter(t *testing.T) {
 }
 
 func TestNewAuthRateLimiter(t *testing.T) {
-	rl := ratelimit.NewAuthRateLimiter()
+	rl := ratelimit.NewAuthRateLimiter(nil)
 	defer rl.Stop()
 
 	if rl == nil {
@@ -33,7 +33,7 @@ func TestNewAuthRateLimiter(t *testing.T) {
 }
 
 func TestNewAPIRateLimiter(t *testing.T) {
-	rl := ratelimit.NewAPIRateLimiter()
+	rl := ratelimit.NewAPIRateLimiter(nil)
 	defer rl.Stop()
 
 	if rl == nil {
@@ -165,10 +165,10 @@ func TestRateLimiterMiddlewareXForwardedFor(t *testing.T) {
 
 	wrapped := rl.Middleware(handler)
 
-	// Request with X-Forwarded-For header.
+	// Request through the local proxy, which appended the address it saw.
 	req := httptest.NewRequest(http.MethodGet, "/test", nil)
 	req.RemoteAddr = "127.0.0.1:12345"
-	req.Header.Set("X-Forwarded-For", "203.0.113.195, 70.41.3.18, 150.172.238.178")
+	req.Header.Set("X-Forwarded-For", "70.41.3.18, 150.172.238.178")
 	w := httptest.NewRecorder()
 
 	wrapped.ServeHTTP(w, req)
@@ -177,16 +177,18 @@ func TestRateLimiterMiddlewareXForwardedFor(t *testing.T) {
 		t.Errorf("Expected status 200, got %d", w.Code)
 	}
 
-	// Second request from same X-Forwarded-For should be denied.
+	// The same client again, having varied the part of the header it controls
+	// (#962): the entry the proxy appended is unchanged, so it is the same
+	// bucket and the burst of one is spent.
 	req2 := httptest.NewRequest(http.MethodGet, "/test", nil)
 	req2.RemoteAddr = "127.0.0.1:12346"
-	req2.Header.Set("X-Forwarded-For", "203.0.113.195, 70.41.3.18")
+	req2.Header.Set("X-Forwarded-For", "203.0.113.195, 150.172.238.178")
 	w2 := httptest.NewRecorder()
 
 	wrapped.ServeHTTP(w2, req2)
 
 	if w2.Code != http.StatusTooManyRequests {
-		t.Errorf("Expected status 429 for same X-Forwarded-For IP, got %d", w2.Code)
+		t.Errorf("Expected status 429 for same forwarded client IP, got %d", w2.Code)
 	}
 }
 
@@ -265,7 +267,7 @@ func TestRateLimiterStop(t *testing.T) {
 }
 
 func TestAuthRateLimiterLimits(t *testing.T) {
-	rl := ratelimit.NewAuthRateLimiter()
+	rl := ratelimit.NewAuthRateLimiter(nil)
 	defer rl.Stop()
 
 	ip := "10.0.0.100"
@@ -284,7 +286,7 @@ func TestAuthRateLimiterLimits(t *testing.T) {
 }
 
 func TestAPIRateLimiterLimits(t *testing.T) {
-	rl := ratelimit.NewAPIRateLimiter()
+	rl := ratelimit.NewAPIRateLimiter(nil)
 	defer rl.Stop()
 
 	ip := "10.0.0.200"

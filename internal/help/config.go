@@ -353,6 +353,16 @@ func GetEnvironmentVariables() []ConfigOption {
 			Example:    "STEM_AUTH_PASSWORD=SecureP@ssw0rd!",
 		},
 		{
+			Name:       "Trusted Proxies",
+			Path:       "",
+			Type:       TypeString,
+			Default:    "",
+			EnvVar:     "STEM_TRUSTED_PROXIES",
+			TechDesc:   "Comma-separated CIDRs whose X-Forwarded-For / X-Real-IP may key rate limits and failed-login counters. Loopback is always trusted; 0.0.0.0/0 and ::/0 are refused at startup.",
+			LaymanDesc: "Addresses of your reverse proxies, so clients behind them are counted separately.",
+			Example:    "STEM_TRUSTED_PROXIES=10.0.0.0/24,192.168.7.5/32",
+		},
+		{
 			Name:       "JWT Secret",
 			Path:       "",
 			Type:       TypeString,

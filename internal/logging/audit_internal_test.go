@@ -191,7 +191,7 @@ func TestLogSecurityEvent_SetsTimestamp(t *testing.T) {
 
 func TestAuditor_LoginSuccess(t *testing.T) {
 	handler := setupTestLogger()
-	auditor := NewAuditor()
+	auditor := NewAuditor(nil)
 	t.Cleanup(auditor.Stop)
 	defer handler.Reset()
 
@@ -213,7 +213,7 @@ func TestAuditor_LoginSuccess(t *testing.T) {
 }
 
 func TestAuditor_LoginSuccess_ClearsFailedAttempts(t *testing.T) {
-	auditor := NewAuditor()
+	auditor := NewAuditor(nil)
 	t.Cleanup(auditor.Stop)
 	handler := setupTestLogger()
 	defer handler.Reset()
@@ -242,7 +242,7 @@ func TestAuditor_LoginSuccess_ClearsFailedAttempts(t *testing.T) {
 
 func TestAuditor_LoginFailure(t *testing.T) {
 	handler := setupTestLogger()
-	auditor := NewAuditor()
+	auditor := NewAuditor(nil)
 	t.Cleanup(auditor.Stop)
 	defer handler.Reset()
 
@@ -268,7 +268,7 @@ func TestAuditor_LoginFailure(t *testing.T) {
 
 func TestAuditor_LoginFailure_TriggersSuspiciousActivity(t *testing.T) {
 	handler := setupTestLogger()
-	auditor := NewAuditor()
+	auditor := NewAuditor(nil)
 	t.Cleanup(auditor.Stop)
 	defer handler.Reset()
 
@@ -463,7 +463,7 @@ func TestAuditSuspiciousActivity(t *testing.T) {
 }
 
 func TestFailedLoginTracker_RecordAndCount(t *testing.T) {
-	auditor := NewAuditor()
+	auditor := NewAuditor(nil)
 	t.Cleanup(auditor.Stop)
 	tracker := auditor.Tracker()
 
@@ -487,7 +487,7 @@ func TestFailedLoginTracker_RecordAndCount(t *testing.T) {
 }
 
 func TestFailedLoginTracker_ClearAttempts(t *testing.T) {
-	auditor := NewAuditor()
+	auditor := NewAuditor(nil)
 	t.Cleanup(auditor.Stop)
 	tracker := auditor.Tracker()
 
@@ -513,7 +513,7 @@ func TestFailedLoginTracker_ClearAttempts(t *testing.T) {
 }
 
 func TestFailedLoginTracker_CleanupOldAttempts(t *testing.T) {
-	auditor := NewAuditor()
+	auditor := NewAuditor(nil)
 	t.Cleanup(auditor.Stop)
 	tracker := auditor.Tracker()
 
@@ -675,9 +675,9 @@ func TestGetClientIP_RemoteAddr(t *testing.T) {
 // used to be a package global, so every caller shared one. If a global is
 // reintroduced, the second auditor sees the first one's attempts and this fails.
 func TestNewAuditorIsolatesTrackers(t *testing.T) {
-	first := NewAuditor()
+	first := NewAuditor(nil)
 	t.Cleanup(first.Stop)
-	second := NewAuditor()
+	second := NewAuditor(nil)
 	t.Cleanup(second.Stop)
 
 	if first.Tracker() == second.Tracker() {
@@ -703,7 +703,7 @@ func TestNewAuditorIsolatesTrackers(t *testing.T) {
 func TestAuditorStopIsIdempotent(t *testing.T) {
 	t.Parallel()
 
-	auditor := NewAuditor()
+	auditor := NewAuditor(nil)
 
 	auditor.Stop()
 	auditor.Stop()
