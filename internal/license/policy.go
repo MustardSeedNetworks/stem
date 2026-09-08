@@ -74,21 +74,47 @@ func (t Tier) String() string {
 	return "Invalid"
 }
 
-// proFeatures returns the feature list granted to TierProfessional.
-// Listed alphabetically after reflector.
-func proFeatures() []string {
-	return []string{
-		"reflector",
-		"api",
-		"mef",
-		"multiuser",
-		"rfc2544",
-		"rfc2889",
-		"rfc6349",
-		"tsn",
-		"y1564",
-		"y1731",
-	}
+// Catalog feature names. Every string here is an entitlement Stem actually
+// enforces; docs/EDITIONS.md is the table that maps each one to the capability
+// it unlocks and the code that gates it. A string with no gate is a claim, not
+// a feature — the completeness test in internal/services rejects one.
+const (
+	// FeatureReflector is the Free grant: serving as a test endpoint for
+	// another Stem or a hardware tester. Ungated at runtime by design.
+	FeatureReflector = "reflector"
+
+	// FeatureMEF and the constants below it are the Pro grants: one per
+	// standard Stem implements, plus the custom traffic generator. Each is
+	// required by the test types of the module that implements it.
+	FeatureMEF        = "mef"
+	FeatureRFC2544    = "rfc2544"
+	FeatureRFC2889    = "rfc2889"
+	FeatureRFC6349    = "rfc6349"
+	FeatureTrafficGen = "trafficgen"
+	FeatureTSN        = "tsn"
+	FeatureY1564      = "y1564"
+	FeatureY1731      = "y1731"
+)
+
+// FreeFeatures returns the features a Reflector (tier 1) token grants.
+func FreeFeatures() []string {
+	return []string{FeatureReflector}
+}
+
+// ProFeatures returns the features a Professional (tier 2) token grants:
+// the Free list plus the paid additions, so Pro is a superset by construction
+// rather than by remembering to copy entries.
+func ProFeatures() []string {
+	return append(FreeFeatures(),
+		FeatureMEF,
+		FeatureRFC2544,
+		FeatureRFC2889,
+		FeatureRFC6349,
+		FeatureTrafficGen,
+		FeatureTSN,
+		FeatureY1564,
+		FeatureY1731,
+	)
 }
 
 // featuresForTier maps a signed wire-tier to the features Stem grants and the
@@ -99,9 +125,9 @@ func proFeatures() []string {
 func featuresForTier(wireTier int) ([]string, string, bool) {
 	switch Tier(wireTier) {
 	case TierReflector:
-		return []string{"reflector"}, codeReflector, true
+		return FreeFeatures(), codeReflector, true
 	case TierProfessional:
-		return proFeatures(), codeProfessional, true
+		return ProFeatures(), codeProfessional, true
 	case TierInvalid:
 		return nil, "", false
 	default:
