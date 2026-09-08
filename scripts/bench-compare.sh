@@ -27,37 +27,50 @@
 #
 # Environment:
 #   BENCH_MAX_REGRESSION_PCT  allowed slowdown per case (default 15)
-#   BENCH_RUNS                measurements per side, best taken (default 3)
+#   BENCH_RUNS                measurements per side, best taken (default 15)
 #   CC                        compiler (default gcc)
 
 set -euo pipefail
 
 BASELINE_REF="${1:-}"
 MAX_REGRESSION="${BENCH_MAX_REGRESSION_PCT:-15}"
-BENCH_RUNS="${BENCH_RUNS:-3}"
+# Measurements per side. 15, not 3, because the machine -- not the case -- is
+# what moves (#965).
+#
+# On an idle KVM guest, 30 back-to-back runs of one binary put EVERY case in one
+# of two modes, and a whole run lands in the same mode at once:
+#
+#   reflect_inplace_v4        93.5M - 175.1M pps      1.87x
+#   reflect_mode_mac_v4      233.3M - 351.4M pps      1.51x
+#   reflect_mode_all_csum_v4  18.5M -  25.2M pps      1.36x
+#   reflect_netally_probe     61.7M -  85.8M pps      1.39x
+#
+# So this was never a property of reflect_inplace_v4, which is why singling that
+# case out as advisory did not stop the gate false-failing on three different
+# cases in one day. Best-of-N is the right estimator -- interference only makes a
+# run slower, so the fastest observation is the closest to what the code can do
+# -- but a side that never happens to sample the fast mode reads as a
+# regression, and at N=3 that is common.
+#
+# Measured over 100 interleaved A/B rounds of identical code, sliding windows,
+# counting windows where any case read worse than -15%:
+#
+#   N=3    8 of 98 windows false-fail   worst -18.2%
+#   N=5    1 of 96                      worst -15.1%
+#   N=7    0 of 94                      worst -13.6%
+#   N=9    0 of 92                      worst  -1.4%
+#   N=15   0 of 86                      worst  -1.4%
+#
+# N=9 is where the margin collapses to noise; 15 is chosen over 9 because the
+# hosted runners are shared and noisier than the guest these numbers came from,
+# and the whole benchmark takes under a second per run.
+#
+# A median-of-paired-ratios estimator was measured on the same data and is
+# worse (18 of 98 false-fails at N=3, 0 at N=9 but worst -9.9%): the two sides
+# of a round are sequential, not simultaneous, so the mode can flip between
+# them and the pairing buys nothing.
+BENCH_RUNS="${BENCH_RUNS:-15}"
 
-# Cases that report but do not block.
-#
-# reflect_inplace_v4 cannot currently measure itself. Evidence, all on one idle
-# machine with byte-identical code on both sides (#965):
-#
-#   - the same binary run ten times produced 93.8M-175.3M pps, a 1.87x spread
-#   - the slow mode survives all 7 of the benchmark's own internal REPEATS, so
-#     it is fixed at process start rather than varying per repeat
-#   - it tracks process layout: padding the environment moved the result
-#     between 110M and 175M with nothing else changed
-#   - aligning the frame buffer to 64 bytes did not fix it, so the buffer's
-#     own alignment is not the cause
-#
-# Interleaving fixed the six other cases -- they now agree within 0.5% -- but
-# not this one. Blocking on a case that cannot measure would fail roughly one
-# PR in three for no reason, and a gate people re-run until it goes green is a
-# gate nobody reads. It stays measured and printed; it just does not fail the
-# build until #965 explains it.
-#
-# This list should stay empty. Adding to it needs the same standard: evidence
-# that the case cannot measure, not that a change made it slower.
-ADVISORY_CASES="${ADVISORY_CASES:-reflect_inplace_v4}"
 CC="${CC:-gcc}"
 
 REPO_ROOT="$(git rev-parse --show-toplevel)"
@@ -116,11 +129,13 @@ sample_bench() {
 # Two separate problems make a single measurement per side unusable, and they
 # need different answers (#965):
 #
-#   Within a side: reflect_inplace_v4 is bimodal on some hosts. The same
-#   binary, run ten times back to back on an idle machine, produced 93.8M-
-#   175.3M pps -- a 1.87x spread with no code difference at all. Best-of-N
-#   fixes that, because interference only ever makes a run slower, so the
-#   fastest observation is the closest to what the code can do.
+#   Within a side: the machine is bimodal, and every case moves with it. The
+#   same binary, run back to back on an idle machine, lands each whole run in
+#   a fast or a slow mode -- 1.36x to 1.87x apart depending on the case, with
+#   no code difference at all. Best-of-N fixes that, because interference only
+#   ever makes a run slower, so the fastest observation is the closest to what
+#   the code can do. It needs enough rounds for both sides to sample the fast
+#   mode; see BENCH_RUNS above for how 15 was chosen.
 #
 #   Across sides: the machine drifts during the job. Measuring all of the
 #   baseline and then all of the current made that drift look like a
@@ -200,15 +215,13 @@ build_bench "$REPO_ROOT" current
 measure_both
 
 echo
-MAX_REGRESSION="$MAX_REGRESSION" ADVISORY_CASES="$ADVISORY_CASES" awk '
+MAX_REGRESSION="$MAX_REGRESSION" awk '
   FNR == NR { base[$1] = $2; next }
   {
     cur[$1] = $2
   }
   END {
     limit = ENVIRON["MAX_REGRESSION"] + 0
-    split(ENVIRON["ADVISORY_CASES"], adv, " ")
-    for (i in adv) if (adv[i] != "") advisory[adv[i]] = 1
     failed = 0
     printf "%-26s %15s %15s %9s\n", "case", "baseline pps", "current pps", "change"
     for (name in base) {
@@ -224,13 +237,8 @@ MAX_REGRESSION="$MAX_REGRESSION" ADVISORY_CASES="$ADVISORY_CASES" awk '
       }
       delta = (cur[name] - base[name]) / base[name] * 100
       regressed = (delta < -limit)
-      if (regressed && (name in advisory)) {
-        verdict = "ADVISORY"
-        advised = 1
-      } else {
-        verdict = regressed ? "FAIL" : "ok"
-        if (regressed) failed = 1
-      }
+      verdict = regressed ? "FAIL" : "ok"
+      if (regressed) failed = 1
       printf "%-26s %15.0f %15.0f %8.1f%% %s\n", name, base[name], cur[name], delta, verdict
     }
     for (name in cur) {
@@ -244,12 +252,6 @@ MAX_REGRESSION="$MAX_REGRESSION" ADVISORY_CASES="$ADVISORY_CASES" awk '
       print  "BENCH_MAX_REGRESSION_PCT for that job -- do not silence the gate."
       exit 1
     }
-    if (advised) {
-      printf "\nADVISORY: a case listed in ADVISORY_CASES regressed. Not failing the\n"
-      print  "build, because that case cannot currently measure itself reliably --"
-      print  "see the comment above ADVISORY_CASES and #965. Every other case is"
-      print  "still blocking."
-    }
-    print "\nOK: no blocking reflect-path case regressed beyond the allowed margin."
+    print "\nOK: no reflect-path case regressed beyond the allowed margin."
   }
 ' "$WORKDIR/baseline.txt" "$WORKDIR/current.txt"

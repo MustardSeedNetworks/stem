@@ -1742,30 +1742,19 @@ jobs:
         with:
           packages: gcc-14
 
-      # Reports, does not block — see #965.
+      # Blocking again as of #965: three PRs were false-failed in one day on
+      # three DIFFERENT cases with identical code, which is what showed the
+      # noise was the machine and not any one case. The measurement now takes
+      # the best of 15 interleaved rounds per side rather than 3; on 100
+      # rounds of identical code that is 0 false failures in 92 sliding
+      # windows, against 8 in 98 at 3. The reasoning and the numbers are in
+      # scripts/bench-compare.sh above BENCH_RUNS.
       #
-      # The comparison is sound in design (same runner, same job, interleaved
-      # rounds since #966) but the hosted runners cannot currently measure
-      # this benchmark reliably enough to gate on. Measured, byte-identical
-      # code on both sides:
-      #
-      #   the same binary run ten times      93.8M - 175.3M pps, a 1.87x spread
-      #   three PRs blocked in one day       -16.7%, -16.6%, -20.8%, on three
-      #                                      DIFFERENT cases, each time with all
-      #                                      four benchmarked sources identical
-      #                                      to main and the hot function
-      #                                      compiling to identical machine code
-      #
-      # In that time it produced no true positives. A gate that fails roughly
-      # one PR in three for no reason is one people re-run until it goes green,
-      # which is worse than no gate: it teaches the team to ignore a red check.
-      #
-      # `continue-on-error` rather than deleting the step, because the numbers
-      # are still worth printing and the local `scripts/bench-compare.sh` still
-      # exits non-zero on a regression. Restore the gate — remove this line —
-      # once #965 makes the measurement trustworthy.
+      # If this starts false-failing again, the answer is more rounds or a
+      # quieter runner — not `continue-on-error` and not a wider
+      # BENCH_MAX_REGRESSION_PCT, which would stop it catching a real
+      # regression too.
       - name: Compare reflect-path throughput against the merge base
-        continue-on-error: true
         env:
           CC: gcc-14
         run: scripts/bench-compare.sh
