@@ -10,10 +10,10 @@ import (
 )
 
 const (
-	defaultRatePct         = 100.0 // Match TUI/WebUI: 100% line rate.
-	defaultWarmupSec       = 2     // Match TUI/WebUI: 2 seconds.
-	defaultDurationSec     = 60    // Match TUI/WebUI: 60 seconds.
-	defaultStreamID        = 1     // Match TUI/WebUI: stream 1.
+	defaultRatePct         = 100.0 // Match WebUI: 100% line rate.
+	defaultWarmupSec       = 2     // Match WebUI: 2 seconds.
+	defaultDurationSec     = 60    // Match WebUI: 60 seconds.
+	defaultStreamID        = 1     // Match WebUI: stream 1.
 	defaultBurstSize       = 100
 	defaultInterBurstGapUs = 1000
 )

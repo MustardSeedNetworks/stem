@@ -9,6 +9,4 @@ internal/reflector/tui/tui_internal_test.go 1558
 internal/reflector/tui/tui_test.go 1674
 internal/services/benchmark/executor_test.go 1177
 internal/services/orchestrator/dataplane/dataplane.go 1163
-internal/services/orchestrator/tui/configs.go 1176
-internal/services/orchestrator/tui/tui.go 1077
 internal/services/servicetest/executor_test.go 2004

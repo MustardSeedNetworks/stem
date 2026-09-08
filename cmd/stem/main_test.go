@@ -379,7 +379,6 @@ func TestPrintUsage(t *testing.T) {
 		"reflect",
 		"test",
 		"web",
-		"tui",
 		"license",
 		"EXAMPLES:",
 	}

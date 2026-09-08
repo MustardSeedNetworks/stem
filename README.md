@@ -12,7 +12,7 @@
 
 The Stem is a network performance testing tool from **Mustard Seed Networks**.
 It packages a high-performance reflector and a full suite of RFC-compliant
-testing modules into a single Go binary with a CLI, TUI, and React web UI.
+testing modules into a single Go binary with a CLI and a React web UI.
 
 Run it as a service-level loopback target, generate traffic against another
 endpoint, or drive a full RFC 2544 / Y.1564 certification suite — all from
@@ -40,7 +40,7 @@ the same install.
 ### Interfaces
 
 - **CLI** — scriptable `stem <cmd>` for CI integration
-- **TUI** — single-screen Bubbletea dashboard for ad-hoc use
+- **Reflector dashboard** — live tview terminal display for `stem reflect --tui`
 - **Web UI** — React/TypeScript control plane on port 8444 (HTTPS by default; 8043 plaintext redirector)
 - **REST + SSE** — `/api/v1/events` streams live test results
 
@@ -67,8 +67,8 @@ sudo ./bin/stem web -p 8444
 # → open https://localhost:8444 (self-signed cert)
 # → run `sudo ./bin/stem install-ca` once to trust the cert system-wide
 
-# Or the TUI
-sudo ./bin/stem tui
+# Or the reflector with its live terminal dashboard
+sudo ./bin/stem reflect -i eth0 --tui
 ```
 
 ## Commands
@@ -79,7 +79,6 @@ sudo ./bin/stem tui
 | `stem reflect -i <iface>` | Start the reflector |
 | `stem test -t <type> -i <iface>` | Run one or more tests (comma-separated) |
 | `stem web -p <port>` | Start the web UI + REST API |
-| `stem tui` | Launch the TUI dashboard |
 | `stem license --status` | Show license tier + activation state |
 | `stem list-tests` | Catalogue all supported tests, grouped by module |
 | `stem help modules` | Module + test type reference |

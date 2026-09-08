@@ -495,19 +495,6 @@ func TestTutorialStepsHaveContent(t *testing.T) {
 // Commands Tests
 // ============================================================================
 
-func TestCommandsCount(t *testing.T) {
-	commands := help.GetAllCommands()
-	// Updated 2026-05-29: PR-B added tui, list-tests, install-ca entries so
-	// every dispatch verb in cmd/stem/main.go has a help-package record. The
-	// canonical-verb list in commands_completeness_test.go is the source of
-	// truth — keep this in sync with it.
-	expectedCount := 11
-
-	if len(commands) != expectedCount {
-		t.Errorf("help.GetAllCommands() returned %d commands, want %d", len(commands), expectedCount)
-	}
-}
-
 func TestCommandsHaveRequiredFields(t *testing.T) {
 	commands := help.GetAllCommands()
 

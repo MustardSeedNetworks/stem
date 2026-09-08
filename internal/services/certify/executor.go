@@ -10,30 +10,30 @@ import (
 )
 
 const (
-	// RFC 6349 defaults - aligned with TUI/WebUI.
-	defaultRFC6349TargetRate = 100.0 // Match TUI/WebUI: 100 Mbps.
-	defaultRFC6349MinRTTMs   = 1.0   // Match TUI/WebUI: 1.0 ms.
-	defaultRFC6349MaxRTTMs   = 100.0 // Match TUI/WebUI: 100 ms.
+	// RFC 6349 defaults - aligned with WebUI.
+	defaultRFC6349TargetRate = 100.0 // Match WebUI: 100 Mbps.
+	defaultRFC6349MinRTTMs   = 1.0   // Match WebUI: 1.0 ms.
+	defaultRFC6349MaxRTTMs   = 100.0 // Match WebUI: 100 ms.
 	defaultRFC6349RWND       = 65535 // 64KB receive window.
 	defaultRFC6349MSS        = 1460  // Standard MSS.
 	defaultRFC6349Duration   = 30    // 30 seconds.
 
-	// RFC 2889 defaults - aligned with TUI/WebUI.
+	// RFC 2889 defaults - aligned with WebUI.
 	defaultRFC2889WarmupSec = 2
 	defaultRFC2889AddressCt = 8192
 	defaultRFC2889PortCt    = 2
 	defaultRFC2889Duration  = 60
 
-	// TSN defaults - aligned with TUI/WebUI.
-	defaultTSNWarmupSec       = 5       // Match TUI/WebUI: 5 seconds.
+	// TSN defaults - aligned with WebUI.
+	defaultTSNWarmupSec       = 5       // Match WebUI: 5 seconds.
 	defaultTSNClassCount      = 8       // 8 traffic classes.
 	defaultTSNDuration        = 60      // 60 seconds.
-	defaultTSNFrameSize       = 64      // Match TUI/WebUI: 64 bytes.
-	defaultTSNMaxLatencyNs    = 1000000 // Match TUI/WebUI: 1ms.
-	defaultTSNMaxJitterNs     = 100000  // Match TUI/WebUI: 100µs.
-	defaultTSNMaxSyncOffsetNs = 1000    // Match TUI/WebUI: 1µs.
-	defaultTSNCycleTimeNs     = 1000000 // Match TUI/WebUI: 1ms.
-	defaultTSNTrafficClass    = 7       // Match TUI/WebUI: highest priority.
+	defaultTSNFrameSize       = 64      // Match WebUI: 64 bytes.
+	defaultTSNMaxLatencyNs    = 1000000 // Match WebUI: 1ms.
+	defaultTSNMaxJitterNs     = 100000  // Match WebUI: 100µs.
+	defaultTSNMaxSyncOffsetNs = 1000    // Match WebUI: 1µs.
+	defaultTSNCycleTimeNs     = 1000000 // Match WebUI: 1ms.
+	defaultTSNTrafficClass    = 7       // Match WebUI: highest priority.
 )
 
 // Executor wraps the Certify module with test execution capability.
@@ -198,9 +198,9 @@ func buildTSNConfig(cfg *modtypes.TestConfig) *dataplane.TSNConfig {
 		FrameSize:         cfg.FrameSize,
 		MaxLatencyNs:      modtypes.GetUint32Param(cfg.Params, "max_latency_ns", defaultTSNMaxLatencyNs),
 		MaxJitterNs:       modtypes.GetUint32Param(cfg.Params, "max_jitter_ns", defaultTSNMaxJitterNs),
-		RequirePTPSync:    modtypes.GetBoolParam(cfg.Params, "require_ptp_sync", true), // Match TUI/WebUI.
+		RequirePTPSync:    modtypes.GetBoolParam(cfg.Params, "require_ptp_sync", true), // Match WebUI.
 		MaxSyncOffsetNs:   modtypes.GetUint32Param(cfg.Params, "max_sync_offset_ns", defaultTSNMaxSyncOffsetNs),
-		PTPEnabled:        modtypes.GetBoolParam(cfg.Params, "ptp_enabled", true), // Match TUI/WebUI.
+		PTPEnabled:        modtypes.GetBoolParam(cfg.Params, "ptp_enabled", true), // Match WebUI.
 		PreemptionEnabled: modtypes.GetBoolParam(cfg.Params, "preemption_enabled", false),
 		NumTrafficClasses: modtypes.GetUint32Param(cfg.Params, "num_traffic_classes", defaultTSNClassCount),
 		BaseTimeNs:        modtypes.GetUint64Param(cfg.Params, "base_time_ns", 0),

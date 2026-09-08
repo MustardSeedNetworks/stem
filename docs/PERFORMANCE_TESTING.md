@@ -58,7 +58,7 @@ Missing requirements:
   - Linux required (current: darwin)
 ```
 
-This is a hard gate, not a degraded mode. The WebUI, TUI, licensing, and
+This is a hard gate, not a degraded mode. The WebUI, licensing, and
 `list-tests` all work everywhere; **running a test does not.**
 
 ### Licence tier
@@ -191,11 +191,10 @@ is intended. The certificate is self-signed unless you have installed one;
 
 ## 7. Interfaces
 
-Three, over the same engine:
+Two, over the same engine:
 
 ```bash
 stem test -i eth0 -t rfc2544_throughput   # CLI, scriptable, --json / --csv
-stem tui                                  # terminal dashboard
 stem web -p 8444                          # HTTPS WebUI (default :8444)
 ```
 

@@ -4,8 +4,6 @@ package main
 
 import (
 	"testing"
-
-	reflectorConfig "github.com/MustardSeedNetworks/stem/internal/reflector/config"
 )
 
 func TestNetAllyProfilePreservesUDPPorts(t *testing.T) {
@@ -18,12 +16,5 @@ func TestNetAllyProfilePreservesUDPPorts(t *testing.T) {
 	}
 	if cfg.Filtering.Port != 3842 {
 		t.Fatalf("NetAlly reflector port = %d, want 3842", cfg.Filtering.Port)
-	}
-}
-
-func TestBuildTUIReflectorConfigSuppliesAFPacketGuardPort(t *testing.T) {
-	cfg := buildTUIReflectorConfig("eth0")
-	if cfg.Filtering.Port != reflectorConfig.NetAllyPort {
-		t.Fatalf("TUI reflector port = %d, want %d", cfg.Filtering.Port, reflectorConfig.NetAllyPort)
 	}
 }
