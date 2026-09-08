@@ -95,10 +95,11 @@ func (s *Server) UseReflectorAvailabilityForTest(fn func() (bool, string)) {
 }
 
 // UseLicenseForTest swaps the server's license manager so a test can decide
-// what the deployment is entitled to. Passing nil disables entitlement
-// checking entirely (hasFeature permits everything without a manager), which
-// is what tests exercising non-licensing behaviour want — otherwise they would
-// depend on whatever activation state the developer's ~/.config/stem holds.
+// what the deployment is entitled to. Passing nil is the deployment whose
+// manager could not be built at all, which grants the Free features and
+// nothing else; a test exercising a paid capability installs a manager rather
+// than depending on whatever activation state the developer's ~/.config/stem
+// holds.
 func (s *Server) UseLicenseForTest(mgr *license.Manager) {
 	s.licenseManager = mgr
 }

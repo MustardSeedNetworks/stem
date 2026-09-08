@@ -87,9 +87,7 @@ func reflectCmd(args []string) error {
 		return err
 	}
 
-	if err := checkReflectorLicense(); err != nil {
-		return err
-	}
+	reportReflectorLicense()
 
 	sigFilter := getSignatureFilter(parsed.profile)
 
@@ -170,25 +168,20 @@ func requireReflectInterface(iface string, fs *flag.FlagSet) error {
 	return nil
 }
 
-func checkReflectorLicense() error {
-	// Check license (Tier 1 minimum).
-	mgr, err := license.NewManager()
-	if err != nil {
+// reportReflectorLicense tells the operator what the license state is before
+// the reflector starts. Reflecting is the Free grant, so this never refuses
+// and never starts a trial: spending the 14 Professional days to run a free
+// capability was wrong even on a healthy install, and on a damaged one it
+// overwrote the operator's license file (#1068).
+func reportReflectorLicense() {
+	_, loadStatus, err := license.Load()
+	switch {
+	case err != nil:
 		_, _ = fmt.Fprintf(os.Stdout, "Warning: License check failed: %v\n", err)
-		return nil
+	case !loadStatus.Usable():
+		_, _ = fmt.Fprintf(os.Stdout, "Warning: License file %s is %s; running the reflector, which is free\n",
+			license.DefaultLicensePath(), loadStatus)
 	}
-	if mgr.IsActivated() {
-		return nil
-	}
-
-	_, _ = fmt.Fprintln(os.Stdout, "No active license. Starting 14-day trial...")
-	result := mgr.StartTrial()
-	if !result.Success {
-		_, _ = fmt.Fprintf(os.Stdout, "Error: %s\n", result.Message)
-		return fmt.Errorf("license trial failed: %s", result.Message)
-	}
-	_, _ = fmt.Fprintf(os.Stdout, "%s\n", result.Message)
-	return nil
 }
 
 func buildReflectorConfig(parsed *reflectCmdArgs, sigFilter string) *reflectorConfig.Config {

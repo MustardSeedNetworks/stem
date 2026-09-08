@@ -64,11 +64,24 @@ func validateTestTypesList(tests []string) bool {
 }
 
 // checkTestLicense checks that the license is valid for running tests.
+//
+// Every test is a Professional capability, so an answer this code cannot
+// stand behind is a refusal: a license manager that failed to build, or a
+// license file that could not be read or parsed, leaves the host on the Free
+// grant. In particular a damaged file must not start a trial — that would
+// hand out Professional for corrupting a file, and overwrite the operator's
+// license in the process (#1068).
 func checkTestLicense() bool {
-	mgr, err := license.NewManager()
+	mgr, loadStatus, err := license.Load()
 	if err != nil {
-		_, _ = fmt.Fprintf(os.Stdout, "Warning: License check failed: %v\n", err)
-		return true // Allow to continue with warning.
+		_, _ = fmt.Fprintf(os.Stdout, "Error: License check failed: %v\n", err)
+		_, _ = fmt.Fprintln(os.Stdout, "Tests require a Professional license; only the reflector runs without one")
+		return false
+	}
+	if !loadStatus.Usable() {
+		_, _ = fmt.Fprintf(os.Stdout, "Error: License file %s is %s\n", license.DefaultLicensePath(), loadStatus)
+		_, _ = fmt.Fprintln(os.Stdout, "Replace it with 'stem license --activate <KEY>' or 'stem license --trial'")
+		return false
 	}
 
 	state := mgr.GetState()

@@ -59,9 +59,9 @@ func TestKeygenContract(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			t.Parallel()
-			mgr, err := license.NewManagerWithDir(t.TempDir())
+			mgr, _, err := license.LoadFromDir(t.TempDir())
 			if err != nil {
-				t.Fatalf("NewManagerWithDir: %v", err)
+				t.Fatalf("LoadFromDir: %v", err)
 			}
 			res := mgr.Activate(c.vector)
 			if !res.Success {
@@ -75,9 +75,9 @@ func TestKeygenContract(t *testing.T) {
 
 	t.Run("enterprise-retired", func(t *testing.T) {
 		t.Parallel()
-		mgr, err := license.NewManagerWithDir(t.TempDir())
+		mgr, _, err := license.LoadFromDir(t.TempDir())
 		if err != nil {
-			t.Fatalf("NewManagerWithDir: %v", err)
+			t.Fatalf("LoadFromDir: %v", err)
 		}
 		if res := mgr.Activate(prodStemEnterpriseVector); res.Success {
 			t.Error("Enterprise prod vector (tier 3) must be rejected after retirement")

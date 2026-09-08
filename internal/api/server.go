@@ -213,10 +213,16 @@ func serveFallbackUIPage(w http.ResponseWriter, _ *http.Request) {
 // error if those env vars are missing or invalid). The returned Server has
 // not started listening yet; call Run to bind the TLS listener and serve.
 func NewServer(port int) (*Server, error) {
-	// Initialize license manager.
-	licMgr, err := license.NewManager()
+	// Initialize license manager. A state Stem cannot use is reported once
+	// here rather than on every gated request; the entitlement consequence is
+	// hasFeature's, which grants only the Free features without a manager.
+	licMgr, licStatus, err := license.Load()
 	if err != nil {
-		logging.Warn("Failed to initialize license manager", "error", err)
+		logging.Error("license manager unavailable; entitlements limited to Free",
+			"event", "license.unusable", "error", err)
+	} else if !licStatus.Usable() {
+		logging.Error("license file unusable; entitlements limited to Free",
+			"event", "license.unusable", "status", licStatus.String(), "path", license.DefaultLicensePath())
 	}
 
 	// Auto-select best interface if available.

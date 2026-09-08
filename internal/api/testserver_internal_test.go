@@ -22,9 +22,9 @@ func newTestServer(t testing.TB) *Server {
 	// Entitlement is a test input: install a Professional trial so these tests
 	// exercise handler behaviour rather than whatever activation state the
 	// developer's ~/.config/stem happens to hold.
-	mgr, mgrErr := license.NewManagerWithDir(t.TempDir())
+	mgr, _, mgrErr := license.LoadFromDir(t.TempDir())
 	if mgrErr != nil {
-		t.Fatalf("NewManagerWithDir() error: %v", mgrErr)
+		t.Fatalf("LoadFromDir() error: %v", mgrErr)
 	}
 	if result := mgr.StartTrial(); !result.Success {
 		t.Fatalf("StartTrial() failed: %s", result.Message)
