@@ -39,20 +39,6 @@ func (e *blockingCancelableExecutor) Close() {
 	close(e.done)
 }
 
-// newTestServer creates a test server with automatic cleanup.
-// This helper ensures that all servers created in tests are properly
-// shut down to prevent goroutine leaks.
-func newTestServer(t testing.TB) *Server {
-	t.Helper()
-	t.Setenv("STEM_TEST_MODE", "1") // Use fast bcrypt for tests
-	s, err := NewServer(8444)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
-	t.Cleanup(func() { _ = s.Shutdown() })
-	return s
-}
-
 // setupClaimsTestServer creates a server for claims tests.
 func setupClaimsTestServer(t *testing.T) *Server {
 	t.Helper()

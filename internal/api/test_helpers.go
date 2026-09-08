@@ -4,6 +4,7 @@ package api
 
 import (
 	"github.com/MustardSeedNetworks/stem/internal/auth"
+	"github.com/MustardSeedNetworks/stem/internal/license"
 )
 
 // TestExecutor is the public alias for the unexported testExecutor
@@ -91,4 +92,20 @@ func (s *Server) UseReflectorAvailabilityForTest(fn func() (bool, string)) {
 	s.reflectorAvailability = func() (bool, string) {
 		return fn()
 	}
+}
+
+// UseLicenseForTest swaps the server's license manager so a test can decide
+// what the deployment is entitled to. Passing nil disables entitlement
+// checking entirely (hasFeature permits everything without a manager), which
+// is what tests exercising non-licensing behaviour want — otherwise they would
+// depend on whatever activation state the developer's ~/.config/stem holds.
+func (s *Server) UseLicenseForTest(mgr *license.Manager) {
+	s.licenseManager = mgr
+}
+
+// FeatureForTestTypeForTest exposes the entitlement map so the catalog
+// completeness test can assert, from outside the package, that every priced
+// capability has a gate and every gate names a real catalog string.
+func FeatureForTestTypeForTest(testType string) (string, bool) {
+	return featureForTestType(testType)
 }

@@ -124,8 +124,13 @@ Two tiers, plus a 14-day trial of the paid one.
 | Tier | Price | What it unlocks |
 | --- | --- | --- |
 | Free (Reflector) | free | Reflector only — the host serves as a test endpoint for another Stem or a hardware tester |
-| Pro | $1,999/yr | Reflector plus RFC 2544, Y.1564, Y.1731, RFC 2889, RFC 6349, MEF and TSN, the REST API, and multi-user access |
+| Pro | $1,999/yr | Reflector plus RFC 2544, Y.1564, Y.1731, RFC 2889, RFC 6349, MEF, TSN and custom traffic streams |
 | Trial | free, 14 days | Pro features, no key required |
+
+Every entry in that Pro column is a feature name the binary enforces, and
+[docs/EDITIONS.md](docs/EDITIONS.md) maps each one to the code that gates it.
+The web UI and the REST API it runs on are how Stem is operated at every tier,
+including Free — neither is sold separately.
 
 Licenses are Ed25519-signed tokens (`MSN1.<payload>.<signature>`, see
 [ADR-0007](docs/adr/0007-ed25519-signed-licenses.md)) verified entirely

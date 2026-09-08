@@ -42,6 +42,10 @@ func setupTestServer(t testing.TB) *api.Server {
 		t.Fatalf("NewServer() error: %v", err)
 	}
 	t.Cleanup(func() { _ = s.Shutdown() })
+	// Entitlement is a test input: install a Professional trial so these
+	// tests exercise handler behaviour rather than whatever activation
+	// state the developer's ~/.config/stem happens to hold.
+	s.UseLicenseForTest(proLicense(t))
 	return s
 }
 

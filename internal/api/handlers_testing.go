@@ -38,6 +38,14 @@ func (s *Server) handleTestStart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Entitlement: the test type names the standard, and the standard is what
+	// is sold. Checked before anything is reserved or started so a denied run
+	// leaves no state behind.
+	if feature, gated := featureForTestType(req.TestType); gated && !s.hasFeature(feature) {
+		s.sendFeatureGate(w, feature)
+		return
+	}
+
 	iface, ifaceErr := s.resolveTestInterface(req.Interface)
 	if ifaceErr != nil {
 		WriteInvalidRequest(w, "No network interface specified")
