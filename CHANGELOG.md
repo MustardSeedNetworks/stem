@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.71](https://github.com/MustardSeedNetworks/stem/compare/v0.24.70...v0.24.71) (2026-09-08)
+
+
+### Bug Fixes
+
+* **e2e:** run the suite against the daemon, not the dev server ([#1062](https://github.com/MustardSeedNetworks/stem/issues/1062)) ([972861e](https://github.com/MustardSeedNetworks/stem/commit/972861e9b001dec77fbaa6ce0f3452f2efa5a073)), closes [#959](https://github.com/MustardSeedNetworks/stem/issues/959)
+
 ## [0.24.70](https://github.com/MustardSeedNetworks/stem/compare/v0.24.69...v0.24.70) (2026-09-08)
 
 
