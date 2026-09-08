@@ -30,7 +30,7 @@ arrangements — custom terms, volume licensing, net-30 — are not a third tier
 whole standards, and every test names its type in the body of one route, so the
 gate is at the point the test type is resolved rather than at route
 registration: `handleTestStart` maps the type through
-[`services.FeatureForTestType`](../internal/services/features.go) and answers
+[`featureForTestType`](../internal/api/features.go) and answers
 402 `TIER_TOO_LOW` when the licence does not cover it.
 
 | Feature | Tier | Capability | Test types it gates | Gate |
@@ -50,7 +50,7 @@ an active trial) for any test through `checkTestLicense` in
 [`cmd/stem/cmd_testmaster.go`](../cmd/stem/cmd_testmaster.go). It is the same
 verdict at a lower resolution, not a different policy.
 
-`internal/services/features_test.go` fails the build if a Pro catalog string is
+`internal/api/features_test.go` fails the build if a Pro catalog string is
 required by no test type, or if a registered test type requires no feature.
 That is what stops the table above from drifting into a list of claims.
 
