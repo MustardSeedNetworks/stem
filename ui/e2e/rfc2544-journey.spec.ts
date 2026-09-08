@@ -89,3 +89,56 @@ test.describe('RFC 2544 journey', () => {
     expect(body.config, 'the RFC 2544 config must be sent, not just the test list').toBeTruthy();
   });
 });
+
+/**
+ * The entitlement answer, from the operator's side (#1070).
+ *
+ * The daemon refuses an unlicensed standard with 402 TIER_TOO_LOW and a body
+ * naming the feature; before this the UI rendered that as a generic failure,
+ * so a Free operator was told the test failed rather than that it is sold.
+ * The response is faked because CI's daemon is licensed by the test fixture —
+ * what is under test is the render path, not the gate (which has Go tests).
+ */
+test.describe('feature gate', () => {
+  test.beforeEach(async ({ page }) => {
+    await skipSetupWizard(page);
+    await useRole(page, 'test_master');
+  });
+
+  test('a 402 names the feature and points at the licence, not a generic error', async ({
+    page,
+  }) => {
+    await page.route(START_ENDPOINT, async (route) => {
+      await route.fulfill({
+        status: 402,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          error: 'Feature requires a higher tier',
+          code: 'TIER_TOO_LOW',
+          requiredFeature: 'rfc2544',
+          currentTier: 'Reflector',
+          upgradeMessage: 'Start a 14-day Pro trial with `stem license --trial`.',
+        }),
+      });
+    });
+
+    await page.goto('/tests/benchmark');
+    await expect(page.getByTestId('rfc2544-config-form')).toBeVisible({ timeout: 10000 });
+
+    const iface = page.getByTestId('interface-select');
+    const value = await iface.locator('option').nth(1).getAttribute('value');
+    expect(value, 'daemon reported no interfaces to select').toBeTruthy();
+    await iface.selectOption(value as string);
+
+    const start = page.getByTestId('start-test-button');
+    await expect(start).toBeEnabled();
+    await start.click();
+
+    const alert = page.getByTestId('test-start-error');
+    await expect(alert).toBeVisible({ timeout: 10000 });
+    await expect(alert).toContainText('rfc2544');
+    await expect(alert).toContainText('Reflector');
+    // The generic failure text must not be what the operator is shown.
+    await expect(alert).not.toContainText('Failed to start test');
+  });
+});

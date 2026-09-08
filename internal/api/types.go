@@ -31,10 +31,16 @@ const (
 	modeTestMaster = "test_master"
 )
 
-// Test type constants.
+// Test type constants. These are the names the module registry indexes, which
+// are standard-qualified — the CLI's shorter vocabulary ("throughput") is its
+// own dispatch table and is not what the API speaks (#1069).
 const (
-	testTypeReflect    = "reflect"
-	testTypeThroughput = "throughput"
+	testTypeReflect = "reflect"
+
+	// defaultTestType is substituted when a request omits testType. It must
+	// be a type some module registers or the default is a guaranteed 400;
+	// the benchmark module owns it, and it is what the web UI falls back to.
+	defaultTestType = "rfc2544_throughput"
 )
 
 // StatusResponse for simple status messages.

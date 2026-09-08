@@ -28,7 +28,8 @@
     "failedToStop": "Failed to stop test",
     "invalidConfig": "Invalid test configuration",
     "moduleNotFound": "Test module not found",
-    "testTypeNotSupported": "Test type not supported by module"
+    "testTypeNotSupported": "Test type not supported by module",
+    "featureGate": "{{feature}} requires Stem Pro. This deployment is licensed as {{tier}} — start a 14-day trial or activate a Pro key under Settings > License."
   },
   "reflector": {
     "alreadyRunning": "Reflector already running",

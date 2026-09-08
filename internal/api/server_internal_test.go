@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -3243,7 +3244,11 @@ func TestApplyReflectorDataplaneUpdateVariations(t *testing.T) {
 	})
 }
 
-// TestHandleTestStartWithInterface tests handleTestStart with various interfaces.
+// TestHandleTestStartWithInterface asserts the API's test-type vocabulary:
+// every name the request may carry is one the module registry indexes, so a
+// real interface never fails with "unknown test type". The subtests used to
+// post the CLI's short names ("throughput", "latency") and only t.Logf the
+// status, which passed for every possible answer (#1069).
 func TestHandleTestStartWithInterface(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "startwithifaceuser")
 	t.Setenv("STEM_AUTH_PASSWORD", "startwithifacepass123")
@@ -3258,48 +3263,30 @@ func TestHandleTestStartWithInterface(t *testing.T) {
 
 	testIface := ifaces[0].Name
 
-	t.Run("start with valid interface and throughput", func(t *testing.T) {
-		body := bytes.NewBufferString(`{"testType":"throughput","interface":"` + testIface + `"}`)
-		req := httptest.NewRequest(http.MethodPost, "/api/v1/test/start", body)
-		w := httptest.NewRecorder()
+	for _, testType := range []string{
+		"rfc2544_throughput",
+		"rfc2544_latency",
+		"rfc2544_frame_loss",
+	} {
+		t.Run(testType, func(t *testing.T) {
+			s.statsMu.Lock()
+			s.testStatus = statusIdle
+			s.currentTest = ""
+			s.statsMu.Unlock()
 
-		s.handleTestStart(w, req)
+			body := bytes.NewBufferString(`{"testType":"` + testType + `","interface":"` + testIface + `"}`)
+			req := httptest.NewRequest(http.MethodPost, "/api/v1/test/start", body)
+			w := httptest.NewRecorder()
 
-		// May succeed or fail, but should not be 400 for valid interface.
-		t.Logf("handleTestStart response: %d", w.Code)
-	})
+			s.handleTestStart(w, req)
 
-	t.Run("start with valid interface and latency", func(t *testing.T) {
-		// Reset test state.
-		s.statsMu.Lock()
-		s.testStatus = statusIdle
-		s.currentTest = ""
-		s.statsMu.Unlock()
-
-		body := bytes.NewBufferString(`{"testType":"latency","interface":"` + testIface + `"}`)
-		req := httptest.NewRequest(http.MethodPost, "/api/v1/test/start", body)
-		w := httptest.NewRecorder()
-
-		s.handleTestStart(w, req)
-
-		t.Logf("handleTestStart (latency) response: %d", w.Code)
-	})
-
-	t.Run("start with frame_loss test", func(t *testing.T) {
-		// Reset test state.
-		s.statsMu.Lock()
-		s.testStatus = statusIdle
-		s.currentTest = ""
-		s.statsMu.Unlock()
-
-		body := bytes.NewBufferString(`{"testType":"frame_loss","interface":"` + testIface + `"}`)
-		req := httptest.NewRequest(http.MethodPost, "/api/v1/test/start", body)
-		w := httptest.NewRecorder()
-
-		s.handleTestStart(w, req)
-
-		t.Logf("handleTestStart (frame_loss) response: %d", w.Code)
-	})
+			var resp map[string]any
+			_ = json.Unmarshal(w.Body.Bytes(), &resp)
+			if msg, _ := resp["message"].(string); msg == "Unknown or unsupported test type" {
+				t.Fatalf("%s is not registered by any module: %s", testType, w.Body.String())
+			}
+		})
+	}
 }
 
 // TestHandleLicenseVariations tests handleLicense variations.
