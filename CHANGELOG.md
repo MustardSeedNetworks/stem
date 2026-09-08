@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.73](https://github.com/MustardSeedNetworks/stem/compare/v0.24.72...v0.24.73) (2026-09-08)
+
+
+### Features
+
+* **license:** enforce the Pro feature catalog at the API ([#1071](https://github.com/MustardSeedNetworks/stem/issues/1071)) ([17bf1c3](https://github.com/MustardSeedNetworks/stem/commit/17bf1c36db799bb56bad66ed7ccabbe88c3c37d8))
+
+
+### Miscellaneous
+
+* **deps:** update dependency lint-staged to v17.5.0 ([#1072](https://github.com/MustardSeedNetworks/stem/issues/1072)) ([98ae25c](https://github.com/MustardSeedNetworks/stem/commit/98ae25cfe1af8d259a299aae65b46cab0f2be329))
+
 ## [0.24.72](https://github.com/MustardSeedNetworks/stem/compare/v0.24.71...v0.24.72) (2026-09-08)
 
 
