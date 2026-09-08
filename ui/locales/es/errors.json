@@ -29,7 +29,7 @@
     "invalidConfig": "Configuración de prueba invalida",
     "moduleNotFound": "Modulo de prueba no encontrado",
     "testTypeNotSupported": "Tipo de prueba no soportado por el modulo",
-    "featureGate": "{{feature}} requiere Stem Pro. Esta instalación tiene licencia {{tier}}: inicie una prueba de 14 días o active una clave Pro en Configuración > Licencia."
+    "featureGate": "{{feature}} requiere Stem Pro. Inicie una prueba de 14 días o active una clave Pro en Configuración > Licencia."
   },
   "reflector": {
     "alreadyRunning": "Reflector ya está en ejecución",

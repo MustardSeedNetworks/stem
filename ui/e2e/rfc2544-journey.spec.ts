@@ -116,7 +116,7 @@ test.describe('feature gate', () => {
           error: 'Feature requires a higher tier',
           code: 'TIER_TOO_LOW',
           requiredFeature: 'rfc2544',
-          currentTier: 'Reflector',
+          currentTier: 'Invalid',
           upgradeMessage: 'Start a 14-day Pro trial with `stem license --trial`.',
         }),
       });
@@ -137,7 +137,11 @@ test.describe('feature gate', () => {
     const alert = page.getByTestId('test-start-error');
     await expect(alert).toBeVisible({ timeout: 10000 });
     await expect(alert).toContainText('rfc2544');
-    await expect(alert).toContainText('Reflector');
+    await expect(alert).toContainText('Stem Pro');
+    // The daemon's own tier name for an unlicensed host is "Invalid", a state
+    // name rather than a tier an operator has heard of (#1095). It must not
+    // leak into the copy.
+    await expect(alert).not.toContainText('Invalid');
     // The generic failure text must not be what the operator is shown.
     await expect(alert).not.toContainText('Failed to start test');
   });

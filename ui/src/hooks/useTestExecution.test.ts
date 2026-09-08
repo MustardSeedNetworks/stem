@@ -18,7 +18,7 @@ function jsonResponse(status: number, body: unknown): Response {
 }
 
 describe('classifyStartFailure', () => {
-  it('reads the feature and tier out of a 402 TIER_TOO_LOW body', async () => {
+  it('reads the missing feature out of a 402 TIER_TOO_LOW body', async () => {
     const failure = await classifyStartFailure(
       jsonResponse(402, {
         error: 'Feature requires a higher tier',
@@ -28,7 +28,7 @@ describe('classifyStartFailure', () => {
       }),
     );
 
-    expect(failure).toEqual({ kind: 'featureGate', feature: 'rfc2544', tier: 'Reflector' });
+    expect(failure).toEqual({ kind: 'featureGate', feature: 'rfc2544' });
   });
 
   it('treats a 402 without the code as an ordinary failure', async () => {

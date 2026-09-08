@@ -79,28 +79,29 @@ interface FeatureGateBody {
   error?: string;
   code?: string;
   requiredFeature?: string;
-  currentTier?: string;
 }
 
 /**
  * Why a start failed, in the shape the render path needs.
  *
  * The 402 entitlement answer is not a generic failure: it carries the feature
- * the licence is missing and the tier the deployment is on, so the operator is
- * told what to buy rather than that something went wrong (#1070). The server's
- * own `upgradeMessage` is CLI prose and is deliberately not rendered — the
- * message is built from the translation catalog at the call site.
+ * the licence is missing, so the operator is told what to buy rather than that
+ * something went wrong (#1070). The server's own `upgradeMessage` is CLI prose
+ * and is deliberately not rendered — the message is built from the translation
+ * catalog at the call site. Its `currentTier` is not rendered either: a fresh
+ * install reports "Invalid" (license.TierInvalid), which is a state name, not
+ * a tier an operator has heard of (#1095).
  */
 export type TestStartFailure =
   | { kind: 'message'; message?: string }
-  | { kind: 'featureGate'; feature?: string; tier?: string };
+  | { kind: 'featureGate'; feature?: string };
 
 /** Classify a failed start response from its body. */
 export async function classifyStartFailure(response: Response): Promise<TestStartFailure> {
   try {
     const body = await (response.json() as Promise<FeatureGateBody>);
     if (response.status === 402 && body?.code === 'TIER_TOO_LOW') {
-      return { kind: 'featureGate', feature: body.requiredFeature, tier: body.currentTier };
+      return { kind: 'featureGate', feature: body.requiredFeature };
     }
     return { kind: 'message', message: body?.error };
   } catch {
@@ -359,10 +360,7 @@ export function useTestExecution(): UseTestExecution {
         const failure = await classifyStartFailure(response);
         setTestStartError(
           failure.kind === 'featureGate'
-            ? t('errors:test.featureGate', {
-                feature: failure.feature,
-                tier: failure.tier,
-              })
+            ? t('errors:test.featureGate', { feature: failure.feature })
             : (failure.message ?? t('errors:test.failedToStart')),
         );
         return;
