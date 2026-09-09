@@ -12,10 +12,10 @@ import { Lock, ShieldCheck, ShieldOff } from 'lucide-react';
 import { type ReactElement, useCallback, useEffect, useState } from 'react';
 import { type SubmitHandler, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
+import { registerPasskey } from '../../../lib/webauthn';
 import { TotpDisableSchema } from '../../../schemas/auth';
 import {
   isMFARequired as _isMFARequired,
-  MFAError,
   type MFAStatusResponse,
   mfaApi,
   type TotpSetupResponse,
@@ -79,18 +79,7 @@ export function SecurityPage(): ReactElement {
     setPasskeyMsg(null);
     setError(null);
     try {
-      const options = await mfaApi.webauthnRegisterBegin();
-      // The server returns the WebAuthn options in JSON; the browser
-      // needs ArrayBuffer values for challenge/user.id. Cast and let
-      // the browser API handle the rest — we rely on the operator's
-      // browser supporting the @simplewebauthn-style JSON shape.
-      const credential = (await navigator.credentials.create({
-        publicKey: options as PublicKeyCredentialCreationOptions,
-      })) as PublicKeyCredential | null;
-      if (!credential) {
-        throw new MFAError(0, 'No credential returned by browser');
-      }
-      await mfaApi.webauthnRegisterFinish(credential);
+      await registerPasskey();
       setPasskeyMsg(t('passkeys.successMessage'));
       await refresh();
     } catch (err) {
@@ -153,7 +142,7 @@ export function SecurityPage(): ReactElement {
             <div>
               <h2 className="heading-3 text-text-primary">{t('passkeys.heading')}</h2>
               <p className="text-sm text-text-muted">{t('passkeys.description')}</p>
-              <p className="text-xs text-text-muted mt-inline">
+              <p data-testid="passkey-count" className="text-xs text-text-muted mt-inline">
                 {t('passkeys.countLabel', { count: status?.webauthnCredentialCount ?? 0 })}
               </p>
               {passkeyMsg ? (

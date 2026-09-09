@@ -13,13 +13,13 @@ package auth
 // one account; the adapter pattern keeps the door open for a future
 // multi-user store.
 //
-// JUDGMENT CALL: configuration. RPID defaults to "localhost" so the
-// dev-mode loopback build works out of the box; production deployments
-// MUST set STEM_WEBAUTHN_RPID and STEM_WEBAUTHN_ORIGINS to the served
-// hostname and the full origin URL respectively. The library refuses
-// to mint credentials when these mismatch the request Origin, so a
-// misconfiguration fails closed rather than silently disabling the
-// second factor.
+// JUDGMENT CALL: configuration. RPID and origin default to Stem's
+// canonical localhost listener so local installs work out of the box.
+// Production deployments MUST set STEM_WEBAUTHN_RPID and
+// STEM_WEBAUTHN_ORIGINS to the served hostname and full origin URL.
+// The library refuses to mint credentials when these mismatch the
+// request Origin, so a misconfiguration fails closed rather than
+// silently disabling the second factor.
 
 import (
 	"encoding/base64"
@@ -49,7 +49,7 @@ const (
 
 	defaultWebAuthnRPID    = "localhost"
 	defaultWebAuthnRPName  = "Stem"
-	defaultWebAuthnOrigins = "http://localhost:8080,https://localhost:8443"
+	defaultWebAuthnOrigins = "https://localhost:8444"
 
 	// webauthnSessionTTL is how long a pending registration / login
 	// ceremony remains valid between begin and finish. The browser

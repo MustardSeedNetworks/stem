@@ -27,6 +27,12 @@ func TestNewWebAuthn_DefaultConfig(t *testing.T) {
 	if wa == nil {
 		t.Fatal("expected non-nil webauthn instance")
 	}
+	if wa.Config.RPID != "localhost" {
+		t.Errorf("RPID = %q, want localhost", wa.Config.RPID)
+	}
+	if got := strings.Join(wa.Config.RPOrigins, ","); got != "https://localhost:8444" {
+		t.Errorf("RPOrigins = %q, want Stem's canonical HTTPS origin", got)
+	}
 }
 
 // TestNewWebAuthn_CustomConfig respects environment overrides.

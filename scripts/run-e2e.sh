@@ -62,6 +62,17 @@ if [ ! -x ./bin/stem ]; then
 fi
 
 port=$(python3 -c 'import socket; s=socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1]); s.close()')
+webauthn_origins=
+offset=0
+while [ "$offset" -le 9 ]; do
+  candidate_origin="https://localhost:$((port + offset))"
+  if [ -z "$webauthn_origins" ]; then
+    webauthn_origins=$candidate_origin
+  else
+    webauthn_origins="$webauthn_origins,$candidate_origin"
+  fi
+  offset=$((offset + 1))
+done
 
 (
   cd "$run_dir"
@@ -73,6 +84,8 @@ port=$(python3 -c 'import socket; s=socket.socket(); s.bind(("127.0.0.1", 0)); p
   STEM_AUTH_USERNAME=admin \
   STEM_AUTH_PASSWORD=admin \
   STEM_API_RATE_LIMIT=5000 \
+  STEM_WEBAUTHN_RPID=localhost \
+  STEM_WEBAUTHN_ORIGINS="$webauthn_origins" \
     exec "$repo_dir/bin/stem" web -p "$port"
 ) >"$server_log" 2>&1 &
 server_pid=$!
@@ -86,7 +99,7 @@ while [ "$attempt" -lt 120 ]; do
   while [ "$offset" -le 9 ]; do
     candidate_port=$((port + offset))
     if curl -skf "https://127.0.0.1:$candidate_port/__version" >/dev/null 2>&1; then
-      base_url="https://127.0.0.1:$candidate_port"
+      base_url="https://localhost:$candidate_port"
       break 2
     fi
     offset=$((offset + 1))

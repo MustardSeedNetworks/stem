@@ -9,12 +9,18 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const cancelQueries = vi.fn().mockResolvedValue(undefined);
 const clear = vi.fn();
+const { passkeyLoginMock } = vi.hoisted(() => ({
+  passkeyLoginMock: vi.fn(),
+}));
 
 vi.mock('../lib/queryClient', () => ({
   getQueryClient: () => ({ cancelQueries, clear }),
 }));
 
 import { invalidateCsrfToken } from '../lib/csrf';
+vi.mock('../lib/webauthn', () => ({
+  loginWithPasskey: passkeyLoginMock,
+}));
 import * as http from '../utils/http';
 import { authFetch, useAuthStore } from './auth-store';
 
@@ -51,6 +57,7 @@ beforeEach(() => {
   invalidateCsrfToken();
   cancelQueries.mockClear();
   clear.mockClear();
+  passkeyLoginMock.mockReset();
   useAuthStore.setState({
     isAuthenticated: false,
     loginLoading: false,
@@ -157,6 +164,26 @@ describe('auth-store: login / MFA', () => {
     useAuthStore.getState().cancelMfa();
     expect(useAuthStore.getState().mfaPending).toBeNull();
     expect(useAuthStore.getState().loginError).toBeNull();
+  });
+
+  it('marks the session authenticated after passkey sign-in', async () => {
+    passkeyLoginMock.mockResolvedValue({ token: 'abc', expiresAt: 1 });
+
+    const result = await useAuthStore.getState().passkeyLogin();
+
+    expect(result).toEqual({ status: 'ok' });
+    expect(useAuthStore.getState().isAuthenticated).toBe(true);
+    expect(window.localStorage.getItem(AUTH_FLAG_KEY)).toBe('true');
+  });
+
+  it('surfaces a rejected passkey ceremony', async () => {
+    passkeyLoginMock.mockRejectedValue(new Error('Passkey sign-in was cancelled.'));
+
+    const result = await useAuthStore.getState().passkeyLogin();
+
+    expect(result).toEqual({ status: 'error', message: 'Passkey sign-in was cancelled.' });
+    expect(useAuthStore.getState().isAuthenticated).toBe(false);
+    expect(useAuthStore.getState().loginError).toBe('Passkey sign-in was cancelled.');
   });
 });
 
