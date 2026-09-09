@@ -2,6 +2,11 @@
 
 package trafficgen
 
+import (
+	"github.com/MustardSeedNetworks/stem/internal/services/modtypes"
+	"github.com/MustardSeedNetworks/stem/internal/services/orchestrator/dataplane"
+)
+
 // This file exports internal symbols for testing purposes.
 // It is only compiled with test builds (due to _test.go suffix).
 
@@ -23,12 +28,19 @@ func NewMockExecutorWithNilModule() *Executor {
 	}
 }
 
-// Test constants exports for black-box testing.
-const (
-	TestDefaultRatePct         = defaultRatePct
-	TestDefaultWarmupSec       = defaultWarmupSec
-	TestDefaultDurationSec     = defaultDurationSec
-	TestDefaultStreamID        = defaultStreamID
-	TestDefaultBurstSize       = defaultBurstSize
-	TestDefaultInterBurstGapUs = defaultInterBurstGapUs
-)
+// NewExecutorWithTestContext creates an executor holding a dataplane context
+// that owns no C resources. Close and Cancel are safe against it on every
+// build; Execute is not, because RunCustomStreamTest hands the absent C context
+// straight to the dataplane (issue #1096).
+func NewExecutorWithTestContext() *Executor {
+	return &Executor{
+		Module: New(),
+		ctx:    dataplane.NewTestContext(),
+	}
+}
+
+// BuildTrafficGenConfig exposes the parameter-defaulting logic that Execute
+// applies before handing a config to the dataplane.
+func BuildTrafficGenConfig(cfg *modtypes.TestConfig) *dataplane.TrafficGenConfig {
+	return buildTrafficGenConfig(cfg)
+}

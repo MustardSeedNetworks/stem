@@ -75,15 +75,26 @@ func (e *Executor) Execute(testType string, cfg *modtypes.TestConfig) (*modtypes
 		Data:       nil,
 	}
 
-	if testType != "custom_stream" {
-		return nil, modtypes.ErrTestNotImplemented
-	}
-
 	if e.ctx == nil {
 		result.Error = "dataplane context is not configured"
 		return result, fmt.Errorf("trafficgen %s failed: %s", testType, result.Error)
 	}
 
+	data, runErr := e.ctx.RunCustomStreamTest(buildTrafficGenConfig(cfg))
+	if runErr != nil {
+		result.Error = runErr.Error()
+		return result, fmt.Errorf("trafficgen %s failed: %w", testType, runErr)
+	}
+
+	result.Success = true
+	result.Data = data
+	return result, nil
+}
+
+// buildTrafficGenConfig maps a module test config onto the dataplane's traffic
+// generation config, applying the WebUI defaults for any parameter the caller
+// left unset. A zero Duration falls back to the "duration_sec" parameter.
+func buildTrafficGenConfig(cfg *modtypes.TestConfig) *dataplane.TrafficGenConfig {
 	config := &dataplane.TrafficGenConfig{
 		FrameSize:       cfg.FrameSize,
 		RatePct:         modtypes.GetFloat64Param(cfg.Params, "rate_pct", defaultRatePct),
@@ -103,13 +114,5 @@ func (e *Executor) Execute(testType string, cfg *modtypes.TestConfig) (*modtypes
 		config.DurationSec = modtypes.GetUint32Param(cfg.Params, "duration_sec", defaultDurationSec)
 	}
 
-	data, runErr := e.ctx.RunCustomStreamTest(config)
-	if runErr != nil {
-		result.Error = runErr.Error()
-		return result, fmt.Errorf("trafficgen %s failed: %w", testType, runErr)
-	}
-
-	result.Success = true
-	result.Data = data
-	return result, nil
+	return config
 }
