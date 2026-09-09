@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.79](https://github.com/MustardSeedNetworks/stem/compare/v0.24.78...v0.24.79) (2026-09-09)
+
+
+### Tests
+
+* **cmd:** cover cmd/stem behaviour, replacing a self-referential fixture ([#1099](https://github.com/MustardSeedNetworks/stem/issues/1099)) ([754efdf](https://github.com/MustardSeedNetworks/stem/commit/754efdf479d38aba8bf1105e1910b9123aba63d3))
+
 ## [0.24.78](https://github.com/MustardSeedNetworks/stem/compare/v0.24.77...v0.24.78) (2026-09-09)
 
 
