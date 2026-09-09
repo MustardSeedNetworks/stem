@@ -64,14 +64,20 @@ typedef struct __attribute__((packed)) {
     uint16_t checksum;
 } udp_header_t;
 
-/* RFC2544 payload header (24 bytes) */
+/* RFC2544 payload header (18 bytes) */
 typedef struct __attribute__((packed)) {
-    uint8_t  signature[RFC2544_SIG_LEN]; /* "RFC2544" */
+    uint8_t  signature[RFC2544_SIG_LEN]; /* "RFC254" */
     uint32_t seq_num;                    /* Sequence number (network order) */
     uint64_t timestamp;                  /* TX timestamp ns (network order) */
-    uint32_t stream_id;                  /* Stream ID (network order) */
-    uint8_t  flags;                      /* Flags */
 } rfc2544_payload_t;
+
+typedef struct __attribute__((packed)) {
+    uint8_t  signature[7];
+    uint32_t seq_num;
+    uint64_t timestamp;
+    uint32_t stream_id;
+    uint8_t  flags;
+} custom_payload_t;
 
 /* ============================================================================
  * Checksum Calculation
@@ -122,22 +128,17 @@ rfc2544_payload_t *rfc2544_create_packet_template(uint8_t *buffer, uint32_t fram
                                                   uint16_t src_port, uint16_t dst_port,
                                                   uint32_t stream_id)
 {
-    /* Minimum frame size must fit all headers + payload:
-     * 14 (Ethernet) + 20 (IPv4) + 8 (UDP) + 24 (payload) = 66 bytes */
-    const uint32_t min_frame = sizeof(eth_header_t) + sizeof(ip_header_t) + sizeof(udp_header_t) +
-                               sizeof(rfc2544_payload_t);
-
     if (!buffer) {
         return NULL;
     }
 
-    if (frame_size < min_frame) {
+    if (frame_size < RFC2544_MIN_PACKET_SIZE) {
         fprintf(stderr, "[packet] Frame size %u too small (minimum: %u bytes)\n", frame_size,
-                min_frame);
-        fprintf(stderr, "[packet] Tip: RFC2544 payload requires 24 bytes for signature, "
-                        "sequence, timestamp, and stream ID\n");
+                (unsigned int)RFC2544_MIN_PACKET_SIZE);
         return NULL;
     }
+
+    (void)stream_id;
 
     /* Clear buffer */
     memset(buffer, 0, frame_size);
@@ -175,8 +176,6 @@ rfc2544_payload_t *rfc2544_create_packet_template(uint8_t *buffer, uint32_t fram
     memcpy(payload->signature, RFC2544_SIGNATURE, RFC2544_SIG_LEN);
     payload->seq_num   = 0; /* Will be set per-packet */
     payload->timestamp = 0; /* Will be set per-packet */
-    payload->stream_id = htonl(stream_id);
-    payload->flags     = RFC2544_FLAG_REQ_TIMESTAMP;
 
     /* Fill padding with pattern */
     uint8_t *padding = buffer + sizeof(eth_header_t) + sizeof(ip_header_t) + sizeof(udp_header_t) +
@@ -206,29 +205,38 @@ rfc2544_payload_t *rfc2544_create_packet_template(uint8_t *buffer, uint32_t fram
  * @param signature Custom 7-byte signature (NULL uses default RFC2544)
  * @return Pointer to payload area, or NULL on error
  */
-rfc2544_payload_t *custom_create_packet_template(uint8_t *buffer, uint32_t frame_size,
-                                                 const uint8_t *src_mac, const uint8_t *dst_mac,
-                                                 uint32_t src_ip, uint32_t dst_ip,
-                                                 uint16_t src_port, uint16_t dst_port,
-                                                 uint32_t stream_id, const char *signature)
+custom_payload_t *custom_create_packet_template(uint8_t *buffer, uint32_t frame_size,
+                                                const uint8_t *src_mac, const uint8_t *dst_mac,
+                                                uint32_t src_ip, uint32_t dst_ip, uint16_t src_port,
+                                                uint16_t dst_port, uint32_t stream_id,
+                                                const char *signature)
 {
-    /* Create standard packet template first */
-    rfc2544_payload_t *payload = rfc2544_create_packet_template(
-        buffer, frame_size, src_mac, dst_mac, src_ip, dst_ip, src_port, dst_port, stream_id);
-
-    if (!payload) {
+    const uint32_t min_frame = sizeof(eth_header_t) + sizeof(ip_header_t) + sizeof(udp_header_t) +
+                               sizeof(custom_payload_t);
+    if (frame_size < min_frame) {
         return NULL;
     }
 
-    /* Override signature if custom one provided */
+    rfc2544_payload_t *base = rfc2544_create_packet_template(
+        buffer, frame_size, src_mac, dst_mac, src_ip, dst_ip, src_port, dst_port, stream_id);
+    if (!base) {
+        return NULL;
+    }
+
+    custom_payload_t *payload = (custom_payload_t *)base;
     if (signature) {
-        memset(payload->signature, ' ', RFC2544_SIG_LEN); /* Pad with spaces */
+        memset(payload->signature, ' ', sizeof(payload->signature));
         size_t sig_len = strlen(signature);
-        if (sig_len > RFC2544_SIG_LEN) {
-            sig_len = RFC2544_SIG_LEN;
+        if (sig_len > sizeof(payload->signature)) {
+            sig_len = sizeof(payload->signature);
         }
         memcpy(payload->signature, signature, sig_len);
     }
+
+    payload->seq_num   = 0;
+    payload->timestamp = 0;
+    payload->stream_id = htonl(stream_id);
+    payload->flags     = CUSTOM_FLAG_REQ_TIMESTAMP;
 
     return payload;
 }
@@ -243,33 +251,28 @@ rfc2544_payload_t *custom_create_packet_template(uint8_t *buffer, uint32_t frame
  */
 bool custom_is_valid_response(const uint8_t *data, uint32_t len, const char *signature)
 {
-    /* Require the full payload, not just the 64-byte Ethernet minimum: the
-     * cast below addresses a 24-byte rfc2544_payload_t at offset 42, so a
-     * consumer trusting this validation reads through offset 66. Guarding on
-     * the literal RFC2544_MIN_FRAME (64) let a 64-/65-byte attacker frame
-     * through, leaving a 1-2 byte out-of-bounds read for downstream readers. */
     const uint32_t min_len = (uint32_t)(sizeof(eth_header_t) + sizeof(ip_header_t) +
-                                        sizeof(udp_header_t) + sizeof(rfc2544_payload_t));
+                                        sizeof(udp_header_t) + sizeof(custom_payload_t));
     if (!data || len < min_len || !signature) {
         return false;
     }
 
     /* Skip to payload */
-    const rfc2544_payload_t *payload =
-        (const rfc2544_payload_t *)(data + sizeof(eth_header_t) + sizeof(ip_header_t) +
-                                    sizeof(udp_header_t));
+    const custom_payload_t *payload =
+        (const custom_payload_t *)(data + sizeof(eth_header_t) + sizeof(ip_header_t) +
+                                   sizeof(udp_header_t));
 
     /* Build padded signature for comparison */
-    char padded_sig[RFC2544_SIG_LEN];
-    memset(padded_sig, ' ', RFC2544_SIG_LEN);
+    char padded_sig[sizeof(payload->signature)];
+    memset(padded_sig, ' ', sizeof(padded_sig));
     size_t sig_len = strlen(signature);
-    if (sig_len > RFC2544_SIG_LEN) {
-        sig_len = RFC2544_SIG_LEN;
+    if (sig_len > sizeof(padded_sig)) {
+        sig_len = sizeof(padded_sig);
     }
     memcpy(padded_sig, signature, sig_len);
 
     /* Check signature */
-    return memcmp(payload->signature, padded_sig, RFC2544_SIG_LEN) == 0;
+    return memcmp(payload->signature, padded_sig, sizeof(padded_sig)) == 0;
 }
 
 /**
@@ -286,9 +289,9 @@ uint32_t custom_get_seq_num(const uint8_t *data, uint32_t len, const char *signa
         return 0;
     }
 
-    const rfc2544_payload_t *payload =
-        (const rfc2544_payload_t *)(data + sizeof(eth_header_t) + sizeof(ip_header_t) +
-                                    sizeof(udp_header_t));
+    const custom_payload_t *payload =
+        (const custom_payload_t *)(data + sizeof(eth_header_t) + sizeof(ip_header_t) +
+                                   sizeof(udp_header_t));
 
     return ntohl(payload->seq_num);
 }
@@ -307,9 +310,9 @@ uint64_t custom_get_tx_timestamp(const uint8_t *data, uint32_t len, const char *
         return 0;
     }
 
-    const rfc2544_payload_t *payload =
-        (const rfc2544_payload_t *)(data + sizeof(eth_header_t) + sizeof(ip_header_t) +
-                                    sizeof(udp_header_t));
+    const custom_payload_t *payload =
+        (const custom_payload_t *)(data + sizeof(eth_header_t) + sizeof(ip_header_t) +
+                                   sizeof(udp_header_t));
 
     /* Convert from network byte order */
     uint64_t ts_be = payload->timestamp;
@@ -336,6 +339,17 @@ void rfc2544_stamp_packet(rfc2544_payload_t *payload, uint32_t seq_num, uint64_t
     payload->timestamp = ts_be;
 }
 
+void custom_stamp_packet(custom_payload_t *payload, uint32_t seq_num, uint64_t timestamp_ns)
+{
+    if (!payload) {
+        return;
+    }
+
+    payload->seq_num = htonl(seq_num);
+    uint64_t ts_be = ((uint64_t)htonl(timestamp_ns & 0xFFFFFFFF) << 32) | htonl(timestamp_ns >> 32);
+    payload->timestamp = ts_be;
+}
+
 /**
  * Check if packet is a valid RFC2544 response
  *
@@ -345,12 +359,7 @@ void rfc2544_stamp_packet(rfc2544_payload_t *payload, uint32_t seq_num, uint64_t
  */
 bool rfc2544_is_valid_response(const uint8_t *data, uint32_t len)
 {
-    /* Full-payload bound (66), not the 64-byte Ethernet minimum: see the note
-     * in custom_is_valid_response. Prevents validating a frame too short to
-     * hold the rfc2544_payload_t that downstream readers dereference. */
-    const uint32_t min_len = (uint32_t)(sizeof(eth_header_t) + sizeof(ip_header_t) +
-                                        sizeof(udp_header_t) + sizeof(rfc2544_payload_t));
-    if (!data || len < min_len) {
+    if (!data || len < RFC2544_MIN_PACKET_SIZE) {
         return false;
     }
 

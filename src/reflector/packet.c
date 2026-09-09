@@ -215,7 +215,7 @@ ALWAYS_INLINE bool is_ito_packet(const uint8_t *data, uint32_t len,
 
     /* Custom signatures (RFC2544/Y.1564 tester) - at offset 0 */
     if (filter == SIG_FILTER_ALL || filter == SIG_FILTER_CUSTOM || filter == SIG_FILTER_RFC2544) {
-        if (memcmp(custom_sig, CUSTOM_SIG_RFC2544, CUSTOM_SIG_LEN) == 0) {
+        if (memcmp(custom_sig, CUSTOM_SIG_RFC2544, CUSTOM_SIG_RFC2544_LEN) == 0) {
             DEBUG_LOG("RFC2544 packet matched! len=%u", len);
             return true;
         }
@@ -752,7 +752,7 @@ sig_type_t get_ito_signature_type(const uint8_t *data, uint32_t len)
     }
 
     /* Custom signatures (RFC2544/Y.1564/MSN tester) - at offset 0 */
-    if (memcmp(custom_sig, CUSTOM_SIG_RFC2544, CUSTOM_SIG_LEN) == 0) {
+    if (memcmp(custom_sig, CUSTOM_SIG_RFC2544, CUSTOM_SIG_RFC2544_LEN) == 0) {
         return SIG_TYPE_RFC2544;
     } else if (memcmp(custom_sig, CUSTOM_SIG_Y1564, CUSTOM_SIG_LEN) == 0) {
         return SIG_TYPE_Y1564;
@@ -1265,7 +1265,7 @@ bool is_ito_packet_extended(const uint8_t *data, uint32_t len, const reflector_c
     }
 
     /* Check for RFC2544/Y.1564/MSN custom signatures (at offset 0) */
-    if (memcmp(custom_sig, CUSTOM_SIG_RFC2544, CUSTOM_SIG_LEN) == 0 ||
+    if (memcmp(custom_sig, CUSTOM_SIG_RFC2544, CUSTOM_SIG_RFC2544_LEN) == 0 ||
         memcmp(custom_sig, CUSTOM_SIG_Y1564, CUSTOM_SIG_LEN) == 0 ||
         memcmp(custom_sig, CUSTOM_SIG_MSN, CUSTOM_SIG_LEN) == 0) {
         return true;

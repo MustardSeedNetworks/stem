@@ -10,7 +10,7 @@
  *     ./fuzz_packet -max_total_time=60
  *
  * The harness models a real consumer: when a validator accepts a frame, it
- * reads the full 24-byte payload the validator vouched for. If a parser ever
+ * reads the full measurement payload the validator vouched for. If a parser ever
  * accepts a frame too short to hold that payload, ASAN trips on the read.
  *
  * Copyright (c) 2026 Mustard Seed Networks. All rights reserved.
@@ -30,13 +30,14 @@ uint64_t rfc2544_get_tx_timestamp(const uint8_t *data, uint32_t len);
 uint32_t y1564_get_seq_num(const uint8_t *data, uint32_t len);
 uint32_t y1564_get_service_id(const uint8_t *data, uint32_t len);
 
-#define HDR_LEN     42
-#define PAYLOAD_LEN 24
+#define HDR_LEN              42
+#define RFC2544_PAYLOAD_LEN  18
+#define EXTENDED_PAYLOAD_LEN 24
 
-static void read_full_payload(const uint8_t *data)
+static void read_full_payload(const uint8_t *data, int payload_len)
 {
     volatile uint8_t sink = 0;
-    for (int i = HDR_LEN; i < HDR_LEN + PAYLOAD_LEN; i++) {
+    for (int i = HDR_LEN; i < HDR_LEN + payload_len; i++) {
         sink ^= data[i];
     }
     (void)sink;
@@ -50,13 +51,13 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
     uint32_t len = (uint32_t)size;
 
     if (rfc2544_is_valid_response(data, len)) {
-        read_full_payload(data);
+        read_full_payload(data, RFC2544_PAYLOAD_LEN);
     }
     if (custom_is_valid_response(data, len, RFC2544_SIGNATURE)) {
-        read_full_payload(data);
+        read_full_payload(data, EXTENDED_PAYLOAD_LEN);
     }
     if (y1564_is_valid_response(data, len)) {
-        read_full_payload(data);
+        read_full_payload(data, EXTENDED_PAYLOAD_LEN);
     }
 
     /* Extractors validate internally; fuzz them directly too. */

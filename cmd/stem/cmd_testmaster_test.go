@@ -99,8 +99,8 @@ func TestParseTestFlagsDefaults(t *testing.T) {
 	if f.testTypes != "rfc2544_throughput" {
 		t.Errorf("testTypes = %q, want rfc2544_throughput", f.testTypes)
 	}
-	if strings.Contains(f.frameSizes, "64") {
-		t.Errorf("default frame sizes = %q; 64-byte frames do not fit the measurement payload", f.frameSizes)
+	if f.frameSizes != "64,128,256,512,1024,1280,1518" {
+		t.Errorf("default frame sizes = %q, want the RFC 2544 standard sizes", f.frameSizes)
 	}
 	if f.duration != defaultTestDuration || f.warmup != defaultWarmup {
 		t.Errorf("duration/warmup = %d/%d, want %d/%d",
