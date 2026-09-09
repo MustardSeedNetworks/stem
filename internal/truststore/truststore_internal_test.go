@@ -38,7 +38,8 @@ func TestTrimError_TruncatesLongOutput(t *testing.T) {
 		t.Errorf("truncated output missing ellipsis marker: %q", got[max(0, len(got)-10):])
 	}
 	if want := strings.Repeat("x", maxTrimmedLen) + "…"; got != want {
-		t.Errorf("trimError truncated to %d runes of payload, want %d", len(strings.TrimSuffix(got, "…")), maxTrimmedLen)
+		t.Errorf("trimError kept %d bytes of payload, want %d",
+			len(strings.TrimSuffix(got, "…")), maxTrimmedLen)
 	}
 }
 

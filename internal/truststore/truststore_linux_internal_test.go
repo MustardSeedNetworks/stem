@@ -48,8 +48,16 @@ func TestLinuxStore_AnchorPath(t *testing.T) {
 		store linuxStore
 		want  string
 	}{
-		{"debian", linuxStore{AnchorDir: "/usr/local/share/ca-certificates", Suffix: ".crt"}, "/usr/local/share/ca-certificates/stem-root.crt"},
-		{"rhel", linuxStore{AnchorDir: "/etc/pki/ca-trust/source/anchors", Suffix: ".pem"}, "/etc/pki/ca-trust/source/anchors/stem-root.pem"},
+		{
+			name:  "debian",
+			store: linuxStore{AnchorDir: "/usr/local/share/ca-certificates", Suffix: ".crt"},
+			want:  "/usr/local/share/ca-certificates/stem-root.crt",
+		},
+		{
+			name:  "rhel",
+			store: linuxStore{AnchorDir: "/etc/pki/ca-trust/source/anchors", Suffix: ".pem"},
+			want:  "/etc/pki/ca-trust/source/anchors/stem-root.pem",
+		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -125,7 +133,7 @@ func TestWriteAnchorFile_RejectsEscapingPaths(t *testing.T) {
 }
 
 // A child whose name merely starts with ".." is inside root. Guarding with a
-// bare strings.HasPrefix(rel, "..") would reject it.
+// bare [strings.HasPrefix] on ".." would reject it.
 func TestWriteAnchorFile_AllowsChildNamedLikeTraversal(t *testing.T) {
 	t.Parallel()
 	root := t.TempDir()
