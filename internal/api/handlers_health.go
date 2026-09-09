@@ -38,8 +38,10 @@ func (s *Server) handleStats(w http.ResponseWriter, r *http.Request) {
 	stats.Uptime = int64(time.Since(s.startTime).Seconds())
 	stats.TestStatus = s.testStatus
 	if s.currentTest != "" {
-		stats.CurrentTest = &s.currentTest
+		currentTest := s.currentTest
+		stats.CurrentTest = &currentTest
 	}
+	s.runPlan.describe(&stats)
 	s.statsMu.RUnlock()
 
 	writeJSON(w, stats)

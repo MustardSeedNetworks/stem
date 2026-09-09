@@ -46,7 +46,7 @@ func unlicensed(t testing.TB) *license.Manager {
 func startTest(t *testing.T, s *api.Server, token, testType string) *httptest.ResponseRecorder {
 	t.Helper()
 	body := bytes.NewBufferString(
-		fmt.Sprintf(`{"testType":%q,"interface":"nonexistent_iface_xyz123"}`, testType),
+		fmt.Sprintf(`{"tests":[{"testType":%q}],"interface":"nonexistent_iface_xyz123"}`, testType),
 	)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/test/start", body)
 	authorizeWithCSRF(t, s, req, token)

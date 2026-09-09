@@ -2608,7 +2608,7 @@ func TestHandleTestStartWithTestRunning(t *testing.T) {
 	s.currentModule = "benchmark"
 	s.statsMu.Unlock()
 
-	body := bytes.NewBufferString(`{"testType":"rfc2544_latency"}`)
+	body := bytes.NewBufferString(`{"tests":[{"testType":"rfc2544_latency"}]}`)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/test/start", body)
 	w := httptest.NewRecorder()
 
@@ -3260,7 +3260,6 @@ func TestTestTypeVocabularyResolves(t *testing.T) {
 	s := newTestServer(t)
 
 	for _, testType := range []string{
-		defaultTestType,
 		"rfc2544_latency",
 		"rfc2544_frame_loss",
 		testTypeReflect,

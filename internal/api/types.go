@@ -36,11 +36,6 @@ const (
 // own dispatch table and is not what the API speaks (#1069).
 const (
 	testTypeReflect = "reflect"
-
-	// defaultTestType is substituted when a request omits testType. It must
-	// be a type some module registers or the default is a guaranteed 400;
-	// the benchmark module owns it, and it is what the web UI falls back to.
-	defaultTestType = "rfc2544_throughput"
 )
 
 // StatusResponse for simple status messages.
@@ -100,14 +95,17 @@ type ErrorResponse struct {
 	Message string `json:"message"`
 }
 
-// TestStartRequest for starting a test.
+// TestStartRequest starts an ordered run plan.
 type TestStartRequest struct {
-	TestType  string      `json:"testType"`
-	Interface string      `json:"interface,omitempty"`
-	Mode      string      `json:"mode,omitempty"`    // reflector or test_master
-	Profile   string      `json:"profile,omitempty"` // reflector profile
-	Tests     []string    `json:"tests,omitempty"`   // selected test types
-	Config    *TestConfig `json:"config,omitempty"`  // full test configuration
+	Interface string            `json:"interface,omitempty"`
+	Profile   string            `json:"profile,omitempty"` // reflector profile
+	Tests     []TestStepRequest `json:"tests"`
+}
+
+// TestStepRequest is one immutable configuration snapshot in a run plan.
+type TestStepRequest struct {
+	TestType string      `json:"testType"         validate:"required"`
+	Config   *TestConfig `json:"config,omitempty"`
 }
 
 // TestConfig contains all module-specific configurations.
@@ -220,12 +218,11 @@ type TrafficGenTestConfig struct {
 	VlanPriority    uint8   `json:"vlanPriority"`
 }
 
-// TestStartResponse for test start confirmation.
+// TestStartResponse confirms that the server accepted a run plan.
 type TestStartResponse struct {
-	Status   string `json:"status"`
-	TestType string `json:"testType"`
-	Module   string `json:"module"`
-	Message  string `json:"message,omitempty"`
+	Status  string `json:"status"`
+	SuiteID string `json:"suiteId"`
+	Message string `json:"message,omitempty"`
 }
 
 // AuthLoginRequest captures credentials supplied to /api/auth/login.
@@ -248,13 +245,15 @@ type AuthRefreshRequest struct {
 
 // TestResultResponse for completed test results.
 type TestResultResponse struct {
-	Status   string `json:"status"`
-	TestType string `json:"testType,omitempty"`
-	Module   string `json:"module,omitempty"`
-	Success  bool   `json:"success,omitempty"`
-	Error    string `json:"error,omitempty"`
-	Message  string `json:"message,omitempty"`
-	Data     any    `json:"data,omitempty"`
+	Status   string        `json:"status"`
+	TestType string        `json:"testType,omitempty"`
+	Module   string        `json:"module,omitempty"`
+	Success  bool          `json:"success,omitempty"`
+	Error    string        `json:"error,omitempty"`
+	Message  string        `json:"message,omitempty"`
+	Data     any           `json:"data,omitempty"`
+	SuiteID  string        `json:"suiteId,omitempty"`
+	Steps    []RunPlanStep `json:"steps,omitempty"`
 }
 
 // ModeRequest for mode POST requests. Valid values are mirrored from
@@ -301,15 +300,33 @@ type ReflectorStats struct {
 
 // Stats holds runtime statistics.
 type Stats struct {
-	PacketsReceived uint64  `json:"packetsReceived"`
-	PacketsSent     uint64  `json:"packetsSent"`
-	BytesReceived   uint64  `json:"bytesReceived"`
-	BytesSent       uint64  `json:"bytesSent"`
-	CurrentPPS      float64 `json:"currentPps"`
-	CurrentMbps     float64 `json:"currentMbps"`
-	Uptime          int64   `json:"uptime"`
-	TestStatus      string  `json:"testStatus"`
-	CurrentTest     *string `json:"currentTest"`
+	PacketsReceived           uint64        `json:"packetsReceived"`
+	PacketsSent               uint64        `json:"packetsSent"`
+	BytesReceived             uint64        `json:"bytesReceived"`
+	BytesSent                 uint64        `json:"bytesSent"`
+	CurrentPPS                float64       `json:"currentPps"`
+	CurrentMbps               float64       `json:"currentMbps"`
+	Uptime                    int64         `json:"uptime"`
+	TestStatus                string        `json:"testStatus"`
+	CurrentTest               *string       `json:"currentTest"`
+	SuiteID                   string        `json:"suiteId,omitempty"`
+	Steps                     []RunPlanStep `json:"steps,omitempty"`
+	CurrentStep               int           `json:"currentStep,omitempty"`
+	StepsComplete             int           `json:"stepsComplete,omitempty"`
+	StepsTotal                int           `json:"stepsTotal,omitempty"`
+	Phase                     string        `json:"phase,omitempty"`
+	ElapsedSeconds            int64         `json:"elapsedSeconds,omitempty"`
+	EstimatedRemainingSeconds *int64        `json:"estimatedRemainingSeconds"`
+}
+
+// RunPlanStep is the observable state of one ordered run-plan step.
+type RunPlanStep struct {
+	TestType string              `json:"testType"`
+	Module   string              `json:"module"`
+	Status   string              `json:"status"`
+	Config   *TestConfig         `json:"config,omitempty"`
+	Error    string              `json:"error,omitempty"`
+	Result   *TestResultResponse `json:"result,omitempty"`
 }
 
 // LicenseStatus represents the license status response.

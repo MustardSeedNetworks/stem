@@ -133,9 +133,15 @@ test.describe('RFC 2544 sub-test selection', () => {
       .poll(() => startBody, { timeout: 10000, message: 'no start request was sent' })
       .not.toBeNull();
 
-    const body = startBody as { tests?: string[]; interface?: string };
+    const body = startBody as {
+      tests?: Array<{ testType: string; config?: unknown }>;
+      interface?: string;
+    };
     expect(body.interface).toBe(STUB_INTERFACE.name);
-    const rfc2544 = (body.tests ?? []).filter((id) => id.startsWith('rfc2544'));
+    const rfc2544 = (body.tests ?? [])
+      .map((step) => step.testType)
+      .filter((id) => id.startsWith('rfc2544'));
     expect(rfc2544).toEqual(['rfc2544_latency']);
+    expect(body.tests?.[0]?.config).toBeTruthy();
   });
 });

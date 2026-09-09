@@ -215,7 +215,7 @@ func TestHandleStats(t *testing.T) {
 func TestHandleTestStartUnknownType(t *testing.T) {
 	s := setupTestServer(t)
 
-	body := strings.NewReader(`{"testType": "nonexistent_test"}`)
+	body := strings.NewReader(`{"tests":[{"testType":"nonexistent_test"}]}`)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/test/start", body)
 	token := loginToken(t, s)
 	authorizeWithCSRF(t, s, req, token)
@@ -231,7 +231,7 @@ func TestHandleTestStartUnknownType(t *testing.T) {
 func TestHandleTestStartUnauthorized(t *testing.T) {
 	s := setupTestServer(t)
 
-	body := strings.NewReader(`{"testType": "throughput"}`)
+	body := strings.NewReader(`{"tests":[{"testType":"throughput"}]}`)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/test/start", body)
 	w := httptest.NewRecorder()
 

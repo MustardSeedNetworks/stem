@@ -27,6 +27,8 @@ type TestExecutorResolver func(moduleName string) (TestExecutorFactory, bool)
 //
 // Passing nil restores the default factory.
 func (s *Server) UseTestExecutorResolver(resolver TestExecutorResolver) {
+	s.statsMu.Lock()
+	defer s.statsMu.Unlock()
 	if resolver == nil {
 		s.executorResolver = nil
 		return
@@ -52,11 +54,18 @@ func (s *Server) UseTestExecutorResolver(resolver TestExecutorResolver) {
 // instance use this to return to a clean baseline between requests.
 func (s *Server) ResetTestStateForTest() {
 	s.statsMu.Lock()
-	defer s.statsMu.Unlock()
+	exec := s.activeTestExec
+	s.activeTestExec = nil
+	s.testRunID++
 	s.testStatus = ""
 	s.currentTest = ""
 	s.currentModule = ""
 	s.testResult = nil
+	s.runPlan = nil
+	s.statsMu.Unlock()
+	if cancellable, ok := exec.(interface{ Cancel() }); ok {
+		cancellable.Cancel()
+	}
 }
 
 // CSRFManagerForTest exposes the server's CSRFManager for tests that

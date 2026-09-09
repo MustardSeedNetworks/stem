@@ -253,7 +253,7 @@ func TestHandleTestStartWithInterface(t *testing.T) {
 		token := getTestingAuthToken(t, s)
 
 		body := bytes.NewBufferString(
-			fmt.Sprintf(`{"testType":"rfc2544_throughput","interface":"%s"}`, testIface),
+			fmt.Sprintf(`{"tests":[{"testType":"rfc2544_throughput"}],"interface":"%s"}`, testIface),
 		)
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/test/start", body)
 		authorizeWithCSRF(t, s, req, token)
@@ -278,7 +278,7 @@ func TestHandleTestStartWithInterface(t *testing.T) {
 		token := getTestingAuthToken(t, s)
 
 		body := bytes.NewBufferString(
-			`{"testType":"rfc2544_throughput","interface":"nonexistent_iface_xyz123"}`,
+			`{"tests":[{"testType":"rfc2544_throughput"}],"interface":"nonexistent_iface_xyz123"}`,
 		)
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/test/start", body)
 		authorizeWithCSRF(t, s, req, token)
@@ -319,7 +319,7 @@ func TestHandleTestStartValidation(t *testing.T) {
 	t.Run("start with unknown fields in JSON", func(t *testing.T) {
 		token := getTestingAuthToken(t, s)
 
-		body := bytes.NewBufferString(`{"testType":"rfc2544_throughput","unknownField":"value"}`)
+		body := bytes.NewBufferString(`{"tests":[{"testType":"rfc2544_throughput"}],"unknownField":"value"}`)
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/test/start", body)
 		authorizeWithCSRF(t, s, req, token)
 		w := httptest.NewRecorder()
@@ -384,7 +384,7 @@ func TestHandleTestStartValidation(t *testing.T) {
 				resetServerTestState(t, s)
 
 				body := bytes.NewBufferString(
-					fmt.Sprintf(`{"testType":"%s","interface":"%s"}`, testType, testIface),
+					fmt.Sprintf(`{"tests":[{"testType":"%s"}],"interface":"%s"}`, testType, testIface),
 				)
 				req := httptest.NewRequest(http.MethodPost, "/api/v1/test/start", body)
 				authorizeWithCSRF(t, s, req, token)
@@ -419,7 +419,7 @@ func TestHandleTestStartOptionalParameters(t *testing.T) {
 		testIface := ifaces[0].Name
 
 		body := bytes.NewBufferString(
-			fmt.Sprintf(`{"testType":"throughput","interface":"%s","frameSize":1518}`, testIface),
+			fmt.Sprintf(`{"tests":[{"testType":"throughput"}],"interface":"%s","frameSize":1518}`, testIface),
 		)
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/test/start", body)
 		authorizeWithCSRF(t, s, req, token)
@@ -447,7 +447,7 @@ func TestHandleTestStartOptionalParameters(t *testing.T) {
 		testIface := ifaces[0].Name
 
 		body := bytes.NewBufferString(
-			fmt.Sprintf(`{"testType":"throughput","interface":"%s","duration":60}`, testIface),
+			fmt.Sprintf(`{"tests":[{"testType":"throughput"}],"interface":"%s","duration":60}`, testIface),
 		)
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/test/start", body)
 		authorizeWithCSRF(t, s, req, token)
