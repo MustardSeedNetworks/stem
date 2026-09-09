@@ -88,8 +88,11 @@ func TestWriteAnchorFile_WritesWorldReadable(t *testing.T) {
 	// update-ca-certificates runs as root but reads the anchor as an
 	// ordinary file; 0600 would leave it unreadable to the extract tooling
 	// on distributions that drop privileges.
-	if perm := info.Mode().Perm(); perm != trustAnchorMode {
-		t.Errorf("anchor mode = %#o, want %#o", perm, trustAnchorMode)
+	// The literal, not trustAnchorMode: comparing against the constant would
+	// track any change to it instead of pinning the on-disk contract.
+	const wantMode os.FileMode = 0o644
+	if perm := info.Mode().Perm(); perm != wantMode {
+		t.Errorf("anchor mode = %#o, want %#o", perm, wantMode)
 	}
 }
 
