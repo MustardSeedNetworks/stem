@@ -105,12 +105,16 @@ func TestWriteAnchorFile_RejectsEscapingPaths(t *testing.T) {
 	for name, dst := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
+			// The "parent" case names root's own parent directory, which
+			// already exists; only a path the guard could have created is
+			// evidence that it wrote outside root.
+			existedBefore := pathExists(dst)
 			if _, err := writeAnchorFile(root, dst, []byte("x")); err == nil {
 				t.Fatalf("writeAnchorFile accepted %q, which escapes %q", dst, root)
 			} else if !strings.Contains(err.Error(), "escapes") {
 				t.Errorf("unexpected error for escaping path: %v", err)
 			}
-			if pathExists(dst) {
+			if !existedBefore && pathExists(dst) {
 				t.Errorf("rejected path %q was written anyway", dst)
 			}
 		})
