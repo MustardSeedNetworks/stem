@@ -74,21 +74,28 @@ typedef struct __attribute__((packed)) {
     uint8_t  signature[RFC2544_SIG_LEN];
     uint32_t seq_num;
     uint64_t timestamp;
+} rfc2544_payload_t;
+
+typedef struct __attribute__((packed)) {
+    uint8_t  signature[7];
+    uint32_t seq_num;
+    uint64_t timestamp;
     uint32_t stream_id;
     uint8_t  flags;
-} rfc2544_payload_t;
+} custom_payload_t;
 
 rfc2544_payload_t *rfc2544_create_packet_template(uint8_t *buffer, uint32_t frame_size,
                                                   const uint8_t *src_mac, const uint8_t *dst_mac,
                                                   uint32_t src_ip, uint32_t dst_ip,
                                                   uint16_t src_port, uint16_t dst_port,
                                                   uint32_t stream_id);
-rfc2544_payload_t *custom_create_packet_template(uint8_t *buffer, uint32_t frame_size,
+custom_payload_t  *custom_create_packet_template(uint8_t *buffer, uint32_t frame_size,
                                                  const uint8_t *src_mac, const uint8_t *dst_mac,
-                                                 uint32_t src_ip, uint32_t dst_ip,
-                                                 uint16_t src_port, uint16_t dst_port,
-                                                 uint32_t stream_id, const char *signature);
+                                                 uint32_t src_ip, uint32_t dst_ip, uint16_t src_port,
+                                                 uint16_t dst_port, uint32_t stream_id,
+                                                 const char *signature);
 void     rfc2544_stamp_packet(rfc2544_payload_t *payload, uint32_t seq_num, uint64_t timestamp_ns);
+void     custom_stamp_packet(custom_payload_t *payload, uint32_t seq_num, uint64_t timestamp_ns);
 bool     rfc2544_is_valid_response(const uint8_t *data, uint32_t len);
 bool     custom_is_valid_response(const uint8_t *data, uint32_t len, const char *signature);
 uint32_t rfc2544_get_seq_num(const uint8_t *data, uint32_t len);
@@ -795,7 +802,7 @@ int rfc2544_run(rfc2544_ctx_t *ctx)
 int run_trial(rfc2544_ctx_t *ctx, uint32_t frame_size, double rate_pct, uint32_t duration_sec,
               uint32_t warmup_sec, trial_result_t *result)
 {
-    if (!ctx || !result) {
+    if (!ctx || !result || frame_size < RFC2544_MIN_FRAME_SIZE) {
         return -EINVAL;
     }
 
@@ -808,8 +815,11 @@ int run_trial(rfc2544_ctx_t *ctx, uint32_t frame_size, double rate_pct, uint32_t
 
     worker_ctx_t *wctx = &ctx->workers[0];
 
-    /* Create packet template */
-    uint8_t *pkt_buffer = malloc(frame_size);
+    const uint32_t packet_size = frame_size - RFC2544_FCS_SIZE;
+
+    /* The NIC appends the FCS, so the userspace buffer is four bytes shorter
+     * than the RFC frame size used for pacing and results. */
+    uint8_t *pkt_buffer = malloc(packet_size);
     if (!pkt_buffer) {
         return -ENOMEM;
     }
@@ -829,7 +839,7 @@ int run_trial(rfc2544_ctx_t *ctx, uint32_t frame_size, double rate_pct, uint32_t
     }
 
     rfc2544_payload_t *payload = rfc2544_create_packet_template(
-        pkt_buffer, frame_size, src_mac, dst_mac, src_ip, dst_ip, 12345, 3842, 0);
+        pkt_buffer, packet_size, src_mac, dst_mac, src_ip, dst_ip, 12345, 3842, 0);
 
     if (!payload) {
         free(pkt_buffer);
@@ -868,7 +878,7 @@ int run_trial(rfc2544_ctx_t *ctx, uint32_t frame_size, double rate_pct, uint32_t
     /* Prepare TX packet */
     packet_t tx_pkt;
     tx_pkt.data = pkt_buffer;
-    tx_pkt.len  = frame_size;
+    tx_pkt.len  = packet_size;
 
     /* RX buffer */
     packet_t rx_pkts[64];
@@ -1056,7 +1066,7 @@ int run_trial_custom(rfc2544_ctx_t *ctx, uint32_t frame_size, double rate_pct,
     }
 
     /* Create packet with custom signature */
-    rfc2544_payload_t *payload =
+    custom_payload_t *payload =
         custom_create_packet_template(pkt_buffer, frame_size, src_mac, dst_mac, src_ip, dst_ip,
                                       12345, 3842, stream_id, signature);
 
@@ -1136,7 +1146,7 @@ int run_trial_custom(rfc2544_ctx_t *ctx, uint32_t frame_size, double rate_pct,
 
         /* TX: Send packet at paced rate */
         uint64_t tx_ts = pacing_wait(pacer);
-        rfc2544_stamp_packet(payload, seq_num, tx_ts);
+        custom_stamp_packet(payload, seq_num, tx_ts);
         tx_pkt.timestamp = tx_ts;
         tx_pkt.seq_num   = seq_num;
 

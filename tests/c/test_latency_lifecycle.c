@@ -18,6 +18,8 @@ int main(void)
     config.frame_size         = 128;
     config.trial_duration_sec = 1;
     config.warmup_sec         = 0;
+    config.resolution_pct     = 99;
+    config.max_iterations     = 1;
 
     if (rfc2544_configure(ctx, &config) < 0) {
         rfc2544_cleanup(ctx);
@@ -28,6 +30,14 @@ int main(void)
     int              ret = rfc2544_latency_test(ctx, config.frame_size, 10.0, &result);
 
     if (ret == 0) {
+        throughput_result_t throughput[1];
+        uint32_t            count = 1;
+        if (rfc2544_throughput_test(ctx, FRAME_SIZE_64, throughput, &count) < 0 || count != 1 ||
+            throughput[0].iterations != 1) {
+            rfc2544_cleanup(ctx);
+            return 1;
+        }
+
         config.force_packet = false;
         if (rfc2544_configure(ctx, &config) < 0 || ctx->platform || ctx->workers) {
             rfc2544_cleanup(ctx);

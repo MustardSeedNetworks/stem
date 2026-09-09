@@ -218,7 +218,7 @@ TEST(frame_size_enum_values)
 TEST(frame_size_minimum)
 {
     /* Verify minimum frame size for RFC2544 payload */
-    ASSERT_EQ(66, RFC2544_MIN_FRAME_SIZE);
+    ASSERT_EQ(64, RFC2544_MIN_FRAME_SIZE);
 }
 
 /* ============================================================================

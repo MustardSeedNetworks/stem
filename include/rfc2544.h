@@ -33,13 +33,13 @@ extern "C" {
 #define RFC2544_VERSION_PATCH 0
 
 /* Signature for custom RFC2544 packets - 7 bytes like ITO */
-#define RFC2544_SIGNATURE "RFC2544"
-#define RFC2544_SIG_LEN   7
+#define RFC2544_SIGNATURE "RFC254"
+#define RFC2544_SIG_LEN   6
 // NOLINTEND(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
 
 /* Standard RFC 2544 frame sizes (Section 9.1) */
 typedef enum {
-    FRAME_SIZE_64   = 64, /* Note: Requires 66+ bytes due to 24-byte payload */
+    FRAME_SIZE_64   = 64,
     FRAME_SIZE_128  = 128,
     FRAME_SIZE_256  = 256,
     FRAME_SIZE_512  = 512,
@@ -50,24 +50,24 @@ typedef enum {
 } frame_size_t;
 
 /*
- * Minimum frame size is 66 bytes due to payload structure:
- *   14 (Ethernet) + 20 (IPv4) + 8 (UDP) + 24 (RFC2544 payload) = 66 bytes
+ * Minimum packet buffer is 60 bytes because the NIC appends the 4-byte FCS:
+ *   14 (Ethernet) + 20 (IPv4) + 8 (UDP) + 18 (RFC2544 payload) = 60 bytes
  *
  * The RFC2544 payload contains:
- *   7 bytes - "RFC2544" signature (for reflector detection)
+ *   6 bytes - "RFC254" signature (for reflector detection)
  *   4 bytes - sequence number (loss detection)
  *   8 bytes - timestamp (latency measurement)
- *   4 bytes - stream ID (multi-stream support)
- *   1 byte  - flags
- *
- * Note: True 64-byte frame testing would require a compact payload format.
+ * The compact measurement payload retains signature, sequence, and timestamp
+ * fields so it fits safely in the standard 64-byte frame.
  */
 // NOLINTBEGIN(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
-#define RFC2544_MIN_FRAME_SIZE 66
+#define RFC2544_MIN_FRAME_SIZE  64
+#define RFC2544_FCS_SIZE        4
+#define RFC2544_MIN_PACKET_SIZE (RFC2544_MIN_FRAME_SIZE - RFC2544_FCS_SIZE)
 
-/* Standard frame sizes array - starts at 128 for full payload support */
-#define RFC2544_FRAME_SIZES      {128, 256, 512, 1024, 1280, 1518}
-#define RFC2544_FRAME_SIZE_COUNT 6
+/* Standard RFC 2544 frame sizes. */
+#define RFC2544_FRAME_SIZES      {64, 128, 256, 512, 1024, 1280, 1518}
+#define RFC2544_FRAME_SIZE_COUNT 7
 // NOLINTEND(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
 
 /* Test types */
@@ -884,30 +884,24 @@ void rfc2544_print_results(const rfc2544_ctx_t *ctx);
  *
  * Offset  Size    Field
  * ------  ----    -----
- * 0       7       Signature ("RFC2544")
- * 7       4       Sequence number (uint32_t, network order)
- * 11      8       TX timestamp (uint64_t nanoseconds, network order)
- * 19      4       Stream ID (uint32_t, for multi-stream tests)
- * 23      1       Flags (bit 0: request timestamp, bit 1: is response)
- * 24      N       Padding to reach frame size
+ * 0       6       Signature ("RFC254")
+ * 6       4       Sequence number (uint32_t, network order)
+ * 10      8       TX timestamp (uint64_t nanoseconds, network order)
+ * 18      N       Padding to reach frame size
  *
- * Total payload: 24 bytes minimum + padding
- * Minimum frame: 64 bytes (14 ETH + 20 IP + 8 UDP + 22 payload)
+ * Total payload: 18 bytes minimum + padding
+ * Minimum packet buffer: 60 bytes (64-byte Ethernet frame minus the FCS)
  */
 
 // NOLINTBEGIN(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
 #define RFC2544_PAYLOAD_OFFSET   0
-#define RFC2544_SEQNUM_OFFSET    7
-#define RFC2544_TIMESTAMP_OFFSET 11
-#define RFC2544_STREAMID_OFFSET  19
-#define RFC2544_FLAGS_OFFSET     23
-#define RFC2544_PADDING_OFFSET   24
+#define RFC2544_SEQNUM_OFFSET    6
+#define RFC2544_TIMESTAMP_OFFSET 10
+#define RFC2544_PADDING_OFFSET   18
 
-#define RFC2544_FLAG_REQ_TIMESTAMP 0x01
-#define RFC2544_FLAG_IS_RESPONSE   0x02
+#define CUSTOM_FLAG_REQ_TIMESTAMP 0x01
 
-#define RFC2544_MIN_PAYLOAD 24
-#define RFC2544_MIN_FRAME   64
+#define RFC2544_MIN_PAYLOAD 18
 // NOLINTEND(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
 
 /* Calculate payload size for a given frame size */

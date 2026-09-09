@@ -417,15 +417,15 @@ TEST(test_state_values)
 
 TEST(signature_lengths)
 {
-    /* All signatures should be 7 bytes */
-    ASSERT_EQ(7, RFC2544_SIG_LEN);
+    /* The compact RFC measurement signature leaves room for its timestamp. */
+    ASSERT_EQ(6, RFC2544_SIG_LEN);
     ASSERT_EQ(7, Y1564_SIG_LEN);
 }
 
 TEST(signature_values)
 {
     /* Verify signature strings */
-    ASSERT_STR_EQ("RFC2544", RFC2544_SIGNATURE);
+    ASSERT_STR_EQ("RFC254", RFC2544_SIGNATURE);
     ASSERT_STR_EQ("Y.1564 ", Y1564_SIGNATURE);
 }
 

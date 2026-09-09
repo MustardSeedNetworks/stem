@@ -24,17 +24,17 @@ finding, and there was no sanitizer or fuzz coverage of the parser.
 
 ## Decision
 
-1. **Fix the guard.** The three validators now require the full header+payload
-   length, expressed as a `sizeof` sum
-   (`sizeof(eth)+sizeof(ip)+sizeof(udp)+sizeof(<payload>)`) rather than the
-   literal `64`, mirroring the create path and tracking the struct if it changes.
-   `ETH_P_IP` gained a non-Linux fallback so the parser compiles and is
-   testable off Linux.
+1. **Fix the guard.** Validators require their full header+payload length.
+   Y.1564 and extended custom packets require 66 bytes. The standard RFC 2544
+   measurement format uses an 18-byte compact payload, so its complete packet
+   buffer is 60 bytes; the NIC appends the four-byte FCS to form the standard
+   64-byte Ethernet frame. `ETH_P_IP` gained a non-Linux fallback so the parser
+   compiles and is testable off Linux.
 
 2. **Add a BLOCKING `dataplane-safety` CI job** (separate from advisory c-lint),
    required via the `CI Complete` aggregator. It fails the build on:
    - any ASAN/UBSan finding in the parser unit tests (`make c-test-asan`,
-     `tests/c/test_packet_parse.c` — asserts 64/65 rejected, 66 accepted, and
+     `tests/c/test_packet_parse.c` — asserts each format's exact minimum and
      reads an accepted frame's full payload so a regression trips ASAN);
    - a cppcheck `warning`/`performance`/`portability` issue **scoped to
      packet.c** (tree-wide `style` findings stay advisory in c-lint to avoid

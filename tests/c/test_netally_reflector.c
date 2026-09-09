@@ -12,9 +12,10 @@
 
 static_assert(PACKET_BLOCK_TIMEOUT_MS == 1, "reflector RX blocks must retire promptly");
 
-#define FRAME_LEN   66
-#define IPV4_OFFSET 14
-#define UDP_OFFSET  34
+#define FRAME_LEN          66
+#define RFC2544_PACKET_LEN 60
+#define IPV4_OFFSET        14
+#define UDP_OFFSET         34
 
 static int failures = 0;
 
@@ -137,6 +138,24 @@ static void test_individual_ito_signature_filters(void)
     }
 }
 
+static void test_rfc2544_minimum_frame_signature(void)
+{
+    uint8_t frame[FRAME_LEN];
+    build_probe(frame);
+    memset(frame + UDP_OFFSET + UDP_HDR_LEN, 0, FRAME_LEN - UDP_OFFSET - UDP_HDR_LEN);
+    for (size_t i = 0; i < CUSTOM_SIG_RFC2544_LEN; i++) {
+        frame[UDP_OFFSET + UDP_HDR_LEN + i] = (uint8_t)CUSTOM_SIG_RFC2544[i];
+    }
+
+    reflector_config_t config = {0};
+    config.ito_port           = ITO_UDP_PORT;
+    config.sig_filter         = SIG_FILTER_RFC2544;
+    if (!is_ito_packet(frame, RFC2544_PACKET_LEN, &config)) {
+        fprintf(stderr, "FAIL: RFC 2544 filter rejected the minimum frame\n");
+        failures++;
+    }
+}
+
 int main(void)
 {
     test_netally_handshake_reflection();
@@ -144,6 +163,7 @@ int main(void)
     test_netally_mac_mode_does_not_invalidate_ip_checksum();
     test_netally_rejects_truncated_ipv4_options();
     test_individual_ito_signature_filters();
+    test_rfc2544_minimum_frame_signature();
     if (failures != 0) {
         return 1;
     }

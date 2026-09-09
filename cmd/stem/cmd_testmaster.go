@@ -136,7 +136,7 @@ func parseTestFlags(args []string) (*testCmdFlags, error) {
 	fs.StringVar(testTypes, "t", testTypeThroughput, "Test type (shorthand)")
 	duration := fs.Int("duration", defaultTestDuration, "Test duration in seconds")
 	fs.IntVar(duration, "d", defaultTestDuration, "Test duration (shorthand)")
-	frameSizes := fs.String("frame-sizes", "128,256,512,1024,1280,1518", "Frame sizes")
+	frameSizes := fs.String("frame-sizes", "64,128,256,512,1024,1280,1518", "Frame sizes")
 
 	// Advanced options.
 	resolution := fs.Float64("resolution", defaultResolution, "Binary search resolution %")
