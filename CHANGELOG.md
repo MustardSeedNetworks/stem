@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.84](https://github.com/MustardSeedNetworks/stem/compare/v0.24.83...v0.24.84) (2026-09-09)
+
+
+### Bug Fixes
+
+* support RFC 2544 minimum frames ([#1119](https://github.com/MustardSeedNetworks/stem/issues/1119)) ([cb2aa68](https://github.com/MustardSeedNetworks/stem/commit/cb2aa683a6d3ffb78a2a6556ea606f5d8ecc15ea))
+
+
+### Continuous Integration
+
+* gate unread request fields ([#1122](https://github.com/MustardSeedNetworks/stem/issues/1122)) ([33bef38](https://github.com/MustardSeedNetworks/stem/commit/33bef38018b15f3c075715e3995c4e07a430b837))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1121](https://github.com/MustardSeedNetworks/stem/issues/1121)) ([4a37fe7](https://github.com/MustardSeedNetworks/stem/commit/4a37fe7e757d515b628aadb0b25308826a05b781))
+
 ## [0.24.83](https://github.com/MustardSeedNetworks/stem/compare/v0.24.82...v0.24.83) (2026-09-09)
 
 
