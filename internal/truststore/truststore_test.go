@@ -99,3 +99,55 @@ func TestValidateCertFile_MissingFile(t *testing.T) {
 		t.Fatal("expected error for missing file, got nil")
 	}
 }
+
+// Install and Uninstall validate the certificate before touching the host
+// trust store. These cases stop at that guard: none of them reaches
+// installPlatform, which would shell out to the real system tooling.
+func TestInstall_RejectsNonCertificate(t *testing.T) {
+	t.Parallel()
+	path := filepath.Join(t.TempDir(), "not-a-cert.txt")
+	if err := os.WriteFile(path, []byte("hello world"), 0o600); err != nil {
+		t.Fatalf("write fixture: %v", err)
+	}
+	res, err := truststore.Install(t.Context(), path)
+	if !errors.Is(err, truststore.ErrInvalidCertificate) {
+		t.Errorf("expected ErrInvalidCertificate, got %v", err)
+	}
+	if len(res.Stores) != 0 || len(res.Skipped) != 0 {
+		t.Errorf("a rejected certificate reported trust stores: %+v", res)
+	}
+}
+
+func TestInstall_RejectsMissingFile(t *testing.T) {
+	t.Parallel()
+	_, err := truststore.Install(t.Context(), filepath.Join(t.TempDir(), "absent.crt"))
+	if err == nil {
+		t.Fatal("expected an error for a missing certificate file, got nil")
+	}
+	if errors.Is(err, truststore.ErrInvalidCertificate) {
+		t.Errorf("a missing file should report the read error, not ErrInvalidCertificate: %v", err)
+	}
+}
+
+func TestUninstall_RejectsNonCertificate(t *testing.T) {
+	t.Parallel()
+	path := filepath.Join(t.TempDir(), "not-a-cert.txt")
+	if err := os.WriteFile(path, []byte("hello world"), 0o600); err != nil {
+		t.Fatalf("write fixture: %v", err)
+	}
+	res, err := truststore.Uninstall(t.Context(), path)
+	if !errors.Is(err, truststore.ErrInvalidCertificate) {
+		t.Errorf("expected ErrInvalidCertificate, got %v", err)
+	}
+	if len(res.Stores) != 0 || len(res.Skipped) != 0 {
+		t.Errorf("a rejected certificate reported trust stores: %+v", res)
+	}
+}
+
+func TestUninstall_RejectsEmptyPath(t *testing.T) {
+	t.Parallel()
+	_, err := truststore.Uninstall(t.Context(), "")
+	if !errors.Is(err, truststore.ErrInvalidCertificate) {
+		t.Errorf("expected ErrInvalidCertificate, got %v", err)
+	}
+}
