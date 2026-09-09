@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.80](https://github.com/MustardSeedNetworks/stem/compare/v0.24.79...v0.24.80) (2026-09-09)
+
+
+### Tests
+
+* **truststore:** cover the anchor-path guard, trimError and the platform guards ([#1104](https://github.com/MustardSeedNetworks/stem/issues/1104)) ([08efad7](https://github.com/MustardSeedNetworks/stem/commit/08efad7fd5c7fc822cc4a0242d19a51d5b820108))
+
 ## [0.24.79](https://github.com/MustardSeedNetworks/stem/compare/v0.24.78...v0.24.79) (2026-09-09)
 
 
