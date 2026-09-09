@@ -15,6 +15,7 @@ history, not as current state. Current architecture lives in
 | [AUDIT_SUITE_2026-01-26.md](AUDIT_SUITE_2026-01-26.md) | 2026-01-26 | Combined lint, security and quality sweep |
 | [GITHUB_ISSUES_2026-01-26.md](GITHUB_ISSUES_2026-01-26.md) | 2026-01-26 | Issue backlog written out of the 2026-01-26 sweep |
 | [LINT_BIOME_MAKE_AUDIT_2026-01-26.md](LINT_BIOME_MAKE_AUDIT_2026-01-26.md) | 2026-01-26 | Go lint, Biome and Makefile target review |
+| [STM-11_ETHERSCOPE_2026-09-09.md](STM-11_ETHERSCOPE_2026-09-09.md) | 2026-09-09 | v1 plan STM-11: why the EtherScope nXG comparison could not be run |
 
 New audits produced by the v1 plan land here under the same
 `<TOPIC>_<YYYY-MM-DD>.md` convention and get a row in this table.
