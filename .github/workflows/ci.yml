@@ -390,17 +390,19 @@ jobs:
           echo "Current coverage: ${COVERAGE}%"
 
           # Minimum coverage threshold. Acts as an anti-regression floor.
-          # Overall coverage is ~70% since cmd/stem was brought from 5.5%
-          # to 55%; platform-specific code in the Linux dataplane still
-          # pulls the average down, while critical packages — auth,
-          # database, logging, modules, config — are 90%+.
+          # Overall coverage is ~77% since the STM-6 ratchet took cmd/stem
+          # from 5.5% to 55%, internal/truststore from 13.8% to 46.2% and
+          # internal/database from 29% to 89%; platform-specific code in
+          # the Linux dataplane still pulls the average down. The packages
+          # carrying the product's state are well ahead of the floor —
+          # database 89%, auth 84%, api 67%.
           #
           # Ratchet plan (raise after each release exceeds the next tier
           # by 5+ points):
-          #   2026-Q3: 65 (current)
-          #   2027-Q2: 70
-          #   long-term: 75
-          MIN_COVERAGE=65
+          #   2026-Q3: 70 (current)
+          #   next: 75
+          #   long-term: 80
+          MIN_COVERAGE=70
 
           if (( $(echo "$COVERAGE < $MIN_COVERAGE" | bc -l) )); then
             echo "ERROR: Coverage ${COVERAGE}% is below minimum threshold of ${MIN_COVERAGE}%"
