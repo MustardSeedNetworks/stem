@@ -1,0 +1,4 @@
+# Fields already decoded from API requests but not consumed by production code.
+# Remove entries when the field is implemented or deleted; do not add new debt.
+TestStartRequest.Mode
+TestStartRequest.Tests

@@ -353,6 +353,9 @@ jobs:
       - name: Route-policy gate (capability registry)
         run: ./scripts/check-route-policy.sh
 
+      - name: Request-field read gate
+        run: ./scripts/check-request-fields.sh
+
       - name: JSON wire-casing gate — camelCase ratchet
         run: ./scripts/check-json-casing.sh
 
@@ -1746,9 +1749,9 @@ jobs:
       # Blocking again as of #965: three PRs were false-failed in one day on
       # three DIFFERENT cases with identical code, which is what showed the
       # noise was the machine and not any one case. The measurement now takes
-      # the best of 15 interleaved rounds per side rather than 3; on 100
-      # rounds of identical code that is 0 false failures in 92 sliding
-      # windows, against 8 in 98 at 3. The reasoning and the numbers are in
+      # the best of 30 interleaved rounds per side. Best-of-15 still produced
+      # an isolated -16.6% false failure on an unrelated Go/CI-only change
+      # (#1123). The reasoning and measured history are in
       # scripts/bench-compare.sh above BENCH_RUNS.
       #
       # If this starts false-failing again, the answer is more rounds or a
