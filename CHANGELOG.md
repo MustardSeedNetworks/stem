@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.85](https://github.com/MustardSeedNetworks/stem/compare/v0.24.84...v0.24.85) (2026-09-09)
+
+
+### Code Refactoring
+
+* **trafficgen:** extract config building and raise coverage from 61% to 81% ([#1131](https://github.com/MustardSeedNetworks/stem/issues/1131)) ([1f44e1c](https://github.com/MustardSeedNetworks/stem/commit/1f44e1c4c5ad901782b8919c300a267c25464334))
+
 ## [0.24.84](https://github.com/MustardSeedNetworks/stem/compare/v0.24.83...v0.24.84) (2026-09-09)
 
 
