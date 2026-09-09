@@ -69,10 +69,6 @@ func parseTestFlagsOrFail(t *testing.T, args ...string) *testCmdFlags {
 }
 
 // TestParseTestFlagsLongSpellings covers the flags an operator types in full.
-//
-// The `-t` default is deliberately not asserted anywhere here: it is
-// `throughput`, which no module registers, so `stem test -i eth0` cannot run
-// (#1093). A test pinning that value would cement the defect.
 func TestParseTestFlagsLongSpellings(t *testing.T) {
 	f := parseTestFlagsOrFail(t,
 		"--interface", "eth0", "--type", "rfc2544_throughput",
@@ -100,6 +96,12 @@ func TestParseTestFlagsShortSpellingsReachTheSameFields(t *testing.T) {
 func TestParseTestFlagsDefaults(t *testing.T) {
 	f := parseTestFlagsOrFail(t, "-i", "eth0")
 
+	if f.testTypes != "rfc2544_throughput" {
+		t.Errorf("testTypes = %q, want rfc2544_throughput", f.testTypes)
+	}
+	if strings.Contains(f.frameSizes, "64") {
+		t.Errorf("default frame sizes = %q; 64-byte frames do not fit the measurement payload", f.frameSizes)
+	}
 	if f.duration != defaultTestDuration || f.warmup != defaultWarmup {
 		t.Errorf("duration/warmup = %d/%d, want %d/%d",
 			f.duration, f.warmup, defaultTestDuration, defaultWarmup)
@@ -239,6 +241,10 @@ func TestCreateTestConfigMapsTheFlagsItIsGiven(t *testing.T) {
 	}
 	if !cfg.MeasureLatency {
 		t.Error("MeasureLatency should be on: the CLI prints latency with every throughput run")
+	}
+	if cfg.InitialRatePct != 100 || cfg.MaxIterations != 20 || cfg.BatchSize != 32 {
+		t.Errorf("throughput defaults = %v%%/%d iterations/%d batch, want 100%%/20/32",
+			cfg.InitialRatePct, cfg.MaxIterations, cfg.BatchSize)
 	}
 }
 

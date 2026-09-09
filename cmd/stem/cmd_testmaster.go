@@ -136,7 +136,7 @@ func parseTestFlags(args []string) (*testCmdFlags, error) {
 	fs.StringVar(testTypes, "t", testTypeThroughput, "Test type (shorthand)")
 	duration := fs.Int("duration", defaultTestDuration, "Test duration in seconds")
 	fs.IntVar(duration, "d", defaultTestDuration, "Test duration (shorthand)")
-	frameSizes := fs.String("frame-sizes", "64,128,256,512,1024,1280,1518", "Frame sizes")
+	frameSizes := fs.String("frame-sizes", "128,256,512,1024,1280,1518", "Frame sizes")
 
 	// Advanced options.
 	resolution := fs.Float64("resolution", defaultResolution, "Binary search resolution %")
@@ -200,14 +200,14 @@ func createTestConfig(flags *testCmdFlags) *testmasterDP.Config {
 		IncludeJumbo:   false,
 		TrialDuration:  time.Duration(flags.duration) * time.Second,
 		WarmupPeriod:   time.Duration(flags.warmup) * time.Second,
-		InitialRatePct: 0,
+		InitialRatePct: defaultInitialRatePct,
 		ResolutionPct:  flags.resolution,
-		MaxIterations:  0,
+		MaxIterations:  defaultMaxIterations,
 		AcceptableLoss: flags.maxLoss,
 		HWTimestamp:    false,
 		MeasureLatency: true,
 		UsePacing:      false,
-		BatchSize:      0,
+		BatchSize:      defaultBatchSize,
 	}
 }
 
@@ -311,7 +311,7 @@ func testCmd(args []string) error {
 		jsonOutput:   flags.jsonOutput,
 		csvOutput:    flags.csvOutput,
 	}
-	allResults := runTestSuite(ctx, tests, frameSizeList, params)
+	allResults, runErr := runTestSuite(ctx, tests, frameSizeList, params)
 
 	// Final output.
 	if flags.jsonOutput && len(allResults) > 0 {
@@ -321,7 +321,12 @@ func testCmd(args []string) error {
 		printCSVResults(allResults)
 	}
 
-	_, _ = fmt.Fprintln(os.Stdout, "\nTest suite complete.")
+	if runErr != nil {
+		_, _ = fmt.Fprintln(os.Stdout, "\nTest run failed.")
+		return runErr
+	}
+
+	_, _ = fmt.Fprintln(os.Stdout, "\nTest run complete.")
 
 	return nil
 }
