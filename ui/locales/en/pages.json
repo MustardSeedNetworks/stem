@@ -18,7 +18,7 @@
     "clear": "Clear history",
     "completed": "Completed",
     "deleteRun": "Delete run",
-    "description": "Every run recorded on this machine, with its verdict and metrics.",
+    "description": "Completed runs, kept in this browser only. Another browser, or one with its site data cleared, starts empty.",
     "duration": "Duration",
     "emptyDetail": "Select a run to see its verdict and metrics.",
     "emptyNoMatch": "No run matches this filter.",
@@ -31,12 +31,12 @@
     "metrics": "Metrics",
     "noVerdict": "No verdict recorded",
     "passed": "Passed",
-    "runsRecorded_one": "{{count}} run recorded on this machine",
-    "runsRecorded_other": "{{count}} runs recorded on this machine",
     "selectedRun": "Selected run",
     "started": "Started",
     "status": "Status",
-    "title": "History"
+    "title": "Recent results on this browser",
+    "scope_one": "Kept in this browser only · {{count}} of {{max}} runs",
+    "scope_other": "Kept in this browser only · {{count}} of {{max}} runs"
   },
   "measure": {
     "description": "Y.1731 OAM delay / loss / synthetic loss measurement.",

@@ -12,7 +12,7 @@
 
 import { type JSX, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { type HistoricalResult, useHistoryStore } from '../stores/history-store';
+import { HISTORY_MAX_ITEMS, type HistoricalResult, useHistoryStore } from '../stores/history-store';
 import {
   DetailEmpty,
   DetailFacts,
@@ -78,7 +78,9 @@ export function HistoryPage(): JSX.Element {
   return (
     <>
       <div className="flex-between">
-        <p className="body-small">{t('history.runsRecorded', { count: results.length })}</p>
+        <p className="body-small" data-testid="history-scope">
+          {t('history.scope', { count: results.length, max: HISTORY_MAX_ITEMS })}
+        </p>
         {results.length > 0 ? (
           <button
             type="button"
