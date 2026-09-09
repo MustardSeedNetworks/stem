@@ -5,16 +5,14 @@ package main
 import (
 	"bytes"
 	"io"
+	"os"
+	"regexp"
+	"strconv"
 	"strings"
 	"testing"
 
+	"github.com/MustardSeedNetworks/stem/internal/services"
 	"github.com/MustardSeedNetworks/stem/internal/version"
-)
-
-// Test constants for repeated strings.
-const (
-	testResultPass = "PASS"
-	testResultFail = "FAIL"
 )
 
 // captureOutput captures output during function execution and returns the output.
@@ -26,108 +24,36 @@ func captureOutput(t *testing.T, fn func(w io.Writer)) string {
 	return buf.String()
 }
 
-func allTestTypes() map[string]string {
-	return map[string]string{
-		"throughput":         "RFC 2544 Throughput",
-		"latency":            "RFC 2544 Latency",
-		"frame_loss":         "RFC 2544 Frame Loss",
-		"back_to_back":       "RFC 2544 Back-to-Back",
-		"system_recovery":    "RFC 2544 System Recovery",
-		"reset":              "RFC 2544 Reset",
-		"y1564_config":       "Y.1564 Service Configuration",
-		"y1564_perf":         "Y.1564 Performance Test",
-		"y1564":              "Y.1564 Latency",
-		"rfc2889_forwarding": "RFC 2889 Forwarding",
-		"rfc2889_caching":    "RFC 2889 Caching",
-		"rfc2889_learning":   "RFC 2889 Learning",
-		"rfc2889_broadcast":  "RFC 2889 Broadcast",
-		"rfc2889_congestion": "RFC 2889 Congestion",
-		"rfc6349_throughput": "RFC 6349 Throughput",
-		"rfc6349_path":       "RFC 6349 Path",
-		"y1731_delay":        "Y.1731 Delay",
-		"y1731_loss":         "Y.1731 Loss",
-		"y1731_slm":          "Y.1731 SLM",
-		"y1731_loopback":     "Y.1731 Loopback",
-		"mef_config":         "MEF Configuration",
-		"mef_perf":           "MEF Performance",
-		"mef":                "MEF Service",
-		"tsn_timing":         "TSN Timing",
-		"tsn_isolation":      "TSN Isolation",
-		"tsn_latency":        "TSN Latency",
-		"tsn":                "TSN Service",
-	}
-}
+// captureStdout runs fn with [os.Stdout] redirected to a pipe and returns what
+// it wrote. Most of this package's print helpers address [os.Stdout] directly
+// rather than taking an [io.Writer], so this is how their output is asserted.
+func captureStdout(t *testing.T, fn func()) string {
+	t.Helper()
 
-type testCategory struct {
-	name  string
-	tests []string
-}
-
-func testCategories() []testCategory {
-	return []testCategory{
-		{
-			name: "RFC 2544",
-			tests: []string{
-				"throughput",
-				"latency",
-				"frame_loss",
-				"back_to_back",
-				"system_recovery",
-				"reset",
-			},
-		},
-		{
-			name: "Y.1564 EtherSAM",
-			tests: []string{
-				"y1564_config",
-				"y1564_perf",
-				"y1564",
-			},
-		},
-		{
-			name: "RFC 2889 LAN Switch",
-			tests: []string{
-				"rfc2889_forwarding",
-				"rfc2889_caching",
-				"rfc2889_learning",
-				"rfc2889_broadcast",
-				"rfc2889_congestion",
-			},
-		},
-		{
-			name: "RFC 6349 TCP",
-			tests: []string{
-				"rfc6349_throughput",
-				"rfc6349_path",
-			},
-		},
-		{
-			name: "Y.1731 OAM",
-			tests: []string{
-				"y1731_delay",
-				"y1731_loss",
-				"y1731_slm",
-				"y1731_loopback",
-			},
-		},
-		{
-			name: "MEF Service",
-			tests: []string{
-				"mef_config",
-				"mef_perf",
-				"mef",
-			},
-		},
-		{
-			name: "TSN 802.1Qbv",
-			tests: []string{
-				"tsn_timing",
-				"tsn_isolation",
-				"tsn_latency",
-				"tsn",
-			},
-		},
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatalf("pipe: %v", err)
 	}
+	saved := os.Stdout
+	os.Stdout = w
+	done := make(chan string, 1)
+	go func() {
+		var buf bytes.Buffer
+		_, _ = io.Copy(&buf, r)
+		done <- buf.String()
+	}()
+
+	fn()
+
+	os.Stdout = saved
+	if closeErr := w.Close(); closeErr != nil {
+		t.Fatalf("close pipe: %v", closeErr)
+	}
+	out := <-done
+	if closeErr := r.Close(); closeErr != nil {
+		t.Fatalf("close pipe read end: %v", closeErr)
+	}
+	return out
 }
 
 func TestVersion(t *testing.T) {
@@ -152,206 +78,96 @@ func TestCompany(t *testing.T) {
 	}
 }
 
-func TestAllTestTypesCount(t *testing.T) {
-	// We should have 27 test types total.
-	expectedCount := 27
-	if len(allTestTypes()) != expectedCount {
-		t.Errorf("Expected %d test types, got %d", expectedCount, len(allTestTypes()))
+// exampleTestTypes extracts every test type named by a `-t` argument in the
+// EXAMPLES block of printUsage.
+func exampleTestTypes(t *testing.T) []string {
+	t.Helper()
+
+	usage := captureOutput(t, printUsage)
+	start := strings.Index(usage, "EXAMPLES:")
+	if start < 0 {
+		t.Fatal("printUsage has no EXAMPLES block")
 	}
+	examples := usage[start:]
+	re := regexp.MustCompile(`-t ([\w,]+)`)
+
+	var names []string
+	for _, m := range re.FindAllStringSubmatch(examples, -1) {
+		names = append(names, strings.Split(m[1], ",")...)
+	}
+	return names
 }
 
-func TestAllTestTypesRFC2544(t *testing.T) {
-	rfc2544Tests := []string{
-		"throughput",
-		"latency",
-		"frame_loss",
-		"back_to_back",
-		"system_recovery",
-		"reset",
+// TestUsageExamplesNameRegisteredTestTypes ties the documented invocations to
+// the module registry the CLI validates against. An example naming a type no
+// module registers is an instruction that cannot work (#1093).
+func TestUsageExamplesNameRegisteredTestTypes(t *testing.T) {
+	names := exampleTestTypes(t)
+	if len(names) == 0 {
+		t.Fatal("no -t examples found in printUsage; the extraction is broken, not the docs")
 	}
 
-	allTypes := allTestTypes()
-	for _, test := range rfc2544Tests {
-		if _, ok := allTypes[test]; !ok {
-			t.Errorf("Missing RFC 2544 test type: %s", test)
-		}
-	}
-}
-
-func TestAllTestTypesY1564(t *testing.T) {
-	y1564Tests := []string{
-		"y1564_config",
-		"y1564_perf",
-		"y1564",
-	}
-
-	allTypes := allTestTypes()
-	for _, test := range y1564Tests {
-		if _, ok := allTypes[test]; !ok {
-			t.Errorf("Missing Y.1564 test type: %s", test)
-		}
-	}
-}
-
-func TestAllTestTypesRFC2889(t *testing.T) {
-	rfc2889Tests := []string{
-		"rfc2889_forwarding",
-		"rfc2889_caching",
-		"rfc2889_learning",
-		"rfc2889_broadcast",
-		"rfc2889_congestion",
-	}
-
-	allTypes := allTestTypes()
-	for _, test := range rfc2889Tests {
-		if _, ok := allTypes[test]; !ok {
-			t.Errorf("Missing RFC 2889 test type: %s", test)
-		}
-	}
-}
-
-func TestAllTestTypesRFC6349(t *testing.T) {
-	rfc6349Tests := []string{
-		"rfc6349_throughput",
-		"rfc6349_path",
-	}
-
-	allTypes := allTestTypes()
-	for _, test := range rfc6349Tests {
-		if _, ok := allTypes[test]; !ok {
-			t.Errorf("Missing RFC 6349 test type: %s", test)
-		}
-	}
-}
-
-func TestAllTestTypesY1731(t *testing.T) {
-	y1731Tests := []string{
-		"y1731_delay",
-		"y1731_loss",
-		"y1731_slm",
-		"y1731_loopback",
-	}
-
-	allTypes := allTestTypes()
-	for _, test := range y1731Tests {
-		if _, ok := allTypes[test]; !ok {
-			t.Errorf("Missing Y.1731 test type: %s", test)
-		}
-	}
-}
-
-func TestAllTestTypesMEF(t *testing.T) {
-	mefTests := []string{
-		"mef_config",
-		"mef_perf",
-		"mef",
-	}
-
-	allTypes := allTestTypes()
-	for _, test := range mefTests {
-		if _, ok := allTypes[test]; !ok {
-			t.Errorf("Missing MEF test type: %s", test)
-		}
-	}
-}
-
-func TestAllTestTypesTSN(t *testing.T) {
-	tsnTests := []string{
-		"tsn_timing",
-		"tsn_isolation",
-		"tsn_latency",
-		"tsn",
-	}
-
-	allTypes := allTestTypes()
-	for _, test := range tsnTests {
-		if _, ok := allTypes[test]; !ok {
-			t.Errorf("Missing TSN test type: %s", test)
-		}
-	}
-}
-
-func TestTestCategoriesCount(t *testing.T) {
-	expectedCategories := 7
-	if len(testCategories()) != expectedCategories {
-		t.Errorf("Expected %d test categories, got %d", expectedCategories, len(testCategories()))
-	}
-}
-
-func TestTestCategoriesNames(t *testing.T) {
-	expectedNames := []string{
-		"RFC 2544",
-		"Y.1564 EtherSAM",
-		"RFC 2889 LAN Switch",
-		"RFC 6349 TCP",
-		"Y.1731 OAM",
-		"MEF Service",
-		"TSN 802.1Qbv",
-	}
-
-	categories := testCategories()
-	for i, expected := range expectedNames {
-		if categories[i].name != expected {
-			t.Errorf("Expected category %d name '%s', got '%s'", i, expected, categories[i].name)
-		}
-	}
-}
-
-func TestTestCategoriesTestsExist(t *testing.T) {
-	types := allTestTypes()
-	// Verify all tests in categories exist in allTestTypes.
-	for _, cat := range testCategories() {
-		for _, test := range cat.tests {
-			if _, ok := types[test]; !ok {
-				t.Errorf("Test '%s' in category '%s' not found in allTestTypes", test, cat.name)
-			}
+	for _, name := range names {
+		if services.GetModuleForTest(name) == nil {
+			t.Errorf("EXAMPLES documents 'stem test -t %s', which no module registers", name)
 		}
 	}
 }
 
 func TestParseFrameSizes(t *testing.T) {
 	tests := []struct {
+		name     string
 		input    string
 		expected []int
 	}{
-		{"64", []int{64}},
-		{"64,128,256", []int{64, 128, 256}},
-		{"64,128,256,512,1024,1280,1518", []int{64, 128, 256, 512, 1024, 1280, 1518}},
-		{"1518,9000", []int{1518, 9000}},
-		{"", []int{}},
+		{"single", "64", []int{64}},
+		{"three", "64,128,256", []int{64, 128, 256}},
+		{
+			"rfc2544 defaults",
+			"64,128,256,512,1024,1280,1518",
+			[]int{64, 128, 256, 512, 1024, 1280, 1518},
+		},
+		{"jumbo", "1518,9000", []int{1518, 9000}},
+		{"jumbo limit", "9000,9216", []int{9000, 9216}},
+		{"empty", "", []int{}},
+		{"spaces only", "  ", []int{}},
+		{"padded", " 64 , 128 ", []int{64, 128}},
+		{"trailing comma", "64,128,", []int{64, 128}},
+		{"leading comma", ",64,128", []int{64, 128}},
+		{"duplicates preserved", "64,64,128", []int{64, 64, 128}},
+		{"non-numeric dropped", "64,invalid,128", []int{64, 128}},
+		{"below minimum dropped", "63,64", []int{64}},
+		{"above maximum dropped", "9216,9217", []int{9216}},
+		{"far above maximum dropped", "16384", []int{}},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.input, func(t *testing.T) {
+		t.Run(tt.name, func(t *testing.T) {
 			result := parseFrameSizes(tt.input)
 			if len(result) != len(tt.expected) {
-				t.Errorf("parseFrameSizes(%s) returned %d sizes, expected %d", tt.input, len(result), len(tt.expected))
-				return
+				t.Fatalf("parseFrameSizes(%q) = %v, want %v", tt.input, result, tt.expected)
 			}
 			for i, v := range result {
 				if v != tt.expected[i] {
-					t.Errorf("parseFrameSizes(%s)[%d] = %d, expected %d", tt.input, i, v, tt.expected[i])
+					t.Errorf(
+						"parseFrameSizes(%q)[%d] = %d, want %d",
+						tt.input,
+						i,
+						v,
+						tt.expected[i],
+					)
 				}
 			}
 		})
 	}
 }
 
-func TestParseFrameSizesInvalid(t *testing.T) {
-	// Invalid frame sizes should be skipped.
-	result := parseFrameSizes("64,invalid,128")
-	expected := []int{64, 128}
-	if len(result) != len(expected) {
-		t.Errorf("Expected %d valid sizes, got %d", len(expected), len(result))
-	}
-}
-
 func TestBoolToPassFail(t *testing.T) {
-	if boolToPassFail(true) != testResultPass {
-		t.Errorf("Expected '%s' for true", testResultPass)
+	if got := boolToPassFail(true); got != resultPass {
+		t.Errorf("boolToPassFail(true) = %q, want %q", got, resultPass)
 	}
-	if boolToPassFail(false) != testResultFail {
-		t.Errorf("Expected '%s' for false", testResultFail)
+	if got := boolToPassFail(false); got != resultFail {
+		t.Errorf("boolToPassFail(false) = %q, want %q", got, resultFail)
 	}
 }
 
@@ -367,20 +183,19 @@ func TestPrintVersion(t *testing.T) {
 	if !strings.Contains(output, Company) {
 		t.Error("printVersion should contain Company")
 	}
+	if !strings.Contains(output, version.GetCommit()) {
+		t.Error("printVersion should contain the commit")
+	}
 }
 
 func TestPrintUsage(t *testing.T) {
 	output := captureOutput(t, printUsage)
 
-	// Should contain key sections.
+	// Every verb dispatchSubcommand accepts must be discoverable here.
 	expectedSections := []string{
-		"USAGE:",
-		"COMMANDS:",
-		"reflect",
-		"test",
-		"web",
-		"license",
-		"EXAMPLES:",
+		"USAGE:", "COMMANDS:", "EXAMPLES:",
+		subReflect, subTest, "web", "license",
+		"list-tests", installCACommandName, "tutorial", "glossary", "version",
 	}
 
 	for _, section := range expectedSections {
@@ -390,91 +205,91 @@ func TestPrintUsage(t *testing.T) {
 	}
 }
 
-func TestDefaultFrameSizes(t *testing.T) {
-	// Default RFC 2544 frame sizes.
-	defaults := parseFrameSizes("64,128,256,512,1024,1280,1518")
-	if len(defaults) != 7 {
-		t.Errorf("Expected 7 default frame sizes, got %d", len(defaults))
-	}
-
-	expected := []int{64, 128, 256, 512, 1024, 1280, 1518}
-	for i, v := range expected {
-		if defaults[i] != v {
-			t.Errorf("Default frame size[%d] = %d, expected %d", i, defaults[i], v)
-		}
-	}
-}
-
-func TestJumboFrameSupport(t *testing.T) {
-	// Should support jumbo frames (9216 is > 9216 so it's excluded).
-	jumbos := parseFrameSizes("9000,9216")
-	if len(jumbos) != 2 {
-		t.Errorf("Expected 2 jumbo sizes, got %d", len(jumbos))
-	}
-	if len(jumbos) > 0 && jumbos[0] != 9000 {
-		t.Errorf("Expected 9000, got %d", jumbos[0])
-	}
-	if len(jumbos) > 1 && jumbos[1] != 9216 {
-		t.Errorf("Expected 9216, got %d", jumbos[1])
-	}
-}
-
-func TestTestTypeDescriptions(t *testing.T) {
-	// Verify each test type has a non-empty description.
-	for testType, desc := range allTestTypes() {
-		if desc == "" {
-			t.Errorf("Test type '%s' has empty description", testType)
-		}
-		if len(desc) < 10 {
-			t.Errorf("Test type '%s' has too short description: '%s'", testType, desc)
-		}
-	}
-}
-
-func TestTestTypeDescriptionsContainStandard(t *testing.T) {
-	// RFC 2544 tests should reference RFC 2544.
-	rfc2544Tests := []string{"throughput", "latency", "frame_loss", "back_to_back", "system_recovery", "reset"}
-	types := allTestTypes()
-	for _, test := range rfc2544Tests {
-		desc := types[test]
-		if !strings.Contains(desc, "RFC 2544") {
-			t.Errorf("RFC 2544 test '%s' description should reference RFC 2544: '%s'", test, desc)
-		}
-	}
-
-	// Y.1564 tests should reference Y.1564 or ITU-T.
-	y1564Tests := []string{"y1564_config", "y1564_perf", "y1564"}
-	for _, test := range y1564Tests {
-		desc := types[test]
-		if !strings.Contains(desc, "Y.1564") && !strings.Contains(desc, "ITU-T") {
-			t.Errorf("Y.1564 test '%s' description should reference Y.1564 or ITU-T: '%s'", test, desc)
-		}
-	}
-}
-
-// Table-driven test for frame size edge cases.
-func TestParseFrameSizesEdgeCases(t *testing.T) {
-	tests := []struct {
-		name     string
-		input    string
-		expected int // expected length.
-	}{
-		{"empty string", "", 0},
-		{"spaces", "  ", 0},
-		{"single value", "1518", 1},
-		{"trailing comma", "64,128,", 2},
-		{"leading comma", ",64,128", 2},
-		{"duplicate values", "64,64,128", 3},
-		{"large value over limit", "16384", 0}, // 16384 > 9216 limit.
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := parseFrameSizes(tt.input)
-			if len(result) != tt.expected {
-				t.Errorf("parseFrameSizes(%q) = %d sizes, want %d", tt.input, len(result), tt.expected)
+// TestDispatchSubcommandRejectsUnknownVerbs is what makes main() print usage
+// and exit 1 rather than silently succeeding.
+func TestDispatchSubcommandRejectsUnknownVerbs(t *testing.T) {
+	for _, cmd := range []string{"", "throughput", "reflectt", "--bogus"} {
+		t.Run(cmd, func(t *testing.T) {
+			if dispatchSubcommand(cmd, nil) {
+				t.Errorf("dispatchSubcommand(%q) = true, want false for an unknown verb", cmd)
 			}
 		})
+	}
+}
+
+// TestDispatchSubcommandVersionAliases covers the three spellings that reach
+// printVersion; each must actually print, not merely return true.
+func TestDispatchSubcommandVersionAliases(t *testing.T) {
+	for _, cmd := range []string{"version", "--version", "-v"} {
+		t.Run(cmd, func(t *testing.T) {
+			var handled bool
+			out := captureStdout(t, func() { handled = dispatchSubcommand(cmd, nil) })
+			if !handled {
+				t.Fatalf("dispatchSubcommand(%q) = false, want true", cmd)
+			}
+			if !strings.Contains(out, version.GetVersion()) {
+				t.Errorf("dispatchSubcommand(%q) printed %q, which omits the version", cmd, out)
+			}
+		})
+	}
+}
+
+// TestDispatchSubcommandHelpAliasesPrintUsage: `help` with no topic falls back
+// to the usage screen, and --help/-h are the same door.
+func TestDispatchSubcommandHelpAliasesPrintUsage(t *testing.T) {
+	for _, cmd := range []string{"help", "--help", "-h"} {
+		t.Run(cmd, func(t *testing.T) {
+			var handled bool
+			out := captureStdout(t, func() { handled = dispatchSubcommand(cmd, nil) })
+			if !handled {
+				t.Fatalf("dispatchSubcommand(%q) = false, want true", cmd)
+			}
+			if !strings.Contains(out, "COMMANDS:") {
+				t.Errorf(
+					"dispatchSubcommand(%q) printed %q, which is not the usage screen",
+					cmd,
+					out,
+				)
+			}
+		})
+	}
+}
+
+// TestHelpCmdUnknownTopicListsTopics: an operator who mistypes a topic gets
+// the topic list, not silence.
+func TestHelpCmdUnknownTopicListsTopics(t *testing.T) {
+	out := captureStdout(t, func() { helpCmd([]string{"no-such-topic"}) })
+
+	if !strings.Contains(out, "No help found for 'no-such-topic'") {
+		t.Errorf("helpCmd printed %q, which does not name the missing topic", out)
+	}
+	for _, hint := range []string{"Available help topics:", "stem glossary", "stem tutorial"} {
+		if !strings.Contains(out, hint) {
+			t.Errorf("helpCmd output is missing %q:\n%s", hint, out)
+		}
+	}
+}
+
+// TestListTestsCmdListsEveryRegisteredType: `stem list-tests` is the answer
+// the CLI gives when it rejects a test type, so it must name every type the
+// registry will accept.
+func TestListTestsCmdListsEveryRegisteredType(t *testing.T) {
+	out := captureStdout(t, func() { listTestsCmd(nil) })
+
+	total := 0
+	for _, mod := range services.GetAllModules() {
+		if !strings.Contains(out, mod.DisplayName()) {
+			t.Errorf("list-tests omits module %q", mod.DisplayName())
+		}
+		for _, testType := range mod.TestTypes() {
+			if !strings.Contains(out, testType) {
+				t.Errorf("list-tests omits test type %q", testType)
+			}
+			total++
+		}
+	}
+	if !strings.Contains(out, "Total: "+strconv.Itoa(total)+" test types") {
+		t.Errorf("list-tests did not report %d test types:\n%s", total, out)
 	}
 }
 
@@ -486,8 +301,38 @@ func BenchmarkParseFrameSizes(b *testing.B) {
 	}
 }
 
-func BenchmarkBoolToPassFail(b *testing.B) {
-	for i := range b.N {
-		boolToPassFail(i%2 == 0)
+// TestTutorialCmdUnknownIDFallsBackToTheList: a mistyped tutorial name must
+// leave the operator with the list of real ones.
+func TestTutorialCmdUnknownIDFallsBackToTheList(t *testing.T) {
+	unknown := captureStdout(t, func() { tutorialCmd([]string{"no-such-tutorial"}) })
+	if !strings.Contains(unknown, "Tutorial 'no-such-tutorial' not found") {
+		t.Errorf("tutorialCmd printed %q, which does not name the missing tutorial", unknown)
+	}
+
+	listing := captureStdout(t, func() { tutorialCmd(nil) })
+	if listing == "" {
+		t.Fatal("tutorialCmd with no arguments printed nothing")
+	}
+	if !strings.Contains(unknown, listing) {
+		t.Error("the not-found path does not fall back to the same tutorial list")
+	}
+}
+
+// TestGlossaryCmdSearchAndLookup: --search narrows the glossary and an
+// unknown term says so rather than printing an empty definition.
+func TestGlossaryCmdSearchAndLookup(t *testing.T) {
+	hit := captureStdout(t, func() { glossaryCmd([]string{"--search", "latency"}) })
+	if !strings.Contains(hit, "Terms matching 'latency'") {
+		t.Errorf("glossary --search latency printed %q", hit)
+	}
+
+	miss := captureStdout(t, func() { glossaryCmd([]string{"--search", "zzzznotaterm"}) })
+	if !strings.Contains(miss, "No terms found matching 'zzzznotaterm'") {
+		t.Errorf("glossary --search on a nonsense keyword printed %q", miss)
+	}
+
+	unknown := captureStdout(t, func() { glossaryCmd([]string{"zzzznotaterm"}) })
+	if !strings.Contains(unknown, "not found in glossary") {
+		t.Errorf("glossary on an unknown term printed %q", unknown)
 	}
 }

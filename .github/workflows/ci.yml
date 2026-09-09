@@ -390,17 +390,17 @@ jobs:
           echo "Current coverage: ${COVERAGE}%"
 
           # Minimum coverage threshold. Acts as an anti-regression floor.
-          # Overall coverage is ~65% since the orchestrator TUI (2,253 lines
-          # at 0.0%) was deleted; platform-specific code in the Linux
-          # dataplane still pulls the average down, while critical packages —
-          # auth, database, logging, modules, config — are 90%+.
+          # Overall coverage is ~70% since cmd/stem was brought from 5.5%
+          # to 55%; platform-specific code in the Linux dataplane still
+          # pulls the average down, while critical packages — auth,
+          # database, logging, modules, config — are 90%+.
           #
           # Ratchet plan (raise after each release exceeds the next tier
           # by 5+ points):
-          #   2026-Q3: 60 (current)
-          #   2027-Q2: 65
-          #   long-term: 70
-          MIN_COVERAGE=60
+          #   2026-Q3: 65 (current)
+          #   2027-Q2: 70
+          #   long-term: 75
+          MIN_COVERAGE=65
 
           if (( $(echo "$COVERAGE < $MIN_COVERAGE" | bc -l) )); then
             echo "ERROR: Coverage ${COVERAGE}% is below minimum threshold of ${MIN_COVERAGE}%"
