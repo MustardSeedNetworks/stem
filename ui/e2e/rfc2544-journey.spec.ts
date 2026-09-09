@@ -76,17 +76,17 @@ test.describe('RFC 2544 journey', () => {
     // The operator's selection must survive into the request — asserting only
     // that "a request happened" would pass even if the form were ignored.
     const body = startBody as {
-      tests?: string[];
+      tests?: Array<{ testType: string; config?: unknown }>;
       interface?: string;
-      testType?: string;
       mode?: string;
-      config?: unknown;
     };
     expect(body.interface).toBe(value);
-    expect(body.tests?.some((t) => t.startsWith('rfc2544'))).toBe(true);
-    expect(body.testType).toMatch(/^rfc2544/);
+    expect(body.tests?.some((step) => step.testType.startsWith('rfc2544'))).toBe(true);
     expect(body.mode).toBe('test_master');
-    expect(body.config, 'the RFC 2544 config must be sent, not just the test list').toBeTruthy();
+    expect(
+      body.tests?.every((step) => step.config),
+      'each RFC 2544 step must carry its own config snapshot',
+    ).toBe(true);
   });
 });
 

@@ -35,7 +35,8 @@ import { logError, logWarn } from '../utils/logger';
 
 // Helper: check if test just completed (status transition to completed/error)
 function isTestCompleted(prev: string, curr: string): boolean {
-  return (curr === 'completed' || curr === 'error') && prev !== 'completed' && prev !== 'error';
+	const terminal = curr === 'completed' || curr === 'error' || curr === 'cancelled';
+	return terminal && prev !== curr;
 }
 
 // Helper: check if new test is starting
@@ -71,6 +72,15 @@ function mapStatsPayload(payload: Partial<Stats>): Stats {
     uptime: Number(payload.uptime ?? 0),
     testStatus: normalizeTestStatus(payload.testStatus),
     currentTest: payload.currentTest ?? null,
+    errorMessage: payload.errorMessage,
+    suiteId: payload.suiteId ?? '',
+    steps: payload.steps ?? [],
+    currentStep: Number(payload.currentStep ?? 0),
+    stepsComplete: Number(payload.stepsComplete ?? 0),
+    stepsTotal: Number(payload.stepsTotal ?? 0),
+    phase: payload.phase ?? '',
+    elapsedSeconds: Number(payload.elapsedSeconds ?? 0),
+    estimatedRemainingSeconds: payload.estimatedRemainingSeconds ?? null,
   };
 }
 
@@ -251,7 +261,7 @@ export function useTestExecution(): UseTestExecution {
         return;
       }
       const data = await (response.json() as Promise<TestResult>);
-      if (data.status === 'completed' || data.status === 'error') {
+		if (data.status === 'completed' || data.status === 'error' || data.status === 'cancelled') {
         setTestResult(data);
       }
     } catch (error) {
@@ -310,15 +320,7 @@ export function useTestExecution(): UseTestExecution {
   });
   const stats = statsData ?? initialStats;
 
-  // Calculate expected test duration based on config.
-  const expectedDuration =
-    (rfc2544Config.duration + rfc2544Config.warmup) *
-    rfc2544Config.trials *
-    rfc2544Config.frameSizes.length *
-    selectedTests.filter((t) => t.startsWith('rfc2544')).length;
-
-  // Track test progress.
-  const testProgress = useTestProgress(stats.testStatus, stats.currentTest, expectedDuration);
+  const testProgress = useTestProgress(stats);
 
   const handleStartTest = useCallback(async (): Promise<void> => {
     if (!isAuthenticated) {
@@ -328,12 +330,7 @@ export function useTestExecution(): UseTestExecution {
     setTestStartError(null);
 
     try {
-      // Determine test type based on mode
-      const testType =
-        mode === 'reflector' ? 'reflect' : (selectedTests[0] ?? 'rfc2544_throughput');
-
-      // Build test configuration using helper
-      const config = buildTestConfig(testType, {
+      const configs = {
         rfc2544: rfc2544Config,
         rfc2889: rfc2889Config,
         rfc6349: rfc6349Config,
@@ -341,17 +338,19 @@ export function useTestExecution(): UseTestExecution {
         y1731: y1731Config,
         tsn: tsnConfig,
         trafficGen: trafficGenConfig,
-      });
+      };
+      const tests = selectedTests.map((testType) => ({
+        testType,
+        config: buildTestConfig(testType, configs),
+      }));
 
       const response = await authFetch('/api/v1/test/start', {
         method: 'POST',
         body: JSON.stringify({
           interface: selectedInterface,
-          testType,
           mode,
           profile: mode === 'reflector' ? reflectorProfile : undefined,
-          tests: selectedTests,
-          config,
+          tests,
         }),
       });
 

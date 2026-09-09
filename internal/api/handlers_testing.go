@@ -28,22 +28,17 @@ func (s *Server) handleTestStart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if req.TestType == "" {
-		req.TestType = defaultTestType
-	}
-
-	mod, modErr := s.resolveTestModule(req.TestType)
-	if modErr != nil {
+	plan, planErr := newRunPlan("", req.Tests)
+	if planErr != nil {
 		WriteInvalidRequest(w, "Unknown or unsupported test type")
 		return
 	}
 
-	// Entitlement: the test type names the standard, and the standard is what
-	// is sold. Checked before anything is reserved or started so a denied run
-	// leaves no state behind.
-	if feature, gated := featureForTestType(req.TestType); gated && !s.hasFeature(feature) {
-		s.sendFeatureGate(w, feature)
-		return
+	for _, step := range plan.Steps {
+		if feature, gated := featureForTestType(step.TestType); gated && !s.hasFeature(feature) {
+			s.sendFeatureGate(w, feature)
+			return
+		}
 	}
 
 	iface, ifaceErr := s.resolveTestInterface(req.Interface)
@@ -57,7 +52,12 @@ func (s *Server) handleTestStart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	beginErr := s.beginTestRun(req.TestType, mod.Name())
+	if len(plan.Steps) == 1 && plan.Steps[0].Module == moduleReflector {
+		s.startReflectorRequest(w, req, iface, plan.Steps[0])
+		return
+	}
+
+	runID, beginErr := s.beginRunPlan(plan)
 	if beginErr != nil {
 		if errors.Is(beginErr, errTestAlreadyRunning) {
 			WriteConflict(w, "A test is already running")
@@ -67,24 +67,39 @@ func (s *Server) handleTestStart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	logging.Info("Starting test via module system",
-		"testType", req.TestType,
-		"module", mod.Name(),
+	logging.Info("Starting run plan",
+		"suiteId", plan.ID,
+		"steps", len(plan.Steps),
 		"interface", iface,
 	)
-
-	execErr := s.executeTest(mod.Name(), req.TestType, iface, req.Profile, req.Config)
-	if execErr != nil {
-		s.respondTestExecutionError(w, execErr, mod.Name(), req.TestType)
-		return
-	}
+	go s.runTestPlan(runID, iface)
 
 	writeJSON(w, TestStartResponse{
-		Status:   "started",
-		TestType: req.TestType,
-		Module:   mod.Name(),
-		Message:  "Test execution started",
+		Status:  "started",
+		SuiteID: plan.ID,
+		Message: "Run plan started",
 	})
+}
+
+func (s *Server) startReflectorRequest(
+	w http.ResponseWriter,
+	req TestStartRequest,
+	iface string,
+	step RunPlanStep,
+) {
+	if err := s.beginTestRun(step.TestType, step.Module); err != nil {
+		if errors.Is(err, errTestAlreadyRunning) {
+			WriteConflict(w, "A test is already running")
+			return
+		}
+		WriteInternalError(w, err)
+		return
+	}
+	if err := s.executeTest(step.Module, step.TestType, iface, req.Profile, step.Config); err != nil {
+		s.respondTestExecutionError(w, err, step.Module, step.TestType)
+		return
+	}
+	writeJSON(w, TestStartResponse{Status: "started", SuiteID: fmt.Sprintf("stem-%d", s.testRunID)})
 }
 
 // handleTestStop stops the current test or reflector.
@@ -128,6 +143,7 @@ func (s *Server) handleTestStop(w http.ResponseWriter, r *http.Request) {
 	s.testStatus = statusCancelled
 	s.currentTest = ""
 	s.currentModule = ""
+	s.cancelRunPlanLocked("Run plan cancelled")
 	s.statsMu.Unlock()
 	if cancellable, ok := execToCancel.(interface{ Cancel() }); ok {
 		cancellable.Cancel()
@@ -223,10 +239,31 @@ func (s *Server) beginTestRun(testType, module string) error {
 	s.currentTest = testType
 	s.currentModule = module
 	s.testResult = nil
+	s.runPlan = nil
 	return nil
 }
 
-func (s *Server) respondTestExecutionError(w http.ResponseWriter, execErr error, module, testType string) {
+func (s *Server) beginRunPlan(plan *runPlan) (uint64, error) {
+	s.statsMu.Lock()
+	defer s.statsMu.Unlock()
+	if s.testStatus == statusRunning || s.testStatus == statusStarting {
+		return 0, errTestAlreadyRunning
+	}
+	s.testStatus = statusStarting
+	s.testRunID++
+	plan.ID = fmt.Sprintf("stem-%d", s.testRunID)
+	s.runPlan = plan
+	s.currentTest = plan.Steps[0].TestType
+	s.currentModule = plan.Steps[0].Module
+	s.testResult = nil
+	return s.testRunID, nil
+}
+
+func (s *Server) respondTestExecutionError(
+	w http.ResponseWriter,
+	execErr error,
+	module, testType string,
+) {
 	s.statsMu.Lock()
 	s.testStatus = statusError
 	// Store a sanitized error message for internal state - don't leak details.

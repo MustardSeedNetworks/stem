@@ -133,6 +133,7 @@ type Server struct {
 	activeTestExec       testExecutor
 	currentTest          string
 	testResult           *TestResultResponse
+	runPlan              *runPlan
 	startTime            time.Time
 	selectedIface        string
 	mode                 string // "reflector" or "test_master"

@@ -220,6 +220,7 @@ func (s *Server) teardownForModeSwitch() {
 		s.testStatus = statusCancelled
 		s.currentTest = ""
 		s.currentModule = ""
+		s.cancelRunPlanLocked("Run plan cancelled by role change")
 	}
 	if exec != nil {
 		s.reflectorExec = nil

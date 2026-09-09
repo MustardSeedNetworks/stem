@@ -90,6 +90,28 @@ export function TestResults({ testStatus, result }: TestResultsProps): ReactElem
         {t('labels.testResults')}
       </div>
 
+      {result.steps && result.steps.length > 0 ? (
+        <section className="mb-content grid gap-default" aria-label="Run plan results">
+          {result.steps.map((step, index) => (
+            <div
+              key={`${step.testType}-${index}`}
+              className="pad-sm rounded-lg bg-surface-base border border-surface-border"
+            >
+              <div className="flex-between">
+                <span className="font-medium text-text-primary">{step.testType}</span>
+                <span>{step.status.toUpperCase()}</span>
+              </div>
+              {step.error ? <div className="text-status-error">{step.error}</div> : null}
+              {step.result?.data ? (
+                <pre className="mt-inline overflow-auto text-xs text-text-muted">
+                  {JSON.stringify(step.result.data, null, 2)}
+                </pre>
+              ) : null}
+            </div>
+          ))}
+        </section>
+      ) : null}
+
       {/* Test Header */}
       <div className="flex-between mb-content pb-4 border-b border-surface-border">
         <div>

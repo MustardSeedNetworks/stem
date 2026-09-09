@@ -38,7 +38,26 @@ func (s *Server) handleStats(w http.ResponseWriter, r *http.Request) {
 	stats.Uptime = int64(time.Since(s.startTime).Seconds())
 	stats.TestStatus = s.testStatus
 	if s.currentTest != "" {
-		stats.CurrentTest = &s.currentTest
+		currentTest := s.currentTest
+		stats.CurrentTest = &currentTest
+	}
+	if s.runPlan != nil {
+		stats.SuiteID = s.runPlan.ID
+		stats.Steps = append([]RunPlanStep(nil), s.runPlan.Steps...)
+		stats.StepsTotal = len(s.runPlan.Steps)
+		stats.StepsComplete = s.runPlan.Complete
+		if s.runPlan.Current >= 0 {
+			stats.CurrentStep = s.runPlan.Current + 1
+			stats.ElapsedSeconds = s.runPlan.StepElapsedSec
+			if s.runPlan.Steps[s.runPlan.Current].Status == stepRunning {
+				stats.Phase = "Executing " + s.runPlan.Steps[s.runPlan.Current].TestType
+				stats.ElapsedSeconds = int64(time.Since(s.runPlan.StepStarted).Seconds())
+				if s.runPlan.StepEstimateSec != nil {
+					remaining := max(0, *s.runPlan.StepEstimateSec-stats.ElapsedSeconds)
+					stats.EstimatedRemainingSeconds = &remaining
+				}
+			}
+		}
 	}
 	s.statsMu.RUnlock()
 

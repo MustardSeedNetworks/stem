@@ -33,13 +33,16 @@ type (
 )
 
 // executeTest runs the test via the appropriate module executor.
-func (s *Server) executeTest(moduleName, testType, iface, profile string, config *TestConfig) error {
+func (s *Server) executeTest(
+	moduleName, testType, iface, profile string,
+	config *TestConfig,
+) error {
 	// Handle reflector separately as it has different lifecycle.
 	if moduleName == moduleReflector {
 		return s.executeReflector(iface, profile)
 	}
 
-	resolver := s.executorResolver
+	resolver := s.testExecutorResolver()
 	if resolver == nil {
 		resolver = services.Factory
 	}
@@ -49,6 +52,12 @@ func (s *Server) executeTest(moduleName, testType, iface, profile string, config
 	}
 
 	return s.runModuleTest(factory, moduleName, testType, iface, config)
+}
+
+func (s *Server) testExecutorResolver() func(string) (executorFactory, bool) {
+	s.statsMu.RLock()
+	defer s.statsMu.RUnlock()
+	return s.executorResolver
 }
 
 // runModuleTest is the generic test execution function that eliminates duplication.
@@ -98,7 +107,15 @@ func (s *Server) runModuleTest(
 			s.currentTest = ""
 			s.currentModule = ""
 			s.statsMu.Unlock()
-			logging.Error("Test failed", "module", moduleName, "testType", testType, "error", execErr)
+			logging.Error(
+				"Test failed",
+				"module",
+				moduleName,
+				"testType",
+				testType,
+				"error",
+				execErr,
+			)
 			return
 		}
 
@@ -116,7 +133,15 @@ func (s *Server) runModuleTest(
 		s.currentTest = ""
 		s.currentModule = ""
 		s.statsMu.Unlock()
-		logging.Info("Test completed", "module", moduleName, "testType", testType, "success", result.Success)
+		logging.Info(
+			"Test completed",
+			"module",
+			moduleName,
+			"testType",
+			testType,
+			"success",
+			result.Success,
+		)
 	}()
 
 	return nil

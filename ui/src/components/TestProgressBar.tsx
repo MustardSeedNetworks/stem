@@ -1,26 +1,17 @@
-/**
- * @fileoverview The Stem - Test Progress Bar Component
- * @description Displays test execution progress with elapsed time, ETA, and visual progress bar.
- */
-
+/** Displays progress reported by the server-owned run plan. */
 import { Clock, Loader2 } from 'lucide-react';
 import type { ReactElement } from 'react';
-import { useEffect, useState } from 'react';
+import type { Stats } from '../types/api';
 
-/** Test progress information */
 export interface TestProgress {
-  /** Current test status */
-  status: 'idle' | 'starting' | 'running' | 'completed' | 'cancelled' | 'error';
-  /** Current test name */
+  status: Stats['testStatus'];
   currentTest: string | null;
-  /** Expected total duration in seconds */
-  expectedDuration: number;
-  /** Test start timestamp */
-  startedAt: number | null;
-  /** Current test step (e.g., "1 of 7 frame sizes") */
-  currentStep?: string;
-  /** Progress percentage (0-100) if provided by backend */
-  progressPercent?: number;
+  currentStep: number;
+  stepsTotal: number;
+  phase: string;
+  elapsedSeconds: number;
+  estimatedRemainingSeconds: number | null;
+  steps: Stats['steps'];
 }
 
 interface TestProgressBarProps {
@@ -28,166 +19,114 @@ interface TestProgressBarProps {
 }
 
 function formatTime(seconds: number): string {
-  if (seconds < 0) {
-    return '0:00';
-  }
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
+  const bounded = Math.max(0, seconds);
+  const mins = Math.floor(bounded / 60);
+  const secs = Math.floor(bounded % 60);
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
 function formatETA(seconds: number): string {
-  if (seconds <= 0) {
-    return 'Complete';
+  if (seconds <= 0) return 'Complete';
+  if (seconds < 60) return `~${Math.ceil(seconds)}s`;
+  return `~${Math.ceil(seconds / 60)}m`;
+}
+
+function statusPresentation(status: TestProgress['status']): [string, string, string] {
+  switch (status) {
+    case 'starting':
+      return ['Starting...', 'text-status-info', 'bg-status-info'];
+    case 'running':
+      return ['Running', 'text-status-success', 'bg-brand-primary'];
+    case 'completed':
+      return ['Completed', 'text-status-success', 'bg-status-success'];
+    case 'cancelled':
+      return ['Cancelled', 'text-status-warning', 'bg-status-warning'];
+    case 'error':
+      return ['Error', 'text-status-error', 'bg-status-error'];
+    default:
+      return ['Idle', 'text-text-muted', 'bg-text-muted'];
   }
-  if (seconds < 60) {
-    return `~${Math.ceil(seconds)}s`;
-  }
-  const mins = Math.ceil(seconds / 60);
-  return `~${mins}m`;
 }
 
 export function TestProgressBar({ progress }: TestProgressBarProps): ReactElement | null {
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  if (progress.status === 'idle' || !progress.currentTest) return null;
 
-  // Update elapsed time every second when test is running
-  useEffect(() => {
-    if (progress.status !== 'running' || !progress.startedAt) {
-      setElapsedSeconds(0);
-      return;
-    }
-
-    // Calculate initial elapsed time
-    const initialElapsed = (Date.now() - progress.startedAt) / 1000;
-    setElapsedSeconds(initialElapsed);
-
-    const interval = setInterval(() => {
-      if (progress.startedAt) {
-        const elapsed = (Date.now() - progress.startedAt) / 1000;
-        setElapsedSeconds(elapsed);
-      }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [progress.status, progress.startedAt]);
-
-  // Don't show progress bar when idle or no test running
-  if (progress.status === 'idle' || !progress.currentTest) {
-    return null;
-  }
-
-  // Calculate progress percentage
-  const calculatedPercent =
-    progress.progressPercent ??
-    (progress.expectedDuration > 0
-      ? Math.min(100, (elapsedSeconds / progress.expectedDuration) * 100)
-      : 0);
-
-  // Calculate remaining time
-  const remainingSeconds = Math.max(0, progress.expectedDuration - elapsedSeconds);
-
-  // Determine status text and colors
-  let statusText: string;
-  let statusColor: string;
-  let barColor: string;
-
-  switch (progress.status) {
-    case 'starting':
-      statusText = 'Starting...';
-      statusColor = 'text-status-info';
-      barColor = 'bg-status-info';
-      break;
-    case 'running':
-      statusText = 'Running';
-      statusColor = 'text-status-success';
-      barColor = 'bg-brand-primary';
-      break;
-    case 'completed':
-      statusText = 'Completed';
-      statusColor = 'text-status-success';
-      barColor = 'bg-status-success';
-      break;
-    case 'cancelled':
-      statusText = 'Cancelled';
-      statusColor = 'text-status-warning';
-      barColor = 'bg-status-warning';
-      break;
-    case 'error':
-      statusText = 'Error';
-      statusColor = 'text-status-error';
-      barColor = 'bg-status-error';
-      break;
-    default:
-      statusText = 'Unknown';
-      statusColor = 'text-text-muted';
-      barColor = 'bg-text-muted';
-  }
-
-  const isActive = progress.status === 'running' || progress.status === 'starting';
+  const active = progress.status === 'running' || progress.status === 'starting';
+  const determinate = progress.estimatedRemainingSeconds !== null;
+  const totalEstimate = progress.elapsedSeconds + (progress.estimatedRemainingSeconds ?? 0);
+  const percent =
+    progress.status === 'completed'
+      ? 100
+      : determinate && totalEstimate > 0
+        ? Math.min(100, (progress.elapsedSeconds / totalEstimate) * 100)
+        : 0;
+  const [statusText, statusColor, barColor] = statusPresentation(progress.status);
 
   return (
     <div className="card mb-section">
-      {/* Header */}
       <div className="flex-between mb-heading">
         <div className="flex items-center gap-compact">
-          {isActive ? <Loader2 className="w-4 h-4 animate-spin text-brand-primary" /> : null}
+          {active ? <Loader2 className="w-4 h-4 animate-spin text-brand-primary" /> : null}
           <span className="font-medium text-text-primary">{progress.currentTest}</span>
           <span className={`text-sm ${statusColor}`}>({statusText})</span>
         </div>
         <div className="flex items-center gap-default text-sm text-text-muted">
-          <div className="flex items-center gap-tight">
-            <Clock className="w-3 h-3" />
-            <span>Elapsed: {formatTime(elapsedSeconds)}</span>
-          </div>
-          {isActive && progress.expectedDuration > 0 && (
-            <span>ETA: {formatETA(remainingSeconds)}</span>
-          )}
+          <span className="flex items-center gap-tight">
+            <Clock className="w-3 h-3" /> Elapsed: {formatTime(progress.elapsedSeconds)}
+          </span>
+          {active && determinate ? (
+            <span>ETA: {formatETA(progress.estimatedRemainingSeconds ?? 0)}</span>
+          ) : null}
         </div>
       </div>
 
-      {/* Progress Bar */}
-      <div className="relative h-3 rounded-full bg-surface-base overflow-hidden">
+      <div
+        className="relative h-3 rounded-full bg-surface-base overflow-hidden"
+        role="progressbar"
+        aria-valuenow={determinate ? Math.round(percent) : undefined}
+      >
         <div
-          className={`absolute inset-y-0 left-0 rounded-full transition-all duration-300 ${barColor}`}
-          style={{ width: `${Math.min(100, calculatedPercent)}%` }}
+          data-testid={determinate ? 'determinate-progress' : 'indeterminate-progress'}
+          className={`absolute inset-y-0 left-0 rounded-full ${barColor} ${
+            determinate ? 'transition-all duration-300' : 'w-1/3 animate-shimmer'
+          }`}
+          style={determinate ? { width: `${percent}%` } : undefined}
         />
-        {/* Animated shine effect for active tests */}
-        {isActive ? (
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-knob/20 to-transparent animate-shimmer" />
-        ) : null}
       </div>
 
-      {/* Footer */}
       <div className="flex-between mt-inline text-xs text-text-muted">
-        <div>{progress.currentStep ? <span>{progress.currentStep}</span> : null}</div>
-        <div className="font-medium">{Math.round(calculatedPercent)}%</div>
+        <span>
+          {progress.currentStep > 0 && progress.stepsTotal > 0
+            ? `Step ${progress.currentStep} of ${progress.stepsTotal}`
+            : null}
+          {progress.phase ? ` · ${progress.phase}` : null}
+        </span>
+        {determinate ? <span className="font-medium">{Math.round(percent)}%</span> : null}
       </div>
+      {progress.steps.length > 0 ? (
+        <ol className="mt-inline grid gap-tight text-xs" aria-label="Run plan steps">
+          {progress.steps.map((step, index) => (
+            <li key={`${step.testType}-${index}`} className="flex-between">
+              <span>{step.testType}</span>
+              <span>{step.status}</span>
+            </li>
+          ))}
+        </ol>
+      ) : null}
     </div>
   );
 }
 
-/** Hook to manage test progress state */
-export function useTestProgress(
-  testStatus: 'idle' | 'starting' | 'running' | 'completed' | 'cancelled' | 'error',
-  currentTest: string | null,
-  expectedDuration: number,
-): TestProgress {
-  const [startedAt, setStartedAt] = useState<number | null>(null);
-
-  // Track when test starts
-  useEffect(() => {
-    if (testStatus === 'starting' || testStatus === 'running') {
-      setStartedAt((prev) => prev ?? Date.now());
-    } else {
-      setStartedAt(null);
-    }
-  }, [testStatus]);
-
+export function useTestProgress(stats: Stats): TestProgress {
   return {
-    status: testStatus,
-    currentTest,
-    expectedDuration,
-    startedAt,
+    status: stats.testStatus,
+    currentTest: stats.currentTest,
+    currentStep: stats.currentStep,
+    stepsTotal: stats.stepsTotal,
+    phase: stats.phase,
+    elapsedSeconds: stats.elapsedSeconds,
+    estimatedRemainingSeconds: stats.estimatedRemainingSeconds,
+    steps: stats.steps,
   };
 }
 

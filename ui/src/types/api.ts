@@ -33,6 +33,26 @@ export interface Stats {
   testStatus: TestStatus;
   currentTest: string | null;
   errorMessage?: string;
+  suiteId: string;
+  steps: RunPlanStep[];
+  currentStep: number;
+  stepsComplete: number;
+  stepsTotal: number;
+  phase: string;
+  elapsedSeconds: number;
+  estimatedRemainingSeconds: number | null;
+}
+
+export interface RunPlanStep {
+  testType: string;
+  module: string;
+  status: 'pending' | 'running' | 'passed' | 'failed' | 'skipped' | 'cancelled';
+  error?: string;
+  result?: {
+    success?: boolean;
+    error?: string;
+    data?: Record<string, unknown>;
+  };
 }
 
 /** Initial stats state */
@@ -46,6 +66,14 @@ export const initialStats: Stats = {
   uptime: 0,
   testStatus: 'idle',
   currentTest: null,
+  suiteId: '',
+  steps: [],
+  currentStep: 0,
+  stepsComplete: 0,
+  stepsTotal: 0,
+  phase: '',
+  elapsedSeconds: 0,
+  estimatedRemainingSeconds: null,
 };
 
 /** Test result from completed test */
@@ -60,6 +88,8 @@ export interface TestResult {
   error?: string;
   metrics?: Record<string, number | string>;
   data?: Record<string, unknown>;
+  suiteId?: string;
+  steps?: RunPlanStep[];
 }
 
 /** License information */

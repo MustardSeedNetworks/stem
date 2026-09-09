@@ -178,7 +178,7 @@ func TestHandleAuthLogout(t *testing.T) {
 		testReq := httptest.NewRequest(
 			http.MethodPost,
 			"/api/v1/test/start",
-			bytes.NewBufferString(`{"testType":"throughput"}`),
+			bytes.NewBufferString(`{"tests":[{"testType":"throughput"}]}`),
 		)
 		authorizeWithCSRF(t, s, testReq, token)
 		testW := httptest.NewRecorder()
