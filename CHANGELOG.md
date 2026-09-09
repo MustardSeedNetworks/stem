@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.81](https://github.com/MustardSeedNetworks/stem/compare/v0.24.80...v0.24.81) (2026-09-09)
+
+
+### Tests
+
+* **database:** raise internal/database coverage from 29% to 89% ([#1108](https://github.com/MustardSeedNetworks/stem/issues/1108)) ([365fbb4](https://github.com/MustardSeedNetworks/stem/commit/365fbb4a61acf48c3e7c40005241a2f91fcfbe42))
+
 ## [0.24.80](https://github.com/MustardSeedNetworks/stem/compare/v0.24.79...v0.24.80) (2026-09-09)
 
 
