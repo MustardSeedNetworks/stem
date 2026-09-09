@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.82](https://github.com/MustardSeedNetworks/stem/compare/v0.24.81...v0.24.82) (2026-09-09)
+
+
+### Bug Fixes
+
+* initialize RFC 2544 latency dataplane ([#1110](https://github.com/MustardSeedNetworks/stem/issues/1110)) ([3621998](https://github.com/MustardSeedNetworks/stem/commit/3621998d1a94e7dfa95c5dd26589f17370dccecf))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1113](https://github.com/MustardSeedNetworks/stem/issues/1113)) ([f3b6b3a](https://github.com/MustardSeedNetworks/stem/commit/f3b6b3a3f4a9586b211ba9e89a1f906097105c41))
+* **deps:** update dependency @chromatic-com/storybook to v5.3.1 ([#1111](https://github.com/MustardSeedNetworks/stem/issues/1111)) ([56e9565](https://github.com/MustardSeedNetworks/stem/commit/56e95653b50a2887bd752920f01dbb0fd3dbcb1d))
+* **deps:** update storybook monorepo to v10.6.0 ([#1112](https://github.com/MustardSeedNetworks/stem/issues/1112)) ([80d492b](https://github.com/MustardSeedNetworks/stem/commit/80d492bcbf5434bd1dccd315d0a810744ea40aac))
+
 ## [0.24.81](https://github.com/MustardSeedNetworks/stem/compare/v0.24.80...v0.24.81) (2026-09-09)
 
 
