@@ -38,6 +38,14 @@ describe('TestProgressBar', () => {
     expect(screen.getByText('passed')).toBeInTheDocument();
   });
 
+  // The bar carries role="progressbar", and axe fails a progressbar with no
+  // accessible name (aria-progressbar-name). Both bar shapes are checked
+  // because only one of them renders at a time.
+  it.each([[null], [90]])('names the progressbar for estimate %s', (estimate) => {
+    render(<TestProgressBar progress={progress({ estimatedRemainingSeconds: estimate })} />);
+    expect(screen.getByRole('progressbar')).toHaveAccessibleName('Run plan progress');
+  });
+
   it('uses an indeterminate bar when the module provides no estimate', () => {
     render(<TestProgressBar progress={progress()} />);
     expect(screen.getByTestId('indeterminate-progress')).toBeInTheDocument();

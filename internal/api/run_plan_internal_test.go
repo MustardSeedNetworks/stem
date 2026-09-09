@@ -13,6 +13,7 @@ func TestRunPlanDescribe(t *testing.T) {
 		{TestType: "y1731_delay", Module: "servicetest", Status: stepRunning},
 	}
 	estimate := int64(120)
+	ninetyRemaining := int64(90)
 
 	tests := []struct {
 		name string
@@ -60,7 +61,7 @@ func TestRunPlanDescribe(t *testing.T) {
 			want: Stats{
 				SuiteID: "stem-4", StepsTotal: 2, StepsComplete: 1, CurrentStep: 2,
 				Phase: "Executing y1731_delay", ElapsedSeconds: 30,
-				EstimatedRemainingSeconds: ptrInt64(90),
+				EstimatedRemainingSeconds: &ninetyRemaining,
 			},
 		},
 	}
@@ -126,5 +127,3 @@ func assertStatsProjection(t *testing.T, got, want Stats) {
 		)
 	}
 }
-
-func ptrInt64(v int64) *int64 { return &v }

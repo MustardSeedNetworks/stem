@@ -83,7 +83,10 @@ export function TestProgressBar({ progress }: TestProgressBarProps): ReactElemen
       <div
         className="relative h-3 rounded-full bg-surface-base overflow-hidden"
         role="progressbar"
+        aria-label="Run plan progress"
         aria-valuenow={determinate ? Math.round(percent) : undefined}
+        aria-valuemin={determinate ? 0 : undefined}
+        aria-valuemax={determinate ? 100 : undefined}
       >
         <div
           data-testid={determinate ? 'determinate-progress' : 'indeterminate-progress'}
