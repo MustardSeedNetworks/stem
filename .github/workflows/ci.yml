@@ -317,7 +317,7 @@ jobs:
         # (actions/runner-images Ubuntu2404-Readme.md) — only the packages
         # not already on the image are installed here.
         timeout-minutes: 10
-        uses: MustardSeedNetworks/.github/.github/actions/apt-install@4ffdaf668446e6ed6d4460d3267ef16ebde218d5 # v1.12.0
+        uses: MustardSeedNetworks/.github/.github/actions/apt-install@048d173dd72ca0f9e5fa832fb5b9fd2a6447e5e9 # v1.13.0
         with:
           packages: libbpf-dev libelf-dev libxdp-dev zlib1g-dev
 
@@ -449,7 +449,7 @@ jobs:
         # (actions/runner-images Ubuntu2404-Readme.md) — only the packages
         # not already on the image are installed here.
         timeout-minutes: 10
-        uses: MustardSeedNetworks/.github/.github/actions/apt-install@4ffdaf668446e6ed6d4460d3267ef16ebde218d5 # v1.12.0
+        uses: MustardSeedNetworks/.github/.github/actions/apt-install@048d173dd72ca0f9e5fa832fb5b9fd2a6447e5e9 # v1.13.0
         with:
           packages: libbpf-dev libelf-dev libxdp-dev zlib1g-dev
 
@@ -550,7 +550,7 @@ jobs:
         # preinstalled on ubuntu-24.04 (actions/runner-images
         # Ubuntu2404-Readme.md) — only cppcheck and bear are installed here.
         timeout-minutes: 10
-        uses: MustardSeedNetworks/.github/.github/actions/apt-install@4ffdaf668446e6ed6d4460d3267ef16ebde218d5 # v1.12.0
+        uses: MustardSeedNetworks/.github/.github/actions/apt-install@048d173dd72ca0f9e5fa832fb5b9fd2a6447e5e9 # v1.13.0
         with:
           # gcc-14 is required for -std=c23: gcc-13 only knows -std=c2x,
           # and rejecting that flag is what made the compile database
@@ -750,7 +750,7 @@ jobs:
         # clang-18 ships preinstalled on ubuntu-24.04 (actions/runner-images
         # Ubuntu2404-Readme.md) — only cppcheck is installed here.
         timeout-minutes: 10
-        uses: MustardSeedNetworks/.github/.github/actions/apt-install@4ffdaf668446e6ed6d4460d3267ef16ebde218d5 # v1.12.0
+        uses: MustardSeedNetworks/.github/.github/actions/apt-install@048d173dd72ca0f9e5fa832fb5b9fd2a6447e5e9 # v1.13.0
         with:
           packages: cppcheck
 
@@ -830,7 +830,7 @@ jobs:
       # bundling them leaves the apt half with no step budget and no dpkg lock
       # bound. seed lost a whole 15-minute job budget to exactly that.
       - name: Install Chromium OS dependencies
-        uses: MustardSeedNetworks/.github/.github/actions/apt-install@4ffdaf668446e6ed6d4460d3267ef16ebde218d5 # v1.12.0
+        uses: MustardSeedNetworks/.github/.github/actions/apt-install@048d173dd72ca0f9e5fa832fb5b9fd2a6447e5e9 # v1.13.0
         timeout-minutes: 10
         with:
           # cd ui explicitly: the job's defaults.run.working-directory does not
@@ -1042,7 +1042,7 @@ jobs:
   # Defined once in MustardSeedNetworks/.github (fleet-shared); ci-complete
   # still needs: [semgrep]. Edit the pinned version / config policy there.
   semgrep:
-    uses: MustardSeedNetworks/.github/.github/workflows/semgrep.yml@4ffdaf668446e6ed6d4460d3267ef16ebde218d5 # v1.12.0
+    uses: MustardSeedNetworks/.github/.github/workflows/semgrep.yml@048d173dd72ca0f9e5fa832fb5b9fd2a6447e5e9 # v1.13.0
     permissions:
       contents: read
       # v1.8.0 publishes the all-severity SARIF to code scanning. The
@@ -1085,7 +1085,7 @@ jobs:
   # Defined once in MustardSeedNetworks/.github (fleet-shared); ci-complete
   # still needs: [ci-conformance].
   ci-conformance:
-    uses: MustardSeedNetworks/.github/.github/workflows/ci-conformance.yml@4ffdaf668446e6ed6d4460d3267ef16ebde218d5 # v1.12.0
+    uses: MustardSeedNetworks/.github/.github/workflows/ci-conformance.yml@048d173dd72ca0f9e5fa832fb5b9fd2a6447e5e9 # v1.13.0
     permissions:
       contents: read
 
@@ -1248,7 +1248,7 @@ jobs:
       # repos. See scripts/i18n/README.md and
       # msn-docs-internal/05-Engineering/I18N_CONVENTIONS.md.
       - name: Validate i18n (parity, glossary, banned vocab, etc.)
-        uses: MustardSeedNetworks/.github/.github/actions/i18n-validate@4ffdaf668446e6ed6d4460d3267ef16ebde218d5 # v1.12.0
+        uses: MustardSeedNetworks/.github/.github/actions/i18n-validate@048d173dd72ca0f9e5fa832fb5b9fd2a6447e5e9 # v1.13.0
         with:
           # The action defaults to internal/i18n/locales, which is where these
           # lived while they sat inside a dead Go package. They belong to the
@@ -1686,7 +1686,7 @@ jobs:
       # this step is what fails.
       - name: Enforce flake budget
         if: always()
-        uses: MustardSeedNetworks/.github/.github/actions/flake-budget@4ffdaf668446e6ed6d4460d3267ef16ebde218d5 # v1.12.0
+        uses: MustardSeedNetworks/.github/.github/actions/flake-budget@048d173dd72ca0f9e5fa832fb5b9fd2a6447e5e9 # v1.13.0
         with:
           report: ui/playwright-report/results.json
           budget: "0"
@@ -1737,7 +1737,7 @@ jobs:
         # rejects the -std=c23 the Makefile and this benchmark use. Same reason
         # c-lint installs it.
         timeout-minutes: 10
-        uses: MustardSeedNetworks/.github/.github/actions/apt-install@4ffdaf668446e6ed6d4460d3267ef16ebde218d5 # v1.12.0
+        uses: MustardSeedNetworks/.github/.github/actions/apt-install@048d173dd72ca0f9e5fa832fb5b9fd2a6447e5e9 # v1.13.0
         with:
           packages: gcc-14
 
@@ -1780,7 +1780,7 @@ jobs:
   # severity, several of which encode deliberate decisions.
   codeql-alert-gate:
     name: CodeQL Alert Gate
-    uses: MustardSeedNetworks/.github/.github/workflows/codeql-alert-gate.yml@4ffdaf668446e6ed6d4460d3267ef16ebde218d5 # v1.12.0
+    uses: MustardSeedNetworks/.github/.github/workflows/codeql-alert-gate.yml@048d173dd72ca0f9e5fa832fb5b9fd2a6447e5e9 # v1.13.0
     permissions:
       security-events: read
 
