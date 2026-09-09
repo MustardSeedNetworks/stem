@@ -174,11 +174,11 @@ void rfc2544_log(log_level_t level, const char *fmt, ...)
  * ============================================================================ */
 
 #if HAVE_AF_XDP
-extern const platform_ops_t *get_xdp_platform_ops(void);
+extern const platform_ops_t *get_dataplane_xdp_platform_ops(void);
 #endif
 
 #if PLATFORM_LINUX
-extern const platform_ops_t *get_packet_platform_ops(void);
+extern const platform_ops_t *get_dataplane_packet_platform_ops(void);
 #endif
 
 static const platform_ops_t *select_platform(const rfc2544_ctx_t *ctx)
@@ -187,16 +187,16 @@ static const platform_ops_t *select_platform(const rfc2544_ctx_t *ctx)
     /* Force AF_PACKET for veth/testing compatibility */
     if (ctx->config.force_packet) {
         rfc2544_log(LOG_INFO, "Platform: AF_PACKET (forced - for veth/testing)");
-        return get_packet_platform_ops();
+        return get_dataplane_packet_platform_ops();
     }
 #endif
 
 #if HAVE_AF_XDP
     rfc2544_log(LOG_INFO, "Platform: AF_XDP (high performance)");
-    return get_xdp_platform_ops();
+    return get_dataplane_xdp_platform_ops();
 #elif PLATFORM_LINUX
     rfc2544_log(LOG_INFO, "Platform: AF_PACKET (fallback)");
-    return get_packet_platform_ops();
+    return get_dataplane_packet_platform_ops();
 #else
     rfc2544_log(LOG_ERROR, "No supported platform available");
     return NULL;
@@ -440,6 +440,20 @@ int rfc2544_init(rfc2544_ctx_t **ctx_out, const char *interface)
     return 0;
 }
 
+static void cleanup_platform(rfc2544_ctx_t *ctx)
+{
+    if (!ctx || !ctx->platform || !ctx->workers) {
+        return;
+    }
+    for (int i = 0; i < ctx->num_workers; i++) {
+        ctx->platform->cleanup(&ctx->workers[i]);
+    }
+    free(ctx->workers);
+    ctx->workers     = NULL;
+    ctx->platform    = NULL;
+    ctx->num_workers = 0;
+}
+
 int rfc2544_configure(rfc2544_ctx_t *ctx, const rfc2544_config_t *config)
 {
     if (!ctx || !config) {
@@ -451,6 +465,7 @@ int rfc2544_configure(rfc2544_ctx_t *ctx, const rfc2544_config_t *config)
         return -EBUSY;
     }
 
+    cleanup_platform(ctx);
     memcpy(&ctx->config, config, sizeof(rfc2544_config_t));
 
     /* Validate */
@@ -507,13 +522,7 @@ void rfc2544_cleanup(rfc2544_ctx_t *ctx)
         }
     }
 
-    /* Cleanup platform */
-    if (ctx->platform && ctx->workers) {
-        for (int i = 0; i < ctx->num_workers; i++) {
-            ctx->platform->cleanup(&ctx->workers[i]);
-        }
-        free(ctx->workers);
-    }
+    cleanup_platform(ctx);
 
     /* Free resources */
     free(ctx->latency_samples);
@@ -538,6 +547,47 @@ void report_progress(rfc2544_ctx_t *ctx, const char *message, double pct)
     }
 }
 
+static int prepare_platform(rfc2544_ctx_t *ctx)
+{
+    if (!ctx) {
+        return -EINVAL;
+    }
+    if (ctx->platform && ctx->workers && ctx->num_workers > 0) {
+        return 0;
+    }
+
+    ctx->platform = select_platform(ctx);
+    if (!ctx->platform) {
+        return -ENOTSUP;
+    }
+
+    ctx->num_workers = 1;
+    ctx->workers     = calloc((size_t)ctx->num_workers, sizeof(worker_ctx_t));
+    if (!ctx->workers) {
+        ctx->platform    = NULL;
+        ctx->num_workers = 0;
+        return -ENOMEM;
+    }
+
+    for (int i = 0; i < ctx->num_workers; i++) {
+        ctx->workers[i].worker_id = i;
+        ctx->workers[i].queue_id  = i;
+        if (ctx->platform->init(ctx, &ctx->workers[i]) < 0) {
+            rfc2544_log(LOG_ERROR, "Failed to initialize platform");
+            for (int j = 0; j < i; j++) {
+                ctx->platform->cleanup(&ctx->workers[j]);
+            }
+            free(ctx->workers);
+            ctx->workers     = NULL;
+            ctx->platform    = NULL;
+            ctx->num_workers = 0;
+            return -EIO;
+        }
+    }
+
+    return 0;
+}
+
 int rfc2544_run(rfc2544_ctx_t *ctx)
 {
     if (!ctx) {
@@ -549,36 +599,10 @@ int rfc2544_run(rfc2544_ctx_t *ctx)
         return -EBUSY;
     }
 
-    /* Select platform */
-    ctx->platform = select_platform(ctx);
-    if (!ctx->platform) {
+    int prepare_ret = prepare_platform(ctx);
+    if (prepare_ret < 0) {
         ctx->state = STATE_FAILED;
-        return -ENOTSUP;
-    }
-
-    /* Allocate workers (single worker for now) */
-    ctx->num_workers = 1;
-    ctx->workers     = calloc((size_t)ctx->num_workers, sizeof(worker_ctx_t));
-    if (!ctx->workers) {
-        ctx->state = STATE_FAILED;
-        return -ENOMEM;
-    }
-
-    /* Initialize platform */
-    for (int i = 0; i < ctx->num_workers; i++) {
-        ctx->workers[i].worker_id = i;
-        ctx->workers[i].queue_id  = i;
-        if (ctx->platform->init(ctx, &ctx->workers[i]) < 0) {
-            rfc2544_log(LOG_ERROR, "Failed to initialize platform");
-            /* Cleanup already-initialized workers */
-            for (int j = 0; j < i; j++) {
-                ctx->platform->cleanup(&ctx->workers[j]);
-            }
-            free(ctx->workers);
-            ctx->workers = NULL;
-            ctx->state   = STATE_FAILED;
-            return -EIO;
-        }
+        return prepare_ret;
     }
 
     ctx->state            = STATE_RUNNING;
@@ -776,6 +800,11 @@ int run_trial(rfc2544_ctx_t *ctx, uint32_t frame_size, double rate_pct, uint32_t
     }
 
     memset(result, 0, sizeof(*result));
+
+    int prepare_ret = prepare_platform(ctx);
+    if (prepare_ret < 0) {
+        return prepare_ret;
+    }
 
     worker_ctx_t *wctx = &ctx->workers[0];
 
@@ -998,6 +1027,11 @@ int run_trial_custom(rfc2544_ctx_t *ctx, uint32_t frame_size, double rate_pct,
     }
 
     memset(result, 0, sizeof(*result));
+
+    int prepare_ret = prepare_platform(ctx);
+    if (prepare_ret < 0) {
+        return prepare_ret;
+    }
 
     worker_ctx_t *wctx = &ctx->workers[0];
 

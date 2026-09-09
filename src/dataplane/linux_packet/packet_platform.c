@@ -414,7 +414,7 @@ static const struct {
     .get_rx_timestamp = packet_get_rx_timestamp,
 };
 
-const void *get_packet_platform_ops(void)
+const void *get_dataplane_packet_platform_ops(void)
 {
     return &packet_ops;
 }
