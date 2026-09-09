@@ -212,3 +212,29 @@ func (s *Server) finishRunPlan(runID uint64) {
 	s.testResult = s.planResult(true, "Run plan completed")
 	logging.Info("Run plan completed", "suiteId", s.runPlan.ID, "steps", len(s.runPlan.Steps))
 }
+
+// describe projects the plan onto a stats snapshot. A nil receiver is the
+// no-plan case, so the caller does not repeat the check.
+func (p *runPlan) describe(stats *Stats) {
+	if p == nil {
+		return
+	}
+	stats.SuiteID = p.ID
+	stats.Steps = append([]RunPlanStep(nil), p.Steps...)
+	stats.StepsTotal = len(p.Steps)
+	stats.StepsComplete = p.Complete
+	if p.Current < 0 {
+		return
+	}
+	stats.CurrentStep = p.Current + 1
+	stats.ElapsedSeconds = p.StepElapsedSec
+	if p.Steps[p.Current].Status != stepRunning {
+		return
+	}
+	stats.Phase = "Executing " + p.Steps[p.Current].TestType
+	stats.ElapsedSeconds = int64(time.Since(p.StepStarted).Seconds())
+	if p.StepEstimateSec != nil {
+		remaining := max(0, *p.StepEstimateSec-stats.ElapsedSeconds)
+		stats.EstimatedRemainingSeconds = &remaining
+	}
+}

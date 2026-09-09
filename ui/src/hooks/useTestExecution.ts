@@ -35,8 +35,8 @@ import { logError, logWarn } from '../utils/logger';
 
 // Helper: check if test just completed (status transition to completed/error)
 function isTestCompleted(prev: string, curr: string): boolean {
-	const terminal = curr === 'completed' || curr === 'error' || curr === 'cancelled';
-	return terminal && prev !== curr;
+  const terminal = curr === 'completed' || curr === 'error' || curr === 'cancelled';
+  return terminal && prev !== curr;
 }
 
 // Helper: check if new test is starting
@@ -261,7 +261,7 @@ export function useTestExecution(): UseTestExecution {
         return;
       }
       const data = await (response.json() as Promise<TestResult>);
-		if (data.status === 'completed' || data.status === 'error' || data.status === 'cancelled') {
+      if (data.status === 'completed' || data.status === 'error' || data.status === 'cancelled') {
         setTestResult(data);
       }
     } catch (error) {
@@ -348,8 +348,7 @@ export function useTestExecution(): UseTestExecution {
         method: 'POST',
         body: JSON.stringify({
           interface: selectedInterface,
-          mode,
-          profile: mode === 'reflector' ? reflectorProfile : undefined,
+          profile: tests.some((step) => step.testType === 'reflect') ? reflectorProfile : undefined,
           tests,
         }),
       });

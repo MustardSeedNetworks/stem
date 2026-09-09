@@ -98,7 +98,6 @@ type ErrorResponse struct {
 // TestStartRequest starts an ordered run plan.
 type TestStartRequest struct {
 	Interface string            `json:"interface,omitempty"`
-	Mode      string            `json:"mode,omitempty"`    // reflector or test_master
 	Profile   string            `json:"profile,omitempty"` // reflector profile
 	Tests     []TestStepRequest `json:"tests"`
 }
