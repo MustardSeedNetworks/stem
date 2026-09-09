@@ -27,14 +27,20 @@
 #
 # Environment:
 #   BENCH_MAX_REGRESSION_PCT  allowed slowdown per case (default 15)
-#   BENCH_RUNS                measurements per side, best taken (default 15)
+#   BENCH_RUNS                measurements per side, best taken (default 30)
 #   CC                        compiler (default gcc)
 
 set -euo pipefail
 
 BASELINE_REF="${1:-}"
 MAX_REGRESSION="${BENCH_MAX_REGRESSION_PCT:-15}"
-# Measurements per side. 15, not 3, because the machine -- not the case -- is
+# Measurements per side. 30, not 15, because the hosted runner still produced
+# a false failure at 15 on #1122: an unrelated Go/CI-only change measured
+# reflect_inplace_v4 at -16.6% while every other case was within 0.8%.
+# Thirty keeps the same blocking 15% threshold while giving both sides twice
+# as many chances to observe the documented fast mode (#1123).
+#
+# 15, not 3, was the previous floor because the machine -- not the case -- is
 # what moves (#965).
 #
 # On an idle KVM guest, 30 back-to-back runs of one binary put EVERY case in one
@@ -62,14 +68,13 @@ MAX_REGRESSION="${BENCH_MAX_REGRESSION_PCT:-15}"
 #   N=15   0 of 86                      worst  -1.4%
 #
 # N=9 is where the margin collapses to noise; 15 is chosen over 9 because the
-# hosted runners are shared and noisier than the guest these numbers came from,
-# and the whole benchmark takes under a second per run.
+# hosted runners are shared and noisier than the guest these numbers came from.
 #
 # A median-of-paired-ratios estimator was measured on the same data and is
 # worse (18 of 98 false-fails at N=3, 0 at N=9 but worst -9.9%): the two sides
 # of a round are sequential, not simultaneous, so the mode can flip between
 # them and the pairing buys nothing.
-BENCH_RUNS="${BENCH_RUNS:-15}"
+BENCH_RUNS="${BENCH_RUNS:-30}"
 
 CC="${CC:-gcc}"
 
