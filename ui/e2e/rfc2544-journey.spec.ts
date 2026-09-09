@@ -79,10 +79,16 @@ test.describe('RFC 2544 journey', () => {
       tests?: Array<{ testType: string; config?: unknown }>;
       interface?: string;
       mode?: string;
+      profile?: string;
     };
     expect(body.interface).toBe(value);
     expect(body.tests?.some((step) => step.testType.startsWith('rfc2544'))).toBe(true);
-    expect(body.mode).toBe('test_master');
+    // The run plan carries the role, so the request no longer does: the server
+    // takes the reflector branch from the plan's own first step, and `mode` was
+    // read nowhere. Both fields staying absent is what proves that, and keeps a
+    // reintroduced client-side mode from passing unnoticed.
+    expect(body.mode, 'the start request must not carry a mode').toBeUndefined();
+    expect(body.profile, 'a non-reflect plan must not carry a profile').toBeUndefined();
     expect(
       body.tests?.every((step) => step.config),
       'each RFC 2544 step must carry its own config snapshot',
