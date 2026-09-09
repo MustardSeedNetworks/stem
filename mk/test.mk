@@ -126,11 +126,14 @@ ifeq ($(UNAME),Linux)
 	$(CC) $(CFLAGS) -o bin/test_packet_parse tests/c/test_packet_parse.c src/dataplane/common/packet.c $(C_LDFLAGS)
 	$(CC) $(CFLAGS) -o bin/test_netally_reflector tests/c/test_netally_reflector.c \
 		src/reflector/netally.c src/reflector/packet.c src/reflector/util.c $(C_LDFLAGS)
+	$(CC) $(CFLAGS) -o bin/test_latency_lifecycle tests/c/test_latency_lifecycle.c \
+		$(C_TEST_DATAPLANE_SRCS) $(C_LDFLAGS) -lxdp -lbpf
 	@echo "Running C tests..."
 	./bin/test_pacing
 	./bin/test_protocols
 	./bin/test_packet_parse
 	./bin/test_netally_reflector
+	./bin/test_latency_lifecycle
 else ifeq ($(UNAME),Darwin)
 	@echo "Building C tests (common code only, macOS)..."
 	mkdir -p bin
@@ -166,9 +169,16 @@ c-test-asan: ## Build + run the dataplane parser tests under AddressSanitizer/UB
 	$(CC) $(C_SAN_CFLAGS) -o bin/test_netally_reflector_asan \
 		tests/c/test_netally_reflector.c src/reflector/netally.c src/reflector/packet.c \
 		src/reflector/util.c -pthread -lm
+ifeq ($(UNAME),Linux)
+	$(CC) $(C_SAN_CFLAGS) -o bin/test_latency_lifecycle_asan \
+		tests/c/test_latency_lifecycle.c $(C_TEST_DATAPLANE_SRCS) -pthread -lm -lxdp -lbpf
+endif
 	@echo "Running packet-parser tests (ASAN)..."
 	ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=halt_on_error=1 ./bin/test_packet_parse_asan
 	ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=halt_on_error=1 ./bin/test_netally_reflector_asan
+ifeq ($(UNAME),Linux)
+	ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=halt_on_error=1 ./bin/test_latency_lifecycle_asan
+endif
 
 c-fuzz: ## Fuzz the dataplane packet parser under libFuzzer+ASAN (FUZZ_SECONDS=60)
 	@command -v $(FUZZ_CC) >/dev/null 2>&1 || { echo "$(FUZZ_CC) (clang) required for libFuzzer"; exit 1; }

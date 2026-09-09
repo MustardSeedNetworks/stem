@@ -476,7 +476,7 @@ static const struct {
     .get_rx_timestamp = xdp_get_timestamp,
 };
 
-const void *get_xdp_platform_ops(void)
+const void *get_dataplane_xdp_platform_ops(void)
 {
     return &xdp_ops;
 }
