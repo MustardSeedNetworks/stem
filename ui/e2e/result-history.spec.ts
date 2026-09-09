@@ -25,7 +25,9 @@ test.describe('Result History', () => {
     await page.getByRole('button', { name: 'History', exact: true }).first().click();
 
     await expect(page).toHaveURL(/\/history$/);
-    await expect(page.getByTestId('page-header-title')).toHaveText('History');
+    await expect(page.getByTestId('page-header-title')).toHaveText(
+      'Recent results on this browser',
+    );
   });
 
   test('says so plainly when no run has been recorded', async ({ page }) => {

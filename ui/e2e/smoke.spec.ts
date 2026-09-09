@@ -60,6 +60,9 @@ test.describe('smoke @ authenticated', { tag: '@smoke' }, () => {
 
   test('history page loads @smoke', async ({ page }) => {
     await page.goto('/history');
-    await expect(page.getByTestId('page-header-title')).toHaveText('History', { timeout: 10000 });
+    await expect(page.getByTestId('page-header-title')).toHaveText(
+      'Recent results on this browser',
+      { timeout: 10000 },
+    );
   });
 });

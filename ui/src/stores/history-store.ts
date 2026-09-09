@@ -30,7 +30,13 @@ export interface HistoricalResult {
 }
 
 const STORAGE_KEY = 'stem-result-history';
-const MAX_ITEMS = 50;
+
+/**
+ * How many results this browser keeps. Exported because the History page
+ * discloses the cap to the operator: the number in the copy is this
+ * constant, not a literal that can drift away from it.
+ */
+export const HISTORY_MAX_ITEMS = 50;
 
 function load(): HistoricalResult[] {
   if (typeof window === 'undefined') {
@@ -54,7 +60,7 @@ function save(results: HistoricalResult[]): void {
     return;
   }
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(results.slice(0, MAX_ITEMS)));
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(results.slice(0, HISTORY_MAX_ITEMS)));
   } catch {
     // Storage full or blocked — the in-memory history still works this session.
   }
@@ -86,7 +92,7 @@ export const useHistoryStore = create<HistoryStore>()(
         const results = [
           { id: `${result.completedAt}-${result.testType}`, ...result },
           ...get().results,
-        ].slice(0, MAX_ITEMS);
+        ].slice(0, HISTORY_MAX_ITEMS);
         save(results);
         set({ results, lastRecorded: result.completedAt }, false, 'record');
       },
