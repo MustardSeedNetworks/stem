@@ -3,6 +3,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"os"
@@ -10,23 +11,28 @@ import (
 	testmasterDP "github.com/MustardSeedNetworks/stem/internal/services/orchestrator/dataplane"
 )
 
+var errUnknownTestType = errors.New("unknown test type")
+
 // runTestSuite runs all tests for given frame sizes.
 func runTestSuite(
 	ctx *testmasterDP.Context,
 	tests []string,
 	frameSizes []int,
 	params testCmdParams,
-) []any {
+) ([]any, error) {
 	var allResults []any
+	var runErr error
 
 	for _, testType := range tests {
 		for _, frameSize := range frameSizes {
 			if frameSize < 0 || frameSize > math.MaxUint32 {
+				err := fmt.Errorf("frame size %d out of valid range", frameSize)
 				_, _ = fmt.Fprintf(
 					os.Stdout,
-					"Error: frame size %d out of valid range\n",
-					frameSize,
+					"Error: %v\n",
+					err,
 				)
+				runErr = errors.Join(runErr, err)
 				continue
 			}
 			ctx.SetFrameSize(uint32(frameSize))
@@ -46,6 +52,7 @@ func runTestSuite(
 			)
 			if err != nil {
 				_, _ = fmt.Fprintf(os.Stdout, "Error: %s test failed: %v\n", testType, err)
+				runErr = errors.Join(runErr, fmt.Errorf("%s frame size %d: %w", testType, frameSize, err))
 				continue
 			}
 
@@ -54,7 +61,7 @@ func runTestSuite(
 		}
 	}
 
-	return allResults
+	return allResults, runErr
 }
 
 // runTest executes a single test and returns the result.
@@ -82,11 +89,7 @@ func runTest(
 	case testTypeY1564Perf:
 		return runY1564PerfTest(ctx, cir, eir, fdThreshold, fdvThreshold, flrThreshold, duration)
 	default:
-		return map[string]string{
-			"test":   testType,
-			"status": "not_implemented",
-			"note":   "This test type requires additional dataplane support",
-		}, nil
+		return nil, fmt.Errorf("%w: %s", errUnknownTestType, testType)
 	}
 }
 

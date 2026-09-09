@@ -9,7 +9,7 @@
 // Usage:
 //
 //	stem reflect --interface eth0       # Reflector mode (Tier 1)
-//	stem test --type throughput         # Test Master mode (Tier 2)
+//	stem test --type rfc2544_throughput # Test Master mode (Tier 2)
 //	stem web --port 8444                # WebUI (HTTPS by default)
 package main
 
@@ -40,12 +40,12 @@ const (
 // here as untyped string consts so the CLI dispatch switch is readable
 // and grep-friendly.
 const (
-	testTypeThroughput     = "throughput"
-	testTypeLatency        = "latency"
-	testTypeFrameLoss      = "frame_loss"
-	testTypeBackToBack     = "back_to_back"
-	testTypeSystemRecovery = "system_recovery"
-	testTypeReset          = "reset"
+	testTypeThroughput     = "rfc2544_throughput"
+	testTypeLatency        = "rfc2544_latency"
+	testTypeFrameLoss      = "rfc2544_frame_loss"
+	testTypeBackToBack     = "rfc2544_back_to_back"
+	testTypeSystemRecovery = "rfc2544_system_recovery"
+	testTypeReset          = "rfc2544_reset"
 	testTypeY1564Config    = "y1564_config"
 	testTypeY1564          = "y1564"
 	testTypeY1564Perf      = "y1564_perf"
@@ -77,6 +77,9 @@ const (
 	defaultBackToBackBurst  = 10000
 	defaultOverloadRate     = 100.0
 	defaultOverloadDuration = 60
+	defaultInitialRatePct   = 100.0
+	defaultMaxIterations    = 20
+	defaultBatchSize        = 32
 	nsToUsConversion        = 1000.0
 	trialWarningDays        = 3
 )

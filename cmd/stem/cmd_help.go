@@ -101,7 +101,7 @@ func helpCmd(args []string) {
 	_, _ = fmt.Fprintln(os.Stdout, "  Commands:   reflect, test, web, license")
 	_, _ = fmt.Fprintln(
 		os.Stdout,
-		"  Tests:      throughput, latency, frame_loss, y1564_config, ...",
+		"  Tests:      rfc2544_throughput, rfc2544_latency, rfc2544_frame_loss, y1564_config, ...",
 	)
 	_, _ = fmt.Fprintln(
 		os.Stdout,

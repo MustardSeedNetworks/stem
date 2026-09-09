@@ -3,11 +3,35 @@
 package main
 
 import (
+	"errors"
 	"strings"
 	"testing"
 
 	testmasterDP "github.com/MustardSeedNetworks/stem/internal/services/orchestrator/dataplane"
 )
+
+func TestRunTestRejectsUnknownTypes(t *testing.T) {
+	result, err := runTest(nil, "not_a_test", 0, 0, 0, 0, 0, 0)
+	if err == nil {
+		t.Fatal("runTest unknown type = nil error")
+	}
+	if result != nil {
+		t.Errorf("runTest unknown type result = %#v, want nil", result)
+	}
+	if !errors.Is(err, errUnknownTestType) {
+		t.Errorf("runTest unknown type error = %v, want errUnknownTestType", err)
+	}
+}
+
+func TestRunTestSuiteReturnsExecutionErrors(t *testing.T) {
+	results, err := runTestSuite(nil, []string{testTypeThroughput}, []int{-1}, testCmdParams{})
+	if err == nil {
+		t.Fatal("runTestSuite invalid frame size = nil error")
+	}
+	if len(results) != 0 {
+		t.Errorf("runTestSuite invalid frame size results = %#v, want none", results)
+	}
+}
 
 // TestPrintTestResultRendersEachResultType is the operator's only view of a
 // run on the CLI. Nanoseconds are converted to microseconds on the way out,
