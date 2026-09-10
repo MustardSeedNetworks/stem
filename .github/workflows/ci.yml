@@ -1628,6 +1628,9 @@ jobs:
           # the middleware is wired. Same shape as seed's
           # SEED_LOGIN_MAX_ATTEMPTS=200 in scripts/run-e2e.sh.
           STEM_API_RATE_LIMIT: "5000"
+          # Auth specs deliberately perform multiple real logins in addition
+          # to global setup. Keep that bounded bucket above the suite volume.
+          STEM_AUTH_RATE_LIMIT: "200"
         run: |
           # Backend is HTTPS-by-default since the Wave 1 TLS rollout. The
           # legacy STEM_TLS_ENABLED env var was removed from the code; self-

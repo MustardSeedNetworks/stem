@@ -53,6 +53,39 @@ func TestAPIRateLimitFromEnv(t *testing.T) {
 	}
 }
 
+func TestAuthRateLimitFromEnv(t *testing.T) {
+	tests := []struct {
+		name     string
+		envValue string
+		want     int
+	}{
+		{name: "higher value raises the limit", envValue: "200", want: 200},
+		{name: "default cannot be lowered", envValue: "4", want: AuthRateLimit},
+		{name: "malformed value falls back", envValue: "many", want: AuthRateLimit},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Setenv(AuthRateLimitEnv, tt.envValue)
+			if got := authRateLimitFromEnv(); got != tt.want {
+				t.Errorf("authRateLimitFromEnv() = %d, want %d", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestNewAuthRateLimiterHonoursOverride(t *testing.T) {
+	t.Setenv(AuthRateLimitEnv, strconv.Itoa(AuthRateLimit*4))
+	rl := NewAuthRateLimiter(nil)
+	defer rl.Stop()
+
+	for i := range AuthRateLimit * 4 {
+		if !rl.Allow("10.0.0.202") {
+			t.Fatalf("request %d denied; raised burst should allow %d", i+1, AuthRateLimit*4)
+		}
+	}
+}
+
 // TestNewAPIRateLimiterHonoursOverride proves the override reaches the
 // constructed limiter's burst, not merely the helper: the regression it guards
 // is a bucket that still runs dry at the default after the env is set.

@@ -79,11 +79,12 @@ done
   # Credentials match e2e/helpers/auth.ts TEST_CREDENTIALS; global-setup logs in
   # once with them. The rate limit is raised, not disabled — the whole suite
   # drives one daemon from one IP across two browsers, and the compiled-in
-  # default (100/min) runs dry mid-run. It cannot go below the default, so the
-  # limiter middleware is still exercised.
+  # API (100/min) and authentication (5/min) defaults run dry mid-run. Neither
+  # override can go below its default, so both limiters remain exercised.
   STEM_AUTH_USERNAME=admin \
   STEM_AUTH_PASSWORD=admin \
   STEM_API_RATE_LIMIT=5000 \
+  STEM_AUTH_RATE_LIMIT=200 \
   STEM_WEBAUTHN_RPID=localhost \
   STEM_WEBAUTHN_ORIGINS="$webauthn_origins" \
     exec "$repo_dir/bin/stem" web -p "$port"
