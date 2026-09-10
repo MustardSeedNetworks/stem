@@ -1,5 +1,7 @@
 import { expect, type Locator, type Page, test } from '@playwright/test';
-import { skipSetupWizard } from './helpers/auth';
+import { loginViaUI } from './helpers/auth';
+
+test.use({ storageState: { cookies: [], origins: [] } });
 
 async function addVirtualAuthenticator(page: Page): Promise<void> {
   const cdp = await page.context().newCDPSession(page);
@@ -26,7 +28,7 @@ test.describe('Passkeys', () => {
     test.skip(browserName !== 'chromium', 'CDP virtual authenticators are Chromium-only');
     await page.setExtraHTTPHeaders({ 'X-Forwarded-For': '198.51.100.82' });
     await addVirtualAuthenticator(page);
-    await skipSetupWizard(page);
+    await loginViaUI(page);
     await page.goto('/account/security');
     const count = page.getByTestId('passkey-count');
     const initialCount = await readPasskeyCount(count);
