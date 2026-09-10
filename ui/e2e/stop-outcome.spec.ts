@@ -22,11 +22,15 @@ import { useRole } from './helpers/role';
  * mocking the thing under test (memory `niac-p1b2-editor-rewire`).
  *
  * Not covered here: "Stop mid-run reaches stopped". That needs the daemon
- * actually running a test, which no host available to this suite can do — the
- * macOS/Windows builds are CGO-less and have no dataplane, and every standard
- * that would run on Linux is Pro-gated (402) on the unlicensed E2E daemon. The
- * transition itself is pinned by unit tests over `resolveStopOutcome` and
- * `StopOutcomeMessage`; the end-to-end clause is tracked on the plan row.
+ * actually running something, which this host cannot do — the macOS and
+ * Windows builds are CGO-less and have no dataplane, so a started run errors
+ * within two seconds. It IS reachable on Linux with CGO: `reflect` is Free and
+ * ungated (docs/EDITIONS.md §3) and `handleTestStop` has a first-class
+ * reflector branch, so a reflector started on dev-srv-ubuntu and stopped
+ * through this UI would close the clause. Every Pro standard would instead
+ * answer 402 there: nothing in `scripts/run-e2e.sh`, `ci.yml` or the fixtures
+ * licenses the E2E daemon. The transition itself is pinned by unit tests over
+ * `resolveStopOutcome` and `StopOutcomeMessage`.
  */
 
 const STATS_ENDPOINT = '**/api/v1/stats';

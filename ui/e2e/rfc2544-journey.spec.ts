@@ -102,8 +102,11 @@ test.describe('RFC 2544 journey', () => {
  * The daemon refuses an unlicensed standard with 402 TIER_TOO_LOW and a body
  * naming the feature; before this the UI rendered that as a generic failure,
  * so a Free operator was told the test failed rather than that it is sold.
- * The response is faked because CI's daemon is licensed by the test fixture —
- * what is under test is the render path, not the gate (which has Go tests).
+ * The response is faked because what is under test is the render path, not the
+ * gate (which has Go tests). This previously said the daemon "is licensed by
+ * the test fixture"; it is not — no fixture, `scripts/run-e2e.sh` or CI step
+ * activates a licence or a trial, so the E2E daemon answers 402 for every Pro
+ * standard, and a spec that needs a running test cannot use one.
  */
 test.describe('feature gate', () => {
   test.beforeEach(async ({ page }) => {
