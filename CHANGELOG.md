@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.93](https://github.com/MustardSeedNetworks/stem/compare/v0.24.92...v0.24.93) (2026-09-10)
+
+
+### Bug Fixes
+
+* raise auth limit for e2e ([#1157](https://github.com/MustardSeedNetworks/stem/issues/1157)) ([0958310](https://github.com/MustardSeedNetworks/stem/commit/0958310780614d41c9645630281965d2a4c32659))
+
 ## [0.24.92](https://github.com/MustardSeedNetworks/stem/compare/v0.24.91...v0.24.92) (2026-09-10)
 
 
