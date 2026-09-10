@@ -75,7 +75,7 @@
     "jsdom": "30.0.1",
     "json-schema-to-typescript": "16.0.0",
     "playwright": "1.62.1",
-    "postcss": "8.5.26",
+    "postcss": "8.5.28",
     "rollup-plugin-visualizer": "7.1.1",
     "storybook": "10.6.0",
     "typescript": "7.0.2",
