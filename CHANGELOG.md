@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.91](https://github.com/MustardSeedNetworks/stem/compare/v0.24.90...v0.24.91) (2026-09-10)
+
+
+### Performance Improvements
+
+* split optional interface bundles ([#1150](https://github.com/MustardSeedNetworks/stem/issues/1150)) ([a112897](https://github.com/MustardSeedNetworks/stem/commit/a112897412476493c99003a4541d297ec35e01b6))
+
 ## [0.24.90](https://github.com/MustardSeedNetworks/stem/compare/v0.24.89...v0.24.90) (2026-09-10)
 
 
