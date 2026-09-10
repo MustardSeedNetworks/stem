@@ -27,9 +27,6 @@ class BannedVocabularyTest(unittest.TestCase):
         # file), so the fixture mirrors that rather than being a shape the gate
         # never actually runs against.
         self.exclusions.write_text(
-            "CHANGELOG.md | immutable release history\n"
-            "internal/database/migrations/** | immutable migrations\n"
-            "**/AGENTS.md | developer instructions\n"
             "terms.txt | policy term source\n"
             "exclusions.txt | policy exclusion list\n",
             encoding="utf-8",
@@ -84,11 +81,26 @@ class BannedVocabularyTest(unittest.TestCase):
         self.assertIn("docs/current.md:1: banned term 'open source'", result.stdout)
 
     def test_only_documented_paths_are_excluded(self) -> None:
+        with self.exclusions.open("a", encoding="utf-8") as exclusions:
+            exclusions.write(
+                "CHANGELOG.md | immutable release history\n"
+                "internal/database/migrations/** | immutable migrations\n"
+                "**/AGENTS.md | developer instructions\n"
+            )
         self.write("CHANGELOG.md", "AI-powered\n")
         self.write("internal/database/migrations/00001.sql", "AI-powered\n")
         self.write("dev/AGENTS.md", "AI-powered\n")
         result = self.run_checker()
         self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+
+    def test_stale_exclusion_is_an_error(self) -> None:
+        with self.exclusions.open("a", encoding="utf-8") as exclusions:
+            exclusions.write("docs/missing.md | stale path\n")
+        result = self.run_checker()
+        self.assertEqual(2, result.returncode)
+        self.assertIn(
+            "exclusion matches no repository file: docs/missing.md", result.stderr
+        )
 
     def test_unstaged_file_is_still_checked(self) -> None:
         """The loop that matters is write -> run the gate -> commit. Enumerating
