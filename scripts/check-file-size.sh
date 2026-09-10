@@ -26,6 +26,34 @@ BASELINED=0
 
 cd "$SCAN_ROOT"
 
+validate_baseline() {
+    [ -f "$BASELINE_FILE" ] || return 0
+    local file granted extra seen=""
+    while read -r file granted extra; do
+        [ -z "${file:-}" ] && continue
+        case "$file" in \#*) continue ;; esac
+        if [ -n "${extra:-}" ] || ! [[ "$granted" =~ ^[0-9]+$ ]]; then
+            echo "❌ Invalid baseline entry: $file ${granted:-} ${extra:-}" >&2
+            return 1
+        fi
+        case "$file" in
+            *.go|ui/src/*.ts|ui/src/*.tsx) ;;
+            *) echo "❌ Baseline path is not scanned: $file" >&2; return 1 ;;
+        esac
+        if [ ! -f "$file" ]; then
+            echo "❌ Baseline path does not exist: $file" >&2
+            return 1
+        fi
+        if [[ $'\n'${seen} == *$'\n'${file}$'\n'* ]]; then
+            echo "❌ Duplicate baseline path: $file" >&2
+            return 1
+        fi
+        seen="${seen}${file}"$'\n'
+    done < "$BASELINE_FILE"
+}
+
+validate_baseline
+
 baseline_limit() {
     local file=$1
     # No baseline file is a valid state -- it means nothing has been granted

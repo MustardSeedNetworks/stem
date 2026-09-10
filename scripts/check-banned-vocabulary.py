@@ -93,6 +93,16 @@ def excluded(path: str, patterns: list[str]) -> bool:
     return any(fnmatch.fnmatchcase(path, pattern) for pattern in patterns)
 
 
+def validate_exclusions(patterns: list[str], candidates: list[str]) -> None:
+    stale = [
+        pattern
+        for pattern in patterns
+        if not any(fnmatch.fnmatchcase(path, pattern) for path in candidates)
+    ]
+    if stale:
+        raise ValueError(f"exclusion matches no repository file: {', '.join(stale)}")
+
+
 def patterns_for(terms: list[str]) -> list[tuple[str, re.Pattern[str]]]:
     return [
         (
@@ -115,8 +125,10 @@ def text_lines(path: Path) -> list[str]:
 def scan(config: Config) -> list[tuple[str, int, str]]:
     terms = patterns_for(load_terms(config.terms))
     exclusions = load_exclusions(config.exclusions)
+    candidates = candidate_files(config.root)
+    validate_exclusions(exclusions, candidates)
     findings: list[tuple[str, int, str]] = []
-    for relative in candidate_files(config.root):
+    for relative in candidates:
         if excluded(relative, exclusions):
             continue
         for number, line in enumerate(text_lines(config.root / relative), start=1):

@@ -21,8 +21,6 @@ ui/SHELL.md | states the banned-vocabulary policy and must name the terms
 docs/README.md | relocation index; the old filenames it maps are immutable history
 
 # Developer instructions, tests, generated locks, and tool configuration.
-AGENTS.md | developer-only agent instructions
-**/AGENTS.md | developer-only agent instructions
 CONTRIBUTING.md | developer-only contributor instructions naming dev tooling
 .ignore | developer-tool path rules
 .serena/** | developer agent tooling
@@ -31,8 +29,6 @@ scripts/i18n/README.md | developer i18n tooling instructions
 scripts/i18n/validate.sh | developer i18n tooling
 .gitignore | developer-tool path rules
 .markdownlint-cli2.jsonc | developer-tool path rules
-.markdownlintignore | developer-tool path rules
-codecov.yml | developer-tool path rules
 scripts/i18n/banned-vocab.txt | policy term source
 scripts/test-check-banned-vocabulary.py | checker fixture self-tests
 **/*_test.go | developer test fixtures and protocol terminology

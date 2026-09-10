@@ -15,6 +15,16 @@ trap 'rm -rf "$fixture_dir"' EXIT
 
 failures=0
 
+single_matching_line() {
+  local pattern="$1" matches
+  matches=$(awk -v pattern="$pattern" '$0 ~ pattern { print }' "$source_workflow")
+  if [ "$(wc -l <<<"$matches" | tr -d ' ')" -ne 1 ]; then
+    echo "mutation source must occur once: $pattern" >&2
+    exit 1
+  fi
+  printf '%s' "$matches"
+}
+
 assert_rejected() {
   local name="$1"
   local old="$2"
@@ -80,23 +90,29 @@ assert_rejected "workspace-assertion-removed" \
   "      - name: Formerly asserted the workspace was clean"
 
 # The builder image floats.
+builder_image=$(single_matching_line '^[[:space:]]+image: goreleaser/goreleaser-cross:')
 assert_rejected "unpinned-builder-image" \
-  "      image: goreleaser/goreleaser-cross:v1.27.0@sha256:3ce3506ee9179c4122ba0b5dc13ab564ff259fb65f45bfad005ddd5e4a3d326d" \
+  "$builder_image" \
   "      image: goreleaser/goreleaser-cross:latest"
 
 # An action on the signing path floats to a tag.
+attestation_action=$(single_matching_line '^[[:space:]]+uses: actions/attest-build-provenance@')
 assert_rejected "unpinned-action" \
-  "        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2" \
+  "$attestation_action" \
   "        uses: actions/attest-build-provenance@v4"
 
 # A supply-chain download loses its checksum.
+syft_checksum=$(single_matching_line '^[[:space:]]+SYFT_SHA256:')
 assert_rejected "syft-checksum-removed" \
-  '          SYFT_SHA256: "d654f678b709eb53c393d38519d5ed7d2e57205529404018614cfefa0fb2b5ca"' \
+  "$syft_checksum" \
   '          SYFT_SHA256: ""'
 
 # A mutable latest-release lookup appears.
+syft_download=$(single_matching_line 'anchore/syft/releases/download')
+syft_download=${syft_download#*\"}
+syft_download=${syft_download%\"}
 assert_rejected "mutable-latest-lookup" \
-  "https://github.com/anchore/syft/releases/download/v\${SYFT_VERSION}/syft_\${SYFT_VERSION}_linux_amd64.tar.gz" \
+  "$syft_download" \
   "https://github.com/anchore/syft/releases/latest/syft_linux_amd64.tar.gz"
 
 # Workflow-level permissions stop being read-only.

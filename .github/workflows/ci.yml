@@ -275,6 +275,7 @@ jobs:
         with:
           version: v2.13.2
           only-new-issues: true
+          skip-cache: true
 
   backend:
     name: Backend (Go)
@@ -337,6 +338,7 @@ jobs:
         uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
         with:
           version: v2.13.2
+          skip-cache: true
           # Full-tree lint verified clean on 2026-08-14. Keep CI aligned with
           # the repository-wide zero-warning policy.
           args: --timeout=5m
@@ -369,12 +371,11 @@ jobs:
         run: python3 scripts/check-tsconfig-flags.py
 
       - name: File-size gate (baseline-ratchet)
-        # Adopts niac-go's implementation so all three repos share one gate.
-        # Red-flag files present at adoption are recorded in
-        # scripts/file-size-baseline.txt with their current size and may not
-        # grow; anything new or increased fails. stem's baseline is empty —
-        # it had already paid its debt down under the previous STRICT=1 mode.
-        run: ./scripts/check-file-size.sh
+        # Red-flag files present at adoption are recorded at their current
+        # size and may not grow; stale allowances fail the self-test.
+        run: |
+          ./scripts/test-check-file-size.sh
+          ./scripts/check-file-size.sh
 
       - name: Banned-vocabulary gate (strategy reset)
         # Ported from seed, which was the only repo enforcing it. Catches
