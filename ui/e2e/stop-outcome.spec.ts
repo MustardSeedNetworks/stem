@@ -50,6 +50,10 @@ test.describe('stop outcome', () => {
     await useRole(page, 'test_master');
   });
 
+  test.afterEach(async ({ page }) => {
+    await page.unrouteAll({ behavior: 'wait' });
+  });
+
   test('a refused stop shows the daemon’s own sentence', async ({ page }) => {
     await freezeStatusRunning(page);
 
