@@ -51,6 +51,10 @@ func (b *BackgroundComponents) Start(ctx context.Context) {
 		b.srv.runReflectorStatsPublisher(runCtx)
 	})
 
+	b.wg.Go(func() {
+		b.srv.runCLITokenRefresher(runCtx)
+	})
+
 	logging.Debug("background components started")
 }
 
