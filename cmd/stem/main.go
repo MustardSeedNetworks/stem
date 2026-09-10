@@ -80,6 +80,7 @@ const (
 	defaultInitialRatePct   = 100.0
 	defaultMaxIterations    = 20
 	defaultBatchSize        = 32
+	defaultPeerPort         = 3842
 	nsToUsConversion        = 1000.0
 	trialWarningDays        = 3
 )

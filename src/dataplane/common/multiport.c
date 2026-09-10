@@ -123,6 +123,17 @@ int rfc2544_multiport_throughput(rfc2544_ctx_t *ctx, throughput_result_t *result
         strncpy(port_contexts[i]->config.interface, config->ports[i].interface,
                 sizeof(port_contexts[i]->config.interface) - 1);
 
+        ret = rfc2544_set_peer(port_contexts[i], config->ports[i].dst_mac,
+                               (const uint8_t *)&config->ports[i].src_ip,
+                               (const uint8_t *)&config->ports[i].dst_ip, config->ports[i].src_port,
+                               config->ports[i].dst_port);
+        if (ret < 0) {
+            rfc2544_log(LOG_ERROR, "Invalid peer configuration for port %u: %d", i, ret);
+            rfc2544_cleanup(port_contexts[i]);
+            port_contexts[i] = NULL;
+            continue;
+        }
+
         /* Setup thread data */
         thread_data[i].ctx        = port_contexts[i];
         thread_data[i].port       = (port_config_t *)&config->ports[i];

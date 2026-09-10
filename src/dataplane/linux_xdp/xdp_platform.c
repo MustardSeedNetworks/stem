@@ -260,7 +260,9 @@ static int xdp_init(rfc2544_ctx_t *ctx, worker_ctx_t *wctx)
     int sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock >= 0) {
         struct ifreq ifr;
-        strncpy(ifr.ifr_name, ctx->config.interface, IFNAMSIZ - 1);
+        memset(&ifr, 0, sizeof(ifr));
+        memcpy(ifr.ifr_name, ctx->config.interface,
+               strnlen(ctx->config.interface, sizeof(ifr.ifr_name) - 1));
         if (ioctl(sock, SIOCGIFHWADDR, &ifr) == 0) {
             memcpy(pctx->if_mac, ifr.ifr_hwaddr.sa_data, 6);
             memcpy(ctx->local_mac, pctx->if_mac, 6);

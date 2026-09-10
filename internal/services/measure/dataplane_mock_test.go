@@ -32,10 +32,16 @@ type mockY1731Dataplane struct {
 	closeCalls    atomic.Uint32
 
 	lastConfig atomic.Pointer[dataplane.Y1731Config]
+	peerConfig atomic.Pointer[dataplane.Config]
 }
 
 // Ensure mockY1731Dataplane satisfies the interface.
 var _ measure.Y1731Dataplane = (*mockY1731Dataplane)(nil)
+
+func (m *mockY1731Dataplane) Configure(cfg *dataplane.Config) error {
+	m.peerConfig.Store(cfg)
+	return nil
+}
 
 func newMockY1731Dataplane() *mockY1731Dataplane {
 	return &mockY1731Dataplane{

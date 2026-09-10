@@ -43,6 +43,8 @@ type Result struct {
 // TestConfig holds configuration for test execution.
 type TestConfig struct {
 	Interface string
+	Peer      string
+	PeerPort  uint16
 	FrameSize uint32
 	Duration  int
 	Params    map[string]any

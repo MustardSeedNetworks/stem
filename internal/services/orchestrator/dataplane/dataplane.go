@@ -757,6 +757,9 @@ static stem_rfc2544_init_result_t stem_rfc2544_initialize(const char *interface)
     return result;
 }
 extern int rfc2544_configure(rfc2544_ctx_t *ctx, const rfc2544_config_t *config);
+extern int rfc2544_set_peer(rfc2544_ctx_t *ctx, const uint8_t *remote_mac,
+                            const uint8_t *local_ip, const uint8_t *remote_ip,
+                            uint16_t source_port, uint16_t remote_port);
 extern int rfc2544_run(rfc2544_ctx_t *ctx);
 extern void rfc2544_cancel(rfc2544_ctx_t *ctx);
 extern test_state_t rfc2544_get_state(const rfc2544_ctx_t *ctx);
@@ -919,6 +922,15 @@ func (c *Context) Configure(cfg *Config) error {
 
 	if ret := C.rfc2544_configure(c.ctx, ccfg); ret < 0 {
 		return fmt.Errorf("configure failed: %d", ret)
+	}
+	peer, err := resolvePeer(cfg.Interface, cfg.Peer, cfg.PeerPort)
+	if err != nil {
+		return err
+	}
+	if ret := C.rfc2544_set_peer(c.ctx, (*C.uint8_t)(&peer.remoteMAC[0]),
+		(*C.uint8_t)(&peer.localIP[0]), (*C.uint8_t)(&peer.remoteIP[0]),
+		C.uint16_t(peer.sourcePort), C.uint16_t(peer.remotePort)); ret < 0 {
+		return fmt.Errorf("configure peer failed: %d", ret)
 	}
 
 	return nil

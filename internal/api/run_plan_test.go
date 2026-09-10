@@ -41,7 +41,7 @@ func TestRunPlanStopsAfterFailedStep(t *testing.T) {
 		return func(string) (api.TestExecutor, error) { return &planExecutor{}, nil }, true
 	})
 	token := getTestingAuthToken(t, s)
-	body := bytes.NewBufferString(`{"tests":[
+	body := bytes.NewBufferString(`{"peer":"192.0.2.1","tests":[
 		{"testType":"rfc2544_throughput"},
 		{"testType":"rfc2544_latency"},
 		{"testType":"rfc2544_frame_loss"}

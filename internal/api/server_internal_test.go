@@ -2608,7 +2608,7 @@ func TestHandleTestStartWithTestRunning(t *testing.T) {
 	s.currentModule = "benchmark"
 	s.statsMu.Unlock()
 
-	body := bytes.NewBufferString(`{"tests":[{"testType":"rfc2544_latency"}]}`)
+	body := bytes.NewBufferString(`{"peer":"192.0.2.1","tests":[{"testType":"rfc2544_latency"}]}`)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/test/start", body)
 	w := httptest.NewRecorder()
 

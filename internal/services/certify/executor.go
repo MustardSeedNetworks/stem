@@ -107,6 +107,11 @@ func (e *Executor) Execute(testType string, cfg *modtypes.TestConfig) (*modtypes
 		Error:      "",
 		Data:       nil,
 	}
+	dpCfg := dataplane.PeerConfig(cfg.Interface, cfg.Peer, cfg.PeerPort)
+	if err := e.ctx.Configure(&dpCfg); err != nil {
+		result.Error = err.Error()
+		return result, fmt.Errorf("configure certify dataplane: %w", err)
+	}
 
 	var data any
 	var runErr error

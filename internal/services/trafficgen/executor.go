@@ -79,6 +79,11 @@ func (e *Executor) Execute(testType string, cfg *modtypes.TestConfig) (*modtypes
 		result.Error = "dataplane context is not configured"
 		return result, fmt.Errorf("trafficgen %s failed: %s", testType, result.Error)
 	}
+	dpCfg := dataplane.PeerConfig(cfg.Interface, cfg.Peer, cfg.PeerPort)
+	if err := e.ctx.Configure(&dpCfg); err != nil {
+		result.Error = err.Error()
+		return result, fmt.Errorf("configure trafficgen dataplane: %w", err)
+	}
 
 	data, runErr := e.ctx.RunCustomStreamTest(buildTrafficGenConfig(cfg))
 	if runErr != nil {

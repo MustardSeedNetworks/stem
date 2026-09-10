@@ -35,13 +35,17 @@ test.describe('RFC 2544 journey', () => {
     await useRole(page, 'test_master');
   });
 
-  test('the start control stays disabled until an interface is chosen', async ({ page }) => {
+  test('the start control stays disabled until an interface and peer are chosen', async ({
+    page,
+  }) => {
     await page.goto('/tests/benchmark');
 
     const start = page.getByTestId('start-test-button');
     await expect(start).toBeVisible({ timeout: 10000 });
 
     await page.getByTestId('interface-select').selectOption('');
+    await expect(start).toBeDisabled();
+    await page.getByTestId('interface-select').selectOption({ index: 1 });
     await expect(start).toBeDisabled();
   });
 
@@ -64,6 +68,7 @@ test.describe('RFC 2544 journey', () => {
     const value = await iface.locator('option').nth(1).getAttribute('value');
     expect(value, 'daemon reported no interfaces to select').toBeTruthy();
     await iface.selectOption(value as string);
+    await page.getByTestId('peer-input').fill('192.0.2.10');
 
     const start = page.getByTestId('start-test-button');
     await expect(start).toBeEnabled();
@@ -78,10 +83,14 @@ test.describe('RFC 2544 journey', () => {
     const body = startBody as {
       tests?: Array<{ testType: string; config?: unknown }>;
       interface?: string;
+      peer?: string;
+      peerPort?: number;
       mode?: string;
       profile?: string;
     };
     expect(body.interface).toBe(value);
+    expect(body.peer).toBe('192.0.2.10');
+    expect(body.peerPort).toBe(3842);
     expect(body.tests?.some((step) => step.testType.startsWith('rfc2544'))).toBe(true);
     // The run plan carries the role, so the request no longer does: the server
     // takes the reflector branch from the plan's own first step, and `mode` was
@@ -138,6 +147,7 @@ test.describe('feature gate', () => {
     const value = await iface.locator('option').nth(1).getAttribute('value');
     expect(value, 'daemon reported no interfaces to select').toBeTruthy();
     await iface.selectOption(value as string);
+    await page.getByTestId('peer-input').fill('192.0.2.10');
 
     const start = page.getByTestId('start-test-button');
     await expect(start).toBeEnabled();

@@ -28,7 +28,7 @@ func (s *Server) handleTestStart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	plan, planErr := newRunPlan("", req.Tests)
+	plan, planErr := newRunPlan("", req)
 	if planErr != nil {
 		WriteInvalidRequest(w, "Unknown or unsupported test type")
 		return
@@ -54,6 +54,10 @@ func (s *Server) handleTestStart(w http.ResponseWriter, r *http.Request) {
 
 	if len(plan.Steps) == 1 && plan.Steps[0].Module == moduleReflector {
 		s.startReflectorRequest(w, req, iface, plan.Steps[0])
+		return
+	}
+	if plan.Peer == "" {
+		WriteInvalidRequest(w, "A peer is required for test traffic")
 		return
 	}
 

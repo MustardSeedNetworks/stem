@@ -215,6 +215,8 @@ func TestValidateTestTypesList(t *testing.T) {
 func TestCreateTestConfigMapsTheFlagsItIsGiven(t *testing.T) {
 	cfg := createTestConfig(&testCmdFlags{
 		iface:      "eth3",
+		peer:       "192.0.2.10",
+		peerPort:   4842,
 		duration:   45,
 		warmup:     9,
 		resolution: 0.25,
@@ -223,6 +225,9 @@ func TestCreateTestConfigMapsTheFlagsItIsGiven(t *testing.T) {
 
 	if cfg.Interface != "eth3" {
 		t.Errorf("Interface = %q, want eth3", cfg.Interface)
+	}
+	if cfg.Peer != "192.0.2.10" || cfg.PeerPort != 4842 {
+		t.Errorf("Peer = %s:%d, want 192.0.2.10:4842", cfg.Peer, cfg.PeerPort)
 	}
 	if cfg.TrialDuration != 45*time.Second {
 		t.Errorf("TrialDuration = %v, want 45s", cfg.TrialDuration)

@@ -536,6 +536,8 @@ type TrafficGenResult struct {
 // Config for RFC2544 tests.
 type Config struct {
 	Interface      string
+	Peer           string
+	PeerPort       uint16
 	LineRate       uint64
 	AutoDetect     bool
 	TestType       TestType
@@ -551,6 +553,18 @@ type Config struct {
 	MeasureLatency bool
 	UsePacing      bool
 	BatchSize      uint32
+}
+
+// PeerConfig preserves the dataplane defaults while directing traffic to a reflector.
+func PeerConfig(iface, peer string, peerPort uint16) Config {
+	return Config{
+		Interface:   iface,
+		Peer:        peer,
+		PeerPort:    peerPort,
+		HWTimestamp: true,
+		UsePacing:   true,
+		BatchSize:   32,
+	}
 }
 
 // Stats for real-time monitoring.

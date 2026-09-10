@@ -102,6 +102,11 @@ func (e *Executor) Execute(testType string, cfg *modtypes.TestConfig) (*modtypes
 		result.Error = "dataplane is not configured"
 		return result, fmt.Errorf("measure %s failed: %s", testType, result.Error)
 	}
+	dpCfg := dataplane.PeerConfig(cfg.Interface, cfg.Peer, cfg.PeerPort)
+	if err := e.dp.Configure(&dpCfg); err != nil {
+		result.Error = err.Error()
+		return result, fmt.Errorf("configure measure dataplane: %w", err)
+	}
 
 	ycfg := buildY1731Config(cfg)
 
