@@ -10,7 +10,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { classifyFailure, resolveStopOutcome } from './useTestExecution';
+import { classifyFailure, resolveStopOutcome, resolveTestResult } from './useTestExecution';
 
 function jsonResponse(status: number, body: unknown): Response {
   return new Response(JSON.stringify(body), {
@@ -100,5 +100,26 @@ describe('resolveStopOutcome', () => {
     const outcome = await resolveStopOutcome(new Response('', { status: 502 }), fallback);
 
     expect(outcome).toEqual({ kind: 'stopRejected', message: fallback });
+  });
+});
+
+describe('resolveTestResult', () => {
+  it('turns a failed fetch into a visible result with the HTTP status', async () => {
+    const result = await resolveTestResult(new Response('', { status: 500 }));
+
+    expect(result).toMatchObject({
+      status: 'error',
+      success: false,
+      error: 'Result unavailable (HTTP 500)',
+    });
+  });
+
+  it('preserves the daemon error reported by stats when the result omits it', async () => {
+    const result = await resolveTestResult(
+      jsonResponse(200, { testType: 'rfc2544_latency', module: 'benchmark', status: 'error' }),
+      'Latency measurement failed',
+    );
+
+    expect(result).toMatchObject({ success: false, error: 'Latency measurement failed' });
   });
 });

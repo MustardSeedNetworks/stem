@@ -3,7 +3,7 @@
  * in both locales, and the eyebrow slot stays opt-in — a page has one
  * only when its locale namespace declares it.
  */
-import { renderHook } from '@testing-library/react';
+import { cleanup, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import i18n from './i18n';
 import { useNavGroups } from './navGroups';
@@ -11,6 +11,7 @@ import { usePages } from './pageRegistry';
 
 describe('page registry translations', () => {
   afterEach(async () => {
+    cleanup();
     await i18n.changeLanguage('en');
   });
 
@@ -38,6 +39,7 @@ describe('page registry translations', () => {
 
 describe('rail <-> header label agreement', () => {
   afterEach(async () => {
+    cleanup();
     await i18n.changeLanguage('en');
   });
 

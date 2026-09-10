@@ -63,6 +63,13 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
+    fileParallelism: false,
+    sequence: { hooks: 'list' },
+    onConsoleLog(log, type) {
+      if (type === 'stderr') {
+        throw new Error(`Unexpected test warning: ${log}`);
+      }
+    },
     setupFiles: ['./src/test/setup.ts'],
     include: ['src/**/*.{test,spec}.{ts,tsx}'],
     exclude: ['src/components/__stories__/**', 'node_modules/'],
@@ -70,16 +77,8 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov'],
       exclude: ['node_modules/', 'src/test/', '**/*.d.ts', '**/*.config.*', 'dist/'],
-      // TARGETS, not a measurement of today. The comment here used to claim
-      // "current: lines 91, branches 84, functions 94" — numbers no run has
-      // produced. Measured on this commit: lines 79.61, branches 67.67,
-      // functions 60.90, statements 79.61 (was 77.97 / 67.24 / 58.71 / 77.97
-      // before this change).
-      //
-      // Because of that gap, CI runs `npm test`, not `npm run test:coverage`
-      // — wiring the gate today would fail every PR. The numbers are being
-      // ratcheted up slice by slice (#824); the thresholds below stay where
-      // they are and the gate goes on when the measurement reaches them.
+      // Targets tracked by #824. CI runs the warning-gated unit suite; the
+      // coverage gate becomes blocking when behavioral coverage reaches them.
       thresholds: {
         lines: 88,
         branches: 80,

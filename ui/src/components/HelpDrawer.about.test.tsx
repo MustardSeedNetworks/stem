@@ -10,6 +10,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { HelpDrawer } from './HelpDrawer';
 
+vi.mock('../utils/logger', () => ({ logWarn: vi.fn() }));
+
 describe('HelpDrawer — About / version surface', () => {
   it('renders the version badge using /__version payload', async () => {
     const payload = {

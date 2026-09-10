@@ -60,6 +60,12 @@ global.IntersectionObserver = vi.fn().mockImplementation(() => ({
   thresholds: [],
 })) as unknown as typeof IntersectionObserver;
 
+// axe probes canvas support while auditing contrast. JSDOM reports every probe
+// as a noisy "Not implemented" diagnostic unless the browser API is stubbed.
+HTMLCanvasElement.prototype.getContext = vi.fn(
+  () => null,
+) as unknown as HTMLCanvasElement['getContext'];
+
 // EventSource: required by useSse (#302) SSE subscription hook. JSDoM does not
 // implement EventSource. Without this polyfill, any component test that mounts
 // a tree containing useSse() throws "ReferenceError: EventSource is not defined".

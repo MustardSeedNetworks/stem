@@ -138,8 +138,8 @@ i18n
       escapeValue: false,
     },
 
-    // Debug mode in development
-    debug: import.meta.env.DEV,
+    // Test output is a gate: verbose library diagnostics would hide React warnings.
+    debug: import.meta.env.DEV && import.meta.env.MODE !== 'test',
   })
   .catch(() => {
     // i18n initialization failure is non-recoverable, app will use fallback strings
