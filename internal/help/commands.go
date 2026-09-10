@@ -24,16 +24,12 @@ func ReflectCommand() CommandHelp {
 	return CommandHelp{
 		Name:    "reflect",
 		Summary: "Run packet reflection mode for remote testing",
-		Description: `The reflect command starts the packet reflector, which receives test
+		Description: `The reflect command starts a standalone packet reflector, which receives test
 packets and sends them back to their source. This is used as the far-end device
 when running tests from another location.
 
-The reflector supports multiple performance modes:
-• AF_PACKET: Standard Linux socket mode, good for up to ~1-2 Mpps
-• AF_XDP: High-performance eBPF mode, good for ~5-10 Mpps
-
-The appropriate mode is selected automatically based on available system capabilities,
-or can be specified manually.`,
+	Profiles select the packet signature and reflection behavior expected by the
+	remote tester. Use netally (or its ito alias) for EtherScope and CyberScope.`,
 		Usage: "stem reflect [flags]",
 		Flags: []FlagHelp{
 			{
@@ -46,67 +42,50 @@ or can be specified manually.`,
 				LaymanDesc: "Which network port to use (e.g., eth0, enp3s0)",
 			},
 			{
-				Short:      "-p",
+				Short:      "",
 				Long:       "--port",
 				Type:       TypeInteger,
-				Default:    "3842",
+				Default:    "0",
 				Required:   false,
-				TechDesc:   "UDP port for test traffic",
-				LaymanDesc: "Port number for test packets (default is fine for most cases)",
+				TechDesc:   "Override the profile's UDP port (0 uses the profile default)",
+				LaymanDesc: "Override the UDP port selected by the profile",
 			},
 			{
 				Short:      "",
-				Long:       "--filter-oui",
+				Long:       "--profile",
+				Type:       TypeString,
+				Default:    "all",
+				Required:   false,
+				TechDesc:   "Reflection profile: all, netally, ito, msn, or custom",
+				LaymanDesc: "Choose the packet format used by the remote tester",
+			},
+			{
+				Short:      "",
+				Long:       "--oui",
 				Type:       TypeString,
 				Default:    "",
 				Required:   false,
-				TechDesc:   "Only reflect packets from MACs matching this OUI prefix",
-				LaymanDesc: "Only respond to packets from specific device manufacturers",
+				TechDesc:   "Only reflect packets from MAC addresses matching this OUI prefix",
+				LaymanDesc: "Only respond to packets from a specific device manufacturer",
 			},
 			{
 				Short:      "",
-				Long:       "--mode",
-				Type:       TypeString,
-				Default:    ValueAuto,
-				Required:   false,
-				TechDesc:   "Dataplane mode: auto, af_packet, af_xdp",
-				LaymanDesc: "Performance mode - 'auto' picks the best available",
-			},
-			{
-				Short:      "-w",
-				Long:       "--web",
-				Type:       TypeInteger,
-				Default:    "8444",
-				Required:   false,
-				TechDesc:   "Web UI port, 0 to disable",
-				LaymanDesc: "Port for the web interface (set to 0 to disable)",
-			},
-			{
-				Short:      "-v",
-				Long:       "--verbose",
+				Long:       "--tui",
 				Type:       TypeBoolean,
 				Default:    ValueFalse,
 				Required:   false,
-				TechDesc:   "Enable verbose logging",
-				LaymanDesc: "Show detailed information about what's happening",
+				TechDesc:   "Launch the standalone reflector dashboard",
+				LaymanDesc: "Show live reflector counters in the terminal",
 			},
 		},
 		Examples: []Example{
 			{
 				Desc:    "Start reflector on eth0",
 				Command: "stem reflect -i eth0",
-				Output:  "Reflector started on eth0:3842 (AF_XDP mode)",
+				Output:  "Interface: eth0\nProfile: all\nMode: all",
 			},
-			{
-				Desc:    "Start reflector with web UI on custom port",
-				Command: "stem reflect -i eth0 -w 9000",
-				Output:  "Reflector started, Web UI at http://localhost:9000",
-			},
-			{
-				Desc:    "Start reflector without web UI",
-				Command: "stem reflect -i eth0 -w 0",
-				Output:  "Reflector started (web UI disabled)",
-			},
+			{Desc: "Reflect NetAlly test traffic", Command: "stem reflect -i eth0 --profile netally"},
+			{Desc: "Show the reflector dashboard", Command: "stem reflect -i eth0 --tui"},
 		},
 		SeeAlso: []string{"test", "web"},
 	}
@@ -133,6 +112,10 @@ func TestCommand() CommandHelp {
 }
 
 func testCommandFlags() []FlagHelp {
+	return append(testCommandBasicFlags(), testCommandAdvancedFlags()...)
+}
+
+func testCommandBasicFlags() []FlagHelp {
 	return []FlagHelp{
 		{
 			Short:      "-i",
@@ -145,21 +128,28 @@ func testCommandFlags() []FlagHelp {
 		},
 		{
 			Short:      "-t",
-			Long:       "--test",
+			Long:       "--type",
 			Type:       TypeString,
-			Default:    "",
-			Required:   true,
-			TechDesc:   "Test type to run (use 'stem help tests' for list)",
-			LaymanDesc: "Which test to run (e.g., throughput, latency, y1564_config)",
+			Default:    "rfc2544_throughput",
+			Required:   false,
+			TechDesc:   "Test type to run (use 'stem list-tests' for the catalog)",
+			LaymanDesc: "Which test to run (for example, rfc2544_throughput or y1564_config)",
 		},
 		{
 			Short:      "",
-			Long:       "--target",
+			Long:       "--peer",
 			Type:       TypeString,
 			Default:    "",
 			Required:   false,
-			TechDesc:   "Target IP address for remote testing",
-			LaymanDesc: "Remote endpoint IP (required for TCP tests)",
+			TechDesc:   "Reflector host name or IPv4 address",
+			LaymanDesc: "Remote reflector to test through",
+		},
+		{
+			Long:       "--peer-port",
+			Type:       TypeInteger,
+			Default:    "3842",
+			TechDesc:   "Reflector UDP port",
+			LaymanDesc: "UDP port used by the reflector",
 		},
 		{
 			Short:      "",
@@ -171,31 +161,95 @@ func testCommandFlags() []FlagHelp {
 			LaymanDesc: "Packet sizes to use for testing",
 		},
 		{
-			Short:      "",
+			Short:      "-d",
 			Long:       FlagDuration,
 			Type:       TypeInteger,
-			Default:    "10",
+			Default:    "60",
 			Required:   false,
 			TechDesc:   "Test duration per step (seconds)",
 			LaymanDesc: "How long to test at each speed",
 		},
+	}
+}
+
+func testCommandAdvancedFlags() []FlagHelp {
+	return []FlagHelp{
 		{
-			Short:      "",
-			Long:       "--config",
-			Type:       TypeString,
-			Default:    "",
-			Required:   false,
-			TechDesc:   "JSON config file for advanced test settings",
-			LaymanDesc: "File with detailed test settings",
+			Long:       "--resolution",
+			Type:       "float",
+			Default:    "0.1",
+			TechDesc:   "Binary-search resolution percentage",
+			LaymanDesc: "How precisely throughput is narrowed",
 		},
 		{
-			Short:      "",
-			Long:       "--output",
-			Type:       TypeString,
-			Default:    "",
-			Required:   false,
-			TechDesc:   "Output file for results (JSON format)",
-			LaymanDesc: "Save results to a file for later analysis",
+			Long:       "--max-loss",
+			Type:       "float",
+			Default:    "0",
+			TechDesc:   "Maximum acceptable loss percentage",
+			LaymanDesc: "Packet loss allowed before a step fails",
+		},
+		{
+			Long:       "--warmup",
+			Type:       TypeInteger,
+			Default:    "2",
+			TechDesc:   "Warmup period in seconds",
+			LaymanDesc: "Time allowed before measurements begin",
+		},
+		{
+			Long:       "--trials",
+			Type:       TypeInteger,
+			Default:    "3",
+			TechDesc:   "Number of trials",
+			LaymanDesc: "How many times to repeat each measurement",
+		},
+		{
+			Long:       "--cir",
+			Type:       "float",
+			Default:    "0",
+			TechDesc:   "Committed Information Rate in Mbps",
+			LaymanDesc: "Guaranteed service rate for Y.1564",
+		},
+		{
+			Long:       "--eir",
+			Type:       "float",
+			Default:    "0",
+			TechDesc:   "Excess Information Rate in Mbps",
+			LaymanDesc: "Additional service rate for Y.1564",
+		},
+		{
+			Long:       "--fd-threshold",
+			Type:       "float",
+			Default:    "10",
+			TechDesc:   "Frame Delay threshold in milliseconds",
+			LaymanDesc: "Maximum allowed frame delay",
+		},
+		{
+			Long:       "--fdv-threshold",
+			Type:       "float",
+			Default:    "5",
+			TechDesc:   "Frame Delay Variation threshold in milliseconds",
+			LaymanDesc: "Maximum allowed jitter",
+		},
+		{
+			Long:       "--flr-threshold",
+			Type:       "float",
+			Default:    "0.01",
+			TechDesc:   "Frame Loss Rate threshold percentage",
+			LaymanDesc: "Maximum allowed packet loss",
+		},
+		{
+			Long:       "--json",
+			Type:       TypeBoolean,
+			Default:    ValueFalse,
+			TechDesc:   "Write results as JSON",
+			LaymanDesc: "Show machine-readable JSON results",
+		},
+		{
+			Long:       "--csv",
+			Type:       TypeBoolean,
+			Default:    ValueFalse,
+			TechDesc:   "Write results as CSV",
+			LaymanDesc: "Show spreadsheet-compatible results",
 		},
 	}
 }
@@ -204,7 +258,7 @@ func testCommandExamples() []Example {
 	return []Example{
 		{
 			Desc:    "Run throughput test",
-			Command: "stem test -i eth0 -t throughput",
+			Command: "stem test -i eth0 -t rfc2544_throughput",
 			Output:  "Test running... Results: Max Rate 98.5%",
 		},
 		{
@@ -213,9 +267,9 @@ func testCommandExamples() []Example {
 			Output:  "Step 1/4 PASS, Step 2/4 PASS, ...",
 		},
 		{
-			Desc:    "Save results to file",
-			Command: "stem test -i eth0 -t latency --output results.json",
-			Output:  "Results saved to results.json",
+			Desc:    "Emit JSON results",
+			Command: "stem test -i eth0 -t rfc2544_latency --json",
+			Output:  "{ ... }",
 		},
 	}
 }
@@ -243,7 +297,7 @@ The web interface includes:
 				Type:       TypeInteger,
 				Default:    "8444",
 				Required:   false,
-				TechDesc:   "HTTPS port for web interface (default; --http for plaintext)",
+				TechDesc:   "HTTPS port for web interface",
 				LaymanDesc: "Port number for the web interface (HTTPS by default)",
 			},
 			{
@@ -265,7 +319,7 @@ The web interface includes:
 			{
 				Desc:    "Start on custom port",
 				Command: "stem web -p 9000",
-				Output:  "Test Master UI available at http://localhost:9000",
+				Output:  "Test Master UI available at https://localhost:9000",
 			},
 		},
 		SeeAlso: []string{"reflect", "test"},
@@ -293,6 +347,15 @@ determines which features are available:
 				Required:   false,
 				TechDesc:   "Signed license token to activate (format: MSN1.<payload>.<signature>)",
 				LaymanDesc: "Your license key from Mustard Seed Networks",
+			},
+			{
+				Short:      "",
+				Long:       "--trial",
+				Type:       TypeBoolean,
+				Default:    ValueFalse,
+				Required:   false,
+				TechDesc:   "Start the 14-day Professional trial",
+				LaymanDesc: "Try all Professional tests for 14 days",
 			},
 			{
 				Short:      "",
@@ -361,8 +424,17 @@ tests, and network testing concepts. You can get help on:
 • Tests: stem help throughput
 • Categories: stem help rfc2544
 • Concepts: Use the glossary command for definitions`,
-		Usage: "stem help [topic]",
-		Flags: []FlagHelp{},
+		Usage: "stem help [flags] [topic]",
+		Flags: []FlagHelp{
+			{
+				Short:      "-s",
+				Long:       "--simple",
+				Type:       TypeBoolean,
+				Default:    ValueFalse,
+				TechDesc:   "Show simplified explanations",
+				LaymanDesc: "Use less technical wording",
+			},
+		},
 		Examples: []Example{
 			{
 				Desc:    "Get help on a command",
@@ -429,8 +501,24 @@ and a plain-English explanation for newcomers.
 
 Run without arguments to see categories, or specify a term to get its
 definition.`,
-		Usage: "stem glossary [term]",
-		Flags: []FlagHelp{},
+		Usage: "stem glossary [flags] [term]",
+		Flags: []FlagHelp{
+			{
+				Short:      "-s",
+				Long:       "--simple",
+				Type:       TypeBoolean,
+				Default:    ValueFalse,
+				TechDesc:   "Show only simple definitions",
+				LaymanDesc: "Use less technical definitions",
+			},
+			{
+				Long:       "--search",
+				Type:       TypeString,
+				Default:    "",
+				TechDesc:   "Search for terms containing a keyword",
+				LaymanDesc: "Find glossary entries by keyword",
+			},
+		},
 		Examples: []Example{
 			{
 				Desc:    "List glossary categories",
