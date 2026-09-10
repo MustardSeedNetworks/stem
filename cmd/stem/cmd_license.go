@@ -26,7 +26,7 @@ func displayLicenseStatus(mgr *license.Manager) {
 		_, _ = fmt.Fprintln(os.Stdout, "  stem license --trial")
 		_, _ = fmt.Fprintln(os.Stdout, "\nTo activate with a license key:")
 		_, _ = fmt.Fprintln(os.Stdout, "  stem license --activate MSN1.<payload>.<signature>")
-	case state.IsTrialMode:
+	case state.IsTrialMode && mgr.IsTrialValid():
 		remaining := mgr.TrialDaysRemaining()
 		_, _ = fmt.Fprintln(os.Stdout, "Status:    Trial Mode")
 		_, _ = fmt.Fprintf(os.Stdout, "Days Left: %d\n", remaining)
@@ -35,6 +35,11 @@ func displayLicenseStatus(mgr *license.Manager) {
 			_, _ = fmt.Fprintln(os.Stdout, "\nWarning: Trial ending soon!")
 			_, _ = fmt.Fprintln(os.Stdout, "Activate a license to continue using The Stem")
 		}
+	case state.IsTrialMode:
+		_, _ = fmt.Fprintln(os.Stdout, "Status:    Trial Expired")
+		_, _ = fmt.Fprintf(os.Stdout, "Tier:      %s\n", license.EffectiveTier(mgr))
+		_, _ = fmt.Fprintln(os.Stdout, "\nActivate a Pro key with:")
+		_, _ = fmt.Fprintln(os.Stdout, "  stem license --activate MSN1.<payload>.<signature>")
 	default:
 		_, _ = fmt.Fprintln(os.Stdout, "Status:    Licensed")
 		_, _ = fmt.Fprintf(os.Stdout, "Tier:      %s\n", license.Tier(state.Tier))

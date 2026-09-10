@@ -48,11 +48,11 @@ func (s *Server) hasFeature(feature string) bool {
 // logs the denial under a single event so an operator can see which feature a
 // deployment is being asked for.
 func (s *Server) sendFeatureGate(w http.ResponseWriter, feature string) {
-	tierName := license.TierInvalid.String()
-	if s.licenseManager != nil {
-		if state := s.licenseManager.GetState(); state != nil {
-			tierName = license.Tier(state.Tier).String()
-		}
+	tierName := license.EffectiveTier(s.licenseManager).String()
+	upgradeMessage := "Activate a Pro key with `stem license --activate <KEY>`."
+	if trialAvailable(s.licenseManager) {
+		upgradeMessage = "Start a 14-day Pro trial with `stem license --trial` " +
+			"or activate a Pro key with `stem license --activate <KEY>`."
 	}
 
 	logging.Warn("feature gate denied request",
@@ -68,7 +68,14 @@ func (s *Server) sendFeatureGate(w http.ResponseWriter, feature string) {
 		Code:            errCodeTierTooLow,
 		RequiredFeature: feature,
 		CurrentTier:     tierName,
-		UpgradeMessage: "Start a 14-day Pro trial with `stem license --trial` " +
-			"or activate a Pro key with `stem license --activate <KEY>`.",
+		UpgradeMessage:  upgradeMessage,
 	})
+}
+
+func trialAvailable(manager *license.Manager) bool {
+	if manager == nil {
+		return false
+	}
+	state := manager.GetState()
+	return state == nil || state.TrialStartedAt.IsZero()
 }

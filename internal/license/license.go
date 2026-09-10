@@ -25,3 +25,15 @@ type (
 func FormatKey(key string) string {
 	return fnd.FormatKey(key)
 }
+
+// EffectiveTier returns the tier whose grants are currently active.
+func EffectiveTier(manager *Manager) Tier {
+	if manager == nil || !manager.IsActivated() {
+		return TierReflector
+	}
+	state := manager.GetState()
+	if state == nil {
+		return TierReflector
+	}
+	return Tier(state.Tier)
+}
