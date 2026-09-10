@@ -87,7 +87,10 @@ cd "$REPO_ROOT"
 # comparison does not change meaning if the runner class changes.
 BENCH_CFLAGS=(
   -D_GNU_SOURCE -D_DEFAULT_SOURCE -std=c23
-  -Wall -Wextra -Wpedantic -O3 -pthread -Iinclude
+  # Keep unrelated cases from moving across cache-line boundaries when one
+  # reflect function changes; best-of-N cannot remove fixed layout variance.
+  -Wall -Wextra -Wpedantic -O3 -falign-functions=32 -falign-loops=32
+  -pthread -Iinclude
 )
 BENCH_SRCS=(
   bench/bench_reflect.c
