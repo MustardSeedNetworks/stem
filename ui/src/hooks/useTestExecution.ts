@@ -84,6 +84,30 @@ function mapStatsPayload(payload: Partial<Stats>): Stats {
   };
 }
 
+function unavailableResult(message: string): TestResult {
+  return {
+    testType: 'run_plan',
+    module: 'orchestrator',
+    status: 'error',
+    success: false,
+    error: message,
+  };
+}
+
+export async function resolveTestResult(
+  response: Response,
+  statsError?: string,
+): Promise<TestResult> {
+  if (!response.ok) {
+    return unavailableResult(`Result unavailable (HTTP ${response.status})`);
+  }
+  const result = await (response.json() as Promise<TestResult>);
+  if (statsError && !result.error) {
+    return { ...result, success: false, error: statsError };
+  }
+  return result;
+}
+
 /** The daemon's error envelope, as `internal/api/errors.go` writes it. */
 interface ApiErrorBody {
   error?: string;
@@ -282,13 +306,10 @@ export function useTestExecution(): UseTestExecution {
   const interfaces = interfacesData ?? [];
 
   // Fetch test result when test completes
-  const fetchTestResult = useCallback(async () => {
+  const fetchTestResult = useCallback(async (statsError?: string) => {
     try {
       const response = await authFetch('/api/v1/test/result');
-      if (!response.ok) {
-        return;
-      }
-      const data = await (response.json() as Promise<TestResult>);
+      const data = await resolveTestResult(response, statsError);
       if (data.status === 'completed' || data.status === 'error' || data.status === 'cancelled') {
         setTestResult(data);
       }
@@ -301,6 +322,13 @@ export function useTestExecution(): UseTestExecution {
           error: error instanceof Error ? error.message : String(error),
         },
       });
+      setTestResult(
+        unavailableResult(
+          error instanceof Error
+            ? `Result unavailable: ${error.message}`
+            : 'Result unavailable: request failed',
+        ),
+      );
     }
   }, []);
 
@@ -309,11 +337,9 @@ export function useTestExecution(): UseTestExecution {
 
   // Handle test status transitions - extracted to reduce cognitive complexity
   const handleStatusTransition = useCallback(
-    (prevStatus: string, newStatus: string): void => {
+    (prevStatus: string, newStatus: string, statsError?: string): void => {
       if (isTestCompleted(prevStatus, newStatus)) {
-        fetchTestResult().catch(() => {
-          // Silent fail - result fetch is non-critical
-        });
+        void fetchTestResult(statsError);
       }
       if (isTestStarting(prevStatus, newStatus)) {
         setTestResult(null);
@@ -488,7 +514,7 @@ export function useTestExecution(): UseTestExecution {
   // itself is owned by the stats query's refetchInterval above.
   useEffect(() => {
     if (statsData) {
-      handleStatusTransition(prevTestStatus.current, statsData.testStatus);
+      handleStatusTransition(prevTestStatus.current, statsData.testStatus, statsData.errorMessage);
     }
   }, [statsData, handleStatusTransition]);
 

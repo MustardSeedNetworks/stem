@@ -42,8 +42,9 @@ describe('useCapabilities', () => {
 
   it('starts optimistic so callers need no loading state', () => {
     vi.stubGlobal('fetch', respondWith(FALLBACK));
-    const { result } = renderHook(() => useCapabilities());
+    const { result, unmount } = renderHook(() => useCapabilities());
     expect(result.current).toEqual(FALLBACK);
+    unmount();
   });
 
   it('surfaces the reason for an unsupported reflector', async () => {

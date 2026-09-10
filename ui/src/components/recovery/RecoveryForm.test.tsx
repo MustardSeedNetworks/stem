@@ -12,7 +12,7 @@
  * `onRecoveryComplete`, because that is what lets the caller in.
  */
 
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { RecoveryForm } from './RecoveryForm';
@@ -306,16 +306,16 @@ describe('token expiry countdown', () => {
 
       await waitFor(() => expect(clock()).toContain('0:02'));
 
-      await vi.advanceTimersByTimeAsync(1000);
+      act(() => vi.advanceTimersByTime(1000));
       await waitFor(() => expect(clock()).toContain('0:01'));
 
       // At zero the whole timer block unmounts — the token has expired, so a
       // countdown is no longer meaningful. A clock that kept ticking would
       // still be here reading 0:-1.
-      await vi.advanceTimersByTimeAsync(2000);
+      act(() => vi.advanceTimersByTime(2000));
       await waitFor(() => expect(screen.queryByText(/Time remaining:/)).not.toBeInTheDocument());
 
-      await vi.advanceTimersByTimeAsync(3000);
+      act(() => vi.advanceTimersByTime(3000));
       expect(screen.queryByText(/Time remaining:/)).not.toBeInTheDocument();
     } finally {
       vi.useRealTimers();

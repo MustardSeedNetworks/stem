@@ -313,6 +313,7 @@ describe('switching fails', () => {
     act(() => result.current.setRole('test_master'));
 
     expect(result.current.roleSwitchError).toBeNull();
+    await waitFor(() => expect(result.current.isSwitchingRole).toBe(false));
   });
 
   it('clears the error on request', async () => {
