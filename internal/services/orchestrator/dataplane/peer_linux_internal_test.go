@@ -15,10 +15,16 @@ import (
 
 func TestRouteGatewayUsesKernelGateway(t *testing.T) {
 	data := make([]byte, unix.SizeofRtMsg)
-	index := make([]byte, 4)
+	index := make([]byte, netlinkAlignment)
 	binary.NativeEndian.PutUint32(index, 7)
-	data = appendRouteAttribute(data, unix.RTA_OIF, index)
-	data = appendRouteAttribute(data, unix.RTA_GATEWAY, net.ParseIP("10.44.30.1").To4())
+	data, err := appendRouteAttribute(data, unix.RTA_OIF, index)
+	if err != nil {
+		t.Fatalf("append output-interface attribute: %v", err)
+	}
+	data, err = appendRouteAttribute(data, unix.RTA_GATEWAY, net.ParseIP("10.44.30.1").To4())
+	if err != nil {
+		t.Fatalf("append gateway attribute: %v", err)
+	}
 	message := syscall.NetlinkMessage{Header: syscall.NlMsghdr{Type: unix.RTM_NEWROUTE}, Data: data}
 
 	nextHop, err := routeGateway(message, 7, net.ParseIP("10.44.40.23"))

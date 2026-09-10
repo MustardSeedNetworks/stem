@@ -561,13 +561,15 @@ type Config struct {
 
 // PeerConfig preserves the dataplane defaults while directing traffic to a reflector.
 func PeerConfig(iface, peer string, peerPort uint16) Config {
+	const defaultBatchSize = 32
+
 	return Config{
 		Interface:   iface,
 		Peer:        peer,
 		PeerPort:    peerPort,
 		HWTimestamp: true,
 		UsePacing:   true,
-		BatchSize:   32,
+		BatchSize:   defaultBatchSize,
 	}
 }
 
