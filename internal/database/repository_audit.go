@@ -105,6 +105,7 @@ type AuditLogQueryOptions struct {
 	ResourceType string
 	ResourceID   string
 	TimeRange    TimeRange
+	OldestFirst  bool
 	Limit        int
 	Offset       int
 }
@@ -144,7 +145,11 @@ func (r *AuditLogRepository) List(ctx context.Context, opts AuditLogQueryOptions
 		args = append(args, opts.TimeRange.End.Format(time.RFC3339))
 	}
 
-	query += " ORDER BY timestamp DESC"
+	if opts.OldestFirst {
+		query += " ORDER BY timestamp ASC"
+	} else {
+		query += " ORDER BY timestamp DESC"
+	}
 
 	if opts.Limit > 0 {
 		query += limitClause

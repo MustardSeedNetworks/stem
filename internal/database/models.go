@@ -176,12 +176,13 @@ func DefaultPagination() Pagination {
 
 // TestRunQueryOptions specifies criteria for querying test runs.
 type TestRunQueryOptions struct {
-	Module    string
-	TestType  string
-	Status    string
-	TimeRange TimeRange
-	Limit     int
-	Offset    int
+	Module      string
+	TestType    string
+	Status      string
+	TimeRange   TimeRange
+	OldestFirst bool
+	Limit       int
+	Offset      int
 }
 
 // TestResultQueryOptions specifies criteria for querying test results.
