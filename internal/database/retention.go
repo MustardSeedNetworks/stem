@@ -190,13 +190,13 @@ func (m *RetentionManager) GetStats(ctx context.Context) (*RetentionStats, error
 	stats.TotalAuditLogs = auditCount
 
 	// Get oldest test run
-	runs, err := m.db.TestRuns().List(ctx, TestRunQueryOptions{Limit: 1})
+	runs, err := m.db.TestRuns().List(ctx, TestRunQueryOptions{OldestFirst: true, Limit: 1})
 	if err == nil && len(runs) > 0 {
 		stats.OldestTestRun = &runs[0].StartedAt
 	}
 
 	// Get oldest audit log
-	audits, err := m.db.AuditLog().List(ctx, AuditLogQueryOptions{Limit: 1})
+	audits, err := m.db.AuditLog().List(ctx, AuditLogQueryOptions{OldestFirst: true, Limit: 1})
 	if err == nil && len(audits) > 0 {
 		stats.OldestAuditLog = &audits[0].Timestamp
 	}

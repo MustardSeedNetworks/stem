@@ -180,7 +180,11 @@ func buildTestRunListQuery(opts TestRunQueryOptions) (string, []any) {
 		args = append(args, opts.TimeRange.End.Format(time.RFC3339))
 	}
 
-	query += " ORDER BY started_at DESC"
+	if opts.OldestFirst {
+		query += " ORDER BY started_at ASC"
+	} else {
+		query += " ORDER BY started_at DESC"
+	}
 
 	if opts.Limit > 0 {
 		query += limitClause

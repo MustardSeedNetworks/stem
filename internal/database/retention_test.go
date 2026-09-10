@@ -133,16 +133,11 @@ func TestRetentionManagerGetStats(t *testing.T) {
 		t.Errorf("TotalAuditLogs = %d, want 2", stats.TotalAuditLogs)
 	}
 
-	// Characterises stem#1106: OldestTestRun and OldestAuditLog take the first
-	// row of a list ordered newest-first, so both report the NEWEST row. These
-	// assertions pin the shipped behaviour and must be inverted with the fix.
-	if stats.OldestTestRun == nil || !stats.OldestTestRun.Equal(newest) {
-		t.Errorf("OldestTestRun = %v, want %v (stem#1106: it reports the newest run)",
-			stats.OldestTestRun, newest)
+	if stats.OldestTestRun == nil || !stats.OldestTestRun.Equal(oldest) {
+		t.Errorf("OldestTestRun = %v, want %v", stats.OldestTestRun, oldest)
 	}
-	if stats.OldestAuditLog == nil || !stats.OldestAuditLog.Equal(newest) {
-		t.Errorf("OldestAuditLog = %v, want %v (stem#1106: it reports the newest entry)",
-			stats.OldestAuditLog, newest)
+	if stats.OldestAuditLog == nil || !stats.OldestAuditLog.Equal(oldest) {
+		t.Errorf("OldestAuditLog = %v, want %v", stats.OldestAuditLog, oldest)
 	}
 
 	if stats.TestResultCutoff == nil {
