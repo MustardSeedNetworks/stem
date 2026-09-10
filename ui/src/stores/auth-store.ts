@@ -28,6 +28,7 @@ import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { fetchWithCsrf, getCsrfToken, invalidateCsrfToken } from '../lib/csrf';
 import { getQueryClient } from '../lib/queryClient';
+import { loginWithPasskey } from '../lib/webauthn';
 import { isValidAuthResponse } from '../types/api';
 import { deadlineExpired, requestDeadline } from '../utils/http';
 
@@ -117,6 +118,8 @@ interface AuthActions {
   login: (username: string, password: string) => Promise<LoginResult>;
   /** Complete an MFA challenge with a TOTP code. */
   verifyMfa: (code: string) => Promise<LoginResult>;
+  /** Sign in with an enrolled passkey. */
+  passkeyLogin: () => Promise<LoginResult>;
   /** Abandon an in-progress MFA challenge ("Use different account"). */
   cancelMfa: () => void;
   /**
@@ -242,6 +245,26 @@ export const useAuthStore = create<AuthStore>()(
           return { status: 'error', message };
         } finally {
           set({ loginLoading: false }, false, 'verifyMfa/done');
+        }
+      },
+
+      passkeyLogin: async (): Promise<LoginResult> => {
+        set({ loginLoading: true, loginError: null }, false, 'passkeyLogin/start');
+        try {
+          const data = await loginWithPasskey();
+          if (!isValidAuthResponse(data)) {
+            set({ loginError: 'Passkey sign-in failed' }, false, 'passkeyLogin/invalid');
+            return { status: 'error', message: 'Passkey sign-in failed' };
+          }
+          writeAuthFlag(true);
+          set({ isAuthenticated: true, loginError: null }, false, 'passkeyLogin/ok');
+          return { status: 'ok' };
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Passkey sign-in failed';
+          set({ loginError: message }, false, 'passkeyLogin/error');
+          return { status: 'error', message };
+        } finally {
+          set({ loginLoading: false }, false, 'passkeyLogin/done');
         }
       },
 

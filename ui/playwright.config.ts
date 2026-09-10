@@ -87,7 +87,10 @@ export default defineConfig({
     // from lying about what's actually tested.
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: {
+        ...devices['Desktop Chrome'],
+        launchOptions: { args: ['--enable-features=WebAuthentication'] },
+      },
     },
     {
       name: 'webkit',

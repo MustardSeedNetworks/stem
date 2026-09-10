@@ -41,6 +41,7 @@
     "submitButton": "Verify",
     "signInTitle": "Sign in to continue",
     "signInSubtitle": "Authenticate with your Stem credentials.",
+    "passkeyButton": "Sign in with passkey",
     "mfaContinue": "Enter the code from your authenticator app to continue.",
     "useDifferentAccount": "Use different account",
     "forgotPassword": "Forgot password?"

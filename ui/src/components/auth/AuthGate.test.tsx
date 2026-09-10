@@ -140,6 +140,17 @@ describe('AuthGate — login', () => {
     });
   });
 
+  it('offers passkey sign-in and starts its ceremony', async () => {
+    const passkeyLogin = vi
+      .spyOn(useAuthStore.getState(), 'passkeyLogin')
+      .mockResolvedValue({ status: 'ok' as const });
+    render(<AuthGate />);
+
+    await userEvent.click(screen.getByTestId('passkey-login'));
+
+    expect(passkeyLogin).toHaveBeenCalledOnce();
+  });
+
   it('does not call the server with an empty username', async () => {
     const login = vi.spyOn(useAuthStore.getState(), 'login');
     render(<AuthGate />);

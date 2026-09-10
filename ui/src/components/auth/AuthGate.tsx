@@ -66,6 +66,10 @@ export function AuthGate(): ReactElement {
     void useAuthStore.getState().login(values.username, values.password);
   }, []);
 
+  const handlePasskeyLogin = useCallback((): void => {
+    void useAuthStore.getState().passkeyLogin();
+  }, []);
+
   const handleMFAVerify = useCallback(
     (values: { code: string }): void => {
       void useAuthStore
@@ -253,6 +257,15 @@ export function AuthGate(): ReactElement {
                   disabled={loginLoading}
                 >
                   {loginLoading ? 'Signing in...' : 'Sign In'}
+                </button>
+                <button
+                  type="button"
+                  data-testid="passkey-login"
+                  className="btn btn-secondary w-full justify-center"
+                  disabled={loginLoading}
+                  onClick={handlePasskeyLogin}
+                >
+                  {t('security:login.passkeyButton')}
                 </button>
 
                 {/* Forgot Password link - only shown when recovery is available */}

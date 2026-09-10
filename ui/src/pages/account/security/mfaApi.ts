@@ -119,15 +119,4 @@ export const mfaApi = {
       return (await response.json()) as AuthLoginResponse;
     });
   },
-
-  webauthnRegisterBegin: (): Promise<PublicKeyCredentialCreationOptions> =>
-    postJSON<PublicKeyCredentialCreationOptions>('/auth/webauthn/register/begin', {}),
-
-  webauthnRegisterFinish: (
-    credential: PublicKeyCredential,
-  ): Promise<{ success: boolean; credentialId: string }> =>
-    postJSON<{ success: boolean; credentialId: string }>(
-      '/auth/webauthn/register/finish',
-      credential,
-    ),
 };
