@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.95](https://github.com/MustardSeedNetworks/stem/compare/v0.24.94...v0.24.95) (2026-09-10)
+
+
+### Documentation
+
+* remove obsolete seedtest man pages ([#1163](https://github.com/MustardSeedNetworks/stem/issues/1163)) ([a12facf](https://github.com/MustardSeedNetworks/stem/commit/a12facf4332c16523ed890c9435196ed50618105))
+
 ## [0.24.94](https://github.com/MustardSeedNetworks/stem/compare/v0.24.93...v0.24.94) (2026-09-10)
 
 
