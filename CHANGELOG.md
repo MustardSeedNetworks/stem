@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.90](https://github.com/MustardSeedNetworks/stem/compare/v0.24.89...v0.24.90) (2026-09-10)
+
+
+### Bug Fixes
+
+* honor test parameters and configure reflector peers ([#1148](https://github.com/MustardSeedNetworks/stem/issues/1148)) ([e37114b](https://github.com/MustardSeedNetworks/stem/commit/e37114bdde402b77f7bf025a2710a7888a50f4e3))
+
 ## [0.24.89](https://github.com/MustardSeedNetworks/stem/compare/v0.24.88...v0.24.89) (2026-09-10)
 
 
