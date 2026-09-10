@@ -10,12 +10,11 @@
  * @license Proprietary
  */
 
-import { type ReactElement, useCallback } from 'react';
+import { lazy, type ReactElement, Suspense, useCallback, useEffect, useState } from 'react';
 import { BrowserRouter } from 'react-router';
 import { AppShell } from './AppShell';
 import { AuthGate } from './components/auth/AuthGate';
 import { TopBar } from './components/TopBar';
-import { CommandPalette } from './components/ui/CommandPalette';
 import { AppContext, type AppContextValue } from './contexts/AppContext';
 import { ModuleSettingsProvider } from './contexts/ModuleSettingsContext';
 import { RoleProvider, useRole } from './contexts/RoleContext';
@@ -27,6 +26,12 @@ import { useAuthStore } from './stores/auth-store';
 import { useShellStore } from './stores/shell-store';
 import { useTestStore } from './stores/test-store';
 
+const CommandPalette = lazy(() =>
+  import('./components/ui/CommandPalette').then(({ CommandPalette: component }) => ({
+    default: component,
+  })),
+);
+
 function AppContent(): ReactElement {
   const navGroups = useNavGroups();
   const { isDark, toggleTheme } = useTheme();
@@ -36,9 +41,32 @@ function AppContent(): ReactElement {
 
   // Command-palette open state + the drawer openers it shares with the shell.
   const paletteOpen = useShellStore((s) => s.paletteOpen);
+  const [paletteLoaded, setPaletteLoaded] = useState(paletteOpen);
   const setPaletteOpen = useShellStore((s) => s.setPaletteOpen);
   const setSettingsOpen = useShellStore((s) => s.setSettingsOpen);
   const setHelpOpen = useShellStore((s) => s.setHelpOpen);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      return;
+    }
+
+    const openCommandPalette = (event: KeyboardEvent): void => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        setPaletteOpen(!paletteOpen);
+      }
+    };
+
+    document.addEventListener('keydown', openCommandPalette);
+    return () => document.removeEventListener('keydown', openCommandPalette);
+  }, [isAuthenticated, paletteOpen, setPaletteOpen]);
+
+  useEffect(() => {
+    if (paletteOpen) {
+      setPaletteLoaded(true);
+    }
+  }, [paletteOpen]);
 
   // Test config lives in the test-store; the routed pages read it via
   // AppContext. The shell drawers read the same store directly.
@@ -165,16 +193,18 @@ function AppContent(): ReactElement {
         <AuthGate />
 
         {/* Command palette (⌘K / Ctrl+K) — authenticated feature only */}
-        {isAuthenticated ? (
-          <CommandPalette
-            groups={navGroups}
-            open={paletteOpen}
-            onOpenChange={setPaletteOpen}
-            onOpenSettings={() => setSettingsOpen(true)}
-            onOpenHelp={() => setHelpOpen(true)}
-            onToggleTheme={toggleTheme}
-            isDark={isDark}
-          />
+        {isAuthenticated && paletteLoaded ? (
+          <Suspense fallback={null}>
+            <CommandPalette
+              groups={navGroups}
+              open={paletteOpen}
+              onOpenChange={setPaletteOpen}
+              onOpenSettings={() => setSettingsOpen(true)}
+              onOpenHelp={() => setHelpOpen(true)}
+              onToggleTheme={toggleTheme}
+              isDark={isDark}
+            />
+          </Suspense>
         ) : null}
       </AppContext.Provider>
     </BrowserRouter>

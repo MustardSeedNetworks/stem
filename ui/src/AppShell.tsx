@@ -9,10 +9,8 @@
  * @license Proprietary
  */
 
-import { type ReactElement, type ReactNode, Suspense } from 'react';
+import { lazy, type ReactElement, type ReactNode, Suspense, useEffect, useState } from 'react';
 import { Navigate, Route, Routes } from 'react-router';
-import { HelpDrawer } from './components/HelpDrawer';
-import { SettingsDrawer } from './components/SettingsDrawer';
 import { TestResults } from './components/TestResults';
 import { useNavGroups } from './navGroups';
 import { type PageConfig, usePages } from './pageRegistry';
@@ -24,6 +22,15 @@ import { Breadcrumbs } from './ui/Breadcrumbs';
 import { PageHeader } from './ui/PageHeader';
 import { PageLoader } from './ui/PageLoader';
 import { SidebarLayout } from './ui/Sidebar';
+
+const HelpDrawer = lazy(() =>
+  import('./components/HelpDrawer').then(({ HelpDrawer: component }) => ({ default: component })),
+);
+const SettingsDrawer = lazy(() =>
+  import('./components/SettingsDrawer').then(({ SettingsDrawer: component }) => ({
+    default: component,
+  })),
+);
 
 export interface AppShellProps {
   version?: string;
@@ -41,6 +48,20 @@ export function AppShell({ version, topBar, testResult, testStatus }: AppShellPr
   const setSettingsOpen = useShellStore((s) => s.setSettingsOpen);
   const helpOpen = useShellStore((s) => s.helpOpen);
   const setHelpOpen = useShellStore((s) => s.setHelpOpen);
+  const [settingsLoaded, setSettingsLoaded] = useState(settingsOpen);
+  const [helpLoaded, setHelpLoaded] = useState(helpOpen);
+
+  useEffect(() => {
+    if (settingsOpen) {
+      setSettingsLoaded(true);
+    }
+  }, [settingsOpen]);
+
+  useEffect(() => {
+    if (helpOpen) {
+      setHelpLoaded(true);
+    }
+  }, [helpOpen]);
 
   const {
     selectedTests,
@@ -95,28 +116,36 @@ export function AppShell({ version, topBar, testResult, testStatus }: AppShellPr
         </div>
       </SidebarLayout>
 
-      <SettingsDrawer
-        isOpen={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-        selectedTests={selectedTests}
-        setSelectedTests={setSelectedTests}
-        rfc2544Config={rfc2544Config}
-        setRFC2544Config={setRFC2544Config}
-        rfc2889Config={rfc2889Config}
-        setRFC2889Config={setRFC2889Config}
-        rfc6349Config={rfc6349Config}
-        setRFC6349Config={setRFC6349Config}
-        y1564Config={y1564Config}
-        setY1564Config={setY1564Config}
-        y1731Config={y1731Config}
-        setY1731Config={setY1731Config}
-        tsnConfig={tsnConfig}
-        setTSNConfig={setTSNConfig}
-        trafficGenConfig={trafficGenConfig}
-        setTrafficGenConfig={setTrafficGenConfig}
-      />
+      {settingsLoaded ? (
+        <Suspense fallback={null}>
+          <SettingsDrawer
+            isOpen={settingsOpen}
+            onClose={() => setSettingsOpen(false)}
+            selectedTests={selectedTests}
+            setSelectedTests={setSelectedTests}
+            rfc2544Config={rfc2544Config}
+            setRFC2544Config={setRFC2544Config}
+            rfc2889Config={rfc2889Config}
+            setRFC2889Config={setRFC2889Config}
+            rfc6349Config={rfc6349Config}
+            setRFC6349Config={setRFC6349Config}
+            y1564Config={y1564Config}
+            setY1564Config={setY1564Config}
+            y1731Config={y1731Config}
+            setY1731Config={setY1731Config}
+            tsnConfig={tsnConfig}
+            setTSNConfig={setTSNConfig}
+            trafficGenConfig={trafficGenConfig}
+            setTrafficGenConfig={setTrafficGenConfig}
+          />
+        </Suspense>
+      ) : null}
 
-      <HelpDrawer isOpen={helpOpen} onClose={() => setHelpOpen(false)} />
+      {helpLoaded ? (
+        <Suspense fallback={null}>
+          <HelpDrawer isOpen={helpOpen} onClose={() => setHelpOpen(false)} />
+        </Suspense>
+      ) : null}
     </>
   );
 }
