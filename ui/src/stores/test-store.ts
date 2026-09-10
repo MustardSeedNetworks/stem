@@ -26,6 +26,20 @@ import { defaultTSNConfig, type TSNConfig } from '../components/TSNConfigForm';
 import { defaultY1564Config, type Y1564Config } from '../components/Y1564ConfigForm';
 import { defaultY1731Config, type Y1731Config } from '../components/Y1731ConfigForm';
 
+/**
+ * What happened to the last stop request.
+ *
+ * `handleStopTest` used to keep a boolean and swallow every non-2xx answer, so
+ * a refused stop looked identical to a successful one (#1080). The daemon's
+ * refusal is carried here and rendered.
+ */
+export type StopOutcome =
+  | { kind: 'idle' }
+  | { kind: 'stopping' }
+  | { kind: 'stopped' }
+  | { kind: 'stopRejected'; message: string }
+  | { kind: 'stopFailed'; message: string };
+
 /** React-useState-style update: a value or an updater function. */
 type SetState<T> = T | ((prev: T) => T);
 
@@ -37,7 +51,7 @@ interface TestState {
   selectedTests: string[];
   reflectorProfile: ReflectorProfile;
   isStartingTest: boolean;
-  isStoppingTest: boolean;
+  stopOutcome: StopOutcome;
   testStartError: string | null;
   rfc2544Config: RFC2544Config;
   rfc2889Config: RFC2889Config;
@@ -52,7 +66,7 @@ interface TestActions {
   setSelectedTests: (update: SetState<string[]>) => void;
   setReflectorProfile: (update: SetState<ReflectorProfile>) => void;
   setIsStartingTest: (update: SetState<boolean>) => void;
-  setIsStoppingTest: (update: SetState<boolean>) => void;
+  setStopOutcome: (update: SetState<StopOutcome>) => void;
   setTestStartError: (update: SetState<string | null>) => void;
   setRFC2544Config: (update: SetState<RFC2544Config>) => void;
   setRFC2889Config: (update: SetState<RFC2889Config>) => void;
@@ -76,7 +90,7 @@ export const useTestStore = create<TestStore>()(
       ],
       reflectorProfile: 'all',
       isStartingTest: false,
-      isStoppingTest: false,
+      stopOutcome: { kind: 'idle' },
       testStartError: null,
       rfc2544Config: defaultRFC2544Config,
       rfc2889Config: defaultRFC2889Config,
@@ -95,8 +109,8 @@ export const useTestStore = create<TestStore>()(
         ),
       setIsStartingTest: (u) =>
         set((s) => ({ isStartingTest: resolve(u, s.isStartingTest) }), false, 'setIsStartingTest'),
-      setIsStoppingTest: (u) =>
-        set((s) => ({ isStoppingTest: resolve(u, s.isStoppingTest) }), false, 'setIsStoppingTest'),
+      setStopOutcome: (u) =>
+        set((s) => ({ stopOutcome: resolve(u, s.stopOutcome) }), false, 'setStopOutcome'),
       setTestStartError: (u) =>
         set((s) => ({ testStartError: resolve(u, s.testStartError) }), false, 'setTestStartError'),
       setRFC2544Config: (u) =>

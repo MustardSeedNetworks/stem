@@ -22,8 +22,10 @@ import {
 import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { StemRole } from '../contexts/RoleContext';
+import type { StopOutcome } from '../stores/test-store';
 import type { InterfaceInfo, Stats } from '../types/api';
 import { RoleChip } from './RoleChip';
+import { StopOutcomeMessage } from './StopOutcomeMessage';
 import type { useTestProgress } from './TestProgressBar';
 import { TestProgressBar } from './TestProgressBar';
 
@@ -39,7 +41,7 @@ export interface TopBarProps {
   interfaces: InterfaceInfo[];
   stats: Stats;
   isStartingTest: boolean;
-  isStoppingTest: boolean;
+  stopOutcome: StopOutcome;
   testStartError: string | null;
   onStartTest: () => void;
   onStopTest: () => void;
@@ -58,13 +60,14 @@ export function TopBar({
   interfaces,
   stats,
   isStartingTest,
-  isStoppingTest,
+  stopOutcome,
   testStartError,
   onStartTest,
   onStopTest,
   testProgress,
 }: TopBarProps): ReactElement {
   const { t } = useTranslation('common');
+  const isStopping = stopOutcome.kind === 'stopping';
 
   return (
     <div className="px-4 sm:px-6 lg:px-8 pt-6 pb-inline stack-lg">
@@ -153,10 +156,10 @@ export function TopBar({
               data-testid="stop-test-button"
               onClick={onStopTest}
               className="btn btn-secondary"
-              disabled={isStoppingTest}
-              aria-busy={isStoppingTest}
+              disabled={isStopping}
+              aria-busy={isStopping}
             >
-              {isStoppingTest ? (
+              {isStopping ? (
                 <>
                   <RefreshCw className="w-4 h-4 animate-spin" aria-hidden="true" />
                   {t('status.stopping')}
@@ -190,6 +193,8 @@ export function TopBar({
               )}
             </button>
           )}
+
+          <StopOutcomeMessage outcome={stopOutcome} />
 
           {testStartError ? (
             <div

@@ -26,6 +26,7 @@
 
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
+import { fetchWithCsrf, getCsrfToken, invalidateCsrfToken } from '../lib/csrf';
 import { getQueryClient } from '../lib/queryClient';
 import { isValidAuthResponse } from '../types/api';
 import { deadlineExpired, requestDeadline } from '../utils/http';
@@ -140,6 +141,9 @@ export type AuthStore = AuthState & AuthActions;
 /** Local teardown shared by logout + expireSession. */
 function tearDownSession(set: (partial: Partial<AuthState>) => void, message: string | null): void {
   writeAuthFlag(false);
+  // The daemon mints a fresh token per session; keeping the old one would send
+  // a stale header on the next sign-in's first mutating request.
+  invalidateCsrfToken();
   set({ isAuthenticated: false, mfaPending: null, loginError: message });
   // Cancel-then-clear so a late in-flight request can't repopulate the cache.
   void purgeQueryCache();
@@ -268,7 +272,11 @@ export const useAuthStore = create<AuthStore>()(
 
       logout: async (): Promise<void> => {
         try {
-          await fetch('/api/v1/auth/logout', { method: 'POST', credentials: 'include' });
+          // Logout is state-changing and not on the CSRF exempt list (#87
+          // removed it): sent bare, the daemon answers 403 and the *server*
+          // session outlives the sign-out, however convincing the local
+          // teardown below looks.
+          await fetchWithCsrf('/api/v1/auth/logout', { method: 'POST' });
         } catch {
           // Proceed with local teardown regardless — the user is logging out.
         }
@@ -319,6 +327,9 @@ export const useAuthStore = create<AuthStore>()(
   ),
 );
 
+/** Methods the CSRF middleware lets through unvalidated (internal/auth/csrf.go). */
+const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS', 'TRACE']);
+
 /**
  * Authenticated fetch — module-level so React Query queryFns (and mutations)
  * can call it without closing over a component callback. Reads/writes auth
@@ -337,7 +348,18 @@ export async function authFetch(input: RequestInfo, init: RequestInit = {}): Pro
   if (init.body && !(init.body instanceof FormData) && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
   }
-  const send = (): Promise<Response> => fetch(input, { ...init, headers, credentials: 'include' });
+  // Every mutating route is behind the per-session CSRF manager, and the
+  // exempt list holds only pre-session endpoints (internal/auth/csrf.go). A
+  // POST without the header is answered 403 with a plain-text body, which the
+  // 403 branch below then reads as a dead session — so before this, Start and
+  // Stop did not merely fail, they signed the operator out (#1080).
+  const mutating = !SAFE_METHODS.has((init.method ?? 'GET').toUpperCase());
+  const send = async (): Promise<Response> => {
+    if (mutating) {
+      headers.set('X-Csrf-Token', await getCsrfToken());
+    }
+    return fetch(input, { ...init, headers, credentials: 'include' });
+  };
 
   const response = await send();
 
@@ -367,6 +389,16 @@ export async function authFetch(input: RequestInfo, init: RequestInit = {}): Pro
     }
     if (code === 'PERMISSION_DENIED') {
       return response;
+    }
+    if (mutating) {
+      // The daemon rotates the CSRF token on login, so a token minted before a
+      // re-login is stale. One retry with a fresh token is the difference
+      // between "your session rotated" and "the button signed you out".
+      invalidateCsrfToken();
+      const retry = await send();
+      if (retry.status !== 403) {
+        return retry;
+      }
     }
     expireSession('Access forbidden. Please sign in again.');
     throw new Error('Forbidden');

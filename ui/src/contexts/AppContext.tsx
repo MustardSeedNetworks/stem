@@ -15,6 +15,7 @@ import type { TrafficGenConfig } from '../components/TrafficGenConfigForm';
 import type { TSNConfig } from '../components/TSNConfigForm';
 import type { Y1564Config } from '../components/Y1564ConfigForm';
 import type { Y1731Config } from '../components/Y1731ConfigForm';
+import type { StopOutcome } from '../stores/test-store';
 import type { InterfaceInfo, Stats, TestResult } from '../types/api';
 
 export interface AppContextValue {
@@ -50,7 +51,7 @@ export interface AppContextValue {
   onStartReflector: () => void;
   onStopReflector: () => void;
   isStartingReflector: boolean;
-  isStoppingReflector: boolean;
+  reflectorStopOutcome: StopOutcome;
   reflectorStartError: string | null;
 }
 

@@ -14,6 +14,7 @@ vi.mock('../lib/queryClient', () => ({
   getQueryClient: () => ({ cancelQueries, clear }),
 }));
 
+import { invalidateCsrfToken } from '../lib/csrf';
 import * as http from '../utils/http';
 import { authFetch, useAuthStore } from './auth-store';
 
@@ -30,8 +31,24 @@ function textResponse(body: string, status: number): Response {
   return new Response(body, { status, headers: { 'Content-Type': 'text/plain' } });
 }
 
+/**
+ * Mutating requests now fetch a CSRF token first, so a mock that answers every
+ * URL with the case under test would answer the token endpoint with it too.
+ * This answers the token endpoint and delegates the rest.
+ */
+function mockFetchWithCsrf(handler: (url: string) => Response): ReturnType<typeof vi.spyOn> {
+  return vi.spyOn(globalThis, 'fetch').mockImplementation((input) => {
+    const url = String(input);
+    if (url.includes('/auth/csrf-token')) {
+      return Promise.resolve(jsonResponse({ token: 'csrf-token-1' }));
+    }
+    return Promise.resolve(handler(url));
+  });
+}
+
 beforeEach(() => {
   window.localStorage.clear();
+  invalidateCsrfToken();
   cancelQueries.mockClear();
   clear.mockClear();
   useAuthStore.setState({
@@ -143,6 +160,22 @@ describe('auth-store: login / MFA', () => {
   });
 });
 
+describe('auth-store: logout', () => {
+  it('sends the CSRF header, so the server session is actually ended', async () => {
+    useAuthStore.setState({ isAuthenticated: true });
+    const fetchSpy = mockFetchWithCsrf(() => jsonResponse({ status: 'ok' }));
+
+    await useAuthStore.getState().logout();
+
+    const call = fetchSpy.mock.calls.find((c) => String(c[0]).includes('/auth/logout'));
+    expect(call, 'no request reached /auth/logout').toBeDefined();
+    // fetchWithCsrf builds a plain header record, not a Headers instance.
+    const init = (call as unknown as [string, RequestInit])[1];
+    expect((init.headers as Record<string, string>)['X-Csrf-Token']).toBe('csrf-token-1');
+    expect(useAuthStore.getState().isAuthenticated).toBe(false);
+  });
+});
+
 describe('auth-store: teardown purges the query cache', () => {
   it('logout cancels queries then clears + drops the flag', async () => {
     useAuthStore.setState({ isAuthenticated: true });
@@ -212,7 +245,7 @@ describe('authFetch', () => {
 
   it('403 PERMISSION_DENIED → returns the response WITHOUT expiring', async () => {
     useAuthStore.setState({ isAuthenticated: true });
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+    mockFetchWithCsrf(() =>
       jsonResponse({ error: 'Insufficient permissions', code: 'PERMISSION_DENIED' }, 403),
     );
     const res = await authFetch('/api/v1/config/import', { method: 'POST', body: '{}' });
@@ -222,7 +255,7 @@ describe('authFetch', () => {
 
   it('403 plain-text (CSRF/unknown) → expires session and throws Forbidden', async () => {
     useAuthStore.setState({ isAuthenticated: true });
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(textResponse('Invalid CSRF token', 403));
+    mockFetchWithCsrf(() => textResponse('Invalid CSRF token', 403));
     await expect(authFetch('/api/v1/alerts', { method: 'PUT', body: '{}' })).rejects.toThrow(
       'Forbidden',
     );
@@ -240,14 +273,77 @@ describe('authFetch', () => {
     expect(useAuthStore.getState().isAuthenticated).toBe(true);
   });
 
+  // Every mutating route is behind the daemon's per-session CSRF manager and
+  // the exempt list holds only pre-session endpoints, so an authFetch POST
+  // without the header was answered 403 with a plain-text body — which the
+  // branch above reads as a dead session. Starting and stopping a test both
+  // go through here, so both signed the operator out instead of running
+  // (#1080).
+  it('attaches the CSRF header to a mutating request', async () => {
+    useAuthStore.setState({ isAuthenticated: true });
+    const fetchSpy = mockFetchWithCsrf(() => jsonResponse({ status: 'stopped' }));
+
+    await authFetch('/api/v1/test/stop', { method: 'POST' });
+
+    const stop = fetchSpy.mock.calls.find((c) => String(c[0]).includes('/test/stop'));
+    expect(stop, 'no request reached /test/stop').toBeDefined();
+    const headers = (stop as unknown as [string, RequestInit])[1].headers as Headers;
+    expect(headers.get('X-Csrf-Token')).toBe('csrf-token-1');
+  });
+
+  it('does not fetch or attach a token for a safe request', async () => {
+    useAuthStore.setState({ isAuthenticated: true });
+    const fetchSpy = mockFetchWithCsrf(() => jsonResponse({ ok: true }));
+
+    await authFetch('/api/v1/stats');
+
+    expect(fetchSpy.mock.calls.some((c) => String(c[0]).includes('/auth/csrf-token'))).toBe(false);
+    const stats = fetchSpy.mock.calls.find((c) => String(c[0]).includes('/stats'));
+    expect(stats, 'no request reached /stats').toBeDefined();
+    const headers = (stats as unknown as [string, RequestInit])[1].headers as Headers;
+    expect(headers.has('X-Csrf-Token')).toBe(false);
+  });
+
+  it('a mutating 403 retries once with a fresh token before giving up', async () => {
+    useAuthStore.setState({ isAuthenticated: true });
+    let tokenIssue = 0;
+    const seen: string[] = [];
+    vi.spyOn(globalThis, 'fetch').mockImplementation((input, init) => {
+      const url = String(input);
+      if (url.includes('/auth/csrf-token')) {
+        tokenIssue += 1;
+        return Promise.resolve(jsonResponse({ token: `csrf-token-${tokenIssue}` }));
+      }
+      const sent = ((init as RequestInit).headers as Headers).get('X-Csrf-Token') ?? '';
+      seen.push(sent);
+      // The daemon rotates the token on login: the first (stale) one is
+      // refused, the re-fetched one is accepted.
+      return Promise.resolve(
+        sent === 'csrf-token-2'
+          ? jsonResponse({ status: 'stopped' })
+          : textResponse('CSRF token invalid', 403),
+      );
+    });
+
+    const res = await authFetch('/api/v1/test/stop', { method: 'POST' });
+
+    expect(res.status).toBe(200);
+    expect(seen).toEqual(['csrf-token-1', 'csrf-token-2']);
+    expect(useAuthStore.getState().isAuthenticated).toBe(true);
+  });
+
   it('preserves FormData (no Content-Type override) and forwards the abort signal + credentials', async () => {
     useAuthStore.setState({ isAuthenticated: true });
-    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(jsonResponse({ ok: true }));
+    const fetchSpy = mockFetchWithCsrf(() => jsonResponse({ ok: true }));
     const fd = new FormData();
     fd.append('f', 'v');
     const controller = new AbortController();
     await authFetch('/api/v1/upload', { method: 'POST', body: fd, signal: controller.signal });
-    const init = fetchSpy.mock.calls[0]?.[1] as RequestInit & { headers: Headers };
+    const upload = fetchSpy.mock.calls.find((c) => String(c[0]).includes('/upload'));
+    expect(upload, 'no request reached /upload').toBeDefined();
+    const init = (upload as unknown as [string, RequestInit])[1] as RequestInit & {
+      headers: Headers;
+    };
     expect(init.credentials).toBe('include');
     expect(init.signal).toBe(controller.signal);
     expect((init.headers as Headers).has('Content-Type')).toBe(false);

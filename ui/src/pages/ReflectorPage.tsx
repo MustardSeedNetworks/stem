@@ -15,6 +15,7 @@ import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { HeaderInterfaceSelector } from '../components/HeaderInterfaceSelector';
 import { RoleGuard } from '../components/RoleGuard';
+import { StopOutcomeMessage } from '../components/StopOutcomeMessage';
 import { ReflectorSection } from '../components/settings/ReflectorSection';
 import { Alert } from '../components/ui/Alert';
 import { Button } from '../components/ui/Button';
@@ -200,7 +201,7 @@ export function ReflectorPage(): ReactElement {
     onStartReflector,
     onStopReflector,
     isStartingReflector,
-    isStoppingReflector,
+    reflectorStopOutcome,
     reflectorStartError,
   } = useAppContext();
   const capabilities = useCapabilities();
@@ -208,6 +209,7 @@ export function ReflectorPage(): ReactElement {
 
   const selectedIface = interfaces.find((i) => i.name === selectedInterface);
   const reflectorRunning = stats.testStatus === 'running' || stats.testStatus === 'starting';
+  const isStoppingReflector = reflectorStopOutcome.kind === 'stopping';
   const { supported: reflectorSupported, reason: platformReasonRaw } = capabilities.reflector;
   const platformReason = platformReasonRaw ?? '';
   const unsupportedTooltip = t('role.platform.startDisabledTooltip');
@@ -322,6 +324,8 @@ export function ReflectorPage(): ReactElement {
               )}
             </button>
           )}
+
+          <StopOutcomeMessage outcome={reflectorStopOutcome} />
 
           {reflectorStartError ? (
             <div
