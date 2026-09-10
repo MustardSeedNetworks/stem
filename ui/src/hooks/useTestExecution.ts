@@ -211,6 +211,10 @@ export interface UseTestExecution {
   interfaces: InterfaceInfo[];
   selectedInterface: string;
   setSelectedInterface: (name: string) => void;
+  peer: string;
+  setPeer: (peer: string) => void;
+  peerPort: number;
+  setPeerPort: (port: number) => void;
   stats: Stats;
   testResult: TestResult | null;
   testProgress: ReturnType<typeof useTestProgress>;
@@ -264,6 +268,8 @@ export function useTestExecution(): UseTestExecution {
   );
   const [testResult, setTestResult] = useState<TestResult | null>(null);
   const [selectedInterface, setSelectedInterface] = useState<string>('');
+  const [peer, setPeer] = useState<string>('');
+  const [peerPort, setPeerPort] = useState<number>(3842);
 
   // Helper: Select best interface by score or keep current
   const selectBestInterface = useCallback((interfaceData: InterfaceInfo[]): void => {
@@ -403,6 +409,8 @@ export function useTestExecution(): UseTestExecution {
         method: 'POST',
         body: JSON.stringify({
           interface: selectedInterface,
+          peer: mode === 'test_master' ? peer.trim() : undefined,
+          peerPort: mode === 'test_master' ? peerPort : undefined,
           profile: tests.some((step) => step.testType === 'reflect') ? reflectorProfile : undefined,
           tests,
         }),
@@ -428,6 +436,8 @@ export function useTestExecution(): UseTestExecution {
     }
   }, [
     mode,
+    peer,
+    peerPort,
     reflectorProfile,
     isAuthenticated,
     t,
@@ -523,6 +533,10 @@ export function useTestExecution(): UseTestExecution {
     interfaces,
     selectedInterface,
     setSelectedInterface,
+    peer,
+    setPeer,
+    peerPort,
+    setPeerPort,
     stats,
     testResult,
     testProgress,

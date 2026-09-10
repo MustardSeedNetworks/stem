@@ -371,6 +371,19 @@ void rfc2544_get_ips(const rfc2544_ctx_t *ctx, uint32_t *src_ip, uint32_t *dst_i
     }
 }
 
+void rfc2544_get_ports(const rfc2544_ctx_t *ctx, uint16_t *source_port, uint16_t *remote_port)
+{
+    if (!ctx) {
+        return;
+    }
+    if (source_port) {
+        *source_port = ctx->source_port;
+    }
+    if (remote_port) {
+        *remote_port = ctx->remote_port;
+    }
+}
+
 bool rfc2544_is_cancelled(const rfc2544_ctx_t *ctx)
 {
     return ctx ? ctx->cancel_requested : true;
@@ -486,6 +499,20 @@ int rfc2544_configure(rfc2544_ctx_t *ctx, const rfc2544_config_t *config)
         ctx->config.resolution_pct = 0.01;
     }
 
+    return 0;
+}
+
+int rfc2544_set_peer(rfc2544_ctx_t *ctx, const uint8_t *remote_mac, const uint8_t *local_ip,
+                     const uint8_t *remote_ip, uint16_t source_port, uint16_t remote_port)
+{
+    if (!ctx || !remote_mac || !local_ip || !remote_ip || remote_port == 0) {
+        return -EINVAL;
+    }
+    memcpy(ctx->remote_mac, remote_mac, sizeof(ctx->remote_mac));
+    memcpy(&ctx->local_ip, local_ip, sizeof(ctx->local_ip));
+    memcpy(&ctx->remote_ip, remote_ip, sizeof(ctx->remote_ip));
+    ctx->source_port = source_port;
+    ctx->remote_port = remote_port;
     return 0;
 }
 
@@ -824,22 +851,9 @@ int run_trial(rfc2544_ctx_t *ctx, uint32_t frame_size, double rate_pct, uint32_t
         return -ENOMEM;
     }
 
-    /* Default addresses - in real use, would be configured */
-    uint8_t  src_mac[6] = {0x02, 0x00, 0x00, 0x00, 0x00, 0x01};
-    uint8_t  dst_mac[6] = {0x02, 0x00, 0x00, 0x00, 0x00, 0x02};
-    uint32_t src_ip     = htonl(0x0A000001); /* 10.0.0.1 */
-    uint32_t dst_ip     = htonl(0x0A000002); /* 10.0.0.2 */
-
-    /* Use configured MAC if available */
-    if (ctx->local_mac[0] || ctx->local_mac[1] || ctx->local_mac[2]) {
-        memcpy(src_mac, ctx->local_mac, 6);
-    }
-    if (ctx->remote_mac[0] || ctx->remote_mac[1] || ctx->remote_mac[2]) {
-        memcpy(dst_mac, ctx->remote_mac, 6);
-    }
-
     rfc2544_payload_t *payload = rfc2544_create_packet_template(
-        pkt_buffer, packet_size, src_mac, dst_mac, src_ip, dst_ip, 12345, 3842, 0);
+        pkt_buffer, packet_size, ctx->local_mac, ctx->remote_mac, ctx->local_ip, ctx->remote_ip,
+        ctx->source_port, ctx->remote_port, 0);
 
     if (!payload) {
         free(pkt_buffer);
@@ -1051,24 +1065,10 @@ int run_trial_custom(rfc2544_ctx_t *ctx, uint32_t frame_size, double rate_pct,
         return -ENOMEM;
     }
 
-    /* Default addresses - in real use, would be configured */
-    uint8_t  src_mac[6] = {0x02, 0x00, 0x00, 0x00, 0x00, 0x01};
-    uint8_t  dst_mac[6] = {0x02, 0x00, 0x00, 0x00, 0x00, 0x02};
-    uint32_t src_ip     = htonl(0x0A000001); /* 10.0.0.1 */
-    uint32_t dst_ip     = htonl(0x0A000002); /* 10.0.0.2 */
-
-    /* Use configured MAC if available */
-    if (ctx->local_mac[0] || ctx->local_mac[1] || ctx->local_mac[2]) {
-        memcpy(src_mac, ctx->local_mac, 6);
-    }
-    if (ctx->remote_mac[0] || ctx->remote_mac[1] || ctx->remote_mac[2]) {
-        memcpy(dst_mac, ctx->remote_mac, 6);
-    }
-
     /* Create packet with custom signature */
-    custom_payload_t *payload =
-        custom_create_packet_template(pkt_buffer, frame_size, src_mac, dst_mac, src_ip, dst_ip,
-                                      12345, 3842, stream_id, signature);
+    custom_payload_t *payload = custom_create_packet_template(
+        pkt_buffer, frame_size, ctx->local_mac, ctx->remote_mac, ctx->local_ip, ctx->remote_ip,
+        ctx->source_port, ctx->remote_port, stream_id, signature);
 
     if (!payload) {
         free(pkt_buffer);

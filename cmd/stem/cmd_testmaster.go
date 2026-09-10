@@ -36,6 +36,8 @@ type testCmdParams struct {
 // testCmdFlags holds parsed command line flags for test command.
 type testCmdFlags struct {
 	iface        string
+	peer         string
+	peerPort     uint16
 	testTypes    string
 	duration     int
 	frameSizes   string
@@ -132,6 +134,16 @@ func parseTestFlags(args []string) (*testCmdFlags, error) {
 	// Basic options.
 	iface := fs.String("interface", "", "Network interface")
 	fs.StringVar(iface, "i", "", "Network interface (shorthand)")
+	peer := fs.String("peer", "", "Reflector host or IPv4 address")
+	peerPort := uint16(defaultPeerPort)
+	fs.Func("peer-port", "Reflector UDP port", func(value string) error {
+		parsed, err := strconv.ParseUint(value, 10, 16)
+		if err != nil {
+			return fmt.Errorf("invalid reflector UDP port: %w", err)
+		}
+		peerPort = uint16(parsed)
+		return nil
+	})
 	testTypes := fs.String("type", testTypeThroughput, "Test type(s), comma-separated")
 	fs.StringVar(testTypes, "t", testTypeThroughput, "Test type (shorthand)")
 	duration := fs.Int("duration", defaultTestDuration, "Test duration in seconds")
@@ -173,6 +185,8 @@ func parseTestFlags(args []string) (*testCmdFlags, error) {
 
 	return &testCmdFlags{
 		iface:        *iface,
+		peer:         *peer,
+		peerPort:     peerPort,
 		testTypes:    *testTypes,
 		duration:     *duration,
 		frameSizes:   *frameSizes,
@@ -193,6 +207,8 @@ func parseTestFlags(args []string) (*testCmdFlags, error) {
 func createTestConfig(flags *testCmdFlags) *testmasterDP.Config {
 	return &testmasterDP.Config{
 		Interface:      flags.iface,
+		Peer:           flags.peer,
+		PeerPort:       flags.peerPort,
 		LineRate:       0,
 		AutoDetect:     true,
 		TestType:       testmasterDP.TestThroughput,
@@ -248,14 +264,9 @@ func testCmd(args []string) error {
 		_, _ = fmt.Fprintln(os.Stdout, "Error: --interface is required")
 		return errors.New("missing interface")
 	}
-
-	// Validate test types.
-	tests := strings.Split(flags.testTypes, ",")
-	for i, t := range tests {
-		tests[i] = strings.TrimSpace(t)
-	}
-	if !validateTestTypesList(tests) {
-		return errors.New("invalid test types")
+	tests, validationErr := validateTestCommand(flags)
+	if validationErr != nil {
+		return validationErr
 	}
 
 	// Check license.
@@ -274,6 +285,7 @@ func testCmd(args []string) error {
 		flags.iface, flags.testTypes, flags.frameSizes,
 		flags.duration, flags.resolution, flags.maxLoss, flags.warmup,
 	)
+	_, _ = fmt.Fprintf(os.Stdout, "Peer:         %s:%d\n", flags.peer, flags.peerPort)
 
 	// Create and configure dataplane context.
 	ctx, ctxErr := testmasterDP.NewContext(flags.iface)
@@ -329,4 +341,30 @@ func testCmd(args []string) error {
 	_, _ = fmt.Fprintln(os.Stdout, "\nTest run complete.")
 
 	return nil
+}
+
+func validatePeerFlags(flags *testCmdFlags) error {
+	if flags.peer == "" {
+		_, _ = fmt.Fprintln(os.Stdout, "Error: --peer is required")
+		return errors.New("missing peer")
+	}
+	if flags.peerPort == 0 {
+		_, _ = fmt.Fprintln(os.Stdout, "Error: --peer-port must be between 1 and 65535")
+		return errors.New("invalid peer port")
+	}
+	return nil
+}
+
+func validateTestCommand(flags *testCmdFlags) ([]string, error) {
+	tests := strings.Split(flags.testTypes, ",")
+	for i, testType := range tests {
+		tests[i] = strings.TrimSpace(testType)
+	}
+	if !validateTestTypesList(tests) {
+		return nil, errors.New("invalid test types")
+	}
+	if err := validatePeerFlags(flags); err != nil {
+		return nil, err
+	}
+	return tests, nil
 }

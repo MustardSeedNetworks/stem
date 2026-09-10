@@ -134,6 +134,10 @@ function AppContent(): ReactElement {
                 mode={mode}
                 selectedInterface={exec.selectedInterface}
                 setSelectedInterface={exec.setSelectedInterface}
+                peer={exec.peer}
+                setPeer={exec.setPeer}
+                peerPort={exec.peerPort}
+                setPeerPort={exec.setPeerPort}
                 interfaces={exec.interfaces}
                 stats={exec.stats}
                 isStartingTest={exec.isStartingTest}

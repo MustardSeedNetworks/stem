@@ -322,13 +322,16 @@ static int y1564_run_step(rfc2544_ctx_t *ctx, const y1564_service_t *service, do
     uint8_t  dst_mac[6];
     uint32_t src_ip;
     uint32_t dst_ip;
+    uint16_t source_port;
+    uint16_t remote_port;
     rfc2544_get_macs(ctx, src_mac, dst_mac);
     rfc2544_get_ips(ctx, &src_ip, &dst_ip);
+    rfc2544_get_ports(ctx, &source_port, &remote_port);
 
     /* Create Y.1564 packet with service DSCP marking */
     y1564_payload_t *payload =
         y1564_create_packet_template(pkt_buffer, frame_size, src_mac, dst_mac, src_ip, dst_ip,
-                                     12345, 3842, service->service_id, service->cos);
+                                     source_port, remote_port, service->service_id, service->cos);
     if (!payload) {
         free(pkt_buffer);
         return -EINVAL;

@@ -38,6 +38,10 @@ export interface TopBarProps {
   mode: StemRole;
   selectedInterface: string;
   setSelectedInterface: (name: string) => void;
+  peer: string;
+  setPeer: (peer: string) => void;
+  peerPort: number;
+  setPeerPort: (port: number) => void;
   interfaces: InterfaceInfo[];
   stats: Stats;
   isStartingTest: boolean;
@@ -57,6 +61,10 @@ export function TopBar({
   mode,
   selectedInterface,
   setSelectedInterface,
+  peer,
+  setPeer,
+  peerPort,
+  setPeerPort,
   interfaces,
   stats,
   isStartingTest,
@@ -150,6 +158,27 @@ export function TopBar({
             ))}
           </select>
 
+          <input
+            data-testid="peer-input"
+            value={peer}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setPeer(e.target.value)}
+            className="w-48"
+            placeholder={t('accessibility.peerHost')}
+            aria-label={t('accessibility.peerHost')}
+          />
+          <input
+            data-testid="peer-port-input"
+            type="number"
+            min={1}
+            max={65535}
+            value={peerPort}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+              setPeerPort(Number(e.target.value))
+            }
+            className="w-28"
+            aria-label={t('accessibility.peerPort')}
+          />
+
           {stats.testStatus === 'running' || stats.testStatus === 'starting' ? (
             <button
               type="button"
@@ -177,7 +206,13 @@ export function TopBar({
               data-testid="start-test-button"
               onClick={onStartTest}
               className="btn btn-primary"
-              disabled={!selectedInterface || isStartingTest}
+              disabled={
+                !selectedInterface ||
+                !peer.trim() ||
+                peerPort < 1 ||
+                peerPort > 65535 ||
+                isStartingTest
+              }
               aria-busy={isStartingTest}
             >
               {isStartingTest ? (

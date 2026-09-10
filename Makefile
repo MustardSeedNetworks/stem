@@ -150,11 +150,11 @@ endif
 CFLAGS := -D_GNU_SOURCE -D_DEFAULT_SOURCE -std=c23 -Wall -Wextra -Wpedantic -O3 -march=native -pthread -Iinclude
 C_LDFLAGS := -pthread -lm
 
-# C sources - both dataplane and reflector (excluding main.c)
+# C sources - both dataplane and reflector.
 C_DATAPLANE_SRCS := $(wildcard src/dataplane/common/*.c) \
 	$(wildcard src/dataplane/linux_packet/*.c) \
 	$(wildcard src/dataplane/linux_xdp/*.c)
-C_TEST_DATAPLANE_SRCS := $(filter-out src/dataplane/common/main.c,$(C_DATAPLANE_SRCS))
+C_TEST_DATAPLANE_SRCS := $(C_DATAPLANE_SRCS)
 C_REFLECTOR_SRCS := $(filter-out src/reflector/main.c,$(wildcard src/reflector/*.c))
 C_ALL_SRCS := $(C_DATAPLANE_SRCS) $(C_REFLECTOR_SRCS)
 C_ALL_OBJS := $(C_ALL_SRCS:.c=.o)

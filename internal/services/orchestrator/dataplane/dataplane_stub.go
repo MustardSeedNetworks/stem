@@ -540,6 +540,8 @@ type TrafficGenResult struct {
 // Config holds dataplane test configuration parameters.
 type Config struct {
 	Interface      string
+	Peer           string
+	PeerPort       uint16
 	LineRate       uint64
 	AutoDetect     bool
 	TestType       TestType
@@ -555,6 +557,20 @@ type Config struct {
 	MeasureLatency bool
 	UsePacing      bool
 	BatchSize      uint32
+}
+
+// PeerConfig preserves the dataplane defaults while directing traffic to a reflector.
+func PeerConfig(iface, peer string, peerPort uint16) Config {
+	const defaultBatchSize = 32
+
+	return Config{
+		Interface:   iface,
+		Peer:        peer,
+		PeerPort:    peerPort,
+		HWTimestamp: true,
+		UsePacing:   true,
+		BatchSize:   defaultBatchSize,
+	}
 }
 
 // Context holds the test execution context and state.

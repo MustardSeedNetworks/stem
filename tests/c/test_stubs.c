@@ -50,6 +50,13 @@ void rfc2544_get_ips(rfc2544_ctx_t *ctx, uint32_t *src, uint32_t *dst)
     (void)dst;
 }
 
+void rfc2544_get_ports(const rfc2544_ctx_t *ctx, uint16_t *source_port, uint16_t *remote_port)
+{
+    (void)ctx;
+    *source_port = 12345;
+    *remote_port = 3842;
+}
+
 void rfc2544_log(rfc2544_ctx_t *ctx, const char *fmt, ...)
 {
     (void)ctx;

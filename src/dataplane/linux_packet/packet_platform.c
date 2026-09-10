@@ -85,8 +85,7 @@ static int enable_hw_timestamping(platform_ctx_t *pctx, const char *ifname)
     memset(&ifr, 0, sizeof(ifr));
     memset(&hwconfig, 0, sizeof(hwconfig));
 
-    strncpy(ifr.ifr_name, ifname, IFNAMSIZ - 1);
-    ifr.ifr_name[IFNAMSIZ - 1] = '\0'; /* Ensure null-termination */
+    memcpy(ifr.ifr_name, ifname, strnlen(ifname, sizeof(ifr.ifr_name) - 1));
 
     /* Request hardware TX and RX timestamps */
     hwconfig.tx_type   = HWTSTAMP_TX_ON;
@@ -203,8 +202,8 @@ static int packet_init(rfc2544_ctx_t *ctx, worker_ctx_t *wctx)
     /* Get interface MAC address */
     struct ifreq ifr;
     memset(&ifr, 0, sizeof(ifr));
-    strncpy(ifr.ifr_name, ctx->config.interface, IFNAMSIZ - 1);
-    ifr.ifr_name[IFNAMSIZ - 1] = '\0'; /* Ensure null-termination */
+    memcpy(ifr.ifr_name, ctx->config.interface,
+           strnlen(ctx->config.interface, sizeof(ifr.ifr_name) - 1));
     if (ioctl(pctx->sock_fd, SIOCGIFHWADDR, &ifr) < 0) {
         perror("ioctl SIOCGIFHWADDR");
         close(pctx->sock_fd);

@@ -313,12 +313,12 @@ func populateRFC2544Params(modCfg *modtypes.TestConfig, c *RFC2544TestConfig) {
 		modCfg.FrameSize = c.FrameSizes[0]
 	}
 	modCfg.Params["duration"] = c.Duration
-	modCfg.Params["frameSizes"] = c.FrameSizes
+	modCfg.Params["frame_sizes"] = c.FrameSizes
 	modCfg.Params["resolution"] = c.Resolution
-	modCfg.Params["maxLoss"] = c.MaxLoss
+	modCfg.Params["max_loss"] = c.MaxLoss
 	modCfg.Params["warmup"] = c.Warmup
 	modCfg.Params["trials"] = c.Trials
-	modCfg.Params["stepSize"] = c.StepSize
+	modCfg.Params["step_size"] = c.StepSize
 	modCfg.Params["bidirectional"] = c.Bidirectional
 }
 
@@ -326,24 +326,24 @@ func populateRFC2544Params(modCfg *modtypes.TestConfig, c *RFC2544TestConfig) {
 func populateRFC2889Params(modCfg *modtypes.TestConfig, c *RFC2889TestConfig) {
 	modCfg.FrameSize = c.FrameSize
 	modCfg.Duration = int(c.Duration)
-	modCfg.Params["frameSize"] = c.FrameSize
-	modCfg.Params["duration"] = c.Duration
-	modCfg.Params["warmup"] = c.Warmup
-	modCfg.Params["addressCount"] = c.AddressCount
-	modCfg.Params["acceptableLoss"] = c.AcceptableLoss
-	modCfg.Params["portCount"] = c.PortCount
+	modCfg.Params["frame_size"] = c.FrameSize
+	modCfg.Params["duration_sec"] = c.Duration
+	modCfg.Params["warmup_sec"] = c.Warmup
+	modCfg.Params["address_count"] = c.AddressCount
+	modCfg.Params["acceptable_loss_pct"] = c.AcceptableLoss
+	modCfg.Params["port_count"] = c.PortCount
 	modCfg.Params["pattern"] = c.Pattern
 }
 
 // populateRFC6349Params populates the params map with RFC 6349 config.
 func populateRFC6349Params(modCfg *modtypes.TestConfig, c *RFC6349TestConfig) {
 	modCfg.Duration = int(c.Duration)
-	modCfg.Params["targetRateMbps"] = c.TargetRateMbps
-	modCfg.Params["minRTTMs"] = c.MinRTTMs
-	modCfg.Params["maxRTTMs"] = c.MaxRTTMs
-	modCfg.Params["rwndSize"] = c.RWNDSize
-	modCfg.Params["duration"] = c.Duration
-	modCfg.Params["parallelStreams"] = c.ParallelStreams
+	modCfg.Params["target_rate_mbps"] = c.TargetRateMbps
+	modCfg.Params["min_rtt_ms"] = c.MinRTTMs
+	modCfg.Params["max_rtt_ms"] = c.MaxRTTMs
+	modCfg.Params["rwnd_size"] = c.RWNDSize
+	modCfg.Params["duration_sec"] = c.Duration
+	modCfg.Params["parallel_streams"] = c.ParallelStreams
 	modCfg.Params["mss"] = c.MSS
 	modCfg.Params["mode"] = c.Mode
 }
@@ -358,66 +358,66 @@ func populateY1564Params(modCfg *modtypes.TestConfig, c *Y1564TestConfig) {
 	modCfg.Params["eir"] = c.EIR
 	modCfg.Params["cbs"] = c.CBS
 	modCfg.Params["ebs"] = c.EBS
-	modCfg.Params["frameSizes"] = c.FrameSizes
-	modCfg.Params["configStepDuration"] = c.ConfigStepDuration
-	modCfg.Params["perfTestDuration"] = c.PerfTestDuration
-	modCfg.Params["vlanId"] = c.VlanID
-	modCfg.Params["pcp"] = c.PCP
-	modCfg.Params["colorAware"] = c.ColorAware
-	modCfg.Params["flrThreshold"] = c.FLRThreshold
-	modCfg.Params["fdThreshold"] = c.FDThreshold
-	modCfg.Params["fdvThreshold"] = c.FDVThreshold
+	modCfg.Params["frame_sizes"] = c.FrameSizes
+	modCfg.Params["config_duration_sec"] = c.ConfigStepDuration
+	modCfg.Params["perf_duration_sec"] = c.PerfTestDuration
+	modCfg.Params["vlan_id"] = c.VlanID
+	modCfg.Params["cos"] = c.PCP
+	modCfg.Params["color_aware"] = c.ColorAware
+	modCfg.Params["flr_threshold_pct"] = c.FLRThreshold
+	modCfg.Params["fd_threshold_ms"] = c.FDThreshold
+	modCfg.Params["fdv_threshold_ms"] = c.FDVThreshold
 }
 
 // populateY1731Params populates the params map with Y.1731 config.
 func populateY1731Params(modCfg *modtypes.TestConfig, c *Y1731TestConfig) {
 	modCfg.Duration = int(c.Duration)
 	modCfg.FrameSize = c.FrameSize
-	modCfg.Params["mepId"] = c.MepID
-	modCfg.Params["megLevel"] = c.MegLevel
-	modCfg.Params["megId"] = c.MegID
-	modCfg.Params["ccmInterval"] = c.CCMInterval
+	modCfg.Params["mep_id"] = c.MepID
+	modCfg.Params["meg_level"] = c.MegLevel
+	modCfg.Params["meg_id"] = c.MegID
+	modCfg.Params["ccm_interval"] = c.CCMInterval
 	modCfg.Params["priority"] = c.Priority
 	modCfg.Params["duration"] = c.Duration
-	modCfg.Params["intervalMs"] = c.IntervalMs
+	modCfg.Params["interval_ms"] = c.IntervalMs
 	modCfg.Params["count"] = c.Count
-	modCfg.Params["frameSize"] = c.FrameSize
-	modCfg.Params["priorityTagged"] = c.PriorityTagged
+	modCfg.Params["frame_size"] = c.FrameSize
+	modCfg.Params["priority_tagged"] = c.PriorityTagged
 }
 
 // populateTSNParams populates the params map with TSN config.
 func populateTSNParams(modCfg *modtypes.TestConfig, c *TSNTestConfig) {
 	modCfg.Duration = int(c.Duration)
 	modCfg.FrameSize = c.FrameSize
-	modCfg.Params["duration"] = c.Duration
-	modCfg.Params["warmup"] = c.Warmup
-	modCfg.Params["frameSize"] = c.FrameSize
-	modCfg.Params["maxLatencyNs"] = c.MaxLatencyNs
-	modCfg.Params["maxJitterNs"] = c.MaxJitterNs
-	modCfg.Params["requirePTPSync"] = c.RequirePTPSync
-	modCfg.Params["maxSyncOffsetNs"] = c.MaxSyncOffsetNs
-	modCfg.Params["ptpEnabled"] = c.PTPEnabled
-	modCfg.Params["preemptionEnabled"] = c.PreemptionEnabled
-	modCfg.Params["numTrafficClasses"] = c.NumTrafficClasses
-	modCfg.Params["baseTimeNs"] = c.BaseTimeNs
-	modCfg.Params["cycleTimeNs"] = c.CycleTimeNs
-	modCfg.Params["trafficClass"] = c.TrafficClass
+	modCfg.Params["duration_sec"] = c.Duration
+	modCfg.Params["warmup_sec"] = c.Warmup
+	modCfg.Params["frame_size"] = c.FrameSize
+	modCfg.Params["max_latency_ns"] = c.MaxLatencyNs
+	modCfg.Params["max_jitter_ns"] = c.MaxJitterNs
+	modCfg.Params["require_ptp_sync"] = c.RequirePTPSync
+	modCfg.Params["max_sync_offset_ns"] = c.MaxSyncOffsetNs
+	modCfg.Params["ptp_enabled"] = c.PTPEnabled
+	modCfg.Params["preemption_enabled"] = c.PreemptionEnabled
+	modCfg.Params["num_traffic_classes"] = c.NumTrafficClasses
+	modCfg.Params["base_time_ns"] = c.BaseTimeNs
+	modCfg.Params["cycle_time_ns"] = c.CycleTimeNs
+	modCfg.Params["traffic_class"] = c.TrafficClass
 }
 
 // populateTrafficGenParams populates the params map with TrafficGen config.
 func populateTrafficGenParams(modCfg *modtypes.TestConfig, c *TrafficGenTestConfig) {
 	modCfg.Duration = int(c.Duration)
 	modCfg.FrameSize = c.FrameSize
-	modCfg.Params["frameSize"] = c.FrameSize
-	modCfg.Params["ratePct"] = c.RatePct
-	modCfg.Params["duration"] = c.Duration
-	modCfg.Params["warmup"] = c.Warmup
-	modCfg.Params["streamId"] = c.StreamID
-	modCfg.Params["burstMode"] = c.BurstMode
-	modCfg.Params["burstSize"] = c.BurstSize
-	modCfg.Params["interBurstGapUs"] = c.InterBurstGapUs
-	modCfg.Params["srcMac"] = c.SrcMac
-	modCfg.Params["dstMac"] = c.DstMac
-	modCfg.Params["vlanId"] = c.VlanID
-	modCfg.Params["vlanPriority"] = c.VlanPriority
+	modCfg.Params["frame_size"] = c.FrameSize
+	modCfg.Params["rate_pct"] = c.RatePct
+	modCfg.Params["duration_sec"] = c.Duration
+	modCfg.Params["warmup_sec"] = c.Warmup
+	modCfg.Params["stream_id"] = c.StreamID
+	modCfg.Params["burst_mode"] = c.BurstMode
+	modCfg.Params["burst_size"] = c.BurstSize
+	modCfg.Params["inter_burst_gap_us"] = c.InterBurstGapUs
+	modCfg.Params["src_mac"] = c.SrcMac
+	modCfg.Params["dst_mac"] = c.DstMac
+	modCfg.Params["vlan_id"] = c.VlanID
+	modCfg.Params["vlan_priority"] = c.VlanPriority
 }

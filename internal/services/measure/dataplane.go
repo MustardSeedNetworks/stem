@@ -17,6 +17,7 @@ import "github.com/MustardSeedNetworks/stem/internal/services/orchestrator/datap
 // stub build for other platforms) already satisfies this interface — see
 // internal/services/orchestrator/dataplane.
 type Y1731Dataplane interface {
+	Configure(cfg *dataplane.Config) error
 	RunY1731DelayTest(cfg *dataplane.Y1731Config) (*dataplane.Y1731DelayResult, error)
 	RunY1731LossTest(cfg *dataplane.Y1731Config) (*dataplane.Y1731LossResult, error)
 	RunY1731SyntheticLossTest(cfg *dataplane.Y1731Config) (*dataplane.Y1731LossResult, error)

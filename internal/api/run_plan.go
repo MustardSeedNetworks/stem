@@ -5,10 +5,12 @@ package api
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/MustardSeedNetworks/stem/internal/logging"
 	"github.com/MustardSeedNetworks/stem/internal/services"
+	"github.com/MustardSeedNetworks/stem/internal/services/modtypes"
 )
 
 const (
@@ -21,6 +23,8 @@ const (
 
 type runPlan struct {
 	ID              string
+	Peer            string
+	PeerPort        uint16
 	Steps           []RunPlanStep
 	Current         int
 	Complete        int
@@ -29,24 +33,28 @@ type runPlan struct {
 	StepEstimateSec *int64
 }
 
-func newRunPlan(id string, requests []TestStepRequest) (*runPlan, error) {
-	if len(requests) == 0 {
+func newRunPlan(id string, request TestStartRequest) (*runPlan, error) {
+	if len(request.Tests) == 0 {
 		return nil, errors.New("select at least one test")
 	}
-	steps := make([]RunPlanStep, len(requests))
-	for i, request := range requests {
-		module := services.GetModuleForTest(request.TestType)
-		if module == nil || !module.CanRun(request.TestType) {
-			return nil, fmt.Errorf("unknown test type: %s", request.TestType)
+	steps := make([]RunPlanStep, len(request.Tests))
+	for i, stepRequest := range request.Tests {
+		module := services.GetModuleForTest(stepRequest.TestType)
+		if module == nil || !module.CanRun(stepRequest.TestType) {
+			return nil, fmt.Errorf("unknown test type: %s", stepRequest.TestType)
 		}
 		steps[i] = RunPlanStep{
-			TestType: request.TestType,
+			TestType: stepRequest.TestType,
 			Module:   module.Name(),
 			Status:   stepPending,
-			Config:   request.Config,
+			Config:   stepRequest.Config,
 		}
 	}
-	return &runPlan{ID: id, Steps: steps, Current: -1}, nil
+	peerPort := request.PeerPort
+	if peerPort == 0 {
+		peerPort = DefaultPortFilter
+	}
+	return &runPlan{ID: id, Peer: strings.TrimSpace(request.Peer), PeerPort: peerPort, Steps: steps, Current: -1}, nil
 }
 
 func (s *Server) runTestPlan(runID uint64, iface string) {
@@ -112,12 +120,13 @@ func (s *Server) executePlanStep(
 		s.statsMu.Unlock()
 		return nil, errors.New("run plan cancelled")
 	}
+	plan := s.runPlan
 	s.activeTestExec = exec
 	s.statsMu.Unlock()
 
 	result, execErr := exec.Execute(
 		step.TestType,
-		convertToModuleConfig(iface, step.TestType, step.Config),
+		plan.moduleConfig(iface, step),
 	)
 	if result == nil {
 		return nil, execErr
@@ -131,6 +140,13 @@ func (s *Server) executePlanStep(
 		Data:     result.Data,
 	}
 	return response, execErr
+}
+
+func (p *runPlan) moduleConfig(iface string, step RunPlanStep) *modtypes.TestConfig {
+	cfg := convertToModuleConfig(iface, step.TestType, step.Config)
+	cfg.Peer = p.Peer
+	cfg.PeerPort = p.PeerPort
+	return cfg
 }
 
 func (s *Server) finishPlanStep(

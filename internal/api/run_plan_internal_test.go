@@ -7,6 +7,21 @@ import (
 	"time"
 )
 
+func TestRunPlanCarriesPeerIntoModuleConfig(t *testing.T) {
+	plan, err := newRunPlan("stem-1", TestStartRequest{
+		Peer:     "198.51.100.7",
+		PeerPort: 4842,
+		Tests:    []TestStepRequest{{TestType: "rfc2544_throughput"}},
+	})
+	if err != nil {
+		t.Fatalf("newRunPlan: %v", err)
+	}
+	cfg := plan.moduleConfig("eth7", plan.Steps[0])
+	if cfg.Interface != "eth7" || cfg.Peer != "198.51.100.7" || cfg.PeerPort != 4842 {
+		t.Fatalf("module config = interface %q peer %s:%d", cfg.Interface, cfg.Peer, cfg.PeerPort)
+	}
+}
+
 func TestRunPlanDescribe(t *testing.T) {
 	twoSteps := []RunPlanStep{
 		{TestType: "rfc2544_throughput", Module: "benchmark", Status: stepPassed},

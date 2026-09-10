@@ -18,7 +18,6 @@ package dataplane
 
 // Forward declarations for C types
 typedef struct rfc2544_ctx rfc2544_ctx_t;
-
 // Test types
 typedef enum {
     TEST_THROUGHPUT = 0,
@@ -31,7 +30,6 @@ typedef enum {
     TEST_Y1564_PERF = 7,
     TEST_Y1564_FULL = 8
 } test_type_t;
-
 // Test state
 typedef enum {
     STATE_IDLE = 0,
@@ -40,14 +38,12 @@ typedef enum {
     STATE_FAILED = 3,
     STATE_CANCELLED = 4
 } test_state_t;
-
 // Stats format
 typedef enum {
     STATS_FORMAT_TEXT = 0,
     STATS_FORMAT_JSON = 1,
     STATS_FORMAT_CSV = 2
 } stats_format_t;
-
 // Latency stats
 typedef struct {
     uint64_t count;
@@ -59,7 +55,6 @@ typedef struct {
     double p95_ns;
     double p99_ns;
 } latency_stats_t;
-
 // Throughput result
 typedef struct {
     uint32_t frame_size;
@@ -70,7 +65,6 @@ typedef struct {
     uint32_t iterations;
     latency_stats_t latency;
 } throughput_result_t;
-
 // Frame loss point
 typedef struct {
     double offered_rate_pct;
@@ -79,14 +73,12 @@ typedef struct {
     uint64_t frames_recv;
     double loss_pct;
 } frame_loss_point_t;
-
 // Latency result
 typedef struct {
     uint32_t frame_size;
     double offered_rate_pct;
     latency_stats_t latency;
 } latency_result_t;
-
 // Burst result
 typedef struct {
     uint32_t frame_size;
@@ -94,7 +86,6 @@ typedef struct {
     double burst_duration;
     uint32_t trials;
 } burst_result_t;
-
 // System recovery result (Section 26.5)
 typedef struct {
     uint32_t frame_size;
@@ -105,7 +96,6 @@ typedef struct {
     uint64_t frames_lost;
     uint32_t trials;
 } recovery_result_t;
-
 // Reset result (Section 26.6)
 typedef struct {
     uint32_t frame_size;
@@ -114,7 +104,6 @@ typedef struct {
     uint32_t trials;
     bool manual_reset;
 } reset_result_t;
-
 // Y.1564 SLA parameters
 typedef struct {
     double cir_mbps;
@@ -125,7 +114,6 @@ typedef struct {
     double fdv_threshold_ms;
     double flr_threshold_pct;
 } y1564_sla_t;
-
 // Y.1564 Service configuration
 typedef struct {
     uint32_t service_id;
@@ -757,6 +745,9 @@ static stem_rfc2544_init_result_t stem_rfc2544_initialize(const char *interface)
     return result;
 }
 extern int rfc2544_configure(rfc2544_ctx_t *ctx, const rfc2544_config_t *config);
+extern int rfc2544_set_peer(rfc2544_ctx_t *ctx, const uint8_t *remote_mac,
+                            const uint8_t *local_ip, const uint8_t *remote_ip,
+                            uint16_t source_port, uint16_t remote_port);
 extern int rfc2544_run(rfc2544_ctx_t *ctx);
 extern void rfc2544_cancel(rfc2544_ctx_t *ctx);
 extern test_state_t rfc2544_get_state(const rfc2544_ctx_t *ctx);
@@ -919,6 +910,15 @@ func (c *Context) Configure(cfg *Config) error {
 
 	if ret := C.rfc2544_configure(c.ctx, ccfg); ret < 0 {
 		return fmt.Errorf("configure failed: %d", ret)
+	}
+	peer, err := resolvePeer(cfg.Interface, cfg.Peer, cfg.PeerPort)
+	if err != nil {
+		return err
+	}
+	if ret := C.rfc2544_set_peer(c.ctx, (*C.uint8_t)(&peer.remoteMAC[0]),
+		(*C.uint8_t)(&peer.localIP[0]), (*C.uint8_t)(&peer.remoteIP[0]),
+		C.uint16_t(peer.sourcePort), C.uint16_t(peer.remotePort)); ret < 0 {
+		return fmt.Errorf("configure peer failed: %d", ret)
 	}
 
 	return nil

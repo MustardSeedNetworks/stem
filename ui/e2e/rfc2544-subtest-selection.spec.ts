@@ -124,6 +124,7 @@ test.describe('RFC 2544 sub-test selection', () => {
     const iface = page.getByTestId('interface-select');
     await expect(iface.locator(`option[value="${STUB_INTERFACE.name}"]`)).toHaveCount(1);
     await iface.selectOption(STUB_INTERFACE.name);
+    await page.getByTestId('peer-input').fill('192.0.2.20');
 
     const start = page.getByTestId('start-test-button');
     await expect(start).toBeEnabled();
@@ -136,8 +137,12 @@ test.describe('RFC 2544 sub-test selection', () => {
     const body = startBody as {
       tests?: Array<{ testType: string; config?: unknown }>;
       interface?: string;
+      peer?: string;
+      peerPort?: number;
     };
     expect(body.interface).toBe(STUB_INTERFACE.name);
+    expect(body.peer).toBe('192.0.2.20');
+    expect(body.peerPort).toBe(3842);
     const rfc2544 = (body.tests ?? [])
       .map((step) => step.testType)
       .filter((id) => id.startsWith('rfc2544'));

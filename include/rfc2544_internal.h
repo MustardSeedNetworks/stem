@@ -54,6 +54,8 @@ struct rfc2544_ctx {
     uint8_t  remote_mac[6];
     uint32_t local_ip;
     uint32_t remote_ip;
+    uint16_t source_port;
+    uint16_t remote_port;
 
     /* Timing */
     struct timespec start_time;
@@ -82,6 +84,10 @@ struct rfc2544_ctx {
     uint32_t        latency_sample_capacity;
     pthread_mutex_t latency_lock;
 };
+
+int  rfc2544_set_peer(rfc2544_ctx_t *ctx, const uint8_t *remote_mac, const uint8_t *local_ip,
+                      const uint8_t *remote_ip, uint16_t source_port, uint16_t remote_port);
+void rfc2544_get_ports(const rfc2544_ctx_t *ctx, uint16_t *source_port, uint16_t *remote_port);
 
 /* Logging function (implemented in core.c) */
 void rfc2544_log(log_level_t level, const char *fmt, ...);

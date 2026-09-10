@@ -204,6 +204,8 @@ func (e *Executor) configureContext(cfg *modtypes.TestConfig) error {
 
 	dpCfg := &dataplane.Config{
 		Interface:      cfg.Interface,
+		Peer:           cfg.Peer,
+		PeerPort:       cfg.PeerPort,
 		LineRate:       0,
 		AutoDetect:     true,
 		TestType:       0,

@@ -123,6 +123,8 @@
     "switchToLightMode": "Cambiar a modo claro",
     "switchToDarkMode": "Cambiar a modo oscuro",
     "selectInterface": "Seleccionar interfaz de red",
+    "peerHost": "Host o dirección IPv4 del Reflector",
+    "peerPort": "Puerto UDP del Reflector",
     "selectModule": "Seleccionar modulo de prueba",
     "closeSettings": "Cerrar configuración",
     "openHistory": "Abrir historial de pruebas",

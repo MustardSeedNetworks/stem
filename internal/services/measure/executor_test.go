@@ -181,6 +181,8 @@ func TestExecutorExecuteValidTestTypes(t *testing.T) {
 
 	cfg := &modtypes.TestConfig{
 		Interface: "eth0",
+		Peer:      "198.51.100.9",
+		PeerPort:  4842,
 		FrameSize: 64,
 		Duration:  60,
 		Params:    nil,
@@ -210,6 +212,10 @@ func TestExecutorExecuteValidTestTypes(t *testing.T) {
 			}
 			if result.Data == nil {
 				t.Errorf("Result.Data should be populated by the mock dataplane")
+			}
+			peerConfig := mock.peerConfig.Load()
+			if peerConfig == nil || peerConfig.Peer != "198.51.100.9" || peerConfig.PeerPort != 4842 {
+				t.Errorf("peer config = %+v, want 198.51.100.9:4842", peerConfig)
 			}
 
 			// Verify the dispatcher routed to the correct dataplane method.
