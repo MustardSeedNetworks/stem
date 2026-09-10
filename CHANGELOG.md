@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.88](https://github.com/MustardSeedNetworks/stem/compare/v0.24.87...v0.24.88) (2026-09-10)
+
+
+### Bug Fixes
+
+* **ui:** make stop a request with an outcome, and send CSRF from authFetch ([#1141](https://github.com/MustardSeedNetworks/stem/issues/1141)) ([7c2b9fa](https://github.com/MustardSeedNetworks/stem/commit/7c2b9fadd54dd3b1946e23b6ce199eab1d63e965))
+
 ## [0.24.87](https://github.com/MustardSeedNetworks/stem/compare/v0.24.86...v0.24.87) (2026-09-10)
 
 
