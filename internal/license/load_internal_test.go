@@ -177,6 +177,33 @@ func TestLoadFromDirFailsClosedToFree(t *testing.T) {
 	}
 }
 
+func TestEffectiveTierReflectsActiveEntitlement(t *testing.T) {
+	tests := []struct {
+		name string
+		dir  func(*testing.T) string
+		want Tier
+	}{
+		{name: "fresh install", dir: dirWithNoLicence, want: TierReflector},
+		{name: "expired trial", dir: dirWithExpiredLicence, want: TierReflector},
+		{name: "active trial", dir: func(t *testing.T) string {
+			dir, _ := startedTrial(t)
+			return dir
+		}, want: TierProfessional},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mgr, _, err := LoadFromDir(tt.dir(t))
+			if err != nil {
+				t.Fatalf("LoadFromDir: %v", err)
+			}
+			if got := EffectiveTier(mgr); got != tt.want {
+				t.Errorf("EffectiveTier() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 // TestLoadFromDirReportsAUsableLicence is the control: the same call on a
 // state Stem can use reports StatusLoaded and grants the Pro catalog, so the
 // cases above fail closed because the state is unusable and not because

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/MustardSeedNetworks/stem/internal/api"
@@ -90,8 +91,11 @@ func TestUnlicensedTestStartIsPaymentRequired(t *testing.T) {
 			if resp.Code != "TIER_TOO_LOW" {
 				t.Errorf("code = %q, want TIER_TOO_LOW", resp.Code)
 			}
-			if resp.CurrentTier != license.TierInvalid.String() {
-				t.Errorf("currentTier = %q, want %q", resp.CurrentTier, license.TierInvalid.String())
+			if resp.CurrentTier != license.TierReflector.String() {
+				t.Errorf("currentTier = %q, want %q", resp.CurrentTier, license.TierReflector.String())
+			}
+			if !strings.Contains(resp.UpgradeMessage, "stem license --trial") {
+				t.Errorf("upgradeMessage = %q, want trial instructions for a fresh install", resp.UpgradeMessage)
 			}
 		})
 	}
@@ -138,5 +142,13 @@ func TestUnwiredLicenseDeniesPaidStandards(t *testing.T) {
 	w := startTest(t, s, getTestingAuthToken(t, s), "rfc2544_throughput")
 	if w.Code != http.StatusPaymentRequired {
 		t.Fatalf("status = %d, want 402: %s", w.Code, w.Body.String())
+	}
+
+	var resp api.FeatureGateResponse
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("decode 402 body: %v", err)
+	}
+	if strings.Contains(resp.UpgradeMessage, "stem license --trial") {
+		t.Errorf("upgradeMessage = %q, must not offer a trial when license state is unavailable", resp.UpgradeMessage)
 	}
 }
