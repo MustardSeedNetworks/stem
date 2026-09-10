@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.96](https://github.com/MustardSeedNetworks/stem/compare/v0.24.95...v0.24.96) (2026-09-10)
+
+
+### Bug Fixes
+
+* keep CLI help aligned with runtime flags ([#1164](https://github.com/MustardSeedNetworks/stem/issues/1164)) ([b6b5977](https://github.com/MustardSeedNetworks/stem/commit/b6b597796624839fa97cdcb79fdd6df5ea9ba8b4))
+
 ## [0.24.95](https://github.com/MustardSeedNetworks/stem/compare/v0.24.94...v0.24.95) (2026-09-10)
 
 
