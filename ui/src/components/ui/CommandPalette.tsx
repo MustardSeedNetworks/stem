@@ -1,7 +1,7 @@
 /**
  * CommandPalette — keyboard-first command/navigation palette (cmdk).
  *
- * Mount at the AppShell level. Opens on Cmd+K (macOS) / Ctrl+K (others).
+ * The application shell owns the Cmd+K / Ctrl+K shortcut.
  * Populates with:
  *   - All sidebar nav entries (jump to page)
  *   - Common actions (Open Settings, Open Help, Toggle Theme)
@@ -45,17 +45,6 @@ export const CommandPalette: FC<CommandPaletteProps> = ({
   const { t } = useTranslation('common');
   const navigate = useNavigate();
   const [value, setValue] = useState('');
-
-  useEffect(() => {
-    const handler = (e: KeyboardEvent): void => {
-      if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) {
-        e.preventDefault();
-        onOpenChange(!open);
-      }
-    };
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
-  }, [open, onOpenChange]);
 
   useEffect(() => {
     if (!open) {
