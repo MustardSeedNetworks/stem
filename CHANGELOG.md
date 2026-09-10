@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.87](https://github.com/MustardSeedNetworks/stem/compare/v0.24.86...v0.24.87) (2026-09-10)
+
+
+### Features
+
+* **api:** server-owned run plan with per-step progress ([#1138](https://github.com/MustardSeedNetworks/stem/issues/1138)) ([ddfc9a3](https://github.com/MustardSeedNetworks/stem/commit/ddfc9a34e93c2291367b9554514e8ba7f3b1a3b1))
+
 ## [0.24.86](https://github.com/MustardSeedNetworks/stem/compare/v0.24.85...v0.24.86) (2026-09-09)
 
 
