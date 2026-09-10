@@ -27,6 +27,8 @@ const (
 	AuthRateLimit = 5
 	// AuthBurstLimit is the burst limit for authentication endpoints.
 	AuthBurstLimit = 5
+	// AuthRateLimitEnv optionally raises the authentication rate limit.
+	AuthRateLimitEnv = "STEM_AUTH_RATE_LIMIT"
 
 	// APIRateLimit is the rate limit for standard API endpoints (per minute).
 	APIRateLimit = 100
@@ -123,13 +125,14 @@ func NewRateLimiter(r rate.Limit, burst int) *RateLimiter {
 }
 
 // NewAuthRateLimiter creates a rate limiter configured for authentication endpoints.
-// Limits to 5 requests per minute with burst of 5. trustedProxies is the
+// Limits to 5 requests per minute with burst of 5 by default. trustedProxies is the
 // operator's [logging.TrustedProxiesEnv] list, so clients behind a configured
 // reverse proxy get their own bucket instead of sharing the proxy's.
 func NewAuthRateLimiter(trustedProxies []netip.Prefix) *RateLimiter {
+	limit := authRateLimitFromEnv()
 	// Convert per-minute rate to per-second for rate.Limit.
-	r := rate.Limit(float64(AuthRateLimit) / secondsPerMinute)
-	rl := NewRateLimiter(r, AuthBurstLimit)
+	r := rate.Limit(float64(limit) / secondsPerMinute)
+	rl := NewRateLimiter(r, limit)
 	rl.trustedProxies = trustedProxies
 	return rl
 }
@@ -153,33 +156,43 @@ func NewAPIRateLimiter(trustedProxies []netip.Prefix) *RateLimiter {
 // compiled-in default is rejected, so the knob can relax the limiter for a
 // high-volume client but can never weaken it below its baseline and can never
 // switch it off. That keeps "standard API endpoints are rate limited" a
-// property of the binary rather than of its environment. The auth limiter has
-// no equivalent knob and is untouched.
+// property of the binary rather than of its environment. Authentication uses
+// the same rule through AuthRateLimitEnv.
 //
 // A malformed or out-of-range value falls back to the default and says so
 // rather than failing to start — an unparseable limit is an operator typo, and
 // refusing to boot the server over it trades a small misconfiguration for an
 // outage.
 func apiRateLimitFromEnv() int {
-	raw, ok := os.LookupEnv(APIRateLimitEnv)
+	return raisedRateLimitFromEnv(APIRateLimitEnv, APIRateLimit, "API")
+}
+
+func authRateLimitFromEnv() int {
+	return raisedRateLimitFromEnv(AuthRateLimitEnv, AuthRateLimit, "authentication")
+}
+
+func raisedRateLimitFromEnv(envName string, defaultLimit int, label string) int {
+	raw, ok := os.LookupEnv(envName)
 	if !ok {
-		return APIRateLimit
+		return defaultLimit
 	}
 
 	limit, err := strconv.Atoi(strings.TrimSpace(raw))
-	if err != nil || limit <= APIRateLimit {
-		logging.Warn("Ignoring API rate limit override; using the default",
-			"env", APIRateLimitEnv,
+	if err != nil || limit <= defaultLimit {
+		logging.Warn("Ignoring rate limit override; using the default",
+			"kind", label,
+			"env", envName,
 			"value", raw,
-			"default", APIRateLimit,
+			"default", defaultLimit,
 		)
-		return APIRateLimit
+		return defaultLimit
 	}
 
-	logging.Info("API rate limit raised by environment override",
-		"env", APIRateLimitEnv,
+	logging.Info("Rate limit raised by environment override",
+		"kind", label,
+		"env", envName,
 		"limit", limit,
-		"default", APIRateLimit,
+		"default", defaultLimit,
 	)
 	return limit
 }
