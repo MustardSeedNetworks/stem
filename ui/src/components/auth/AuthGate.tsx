@@ -265,7 +265,7 @@ export function AuthGate(): ReactElement {
                   disabled={loginLoading}
                   onClick={handlePasskeyLogin}
                 >
-                  Sign in with passkey
+                  {t('security:login.passkeyButton')}
                 </button>
 
                 {/* Forgot Password link - only shown when recovery is available */}

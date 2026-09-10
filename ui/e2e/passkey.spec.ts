@@ -24,6 +24,7 @@ async function readPasskeyCount(count: Locator): Promise<number> {
 test.describe('Passkeys', () => {
   test('enrolls and signs in with a virtual authenticator', async ({ browserName, page }) => {
     test.skip(browserName !== 'chromium', 'CDP virtual authenticators are Chromium-only');
+    await page.setExtraHTTPHeaders({ 'X-Forwarded-For': '198.51.100.82' });
     await addVirtualAuthenticator(page);
     await skipSetupWizard(page);
     await page.goto('/account/security');

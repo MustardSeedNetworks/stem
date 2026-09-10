@@ -18,9 +18,11 @@ vi.mock('../lib/queryClient', () => ({
 }));
 
 import { invalidateCsrfToken } from '../lib/csrf';
+
 vi.mock('../lib/webauthn', () => ({
   loginWithPasskey: passkeyLoginMock,
 }));
+
 import * as http from '../utils/http';
 import { authFetch, useAuthStore } from './auth-store';
 
