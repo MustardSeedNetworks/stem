@@ -14,6 +14,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { AppContextValue } from '../contexts/AppContext';
 import type { RoleContextValue } from '../contexts/RoleContext';
 import type { Capabilities } from '../hooks/useCapabilities';
+import type { StopOutcome } from '../stores/test-store';
 import type { InterfaceInfo, Stats } from '../types/api';
 import { ReflectorPage } from './ReflectorPage';
 
@@ -69,7 +70,7 @@ interface Options {
   selectedInterface?: string;
   reflectorStartError?: string | null;
   isStartingReflector?: boolean;
-  isStoppingReflector?: boolean;
+  reflectorStopOutcome?: StopOutcome;
 }
 
 function renderPage(options: Options = {}) {
@@ -103,7 +104,7 @@ function renderPage(options: Options = {}) {
     onStartReflector,
     onStopReflector,
     isStartingReflector: options.isStartingReflector ?? false,
-    isStoppingReflector: options.isStoppingReflector ?? false,
+    reflectorStopOutcome: options.reflectorStopOutcome ?? { kind: 'idle' },
     reflectorStartError: options.reflectorStartError ?? null,
   } as unknown as AppContextValue;
 

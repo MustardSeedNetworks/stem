@@ -101,11 +101,11 @@ function AppContent(): ReactElement {
     },
     onStopReflector: () => {
       exec.handleStopTest().catch(() => {
-        // Errors are already logged inside handleStopTest.
+        // Outcomes surface via stopOutcome state.
       });
     },
     isStartingReflector: exec.isStartingTest,
-    isStoppingReflector: exec.isStoppingTest,
+    reflectorStopOutcome: exec.stopOutcome,
     reflectorStartError: exec.testStartError,
   };
 
@@ -137,7 +137,7 @@ function AppContent(): ReactElement {
                 interfaces={exec.interfaces}
                 stats={exec.stats}
                 isStartingTest={exec.isStartingTest}
-                isStoppingTest={exec.isStoppingTest}
+                stopOutcome={exec.stopOutcome}
                 testStartError={exec.testStartError}
                 onStartTest={() => {
                   exec.handleStartTest().catch(() => {
@@ -146,7 +146,7 @@ function AppContent(): ReactElement {
                 }}
                 onStopTest={() => {
                   exec.handleStopTest().catch(() => {
-                    // Errors are already logged inside handleStopTest.
+                    // Outcomes surface via stopOutcome state.
                   });
                 }}
                 testProgress={exec.testProgress}

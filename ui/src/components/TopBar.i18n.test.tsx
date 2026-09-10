@@ -13,6 +13,7 @@ import { render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { RoleProvider } from '../contexts/RoleContext';
 import i18n from '../i18n';
+import type { StopOutcome } from '../stores/test-store';
 import { initialStats } from '../types/api';
 import { TopBar } from './TopBar';
 
@@ -37,7 +38,7 @@ const props = {
   interfaces: [],
   stats: initialStats,
   isStartingTest: false,
-  isStoppingTest: false,
+  stopOutcome: { kind: 'idle' } as StopOutcome,
   testStartError: null,
   onStartTest: (): void => undefined,
   onStopTest: (): void => undefined,

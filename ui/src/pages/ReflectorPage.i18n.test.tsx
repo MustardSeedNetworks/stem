@@ -85,7 +85,7 @@ function renderPage(stats: Partial<Stats> = {}, reflectorSupported = true): void
     onStartReflector: vi.fn(),
     onStopReflector: vi.fn(),
     isStartingReflector: false,
-    isStoppingReflector: false,
+    reflectorStopOutcome: { kind: 'idle' },
     reflectorStartError: null,
   } as unknown as AppContextValue;
 

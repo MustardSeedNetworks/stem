@@ -22,7 +22,7 @@ import type { Y1564Config } from '../components/Y1564ConfigForm';
 import type { Y1731Config } from '../components/Y1731ConfigForm';
 import { useRole } from '../contexts/RoleContext';
 import { authFetch, useAuthStore } from '../stores/auth-store';
-import { useTestStore } from '../stores/test-store';
+import { type StopOutcome, useTestStore } from '../stores/test-store';
 import {
   type InterfaceInfo,
   initialStats,
@@ -84,15 +84,16 @@ function mapStatsPayload(payload: Partial<Stats>): Stats {
   };
 }
 
-/** The 402 body POST /api/v1/test/start answers with when a standard is not licensed. */
-interface FeatureGateBody {
+/** The daemon's error envelope, as `internal/api/errors.go` writes it. */
+interface ApiErrorBody {
   error?: string;
   code?: string;
+  message?: string;
   requiredFeature?: string;
 }
 
 /**
- * Why a start failed, in the shape the render path needs.
+ * Why a request was refused, in the shape the render path needs.
  *
  * The 402 entitlement answer is not a generic failure: it carries the feature
  * the licence is missing, so the operator is told what to buy rather than that
@@ -102,21 +103,48 @@ interface FeatureGateBody {
  * install reports "Invalid" (license.TierInvalid), which is a state name, not
  * a tier an operator has heard of (#1095).
  */
-export type TestStartFailure =
+export type RequestFailure =
   | { kind: 'message'; message?: string }
   | { kind: 'featureGate'; feature?: string };
 
-/** Classify a failed start response from its body. */
-export async function classifyStartFailure(response: Response): Promise<TestStartFailure> {
+/**
+ * Classify a refused request from its body.
+ *
+ * The daemon's envelope (`HTTPErrorResponse`) carries the error *type* in
+ * `error` ("Bad Request") and the sentence written for the operator in
+ * `message`, so `message` is what gets rendered when it is present.
+ */
+export async function classifyFailure(response: Response): Promise<RequestFailure> {
   try {
-    const body = await (response.json() as Promise<FeatureGateBody>);
+    const body = await (response.json() as Promise<ApiErrorBody>);
     if (response.status === 402 && body?.code === 'TIER_TOO_LOW') {
       return { kind: 'featureGate', feature: body.requiredFeature };
     }
-    return { kind: 'message', message: body?.error };
+    return { kind: 'message', message: body?.message ?? body?.error };
   } catch {
     return { kind: 'message' };
   }
+}
+
+/**
+ * Resolve a stop response into the outcome the UI renders.
+ *
+ * A stop the daemon refuses — "No test is currently running" — is an answer,
+ * not an error: it is reported to the operator, not logged and dropped
+ * (#1080).
+ */
+export async function resolveStopOutcome(
+  response: Response,
+  fallbackMessage: string,
+): Promise<StopOutcome> {
+  if (response.ok) {
+    return { kind: 'stopped' };
+  }
+  const failure = await classifyFailure(response);
+  return {
+    kind: 'stopRejected',
+    message: failure.kind === 'message' ? (failure.message ?? fallbackMessage) : fallbackMessage,
+  };
 }
 
 /** Build test configuration based on test type prefix */
@@ -163,7 +191,7 @@ export interface UseTestExecution {
   testResult: TestResult | null;
   testProgress: ReturnType<typeof useTestProgress>;
   isStartingTest: boolean;
-  isStoppingTest: boolean;
+  stopOutcome: StopOutcome;
   testStartError: string | null;
   handleStartTest: () => Promise<void>;
   handleStopTest: () => Promise<void>;
@@ -191,8 +219,8 @@ export function useTestExecution(): UseTestExecution {
     reflectorProfile,
     isStartingTest,
     setIsStartingTest,
-    isStoppingTest,
-    setIsStoppingTest,
+    stopOutcome,
+    setStopOutcome,
     testStartError,
     setTestStartError,
     rfc2544Config,
@@ -328,6 +356,7 @@ export function useTestExecution(): UseTestExecution {
     }
     setIsStartingTest(true);
     setTestStartError(null);
+    setStopOutcome({ kind: 'idle' });
 
     try {
       const configs = {
@@ -355,7 +384,7 @@ export function useTestExecution(): UseTestExecution {
 
       // Check for validation errors in response
       if (!response.ok) {
-        const failure = await classifyStartFailure(response);
+        const failure = await classifyFailure(response);
         setTestStartError(
           failure.kind === 'featureGate'
             ? t('errors:test.featureGate', { feature: failure.feature })
@@ -387,27 +416,26 @@ export function useTestExecution(): UseTestExecution {
     y1731Config,
     setIsStartingTest,
     setTestStartError,
+    setStopOutcome,
   ]);
 
   const handleStopTest = useCallback(async (): Promise<void> => {
     if (!isAuthenticated) {
       return;
     }
-    setIsStoppingTest(true);
+    setStopOutcome({ kind: 'stopping' });
     try {
-      await authFetch('/api/v1/test/stop', { method: 'POST' });
-      // Status update will come from polling
+      const response = await authFetch('/api/v1/test/stop', { method: 'POST' });
+      setStopOutcome(await resolveStopOutcome(response, t('errors:test.failedToStop')));
     } catch (error) {
-      // Log the error but don't disrupt UX - test may already be stopped
-      // or the stop request may have actually succeeded
+      // The request never reached the daemon; a refusal is not this branch.
       logError(error, {
         component: 'App',
         action: 'handleStopTest',
       });
-    } finally {
-      setIsStoppingTest(false);
+      setStopOutcome({ kind: 'stopFailed', message: t('errors:test.failedToStop') });
     }
-  }, [isAuthenticated, setIsStoppingTest]);
+  }, [isAuthenticated, t, setStopOutcome]);
 
   // Handle mode changes - update selected tests accordingly
   useEffect(() => {
@@ -473,7 +501,7 @@ export function useTestExecution(): UseTestExecution {
     testResult,
     testProgress,
     isStartingTest,
-    isStoppingTest,
+    stopOutcome,
     testStartError,
     handleStartTest,
     handleStopTest,
