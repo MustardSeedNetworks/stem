@@ -31,10 +31,7 @@ const (
 )
 
 // Test result display constants.
-const (
-	resultPass = "PASS"
-	resultFail = "FAIL"
-)
+const ()
 
 // Test-type wire identifiers. Match the executor's dispatch table; kept
 // here as untyped string consts so the CLI dispatch switch is readable

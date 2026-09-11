@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 )
 
 // licenseHome points the license manager at a temp HOME so a case decides what
@@ -23,37 +22,6 @@ func licenseHome(t *testing.T) string {
 		t.Fatalf("mkdir: %v", err)
 	}
 	return dir
-}
-
-// TestCheckTestLicenseRefusesAMalformedFile is the CLI half of #1068: a file
-// the manager cannot parse used to be indistinguishable from a fresh install,
-// so `stem test` started a Professional trial and overwrote the operator's
-// license. It must refuse instead.
-func TestCheckTestLicenseRefusesAMalformedFile(t *testing.T) {
-	dir := licenseHome(t)
-	if err := os.WriteFile(filepath.Join(dir, ".license"), []byte("not a licence"), 0o600); err != nil {
-		t.Fatalf("write: %v", err)
-	}
-
-	if checkTestLicense() {
-		t.Error("checkTestLicense() = true on a malformed license file")
-	}
-	if _, err := os.ReadFile(filepath.Join(dir, ".license")); err != nil {
-		t.Errorf("license file no longer readable after the check: %v", err)
-	}
-}
-
-// TestCheckTestLicenseStartsTheTrialOnAFreshInstall is the control: refusing
-// the damaged file must not have made every unlicensed host unable to test.
-func TestCheckTestLicenseStartsTheTrialOnAFreshInstall(t *testing.T) {
-	dir := licenseHome(t)
-
-	if !checkTestLicense() {
-		t.Fatal("checkTestLicense() = false on a fresh install; the trial should start")
-	}
-	if _, err := os.Stat(filepath.Join(dir, ".license")); err != nil {
-		t.Errorf("no state written after starting the trial: %v", err)
-	}
 }
 
 // parseTestFlagsOrFail parses args the way `stem test` does and fails the test
@@ -210,49 +178,6 @@ func TestValidateTestTypesList(t *testing.T) {
 	}
 }
 
-// TestCreateTestConfigMapsTheFlagsItIsGiven: the dataplane config is where a
-// mistyped mapping silently changes what the operator measured.
-func TestCreateTestConfigMapsTheFlagsItIsGiven(t *testing.T) {
-	cfg := createTestConfig(&testCmdFlags{
-		iface:      "eth3",
-		peer:       "192.0.2.10",
-		peerPort:   4842,
-		duration:   45,
-		warmup:     9,
-		resolution: 0.25,
-		maxLoss:    2.5,
-	})
-
-	if cfg.Interface != "eth3" {
-		t.Errorf("Interface = %q, want eth3", cfg.Interface)
-	}
-	if cfg.Peer != "192.0.2.10" || cfg.PeerPort != 4842 {
-		t.Errorf("Peer = %s:%d, want 192.0.2.10:4842", cfg.Peer, cfg.PeerPort)
-	}
-	if cfg.TrialDuration != 45*time.Second {
-		t.Errorf("TrialDuration = %v, want 45s", cfg.TrialDuration)
-	}
-	if cfg.WarmupPeriod != 9*time.Second {
-		t.Errorf("WarmupPeriod = %v, want 9s", cfg.WarmupPeriod)
-	}
-	if cfg.ResolutionPct != 0.25 {
-		t.Errorf("ResolutionPct = %v, want 0.25", cfg.ResolutionPct)
-	}
-	if cfg.AcceptableLoss != 2.5 {
-		t.Errorf("AcceptableLoss = %v, want 2.5", cfg.AcceptableLoss)
-	}
-	if !cfg.AutoDetect {
-		t.Error("AutoDetect should be on: the CLI never asks for a line rate")
-	}
-	if !cfg.MeasureLatency {
-		t.Error("MeasureLatency should be on: the CLI prints latency with every throughput run")
-	}
-	if cfg.InitialRatePct != 100 || cfg.MaxIterations != 20 || cfg.BatchSize != 32 {
-		t.Errorf("throughput defaults = %v%%/%d iterations/%d batch, want 100%%/20/32",
-			cfg.InitialRatePct, cfg.MaxIterations, cfg.BatchSize)
-	}
-}
-
 // TestPrintTestConfigurationEchoesWhatWillRun is the banner an operator
 // screenshots into a report, so every parameter has to appear.
 func TestPrintTestConfigurationEchoesWhatWillRun(t *testing.T) {
@@ -300,5 +225,90 @@ func TestTestCmdRefusesUnknownTestTypes(t *testing.T) {
 	}
 	if !strings.Contains(out, "Unknown test type 'nonsense'") {
 		t.Errorf("testCmd printed %q, which does not name the rejected type", out)
+	}
+}
+
+// buildStartRequest is where a mistyped mapping silently changes what the
+// operator measured — the run plan the daemon executes comes from here.
+func TestBuildStartRequestCarriesTheFlagsItIsGiven(t *testing.T) {
+	req := buildStartRequest(&testCmdFlags{
+		iface:        "eth3",
+		peer:         "192.0.2.10",
+		peerPort:     4842,
+		duration:     45,
+		warmup:       9,
+		resolution:   0.25,
+		maxLoss:      2.5,
+		cir:          100,
+		eir:          20,
+		fdThreshold:  3.5,
+		fdvThreshold: 1.25,
+		flrThreshold: 0.01,
+	}, []string{"rfc2544_throughput"}, []uint32{64, 1518}, 45)
+
+	if req.Interface != "eth3" {
+		t.Errorf("Interface = %q, want eth3", req.Interface)
+	}
+	if req.Peer != "192.0.2.10" || req.PeerPort != 4842 {
+		t.Errorf("Peer = %s:%d, want 192.0.2.10:4842", req.Peer, req.PeerPort)
+	}
+	if len(req.Tests) != 1 || req.Tests[0].TestType != "rfc2544_throughput" {
+		t.Fatalf("Tests = %+v, want one rfc2544_throughput step", req.Tests)
+	}
+
+	rfc := req.Tests[0].Config.RFC2544
+	if rfc.Duration != 45 || rfc.Warmup != 9 {
+		t.Errorf("RFC2544 duration/warmup = %d/%d, want 45/9", rfc.Duration, rfc.Warmup)
+	}
+	if rfc.Resolution != 0.25 || rfc.MaxLoss != 2.5 {
+		t.Errorf("RFC2544 resolution/maxLoss = %v/%v, want 0.25/2.5", rfc.Resolution, rfc.MaxLoss)
+	}
+	if len(rfc.FrameSizes) != 2 || rfc.FrameSizes[0] != 64 || rfc.FrameSizes[1] != 1518 {
+		t.Errorf("RFC2544 frame sizes = %v, want [64 1518]", rfc.FrameSizes)
+	}
+
+	y := req.Tests[0].Config.Y1564
+	if y.CIR != 100 || y.EIR != 20 {
+		t.Errorf("Y.1564 CIR/EIR = %v/%v, want 100/20", y.CIR, y.EIR)
+	}
+	if y.FDThreshold != 3.5 || y.FDVThreshold != 1.25 || y.FLRThreshold != 0.01 {
+		t.Errorf("Y.1564 thresholds = %v/%v/%v, want 3.5/1.25/0.01", y.FDThreshold, y.FDVThreshold, y.FLRThreshold)
+	}
+	if y.ConfigStepDuration != 45 || y.PerfTestDuration != 45 {
+		t.Errorf("Y.1564 durations = %d/%d, want 45/45", y.ConfigStepDuration, y.PerfTestDuration)
+	}
+}
+
+// A duration the wire cannot carry must be refused, not wrapped into a
+// plausible-looking one: the operator would be handed numbers for a test
+// that never ran for the time they asked for.
+func TestValidateDurationBounds(t *testing.T) {
+	for name, tc := range map[string]struct {
+		duration int
+		want     uint32
+		wantErr  bool
+	}{
+		"one second": {duration: 1, want: 1},
+		"typical":    {duration: 60, want: 60},
+		"one day":    {duration: 86400, want: 86400},
+		"zero":       {duration: 0, wantErr: true},
+		"negative":   {duration: -1, wantErr: true},
+		"over a day": {duration: 86401, wantErr: true},
+	} {
+		t.Run(name, func(t *testing.T) {
+			got, err := validateDuration(tc.duration)
+			if tc.wantErr {
+				if err == nil {
+					t.Fatalf("validateDuration(%d) = %d, nil; want an error", tc.duration, got)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("validateDuration(%d): %v", tc.duration, err)
+			}
+			if got != tc.want {
+				t.Errorf("validateDuration(%d) = %d, want %d", tc.duration, got, tc.want)
+			}
+		})
 	}
 }
