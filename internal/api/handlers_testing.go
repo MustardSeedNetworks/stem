@@ -91,7 +91,8 @@ func (s *Server) startReflectorRequest(
 	iface string,
 	step RunPlanStep,
 ) {
-	if err := s.beginTestRun(step.TestType, step.Module); err != nil {
+	runID, err := s.beginTestRun(step.TestType, step.Module)
+	if err != nil {
 		if errors.Is(err, errTestAlreadyRunning) {
 			WriteConflict(w, "A test is already running")
 			return
@@ -99,11 +100,11 @@ func (s *Server) startReflectorRequest(
 		WriteInternalError(w, err)
 		return
 	}
-	if err := s.executeTest(step.Module, step.TestType, iface, req.Profile, step.Config); err != nil {
-		s.respondTestExecutionError(w, err, step.Module, step.TestType)
+	if execErr := s.executeTest(step.Module, step.TestType, iface, req.Profile, step.Config); execErr != nil {
+		s.respondTestExecutionError(w, execErr, step.Module, step.TestType)
 		return
 	}
-	writeJSON(w, TestStartResponse{Status: "started", SuiteID: fmt.Sprintf("stem-%d", s.testRunID)})
+	writeJSON(w, TestStartResponse{Status: "started", SuiteID: runID})
 }
 
 // handleTestStop stops the current test or reflector.
@@ -232,19 +233,21 @@ func (s *Server) validateInterfaceForTest(w http.ResponseWriter, ifaceName strin
 	return false
 }
 
-func (s *Server) beginTestRun(testType, module string) error {
+// beginTestRun reserves the daemon for a single-step run and returns the ID
+// that names it. The caller reports that ID rather than re-deriving one from
+// testRunID, which it could only read outside statsMu.
+func (s *Server) beginTestRun(testType, module string) (string, error) {
 	s.statsMu.Lock()
 	defer s.statsMu.Unlock()
 	if s.testStatus == statusRunning || s.testStatus == statusStarting {
-		return errTestAlreadyRunning
+		return "", errTestAlreadyRunning
 	}
 	s.testStatus = statusStarting
-	s.testRunID++
 	s.currentTest = testType
 	s.currentModule = module
 	s.testResult = nil
 	s.runPlan = nil
-	return nil
+	return s.newRunIDLocked(), nil
 }
 
 func (s *Server) beginRunPlan(plan *runPlan) (uint64, error) {
@@ -254,8 +257,7 @@ func (s *Server) beginRunPlan(plan *runPlan) (uint64, error) {
 		return 0, errTestAlreadyRunning
 	}
 	s.testStatus = statusStarting
-	s.testRunID++
-	plan.ID = fmt.Sprintf("stem-%d", s.testRunID)
+	plan.ID = s.newRunIDLocked()
 	s.runPlan = plan
 	s.currentTest = plan.Steps[0].TestType
 	s.currentModule = plan.Steps[0].Module

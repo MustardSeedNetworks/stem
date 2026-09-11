@@ -156,6 +156,7 @@ type Server struct {
 	recoveryTokenManager *auth.RecoveryTokenManager // Recovery token manager for password recovery
 	dataDir              string                     // Application data directory for recovery files
 	cliTokenPublished    atomic.Bool                // whether this daemon wrote the local CLI token (#1166)
+	runInstanceID        string                     // per-daemon segment of every run ID (#1166)
 	acmeChallengeServer  *http.Server               // HTTP-01 challenge server for ACME
 	tlsFingerprint       tlsutil.FingerprintCache   // Cached SHA-256 fingerprint of the active TLS cert (exposed via /__version)
 	background           *BackgroundComponents      // Run-scoped long-lived goroutines (reflector-stats SSE publisher); ordered Start/Stop (background.go)
@@ -313,6 +314,12 @@ func NewServer(port int) (*Server, error) {
 	s.setupModeStartTime = time.Time{}
 	s.recoveryTokenManager = auth.NewRecoveryTokenManager(getDataDir())
 	s.dataDir = getDataDir()
+
+	instanceID, instanceErr := newRunInstanceID()
+	if instanceErr != nil {
+		return nil, instanceErr
+	}
+	s.runInstanceID = instanceID
 	s.setupRoutes()
 	return s, nil
 }

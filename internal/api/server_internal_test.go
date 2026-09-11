@@ -1185,7 +1185,7 @@ func TestBeginTestRun(t *testing.T) {
 		s.testStatus = statusIdle
 		s.statsMu.Unlock()
 
-		beginErr := s.beginTestRun("throughput", "benchmark")
+		_, beginErr := s.beginTestRun("throughput", "benchmark")
 		if beginErr != nil {
 			t.Errorf("beginTestRun() error: %v", beginErr)
 		}
@@ -1209,7 +1209,7 @@ func TestBeginTestRun(t *testing.T) {
 		s.testStatus = statusRunning
 		s.statsMu.Unlock()
 
-		beginErr := s.beginTestRun("latency", "benchmark")
+		_, beginErr := s.beginTestRun("latency", "benchmark")
 		if beginErr == nil {
 			t.Error("Expected error when test already running")
 		}
@@ -1223,7 +1223,7 @@ func TestBeginTestRun(t *testing.T) {
 		s.testStatus = statusStarting
 		s.statsMu.Unlock()
 
-		beginErr := s.beginTestRun("latency", "benchmark")
+		_, beginErr := s.beginTestRun("latency", "benchmark")
 		if !errors.Is(beginErr, errTestAlreadyRunning) {
 			t.Fatalf("beginTestRun() = %v, want errTestAlreadyRunning", beginErr)
 		}
@@ -1234,7 +1234,7 @@ func TestStopCancelsActiveExecutorWithoutStatusOverwrite(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "canceltestuser")
 	t.Setenv("STEM_AUTH_PASSWORD", "canceltestpass123")
 	s := newTestServer(t)
-	if err := s.beginTestRun("throughput", "benchmark"); err != nil {
+	if _, err := s.beginTestRun("throughput", "benchmark"); err != nil {
 		t.Fatalf("beginTestRun() error: %v", err)
 	}
 	exec := &blockingCancelableExecutor{
@@ -3604,7 +3604,7 @@ func TestBeginTestRunVariations(t *testing.T) {
 		s.testStatus = statusRunning
 		s.statsMu.Unlock()
 
-		beginErr := s.beginTestRun("throughput", "benchmark")
+		_, beginErr := s.beginTestRun("throughput", "benchmark")
 		if beginErr == nil {
 			t.Error("Expected error when test already running")
 		}
@@ -3618,7 +3618,7 @@ func TestBeginTestRunVariations(t *testing.T) {
 		s.testStatus = statusIdle
 		s.statsMu.Unlock()
 
-		beginErr := s.beginTestRun("throughput", "benchmark")
+		_, beginErr := s.beginTestRun("throughput", "benchmark")
 		if beginErr != nil {
 			t.Errorf("Unexpected error: %v", beginErr)
 		}
