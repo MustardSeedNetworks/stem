@@ -118,27 +118,27 @@ func TestParseFrameSizes(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    string
-		expected []int
+		expected []uint32
 	}{
-		{"single", "64", []int{64}},
-		{"three", "64,128,256", []int{64, 128, 256}},
+		{"single", "64", []uint32{64}},
+		{"three", "64,128,256", []uint32{64, 128, 256}},
 		{
 			"rfc2544 defaults",
 			"64,128,256,512,1024,1280,1518",
-			[]int{64, 128, 256, 512, 1024, 1280, 1518},
+			[]uint32{64, 128, 256, 512, 1024, 1280, 1518},
 		},
-		{"jumbo", "1518,9000", []int{1518, 9000}},
-		{"jumbo limit", "9000,9216", []int{9000, 9216}},
-		{"empty", "", []int{}},
-		{"spaces only", "  ", []int{}},
-		{"padded", " 64 , 128 ", []int{64, 128}},
-		{"trailing comma", "64,128,", []int{64, 128}},
-		{"leading comma", ",64,128", []int{64, 128}},
-		{"duplicates preserved", "64,64,128", []int{64, 64, 128}},
-		{"non-numeric dropped", "64,invalid,128", []int{64, 128}},
-		{"below minimum dropped", "63,64", []int{64}},
-		{"above maximum dropped", "9216,9217", []int{9216}},
-		{"far above maximum dropped", "16384", []int{}},
+		{"jumbo", "1518,9000", []uint32{1518, 9000}},
+		{"jumbo limit", "9000,9216", []uint32{9000, 9216}},
+		{"empty", "", []uint32{}},
+		{"spaces only", "  ", []uint32{}},
+		{"padded", " 64 , 128 ", []uint32{64, 128}},
+		{"trailing comma", "64,128,", []uint32{64, 128}},
+		{"leading comma", ",64,128", []uint32{64, 128}},
+		{"duplicates preserved", "64,64,128", []uint32{64, 64, 128}},
+		{"non-numeric dropped", "64,invalid,128", []uint32{64, 128}},
+		{"below minimum dropped", "63,64", []uint32{64}},
+		{"above maximum dropped", "9216,9217", []uint32{9216}},
+		{"far above maximum dropped", "16384", []uint32{}},
 	}
 
 	for _, tt := range tests {
@@ -159,15 +159,6 @@ func TestParseFrameSizes(t *testing.T) {
 				}
 			}
 		})
-	}
-}
-
-func TestBoolToPassFail(t *testing.T) {
-	if got := boolToPassFail(true); got != resultPass {
-		t.Errorf("boolToPassFail(true) = %q, want %q", got, resultPass)
-	}
-	if got := boolToPassFail(false); got != resultFail {
-		t.Errorf("boolToPassFail(false) = %q, want %q", got, resultFail)
 	}
 }
 

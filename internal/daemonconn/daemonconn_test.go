@@ -199,3 +199,33 @@ func TestWithdrawIsIdempotent(t *testing.T) {
 		t.Errorf("stat err = %v, want ErrNotExist", err)
 	}
 }
+
+// The daemon runs as its own account, so an operator invoking the CLI as
+// themselves gets a permission error. It has to be distinguishable from
+// "no daemon here" — the remedy is completely different.
+func TestReadReportsAnUnreadableDescriptor(t *testing.T) {
+	t.Parallel()
+
+	if runtime.GOOS == "windows" {
+		t.Skip("POSIX file modes are not enforced on Windows")
+	}
+	if os.Geteuid() == 0 {
+		t.Skip("root bypasses file permissions")
+	}
+
+	dir := t.TempDir()
+	if err := daemonconn.Publish(dir, sample()); err != nil {
+		t.Fatalf("Publish: %v", err)
+	}
+	if err := os.Chmod(daemonconn.Path(dir), 0o000); err != nil {
+		t.Fatalf("chmod: %v", err)
+	}
+
+	_, err := daemonconn.Read(dir)
+	if !errors.Is(err, daemonconn.ErrUnreadable) {
+		t.Errorf("err = %v, want ErrUnreadable", err)
+	}
+	if errors.Is(err, daemonconn.ErrNotFound) {
+		t.Error("an unreadable descriptor must not read as a missing one")
+	}
+}

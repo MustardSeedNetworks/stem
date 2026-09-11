@@ -3,6 +3,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -12,26 +13,14 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
-	"time"
 
-	"github.com/MustardSeedNetworks/stem/internal/license"
+	"github.com/MustardSeedNetworks/stem/internal/api"
+	"github.com/MustardSeedNetworks/stem/internal/daemonclient"
+	"github.com/MustardSeedNetworks/stem/internal/daemonconn"
 	"github.com/MustardSeedNetworks/stem/internal/logging"
 	"github.com/MustardSeedNetworks/stem/internal/services"
-	testmasterDP "github.com/MustardSeedNetworks/stem/internal/services/orchestrator/dataplane"
 	"github.com/MustardSeedNetworks/stem/internal/version"
 )
-
-// testCmdParams holds parameters for running test suite.
-type testCmdParams struct {
-	cir          float64
-	eir          float64
-	fdThreshold  float64
-	fdvThreshold float64
-	flrThreshold float64
-	duration     int
-	jsonOutput   bool
-	csvOutput    bool
-}
 
 // testCmdFlags holds parsed command line flags for test command.
 type testCmdFlags struct {
@@ -61,49 +50,6 @@ func validateTestTypesList(tests []string) bool {
 			_, _ = fmt.Fprintln(os.Stdout, "Run 'stem list-tests' to see available tests")
 			return false
 		}
-	}
-	return true
-}
-
-// checkTestLicense checks that the license is valid for running tests.
-//
-// Every test is a Professional capability, so an answer this code cannot
-// stand behind is a refusal: a license manager that failed to build, or a
-// license file that could not be read or parsed, leaves the host on the Free
-// grant. In particular a damaged file must not start a trial — that would
-// hand out Professional for corrupting a file, and overwrite the operator's
-// license in the process (#1068).
-func checkTestLicense() bool {
-	mgr, loadStatus, err := license.Load()
-	if err != nil {
-		_, _ = fmt.Fprintf(os.Stdout, "Error: License check failed: %v\n", err)
-		_, _ = fmt.Fprintln(os.Stdout, "Tests require a Professional license; only the reflector runs without one")
-		return false
-	}
-	if !loadStatus.Usable() {
-		_, _ = fmt.Fprintf(os.Stdout, "Error: License file %s is %s\n", license.DefaultLicensePath(), loadStatus)
-		_, _ = fmt.Fprintln(os.Stdout, "Replace it with 'stem license --activate <KEY>' or 'stem license --trial'")
-		return false
-	}
-
-	state := mgr.GetState()
-	switch {
-	case state == nil:
-		_, _ = fmt.Fprintln(os.Stdout, "No active license. Starting 14-day trial...")
-		result := mgr.StartTrial()
-		if !result.Success {
-			_, _ = fmt.Fprintf(os.Stdout, "Error: %s\n", result.Message)
-			return false
-		}
-		_, _ = fmt.Fprintf(os.Stdout, "%s\n\n", result.Message)
-	case !mgr.IsActivated():
-		_, _ = fmt.Fprintln(os.Stdout, "Error: License expired. Please activate a valid license.")
-		_, _ = fmt.Fprintln(os.Stdout, "Run 'stem license --status' for details")
-		return false
-	case license.Tier(state.Tier) < license.TierProfessional && !state.IsTrialMode:
-		_, _ = fmt.Fprintln(os.Stdout, "Error: Professional features require a Tier 2 (Professional) license")
-		_, _ = fmt.Fprintln(os.Stdout, "Your license: Tier 1 (Reflector only)")
-		return false
 	}
 	return true
 }
@@ -203,34 +149,10 @@ func parseTestFlags(args []string) (*testCmdFlags, error) {
 	}, nil
 }
 
-// createTestConfig creates a dataplane config from test flags.
-func createTestConfig(flags *testCmdFlags) *testmasterDP.Config {
-	return &testmasterDP.Config{
-		Interface:      flags.iface,
-		Peer:           flags.peer,
-		PeerPort:       flags.peerPort,
-		LineRate:       0,
-		AutoDetect:     true,
-		TestType:       testmasterDP.TestThroughput,
-		FrameSize:      0,
-		IncludeJumbo:   false,
-		TrialDuration:  time.Duration(flags.duration) * time.Second,
-		WarmupPeriod:   time.Duration(flags.warmup) * time.Second,
-		InitialRatePct: defaultInitialRatePct,
-		ResolutionPct:  flags.resolution,
-		MaxIterations:  defaultMaxIterations,
-		AcceptableLoss: flags.maxLoss,
-		HWTimestamp:    false,
-		MeasureLatency: true,
-		UsePacing:      false,
-		BatchSize:      defaultBatchSize,
-	}
-}
-
 // parseFrameSizes parses comma-separated frame sizes with validation warnings.
-func parseFrameSizes(s string) []int {
+func parseFrameSizes(s string) []uint32 {
 	parts := strings.Split(s, ",")
-	sizes := make([]int, 0, len(parts))
+	sizes := make([]uint32, 0, len(parts))
 	for _, part := range parts {
 		trimmed := strings.TrimSpace(part)
 		if trimmed == "" {
@@ -245,9 +167,92 @@ func parseFrameSizes(s string) []int {
 			logging.Warn("frame size out of range (64-9216), ignored", "value", size)
 			continue
 		}
-		sizes = append(sizes, size)
+		sizes = append(sizes, uint32(size))
 	}
 	return sizes
+}
+
+// buildStartRequest turns parsed flags into the run plan the daemon
+// executes. The daemon owns defaults it can see (line rate, interface
+// validation); the CLI only forwards what the operator asked for.
+func buildStartRequest(
+	flags *testCmdFlags,
+	tests []string,
+	frameSizes []uint32,
+	seconds uint32,
+) api.TestStartRequest {
+	steps := make([]api.TestStepRequest, 0, len(tests))
+	for _, testType := range tests {
+		steps = append(steps, api.TestStepRequest{
+			TestType: testType,
+			Config: &api.TestConfig{
+				RFC2544: &api.RFC2544TestConfig{
+					Duration:   flags.duration,
+					FrameSizes: frameSizes,
+					Resolution: flags.resolution,
+					MaxLoss:    flags.maxLoss,
+					Warmup:     flags.warmup,
+					Trials:     defaultTrials,
+				},
+				Y1564: &api.Y1564TestConfig{
+					CIR:                flags.cir,
+					EIR:                flags.eir,
+					FrameSizes:         frameSizes,
+					FDThreshold:        flags.fdThreshold,
+					FDVThreshold:       flags.fdvThreshold,
+					FLRThreshold:       flags.flrThreshold,
+					ConfigStepDuration: seconds,
+					PerfTestDuration:   seconds,
+				},
+			},
+		})
+	}
+	return api.TestStartRequest{
+		Interface: flags.iface,
+		Peer:      flags.peer,
+		PeerPort:  flags.peerPort,
+		Tests:     steps,
+	}
+}
+
+// maxDurationSeconds bounds a single test step at one day. The flag is an
+// int, so without a bound the conversion to the wire's uint32 would wrap a
+// negative or absurd duration into a plausible-looking one.
+const maxDurationSeconds = 86400
+
+// validateDuration refuses a duration the wire format cannot carry
+// faithfully and returns the checked value, rather than silently measuring
+// something else. The bound and the conversion live together so the
+// conversion is provably in range.
+func validateDuration(duration int) (uint32, error) {
+	if duration <= 0 || duration > maxDurationSeconds {
+		return 0, fmt.Errorf("duration must be between 1 and %d seconds, got %d", maxDurationSeconds, duration)
+	}
+	return uint32(duration), nil
+}
+
+// reportNoDaemon explains the one thing that stops the CLI working. There
+// is deliberately no standalone fallback: a CLI that quietly opened its own
+// dataplane would be the second orchestration path #1166 removes, and it
+// would fight the daemon for the interface.
+func reportNoDaemon(err error) error {
+	_, _ = fmt.Fprintf(os.Stdout, "Error: %v\n", err)
+	switch {
+	case errors.Is(err, daemonconn.ErrUnreadable):
+		_, _ = fmt.Fprintln(os.Stdout,
+			"The daemon's credential is readable only by the account it runs as. "+
+				"Run this as root (sudo stem test ...) or as the stem user.")
+	case errors.Is(err, daemonconn.ErrPermissions):
+		_, _ = fmt.Fprintln(os.Stdout,
+			"Another account can read the daemon's credential, so it will not be used. "+
+				"Restore it with 'chmod 600' and restart the daemon to reissue the token.")
+	default:
+		_, _ = fmt.Fprintln(os.Stdout,
+			"Tests run in the Stem daemon. Start it with 'systemctl start stem' "+
+				"(or 'stem web') and try again.")
+		_, _ = fmt.Fprintf(os.Stdout, "Looked in: %s\n", strings.Join(daemonconn.SearchDirs(), ", "))
+	}
+	return err
 }
 
 func testCmd(args []string) error {
@@ -264,107 +269,90 @@ func testCmd(args []string) error {
 		_, _ = fmt.Fprintln(os.Stdout, "Error: --interface is required")
 		return errors.New("missing interface")
 	}
-	tests, validationErr := validateTestCommand(flags)
-	if validationErr != nil {
-		return validationErr
+
+	seconds, durErr := validateDuration(flags.duration)
+	if durErr != nil {
+		_, _ = fmt.Fprintf(os.Stdout, "Error: %v\n", durErr)
+		return durErr
 	}
 
-	// Check license.
-	if !checkTestLicense() {
-		return errors.New("license check failed")
+	tests := strings.Split(flags.testTypes, ",")
+	for i, t := range tests {
+		tests[i] = strings.TrimSpace(t)
+	}
+	if !validateTestTypesList(tests) {
+		return errors.New("invalid test types")
 	}
 
-	// Parse frame sizes.
 	frameSizeList := parseFrameSizes(flags.frameSizes)
 	if len(frameSizeList) == 0 {
 		_, _ = fmt.Fprintln(os.Stdout, "Error: No valid frame sizes specified")
 		return errors.New("no valid frame sizes")
 	}
 
+	// Entitlement is the daemon's answer, not the CLI's. Checking a licence
+	// here as well would be a second decision to keep in step — and the old
+	// local check started a trial as a side effect of running a test.
+	client, err := daemonclient.Discover()
+	if err != nil {
+		return reportNoDaemon(err)
+	}
+
 	printTestConfiguration(
 		flags.iface, flags.testTypes, flags.frameSizes,
 		flags.duration, flags.resolution, flags.maxLoss, flags.warmup,
 	)
-	_, _ = fmt.Fprintf(os.Stdout, "Peer:         %s:%d\n", flags.peer, flags.peerPort)
 
-	// Create and configure dataplane context.
-	ctx, ctxErr := testmasterDP.NewContext(flags.iface)
-	if ctxErr != nil {
-		_, _ = fmt.Fprintf(os.Stdout, "Error: Failed to initialize dataplane: %v\n", ctxErr)
-		return ctxErr
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
+	runID, startErr := client.Start(ctx, buildStartRequest(flags, tests, frameSizeList, seconds))
+	if startErr != nil {
+		_, _ = fmt.Fprintf(os.Stdout, "Error: %v\n", startErr)
+		return startErr
 	}
-	defer ctx.Close()
+	_, _ = fmt.Fprintf(os.Stdout, "Run %s started\n", runID)
 
-	cfg := createTestConfig(flags)
-	cfgErr := ctx.Configure(cfg)
-	if cfgErr != nil {
-		ctx.Close()
-		_, _ = fmt.Fprintf(os.Stdout, "Error: Failed to configure: %v\n", cfgErr)
-		return cfgErr
+	quiet := flags.jsonOutput || flags.csvOutput
+	status, watchErr := watchRun(ctx, client, runID, quiet)
+	if watchErr != nil {
+		_, _ = fmt.Fprintf(os.Stdout, "\nError: %v\n", watchErr)
+		return watchErr
 	}
 
-	// Setup signal handler.
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
-	go func() {
-		<-sigChan
-		_, _ = fmt.Fprintln(os.Stdout, "\nCancelling test...")
-		ctx.Cancel()
-	}()
-
-	// Run tests.
-	params := testCmdParams{
-		cir:          flags.cir,
-		eir:          flags.eir,
-		fdThreshold:  flags.fdThreshold,
-		fdvThreshold: flags.fdvThreshold,
-		flrThreshold: flags.flrThreshold,
-		duration:     flags.duration,
-		jsonOutput:   flags.jsonOutput,
-		csvOutput:    flags.csvOutput,
+	result, resultErr := client.Result(ctx)
+	if resultErr != nil {
+		_, _ = fmt.Fprintf(os.Stdout, "\nError: %v\n", resultErr)
+		return resultErr
 	}
-	allResults, runErr := runTestSuite(ctx, tests, frameSizeList, params)
+	return reportRunOutcome(status, result, flags)
+}
 
-	// Final output.
-	if flags.jsonOutput && len(allResults) > 0 {
-		data, _ := json.MarshalIndent(allResults, "", "  ")
+// reportRunOutcome prints the daemon's result in the requested format and
+// turns a failed or cancelled run into a non-zero exit.
+func reportRunOutcome(status api.Stats, result api.TestResultResponse, flags *testCmdFlags) error {
+	switch {
+	case flags.jsonOutput:
+		data, err := json.MarshalIndent(result, "", "  ")
+		if err != nil {
+			return fmt.Errorf("encode result: %w", err)
+		}
 		_, _ = fmt.Fprintf(os.Stdout, "\n%s\n", string(data))
-	} else if flags.csvOutput && len(allResults) > 0 {
-		printCSVResults(allResults)
+	case flags.csvOutput:
+		renderCSV(result.Data)
+	default:
+		_, _ = fmt.Fprintf(os.Stdout, "\n\nRun %s %s\n", status.SuiteID, status.TestStatus)
+		if result.Message != "" {
+			_, _ = fmt.Fprintf(os.Stdout, "%s\n", result.Message)
+		}
+		renderResult(result.Data)
 	}
 
-	if runErr != nil {
-		_, _ = fmt.Fprintln(os.Stdout, "\nTest run failed.")
-		return runErr
-	}
-
-	_, _ = fmt.Fprintln(os.Stdout, "\nTest run complete.")
-
-	return nil
-}
-
-func validatePeerFlags(flags *testCmdFlags) error {
-	if flags.peer == "" {
-		_, _ = fmt.Fprintln(os.Stdout, "Error: --peer is required")
-		return errors.New("missing peer")
-	}
-	if flags.peerPort == 0 {
-		_, _ = fmt.Fprintln(os.Stdout, "Error: --peer-port must be between 1 and 65535")
-		return errors.New("invalid peer port")
+	if status.TestStatus != "completed" || !result.Success {
+		if result.Error != "" {
+			return fmt.Errorf("run %s: %s", status.SuiteID, result.Error)
+		}
+		return fmt.Errorf("run %s ended %s", status.SuiteID, status.TestStatus)
 	}
 	return nil
-}
-
-func validateTestCommand(flags *testCmdFlags) ([]string, error) {
-	tests := strings.Split(flags.testTypes, ",")
-	for i, testType := range tests {
-		tests[i] = strings.TrimSpace(testType)
-	}
-	if !validateTestTypesList(tests) {
-		return nil, errors.New("invalid test types")
-	}
-	if err := validatePeerFlags(flags); err != nil {
-		return nil, err
-	}
-	return tests, nil
 }

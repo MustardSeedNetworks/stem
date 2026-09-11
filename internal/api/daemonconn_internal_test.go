@@ -70,7 +70,8 @@ func TestShutdownLeavesForeignConnection(t *testing.T) {
 	t.Setenv("STEM_DATA_DIR", dir)
 	t.Setenv("STEM_AUTH_USERNAME", "clitokentest")
 	t.Setenv("STEM_AUTH_PASSWORD", "clitokenpass123")
-	if err := daemonconn.Publish(dir, daemonconn.Descriptor{URL: testDaemonURL, Token: "another-daemons-token"}); err != nil {
+	foreign := daemonconn.Descriptor{URL: testDaemonURL, Token: "another-daemons-token"}
+	if err := daemonconn.Publish(dir, foreign); err != nil {
 		t.Fatalf("Publish: %v", err)
 	}
 

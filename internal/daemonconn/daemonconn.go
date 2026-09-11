@@ -44,6 +44,11 @@ var (
 	// which makes the token in it unfit to present.
 	ErrPermissions = errors.New("daemon descriptor is not owner-only")
 
+	// ErrUnreadable reports a descriptor that exists but this account may
+	// not read — normally an operator invoking the CLI as themselves while
+	// the daemon runs as its own user.
+	ErrUnreadable = errors.New("daemon descriptor is not readable by this account")
+
 	errNoToken = errors.New("daemon descriptor carries no token")
 	errBadURL  = errors.New("daemon descriptor needs an absolute https URL")
 )
@@ -137,6 +142,9 @@ func Read(dataDir string) (Descriptor, error) {
 
 	data, readErr := os.ReadFile(path)
 	if readErr != nil {
+		if errors.Is(readErr, os.ErrPermission) {
+			return Descriptor{}, fmt.Errorf("%w: %s", ErrUnreadable, path)
+		}
 		return Descriptor{}, fmt.Errorf("read daemon descriptor: %w", readErr)
 	}
 	var d Descriptor

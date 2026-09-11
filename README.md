@@ -55,6 +55,10 @@ make build
 # Run as a reflector on eth0
 sudo ./bin/stem reflect -i eth0
 
+# Tests are executed by the Stem daemon, so start it first; `stem test` is a
+# client of it, and the web UI shows the same run.
+sudo ./bin/stem web -p 8444 &
+
 # Run a throughput test against a host running `stem reflect`
 # (test type names are exact — see `stem list-tests`)
 sudo ./bin/stem test -t rfc2544_throughput -i eth0
@@ -77,7 +81,7 @@ sudo ./bin/stem reflect -i eth0 --tui
 | --- | --- |
 | `stem version` | Show version + build metadata |
 | `stem reflect -i <iface>` | Start the reflector |
-| `stem test -t <type> -i <iface>` | Run one or more tests (comma-separated) |
+| `stem test -t <type> -i <iface>` | Run one or more tests (comma-separated) in the running daemon |
 | `stem web -p <port>` | Start the web UI + REST API |
 | `stem license --status` | Show license tier + activation state |
 | `stem list-tests` | Catalogue all supported tests, grouped by module |
