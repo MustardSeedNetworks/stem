@@ -68,15 +68,6 @@ when running tests from another location.
 				TechDesc:   "Only reflect packets from MAC addresses matching this OUI prefix",
 				LaymanDesc: "Only respond to packets from a specific device manufacturer",
 			},
-			{
-				Short:      "",
-				Long:       "--tui",
-				Type:       TypeBoolean,
-				Default:    ValueFalse,
-				Required:   false,
-				TechDesc:   "Launch the standalone reflector dashboard",
-				LaymanDesc: "Show live reflector counters in the terminal",
-			},
 		},
 		Examples: []Example{
 			{
@@ -85,7 +76,7 @@ when running tests from another location.
 				Output:  "Interface: eth0\nProfile: all\nMode: all",
 			},
 			{Desc: "Reflect NetAlly test traffic", Command: "stem reflect -i eth0 --profile netally"},
-			{Desc: "Show the reflector dashboard", Command: "stem reflect -i eth0 --tui"},
+			{Desc: "Watch live counters in the web UI", Command: "stem web -p 8444"},
 		},
 		SeeAlso: []string{"test", "web"},
 	}

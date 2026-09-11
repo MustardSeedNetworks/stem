@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"errors"
+	"io"
 	"math/big"
 	"net/http"
 	"net/http/httptest"
@@ -351,5 +352,116 @@ func writeJSON(t *testing.T, w http.ResponseWriter, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(v); err != nil {
 		t.Errorf("encode response: %v", err)
+	}
+}
+
+// Starting the reflector is the same daemon-owned run as any test, so the
+// CLI gets a run ID for it and the web UI sees the same one.
+func TestStartReflectorReturnsARunID(t *testing.T) {
+	dir, rec := newDaemon(t, func(w http.ResponseWriter, _ *http.Request) {
+		writeJSON(t, w, map[string]any{"status": "started", "suiteId": "stem-abc-4"})
+	})
+
+	c, err := daemonclient.Open(dir)
+	if err != nil {
+		t.Fatalf("Open: %v", err)
+	}
+	runID, err := c.StartReflector(context.Background(), "eth0", "netally", 3842)
+	if err != nil {
+		t.Fatalf("StartReflector: %v", err)
+	}
+	if runID != "stem-abc-4" {
+		t.Errorf("run ID = %q, want %q", runID, "stem-abc-4")
+	}
+	if got := rec.last().URL.Path; got != "/api/v1/test/start" {
+		t.Errorf("path = %q, want /api/v1/test/start", got)
+	}
+}
+
+// The port and profile an operator asked for have to reach the daemon;
+// dropping them would silently reflect on the wrong port.
+func TestStartReflectorCarriesProfileAndPort(t *testing.T) {
+	var body []byte
+	dir, _ := newDaemon(t, func(w http.ResponseWriter, r *http.Request) {
+		body, _ = io.ReadAll(r.Body)
+		writeJSON(t, w, map[string]any{"status": "started", "suiteId": "stem-abc-5"})
+	})
+
+	c, err := daemonclient.Open(dir)
+	if err != nil {
+		t.Fatalf("Open: %v", err)
+	}
+	if _, startErr := c.StartReflector(context.Background(), "eth1", "netally", 3842); startErr != nil {
+		t.Fatalf("StartReflector: %v", startErr)
+	}
+
+	var sent api.TestStartRequest
+	if unmarshalErr := json.Unmarshal(body, &sent); unmarshalErr != nil {
+		t.Fatalf("decode request: %v", unmarshalErr)
+	}
+	if sent.Interface != "eth1" {
+		t.Errorf("interface = %q, want eth1", sent.Interface)
+	}
+	if sent.Profile != "netally" {
+		t.Errorf("profile = %q, want netally", sent.Profile)
+	}
+	if sent.PeerPort != 3842 {
+		t.Errorf("peerPort = %d, want 3842", sent.PeerPort)
+	}
+	if len(sent.Tests) != 1 || sent.Tests[0].TestType != "reflect" {
+		t.Errorf("tests = %+v, want a single reflect step", sent.Tests)
+	}
+}
+
+func TestReflectorStatsReportsCounters(t *testing.T) {
+	dir, rec := newDaemon(t, func(w http.ResponseWriter, _ *http.Request) {
+		writeJSON(t, w, map[string]any{
+			"running": true, "packetsReceived": 12, "packetsReflected": 11, "bytesReceived": 792,
+		})
+	})
+
+	c, err := daemonclient.Open(dir)
+	if err != nil {
+		t.Fatalf("Open: %v", err)
+	}
+	stats, err := c.ReflectorStats(context.Background())
+	if err != nil {
+		t.Fatalf("ReflectorStats: %v", err)
+	}
+	if !stats.Running || stats.PacketsReceived != 12 || stats.PacketsReflected != 11 {
+		t.Errorf("stats = %+v, want a running reflector with 12/11 packets", stats)
+	}
+	if got := rec.last().URL.Path; got != "/api/v1/reflector/stats" {
+		t.Errorf("path = %q, want /api/v1/reflector/stats", got)
+	}
+}
+
+// --oui and --port are reflector configuration, not run parameters. If the
+// client did not send them the flags would parse and then do nothing.
+func TestConfigureReflectorSendsTheFilters(t *testing.T) {
+	var body []byte
+	dir, rec := newDaemon(t, func(w http.ResponseWriter, r *http.Request) {
+		body, _ = io.ReadAll(r.Body)
+		writeJSON(t, w, map[string]any{"status": "updated"})
+	})
+
+	c, err := daemonclient.Open(dir)
+	if err != nil {
+		t.Fatalf("Open: %v", err)
+	}
+	want := api.ReflectorConfig{Profile: "netally", OUIFilter: "00:c0:17", PortFilter: 3842}
+	if cfgErr := c.ConfigureReflector(context.Background(), want); cfgErr != nil {
+		t.Fatalf("ConfigureReflector: %v", cfgErr)
+	}
+
+	if got := rec.last().URL.Path; got != "/api/v1/reflector/config" {
+		t.Errorf("path = %q, want /api/v1/reflector/config", got)
+	}
+	var sent api.ReflectorConfig
+	if unmarshalErr := json.Unmarshal(body, &sent); unmarshalErr != nil {
+		t.Fatalf("decode request: %v", unmarshalErr)
+	}
+	if sent.Profile != want.Profile || sent.OUIFilter != want.OUIFilter || sent.PortFilter != want.PortFilter {
+		t.Errorf("sent = %+v, want %+v", sent, want)
 	}
 }

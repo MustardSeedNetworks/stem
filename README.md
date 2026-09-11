@@ -40,7 +40,6 @@ the same install.
 ### Interfaces
 
 - **CLI** — scriptable `stem <cmd>` for CI integration
-- **Reflector dashboard** — live tview terminal display for `stem reflect --tui`
 - **Web UI** — React/TypeScript control plane on port 8444 (HTTPS by default; 8043 plaintext redirector)
 - **REST + SSE** — `/api/v1/events` streams live test results
 
@@ -52,27 +51,22 @@ git clone https://github.com/MustardSeedNetworks/stem
 cd stem
 make build
 
+# The daemon runs every test and the reflector; `stem reflect` and
+# `stem test` are clients of it, so start it first (HTTPS by default).
+sudo ./bin/stem web -p 8444 &
+# → open https://localhost:8444 (self-signed cert)
+# → run `sudo ./bin/stem install-ca` once to trust the cert system-wide
+
 # Run as a reflector on eth0
 sudo ./bin/stem reflect -i eth0
-
-# Tests are executed by the Stem daemon, so start it first; `stem test` is a
-# client of it, and the web UI shows the same run.
-sudo ./bin/stem web -p 8444 &
 
 # Run a throughput test against a host running `stem reflect`
 # (test type names are exact — see `stem list-tests`)
 sudo ./bin/stem test -t rfc2544_throughput -i eth0
+# → the web UI shows this run, with the same run ID the CLI printed
 
 # List every test type, grouped by module
 ./bin/stem list-tests
-
-# Start the web UI (HTTPS by default)
-sudo ./bin/stem web -p 8444
-# → open https://localhost:8444 (self-signed cert)
-# → run `sudo ./bin/stem install-ca` once to trust the cert system-wide
-
-# Or the reflector with its live terminal dashboard
-sudo ./bin/stem reflect -i eth0 --tui
 ```
 
 ## Commands
@@ -80,7 +74,7 @@ sudo ./bin/stem reflect -i eth0 --tui
 | Command | Purpose |
 | --- | --- |
 | `stem version` | Show version + build metadata |
-| `stem reflect -i <iface>` | Start the reflector |
+| `stem reflect -i <iface>` | Start the reflector in the running daemon |
 | `stem test -t <type> -i <iface>` | Run one or more tests (comma-separated) in the running daemon |
 | `stem web -p <port>` | Start the web UI + REST API |
 | `stem license --status` | Show license tier + activation state |

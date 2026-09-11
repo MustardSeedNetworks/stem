@@ -11,9 +11,9 @@ import (
 	"testing"
 )
 
-// licenseHome points the license manager at a temp HOME so a case decides what
-// is on disk, and returns the config directory it will read.
-func licenseHome(t *testing.T) string {
+// licenseHome points the license manager at a temp HOME so a case decides
+// what is on disk.
+func licenseHome(t *testing.T) {
 	t.Helper()
 	home := t.TempDir()
 	t.Setenv("HOME", home)
@@ -21,7 +21,6 @@ func licenseHome(t *testing.T) string {
 	if err := os.MkdirAll(dir, 0o700); err != nil {
 		t.Fatalf("mkdir: %v", err)
 	}
-	return dir
 }
 
 // parseTestFlagsOrFail parses args the way `stem test` does and fails the test

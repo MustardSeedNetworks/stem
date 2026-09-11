@@ -189,8 +189,8 @@ stem reflect -i eth0
 # With profile
 stem reflect -i eth0 --profile all
 
-# With TUI dashboard
-stem reflect -i eth0 --tui
+# Live counters are in the web UI, which shows the same run
+stem web -p 8444
 ```
 
 ### Test Mode (CLI)

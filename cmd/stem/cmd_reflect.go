@@ -3,6 +3,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"flag"
 	"fmt"
@@ -12,17 +13,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/MustardSeedNetworks/stem/internal/license"
+	"github.com/MustardSeedNetworks/stem/internal/api"
+	"github.com/MustardSeedNetworks/stem/internal/daemonclient"
 	reflectorConfig "github.com/MustardSeedNetworks/stem/internal/reflector/config"
-	reflectorDP "github.com/MustardSeedNetworks/stem/internal/reflector/dataplane"
-	reflectorTUI "github.com/MustardSeedNetworks/stem/internal/reflector/tui"
 	"github.com/MustardSeedNetworks/stem/internal/version"
 )
-
-// getSignatureFilter maps profile name to signature filter.
-func getSignatureFilter(profile string) string {
-	return reflectorConfig.SettingsForProfile(profile).SignatureFilter
-}
 
 func getReflectionMode(profile string) string {
 	return reflectorConfig.SettingsForProfile(profile).Mode
@@ -35,11 +30,12 @@ func getReflectorPort(profile string, requested uint16) uint16 {
 	return requested
 }
 
-// reflectorStatsLoop displays reflector stats periodically until interrupted.
-func reflectorStatsLoop(dp *reflectorDP.Dataplane) {
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
-	defer signal.Stop(sigChan)
+// watchReflector prints the daemon's reflector counters until interrupted,
+// then stops the daemon-owned reflector and prints its final totals.
+func watchReflector(ctx context.Context, client *daemonclient.Client) error {
+	// Polling outlives the interrupt: the reflector is the daemon's, and the
+	// CLI has to read the final counters after asking it to stop.
+	poll := context.WithoutCancel(ctx)
 
 	var statsTick <-chan time.Time
 	if stdout, err := os.Stdout.Stat(); err == nil && stdout.Mode()&os.ModeCharDevice != 0 {
@@ -50,30 +46,42 @@ func reflectorStatsLoop(dp *reflectorDP.Dataplane) {
 
 	for {
 		select {
-		case <-sigChan:
-			_, _ = fmt.Fprintln(os.Stdout, "\nShutting down reflector...")
-			dp.Stop()
-			stats := dp.GetStats()
-			_, _ = fmt.Fprintf(os.Stdout, "\nFinal Statistics:\n")
-			_, _ = fmt.Fprintf(os.Stdout, "  Packets Received:  %d\n", stats.PacketsReceived)
-			_, _ = fmt.Fprintf(os.Stdout, "  Packets Reflected: %d\n", stats.PacketsReflected)
-			_, _ = fmt.Fprintf(os.Stdout, "  Bytes Received:    %d\n", stats.BytesReceived)
-			_, _ = fmt.Fprintf(os.Stdout, "  Bytes Reflected:   %d\n", stats.BytesReflected)
-			return
+		case <-ctx.Done():
+			_, _ = fmt.Fprintln(os.Stdout, "\nStopping reflector...")
+			if err := client.Stop(poll); err != nil {
+				return fmt.Errorf("ask the daemon to stop the reflector: %w", err)
+			}
+			stats, err := client.ReflectorStats(poll)
+			if err != nil {
+				return fmt.Errorf("read final reflector statistics: %w", err)
+			}
+			printReflectorTotals(stats)
+			return nil
 		case <-statsTick:
-			stats := dp.GetStats()
-			_, _ = fmt.Fprintf(
-				os.Stdout,
-				"\r[Stats] RX: %d pkts | TX: %d pkts | Signatures: ITO=%d RFC2544=%d Y.1564=%d MSN=%d",
-				stats.PacketsReceived,
-				stats.PacketsReflected,
-				stats.SigProbeOT+stats.SigDataOT+stats.SigLatency,
-				stats.SigRFC2544,
-				stats.SigY1564,
-				stats.SigMSN,
-			)
+			stats, err := client.ReflectorStats(poll)
+			if err != nil {
+				return fmt.Errorf("read reflector statistics: %w", err)
+			}
+			printReflectorProgress(stats)
 		}
 	}
+}
+
+func printReflectorProgress(stats api.ReflectorStats) {
+	_, _ = fmt.Fprintf(
+		os.Stdout,
+		"\r[Stats] RX: %d pkts | TX: %d pkts | RX bytes: %d | TX bytes: %d",
+		stats.PacketsReceived, stats.PacketsReflected,
+		stats.BytesReceived, stats.BytesReflected,
+	)
+}
+
+func printReflectorTotals(stats api.ReflectorStats) {
+	_, _ = fmt.Fprintf(os.Stdout, "\nFinal Statistics:\n")
+	_, _ = fmt.Fprintf(os.Stdout, "  Packets Received:  %d\n", stats.PacketsReceived)
+	_, _ = fmt.Fprintf(os.Stdout, "  Packets Reflected: %d\n", stats.PacketsReflected)
+	_, _ = fmt.Fprintf(os.Stdout, "  Bytes Received:    %d\n", stats.BytesReceived)
+	_, _ = fmt.Fprintf(os.Stdout, "  Bytes Reflected:   %d\n", stats.BytesReflected)
 }
 
 func reflectCmd(args []string) error {
@@ -87,42 +95,46 @@ func reflectCmd(args []string) error {
 		return err
 	}
 
-	reportReflectorLicense()
-
-	sigFilter := getSignatureFilter(parsed.profile)
-
-	cfg := buildReflectorConfig(parsed, sigFilter)
-
-	// Create reflector dataplane.
-	dp, err := reflectorDP.New(cfg)
+	// The reflector runs in the daemon, so it is one run the web UI can see
+	// and stop, and one owner of the interface (#1166).
+	client, err := daemonclient.Discover()
 	if err != nil {
-		_, _ = fmt.Fprintf(os.Stdout, "Error: Failed to create reflector: %v\n", err)
-		return err
+		return reportNoDaemon(err)
 	}
-	defer dp.Close()
 
-	// Start reflector.
-	startErr := dp.Start()
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
+	return runReflector(ctx, client, parsed)
+}
+
+// runReflector configures, starts and follows the daemon-owned reflector.
+// It is separate from reflectCmd so the sequence can be driven in a test
+// without flag parsing or a signal: configuring before starting is the whole
+// point, since the daemon refuses a configuration change while running and
+// --oui and --port would otherwise parse and do nothing.
+func runReflector(ctx context.Context, client *daemonclient.Client, parsed *reflectCmdArgs) error {
+	printReflectorStartup(parsed)
+
+	port := getReflectorPort(parsed.profile, parsed.port)
+	cfg := api.ReflectorConfig{
+		Profile:    parsed.profile,
+		OUIFilter:  parsed.oui,
+		PortFilter: int(port),
+	}
+	if cfgErr := client.ConfigureReflector(ctx, cfg); cfgErr != nil {
+		_, _ = fmt.Fprintf(os.Stdout, "Error: %v\n", cfgErr)
+		return cfgErr
+	}
+
+	runID, startErr := client.StartReflector(ctx, parsed.iface, parsed.profile, port)
 	if startErr != nil {
-		dp.Close() // Cleanup before exit.
-		_, _ = fmt.Fprintf(os.Stdout, "Error: Failed to start reflector: %v\n", startErr)
+		_, _ = fmt.Fprintf(os.Stdout, "Error: %v\n", startErr)
 		return startErr
 	}
 
-	printReflectorStartup(parsed)
-	_, _ = fmt.Fprintln(os.Stdout, "\nReflector started. Press Ctrl+C to stop.")
-
-	if parsed.useTUI {
-		tuiApp := reflectorTUI.New(dp)
-		tuiErr := tuiApp.Run()
-		if tuiErr != nil {
-			_, _ = fmt.Fprintf(os.Stdout, "TUI error: %v\n", tuiErr)
-		}
-	} else {
-		reflectorStatsLoop(dp)
-	}
-
-	return nil
+	_, _ = fmt.Fprintf(os.Stdout, "Run %s started on UDP %d. Press Ctrl+C to stop.\n", runID, port)
+	return watchReflector(ctx, client)
 }
 
 type reflectCmdArgs struct {
@@ -130,7 +142,6 @@ type reflectCmdArgs struct {
 	profile string
 	oui     string
 	port    uint16
-	useTUI  bool
 }
 
 func parseReflectFlags(args []string) (*reflectCmdArgs, *flag.FlagSet, error) {
@@ -140,7 +151,6 @@ func parseReflectFlags(args []string) (*reflectCmdArgs, *flag.FlagSet, error) {
 	profile := fs.String("profile", DefaultProfile, "Preset profile")
 	port := fs.Uint("port", 0, "UDP port filter")
 	oui := fs.String("oui", "", "OUI filter")
-	useTUI := fs.Bool("tui", false, "Launch TUI dashboard")
 
 	if err := fs.Parse(args); err != nil {
 		return nil, fs, err
@@ -155,7 +165,6 @@ func parseReflectFlags(args []string) (*reflectCmdArgs, *flag.FlagSet, error) {
 		profile: *profile,
 		port:    uint16(*port),
 		oui:     *oui,
-		useTUI:  *useTUI,
 	}, fs, nil
 }
 
@@ -173,45 +182,6 @@ func requireReflectInterface(iface string, fs *flag.FlagSet) error {
 // and never starts a trial: spending the 14 Professional days to run a free
 // capability was wrong even on a healthy install, and on a damaged one it
 // overwrote the operator's license file (#1068).
-func reportReflectorLicense() {
-	_, loadStatus, err := license.Load()
-	switch {
-	case err != nil:
-		_, _ = fmt.Fprintf(os.Stdout, "Warning: License check failed: %v\n", err)
-	case !loadStatus.Usable():
-		_, _ = fmt.Fprintf(os.Stdout, "Warning: License file %s is %s; running the reflector, which is free\n",
-			license.DefaultLicensePath(), loadStatus)
-	}
-}
-
-func buildReflectorConfig(parsed *reflectCmdArgs, sigFilter string) *reflectorConfig.Config {
-	cfg := &reflectorConfig.Config{
-		Interface:       parsed.iface,
-		Verbose:         false,
-		SignatureFilter: sigFilter,
-		WebUI:           reflectorConfig.WebUIConfig{Enabled: false, Port: 0},
-		TUI:             reflectorConfig.TUIConfig{Enabled: parsed.useTUI},
-		Filtering: reflectorConfig.FilterConfig{
-			Port:      getReflectorPort(parsed.profile, parsed.port),
-			FilterOUI: false,
-			OUI:       "00:c0:17", // Default NetAlly OUI.
-			FilterMAC: false,
-		},
-		Reflection: reflectorConfig.ReflectConfig{
-			Mode: getReflectionMode(parsed.profile),
-		},
-		Platform: reflectorConfig.PlatformConfig{UseAFXDP: true},
-		Stats:    reflectorConfig.StatsConfig{Format: "text", Interval: 0},
-	}
-
-	if parsed.oui != "" {
-		cfg.Filtering.FilterOUI = true
-		cfg.Filtering.OUI = parsed.oui
-	}
-
-	return cfg
-}
-
 func printReflectorStartup(parsed *reflectCmdArgs) {
 	_, _ = fmt.Fprintf(os.Stdout, "%s %s - Reflector\n", ProductName, version.GetVersion())
 	_, _ = fmt.Fprintf(os.Stdout, "Interface:  %s\n", parsed.iface)

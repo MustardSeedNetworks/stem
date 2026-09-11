@@ -41,11 +41,13 @@ const (
 
 	csrfHeader = "X-Csrf-Token"
 
-	pathStart  = "/api/v1/test/start"
-	pathStop   = "/api/v1/test/stop"
-	pathStats  = "/api/v1/stats"
-	pathCSRF   = "/api/v1/auth/csrf-token"
-	pathResult = "/api/v1/test/result"
+	pathStart           = "/api/v1/test/start"
+	pathStop            = "/api/v1/test/stop"
+	pathStats           = "/api/v1/stats"
+	pathCSRF            = "/api/v1/auth/csrf-token"
+	pathResult          = "/api/v1/test/result"
+	pathReflectorStats  = "/api/v1/reflector/stats"
+	pathReflectorConfig = "/api/v1/reflector/config"
 )
 
 // ErrRunInProgress reports that the daemon is already running something.
@@ -164,6 +166,34 @@ func (c *Client) Start(ctx context.Context, req api.TestStartRequest) (string, e
 		return "", err
 	}
 	return response.SuiteID, nil
+}
+
+// StartReflector starts the daemon-owned reflector and returns the run ID
+// naming it — the same run the web UI shows. The reflector is a run like any
+// other here, so one owner arbitrates the interface.
+func (c *Client) StartReflector(ctx context.Context, iface, profile string, port uint16) (string, error) {
+	return c.Start(ctx, api.TestStartRequest{
+		Interface: iface,
+		Profile:   profile,
+		PeerPort:  port,
+		Tests:     []api.TestStepRequest{{TestType: "reflect"}},
+	})
+}
+
+// ConfigureReflector applies the reflector settings an operator asked for
+// before it starts. The daemon refuses a change while the reflector is
+// running, so this is a pre-start step.
+func (c *Client) ConfigureReflector(ctx context.Context, cfg api.ReflectorConfig) error {
+	return c.do(ctx, http.MethodPost, pathReflectorConfig, cfg, nil)
+}
+
+// ReflectorStats reports the reflector'"'"'s counters.
+func (c *Client) ReflectorStats(ctx context.Context) (api.ReflectorStats, error) {
+	var stats api.ReflectorStats
+	if err := c.do(ctx, http.MethodGet, pathReflectorStats, nil, &stats); err != nil {
+		return api.ReflectorStats{}, err
+	}
+	return stats, nil
 }
 
 // Status reports the daemon's current run state.
