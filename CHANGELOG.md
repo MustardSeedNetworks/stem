@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.100](https://github.com/MustardSeedNetworks/stem/compare/v0.24.99...v0.24.100) (2026-09-11)
+
+
+### Features
+
+* **cli:** make `stem reflect` run in the daemon ([#1177](https://github.com/MustardSeedNetworks/stem/issues/1177)) ([57e7266](https://github.com/MustardSeedNetworks/stem/commit/57e726649982182bacff50f03a90674d53a93240)), closes [#1166](https://github.com/MustardSeedNetworks/stem/issues/1166)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1180](https://github.com/MustardSeedNetworks/stem/issues/1180)) ([1d7423b](https://github.com/MustardSeedNetworks/stem/commit/1d7423b59f5136fec48c4a0bd2e3a311deec92d9))
+* **deps:** update dependency undici to v8.10.2 ([#1178](https://github.com/MustardSeedNetworks/stem/issues/1178)) ([1e5cc85](https://github.com/MustardSeedNetworks/stem/commit/1e5cc853f6bcf200832750ce9acbb1a9def764ce))
+
 ## [0.24.99](https://github.com/MustardSeedNetworks/stem/compare/v0.24.98...v0.24.99) (2026-09-11)
 
 
