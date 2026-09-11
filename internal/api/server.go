@@ -155,7 +155,7 @@ type Server struct {
 	setupModeStartTime   time.Time                  // When setup mode was activated (for timeout)
 	recoveryTokenManager *auth.RecoveryTokenManager // Recovery token manager for password recovery
 	dataDir              string                     // Application data directory for recovery files
-	cliTokenPublished    atomic.Bool                // whether this daemon wrote the local CLI token (#1166)
+	publishedURL         atomic.Pointer[string]     // base URL this daemon published for the local CLI (#1166), nil when none
 	runInstanceID        string                     // per-daemon segment of every run ID (#1166)
 	acmeChallengeServer  *http.Server               // HTTP-01 challenge server for ACME
 	tlsFingerprint       tlsutil.FingerprintCache   // Cached SHA-256 fingerprint of the active TLS cert (exposed via /__version)
@@ -627,10 +627,12 @@ func (s *Server) Run() error {
 	// with the server on SIGINT/SIGTERM; Shutdown also stops them explicitly
 	// and waits for them to exit. The reflector-stats publisher is always-on
 	// but cheap when nobody's subscribed.
-	// The local CLI is a client of this daemon (#1166); publish its
-	// credential before the listener accepts, and withdraw it in Shutdown.
-	if tokenErr := s.publishCLIToken(); tokenErr != nil {
-		return fmt.Errorf("publish CLI token: %w", tokenErr)
+	// The local CLI is a client of this daemon (#1166); publish how to
+	// reach it before the listener accepts, and withdraw it in Shutdown.
+	// This is after bindWithFallback so the URL names the port actually
+	// bound rather than the one that was asked for.
+	if connErr := s.publishConnection(fmt.Sprintf("https://localhost:%d", actualPort)); connErr != nil {
+		return fmt.Errorf("publish daemon descriptor: %w", connErr)
 	}
 
 	s.background = newBackgroundComponents(s)
@@ -686,9 +688,9 @@ func (s *Server) Shutdown() error {
 		s.background.Stop()
 	}
 
-	// Withdraw the local CLI credential before anything else: a token that
-	// outlives the daemon points a CLI at whatever binds the port next.
-	s.withdrawCLIToken()
+	// Withdraw the local CLI credential before anything else: a descriptor
+	// that outlives the daemon points a CLI at whatever binds the port next.
+	s.withdrawConnection()
 
 	// Stop rate limiter cleanup goroutines.
 	if s.authLimiter != nil {
