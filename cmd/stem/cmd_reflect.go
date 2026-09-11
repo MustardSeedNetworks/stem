@@ -121,6 +121,8 @@ func runReflector(ctx context.Context, client *daemonclient.Client, parsed *refl
 		Profile:    parsed.profile,
 		OUIFilter:  parsed.oui,
 		PortFilter: int(port),
+		Interface:  parsed.iface,
+		Autostart:  parsed.atBoot,
 	}
 	if cfgErr := client.ConfigureReflector(ctx, cfg); cfgErr != nil {
 		_, _ = fmt.Fprintf(os.Stdout, "Error: %v\n", cfgErr)
@@ -142,6 +144,7 @@ type reflectCmdArgs struct {
 	profile string
 	oui     string
 	port    uint16
+	atBoot  bool
 }
 
 func parseReflectFlags(args []string) (*reflectCmdArgs, *flag.FlagSet, error) {
@@ -151,6 +154,7 @@ func parseReflectFlags(args []string) (*reflectCmdArgs, *flag.FlagSet, error) {
 	profile := fs.String("profile", DefaultProfile, "Preset profile")
 	port := fs.Uint("port", 0, "UDP port filter")
 	oui := fs.String("oui", "", "OUI filter")
+	atBoot := fs.Bool("at-boot", false, "Start this reflector again when the daemon starts")
 
 	if err := fs.Parse(args); err != nil {
 		return nil, fs, err
@@ -165,6 +169,7 @@ func parseReflectFlags(args []string) (*reflectCmdArgs, *flag.FlagSet, error) {
 		profile: *profile,
 		port:    uint16(*port),
 		oui:     *oui,
+		atBoot:  *atBoot,
 	}, fs, nil
 }
 

@@ -182,6 +182,9 @@ Access at: `https://localhost:8444` (self-signed cert; run
 
 ### Reflector Mode (CLI)
 
+The daemon runs the reflector; `stem reflect` asks it to start one, so the
+`stem` service must be running (`systemctl start stem`).
+
 ```bash
 # Basic reflector
 stem reflect -i eth0
@@ -191,6 +194,27 @@ stem reflect -i eth0 --profile all
 
 # Live counters are in the web UI, which shows the same run
 stem web -p 8444
+```
+
+#### A reflector-only host
+
+For a box whose whole job is to reflect — a permanent test target — ask the
+daemon to bring the reflector back whenever it starts:
+
+```bash
+sudo systemctl enable --now stem
+sudo stem reflect -i eth0 --profile netally --at-boot
+```
+
+`--at-boot` records the interface and profile with the daemon, so the
+reflector returns after a reboot without a second service. Do **not** add a
+separate unit running `stem reflect`: the daemon owns the reflector, and two
+owners would contend for the interface.
+
+Check it came back with:
+
+```bash
+curl -sk https://localhost:8444/api/v1/reflector/stats
 ```
 
 ### Test Mode (CLI)

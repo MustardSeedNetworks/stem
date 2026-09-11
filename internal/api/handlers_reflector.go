@@ -75,6 +75,12 @@ func (s *Server) handleReflectorConfigUpdate(w http.ResponseWriter, r *http.Requ
 	}
 	s.commitReflectorConfigUpdate(&cfg)
 
+	// Remember it across restarts: the daemon owns the reflector now, so
+	// losing this on reboot is what used to need a hand-written unit.
+	if persistErr := s.persistReflectorState(); persistErr != nil {
+		logging.Error("failed to persist reflector config", "error", persistErr)
+	}
+
 	if len(changes) > 0 {
 		logging.Info("reflector config updated", "changes", changes)
 	}
