@@ -315,11 +315,9 @@ func NewServer(port int) (*Server, error) {
 	s.recoveryTokenManager = auth.NewRecoveryTokenManager(getDataDir())
 	s.dataDir = getDataDir()
 
-	instanceID, instanceErr := newRunInstanceID()
-	if instanceErr != nil {
-		return nil, instanceErr
+	if stateErr := s.initStateFromDataDir(); stateErr != nil {
+		return nil, stateErr
 	}
-	s.runInstanceID = instanceID
 	s.setupRoutes()
 	return s, nil
 }
@@ -637,6 +635,8 @@ func (s *Server) Run() error {
 
 	s.background = newBackgroundComponents(s)
 	s.background.Start(ctx)
+
+	s.autostartReflector()
 
 	// Wrap with middleware stack: SecurityHeaders -> CORS -> APIVersion -> RequestID -> Logging -> CSRF -> Handler.
 	handler := securityHeadersMiddleware(

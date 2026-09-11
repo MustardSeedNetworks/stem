@@ -183,3 +183,57 @@ func cancelOnceStarted(daemon *fakeDaemon, cancel context.CancelFunc) {
 	time.Sleep(50 * time.Millisecond)
 	cancel()
 }
+
+// A reflector-only host is configured from a shell, not the web UI. --at-boot
+// is what replaces the hand-written `stem reflect` systemd unit: it tells the
+// daemon to bring this reflector up again after a reboot.
+func TestRunReflectorAtBootPersistsTheRequest(t *testing.T) {
+	client, daemon := newFakeDaemonClient(t)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go cancelOnceStarted(daemon, cancel)
+
+	captureStdout(t, func() {
+		if err := runReflector(ctx, client, &reflectCmdArgs{
+			iface: "eth0", profile: "netally", atBoot: true,
+		}); err != nil {
+			t.Errorf("runReflector: %v", err)
+		}
+	})
+
+	daemon.mu.Lock()
+	defer daemon.mu.Unlock()
+	if len(daemon.configs) != 1 {
+		t.Fatalf("configs = %+v, want exactly one", daemon.configs)
+	}
+	cfg := daemon.configs[0]
+	if !cfg.Autostart {
+		t.Error("--at-boot did not ask the daemon to autostart the reflector")
+	}
+	if cfg.Interface != "eth0" {
+		t.Errorf("interface = %q, want eth0 — the daemon needs it to start without a request", cfg.Interface)
+	}
+}
+
+// Without the flag the daemon must not be told to autostart: an operator
+// running a one-off reflector has not asked for it to come back on reboot.
+func TestRunReflectorWithoutAtBootLeavesAutostartOff(t *testing.T) {
+	client, daemon := newFakeDaemonClient(t)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go cancelOnceStarted(daemon, cancel)
+
+	captureStdout(t, func() {
+		if err := runReflector(ctx, client, &reflectCmdArgs{iface: "eth0", profile: "netally"}); err != nil {
+			t.Errorf("runReflector: %v", err)
+		}
+	})
+
+	daemon.mu.Lock()
+	defer daemon.mu.Unlock()
+	if daemon.configs[0].Autostart {
+		t.Error("autostart was requested without --at-boot")
+	}
+}

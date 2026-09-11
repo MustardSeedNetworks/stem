@@ -270,6 +270,22 @@ type ReflectorConfig struct {
 	SignatureFilter []string `json:"signatureFilter"`
 	OUIFilter       string   `json:"ouiFilter"`
 	PortFilter      int      `json:"portFilter"`
+
+	// Interface is the NIC the reflector binds when the daemon starts it
+	// without a request to name one — an autostart at boot.
+	Interface string `json:"interface,omitempty"`
+
+	// Autostart brings the reflector up with the daemon. It replaces the
+	// hand-written `stem reflect` unit a reflector-only host used to run
+	// (#1166); the daemon owns the reflector, so the daemon restores it.
+	Autostart bool `json:"autostart,omitempty"`
+}
+
+// shouldAutostart reports whether the daemon may bring the reflector up on
+// its own. Both an explicit opt-in and a named interface are required: an
+// autostart without one would pick a NIC nobody chose.
+func (c ReflectorConfig) shouldAutostart() bool {
+	return c.Autostart && c.Interface != ""
 }
 
 // ReflectorStats holds reflector-specific statistics.
