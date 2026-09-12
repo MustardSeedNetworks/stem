@@ -287,6 +287,7 @@ export function ReflectorPage(): ReactElement {
               className="btn btn-secondary"
               disabled={isStoppingReflector}
               aria-busy={isStoppingReflector}
+              data-testid="reflector-stop-button"
             >
               {isStoppingReflector ? (
                 <>
