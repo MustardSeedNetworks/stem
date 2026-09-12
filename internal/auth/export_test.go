@@ -46,3 +46,10 @@ const HibpUserAgent = hibpUserAgent
 func ExportIsCSRFExemptPath(path string) bool {
 	return isCSRFExemptPath(path)
 }
+
+// ExportGenerateTokenWithType mints a token of an arbitrary kind so tests
+// can present one this build does not recognise, which is otherwise
+// unreachable through the public API.
+func ExportGenerateTokenWithType(m *Manager, username, tokenType string) (string, error) {
+	return m.generateTokenWithType(username, tokenType, m.sessionTimeout)
+}

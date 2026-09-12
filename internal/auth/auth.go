@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -25,6 +26,12 @@ var (
 	ErrTokenExpired = errors.New("token expired")
 	// ErrTokenRevoked indicates the token has been revoked/logged out.
 	ErrTokenRevoked = errors.New("token has been revoked")
+
+	// ErrWrongTokenType reports a token presented where its kind is not
+	// accepted — a refresh token used to authenticate an API request, or an
+	// access token offered for exchange. The kinds have deliberately
+	// different lifetimes; accepting one for the other collapses that.
+	ErrWrongTokenType = errors.New("token is not valid for this use")
 	// ErrMissingCredentials indicates required credentials were not provided.
 	ErrMissingCredentials = errors.New(
 		"missing required credentials: set STEM_AUTH_USERNAME and STEM_AUTH_PASSWORD environment variables",
@@ -56,6 +63,17 @@ type Claims struct {
 	Username  string `json:"username"`
 	TokenType string `json:"token_type"`
 }
+
+// Token kinds. Each has its own lifetime and its own valid use, and
+// validateTokenOfType is what keeps them from being swapped (#1169).
+// TokenTypeCLI is declared in clitoken.go with the credential it names.
+const (
+	// TokenTypeAccess authenticates API requests for a browser session.
+	TokenTypeAccess = "access"
+
+	// TokenTypeRefresh may only be exchanged for a fresh access token.
+	TokenTypeRefresh = "refresh"
+)
 
 // Manager issues and validates JWT tokens.
 type Manager struct {
@@ -180,7 +198,29 @@ func (m *Manager) upgradeHash(ctx context.Context, password string) {
 
 // ValidateToken parses and validates a JWT token.
 // Returns ErrTokenRevoked if the token has been revoked via logout.
-func (m *Manager) ValidateToken(_ context.Context, tokenString string) (*Claims, error) {
+// ValidateToken validates a credential presented to authenticate an API
+// request. Only the kinds that may do so are accepted — a browser session
+// and the local CLI — so a refresh token, which lives far longer, cannot be
+// replayed as an access token (#1169).
+func (m *Manager) ValidateToken(ctx context.Context, tokenString string) (*Claims, error) {
+	return m.validateTokenOfType(ctx, tokenString, TokenTypeAccess, TokenTypeCLI)
+}
+
+// ValidateRefreshToken validates a credential offered for exchange at the
+// refresh endpoint. The mirror image of ValidateToken: only a refresh token
+// qualifies, so an access or CLI token cannot mint fresh sessions forever.
+func (m *Manager) ValidateRefreshToken(ctx context.Context, tokenString string) (*Claims, error) {
+	return m.validateTokenOfType(ctx, tokenString, TokenTypeRefresh)
+}
+
+// validateTokenOfType verifies signature, expiry and revocation, then
+// refuses any token whose kind is not in accepted. An unknown or absent
+// kind matches nothing and is refused with it: the default fails closed.
+func (m *Manager) validateTokenOfType(
+	_ context.Context,
+	tokenString string,
+	accepted ...string,
+) (*Claims, error) {
 	claims := new(Claims)
 	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -204,11 +244,15 @@ func (m *Manager) ValidateToken(_ context.Context, tokenString string) (*Claims,
 		return nil, ErrTokenRevoked
 	}
 
+	if !slices.Contains(accepted, claims.TokenType) {
+		return nil, fmt.Errorf("%w: %q", ErrWrongTokenType, claims.TokenType)
+	}
+
 	return claims, nil
 }
 
 func (m *Manager) generateToken(username string) (string, error) {
-	return m.generateTokenWithType(username, "access", m.sessionTimeout)
+	return m.generateTokenWithType(username, TokenTypeAccess, m.sessionTimeout)
 }
 
 func (m *Manager) generateTokenWithType(username, tokenType string, duration time.Duration) (string, error) {
@@ -280,19 +324,15 @@ func (m *Manager) RevokeToken(claims *Claims) {
 
 // GenerateRefreshToken creates a long-lived refresh token for the user.
 func (m *Manager) GenerateRefreshToken(username string) (string, error) {
-	return m.generateTokenWithType(username, "refresh", RefreshTokenDuration)
+	return m.generateTokenWithType(username, TokenTypeRefresh, RefreshTokenDuration)
 }
 
 // RefreshAccessToken validates a refresh token and issues a new access token.
 // Returns ErrInvalidToken if the token is not a valid refresh token.
 func (m *Manager) RefreshAccessToken(ctx context.Context, refreshToken string) (string, error) {
-	claims, err := m.ValidateToken(ctx, refreshToken)
+	claims, err := m.ValidateRefreshToken(ctx, refreshToken)
 	if err != nil {
 		return "", err
-	}
-
-	if claims.TokenType != "refresh" {
-		return "", fmt.Errorf("%w: not a refresh token", ErrInvalidToken)
 	}
 
 	return m.generateToken(claims.Username)
