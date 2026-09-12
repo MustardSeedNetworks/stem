@@ -96,12 +96,12 @@ func TestGenerateTokenWithType_Refresh(t *testing.T) {
 		t.Fatalf("NewManager() error: %v", err)
 	}
 
-	token, err := mgr.generateTokenWithType("testuser", "refresh", RefreshTokenDuration)
+	token, err := mgr.generateTokenWithType("testuser", TokenTypeRefresh, RefreshTokenDuration)
 	if err != nil {
 		t.Fatalf("generateTokenWithType() error: %v", err)
 	}
 
-	claims, err := mgr.ValidateToken(ctx, token)
+	claims, err := mgr.validateTokenOfType(ctx, token, TokenTypeRefresh)
 	if err != nil {
 		t.Fatalf("ValidateToken() error: %v", err)
 	}
@@ -449,7 +449,7 @@ func TestGenerateTokenWithType_AllFields(t *testing.T) {
 		t.Fatalf("generateTokenWithType() error: %v", err)
 	}
 
-	claims, err := mgr.ValidateToken(ctx, token)
+	claims, err := mgr.validateTokenOfType(ctx, token, "custom")
 	if err != nil {
 		t.Fatalf("ValidateToken() error: %v", err)
 	}

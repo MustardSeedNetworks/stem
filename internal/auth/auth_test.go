@@ -765,7 +765,7 @@ func TestGenerateRefreshToken_ValidToken(t *testing.T) {
 	}
 
 	// Validate the refresh token.
-	claims, err := mgr.ValidateToken(ctx, refreshToken)
+	claims, err := mgr.ValidateRefreshToken(ctx, refreshToken)
 	if err != nil {
 		t.Fatalf("ValidateToken() failed: %v", err)
 	}
@@ -799,7 +799,7 @@ func TestGenerateRefreshToken_HasLongerDuration(t *testing.T) {
 		t.Fatalf("ValidateToken(access) failed: %v", err)
 	}
 
-	refreshClaims, err := mgr.ValidateToken(ctx, refreshToken)
+	refreshClaims, err := mgr.ValidateRefreshToken(ctx, refreshToken)
 	if err != nil {
 		t.Fatalf("ValidateToken(refresh) failed: %v", err)
 	}
@@ -848,12 +848,12 @@ func TestGenerateRefreshToken_DifferentUsers(t *testing.T) {
 		t.Fatalf("GenerateRefreshToken() failed: %v", err)
 	}
 
-	claimsAdmin, err := mgr.ValidateToken(ctx, tokenAdmin)
+	claimsAdmin, err := mgr.ValidateRefreshToken(ctx, tokenAdmin)
 	if err != nil {
 		t.Fatalf("ValidateToken() failed: %v", err)
 	}
 
-	claimsUser, err := mgr.ValidateToken(ctx, tokenUser)
+	claimsUser, err := mgr.ValidateRefreshToken(ctx, tokenUser)
 	if err != nil {
 		t.Fatalf("ValidateToken() failed: %v", err)
 	}
@@ -921,8 +921,8 @@ func TestRefreshAccessToken_WithAccessToken(t *testing.T) {
 		t.Error("RefreshAccessToken() expected error when using access token")
 	}
 
-	if !errors.Is(err, auth.ErrInvalidToken) {
-		t.Errorf("RefreshAccessToken() error = %v, want %v", err, auth.ErrInvalidToken)
+	if !errors.Is(err, auth.ErrWrongTokenType) {
+		t.Errorf("RefreshAccessToken() error = %v, want %v", err, auth.ErrWrongTokenType)
 	}
 }
 
@@ -987,7 +987,7 @@ func TestRefreshAccessToken_RevokedRefreshToken(t *testing.T) {
 	}
 
 	// Validate and revoke the refresh token.
-	claims, err := mgr.ValidateToken(ctx, refreshToken)
+	claims, err := mgr.ValidateRefreshToken(ctx, refreshToken)
 	if err != nil {
 		t.Fatalf("ValidateToken() failed: %v", err)
 	}
@@ -1082,7 +1082,7 @@ func TestAuthenticateWithRefresh_TokenTypes(t *testing.T) {
 		t.Fatalf("ValidateToken(access) failed: %v", err)
 	}
 
-	refreshClaims, err := mgr.ValidateToken(ctx, refreshToken)
+	refreshClaims, err := mgr.ValidateRefreshToken(ctx, refreshToken)
 	if err != nil {
 		t.Fatalf("ValidateToken(refresh) failed: %v", err)
 	}
@@ -1254,7 +1254,7 @@ func TestAuthenticateWithRefresh_Concurrency(t *testing.T) {
 				return
 			}
 
-			_, err = mgr.ValidateToken(ctx, refreshToken)
+			_, err = mgr.ValidateRefreshToken(ctx, refreshToken)
 			errChan <- err
 		}()
 	}
@@ -1629,7 +1629,7 @@ func TestLogoutFlow(t *testing.T) {
 		t.Fatalf("ValidateToken(access) failed: %v", err)
 	}
 
-	refreshClaims, err := mgr.ValidateToken(ctx, refreshToken)
+	refreshClaims, err := mgr.ValidateRefreshToken(ctx, refreshToken)
 	if err != nil {
 		t.Fatalf("ValidateToken(refresh) failed: %v", err)
 	}
@@ -1644,7 +1644,7 @@ func TestLogoutFlow(t *testing.T) {
 		t.Errorf("Access token should be revoked, got: %v", err)
 	}
 
-	_, err = mgr.ValidateToken(ctx, refreshToken)
+	_, err = mgr.ValidateRefreshToken(ctx, refreshToken)
 	if !errors.Is(err, auth.ErrTokenRevoked) {
 		t.Errorf("Refresh token should be revoked, got: %v", err)
 	}
@@ -1869,7 +1869,7 @@ func TestAuthenticateWithRefresh_CustomCredentials(t *testing.T) {
 	}
 
 	// Validate refresh token has correct username.
-	refreshClaims, err := mgr.ValidateToken(ctx, refreshToken)
+	refreshClaims, err := mgr.ValidateRefreshToken(ctx, refreshToken)
 	if err != nil {
 		t.Fatalf("ValidateToken() failed: %v", err)
 	}
@@ -1889,7 +1889,7 @@ func TestGenerateRefreshToken_IssuerClaim(t *testing.T) {
 		t.Fatalf("GenerateRefreshToken() failed: %v", err)
 	}
 
-	claims, err := mgr.ValidateToken(ctx, refreshToken)
+	claims, err := mgr.ValidateRefreshToken(ctx, refreshToken)
 	if err != nil {
 		t.Fatalf("ValidateToken() failed: %v", err)
 	}
@@ -1909,7 +1909,7 @@ func TestGenerateRefreshToken_SubjectClaim(t *testing.T) {
 		t.Fatalf("GenerateRefreshToken() failed: %v", err)
 	}
 
-	claims, err := mgr.ValidateToken(ctx, refreshToken)
+	claims, err := mgr.ValidateRefreshToken(ctx, refreshToken)
 	if err != nil {
 		t.Fatalf("ValidateToken() failed: %v", err)
 	}
