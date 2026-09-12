@@ -396,77 +396,79 @@ export function useTestExecution(): UseTestExecution {
 
   const handleStartTest = useCallback(
     async (testTypes?: readonly string[]): Promise<void> => {
-    if (!isAuthenticated) {
-      return;
-    }
-    setIsStartingTest(true);
-    setTestStartError(null);
-    setStopOutcome({ kind: 'idle' });
-
-    try {
-      const configs = {
-        rfc2544: rfc2544Config,
-        rfc2889: rfc2889Config,
-        rfc6349: rfc6349Config,
-        y1564: y1564Config,
-        y1731: y1731Config,
-        tsn: tsnConfig,
-        trafficGen: trafficGenConfig,
-      };
-      const tests = (testTypes ?? selectedTests).map((testType) => ({
-        testType,
-        config: buildTestConfig(testType, configs),
-      }));
-
-      const response = await authFetch('/api/v1/test/start', {
-        method: 'POST',
-        body: JSON.stringify({
-          interface: selectedInterface,
-          peer: mode === 'test_master' ? peer.trim() : undefined,
-          peerPort: mode === 'test_master' ? peerPort : undefined,
-          profile: tests.some((step) => step.testType === 'reflect') ? reflectorProfile : undefined,
-          tests,
-        }),
-      });
-
-      // Check for validation errors in response
-      if (!response.ok) {
-        const failure = await classifyFailure(response);
-        setTestStartError(
-          failure.kind === 'featureGate'
-            ? t('errors:test.featureGate', { feature: failure.feature })
-            : (failure.message ?? t('errors:test.failedToStart')),
-        );
+      if (!isAuthenticated) {
         return;
       }
+      setIsStartingTest(true);
+      setTestStartError(null);
+      setStopOutcome({ kind: 'idle' });
 
-      // Status updates will come from polling - don't update optimistically
-    } catch (error) {
-      const message = error instanceof Error ? error.message : t('errors:test.failedToStart');
-      setTestStartError(message);
-    } finally {
-      setIsStartingTest(false);
-    }
+      try {
+        const configs = {
+          rfc2544: rfc2544Config,
+          rfc2889: rfc2889Config,
+          rfc6349: rfc6349Config,
+          y1564: y1564Config,
+          y1731: y1731Config,
+          tsn: tsnConfig,
+          trafficGen: trafficGenConfig,
+        };
+        const tests = (testTypes ?? selectedTests).map((testType) => ({
+          testType,
+          config: buildTestConfig(testType, configs),
+        }));
+
+        const response = await authFetch('/api/v1/test/start', {
+          method: 'POST',
+          body: JSON.stringify({
+            interface: selectedInterface,
+            peer: mode === 'test_master' ? peer.trim() : undefined,
+            peerPort: mode === 'test_master' ? peerPort : undefined,
+            profile: tests.some((step) => step.testType === 'reflect')
+              ? reflectorProfile
+              : undefined,
+            tests,
+          }),
+        });
+
+        // Check for validation errors in response
+        if (!response.ok) {
+          const failure = await classifyFailure(response);
+          setTestStartError(
+            failure.kind === 'featureGate'
+              ? t('errors:test.featureGate', { feature: failure.feature })
+              : (failure.message ?? t('errors:test.failedToStart')),
+          );
+          return;
+        }
+
+        // Status updates will come from polling - don't update optimistically
+      } catch (error) {
+        const message = error instanceof Error ? error.message : t('errors:test.failedToStart');
+        setTestStartError(message);
+      } finally {
+        setIsStartingTest(false);
+      }
     },
     [
-    mode,
-    peer,
-    peerPort,
-    reflectorProfile,
-    isAuthenticated,
-    t,
-    rfc2544Config,
-    rfc2889Config,
-    rfc6349Config,
-    selectedInterface,
-    selectedTests,
-    trafficGenConfig,
-    tsnConfig,
-    y1564Config,
-    y1731Config,
-    setIsStartingTest,
-    setTestStartError,
-    setStopOutcome,
+      mode,
+      peer,
+      peerPort,
+      reflectorProfile,
+      isAuthenticated,
+      t,
+      rfc2544Config,
+      rfc2889Config,
+      rfc6349Config,
+      selectedInterface,
+      selectedTests,
+      trafficGenConfig,
+      tsnConfig,
+      y1564Config,
+      y1731Config,
+      setIsStartingTest,
+      setTestStartError,
+      setStopOutcome,
     ],
   );
 
