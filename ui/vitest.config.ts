@@ -75,16 +75,13 @@ export default defineConfig({
     exclude: ['src/components/__stories__/**', 'node_modules/'],
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'json', 'html', 'lcov'],
+      reporter: ['text', 'json', 'json-summary', 'html', 'lcov'],
       exclude: ['node_modules/', 'src/test/', '**/*.d.ts', '**/*.config.*', 'dist/'],
-      // Targets tracked by #824. CI runs the warning-gated unit suite; the
-      // coverage gate becomes blocking when behavioral coverage reaches them.
-      thresholds: {
-        lines: 88,
-        branches: 80,
-        functions: 92,
-        statements: 88,
-      },
+      // The enforced gate is scripts/check-ui-coverage.sh, which ratchets
+      // against scripts/ui-coverage-baseline.txt (#824). The targets that
+      // used to sit here are not gone — they are the target column of that
+      // file, next to the floor CI actually enforces. Thresholds here would
+      // fail the run before the ratchet could report anything useful.
     },
   },
 });

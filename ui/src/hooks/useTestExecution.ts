@@ -171,8 +171,14 @@ export async function resolveStopOutcome(
   };
 }
 
-/** Build test configuration based on test type prefix */
-function buildTestConfig(
+/**
+ * Build test configuration based on test type prefix.
+ *
+ * Exported for test: this is the mapping that decides which config block the
+ * daemon receives, so a wrong entry silently measures something other than
+ * what the operator selected.
+ */
+export function buildTestConfig(
   testType: string,
   configs: {
     rfc2544: RFC2544Config;

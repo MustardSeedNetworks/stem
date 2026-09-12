@@ -1,0 +1,16 @@
+# UI coverage ratchet (#824).
+#
+# FLOOR is enforced by scripts/check-ui-coverage.sh in CI: coverage may not
+# drop below it. TARGET is where #824 says the suite has to get to, and is
+# deliberately NOT the enforced number — the thresholds in vitest.config.ts
+# were set to the target and never wired into CI, so nothing was enforced at
+# all and the real figure drifted down unnoticed.
+#
+# The floor is raised by whoever improves coverage, in the same PR. It is
+# never lowered: a drop is a regression to fix, not a number to edit.
+#
+# metric      floor   target
+statements    67.6    88
+branches      51.5    80
+functions     60.4    92
+lines         78.4    88
