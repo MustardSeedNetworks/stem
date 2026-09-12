@@ -21,16 +21,15 @@ import { useRole } from './helpers/role';
  * the 400 asserted below is the daemon's, and an E2E that faked it would be
  * mocking the thing under test (memory `niac-p1b2-editor-rewire`).
  *
- * Not covered here: "Stop mid-run reaches stopped". That needs the daemon
- * actually running something, which this host cannot do — the macOS and
- * Windows builds are CGO-less and have no dataplane, so a started run errors
- * within two seconds. It IS reachable on Linux with CGO: `reflect` is Free and
- * ungated (docs/EDITIONS.md §3) and `handleTestStop` has a first-class
- * reflector branch, so a reflector started on dev-srv-ubuntu and stopped
- * through this UI would close the clause. Every Pro standard would instead
- * answer 402 there: nothing in `scripts/run-e2e.sh`, `ci.yml` or the fixtures
- * licenses the E2E daemon. The transition itself is pinned by unit tests over
- * `resolveStopOutcome` and `StopOutcomeMessage`.
+ * "Stop mid-run reaches stopped" lives in `reflector-run.spec.ts`, not here.
+ * It needs a real run, and a real run is exclusive daemon state: one daemon
+ * serves the whole suite, so a reflector started by one project makes THIS
+ * test's stop succeed instead of being refused. That is not hypothetical —
+ * it is what happened when the two shared a file. That spec is therefore
+ * opt-in and single-project; see its own header.
+ *
+ * The transition itself is also pinned by unit tests over `resolveStopOutcome`
+ * and `StopOutcomeMessage`.
  */
 
 const STATS_ENDPOINT = '**/api/v1/stats';
