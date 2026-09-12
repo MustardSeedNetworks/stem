@@ -21,20 +21,15 @@ import { useRole } from './helpers/role';
  * the 400 asserted below is the daemon's, and an E2E that faked it would be
  * mocking the thing under test (memory `niac-p1b2-editor-rewire`).
  *
- * "Stop mid-run reaches stopped" is the second test below, and it runs a real
- * reflector: `reflect` is Free and ungated (docs/EDITIONS.md §3) and
- * `handleTestStop` has a first-class reflector branch. It needs a daemon that
- * actually has a dataplane, so it skips where the daemon says it has none —
- * the macOS and Windows builds are CGO-less, and so is CI's E2E daemon, which
- * `ci.yml` builds with `CGO_ENABLED: '0'`. The daemon states this itself, in
- * `/api/v1/capabilities`, and the page renders that as the platform banner;
- * the skip reads the product's own answer rather than sniffing the OS.
+ * "Stop mid-run reaches stopped" lives in `reflector-run.spec.ts`, not here.
+ * It needs a real run, and a real run is exclusive daemon state: one daemon
+ * serves the whole suite, so a reflector started by one project makes THIS
+ * test's stop succeed instead of being refused. That is not hypothetical —
+ * it is what happened when the two shared a file. That spec is therefore
+ * opt-in and single-project; see its own header.
  *
- * Where it does run — Linux with CGO, e.g. dev-srv-ubuntu with
- * `cap_net_raw` on the binary — it asserts the daemon's own `testStatus`, not
- * just the button state, because the client used to call a refused stop a
- * success. Every Pro standard would instead answer 402 anywhere: nothing in
- * `scripts/run-e2e.sh`, `ci.yml` or the fixtures licenses the E2E daemon.
+ * The transition itself is also pinned by unit tests over `resolveStopOutcome`
+ * and `StopOutcomeMessage`.
  */
 
 const STATS_ENDPOINT = '**/api/v1/stats';
@@ -81,53 +76,4 @@ test.describe('stop outcome', () => {
     await expect(stop).toBeEnabled();
   });
 
-  test('a stop mid-run reaches stopped', async ({ page }) => {
-    // The reflector role, not the describe's test_master: this is the
-    // reflector operator's own page and its Start control means "reflect".
-    await useRole(page, 'reflector');
-    await page.goto('/reflector');
-
-    // The daemon's own answer about its dataplane, rendered by the page.
-    const unsupported = await page
-      .getByTestId('reflector-platform-banner')
-      .isVisible()
-      .catch(() => false);
-    test.skip(
-      unsupported,
-      'this daemon reports no reflector dataplane (a CGO-less build); the clause needs Linux with CGO',
-    );
-
-    const start = page.getByTestId('reflector-start-button');
-    await expect(start).toBeEnabled({ timeout: 10000 });
-    await start.click();
-
-    const stop = page.getByTestId('reflector-stop-button');
-    await expect(stop).toBeVisible({ timeout: 15000 });
-
-    // The reflector is genuinely up before it is stopped, or "stopped" would
-    // mean nothing.
-    await expect
-      .poll(async () => (await (await page.request.get('/api/v1/stats')).json()).testStatus, {
-        timeout: 15000,
-      })
-      .toBe('running');
-
-    await stop.click();
-
-    // The daemon's state, not the client's opinion of it: ignoring
-    // `response.ok` is exactly the defect this row is about.
-    await expect
-      .poll(async () => (await (await page.request.get('/api/v1/stats')).json()).testStatus, {
-        timeout: 15000,
-      })
-      .toBe('stopped');
-
-    // And the operator is told, as a status rather than an alert.
-    const message = page.getByTestId('test-stop-message');
-    await expect(message).toBeVisible({ timeout: 10000 });
-    await expect(message).toHaveAttribute('role', 'status');
-
-    // The page returns to its resting state, offering to start again.
-    await expect(start).toBeVisible();
-  });
 });
