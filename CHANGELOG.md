@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.103](https://github.com/MustardSeedNetworks/stem/compare/v0.24.102...v0.24.103) (2026-09-12)
+
+
+### Bug Fixes
+
+* **auth:** stop a refresh token from authenticating API requests ([#1188](https://github.com/MustardSeedNetworks/stem/issues/1188)) ([cd77281](https://github.com/MustardSeedNetworks/stem/commit/cd772818e7bbaffc4073bf74d71e94ce860069a7)), closes [#1169](https://github.com/MustardSeedNetworks/stem/issues/1169)
+* **daemonclient:** reload the descriptor when the daemon rejects a token ([#1189](https://github.com/MustardSeedNetworks/stem/issues/1189)) ([3745d4c](https://github.com/MustardSeedNetworks/stem/commit/3745d4cc221e1d391251ff3dceb6ff66d7fd3e55)), closes [#1179](https://github.com/MustardSeedNetworks/stem/issues/1179)
+
 ## [0.24.102](https://github.com/MustardSeedNetworks/stem/compare/v0.24.101...v0.24.102) (2026-09-11)
 
 
