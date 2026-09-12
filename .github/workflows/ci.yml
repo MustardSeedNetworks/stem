@@ -1751,10 +1751,26 @@ jobs:
       # (#1123). The reasoning and measured history are in
       # scripts/bench-compare.sh above BENCH_RUNS.
       #
-      # If this starts false-failing again, the answer is more rounds or a
-      # quieter runner — not `continue-on-error` and not a wider
-      # BENCH_MAX_REGRESSION_PCT, which would stop it catching a real
-      # regression too.
+      # It false-failed again anyway, and more rounds was not the answer: the
+      # queue runs this job on every PR whatever it touched, so most runs
+      # compare a tree with itself and report pure runner noise — -25.0%
+      # and -27.3% on a package-lock.json-only PR (run 34687252273), which
+      # ejected it from the queue. The script now skips a diff that cannot reach the
+      # benchmark; #1198.
+      #
+      # If it false-fails on a change that DOES touch the reflect path, the
+      # answer is more rounds or a quieter runner — not `continue-on-error` and
+      # not a wider BENCH_MAX_REGRESSION_PCT, which would stop it catching a
+      # real regression too.
+
+      # A gate nobody tests is a gate nobody knows the shape of: this proves
+      # the skip fires only when the measured code is unchanged, and that a
+      # changed reflect path is still measured.
+      - name: Verify the benchmark gate measures only reflect-path changes
+        env:
+          CC: gcc-14
+        run: scripts/test-bench-compare.sh
+
       - name: Compare reflect-path throughput against the merge base
         env:
           CC: gcc-14
