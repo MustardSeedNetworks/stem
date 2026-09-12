@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.105](https://github.com/MustardSeedNetworks/stem/compare/v0.24.104...v0.24.105) (2026-09-12)
+
+
+### Bug Fixes
+
+* **api:** report the run ID for a run with no plan ([#1195](https://github.com/MustardSeedNetworks/stem/issues/1195)) ([3ceda65](https://github.com/MustardSeedNetworks/stem/commit/3ceda65ca90de5c0e288d360b17e3109a71027dd)), closes [#1193](https://github.com/MustardSeedNetworks/stem/issues/1193)
+
+
+### Continuous Integration
+
+* **ui:** enforce a coverage ratchet on the frontend suite ([#1194](https://github.com/MustardSeedNetworks/stem/issues/1194)) ([fe4f144](https://github.com/MustardSeedNetworks/stem/commit/fe4f1440dbfda3d3212dc27b4dda7874e310bfdc))
+
 ## [0.24.104](https://github.com/MustardSeedNetworks/stem/compare/v0.24.103...v0.24.104) (2026-09-12)
 
 
