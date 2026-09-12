@@ -75,5 +75,4 @@ test.describe('stop outcome', () => {
     // The control comes back: `stopping` is not a terminal state.
     await expect(stop).toBeEnabled();
   });
-
 });
