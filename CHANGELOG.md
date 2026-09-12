@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.106](https://github.com/MustardSeedNetworks/stem/compare/v0.24.105...v0.24.106) (2026-09-12)
+
+
+### Bug Fixes
+
+* **ci:** skip the reflect bench gate when no C changed ([#1199](https://github.com/MustardSeedNetworks/stem/issues/1199)) ([c6e21cf](https://github.com/MustardSeedNetworks/stem/commit/c6e21cf10231fca4f725cb40e0fc3b3d5fe3106b)), closes [#1198](https://github.com/MustardSeedNetworks/stem/issues/1198)
+
 ## [0.24.105](https://github.com/MustardSeedNetworks/stem/compare/v0.24.104...v0.24.105) (2026-09-12)
 
 
