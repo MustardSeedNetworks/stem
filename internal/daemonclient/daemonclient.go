@@ -55,6 +55,10 @@ const (
 // concurrent run rather than letting two dataplanes fight over one NIC.
 var ErrRunInProgress = errors.New("the daemon is already running a test")
 
+// errUnauthorized marks the daemon refusing the credential. Internal: the
+// caller-facing message is built in errorForStatus.
+var errUnauthorized = errors.New("unauthorized")
+
 // FeatureGateError reports a run the licence does not cover. It names the
 // feature so the CLI can tell the operator what to buy rather than printing
 // a bare 402.
@@ -76,6 +80,15 @@ type Client struct {
 	token   string
 	http    *http.Client
 	csrf    string
+
+	// reload re-reads the descriptor this client was opened from. The
+	// daemon rotates its token every 12 hours and mints a fresh one on
+	// restart, so a client holding the old one should pick up the published
+	// replacement rather than failing with a valid descriptor on disk
+	// (#1179). Nil for a client given an explicit URL and token: there is
+	// no descriptor of its own to re-read, and reading some other daemon's
+	// file off this host would be worse than the 401.
+	reload func() (daemonconn.Descriptor, error)
 }
 
 // Terminal reports whether a run state has stopped moving, so a watcher can
@@ -96,7 +109,9 @@ func Open(dataDir string) (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	return newClient(descriptor)
+	return newClient(descriptor, func() (daemonconn.Descriptor, error) {
+		return daemonconn.Read(dataDir)
+	})
 }
 
 // Discover connects to the running daemon on this host, wherever it keeps
@@ -107,7 +122,7 @@ func Discover() (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	return newClient(descriptor)
+	return newClient(descriptor, daemonconn.Discover)
 }
 
 // OpenRemote connects to a daemon named explicitly rather than discovered,
@@ -115,10 +130,10 @@ func Discover() (*Client, error) {
 // may be empty when the daemon serves a certificate the system already
 // trusts.
 func OpenRemote(baseURL, token, caFile string) (*Client, error) {
-	return newClient(daemonconn.Descriptor{URL: baseURL, Token: token, CAFile: caFile})
+	return newClient(daemonconn.Descriptor{URL: baseURL, Token: token, CAFile: caFile}, nil)
 }
 
-func newClient(d daemonconn.Descriptor) (*Client, error) {
+func newClient(d daemonconn.Descriptor, reload func() (daemonconn.Descriptor, error)) (*Client, error) {
 	tlsConfig, err := clientTLSConfig(d.CAFile)
 	if err != nil {
 		return nil, err
@@ -126,6 +141,7 @@ func newClient(d daemonconn.Descriptor) (*Client, error) {
 	return &Client{
 		baseURL: d.URL,
 		token:   d.Token,
+		reload:  reload,
 		http: &http.Client{
 			Timeout:   requestTimeout,
 			Transport: &http.Transport{TLSClientConfig: tlsConfig},
@@ -221,7 +237,32 @@ func (c *Client) Stop(ctx context.Context) error {
 
 // do performs one authenticated request, fetching a CSRF token first when
 // the method is one the daemon protects.
+// do performs one authenticated request, reloading the descriptor and
+// retrying once if the daemon refuses the credential. The daemon rotates its
+// token on a timer and on restart, so a 401 usually means "the token moved",
+// not "you may not". Exactly one retry: a genuinely revoked credential has to
+// surface as a refusal rather than loop.
 func (c *Client) do(ctx context.Context, method, path string, body, out any) error {
+	err := c.attempt(ctx, method, path, body, out)
+	if !errors.Is(err, errUnauthorized) || c.reload == nil {
+		return err
+	}
+
+	descriptor, reloadErr := c.reload()
+	if reloadErr != nil {
+		return err // report the refusal, not the failure to re-read it
+	}
+	if descriptor.Token == c.token {
+		return err // same credential; the daemon means it
+	}
+	c.token = descriptor.Token
+	c.baseURL = descriptor.URL
+	c.csrf = "" // the CSRF token is keyed to the old bearer
+
+	return c.attempt(ctx, method, path, body, out)
+}
+
+func (c *Client) attempt(ctx context.Context, method, path string, body, out any) error {
 	if method != http.MethodGet && c.csrf == "" {
 		if err := c.fetchCSRF(ctx); err != nil {
 			return err
@@ -305,7 +346,10 @@ func errorForStatus(status int, body []byte) error {
 		return fmt.Errorf("%w: %s", ErrRunInProgress, envelope.Error.Message)
 	case http.StatusPaymentRequired:
 		return &FeatureGateError{Feature: envelope.Error.Feature, Message: envelope.Error.Message}
-	case http.StatusUnauthorized, http.StatusForbidden:
+	case http.StatusUnauthorized:
+		return fmt.Errorf("%w: the daemon rejected this credential (%d): %s",
+			errUnauthorized, status, envelope.Error.Message)
+	case http.StatusForbidden:
 		return fmt.Errorf("the daemon rejected this credential (%d): %s", status, envelope.Error.Message)
 	default:
 		if envelope.Error.Message != "" {

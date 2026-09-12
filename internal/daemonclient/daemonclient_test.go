@@ -17,6 +17,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -40,6 +41,12 @@ func (r *recorder) add(req *http.Request) {
 	defer r.mu.Unlock()
 	clone := req.Clone(context.Background())
 	r.requests = append(r.requests, clone)
+}
+
+func (r *recorder) all() []*http.Request {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return append([]*http.Request(nil), r.requests...)
 }
 
 func (r *recorder) last() *http.Request {
@@ -463,5 +470,267 @@ func TestConfigureReflectorSendsTheFilters(t *testing.T) {
 	}
 	if sent.Profile != want.Profile || sent.OUIFilter != want.OUIFilter || sent.PortFilter != want.PortFilter {
 		t.Errorf("sent = %+v, want %+v", sent, want)
+	}
+}
+
+// The daemon rotates its token every 12 hours and mints a fresh one on
+// restart. A client holding the old one must pick up the published
+// replacement rather than making the operator re-run a command when a
+// valid descriptor is sitting on disk (#1179).
+func TestClientReloadsTheDescriptorAfterA401(t *testing.T) {
+	var (
+		mu       sync.Mutex
+		accepted = "first-token"
+	)
+	rec := &recorder{}
+	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		rec.add(r)
+		if r.URL.Path == "/api/v1/auth/csrf-token" {
+			writeJSON(t, w, map[string]string{"token": "csrf-value"})
+			return
+		}
+		mu.Lock()
+		want := accepted
+		mu.Unlock()
+		if r.Header.Get("Authorization") != "Bearer "+want {
+			w.WriteHeader(http.StatusUnauthorized)
+			writeJSON(t, w, map[string]any{"error": map[string]any{"message": "expired"}})
+			return
+		}
+		writeJSON(t, w, map[string]any{"suiteId": "stem-abc-1", "testStatus": "running"})
+	}))
+	t.Cleanup(srv.Close)
+
+	dir := t.TempDir()
+	caFile := filepath.Join(dir, "server.crt")
+	writePEM(t, caFile, srv.Certificate().Raw)
+	publish := func(token string) {
+		t.Helper()
+		if err := daemonconn.Publish(dir, daemonconn.Descriptor{
+			URL: srv.URL, Token: token, CAFile: caFile,
+		}); err != nil {
+			t.Fatalf("Publish: %v", err)
+		}
+	}
+	publish("first-token")
+
+	c, err := daemonclient.Open(dir)
+	if err != nil {
+		t.Fatalf("Open: %v", err)
+	}
+
+	// The daemon rotates: the old token stops working and a new descriptor
+	// is published, exactly as the refresher does.
+	mu.Lock()
+	accepted = "rotated-token"
+	mu.Unlock()
+	publish("rotated-token")
+
+	status, err := c.Status(context.Background())
+	if err != nil {
+		t.Fatalf("Status after rotation: %v", err)
+	}
+	if status.SuiteID != "stem-abc-1" {
+		t.Errorf("suiteId = %q, want stem-abc-1", status.SuiteID)
+	}
+	if got := rec.last().Header.Get("Authorization"); got != "Bearer rotated-token" {
+		t.Errorf("Authorization = %q, want the rotated token", got)
+	}
+}
+
+// A credential that is genuinely revoked must still surface as a refusal.
+// When the descriptor has not moved there is nothing to retry with, so the
+// client does not spend a second round-trip presenting the same token.
+func TestClientSurfacesA401TheReloadCannotFix(t *testing.T) {
+	rec := &recorder{}
+	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		rec.add(r)
+		if r.URL.Path == "/api/v1/auth/csrf-token" {
+			writeJSON(t, w, map[string]string{"token": "csrf-value"})
+			return
+		}
+		w.WriteHeader(http.StatusUnauthorized)
+		writeJSON(t, w, map[string]any{"error": map[string]any{"message": "revoked"}})
+	}))
+	t.Cleanup(srv.Close)
+
+	dir := t.TempDir()
+	caFile := filepath.Join(dir, "server.crt")
+	writePEM(t, caFile, srv.Certificate().Raw)
+	if err := daemonconn.Publish(dir, daemonconn.Descriptor{
+		URL: srv.URL, Token: "stale-token", CAFile: caFile,
+	}); err != nil {
+		t.Fatalf("Publish: %v", err)
+	}
+
+	c, err := daemonclient.Open(dir)
+	if err != nil {
+		t.Fatalf("Open: %v", err)
+	}
+
+	if _, statusErr := c.Status(context.Background()); statusErr == nil {
+		t.Fatal("Status = nil error against a daemon that refuses the credential")
+	}
+
+	if got := countPath(rec, "/api/v1/stats"); got != 1 {
+		t.Errorf("stats was requested %d times, want 1 — the descriptor had not moved", got)
+	}
+}
+
+// A rotated descriptor that the daemon still refuses must surface the
+// refusal after exactly one retry, never loop.
+func TestClientRetriesOnceThenSurfacesTheRefusal(t *testing.T) {
+	rec := &recorder{}
+	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		rec.add(r)
+		if r.URL.Path == "/api/v1/auth/csrf-token" {
+			writeJSON(t, w, map[string]string{"token": "csrf-value"})
+			return
+		}
+		w.WriteHeader(http.StatusUnauthorized)
+		writeJSON(t, w, map[string]any{"error": map[string]any{"message": "revoked"}})
+	}))
+	t.Cleanup(srv.Close)
+
+	dir := t.TempDir()
+	caFile := filepath.Join(dir, "server.crt")
+	writePEM(t, caFile, srv.Certificate().Raw)
+	if err := daemonconn.Publish(dir, daemonconn.Descriptor{
+		URL: srv.URL, Token: "first-token", CAFile: caFile,
+	}); err != nil {
+		t.Fatalf("Publish: %v", err)
+	}
+
+	c, err := daemonclient.Open(dir)
+	if err != nil {
+		t.Fatalf("Open: %v", err)
+	}
+
+	// The descriptor moves, so a retry is warranted — but the daemon still
+	// refuses, and that answer has to reach the caller.
+	if rotateErr := daemonconn.Publish(dir, daemonconn.Descriptor{
+		URL: srv.URL, Token: "rotated-token", CAFile: caFile,
+	}); rotateErr != nil {
+		t.Fatalf("Publish: %v", rotateErr)
+	}
+
+	if _, statusErr := c.Status(context.Background()); statusErr == nil {
+		t.Fatal("Status = nil error against a daemon that refuses every credential")
+	}
+	if got := countPath(rec, "/api/v1/stats"); got != 2 {
+		t.Errorf("stats was requested %d times, want 2 (the original and one retry)", got)
+	}
+}
+
+// A client given an explicit URL and token has no descriptor to reload, so
+// its 401 must surface immediately rather than reading some unrelated
+// daemon's file off this host.
+func TestRemoteClientDoesNotReload(t *testing.T) {
+	rec := &recorder{}
+	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		rec.add(r)
+		if r.URL.Path == "/api/v1/auth/csrf-token" {
+			writeJSON(t, w, map[string]string{"token": "csrf-value"})
+			return
+		}
+		w.WriteHeader(http.StatusUnauthorized)
+		writeJSON(t, w, map[string]any{"error": map[string]any{"message": "no"}})
+	}))
+	t.Cleanup(srv.Close)
+
+	dir := t.TempDir()
+	caFile := filepath.Join(dir, "server.crt")
+	writePEM(t, caFile, srv.Certificate().Raw)
+
+	c, err := daemonclient.OpenRemote(srv.URL, "explicit-token", caFile)
+	if err != nil {
+		t.Fatalf("OpenRemote: %v", err)
+	}
+	if _, statusErr := c.Status(context.Background()); statusErr == nil {
+		t.Fatal("Status = nil error against a daemon that refuses the credential")
+	}
+
+	if got := countPath(rec, "/api/v1/stats"); got != 1 {
+		t.Errorf("stats was requested %d times, want 1 (no descriptor to reload)", got)
+	}
+}
+
+// countPath reports how many times the client asked for one path.
+func countPath(rec *recorder, path string) int {
+	count := 0
+	for _, req := range rec.all() {
+		if req.URL.Path == path {
+			count++
+		}
+	}
+	return count
+}
+
+// The daemon keys CSRF by the bearer it was issued for, so a token rotation
+// invalidates the CSRF token with it. A mutating request after rotation has
+// to fetch a fresh one or the retry trades a 401 for a 403.
+func TestClientRefreshesCSRFAfterRotation(t *testing.T) {
+	var (
+		mu       sync.Mutex
+		accepted = "first-token"
+		csrfFor  = map[string]string{"first-token": "csrf-first", "rotated-token": "csrf-rotated"}
+	)
+	rec := &recorder{}
+	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		rec.add(r)
+		bearer := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
+
+		if r.URL.Path == "/api/v1/auth/csrf-token" {
+			writeJSON(t, w, map[string]string{"token": csrfFor[bearer]})
+			return
+		}
+
+		mu.Lock()
+		want := accepted
+		mu.Unlock()
+		if bearer != want {
+			w.WriteHeader(http.StatusUnauthorized)
+			writeJSON(t, w, map[string]any{"error": map[string]any{"message": "expired"}})
+			return
+		}
+		// The CSRF token must be the one issued for THIS bearer.
+		if r.Header.Get("X-Csrf-Token") != csrfFor[bearer] {
+			w.WriteHeader(http.StatusForbidden)
+			writeJSON(t, w, map[string]any{"error": map[string]any{"message": "stale CSRF token"}})
+			return
+		}
+		writeJSON(t, w, map[string]any{"status": "stopped"})
+	}))
+	t.Cleanup(srv.Close)
+
+	dir := t.TempDir()
+	caFile := filepath.Join(dir, "server.crt")
+	writePEM(t, caFile, srv.Certificate().Raw)
+	publish := func(token string) {
+		t.Helper()
+		if err := daemonconn.Publish(dir, daemonconn.Descriptor{
+			URL: srv.URL, Token: token, CAFile: caFile,
+		}); err != nil {
+			t.Fatalf("Publish: %v", err)
+		}
+	}
+	publish("first-token")
+
+	c, err := daemonclient.Open(dir)
+	if err != nil {
+		t.Fatalf("Open: %v", err)
+	}
+	// Prime the CSRF token against the first bearer.
+	if stopErr := c.Stop(context.Background()); stopErr != nil {
+		t.Fatalf("Stop before rotation: %v", stopErr)
+	}
+
+	mu.Lock()
+	accepted = "rotated-token"
+	mu.Unlock()
+	publish("rotated-token")
+
+	if stopErr := c.Stop(context.Background()); stopErr != nil {
+		t.Errorf("Stop after rotation: %v", stopErr)
 	}
 }
