@@ -59,6 +59,7 @@ func (s *Server) ResetTestStateForTest() {
 	s.testRunID++
 	s.testStatus = ""
 	s.currentTest = ""
+	s.currentRunID = ""
 	s.currentModule = ""
 	s.testResult = nil
 	s.runPlan = nil

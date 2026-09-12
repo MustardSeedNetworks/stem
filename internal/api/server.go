@@ -131,6 +131,7 @@ type Server struct {
 	testRunID            uint64
 	activeTestExec       testExecutor
 	currentTest          string
+	currentRunID         string // ID naming the run in flight, for runs with no plan (#1193)
 	testResult           *TestResultResponse
 	runPlan              *runPlan
 	startTime            time.Time
@@ -283,6 +284,7 @@ func NewServer(port int) (*Server, error) {
 	}
 	s.testStatus = statusIdle
 	s.currentTest = ""
+	s.currentRunID = ""
 	s.testResult = nil
 	s.startTime = time.Now()
 	s.selectedIface = defaultIface

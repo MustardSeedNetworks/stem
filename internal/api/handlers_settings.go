@@ -219,6 +219,7 @@ func (s *Server) teardownForModeSwitch() {
 		s.activeTestExec = nil
 		s.testStatus = statusCancelled
 		s.currentTest = ""
+		s.currentRunID = ""
 		s.currentModule = ""
 		s.cancelRunPlanLocked("Run plan cancelled by role change")
 	}

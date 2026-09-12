@@ -105,6 +105,7 @@ func (s *Server) runModuleTest(
 			}
 			s.testResult = errResult
 			s.currentTest = ""
+			s.currentRunID = ""
 			s.currentModule = ""
 			s.statsMu.Unlock()
 			logging.Error(
@@ -131,6 +132,7 @@ func (s *Server) runModuleTest(
 		}
 		s.testResult = completedResult
 		s.currentTest = ""
+		s.currentRunID = ""
 		s.currentModule = ""
 		s.statsMu.Unlock()
 		logging.Info(

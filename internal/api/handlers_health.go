@@ -33,7 +33,19 @@ func (s *Server) handleStats(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	writeJSON(w, s.snapshotStats())
+}
+
+// snapshotStats builds the runtime view /api/v1/stats reports.
+//
+// The run ID comes from the plan when there is one and from the run itself
+// otherwise: a reflector is a single-step run with no plan, and reporting no
+// ID for it left the CLI and the web UI unable to agree on the run they were
+// both watching (#1193).
+func (s *Server) snapshotStats() Stats {
 	s.statsMu.RLock()
+	defer s.statsMu.RUnlock()
+
 	stats := *s.stats
 	stats.Uptime = int64(time.Since(s.startTime).Seconds())
 	stats.TestStatus = s.testStatus
@@ -41,10 +53,10 @@ func (s *Server) handleStats(w http.ResponseWriter, r *http.Request) {
 		currentTest := s.currentTest
 		stats.CurrentTest = &currentTest
 	}
+	stats.SuiteID = s.currentRunID
 	s.runPlan.describe(&stats)
-	s.statsMu.RUnlock()
 
-	writeJSON(w, stats)
+	return stats
 }
 
 // handleHealthLive is the Kubernetes liveness probe endpoint.

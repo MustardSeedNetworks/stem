@@ -129,6 +129,7 @@ func (s *Server) handleTestStop(w http.ResponseWriter, r *http.Request) {
 		s.statsMu.Lock()
 		s.testStatus = statusStopped
 		s.currentTest = ""
+		s.currentRunID = ""
 		s.statsMu.Unlock()
 		logging.Info("Reflector stopped via API")
 		writeJSON(w, StatusResponse{Status: statusStopped})
@@ -147,6 +148,7 @@ func (s *Server) handleTestStop(w http.ResponseWriter, r *http.Request) {
 	s.testRunID++
 	s.testStatus = statusCancelled
 	s.currentTest = ""
+	s.currentRunID = ""
 	s.currentModule = ""
 	s.cancelRunPlanLocked("Run plan cancelled")
 	s.statsMu.Unlock()
@@ -247,7 +249,8 @@ func (s *Server) beginTestRun(testType, module string) (string, error) {
 	s.currentModule = module
 	s.testResult = nil
 	s.runPlan = nil
-	return s.newRunIDLocked(), nil
+	s.currentRunID = s.newRunIDLocked()
+	return s.currentRunID, nil
 }
 
 func (s *Server) beginRunPlan(plan *runPlan) (uint64, error) {
