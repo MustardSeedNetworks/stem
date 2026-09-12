@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.104](https://github.com/MustardSeedNetworks/stem/compare/v0.24.103...v0.24.104) (2026-09-12)
+
+
+### Bug Fixes
+
+* **reflector:** let the daemon actually start a reflector ([#1191](https://github.com/MustardSeedNetworks/stem/issues/1191)) ([5244505](https://github.com/MustardSeedNetworks/stem/commit/524450575bb488c5749ecec6f9e10fb9f9e213fc))
+
 ## [0.24.103](https://github.com/MustardSeedNetworks/stem/compare/v0.24.102...v0.24.103) (2026-09-12)
 
 
