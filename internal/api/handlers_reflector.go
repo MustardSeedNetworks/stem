@@ -188,6 +188,13 @@ func (s *Server) commitReflectorConfigUpdate(cfg *ReflectorConfig) {
 	if cfg.SignatureFilter != nil {
 		s.reflectorConfig.SignatureFilter = append([]string(nil), cfg.SignatureFilter...)
 	}
+	if cfg.Interface != "" {
+		s.reflectorConfig.Interface = cfg.Interface
+	}
+	// Autostart is taken as given rather than only when set: an operator
+	// turning it off has to be able to, and a field that only latches true
+	// could never be switched off through this endpoint.
+	s.reflectorConfig.Autostart = cfg.Autostart
 }
 
 // applyReflectorDataplaneUpdate applies the config update to the dataplane.
