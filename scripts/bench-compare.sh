@@ -17,6 +17,10 @@
 #   recorded constant to remember to update, which is the step such schemes
 #   always skip.
 #
+# A run whose diff cannot reach the benchmark is skipped before anything is
+# built: identical code measured twice reports the runner, not the code, and
+# that is where every false failure has come from.
+#
 # The gate fails closed. A build that does not compile, a binary that does not
 # run, output that cannot be parsed, or a case present in one run and missing
 # from the other are all failures -- a perf gate that silently no-ops is the
@@ -192,6 +196,28 @@ fi
 echo "baseline: $BASELINE_REF"
 echo "current:  $(git rev-parse HEAD)"
 echo "allowed regression: ${MAX_REGRESSION}%"
+
+# Most runs have nothing to measure. `merge_group` forces every path filter in
+# ci.yml to `true`, so this gate runs on every queued PR whatever it touched,
+# and both sides are then the same code compiled twice. Measuring that can only
+# report the machine: run 34687252273 compared trees differing by ten lines of
+# package-lock.json and called reflect_mode_mac_ip_v4 -25.0% and
+# reflect_mode_mac_v4 -27.3%, which ejected a bot PR from the merge queue.
+# Best-of-N cannot fix this -- there is no signal to recover (#1198).
+#
+# Unchanged sources cannot regress, so say so and stop. This is not the gate
+# going quiet: the condition is proof, not a guess, and it is deliberately
+# wider than what is compiled -- any difference anywhere under bench/, src/ or
+# include/, tracked or in the working tree, falls through to the full
+# measurement even when it could not reach the binary.
+UNCHANGED_PATHS=(bench src include)
+if git diff --quiet "$BASELINE_REF" -- "${UNCHANGED_PATHS[@]}"; then
+  echo
+  echo "IDENTICAL: ${UNCHANGED_PATHS[*]} are unchanged against the baseline, so this"
+  echo "           change cannot have moved the reflect path and there is"
+  echo "           nothing to measure."
+  exit 0
+fi
 
 if ! git worktree add --detach --quiet "$BASELINE_TREE" "$BASELINE_REF"; then
   echo "FAIL: could not check out baseline revision $BASELINE_REF" >&2
