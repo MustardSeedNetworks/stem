@@ -32,6 +32,9 @@ const CommandPalette = lazy(() =>
   })),
 );
 
+/** What the Reflector page's Start control runs, whatever the Tests page holds. */
+const REFLECT_ONLY = ['reflect'] as const;
+
 function AppContent(): ReactElement {
   const navGroups = useNavGroups();
   const { isDark, toggleTheme } = useTheme();
@@ -123,7 +126,10 @@ function AppContent(): ReactElement {
     reflectorProfile,
     setReflectorProfile,
     onStartReflector: () => {
-      exec.handleStartTest().catch(() => {
+      // The Reflector page's Start control means "reflect". Without naming it,
+      // the request carried the Tests page's selection instead — a Free daemon
+      // answered 402 for rfc2544 and the reflector never started.
+      exec.handleStartTest(REFLECT_ONLY).catch(() => {
         // Errors surface via testStartError state.
       });
     },

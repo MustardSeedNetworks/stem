@@ -82,6 +82,9 @@ test.describe('stop outcome', () => {
   });
 
   test('a stop mid-run reaches stopped', async ({ page }) => {
+    // The reflector role, not the describe's test_master: this is the
+    // reflector operator's own page and its Start control means "reflect".
+    await useRole(page, 'reflector');
     await page.goto('/reflector');
 
     // The daemon's own answer about its dataplane, rendered by the page.

@@ -227,7 +227,13 @@ export interface UseTestExecution {
   isStartingTest: boolean;
   stopOutcome: StopOutcome;
   testStartError: string | null;
-  handleStartTest: () => Promise<void>;
+  /**
+   * Start a run. `testTypes` names what to run; omitting it runs the
+   * operator's current selection. The Reflector page passes `['reflect']`
+   * explicitly — its Start control means "reflect", not "run whatever the
+   * Tests page has selected".
+   */
+  handleStartTest: (testTypes?: readonly string[]) => Promise<void>;
   handleStopTest: () => Promise<void>;
   refetchInterfaces: () => void;
 }
@@ -388,7 +394,8 @@ export function useTestExecution(): UseTestExecution {
 
   const testProgress = useTestProgress(stats);
 
-  const handleStartTest = useCallback(async (): Promise<void> => {
+  const handleStartTest = useCallback(
+    async (testTypes?: readonly string[]): Promise<void> => {
     if (!isAuthenticated) {
       return;
     }
@@ -406,7 +413,7 @@ export function useTestExecution(): UseTestExecution {
         tsn: tsnConfig,
         trafficGen: trafficGenConfig,
       };
-      const tests = selectedTests.map((testType) => ({
+      const tests = (testTypes ?? selectedTests).map((testType) => ({
         testType,
         config: buildTestConfig(testType, configs),
       }));
@@ -440,7 +447,8 @@ export function useTestExecution(): UseTestExecution {
     } finally {
       setIsStartingTest(false);
     }
-  }, [
+    },
+    [
     mode,
     peer,
     peerPort,
@@ -459,7 +467,8 @@ export function useTestExecution(): UseTestExecution {
     setIsStartingTest,
     setTestStartError,
     setStopOutcome,
-  ]);
+    ],
+  );
 
   const handleStopTest = useCallback(async (): Promise<void> => {
     if (!isAuthenticated) {
