@@ -178,6 +178,7 @@ func (s *Server) finishPlanStep(
 		}
 		s.testStatus = statusError
 		s.currentTest = ""
+		s.currentRunID = ""
 		s.currentModule = ""
 		s.testResult = s.planResult(false, "Run plan failed")
 		logging.Error(
@@ -223,6 +224,7 @@ func (s *Server) finishRunPlan(runID uint64) {
 	}
 	s.testStatus = statusCompleted
 	s.currentTest = ""
+	s.currentRunID = ""
 	s.currentModule = ""
 	s.activeTestExec = nil
 	s.testResult = s.planResult(true, "Run plan completed")

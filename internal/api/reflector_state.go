@@ -118,6 +118,7 @@ func (s *Server) autostartReflector() {
 		s.statsMu.Lock()
 		s.testStatus = statusError
 		s.currentTest = ""
+		s.currentRunID = ""
 		s.statsMu.Unlock()
 		logging.Error("reflector autostart failed",
 			"event", "reflector.autostart.failed",
