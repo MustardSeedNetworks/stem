@@ -12,6 +12,7 @@ package api
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 	"time"
 
 	"github.com/MustardSeedNetworks/stem/internal/auth"
@@ -33,7 +34,7 @@ func (s *Server) publishConnection(baseURL string) error {
 	descriptor := daemonconn.Descriptor{
 		URL:    baseURL,
 		Token:  token,
-		CAFile: s.activeCertPath(),
+		CAFile: s.publishedCertPath(),
 	}
 	if publishErr := daemonconn.Publish(s.dataDir, descriptor); publishErr != nil {
 		return fmt.Errorf("publish daemon descriptor: %w", publishErr)
@@ -76,4 +77,22 @@ func (s *Server) runConnectionRefresher(ctx context.Context) {
 			}
 		}
 	}
+}
+
+// publishedCertPath is the certificate a client should trust, as an
+// absolute path. activeCertPath returns what the daemon serves, which for
+// the self-signed default is relative to the daemon's working directory —
+// unusable to a CLI invoked from anywhere else, which is every CLI.
+func (s *Server) publishedCertPath() string {
+	path := s.activeCertPath()
+	if path == "" || filepath.IsAbs(path) {
+		return path
+	}
+	absolute, err := filepath.Abs(path)
+	if err != nil {
+		logging.Warn("could not resolve the TLS certificate path for publication",
+			"path", path, "error", err)
+		return path
+	}
+	return absolute
 }

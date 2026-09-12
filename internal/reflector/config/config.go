@@ -7,12 +7,14 @@
 package config
 
 import (
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -178,12 +180,43 @@ func (c *Config) Validate() error {
 	return nil
 }
 
-// ParseOUI parses the OUI string into bytes.
+// ouiGroups is the number of colon-separated bytes in an OUI, and
+// ouiGroupDigits the hex digits in each.
+const (
+	ouiGroups      = 3
+	ouiGroupDigits = 2
+)
+
+// errMalformedOUI reports a value meant as an OUI filter that is not one.
+var errMalformedOUI = errors.New("malformed OUI filter")
+
+// ParseOUI parses the OUI string into bytes. An unset value means "do not
+// filter by OUI" and yields the zero OUI, not an error: that is the default
+// the daemon builds its reflector with, and treating it as a parse failure
+// stopped a daemon-owned reflector from ever creating a dataplane. A value
+// that was meant as a filter but is malformed is still an error — silently
+// reflecting everything would be worse than refusing to start.
 func (c *Config) ParseOUI() ([3]byte, error) {
 	var oui [3]byte
-	_, err := fmt.Sscanf(c.Filtering.OUI, "%02x:%02x:%02x", &oui[0], &oui[1], &oui[2])
-	if err != nil {
-		return oui, fmt.Errorf("failed to parse OUI: %w", err)
+	if strings.TrimSpace(c.Filtering.OUI) == "" {
+		return oui, nil
+	}
+	// Sscanf("%02x:%02x:%02x") accepts a single hex digit per group and
+	// ignores trailing rubbish, so "00:c0:1g" parsed as a different filter
+	// than the operator wrote. Decode the whole value instead.
+	groups := strings.Split(c.Filtering.OUI, ":")
+	if len(groups) != ouiGroups {
+		return oui, fmt.Errorf("%w: %q", errMalformedOUI, c.Filtering.OUI)
+	}
+	for i, group := range groups {
+		if len(group) != ouiGroupDigits {
+			return oui, fmt.Errorf("%w: %q", errMalformedOUI, c.Filtering.OUI)
+		}
+		decoded, err := hex.DecodeString(group)
+		if err != nil {
+			return oui, fmt.Errorf("%w: %q", errMalformedOUI, c.Filtering.OUI)
+		}
+		oui[i] = decoded[0]
 	}
 	return oui, nil
 }

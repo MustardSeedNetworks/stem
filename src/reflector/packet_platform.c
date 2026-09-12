@@ -206,6 +206,11 @@ int packet_platform_init(reflector_ctx_t *rctx, worker_ctx_t *wctx)
         return -ENOMEM;
     }
 
+    /* From here the worker owns pctx, so every failure exit below must go
+     * through packet_platform_cleanup rather than free(pctx): freeing it
+     * while wctx->pctx still pointed at it left a dangling pointer that
+     * reflector_stop's cleanup loop freed a second time (double free,
+     * SIGABRT) whenever a worker failed to initialise. */
     wctx->pctx         = pctx;
     pctx->frame_size   = PACKET_FRAME_SIZE;
     pctx->udp_guard_fd = -1;
@@ -214,14 +219,13 @@ int packet_platform_init(reflector_ctx_t *rctx, worker_ctx_t *wctx)
     pctx->sock_fd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
     if (pctx->sock_fd < 0) {
         reflector_log(LOG_ERROR, "Failed to create AF_PACKET socket: %s", stem_strerror(errno));
-        free(pctx);
+        packet_platform_cleanup(wctx);
         return -1;
     }
     if (ignore_outgoing_packets(pctx->sock_fd) < 0) {
         reflector_log(LOG_ERROR, "Failed to suppress outgoing packet capture: %s",
                       stem_strerror(errno));
-        close(pctx->sock_fd);
-        free(pctx);
+        packet_platform_cleanup(wctx);
         return -1;
     }
 
@@ -236,10 +240,7 @@ int packet_platform_init(reflector_ctx_t *rctx, worker_ctx_t *wctx)
         if (pctx->sock_fd < 0 || ignore_outgoing_packets(pctx->sock_fd) < 0 ||
             try_tpacket_v2(pctx) < 0) {
             reflector_log(LOG_ERROR, "Failed to setup TPACKET_V2: %s", stem_strerror(errno));
-            if (pctx->sock_fd >= 0) {
-                close(pctx->sock_fd);
-            }
-            free(pctx);
+            packet_platform_cleanup(wctx);
             return -1;
         }
         reflector_log(LOG_DEBUG, "Using TPACKET_V2 (frame-level, veth compatible)");
@@ -283,9 +284,7 @@ int packet_platform_init(reflector_ctx_t *rctx, worker_ctx_t *wctx)
 
     if (bind(pctx->sock_fd, (struct sockaddr *)&sll, sizeof(sll)) < 0) {
         reflector_log(LOG_ERROR, "Failed to bind AF_PACKET socket: %s", stem_strerror(errno));
-        munmap(pctx->rx_ring, pctx->rx_ring_size);
-        close(pctx->sock_fd);
-        free(pctx);
+        packet_platform_cleanup(wctx);
         return -1;
     }
 
