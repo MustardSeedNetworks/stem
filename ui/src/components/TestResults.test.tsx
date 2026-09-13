@@ -85,9 +85,51 @@ describe('TestResults', () => {
     expect(screen.getByText('no reply from peer')).toBeInTheDocument();
   });
 
-  it('says nothing has run rather than showing an empty panel', () => {
-    render(<TestResults testStatus="idle" result={null} />);
+  it('renders metrics, formatting large numbers and leaving text alone', () => {
+    render(
+      <TestResults
+        testStatus="completed"
+        result={result({
+          duration: 92_000,
+          startedAt: '2026-09-12T23:00:00Z',
+          completedAt: '2026-09-12T23:01:32Z',
+          metrics: {
+            frames_sent: 1_500_000_000,
+            throughput_mbps: 9410,
+            verdict: 'pass',
+          },
+        })}
+      />,
+    );
 
-    expect(screen.getByText(/No tests running/)).toBeInTheDocument();
+    expect(screen.getByText('1.50B')).toBeInTheDocument();
+    expect(screen.getByText('9.41K')).toBeInTheDocument();
+    expect(screen.getByText('pass')).toBeInTheDocument();
+    // The key is the operator-facing label, so underscores are not.
+    expect(screen.getByText('frames sent')).toBeInTheDocument();
+    expect(screen.getByText(/1m 32s/)).toBeInTheDocument();
+    expect(screen.getByText('PASSED')).toBeInTheDocument();
+    expect(screen.getByText(/^Started:/)).toBeInTheDocument();
+    expect(screen.getByText(/^Completed:/)).toBeInTheDocument();
+  });
+
+  it('formats a sub-minute duration in seconds', () => {
+    render(<TestResults testStatus="completed" result={result({ duration: 4300 })} />);
+
+    expect(screen.getByText(/4\.3s/)).toBeInTheDocument();
+  });
+
+  // Each waiting state says something different, because "nothing here yet"
+  // and "the run failed" are not the same message to an operator.
+  it.each([
+    ['idle', /No tests running/],
+    ['starting', /Test is starting/],
+    ['running', /Test in progress/],
+    ['cancelled', /Test cancelled/],
+    ['error', /An error occurred during the test/],
+  ] as const)('says what is happening while %s and no result exists', (status, expected) => {
+    render(<TestResults testStatus={status} result={null} />);
+
+    expect(screen.getByText(expected)).toBeInTheDocument();
   });
 });
