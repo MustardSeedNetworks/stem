@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.109](https://github.com/MustardSeedNetworks/stem/compare/v0.24.108...v0.24.109) (2026-09-14)
+
+
+### Miscellaneous
+
+* **deps:** update dependency @rolldown/plugin-babel to v0.2.4 ([#1209](https://github.com/MustardSeedNetworks/stem/issues/1209)) ([0292905](https://github.com/MustardSeedNetworks/stem/commit/0292905d1bae8233d0b0711130a17f4b75a89af0))
+
 ## [0.24.108](https://github.com/MustardSeedNetworks/stem/compare/v0.24.107...v0.24.108) (2026-09-13)
 
 
