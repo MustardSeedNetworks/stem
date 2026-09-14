@@ -104,6 +104,17 @@ destroyed afterwards.
 ## Two things checked after the run, both of which change what can be claimed
 
 **#1217 is diagnosed, and it is platform-independent.**
+
+> **Correction (PR for #1217).** The executor named below is the wrong one:
+> `rfc2544_throughput` maps to the **benchmark** module, not `servicetest`, as
+> the issue's own result JSON (`"module": "benchmark"`) says. The defect is the
+> same shape in `internal/services/benchmark/executor.go`, but narrower —
+> benchmark already carries `resolution` and `max_loss`, so only
+> `InitialRatePct` and `MaxIterations` were dropped. `servicetest`'s zeroed
+> config is harmless: `initial_rate_pct` and `max_iterations` are read only
+> inside `run_throughput_test`, never by Y.1564 or MEF. The paragraph below is
+> otherwise correct, including its conclusion.
+
 `(*Executor).configureContext` in `internal/services/servicetest/executor.go:205`
 builds a `dataplane.Config` of explicit zeros and then copies across **only**
 `cfg.Duration` into `TrialDuration`:
