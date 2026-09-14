@@ -156,7 +156,7 @@ releases the device.
 | Command | Purpose |
 | --- | --- |
 | `make build` | Full build (frontend + Go backend; C dataplane on Linux) |
-| `make test` | Go tests |
+| `make test` | Go tests + frontend Vitest (run `npm ci` in `ui/` first) |
 | `make lint` | golangci-lint + Biome + clang-tidy + cppcheck |
 | `make lint-go` | Go only |
 | `make lint-c` | C only (Linux) |
@@ -190,8 +190,9 @@ Verified versions: **Go 1.27.0**, Node.js 26.8.1, golangci-lint v2.13.2.
 | `/api/v1/reflector/config` | GET / POST | Reflector configuration |
 | `/api/v1/reflector/stats` | GET | Reflector counters |
 
-Every API route is under `/api/v1/`; `/__version` and `/health/{live,ready}`
-are the unversioned introspection endpoints. Test execution, settings, mode,
+Every API route is under `/api/v1/`; `/__version`, `/health/live`,
+`/health/ready` and `/__capabilities` are unversioned introspection endpoints
+registered outside the capability registry. Test execution, settings, mode,
 interfaces and the reflector routes require a JWT issued by
 `/api/v1/auth/login`. First-run setup, password recovery and the license
 routes are deliberately pre-session (there is no account yet); `internal/api/server.go`
