@@ -40,7 +40,8 @@ the same install.
 ### Interfaces
 
 - **CLI** — scriptable `stem <cmd>` for CI integration
-- **Web UI** — React/TypeScript control plane on port 8444 (HTTPS by default; 8043 plaintext redirector)
+- **Web UI** — React/TypeScript control plane on port 8444, HTTPS only
+  (there is no plaintext listener and no HTTP redirector)
 - **REST + SSE** — `/api/v1/events` streams live test results
 
 ## Quick Start
@@ -111,8 +112,13 @@ src/dataplane/      → C dataplane (C23, Linux-only): AF_XDP / AF_PACKET
 include/            → C headers
 ```
 
-The Go binary is pure-Go (`CGO_ENABLED=0`); the C dataplane is built
-separately on Linux for kernel-bypass workloads.
+Only the **Linux amd64 `.deb`/`.rpm`** build links the C dataplane
+(`CGO_ENABLED=1`, `.goreleaser.yml`). The Linux tarballs, Linux arm64, macOS
+and Windows builds are portable `CGO_ENABLED=0` binaries with **no dataplane**:
+they serve the web UI and the API, but the reflector and every test refuse to
+start with `CGO dataplane not available on this platform`. Ask the running
+daemon rather than guessing — `GET /api/v1/capabilities` reports it, and the
+UI gates on that answer.
 
 ## Licensing
 
@@ -150,14 +156,15 @@ releases the device.
 | Command | Purpose |
 | --- | --- |
 | `make build` | Full build (frontend + Go backend; C dataplane on Linux) |
-| `make test` | Go tests |
+| `make test` | Go tests + frontend Vitest (run `npm ci` in `ui/` first) |
 | `make lint` | golangci-lint + Biome + clang-tidy + cppcheck |
 | `make lint-go` | Go only |
 | `make lint-c` | C only (Linux) |
 | `make fmt` | Format all (Go + TS + C) |
-| `make packages` | `.deb` + `.rpm` via GoReleaser |
-| `make pkg` | macOS `.pkg` |
 | `make quick` | Backend-only dev iteration (do **not** ship) |
+
+Packaging has no `make` target: `.deb`, `.rpm`, macOS `.pkg` and Windows
+`.zip` are produced only by GoReleaser in `.github/workflows/release.yml`.
 
 Verified versions: **Go 1.27.0**, Node.js 26.8.1, golangci-lint v2.13.2.
 
@@ -166,28 +173,38 @@ Verified versions: **Go 1.27.0**, Node.js 26.8.1, golangci-lint v2.13.2.
 | Endpoint | Method | Purpose |
 | --- | --- | --- |
 | `/__version` | GET | Build metadata (no auth) |
-| `/api/health` | GET | Server liveness |
-| `/api/interfaces` | GET | List network interfaces |
-| `/api/modules` | GET | List test modules |
-| `/api/modules/{name}` | GET | Module details + supported test types |
-| `/api/test/start` | POST | Start a test |
-| `/api/test/stop` | POST | Stop the running test |
-| `/api/test/result` | GET | Latest result |
+| `/api/v1/health` | GET | Server liveness |
+| `/api/v1/capabilities` | GET | Platform capabilities (is a dataplane present) |
+| `/api/v1/interfaces` | GET | List network interfaces |
+| `/api/v1/modules` | GET | List test modules |
+| `/api/v1/modules/{name}` | GET | Module details + supported test types |
+| `/api/v1/test/start` | POST | Start a run plan |
+| `/api/v1/test/stop` | POST | Stop the running test |
+| `/api/v1/test/result` | GET | Latest result |
+| `/api/v1/stats` | GET | Live run status |
 | `/api/v1/events` | GET (SSE) | Live test events |
-| `/api/auth/login` | POST | Issue JWT |
-| `/api/license` | GET | License status |
-| `/api/license/activate` | POST | Activate a license key |
-| `/api/license/trial` | POST | Start trial |
-| `/api/reflector/config` | GET / POST | Reflector configuration |
-| `/api/reflector/stats` | GET | Reflector counters |
+| `/api/v1/auth/login` | POST | Issue JWT |
+| `/api/v1/license` | GET | License status |
+| `/api/v1/license/activate` | POST | Activate a license key |
+| `/api/v1/license/trial` | POST | Start trial |
+| `/api/v1/reflector/config` | GET / POST | Reflector configuration |
+| `/api/v1/reflector/stats` | GET | Reflector counters |
 
-Most write endpoints require a JWT issued by `/api/auth/login`.
+Every API route is under `/api/v1/`; `/__version`, `/health/live`,
+`/health/ready` and `/__capabilities` are unversioned introspection endpoints
+registered outside the capability registry. Test execution, settings, mode,
+interfaces and the reflector routes require a JWT issued by
+`/api/v1/auth/login`. First-run setup, password recovery and the license
+routes are deliberately pre-session (there is no account yet); `internal/api/server.go`
+carries the reason per route and `scripts/check-route-policy.sh` fails the
+build if a route bypasses that policy.
 
 ## Versioning & Releases
 
 Conventional commits drive [release-please](https://github.com/googleapis/release-please).
 Release tags trigger `release.yml` which cross-builds binaries
-(linux/macOS/windows × amd64/arm64), `.deb`, `.rpm`, macOS `.pkg`, and Windows
+(Linux amd64/arm64, macOS arm64 — Intel was dropped fleet-wide 2026-06-08 —
+and Windows amd64/arm64), `.deb`, `.rpm`, macOS `.pkg`, and Windows
 `.zip` — all signed via cosign keyless OIDC and shipped with SLSA-3
 provenance + Syft SBOM.
 

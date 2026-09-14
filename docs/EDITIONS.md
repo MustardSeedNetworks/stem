@@ -3,7 +3,7 @@
 **Product:** Stem
 **Status:** Current
 **Owner:** Mustard Seed Networks
-**Last updated:** 2026-09-08
+**Last updated:** 2026-09-14
 
 Stem ships as **one binary on two tiers**. There is no separate build and no
 edition string: what a deployment can do is decided by the key it holds, and by
@@ -45,10 +45,13 @@ registration: `handleTestStart` maps the type through
 | `tsn` | Pro | TSN timing and isolation | `tsn`, `tsn_timing`, `tsn_isolation`, `tsn_latency` | `handleTestStart` |
 | `trafficgen` | Pro | Custom traffic streams | `custom_stream` | `handleTestStart` |
 
-The CLI carries a second, coarser check: `stem test` requires Professional (or
-an active trial) for any test through `checkTestLicense` in
-[`cmd/stem/cmd_testmaster.go`](../cmd/stem/cmd_testmaster.go). It is the same
-verdict at a lower resolution, not a different policy.
+There is exactly one entitlement decision, and the daemon makes it. The CLI
+used to carry a second, coarser check (`checkTestLicense`); STM-20 made
+`stem test` a client of the daemon and
+[`cmd/stem/cmd_testmaster.go`](../cmd/stem/cmd_testmaster.go) now forwards the
+run and reports the daemon's 402 — deliberately, because a second decision has
+to be kept in step and the old local check started a trial as a side effect of
+running a test.
 
 `internal/api/features_test.go` fails the build if a Pro catalog string is
 required by no test type, or if a registered test type requires no feature.
@@ -97,18 +100,25 @@ A licence Stem cannot read is not a licence. `license.Load` reports the state
 on disk as `loaded`, `missing`, `unreadable` or `malformed`, and everything
 that is not `loaded` or `missing` grants the Free features only:
 
+Both CLI commands are daemon clients, so both columns below are that same
+daemon verdict as the operator sees it — not a second check:
+
 | On disk | API | CLI `stem test` | CLI `stem reflect` |
 | --- | --- | --- | --- |
 | Valid Pro key or active trial | Pro catalog | runs | runs |
-| No file (`missing`) | Free only | starts the 14-day trial | runs |
-| Present, cannot be opened (`unreadable`) | Free only | refused, names the file | runs, warns |
-| Present, will not decrypt or parse (`malformed`) | Free only | refused, names the file | runs, warns |
-| Read, past its end date | Free only | refused | runs, warns |
+| No file (`missing`) | Free only | refused 402 for a Pro type | runs |
+| Present, cannot be opened (`unreadable`) | Free only | refused 402 for a Pro type | runs |
+| Present, will not decrypt or parse (`malformed`) | Free only | refused 402 for a Pro type | runs |
+| Read, past its end date | Free only | refused 402 for a Pro type | runs |
+
+Starting a trial is now only ever an explicit `stem license --trial`; no test
+run and no reflector start does it as a side effect.
 
 Two consequences worth stating, because both were live defects (#1068):
 
-- Only a `missing` state starts a trial. A damaged file used to become a
-  14-day Professional trial, and starting one overwrote the operator's file.
+- Only a `missing` state starts a trial, and only `stem license --trial` asks
+  for one. A damaged file used to become a 14-day Professional trial, and
+  starting one overwrote the operator's file.
 - `stem reflect` never starts a trial. Reflecting is the Free grant; spending
   the trial to run it was wrong on a healthy install too.
 
@@ -126,4 +136,4 @@ separately.
 | Question | Owner | Needed by |
 | --- | --- | --- |
 | Whether Free should work with no key at all (today an unlicensed install grants nothing) | Product | v1 |
-| Whether the CLI check should be per-standard like the API's | Eng | v1 |
+| ~~Whether the CLI check should be per-standard like the API's~~ — answered by STM-20: the CLI has no check of its own, so it is per-standard by construction | Eng | closed 2026-09-14 |
