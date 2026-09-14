@@ -182,11 +182,11 @@ func requireReflectInterface(iface string, fs *flag.FlagSet) error {
 	return nil
 }
 
-// reportReflectorLicense tells the operator what the license state is before
-// the reflector starts. Reflecting is the Free grant, so this never refuses
-// and never starts a trial: spending the 14 Professional days to run a free
-// capability was wrong even on a healthy install, and on a damaged one it
-// overwrote the operator's license file (#1068).
+// printReflectorStartup echoes the settings the reflector is starting with.
+// It reports no license state and never starts a trial: reflecting is the Free
+// grant, and spending the 14 Professional days to run a free capability was
+// wrong even on a healthy install — on a damaged one it overwrote the
+// operator's license file (#1068).
 func printReflectorStartup(parsed *reflectCmdArgs) {
 	_, _ = fmt.Fprintf(os.Stdout, "%s %s - Reflector\n", ProductName, version.GetVersion())
 	_, _ = fmt.Fprintf(os.Stdout, "Interface:  %s\n", parsed.iface)
