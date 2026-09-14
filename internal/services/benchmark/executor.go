@@ -14,6 +14,12 @@ import (
 const (
 	defaultResolution     = 0.1
 	defaultAcceptableLoss = 0.0
+	// The throughput binary search is bounded by these two. The C side sets
+	// them in rfc2544_default_config, but Configure overwrites every field
+	// unconditionally, so leaving them zero here stops the search before its
+	// first trial -- no frames, no iterations. See #1217.
+	defaultInitialRatePct = 100.0
+	defaultMaxIterations  = 20
 	defaultStartPct       = 10.0
 	defaultEndPct         = 100.0
 	defaultStepPct        = 10.0
@@ -156,21 +162,36 @@ func (e *Executor) configureContext(cfg *modtypes.TestConfig) error {
 		return fmt.Errorf("%w: executor has no dataplane context", modtypes.ErrInvalidConfig)
 	}
 
+	err := e.ctx.Configure(buildDataplaneConfig(cfg))
+	if err != nil {
+		return fmt.Errorf("configure dataplane: %w", err)
+	}
+	return nil
+}
+
+// buildDataplaneConfig translates a test config into the dataplane config that
+// crosses into C. It is separate from configureContext because the stub
+// Configure discards its argument and the cgo one cannot run off Linux, so
+// this is the only place a test can see what an operator's parameters become.
+func buildDataplaneConfig(cfg *modtypes.TestConfig) *dataplane.Config {
 	dpCfg := &dataplane.Config{
-		Interface:      cfg.Interface,
-		Peer:           cfg.Peer,
-		PeerPort:       cfg.PeerPort,
-		LineRate:       0,
-		AutoDetect:     true,
-		TestType:       0,
+		Interface:  cfg.Interface,
+		Peer:       cfg.Peer,
+		PeerPort:   cfg.PeerPort,
+		LineRate:   0,
+		AutoDetect: true,
+		TestType:   0,
+		// Left zero deliberately: the C side reads frame_size 0 as "all
+		// standard sizes", and the executor passes the operator's size
+		// through SetFrameSize instead, which is what the run actually uses.
 		FrameSize:      0,
 		IncludeJumbo:   false,
 		TrialDuration:  0,
 		WarmupPeriod:   0,
-		InitialRatePct: 0,
-		ResolutionPct:  0,
-		MaxIterations:  0,
-		AcceptableLoss: 0,
+		InitialRatePct: defaultInitialRatePct,
+		ResolutionPct:  modtypes.GetFloat64Param(cfg.Params, "resolution", defaultResolution),
+		MaxIterations:  defaultMaxIterations,
+		AcceptableLoss: modtypes.GetFloat64Param(cfg.Params, "max_loss", defaultAcceptableLoss),
 		HWTimestamp:    false,
 		MeasureLatency: false,
 		UsePacing:      false,
@@ -181,19 +202,12 @@ func (e *Executor) configureContext(cfg *modtypes.TestConfig) error {
 		dpCfg.TrialDuration = time.Duration(cfg.Duration) * time.Second
 	}
 
-	// Extract additional parameters using type-safe helpers.
-	dpCfg.ResolutionPct = modtypes.GetFloat64Param(cfg.Params, "resolution", defaultResolution)
-	dpCfg.AcceptableLoss = modtypes.GetFloat64Param(cfg.Params, "max_loss", defaultAcceptableLoss)
 	warmup := modtypes.GetIntParam(cfg.Params, "warmup", 0)
 	if warmup > 0 {
 		dpCfg.WarmupPeriod = time.Duration(warmup) * time.Second
 	}
 
-	err := e.ctx.Configure(dpCfg)
-	if err != nil {
-		return fmt.Errorf("configure dataplane: %w", err)
-	}
-	return nil
+	return dpCfg
 }
 
 // getLoadLevels extracts load levels from config or returns defaults.

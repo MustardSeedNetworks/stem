@@ -2,7 +2,10 @@
 
 package benchmark
 
-import "github.com/MustardSeedNetworks/stem/internal/services/modtypes"
+import (
+	"github.com/MustardSeedNetworks/stem/internal/services/modtypes"
+	"github.com/MustardSeedNetworks/stem/internal/services/orchestrator/dataplane"
+)
 
 // DefaultLoadLevelsForTest exposes default load levels for tests.
 func DefaultLoadLevelsForTest() []float64 {
@@ -77,4 +80,21 @@ func DefaultThroughputPctForTest() float64 {
 // DefaultOverloadSecForTest exposes default overload seconds.
 func DefaultOverloadSecForTest() uint32 {
 	return defaultOverloadSec
+}
+
+// BuildDataplaneConfigForTest exposes the config that crosses into the C
+// dataplane. Neither Configure implementation can show it to a test: the stub
+// discards its argument and the cgo one only builds on Linux.
+func BuildDataplaneConfigForTest(cfg *modtypes.TestConfig) *dataplane.Config {
+	return buildDataplaneConfig(cfg)
+}
+
+// DefaultInitialRatePctForTest exposes the throughput search's starting rate.
+func DefaultInitialRatePctForTest() float64 {
+	return defaultInitialRatePct
+}
+
+// DefaultMaxIterationsForTest exposes the throughput search's iteration cap.
+func DefaultMaxIterationsForTest() uint32 {
+	return defaultMaxIterations
 }
