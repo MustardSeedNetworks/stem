@@ -18,7 +18,7 @@ so the clause stays open.
 | Two containers share one L2 segment | **YES** | `192.168.64.33` and `.34` on one `/24`; `ping` at `ttl=64`; `ip neigh` holds the peer's own MAC `fe:2b:15:70:f6:a9` as `REACHABLE`, not the gateway's. |
 | A container has `CAP_NET_RAW` / `CAP_NET_ADMIN` | **YES** | `CapEff: 00000000a80425fb` — bits 12 and 13 set. No privileged flag needed. |
 | AF_PACKET capture works inside a container | **YES** | `tcpdump -i eth0` captured 5 of 5 ICMP frames, `0 packets dropped by kernel`. |
-| A `CGO_ENABLED=1` linux/arm64 build exists and its dataplane loads | **YES** | See below. `/api/v1/capabilities` → `{"reflector":{"supported":true},"testMaster":{"supported":true}}`; `stem reflect -i eth0 --profile all` starts and holds a run id, where the `msn/stem` `CGO_ENABLED=0` image answers `500 … CGO dataplane not available on this platform`. |
+| A `CGO_ENABLED=1` linux/arm64 build exists and its dataplane **loads** | **YES** (loads and starts — nothing was ever reflected, because nothing valid was ever sent; see the closing section) | See below. `/api/v1/capabilities` → `{"reflector":{"supported":true},"testMaster":{"supported":true}}`; `stem reflect -i eth0 --profile all` starts and holds a run id, where the `msn/stem` `CGO_ENABLED=0` image answers `500 … CGO dataplane not available on this platform`. |
 | An RFC 2544 run moves real frames between them | **NO** | #1217: ~1 ms run, zero frames on either wire, `Iterations: 0`, `"success": true`. |
 
 ## Building the arm64 CGO binary
@@ -76,8 +76,13 @@ Device ID: 828F53EFFD5D542E      Platform:  linux
 
 One wrinkle for whoever automates this: **the daemon resolves entitlement at
 start**, so a trial activated after `stem web` is running is not seen — the
-first RFC 2544 attempt was refused `requires a Professional licence` until the
-daemon was restarted. Activate the trial before starting the daemon.
+first RFC 2544 attempt was refused `requires a Professional licence`. What
+actually cleared it is worth stating precisely, because "restart the daemon"
+would mislead: `pkill` is not installed in `debian:trixie-slim`, so the first
+daemon kept running and a **second** `stem web` bound the fallback port 8445
+(`requested port is in use, bound fallback port instead`) and republished the
+descriptor; the CLI then talked to the second, licence-aware daemon. Activate
+the trial before starting the daemon and the question does not arise.
 
 Each container also needs `STEM_AUTH_USERNAME` / `STEM_AUTH_PASSWORD` to start
 `stem web` at all. Throwaway credentials were used here and the containers were
@@ -95,3 +100,37 @@ destroyed afterwards.
 - **#1217 itself** — its second half (zero results reported as success) is
   platform-independent and is the half that matters most: it is the shape
   #1127 was meant to have closed.
+
+## Two things checked after the run, both of which change what can be claimed
+
+**#1217 is diagnosed, and it is platform-independent.**
+`(*Executor).configureContext` in `internal/services/servicetest/executor.go:205`
+builds a `dataplane.Config` of explicit zeros and then copies across **only**
+`cfg.Duration` into `TrialDuration`:
+
+```text
+InitialRatePct: 0,
+ResolutionPct:  0,
+MaxIterations:  0,
+FrameSize:      0,
+AcceptableLoss: 0,
+```
+
+`run_throughput_test` guards its binary search with
+`while ((high - low) > resolution_pct && iterations < max_iterations && ...)`,
+and `high` is seeded from `initial_rate_pct`. With both zero the condition is
+false on entry, so `run_trial` is never called: no frames, no iterations,
+instant return. Every RFC 2544 parameter the CLI and the UI collect — frame
+sizes, trials, resolution, max-loss — is dropped at this boundary. Nothing
+about this is architecture-specific, so **the dev servers will meet it too when
+the lab returns**, and STM-13's RFC 2544 / Y.1564 legs are blocked everywhere
+rather than only here.
+
+**The reflector's zero count is correct behaviour, not a second finding.**
+`--profile all` maps to `SIG_FILTER_ALL`, which `packet_matches_signature`
+(`src/reflector/packet.c:199-234`) treats as _all signature families_ — ITO
+PROBEOT/DATAOT/LATENCY at offset 5, RFC 2544, Y.1564 and MSN at offset 0 — not
+as "any UDP on the port". The hand-sent probes carried none of those
+signatures, so they were rightly ignored. That is why the table above claims
+only that the dataplane **loads**: end-to-end reflection is still unproven and
+cannot be proven until #1217 lets the test master transmit.
