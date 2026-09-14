@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.111](https://github.com/MustardSeedNetworks/stem/compare/v0.24.110...v0.24.111) (2026-09-14)
+
+
+### Documentation
+
+* **audits:** diagnose [#1217](https://github.com/MustardSeedNetworks/stem/issues/1217) at the Go boundary and temper the dataplane claim ([#1219](https://github.com/MustardSeedNetworks/stem/issues/1219)) ([2bc431c](https://github.com/MustardSeedNetworks/stem/commit/2bc431ca3e01018dcdfc4322daad4c4d61fb0722))
+* **audits:** record whether two Apple containers can stand in for the lab ([#1218](https://github.com/MustardSeedNetworks/stem/issues/1218)) ([54524a3](https://github.com/MustardSeedNetworks/stem/commit/54524a361afefabc6ae4920044a0ef56a61342a8))
+
 ## [0.24.110](https://github.com/MustardSeedNetworks/stem/compare/v0.24.109...v0.24.110) (2026-09-14)
 
 
