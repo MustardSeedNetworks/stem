@@ -613,12 +613,28 @@ void reflect_packet_with_checksum(uint8_t *data, uint32_t len, bool software_che
  * - REFLECT_MODE_MAC_IP: Swap MAC + IP addresses
  * - REFLECT_MODE_ALL: Swap MAC + IP + UDP ports (default, full reflection)
  */
+/* STM-7 clause 2: deliberate regression, do not merge.
+ * The bound is volatile so the compiler cannot fold the chain into a closed
+ * form (it did exactly that for a constant bound, and the injection measured
+ * as free). */
+static volatile uint32_t stm7_sink;
+static volatile int      stm7_delay = 3;
+
 void reflect_packet_with_mode(uint8_t *data, uint32_t len, reflect_mode_t mode,
                               bool software_checksum)
 {
     /* All modes require at least Ethernet header */
     if (len < ETH_HDR_LEN) {
         return;
+    }
+
+    /* STM-7 clause 2: deliberate regression, do not merge. */
+    if (software_checksum) {
+        uint32_t stm7_acc = len;
+        for (int stm7 = 0; stm7 < stm7_delay; stm7++) {
+            stm7_acc = stm7_acc * 1664525u + 1013904223u;
+        }
+        stm7_sink = stm7_acc;
     }
 
     /* Prefetch areas we'll modify */
