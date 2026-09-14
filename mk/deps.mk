@@ -73,7 +73,7 @@ tools-go: ## Install Go development tools
 	@printf "  Installing gosec...\n"
 	go install github.com/securego/gosec/v2/cmd/gosec@v2.29.0
 	@printf "  Installing gofumpt...\n"
-	go install mvdan.cc/gofumpt@v0.11.0
+	go install mvdan.cc/gofumpt@v0.12.0
 	@printf "  Installing goimports...\n"
 	go install golang.org/x/tools/cmd/goimports@v0.49.0
 	@printf "  Installing staticcheck...\n"
