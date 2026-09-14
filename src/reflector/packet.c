@@ -618,7 +618,7 @@ void reflect_packet_with_checksum(uint8_t *data, uint32_t len, bool software_che
  * form (it did exactly that for a constant bound, and the injection measured
  * as free). */
 static volatile uint32_t stm7_sink;
-static volatile int      stm7_delay = 3;
+static volatile int      stm7_delay = 9;
 
 void reflect_packet_with_mode(uint8_t *data, uint32_t len, reflect_mode_t mode,
                               bool software_checksum)
