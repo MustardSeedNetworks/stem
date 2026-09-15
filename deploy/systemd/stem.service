@@ -4,6 +4,13 @@ Documentation=https://github.com/MustardSeedNetworks/stem
 After=network-online.target
 Wants=network-online.target
 
+# A daemon with no credentials exits 1 immediately, and Restart=on-failure at a
+# 5 s cadence never fills systemd's default limit (5 starts / 10 s), so an
+# unconfigured install used to respin forever -- 34,763 times on one host.
+# Three attempts in a minute, then the unit stays failed and says why.
+StartLimitIntervalSec=60
+StartLimitBurst=3
+
 [Service]
 Type=simple
 User=stem
@@ -40,6 +47,9 @@ WorkingDirectory=/var/lib/stem
 StateDirectory=stem
 LogsDirectory=stem
 ConfigurationDirectory=stem
+# The package creates /etc/stem 0750 root:stem; without this systemd warns on
+# every start that the mode differs from its own 0755 default.
+ConfigurationDirectoryMode=0750
 
 # Environment
 EnvironmentFile=-/etc/stem/environment
