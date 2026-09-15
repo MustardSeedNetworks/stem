@@ -50,6 +50,7 @@ if command -v firewall-cmd >/dev/null 2>&1 && systemctl is-active --quiet firewa
     firewall-cmd --reload >/dev/null 2>&1 || true
 fi
 
+running=no
 if command -v systemctl >/dev/null 2>&1; then
     systemctl daemon-reload || true
     systemctl enable stem.service >/dev/null 2>&1 || true
@@ -58,21 +59,66 @@ if command -v systemctl >/dev/null 2>&1; then
     else
         systemctl start stem.service || true
     fi
+
+    # `systemctl start` returns as soon as a Type=simple process forks, so an
+    # immediate is-active reads `active` for the moment before an unconfigured
+    # daemon exits 1. Give it a beat, then report what is actually true --
+    # saying "installed successfully" over a unit that is respinning is how a
+    # crash-looping install went unnoticed for 34,763 restarts.
+    # Integer sleeps only: this runs under whatever /bin/sh the distro ships.
+    i=0
+    while [ "$i" -lt 5 ]; do
+        if systemctl is-active --quiet stem.service 2>/dev/null; then
+            running=yes
+        else
+            running=no
+            break
+        fi
+        i=$((i + 1))
+        sleep 1
+    done
+else
+    running=unknown
 fi
 
-cat <<'EOF'
+echo ""
+echo "=============================================="
+if [ "$running" = yes ]; then
+    echo "  The Stem is installed and running"
+elif [ "$running" = unknown ]; then
+    echo "  The Stem is installed (no systemd on this host)"
+else
+    echo "  The Stem is installed but NOT RUNNING"
+fi
+echo "=============================================="
+echo ""
 
-==============================================
-  The Stem installed successfully
-==============================================
+if [ "$running" = no ]; then
+    cat <<'EOF'
+The service could not start. The usual cause on a fresh install is that no
+credentials are set: /etc/stem/environment ships with every variable
+commented out, and the daemon refuses to start without them.
 
+  1. Edit /etc/stem/environment and set:
+       STEM_AUTH_USERNAME=<your-admin-username>
+       STEM_AUTH_PASSWORD=<choose-a-strong-unique-password>
+       STEM_JWT_SECRET=<a-secure-random-string>
+  2. sudo systemctl restart stem
+  3. systemctl status stem
+
+The exact reason is in the log:
+  journalctl -u stem -n 20 --no-pager
+
+EOF
+else
+    cat <<'EOF'
 Web interface: https://localhost:8444 (self-signed certificate)
   Trust the cert: sudo stem install-ca
 
-Quick start:
-  1. Edit /etc/stem/environment to set credentials
-  2. Restart: sudo systemctl restart stem
+EOF
+fi
 
+cat <<'EOF'
 Commands:
   View logs:  journalctl -u stem -f
   CLI help:   stem --help

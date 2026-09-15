@@ -370,6 +370,11 @@ jobs:
       - name: Filename-policy gate — no monolith naming outside internal/api
         run: ./scripts/check-filename-policy.sh
 
+      # A start limit in [Service] is silently ignored by systemd, so the unit
+      # can look fixed and crash-loop exactly as before (#1249).
+      - name: Service restart-policy gate — start limit and honest postinstall
+        run: ./scripts/check-service-restart-policy.sh
+
       # The four products each own their tsconfig, so the strictness flags
       # drift silently — a missing one never announces itself, it just checks
       # less than its sibling does.
