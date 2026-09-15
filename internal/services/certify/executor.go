@@ -28,7 +28,7 @@ const (
 	defaultTSNWarmupSec       = 5       // Match WebUI: 5 seconds.
 	defaultTSNClassCount      = 8       // 8 traffic classes.
 	defaultTSNDuration        = 60      // 60 seconds.
-	defaultTSNFrameSize       = 64      // Match WebUI: 64 bytes.
+	defaultTSNFrameSize       = 128     // Smallest standard frame the extended payload fits (stem#1250).
 	defaultTSNMaxLatencyNs    = 1000000 // Match WebUI: 1ms.
 	defaultTSNMaxJitterNs     = 100000  // Match WebUI: 100µs.
 	defaultTSNMaxSyncOffsetNs = 1000    // Match WebUI: 1µs.

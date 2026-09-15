@@ -15,7 +15,7 @@
 import { AlertTriangle, Settings2 } from 'lucide-react';
 import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
-import { FRAME_SIZE_OPTIONS } from '../forms/frameSizes';
+import { EXTENDED_FRAME_SIZE_OPTIONS } from '../forms/frameSizes';
 import { useConfigForm } from '../forms/useConfigForm';
 import { Y1564ConfigSchema } from '../schemas/configs';
 import { CollapsibleSection } from './CollapsibleSection';
@@ -60,7 +60,7 @@ export const defaultY1564Config: Y1564Config = {
   eir: 0,
   cbs: 12,
   ebs: 0,
-  frameSizes: [64, 128, 256, 512, 1024, 1280, 1518],
+  frameSizes: [128, 256, 512, 1024, 1280, 1518],
   configStepDuration: 15,
   perfTestDuration: 900,
   vlanId: 0,
@@ -282,7 +282,7 @@ export function Y1564ConfigForm({
           help={<HelpIcon tooltip={t('testConfig.y1564.frameSizes.help')} />}
         >
           <div className="grid grid-cols-2 gap-compact">
-            {FRAME_SIZE_OPTIONS.map((option) => (
+            {EXTENDED_FRAME_SIZE_OPTIONS.map((option) => (
               <label
                 key={option.value}
                 title={t('testConfig.y1564.frameSizes.includeTitle', { size: option.value })}

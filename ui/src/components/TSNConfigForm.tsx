@@ -41,7 +41,7 @@ export interface TSNConfig {
 export const defaultTSNConfig: TSNConfig = {
   duration: 60,
   warmup: 5,
-  frameSize: 64,
+  frameSize: 128,
   maxLatencyNs: 1000000,
   maxJitterNs: 100000,
   requirePTPSync: true,
@@ -54,10 +54,12 @@ export const defaultTSNConfig: TSNConfig = {
   trafficClass: 7,
 };
 
-/** TSN measures bounded latency at standard sizes; no jumbo. */
+/**
+ * TSN measures bounded latency at standard sizes; no jumbo, and no 64 — the
+ * extended payload does not fit one (MIN_EXTENDED_FRAME_SIZE).
+ */
 const FRAME_SIZE_OPTIONS: FrameSizeOption[] = [
-  { value: 64, qualifier: 'frameSizeMin' },
-  { value: 128, qualifier: 'frameSize' },
+  { value: 128, qualifier: 'frameSizeMin' },
   { value: 256, qualifier: 'frameSize' },
   { value: 512, qualifier: 'frameSize' },
   { value: 1024, qualifier: 'frameSize' },

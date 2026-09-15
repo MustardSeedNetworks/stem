@@ -65,6 +65,17 @@ typedef enum {
 #define RFC2544_FCS_SIZE        4
 #define RFC2544_MIN_PACKET_SIZE (RFC2544_MIN_FRAME_SIZE - RFC2544_FCS_SIZE)
 
+/*
+ * Minimum frame for the extended payload formats (custom/TrafficGen, TSN and
+ * Y.1564). They carry a 24-byte payload where the RFC 2544 measurement format
+ * carries 18, so the payload runs to offset 66 and the standard 64-byte frame
+ * cannot hold one (ADR 0008). This is the single definition: packet.c derives
+ * its template and validator bounds from it, and Go mirrors it in
+ * internal/api (pinned by TestExtendedFrameMinimumMatchesTheHeader).
+ */
+#define EXTENDED_MIN_PACKET_SIZE 66
+#define EXTENDED_MIN_FRAME_SIZE  (EXTENDED_MIN_PACKET_SIZE + RFC2544_FCS_SIZE)
+
 /* Standard RFC 2544 frame sizes. */
 #define RFC2544_FRAME_SIZES      {64, 128, 256, 512, 1024, 1280, 1518}
 #define RFC2544_FRAME_SIZE_COUNT 7
@@ -964,7 +975,6 @@ void rfc2544_print_results(const rfc2544_ctx_t *ctx);
 #define Y1564_FLAG_IS_RESPONSE   0x02
 
 #define Y1564_MIN_PAYLOAD 24
-#define Y1564_MIN_FRAME   64
 // NOLINTEND(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
 
 /* Calculate payload size for Y.1564 */

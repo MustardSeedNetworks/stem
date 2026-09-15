@@ -34,7 +34,7 @@ export interface TrafficGenConfig {
 
 /** Default traffic generator configuration */
 export const defaultTrafficGenConfig: TrafficGenConfig = {
-  frameSize: 64,
+  frameSize: 128,
   ratePct: 100,
   duration: 60,
   warmup: 2,

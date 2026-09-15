@@ -79,6 +79,11 @@ typedef struct __attribute__((packed)) {
     uint8_t  flags;
 } custom_payload_t;
 
+static_assert(sizeof(eth_header_t) + sizeof(ip_header_t) + sizeof(udp_header_t) +
+                      sizeof(custom_payload_t) ==
+                  EXTENDED_MIN_PACKET_SIZE,
+              "EXTENDED_MIN_PACKET_SIZE must match the extended custom payload layout");
+
 /* ============================================================================
  * Checksum Calculation
  * ============================================================================ */
@@ -211,9 +216,7 @@ custom_payload_t *custom_create_packet_template(uint8_t *buffer, uint32_t frame_
                                                 uint16_t dst_port, uint32_t stream_id,
                                                 const char *signature)
 {
-    const uint32_t min_frame = sizeof(eth_header_t) + sizeof(ip_header_t) + sizeof(udp_header_t) +
-                               sizeof(custom_payload_t);
-    if (frame_size < min_frame) {
+    if (frame_size < EXTENDED_MIN_PACKET_SIZE) {
         return NULL;
     }
 
@@ -251,9 +254,7 @@ custom_payload_t *custom_create_packet_template(uint8_t *buffer, uint32_t frame_
  */
 bool custom_is_valid_response(const uint8_t *data, uint32_t len, const char *signature)
 {
-    const uint32_t min_len = (uint32_t)(sizeof(eth_header_t) + sizeof(ip_header_t) +
-                                        sizeof(udp_header_t) + sizeof(custom_payload_t));
-    if (!data || len < min_len || !signature) {
+    if (!data || len < EXTENDED_MIN_PACKET_SIZE || !signature) {
         return false;
     }
 
@@ -618,6 +619,11 @@ typedef struct __attribute__((packed)) {
     uint8_t  flags;                    /* Flags */
 } y1564_payload_t;
 
+static_assert(sizeof(eth_header_t) + sizeof(ip_header_t) + sizeof(udp_header_t) +
+                      sizeof(y1564_payload_t) ==
+                  EXTENDED_MIN_PACKET_SIZE,
+              "EXTENDED_MIN_PACKET_SIZE must match the Y.1564 payload layout");
+
 /**
  * Create a packet template for Y.1564 testing
  *
@@ -638,11 +644,7 @@ y1564_payload_t *y1564_create_packet_template(uint8_t *buffer, uint32_t frame_si
                                               uint32_t src_ip, uint32_t dst_ip, uint16_t src_port,
                                               uint16_t dst_port, uint32_t service_id, uint8_t dscp)
 {
-    /* Minimum frame size must fit all headers + payload */
-    const uint32_t min_frame =
-        sizeof(eth_header_t) + sizeof(ip_header_t) + sizeof(udp_header_t) + sizeof(y1564_payload_t);
-
-    if (!buffer || frame_size < min_frame) {
+    if (!buffer || frame_size < EXTENDED_MIN_PACKET_SIZE) {
         return NULL;
     }
 
@@ -728,11 +730,9 @@ void y1564_stamp_packet(y1564_payload_t *payload, uint32_t seq_num, uint64_t tim
 bool y1564_is_valid_response(const uint8_t *data, uint32_t len)
 {
     /* Full-payload bound, not the 64-byte Ethernet minimum: the y1564_payload_t
-     * cast at offset 42 is read through by consumers; guarding on the literal
-     * Y1564_MIN_FRAME (64) admitted 64-/65-byte frames too short to hold it. */
-    const uint32_t min_len = (uint32_t)(sizeof(eth_header_t) + sizeof(ip_header_t) +
-                                        sizeof(udp_header_t) + sizeof(y1564_payload_t));
-    if (!data || len < min_len) {
+     * cast at offset 42 is read through by consumers, so a 64-/65-byte frame is
+     * too short to hold it. */
+    if (!data || len < EXTENDED_MIN_PACKET_SIZE) {
         return false;
     }
 
