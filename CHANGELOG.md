@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.113](https://github.com/MustardSeedNetworks/stem/compare/v0.24.112...v0.24.113) (2026-09-15)
+
+
+### Documentation
+
+* **adr:** record the foundation move on 0006/0007/0009 and repair the index ([#1227](https://github.com/MustardSeedNetworks/stem/issues/1227)) ([c55cdb0](https://github.com/MustardSeedNetworks/stem/commit/c55cdb086c9814959841b7929b5ecfd69767ed5c)), closes [#1226](https://github.com/MustardSeedNetworks/stem/issues/1226)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1187](https://github.com/MustardSeedNetworks/stem/issues/1187)) ([9826771](https://github.com/MustardSeedNetworks/stem/commit/9826771dee59497373f87ceaf48ba42ff6e26a38))
+* **deps:** lock file maintenance ([#1225](https://github.com/MustardSeedNetworks/stem/issues/1225)) ([24e6936](https://github.com/MustardSeedNetworks/stem/commit/24e6936ca7764c0be4fa1554bb378ddc07545c46))
+
 ## [0.24.112](https://github.com/MustardSeedNetworks/stem/compare/v0.24.111...v0.24.112) (2026-09-15)
 
 
