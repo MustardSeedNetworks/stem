@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.117](https://github.com/MustardSeedNetworks/stem/compare/v0.24.116...v0.24.117) (2026-09-15)
+
+
+### Bug Fixes
+
+* **dataplane:** reject frames below the extended-format minimum instead of -22 ([#1266](https://github.com/MustardSeedNetworks/stem/issues/1266)) ([aa21d18](https://github.com/MustardSeedNetworks/stem/commit/aa21d18d4fba891aa925b2f34d170a3ff5f3d977))
+* **ui:** route the License panel through the shared client ([#1256](https://github.com/MustardSeedNetworks/stem/issues/1256)) ([68f1b09](https://github.com/MustardSeedNetworks/stem/commit/68f1b09d3d844ed1408e24663027bb7f5298ec55)), closes [#1247](https://github.com/MustardSeedNetworks/stem/issues/1247)
+
 ## [0.24.116](https://github.com/MustardSeedNetworks/stem/compare/v0.24.115...v0.24.116) (2026-09-15)
 
 
