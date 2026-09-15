@@ -146,4 +146,25 @@ uint64_t calc_max_pps(uint64_t line_rate_bps, uint32_t frame_size);
 /* Report progress to callback */
 void report_progress(rfc2544_ctx_t *ctx, const char *message, double pct);
 
+/**
+ * Platform the dataplane prefers on this build, ignoring config.force_packet.
+ *
+ * @return AF_XDP where the build saw <linux/if_xdp.h>, AF_PACKET on any other
+ *         Linux build, NULL where no platform is supported
+ */
+const platform_ops_t *rfc2544_preferred_platform(void);
+
+/**
+ * Platform to try after `tried` failed to initialize on this host.
+ *
+ * HAVE_AF_XDP only records that <linux/if_xdp.h> was present at build time, so
+ * AF_XDP is selected on hosts that cannot create a UMEM. AF_XDP degrades to
+ * AF_PACKET, as the reflector already does; AF_PACKET is the last resort and
+ * has no fallback.
+ *
+ * @param tried Platform whose init() failed
+ * @return Platform to try next, or NULL when there is none
+ */
+const platform_ops_t *rfc2544_fallback_platform(const platform_ops_t *tried);
+
 #endif /* RFC2544_INTERNAL_H */
