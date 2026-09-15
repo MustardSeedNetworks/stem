@@ -1307,6 +1307,12 @@ int rfc2544_throughput_test(rfc2544_ctx_t *ctx, uint32_t frame_size, throughput_
     uint32_t iterations   = 0;
     uint64_t total_frames = 0;
 
+    /* What the wire actually carried at best_rate, and whether the generator
+     * could offer it at all. */
+    double best_achieved_pps  = 0.0;
+    double best_achieved_mbps = 0.0;
+    bool   generator_limited  = false;
+
     while ((high - low) > ctx->config.resolution_pct && iterations < ctx->config.max_iterations &&
            !ctx->cancel_requested) {
         double current_rate = (low + high) / 2.0;
@@ -1325,10 +1331,32 @@ int rfc2544_throughput_test(rfc2544_ctx_t *ctx, uint32_t frame_size, throughput_
 
         total_frames += trial.packets_sent;
 
+        /* A trial the generator could not drive to the offered load measures
+         * nothing about that load: loss reads 0 % because everything offered
+         * came back, and the search then walks the rate up on evidence it does
+         * not have (#1233). Stop, and report what the wire carried. */
+        const double demanded_pps = (double)max_pps * current_rate / 100.0;
+        if (demanded_pps > 0.0 &&
+            trial.achieved_pps < demanded_pps * (1.0 - RFC2544_GENERATOR_TOLERANCE)) {
+            generator_limited  = true;
+            best_rate          = current_rate;
+            best_achieved_pps  = trial.achieved_pps;
+            best_achieved_mbps = trial.achieved_mbps;
+            result->latency    = trial.latency;
+            iterations++;
+            rfc2544_log(LOG_WARN,
+                        "Generator limited at %.2f%%: demanded %.0f pps, achieved %.0f pps; "
+                        "stopping the search",
+                        current_rate, demanded_pps, trial.achieved_pps);
+            break;
+        }
+
         if (trial.loss_pct <= ctx->config.acceptable_loss) {
             /* Success - try higher rate */
-            best_rate = current_rate;
-            low       = current_rate;
+            best_rate          = current_rate;
+            low                = current_rate;
+            best_achieved_pps  = trial.achieved_pps;
+            best_achieved_mbps = trial.achieved_mbps;
             rfc2544_log(LOG_DEBUG, "  Pass: loss=%.4f%%, new best=%.2f%%", trial.loss_pct,
                         best_rate);
 
@@ -1343,16 +1371,21 @@ int rfc2544_throughput_test(rfc2544_ctx_t *ctx, uint32_t frame_size, throughput_
         iterations++;
     }
 
-    /* Store result */
-    result->frame_size    = frame_size;
-    result->max_rate_pct  = best_rate;
-    result->max_rate_mbps = (ctx->line_rate * best_rate / 100.0) / 1e6;
-    result->max_rate_pps  = (uint64_t)(max_pps * best_rate / 100.0);
-    result->iterations    = iterations;
-    result->frames_tested = total_frames;
+    /* Store result. The reported rate is the best trial's own achieved figure;
+     * deriving it from best_rate reported the offered load as measured. */
+    result->frame_size        = frame_size;
+    result->max_rate_pps      = best_achieved_pps;
+    result->max_rate_mbps     = best_achieved_mbps;
+    result->max_rate_pct      = (max_pps > 0) ? (best_achieved_pps / (double)max_pps * 100.0) : 0.0;
+    result->offered_rate_pct  = best_rate;
+    result->generator_limited = generator_limited;
+    result->iterations        = iterations;
+    result->frames_tested     = total_frames;
 
-    rfc2544_log(LOG_INFO, "Throughput result: %.2f%% (%.2f Mbps, %lu pps)", result->max_rate_pct,
-                result->max_rate_mbps, result->max_rate_pps);
+    rfc2544_log(LOG_INFO,
+                "Throughput result: %.4f%% measured (%.2f Mbps, %.0f pps) at %.2f%% offered%s",
+                result->max_rate_pct, result->max_rate_mbps, result->max_rate_pps,
+                result->offered_rate_pct, generator_limited ? " [generator limited]" : "");
 
     if (result_count) {
         *result_count = 1;
@@ -1725,13 +1758,15 @@ void rfc2544_print_results(const rfc2544_ctx_t *ctx)
     if (ctx->throughput_count > 0) {
         printf("Throughput Test Results (Section 26.1)\n");
         printf("-----------------------------------------------------------------\n");
-        printf("%-10s %12s %12s %15s %10s\n", "Frame", "Rate", "Rate", "Rate", "Iterations");
-        printf("%-10s %12s %12s %15s %10s\n", "Size", "(%)", "(Mbps)", "(pps)", "");
+        printf("%-10s %12s %12s %15s %10s %10s\n", "Frame", "Measured", "Measured", "Measured",
+               "Offered", "Iterations");
+        printf("%-10s %12s %12s %15s %10s %10s\n", "Size", "(%)", "(Mbps)", "(pps)", "(%)", "");
         printf("-----------------------------------------------------------------\n");
         for (uint32_t i = 0; i < ctx->throughput_count; i++) {
             const throughput_result_t *r = &ctx->throughput_results[i];
-            printf("%-10u %11.2f%% %12.2f %15.0f %10u\n", r->frame_size, r->max_rate_pct,
-                   r->max_rate_mbps, r->max_rate_pps, r->iterations);
+            printf("%-10u %11.4f%% %12.2f %15.0f %9.2f%% %10u%s\n", r->frame_size, r->max_rate_pct,
+                   r->max_rate_mbps, r->max_rate_pps, r->offered_rate_pct, r->iterations,
+                   r->generator_limited ? "  GENERATOR LIMITED" : "");
         }
         printf("\n");
     }

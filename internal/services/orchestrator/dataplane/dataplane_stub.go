@@ -53,15 +53,19 @@ type LatencyStats struct {
 	P99Ns    float64
 }
 
-// ThroughputResult holds RFC 2544 throughput test results.
+// ThroughputResult holds RFC 2544 throughput test results. MaxRate* are
+// measurements of what the generator put on the wire; OfferedRatePct is the
+// rate the search settled on (#1233).
 type ThroughputResult struct {
-	FrameSize    uint32
-	MaxRatePct   float64
-	MaxRateMbps  float64
-	MaxRatePps   float64
-	FramesTested uint64
-	Iterations   uint32
-	Latency      LatencyStats
+	FrameSize        uint32
+	MaxRatePct       float64
+	MaxRateMbps      float64
+	MaxRatePps       float64
+	OfferedRatePct   float64
+	GeneratorLimited bool
+	FramesTested     uint64
+	Iterations       uint32
+	Latency          LatencyStats
 }
 
 // FrameLossPoint holds a single data point from frame loss rate testing.
@@ -591,12 +595,14 @@ type Stats struct {
 
 // ThroughputResultCLI holds throughput test results for CLI output.
 type ThroughputResultCLI struct {
-	FrameSize   uint32
-	MaxRatePct  float64
-	MaxRateMbps float64
-	MaxRatePPS  float64
-	Iterations  uint32
-	Latency     LatencyStats
+	FrameSize        uint32
+	MaxRatePct       float64
+	MaxRateMbps      float64
+	MaxRatePPS       float64
+	OfferedRatePct   float64
+	GeneratorLimited bool
+	Iterations       uint32
+	Latency          LatencyStats
 }
 
 // LatencyResultCLI holds latency test results for CLI output.

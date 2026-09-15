@@ -49,12 +49,14 @@ func (c *Context) RunThroughputTest() (*ThroughputResultCLI, error) {
 	}
 
 	return &ThroughputResultCLI{
-		FrameSize:   r.FrameSize,
-		MaxRatePct:  r.MaxRatePct,
-		MaxRateMbps: r.MaxRateMbps,
-		MaxRatePPS:  r.MaxRatePps,
-		Iterations:  r.Iterations,
-		Latency:     r.Latency,
+		FrameSize:        r.FrameSize,
+		MaxRatePct:       r.MaxRatePct,
+		MaxRateMbps:      r.MaxRateMbps,
+		MaxRatePPS:       r.MaxRatePps,
+		OfferedRatePct:   r.OfferedRatePct,
+		GeneratorLimited: r.GeneratorLimited,
+		Iterations:       r.Iterations,
+		Latency:          r.Latency,
 	}, nil
 }
 
