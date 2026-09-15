@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.112](https://github.com/MustardSeedNetworks/stem/compare/v0.24.111...v0.24.112) (2026-09-15)
+
+
+### Bug Fixes
+
+* **rfc2544:** carry the throughput search bounds across the dataplane boundary ([#1221](https://github.com/MustardSeedNetworks/stem/issues/1221)) ([b5bc71d](https://github.com/MustardSeedNetworks/stem/commit/b5bc71d5dbfa17302bcbe854602cd904b2d26451))
+
+
+### Miscellaneous
+
+* **deps:** update module mvdan.cc/gofumpt to v0.12.0 ([#1222](https://github.com/MustardSeedNetworks/stem/issues/1222)) ([e8fd89d](https://github.com/MustardSeedNetworks/stem/commit/e8fd89df54440505515d7d010be9c7c8a13551a0))
+
 ## [0.24.111](https://github.com/MustardSeedNetworks/stem/compare/v0.24.110...v0.24.111) (2026-09-14)
 
 
