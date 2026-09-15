@@ -46,29 +46,15 @@ export function TestResults({ testStatus, result }: TestResultsProps): ReactElem
   const { t } = useTranslation('common');
   // Show placeholder messages when no result data
   if (!result) {
-    let message: string;
-    switch (testStatus) {
-      case 'idle':
-        message = 'No tests running. Configure tests in Settings and click Start.';
-        break;
-      case 'starting':
-        message = 'Test is starting. Results will stream in shortly.';
-        break;
-      case 'running':
-        message = 'Test in progress... Results will appear here when complete.';
-        break;
-      case 'cancelled':
-        message = 'Test cancelled. Adjust settings or restart when ready.';
-        break;
-      case 'stopped':
-        message = 'Stopped by the operator. No result was captured before it ended.';
-        break;
-      case 'error':
-        message = 'An error occurred during the test.';
-        break;
-      default:
-        message = 'Waiting for the backend to report a status.';
-    }
+    const placeholders: Record<string, string> = {
+      idle: t('results.placeholder.idle', { runTest: t('buttons.runTest') }),
+      starting: t('results.placeholder.starting'),
+      running: t('results.placeholder.running'),
+      cancelled: t('results.placeholder.cancelled'),
+      stopped: t('results.placeholder.stopped'),
+      error: t('results.placeholder.error'),
+    };
+    const message = placeholders[testStatus] ?? t('results.placeholder.unknown');
 
     return (
       <div className="card">

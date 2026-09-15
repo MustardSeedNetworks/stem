@@ -9,6 +9,7 @@ import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FRAME_SIZE_OPTIONS } from '../forms/frameSizes';
 import { useConfigForm } from '../forms/useConfigForm';
+import { hasGroupTests } from '../lib/testGroups';
 import { TrafficGenConfigSchema } from '../schemas/configs';
 import { CollapsibleSection } from './CollapsibleSection';
 import { FieldError } from './FieldError';
@@ -68,9 +69,7 @@ export function TrafficGenConfigForm({
   setConfig,
   selectedTests,
 }: TrafficGenConfigFormProps): ReactElement | null {
-  const hasTrafficGenTests = selectedTests.some(
-    (t) => t.startsWith('trafficgen_') || t === 'custom_stream',
-  );
+  const hasTrafficGenTests = hasGroupTests('trafficgen', selectedTests);
 
   const form = useConfigForm<TrafficGenConfig>({
     schema: TrafficGenConfigSchema,

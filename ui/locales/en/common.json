@@ -64,7 +64,16 @@
     "pass": "PASS",
     "fail": "FAIL",
     "warning": "WARNING",
-    "info": "INFO"
+    "info": "INFO",
+    "placeholder": {
+      "idle": "No tests running. Configure tests in Settings and click {{runTest}}.",
+      "starting": "Test is starting. Results will stream in shortly.",
+      "running": "Test in progress... Results will appear here when complete.",
+      "cancelled": "Test cancelled. Adjust settings or restart when ready.",
+      "stopped": "Stopped by the operator. No result was captured before it ended.",
+      "error": "An error occurred during the test.",
+      "unknown": "Waiting for the backend to report a status."
+    }
   },
   "labels": {
     "interface": "Interface",
@@ -251,5 +260,10 @@
       "uptime": "Uptime",
       "statusLabel": "Status:"
     }
+  },
+  "moduleEmptyState": {
+    "title": "No {{module}} tests selected",
+    "body": "Pick the tests this module should run in Settings, and their configuration appears here.",
+    "openSettings": "Open Settings"
   }
 }

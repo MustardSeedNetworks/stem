@@ -64,7 +64,16 @@
     "pass": "APROBADO",
     "fail": "FALLIDO",
     "warning": "ADVERTENCIA",
-    "info": "INFO"
+    "info": "INFO",
+    "placeholder": {
+      "idle": "No hay pruebas en ejecución. Configure las pruebas en Configuración y pulse {{runTest}}.",
+      "starting": "La prueba se está iniciando. Los resultados llegarán en breve.",
+      "running": "Prueba en curso... Los resultados aparecerán aquí al terminar.",
+      "cancelled": "Prueba cancelada. Ajuste la configuración o reiníciela cuando quiera.",
+      "stopped": "Detenida por el operador. No se capturó ningún resultado antes de terminar.",
+      "error": "Se produjo un error durante la prueba.",
+      "unknown": "Esperando a que el backend informe de un estado."
+    }
   },
   "labels": {
     "interface": "Interfaz",
@@ -251,5 +260,10 @@
       "uptime": "Tiempo Activo",
       "statusLabel": "Estado:"
     }
+  },
+  "moduleEmptyState": {
+    "title": "No hay pruebas de {{module}} seleccionadas",
+    "body": "Elija en Configuración las pruebas que debe ejecutar este módulo y su configuración aparecerá aquí.",
+    "openSettings": "Abrir Configuración"
   }
 }

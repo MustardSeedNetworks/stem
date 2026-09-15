@@ -9,6 +9,7 @@ import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { FrameSizeOption } from '../forms/frameSizes';
 import { useConfigForm } from '../forms/useConfigForm';
+import { hasGroupTests } from '../lib/testGroups';
 import { RFC2889ConfigSchema } from '../schemas/configs';
 import { CollapsibleSection } from './CollapsibleSection';
 import { FieldError } from './FieldError';
@@ -74,7 +75,7 @@ export function RFC2889ConfigForm({
   setConfig,
   selectedTests,
 }: RFC2889ConfigFormProps): ReactElement | null {
-  const hasRFC2889Tests = selectedTests.some((t) => t.startsWith('rfc2889'));
+  const hasRFC2889Tests = hasGroupTests('rfc2889', selectedTests);
 
   const form = useConfigForm<RFC2889Config>({
     schema: RFC2889ConfigSchema,
