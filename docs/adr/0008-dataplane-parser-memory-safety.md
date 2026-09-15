@@ -68,3 +68,32 @@ widen the gate rather than re-accept the risk — ASAN unit coverage of
 `packet_platform_init` and its failure paths, blocking cppcheck over the
 reflector platform code, and a fuzz target for the reflector frame path.
 Tracked as stem#1228 (plan row STM-22). The parser scope above is unchanged.
+
+**What shipped for that amendment:**
+
+- `tests/c/test_packet_platform_init.c` drives `packet_platform_init`'s success
+  path and all six of its failure exits under ASAN/UBSan, asserting the contract
+  the CT307 defect broke: after a failed init `wctx->pctx` is NULL, and the
+  cleanup loop `reflector_stop` then runs is a no-op. The cleanup loop runs
+  _before_ the assertion so the regression is caught twice — as a
+  heap-use-after-free under the sanitizer and as a failed assertion without one.
+  The syscalls the init path makes are linker-wrapped (`--wrap=socket`,
+  `--wrap=bind`, `--wrap=setsockopt`) rather than issued: AF_PACKET needs
+  CAP_NET_RAW, which the CI runner lacks and a local container has, so an
+  unwrapped test would reach a different exit in each place and none on demand.
+  `mmap` is deliberately not wrapped — the ASAN runtime uses it.
+- The blocking cppcheck now covers `src/reflector/` alongside `packet.c`, at the
+  same `warning,style,performance,portability` level (one policy, not two). It
+  pins `-D__linux__`: otherwise cppcheck parses the `__APPLE__` branch of
+  `core.c`, where a dispatch block is a `syntaxError`, and judges the reflector
+  against non-Linux stubs that make several real conditions look constant. Two
+  pre-existing findings were real dead members and are deleted
+  (`nic_model_t::speed_gbps`, `platform_ctx::umem_frame_free`); four are
+  valueflow false positives and carry an inline suppression with its reason.
+- `tests/c/fuzz_reflector.c` (`make c-fuzz-reflector`, 120 s in CI) fuzzes the
+  reflector's frame path as `worker_loop` runs it — classify, then reflect
+  through the branch the signature type selects — with the frame in an
+  exactly-sized heap allocation, since these functions write in place.
+- The `ci_infra` path filter gained `Makefile` and `mk/**`. The make recipes
+  _are_ these gates, and no filter matched them: a PR that weakened
+  `c-test-asan` or `c-fuzz` changed no file any gate watched.

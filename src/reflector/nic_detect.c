@@ -45,32 +45,31 @@ typedef struct {
     uint16_t    vendor_id;
     uint16_t    device_id;
     const char *model;
-    int         speed_gbps;
 } nic_model_t;
 
 static const nic_model_t high_speed_nics[] = {
     /* Intel */
-    {0x8086, 0x1572, "Intel X710 (10G)", 10},
-    {0x8086, 0x1583, "Intel XL710 (40G)", 40},
-    {0x8086, 0x1584, "Intel XXV710 (25G)", 25},
-    {0x8086, 0x1592, "Intel E810 (100G)", 100},
-    {0x8086, 0x159B, "Intel E810 (25G)", 25},
+    {0x8086, 0x1572, "Intel X710 (10G)"},
+    {0x8086, 0x1583, "Intel XL710 (40G)"},
+    {0x8086, 0x1584, "Intel XXV710 (25G)"},
+    {0x8086, 0x1592, "Intel E810 (100G)"},
+    {0x8086, 0x159B, "Intel E810 (25G)"},
 
     /* Mellanox/NVIDIA */
-    {0x15b3, 0x1013, "Mellanox ConnectX-4 (100G)", 100},
-    {0x15b3, 0x1015, "Mellanox ConnectX-4 Lx (25G)", 25},
-    {0x15b3, 0x1017, "Mellanox ConnectX-5 (100G)", 100},
-    {0x15b3, 0x1019, "Mellanox ConnectX-5 Ex (100G)", 100},
-    {0x15b3, 0x101b, "Mellanox ConnectX-6 (200G)", 200},
-    {0x15b3, 0x101d, "Mellanox ConnectX-6 Dx (100G)", 100},
-    {0x15b3, 0x101f, "Mellanox ConnectX-6 Lx (25G)", 25},
-    {0x15b3, 0x1021, "Mellanox ConnectX-7 (400G)", 400},
+    {0x15b3, 0x1013, "Mellanox ConnectX-4 (100G)"},
+    {0x15b3, 0x1015, "Mellanox ConnectX-4 Lx (25G)"},
+    {0x15b3, 0x1017, "Mellanox ConnectX-5 (100G)"},
+    {0x15b3, 0x1019, "Mellanox ConnectX-5 Ex (100G)"},
+    {0x15b3, 0x101b, "Mellanox ConnectX-6 (200G)"},
+    {0x15b3, 0x101d, "Mellanox ConnectX-6 Dx (100G)"},
+    {0x15b3, 0x101f, "Mellanox ConnectX-6 Lx (25G)"},
+    {0x15b3, 0x1021, "Mellanox ConnectX-7 (400G)"},
 
     /* Broadcom */
-    {0x14e4, 0x16d7, "Broadcom BCM57414 (25G)", 25},
-    {0x14e4, 0x16d8, "Broadcom BCM57416 (10G)", 10},
+    {0x14e4, 0x16d7, "Broadcom BCM57414 (25G)"},
+    {0x14e4, 0x16d8, "Broadcom BCM57416 (10G)"},
 
-    {0, 0, NULL, 0} /* Sentinel */
+    {0, 0, NULL} /* Sentinel */
 };
 
 #ifdef __linux__

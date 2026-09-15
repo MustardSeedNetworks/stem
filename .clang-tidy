@@ -88,9 +88,12 @@ CheckOptions:
   # y1564_log wraps a logging call; spelling it Y1564_LOG at every call site
   # would advertise an implementation detail the callers should not care about.
   # libFuzzer dispatches on this exact symbol name -- it is defined by the
-  # fuzzing runtime, not by us, so the case style is not ours to choose.
+  # fuzzing runtime, not by us, so the case style is not ours to choose. The
+  # same holds for __wrap_/__real_: those names are the GNU linker's --wrap
+  # contract, which tests/c/test_packet_platform_init.c uses to make every
+  # failure exit of packet_platform_init reachable without CAP_NET_RAW.
   - key: readability-identifier-naming.FunctionIgnoredRegexp
-    value: '^LLVMFuzzer[A-Za-z]+$'
+    value: '^(LLVMFuzzer[A-Za-z]+|__(wrap|real)_[a-z_]+)$'
   - key: readability-identifier-naming.MacroDefinitionIgnoredRegexp
     value: '^(y1564_log|likely|unlikely)$'
   - key: readability-identifier-naming.TypedefCase

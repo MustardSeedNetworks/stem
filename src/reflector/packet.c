@@ -90,6 +90,8 @@ ALWAYS_INLINE bool is_ito_packet(const uint8_t *data, uint32_t len,
 
     /* Fast rejection: minimum length check - LIKELY to pass */
     if (unlikely(len < MIN_ITO_PACKET_LEN)) {
+        /* cppcheck-suppress knownConditionTrueFalse ; debug_count is a
+         * thread-local that persists across calls. */
         if (unlikely(debug_count++ < 3)) {
             DEBUG_LOG("Packet too short: %u bytes (need %d)", len, MIN_ITO_PACKET_LEN);
         }
@@ -99,6 +101,8 @@ ALWAYS_INLINE bool is_ito_packet(const uint8_t *data, uint32_t len,
     /* Check destination MAC matches our interface - UNLIKELY to match (filters most traffic) */
     if (config->filter_dst_mac) {
         if (unlikely(memcmp(&data[ETH_DST_OFFSET], config->mac, 6) != 0)) {
+            /* cppcheck-suppress knownConditionTrueFalse ; debug_count is a
+             * thread-local that persists across calls. */
             if (unlikely(debug_count++ < 3)) {
                 DEBUG_LOG("MAC mismatch: got %02x:%02x:%02x:%02x:%02x:%02x, want "
                           "%02x:%02x:%02x:%02x:%02x:%02x",
@@ -519,6 +523,8 @@ static uint16_t calculate_udp_checksum(const uint8_t *iph, const uint8_t *udph, 
 
     /* UDP checksum 0 means no checksum, use 0xFFFF instead */
     uint16_t checksum = (uint16_t)~sum;
+    /* cppcheck-suppress knownConditionTrueFalse ; sum is folded from frame
+     * bytes, so the complement can be zero; valueflow cannot see that. */
     return checksum == 0 ? htons(0xFFFF) : htons(checksum);
 }
 
@@ -1048,6 +1054,8 @@ static uint16_t calculate_udp6_checksum(const uint8_t *ip6h, const uint8_t *udph
     /* UDP checksum 0 means no checksum, use 0xFFFF instead */
     /* Note: For IPv6, UDP checksum is mandatory (can't be 0) */
     uint16_t checksum = (uint16_t)~sum;
+    /* cppcheck-suppress knownConditionTrueFalse ; sum is folded from frame
+     * bytes, so the complement can be zero; valueflow cannot see that. */
     return checksum == 0 ? htons(0xFFFF) : htons(checksum);
 }
 
