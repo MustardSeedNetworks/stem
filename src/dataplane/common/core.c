@@ -1382,7 +1382,8 @@ int rfc2544_throughput_test(rfc2544_ctx_t *ctx, uint32_t frame_size, throughput_
     result->iterations        = iterations;
     result->frames_tested     = total_frames;
 
-    rfc2544_log(LOG_INFO, "Throughput result: %.4f%% measured (%.2f Mbps, %.0f pps) at %.2f%% offered%s",
+    rfc2544_log(LOG_INFO,
+                "Throughput result: %.4f%% measured (%.2f Mbps, %.0f pps) at %.2f%% offered%s",
                 result->max_rate_pct, result->max_rate_mbps, result->max_rate_pps,
                 result->offered_rate_pct, generator_limited ? " [generator limited]" : "");
 
