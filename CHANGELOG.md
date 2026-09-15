@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.116](https://github.com/MustardSeedNetworks/stem/compare/v0.24.115...v0.24.116) (2026-09-15)
+
+
+### Bug Fixes
+
+* **rfc2544:** report the measured throughput, not the offered rate ([#1241](https://github.com/MustardSeedNetworks/stem/issues/1241)) ([d084af2](https://github.com/MustardSeedNetworks/stem/commit/d084af2563aa689c8b8980531ec4f9d282c4a90f))
+
 ## [0.24.115](https://github.com/MustardSeedNetworks/stem/compare/v0.24.114...v0.24.115) (2026-09-15)
 
 
