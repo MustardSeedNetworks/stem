@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.114](https://github.com/MustardSeedNetworks/stem/compare/v0.24.113...v0.24.114) (2026-09-15)
+
+
+### Documentation
+
+* **adr:** ADR 0008 — record the CT307 double free and the decision to widen the gate ([#1229](https://github.com/MustardSeedNetworks/stem/issues/1229)) ([77645a4](https://github.com/MustardSeedNetworks/stem/commit/77645a44c52cb755b068451ca403fff9682309e1))
+* **audits:** record the [#1217](https://github.com/MustardSeedNetworks/stem/issues/1217) wire proof and the three defects it found ([#1234](https://github.com/MustardSeedNetworks/stem/issues/1234)) ([dd7f359](https://github.com/MustardSeedNetworks/stem/commit/dd7f3592ff51ff1a5f0af6ede0fdba4ac821a105))
+
 ## [0.24.113](https://github.com/MustardSeedNetworks/stem/compare/v0.24.112...v0.24.113) (2026-09-15)
 
 
