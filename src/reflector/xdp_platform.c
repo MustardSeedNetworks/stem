@@ -66,7 +66,6 @@ struct platform_ctx {
 
     uint32_t frame_size;
     uint32_t num_frames;
-    uint32_t umem_frame_free;
 };
 
 /*

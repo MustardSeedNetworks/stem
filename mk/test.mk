@@ -13,7 +13,7 @@
 # =============================================================================
 
 .PHONY: test test-all test-backend test-backend-quiet test-frontend test-frontend-quiet \
-        test-coverage test-coverage-html c-test c-test-asan c-fuzz c-bench \
+        test-coverage test-coverage-html c-test c-test-asan c-fuzz c-fuzz-reflector c-bench \
         c-bench-compare smoke-test \
         test-e2e test-e2e-ui test-e2e-install check-stale-tests
 
@@ -132,6 +132,9 @@ ifeq ($(UNAME),Linux)
 		$(C_TEST_DATAPLANE_SRCS) $(C_LDFLAGS) -lxdp -lbpf
 	$(CC) $(CFLAGS) -o bin/test_throughput_measured tests/c/test_throughput_measured.c \
 		$(C_TEST_DATAPLANE_SRCS) $(C_LDFLAGS) -lxdp -lbpf
+	$(CC) $(CFLAGS) -Itests/c -o bin/test_packet_platform_init \
+		tests/c/test_packet_platform_init.c src/reflector/packet_platform.c \
+		src/reflector/util.c $(C_PLATFORM_INIT_WRAPS) $(C_LDFLAGS)
 	@echo "Running C tests..."
 	./bin/test_pacing
 	./bin/test_protocols
@@ -140,6 +143,7 @@ ifeq ($(UNAME),Linux)
 	./bin/test_latency_lifecycle
 	./bin/test_platform_fallback
 	./bin/test_throughput_measured
+	./bin/test_packet_platform_init
 else ifeq ($(UNAME),Darwin)
 	@echo "Building C tests (common code only, macOS)..."
 	mkdir -p bin
@@ -167,6 +171,12 @@ C_SAN_CFLAGS := -D_GNU_SOURCE -D_DEFAULT_SOURCE -std=c23 -Wall -Wextra -Wpedanti
 FUZZ_CC ?= clang
 FUZZ_SECONDS ?= 60
 
+# packet_platform_init needs CAP_NET_RAW, which a CI runner does not have and a
+# local container does — so the test wraps the syscalls it makes rather than
+# issuing them, and every failure exit is reachable in both places. mmap is
+# deliberately not wrapped: the ASAN runtime uses it.
+C_PLATFORM_INIT_WRAPS := -Wl,--wrap=socket,--wrap=bind,--wrap=setsockopt
+
 c-test-asan: ## Build + run the dataplane parser tests under AddressSanitizer/UBSan
 	@echo "Building packet-parser tests under ASAN/UBSan..."
 	mkdir -p bin
@@ -178,12 +188,18 @@ c-test-asan: ## Build + run the dataplane parser tests under AddressSanitizer/UB
 ifeq ($(UNAME),Linux)
 	$(CC) $(C_SAN_CFLAGS) -o bin/test_latency_lifecycle_asan \
 		tests/c/test_latency_lifecycle.c $(C_TEST_DATAPLANE_SRCS) -pthread -lm -lxdp -lbpf
+	$(CC) $(C_SAN_CFLAGS) -Itests/c -o bin/test_packet_platform_init_asan \
+		tests/c/test_packet_platform_init.c src/reflector/packet_platform.c \
+		src/reflector/util.c $(C_PLATFORM_INIT_WRAPS) -pthread -lm
 endif
 	@echo "Running packet-parser tests (ASAN)..."
 	ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=halt_on_error=1 ./bin/test_packet_parse_asan
 	ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=halt_on_error=1 ./bin/test_netally_reflector_asan
 ifeq ($(UNAME),Linux)
 	ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=halt_on_error=1 ./bin/test_latency_lifecycle_asan
+	# Leak detection on: this test exists because a failure exit mishandled the
+	# context it allocated, and a leak is the other way to get that wrong.
+	ASAN_OPTIONS=detect_leaks=1 UBSAN_OPTIONS=halt_on_error=1 ./bin/test_packet_platform_init_asan
 endif
 
 c-fuzz: ## Fuzz the dataplane packet parser under libFuzzer+ASAN (FUZZ_SECONDS=60)
@@ -195,6 +211,17 @@ c-fuzz: ## Fuzz the dataplane packet parser under libFuzzer+ASAN (FUZZ_SECONDS=6
 		-o bin/fuzz_packet tests/c/fuzz_packet.c src/dataplane/common/packet.c
 	@echo "Fuzzing packet parser for $(FUZZ_SECONDS)s..."
 	ASAN_OPTIONS=detect_leaks=0 ./bin/fuzz_packet -max_total_time=$(FUZZ_SECONDS) -print_final_stats=1
+
+c-fuzz-reflector: ## Fuzz the reflector frame path under libFuzzer+ASAN (FUZZ_SECONDS=60)
+	@command -v $(FUZZ_CC) >/dev/null 2>&1 || { echo "$(FUZZ_CC) (clang) required for libFuzzer"; exit 1; }
+	@echo "Building reflector libFuzzer harness..."
+	mkdir -p bin
+	$(FUZZ_CC) -D_GNU_SOURCE -std=c23 -g -O1 -fno-omit-frame-pointer \
+		-fsanitize=fuzzer,address,undefined -Iinclude \
+		-o bin/fuzz_reflector tests/c/fuzz_reflector.c \
+		src/reflector/packet.c src/reflector/netally.c src/reflector/util.c
+	@echo "Fuzzing reflector frame path for $(FUZZ_SECONDS)s..."
+	ASAN_OPTIONS=detect_leaks=0 ./bin/fuzz_reflector -max_total_time=$(FUZZ_SECONDS) -print_final_stats=1
 
 # =============================================================================
 # C Performance Gate

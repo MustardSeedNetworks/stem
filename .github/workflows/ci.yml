@@ -120,6 +120,12 @@ jobs:
               - '.github/workflows/**'
               - '.github/actions/**'
               - 'scripts/**'
+              # The make recipes ARE the C gates: dataplane-safety runs
+              # `make c-test-asan`, `make c-fuzz` and `make c-fuzz-reflector`,
+              # none of which the `c` class above matches. A PR that weakened
+              # one of them changed no file any gate watched.
+              - 'Makefile'
+              - 'mk/**'
               - '.golangci.yml'
               - 'biome.json'
               - 'ui/biome.json'
@@ -735,7 +741,8 @@ jobs:
   dataplane-safety:
     name: Dataplane Safety (ASAN + fuzz)
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # 25, not 20: the reflector frame path adds a second bounded fuzz run.
+    timeout-minutes: 25
     needs: changes
     if: >-
       needs.changes.outputs.c == 'true' || needs.changes.outputs.ci_infra == 'true'
@@ -782,10 +789,16 @@ jobs:
       - name: Packet-parser tests under ASAN/UBSan (blocking)
         run: make c-test-asan CC=clang
 
-      - name: cppcheck gate on the parser (blocking, warning-class)
+      # -D__linux__ pins a single configuration. Without it cppcheck also
+      # parses the __APPLE__ branch of core.c, where a dispatch block (`^{ }`)
+      # it cannot parse is a syntaxError, and evaluates the reflector against
+      # the non-Linux stubs, which makes several real conditions look constant.
+      # The gate runs on Linux, so the Linux configuration is the one it judges.
+      - name: cppcheck gate on the parser and the reflector (blocking, warning-class)
         run: |
           cppcheck \
             --std=c23 --language=c \
+            -D__linux__ \
             --enable=warning,style,performance,portability \
             --suppress=missingIncludeSystem \
             --suppress=unusedFunction \
@@ -794,10 +807,14 @@ jobs:
             --error-exitcode=1 \
             --template='{file}:{line}: {severity}: {message} [{id}]' \
             -I include \
-            src/dataplane/common/packet.c
+            src/dataplane/common/packet.c \
+            src/reflector/
 
       - name: Fuzz the packet parser (blocking on crash)
         run: make c-fuzz FUZZ_CC=clang FUZZ_SECONDS=120
+
+      - name: Fuzz the reflector frame path (blocking on crash)
+        run: make c-fuzz-reflector FUZZ_CC=clang FUZZ_SECONDS=120
 
   # ============================================================================
   # Storybook interaction and accessibility checks
