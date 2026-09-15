@@ -16,6 +16,10 @@ history, not as current state. Current architecture lives in
 | [GITHUB_ISSUES_2026-01-26.md](GITHUB_ISSUES_2026-01-26.md) | 2026-01-26 | Issue backlog written out of the 2026-01-26 sweep |
 | [LINT_BIOME_MAKE_AUDIT_2026-01-26.md](LINT_BIOME_MAKE_AUDIT_2026-01-26.md) | 2026-01-26 | Go lint, Biome and Makefile target review |
 | [STM-11_ETHERSCOPE_2026-09-09.md](STM-11_ETHERSCOPE_2026-09-09.md) | 2026-09-09 | v1 plan STM-11: why the EtherScope nXG comparison could not be run |
+| [STM-13_CONTAINERS_2026-09-14.md](STM-13_CONTAINERS_2026-09-14.md) | 2026-09-14 | v1 plan STM-13: whether Apple containers substitute for the lab hosts |
+| [STM-13_WIRE_2026-09-14.md](STM-13_WIRE_2026-09-14.md) | 2026-09-14 | v1 plan STM-13: #1217 proven fixed on the wire |
+| [STM-13_FALLBACK_2026-09-15.md](STM-13_FALLBACK_2026-09-15.md) | 2026-09-15 | v1 plan STM-13: #1232, the test master runs where AF_XDP does not |
+| [STM-13_MEASURED_2026-09-15.md](STM-13_MEASURED_2026-09-15.md) | 2026-09-15 | v1 plan STM-13: #1233, a throughput result is a measurement |
 
 New audits produced by the v1 plan land here under the same
 `<TOPIC>_<YYYY-MM-DD>.md` convention and get a row in this table.

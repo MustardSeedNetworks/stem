@@ -55,12 +55,15 @@ typedef struct {
     double p95_ns;
     double p99_ns;
 } latency_stats_t;
-// Throughput result
+// Throughput result -- field for field with throughput_result_t in
+// include/rfc2544.h, which this preamble redeclares rather than includes.
 typedef struct {
     uint32_t frame_size;
     double max_rate_pct;
     double max_rate_mbps;
     double max_rate_pps;
+    double offered_rate_pct;
+    bool generator_limited;
     uint64_t frames_tested;
     uint32_t iterations;
     latency_stats_t latency;
@@ -994,16 +997,7 @@ func (c *Context) RunCustomStreamTest(cfg *TrafficGenConfig) (*TrafficGenResult,
 		ElapsedSec:   float64(cResult.elapsed_sec),
 		AchievedPPS:  float64(cResult.achieved_pps),
 		AchievedMbps: float64(cResult.achieved_mbps),
-		Latency: LatencyStats{
-			Count:    uint64(cResult.latency.count),
-			MinNs:    float64(cResult.latency.min_ns),
-			MaxNs:    float64(cResult.latency.max_ns),
-			AvgNs:    float64(cResult.latency.avg_ns),
-			JitterNs: float64(cResult.latency.jitter_ns),
-			P50Ns:    float64(cResult.latency.p50_ns),
-			P95Ns:    float64(cResult.latency.p95_ns),
-			P99Ns:    float64(cResult.latency.p99_ns),
-		},
+		Latency:      newLatencyStats(cResult.latency),
 	}, nil
 }
 
@@ -1052,6 +1046,21 @@ func (c *Context) RunResetTest() (*ResetResultCLI, error) {
 	}, nil
 }
 
+// newLatencyStats copies one C latency block across the boundary. Three call
+// sites spelled this out identically before.
+func newLatencyStats(l C.latency_stats_t) LatencyStats {
+	return LatencyStats{
+		Count:    uint64(l.count),
+		MinNs:    float64(l.min_ns),
+		MaxNs:    float64(l.max_ns),
+		AvgNs:    float64(l.avg_ns),
+		JitterNs: float64(l.jitter_ns),
+		P50Ns:    float64(l.p50_ns),
+		P95Ns:    float64(l.p95_ns),
+		P99Ns:    float64(l.p99_ns),
+	}
+}
+
 // Internal wrappers for the existing methods.
 func (c *Context) runThroughputTestInternal(frameSize uint32) ([]ThroughputResult, error) {
 	c.mu.Lock()
@@ -1066,25 +1075,22 @@ func (c *Context) runThroughputTestInternal(frameSize uint32) ([]ThroughputResul
 		return nil, fmt.Errorf("throughput test failed: %d", ret)
 	}
 
+	// MaxRate* are what the generator measurably put on the wire and
+	// OfferedRatePct is the rate the binary search settled on; they are
+	// separate fields because reporting the second as the first made a run
+	// that carried ~110 pps claim 99.90 % of 10 Gbps (#1233).
 	goResults := make([]ThroughputResult, count)
 	for i := range int(count) {
 		goResults[i] = ThroughputResult{
-			FrameSize:    uint32(results[i].frame_size),
-			MaxRatePct:   float64(results[i].max_rate_pct),
-			MaxRateMbps:  float64(results[i].max_rate_mbps),
-			MaxRatePps:   float64(results[i].max_rate_pps),
-			FramesTested: uint64(results[i].frames_tested),
-			Iterations:   uint32(results[i].iterations),
-			Latency: LatencyStats{
-				Count:    uint64(results[i].latency.count),
-				MinNs:    float64(results[i].latency.min_ns),
-				MaxNs:    float64(results[i].latency.max_ns),
-				AvgNs:    float64(results[i].latency.avg_ns),
-				JitterNs: float64(results[i].latency.jitter_ns),
-				P50Ns:    float64(results[i].latency.p50_ns),
-				P95Ns:    float64(results[i].latency.p95_ns),
-				P99Ns:    float64(results[i].latency.p99_ns),
-			},
+			FrameSize:        uint32(results[i].frame_size),
+			MaxRatePct:       float64(results[i].max_rate_pct),
+			MaxRateMbps:      float64(results[i].max_rate_mbps),
+			MaxRatePps:       float64(results[i].max_rate_pps),
+			OfferedRatePct:   float64(results[i].offered_rate_pct),
+			GeneratorLimited: bool(results[i].generator_limited),
+			FramesTested:     uint64(results[i].frames_tested),
+			Iterations:       uint32(results[i].iterations),
+			Latency:          newLatencyStats(results[i].latency),
 		}
 	}
 
@@ -1104,16 +1110,7 @@ func (c *Context) runLatencyTestInternal(frameSize uint32, loadPct float64) (*La
 	return &LatencyResult{
 		FrameSize:      uint32(result.frame_size),
 		OfferedRatePct: float64(result.offered_rate_pct),
-		Latency: LatencyStats{
-			Count:    uint64(result.latency.count),
-			MinNs:    float64(result.latency.min_ns),
-			MaxNs:    float64(result.latency.max_ns),
-			AvgNs:    float64(result.latency.avg_ns),
-			JitterNs: float64(result.latency.jitter_ns),
-			P50Ns:    float64(result.latency.p50_ns),
-			P95Ns:    float64(result.latency.p95_ns),
-			P99Ns:    float64(result.latency.p99_ns),
-		},
+		Latency:        newLatencyStats(result.latency),
 	}, nil
 }
 

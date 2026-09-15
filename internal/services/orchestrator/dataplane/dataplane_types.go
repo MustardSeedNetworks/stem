@@ -47,15 +47,19 @@ type LatencyStats struct {
 	P99Ns    float64
 }
 
-// ThroughputResult from binary search test.
+// ThroughputResult from binary search test. MaxRate* are measurements of what
+// the generator put on the wire; OfferedRatePct is the rate the search settled
+// on (#1233).
 type ThroughputResult struct {
-	FrameSize    uint32
-	MaxRatePct   float64
-	MaxRateMbps  float64
-	MaxRatePps   float64
-	FramesTested uint64
-	Iterations   uint32
-	Latency      LatencyStats
+	FrameSize        uint32
+	MaxRatePct       float64
+	MaxRateMbps      float64
+	MaxRatePps       float64
+	OfferedRatePct   float64
+	GeneratorLimited bool
+	FramesTested     uint64
+	Iterations       uint32
+	Latency          LatencyStats
 }
 
 // FrameLossPoint for a single load level.
@@ -586,12 +590,14 @@ type Stats struct {
 
 // ThroughputResultCLI wraps the throughput test result for CLI.
 type ThroughputResultCLI struct {
-	FrameSize   uint32
-	MaxRatePct  float64
-	MaxRateMbps float64
-	MaxRatePPS  float64
-	Iterations  uint32
-	Latency     LatencyStats
+	FrameSize        uint32
+	MaxRatePct       float64
+	MaxRateMbps      float64
+	MaxRatePPS       float64
+	OfferedRatePct   float64
+	GeneratorLimited bool
+	Iterations       uint32
+	Latency          LatencyStats
 }
 
 // LatencyResultCLI wraps the latency test result for CLI.

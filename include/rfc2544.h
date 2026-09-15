@@ -70,6 +70,20 @@ typedef enum {
 #define RFC2544_FRAME_SIZE_COUNT 7
 // NOLINTEND(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
 
+/*
+ * How far below the offered load a trial may fall and still be treated as a
+ * valid measurement of that load. RFC 2544 §26.1 requires the offered load
+ * actually be generated, so a trial that falls further than this says nothing
+ * about the rate the binary search asked for.
+ *
+ * The value is deliberately generous. A software generator on a shared host
+ * loses some of every trial to scheduling, and no measurement of how close
+ * AF_XDP on production hardware comes to its offered load exists yet; tying
+ * this to `resolution_pct` (0.1-1 %) would flag honest runs. It is a warning
+ * threshold only -- the achieved figures are reported either way.
+ */
+#define RFC2544_GENERATOR_TOLERANCE 0.10
+
 /* Test types */
 typedef enum {
     TEST_THROUGHPUT      = 0, /* RFC2544.26.1 - Binary search for max throughput */
@@ -130,14 +144,23 @@ typedef struct {
 } frame_loss_point_t;
 
 /* Throughput test result for a single frame size */
+/*
+ * The three max_rate_* fields are measurements of what the generator put on
+ * the wire, not the rate the binary search settled on. Reporting the offered
+ * rate here made a run that carried ~110 pps report 99.90 % of 10 Gbps (#1233).
+ * `offered_rate_pct` is the search's own answer, kept so the two are
+ * comparable.
+ */
 typedef struct {
-    uint32_t        frame_size;    /* Frame size tested */
-    double          max_rate_pct;  /* Maximum throughput as % of line rate */
-    double          max_rate_mbps; /* Maximum throughput in Mbps */
-    double          max_rate_pps;  /* Maximum throughput in packets/sec */
-    uint64_t        frames_tested; /* Total frames transmitted */
-    uint32_t        iterations;    /* Binary search iterations */
-    latency_stats_t latency;       /* Latency at max throughput */
+    uint32_t        frame_size;        /* Frame size tested */
+    double          max_rate_pct;      /* Measured throughput as % of line rate */
+    double          max_rate_mbps;     /* Measured throughput in Mbps */
+    double          max_rate_pps;      /* Measured throughput in packets/sec */
+    double          offered_rate_pct;  /* Rate the search settled on, as % of line rate */
+    bool            generator_limited; /* Generator could not offer offered_rate_pct */
+    uint64_t        frames_tested;     /* Total frames transmitted */
+    uint32_t        iterations;        /* Binary search iterations */
+    latency_stats_t latency;           /* Latency at max throughput */
 } throughput_result_t;
 
 /* Latency test result for a single load level */

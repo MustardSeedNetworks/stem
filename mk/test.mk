@@ -130,6 +130,8 @@ ifeq ($(UNAME),Linux)
 		$(C_TEST_DATAPLANE_SRCS) $(C_LDFLAGS) -lxdp -lbpf
 	$(CC) $(CFLAGS) -o bin/test_platform_fallback tests/c/test_platform_fallback.c \
 		$(C_TEST_DATAPLANE_SRCS) $(C_LDFLAGS) -lxdp -lbpf
+	$(CC) $(CFLAGS) -o bin/test_throughput_measured tests/c/test_throughput_measured.c \
+		$(C_TEST_DATAPLANE_SRCS) $(C_LDFLAGS) -lxdp -lbpf
 	@echo "Running C tests..."
 	./bin/test_pacing
 	./bin/test_protocols
@@ -137,6 +139,7 @@ ifeq ($(UNAME),Linux)
 	./bin/test_netally_reflector
 	./bin/test_latency_lifecycle
 	./bin/test_platform_fallback
+	./bin/test_throughput_measured
 else ifeq ($(UNAME),Darwin)
 	@echo "Building C tests (common code only, macOS)..."
 	mkdir -p bin
