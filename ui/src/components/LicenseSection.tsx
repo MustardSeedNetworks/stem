@@ -8,6 +8,7 @@ import { AlertTriangle, CheckCircle, Clock, Key, Loader2, Shield } from 'lucide-
 import type { ReactElement } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { authFetch } from '../stores/auth-store';
 import { CollapsibleSection } from './CollapsibleSection';
 
 interface LicenseInfo {
@@ -24,6 +25,40 @@ interface LicenseInfo {
 /** Length of the no-key trial, in days. Interpolated into the copy so the
     number lives in one place rather than in three locale strings. */
 const TRIAL_DAYS = 14;
+
+/**
+ * The daemon's license routes (`internal/api/server.go`). The `/v1` is not
+ * decoration: `apiVersionMiddleware` only stamps a response header, so an
+ * unversioned path is not rewritten and not 404'd either — it falls through to
+ * the SPA handler and comes back as index.html with HTTP 200, which is how
+ * `/api/license` left this panel on "Loading..." with nothing in the console
+ * (#1247, and `/api/modules` before it).
+ */
+const LICENSE_ENDPOINT = '/api/v1/license';
+
+/**
+ * Reads an activation/trial reply, whichever shape the daemon sent.
+ *
+ * A success carries foundation's ActivationResult (`success`, `message`); a
+ * rejection carries HTTPErrorResponse (`error`, `code`, `message`) or
+ * ErrorResponse (`success:false`, `message`). All three name the reason in
+ * `message`, so the operator sees it instead of the blanket "connection
+ * failed" every failure used to collapse into. A body that is not JSON at all
+ * (the SPA's index.html, a proxy's error page) has no message to show and
+ * falls back to the caller's copy.
+ */
+async function readActivation(response: Response): Promise<{ success: boolean; message: string }> {
+  let body: { success?: boolean; message?: string } = {};
+  try {
+    body = (await response.json()) as typeof body;
+  } catch {
+    // Non-JSON body — leave the caller's fallback message in place.
+  }
+  return {
+    success: response.ok && body.success === true,
+    message: body.message ?? '',
+  };
+}
 
 const tierNames: Record<number, string> = {
   0: 'Invalid',
@@ -222,8 +257,12 @@ export function LicenseSection(): ReactElement {
 
   const fetchLicenseStatus = useCallback(async (): Promise<void> => {
     try {
-      const response = await fetch('/api/license');
-      if (response.ok) {
+      const response = await authFetch(LICENSE_ENDPOINT);
+      // An HTML body means the request reached the SPA handler rather than the
+      // API, which is a 200 and would otherwise parse-error into the silent
+      // catch below — the way the unversioned path hid for so long.
+      const contentType = response.headers.get('content-type') ?? '';
+      if (response.ok && contentType.includes('application/json')) {
         const data = await (response.json() as Promise<LicenseInfo>);
         setLicenseInfo(data);
       }
@@ -249,13 +288,12 @@ export function LicenseSection(): ReactElement {
     setSuccess(null);
 
     try {
-      const response = await fetch('/api/license/activate', {
+      const response = await authFetch(`${LICENSE_ENDPOINT}/activate`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key: licenseKey }),
+        body: JSON.stringify({ licenseKey }),
       });
 
-      const data = await (response.json() as Promise<{ success: boolean; message: string }>);
+      const data = await readActivation(response);
 
       if (data.success) {
         setSuccess(data.message);
@@ -279,11 +317,11 @@ export function LicenseSection(): ReactElement {
     setSuccess(null);
 
     try {
-      const response = await fetch('/api/license/trial', {
+      const response = await authFetch(`${LICENSE_ENDPOINT}/trial`, {
         method: 'POST',
       });
 
-      const data = await (response.json() as Promise<{ success: boolean; message: string }>);
+      const data = await readActivation(response);
 
       if (data.success) {
         setSuccess(data.message);

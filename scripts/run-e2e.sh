@@ -81,12 +81,19 @@ done
   # drives one daemon from one IP across two browsers, and the compiled-in
   # API (100/min) and authentication (5/min) defaults run dry mid-run. Neither
   # override can go below its default, so both limiters remain exercised.
+  #
+  # HOME is the run directory because activation state is the one thing stem
+  # keeps under the home directory (~/.config/stem/.license). Without this a
+  # local run reads — and a started trial writes — the developer's real license
+  # file, so the license specs saw a different daemon locally than in CI, where
+  # the runner's home is always empty.
   STEM_AUTH_USERNAME=admin \
   STEM_AUTH_PASSWORD=admin \
   STEM_API_RATE_LIMIT=5000 \
   STEM_AUTH_RATE_LIMIT=200 \
   STEM_WEBAUTHN_RPID=localhost \
   STEM_WEBAUTHN_ORIGINS="$webauthn_origins" \
+  HOME="$run_dir" \
     exec "$repo_dir/bin/stem" web -p "$port"
 ) >"$server_log" 2>&1 &
 server_pid=$!
