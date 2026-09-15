@@ -10,7 +10,13 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { classifyFailure, resolveStopOutcome, resolveTestResult } from './useTestExecution';
+import {
+  classifyFailure,
+  isTerminalTestStatus,
+  normalizeTestStatus,
+  resolveStopOutcome,
+  resolveTestResult,
+} from './useTestExecution';
 
 function jsonResponse(status: number, body: unknown): Response {
   return new Response(JSON.stringify(body), {
@@ -121,5 +127,72 @@ describe('resolveTestResult', () => {
     );
 
     expect(result).toMatchObject({ success: false, error: 'Latency measurement failed' });
+  });
+
+  // The endpoint answers mid-run too. Pinning a running run as "the result"
+  // would freeze a snapshot the card then never replaces.
+  it.each(['idle', 'starting', 'running'] as const)(
+    'has nothing to pin while %s',
+    async (status) => {
+      const result = await resolveTestResult(
+        jsonResponse(200, { testType: 'reflect', module: 'reflector', status }),
+      );
+
+      expect(result).toBeNull();
+    },
+  );
+
+  // A reflector the operator stopped is finished, and its result is the only
+  // record of what the run measured. Dropping it is what left the card saying
+  // no test had run (#1248).
+  it('keeps the result of a run that was stopped', async () => {
+    const result = await resolveTestResult(
+      jsonResponse(200, {
+        testType: 'reflect',
+        module: 'reflector',
+        status: 'stopped',
+        success: true,
+      }),
+    );
+
+    expect(result).toMatchObject({ status: 'stopped', testType: 'reflect' });
+  });
+});
+
+/**
+ * The daemon reports `testStatus: "stopped"` when the reflector is stopped
+ * (internal/api/types.go `statusStopped`). The union had no such member and
+ * the normaliser mapped anything unknown to 'idle', so a just-stopped run read
+ * to the rest of the UI as "nothing ever ran": no terminal transition, so no
+ * result fetch, so the Results card showed the idle placeholder straight after
+ * a real run (#1248).
+ */
+describe('normalizeTestStatus', () => {
+  it.each(['idle', 'starting', 'running', 'completed', 'cancelled', 'stopped', 'error'] as const)(
+    'passes %s through unchanged',
+    (status) => {
+      expect(normalizeTestStatus(status)).toBe(status);
+    },
+  );
+
+  // The fallback is deliberate, and it is also what hid this defect: a status
+  // the daemon really sends and the switch does not list disappears silently.
+  it.each([undefined, '', 'paused'])('falls back to idle for %s', (status) => {
+    expect(normalizeTestStatus(status)).toBe('idle');
+  });
+});
+
+describe('isTerminalTestStatus', () => {
+  // A stop is as final as a completion. This is the single list both the
+  // transition detector and the result filter read, so they cannot drift.
+  it.each(['completed', 'error', 'cancelled', 'stopped'] as const)(
+    'treats %s as the end of a run',
+    (status) => {
+      expect(isTerminalTestStatus(status)).toBe(true);
+    },
+  );
+
+  it.each(['idle', 'starting', 'running'] as const)('leaves %s running', (status) => {
+    expect(isTerminalTestStatus(status)).toBe(false);
   });
 });

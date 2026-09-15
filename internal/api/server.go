@@ -734,7 +734,7 @@ func (s *Server) Shutdown() error {
 	// Stop any running test by updating status.
 	s.statsMu.Lock()
 	if s.testStatus == statusRunning {
-		s.testStatus = statusStopped
+		s.markStoppedLocked()
 		logging.Info("Stopped running test due to shutdown")
 	}
 	s.statsMu.Unlock()

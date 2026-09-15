@@ -33,10 +33,21 @@ import {
 } from '../types/api';
 import { logError, logWarn } from '../utils/logger';
 
-// Helper: check if test just completed (status transition to completed/error)
+/**
+ * Statuses that mean the run is over, whatever ended it. One list, because the
+ * transition detector and the result filter drifting apart is how a stopped
+ * run lost its result: the daemon reports "stopped" for a stopped reflector
+ * (internal/api/types.go statusStopped), as terminal as "completed" (#1248).
+ */
+export function isTerminalTestStatus(status: string): boolean {
+  return (
+    status === 'completed' || status === 'error' || status === 'cancelled' || status === 'stopped'
+  );
+}
+
+// Helper: check if test just reached a terminal status
 function isTestCompleted(prev: string, curr: string): boolean {
-  const terminal = curr === 'completed' || curr === 'error' || curr === 'cancelled';
-  return terminal && prev !== curr;
+  return isTerminalTestStatus(curr) && prev !== curr;
 }
 
 // Helper: check if new test is starting
@@ -44,7 +55,12 @@ function isTestStarting(prev: string, curr: string): boolean {
   return curr === 'starting' && prev !== 'starting';
 }
 
-function normalizeTestStatus(status?: string): Stats['testStatus'] {
+/**
+ * Map the daemon's testStatus onto the union the UI renders. An unrecognised
+ * status falls back to 'idle', so one the daemon really sends and this switch
+ * omits reads as "nothing is happening" (#1248). Exported for test.
+ */
+export function normalizeTestStatus(status?: string): Stats['testStatus'] {
   switch (status) {
     case 'starting':
       return 'starting';
@@ -54,6 +70,8 @@ function normalizeTestStatus(status?: string): Stats['testStatus'] {
       return 'completed';
     case 'cancelled':
       return 'cancelled';
+    case 'stopped':
+      return 'stopped';
     case 'error':
       return 'error';
     default:
@@ -97,11 +115,17 @@ function unavailableResult(message: string): TestResult {
 export async function resolveTestResult(
   response: Response,
   statsError?: string,
-): Promise<TestResult> {
+): Promise<TestResult | null> {
   if (!response.ok) {
     return unavailableResult(`Result unavailable (HTTP ${response.status})`);
   }
   const result = await (response.json() as Promise<TestResult>);
+  // The endpoint answers mid-run too; only a finished run is a result to pin.
+  // Decided here, beside the terminal-status list, rather than at the call
+  // site — the two drifting apart is what lost a stopped run its result.
+  if (!isTerminalTestStatus(result.status)) {
+    return null;
+  }
   if (statsError && !result.error) {
     return { ...result, success: false, error: statsError };
   }
@@ -328,7 +352,7 @@ export function useTestExecution(): UseTestExecution {
     try {
       const response = await authFetch('/api/v1/test/result');
       const data = await resolveTestResult(response, statsError);
-      if (data.status === 'completed' || data.status === 'error' || data.status === 'cancelled') {
+      if (data) {
         setTestResult(data);
       }
     } catch (error) {
