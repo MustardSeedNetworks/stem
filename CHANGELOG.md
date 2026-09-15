@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.120](https://github.com/MustardSeedNetworks/stem/compare/v0.24.119...v0.24.120) (2026-09-15)
+
+
+### Bug Fixes
+
+* **ui:** give every module page a first-visit empty state ([#1284](https://github.com/MustardSeedNetworks/stem/issues/1284)) ([86ec2ea](https://github.com/MustardSeedNetworks/stem/commit/86ec2ea12b20af894b811935b50d1a5338a5f349)), closes [#1257](https://github.com/MustardSeedNetworks/stem/issues/1257)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1286](https://github.com/MustardSeedNetworks/stem/issues/1286)) ([a73d9b9](https://github.com/MustardSeedNetworks/stem/commit/a73d9b9d2c8e4e30182b6a5cd505b48c7c122848))
+
 ## [0.24.119](https://github.com/MustardSeedNetworks/stem/compare/v0.24.118...v0.24.119) (2026-09-15)
 
 
