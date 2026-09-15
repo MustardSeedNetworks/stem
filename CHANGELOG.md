@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.115](https://github.com/MustardSeedNetworks/stem/compare/v0.24.114...v0.24.115) (2026-09-15)
+
+
+### Bug Fixes
+
+* **dataplane:** fall back to AF_PACKET when AF_XDP cannot initialize ([#1238](https://github.com/MustardSeedNetworks/stem/issues/1238)) ([7185d6d](https://github.com/MustardSeedNetworks/stem/commit/7185d6da1c6fa504266231290233ff14528f743f))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1236](https://github.com/MustardSeedNetworks/stem/issues/1236)) ([8ed6383](https://github.com/MustardSeedNetworks/stem/commit/8ed6383d6a02418c62b55eee5f32745cdcc6aed8))
+
 ## [0.24.114](https://github.com/MustardSeedNetworks/stem/compare/v0.24.113...v0.24.114) (2026-09-15)
 
 
