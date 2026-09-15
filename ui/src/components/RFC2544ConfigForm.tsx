@@ -9,6 +9,7 @@ import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FRAME_SIZE_OPTIONS } from '../forms/frameSizes';
 import { useConfigForm } from '../forms/useConfigForm';
+import { hasGroupTests } from '../lib/testGroups';
 import { RFC2544ConfigSchema } from '../schemas/configs';
 import { FieldError } from './FieldError';
 import { FormSection } from './FormSection';
@@ -68,7 +69,7 @@ export function RFC2544ConfigForm({
   testId = 'rfc2544-config-form',
 }: RFC2544ConfigFormProps): ReactElement | null {
   const { t } = useTranslation('settings');
-  const hasRFC2544Tests = selectedTests.some((id) => id.startsWith('rfc2544'));
+  const hasRFC2544Tests = hasGroupTests('rfc2544', selectedTests);
 
   const form = useConfigForm<RFC2544Config>({
     schema: RFC2544ConfigSchema,

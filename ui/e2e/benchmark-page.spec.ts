@@ -37,9 +37,9 @@ test.describe('Benchmark Page', () => {
     await expect(page.getByTestId('page-header-title')).toBeVisible({ timeout: 10000 });
 
     // Benchmark is the one module whose tests are selected by default
-    // (test-store.ts selectedTests), so its form renders without any
-    // Settings setup. The other modules' forms return null until their test
-    // type is picked, which is why only this page asserts the form.
+    // (test-store.ts selectedTests), so its form renders without any Settings
+    // setup. The other modules open on the empty state instead, asserted in
+    // module-empty-state.spec.ts (#1257).
     await expect(page.getByTestId('rfc2544-config-form')).toBeVisible();
     await expect(page.getByTestId('role-guard-banner')).toHaveCount(0);
   });

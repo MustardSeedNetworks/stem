@@ -10,6 +10,7 @@ import { Activity, AlertTriangle } from 'lucide-react';
 import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useConfigForm } from '../forms/useConfigForm';
+import { hasGroupTests } from '../lib/testGroups';
 import { RFC6349ConfigSchema } from '../schemas/configs';
 import { CollapsibleSection } from './CollapsibleSection';
 import { FieldError } from './FieldError';
@@ -77,7 +78,7 @@ export function RFC6349ConfigForm({
   setConfig,
   selectedTests,
 }: RFC6349ConfigFormProps): ReactElement | null {
-  const hasRFC6349Tests = selectedTests.some((t) => t.startsWith('rfc6349'));
+  const hasRFC6349Tests = hasGroupTests('rfc6349', selectedTests);
 
   const form = useConfigForm<RFC6349Config>({
     schema: RFC6349ConfigSchema,

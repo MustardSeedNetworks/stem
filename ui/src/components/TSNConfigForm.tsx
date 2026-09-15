@@ -13,6 +13,7 @@ import { FormProvider, useFormContext } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import type { FrameSizeOption } from '../forms/frameSizes';
 import { useConfigForm } from '../forms/useConfigForm';
+import { hasGroupTests } from '../lib/testGroups';
 import { TSNConfigSchema } from '../schemas/configs';
 import { CollapsibleSection } from './CollapsibleSection';
 import { FieldError } from './FieldError';
@@ -409,7 +410,7 @@ export function TSNConfigForm({
   setConfig,
   selectedTests,
 }: TSNConfigFormProps): ReactElement | null {
-  const hasTSNTests = selectedTests.some((t) => t.startsWith('tsn_'));
+  const hasTSNTests = hasGroupTests('tsn', selectedTests);
 
   const form = useConfigForm<TSNConfig>({
     schema: TSNConfigSchema,

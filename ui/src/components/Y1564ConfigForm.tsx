@@ -17,6 +17,7 @@ import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { EXTENDED_FRAME_SIZE_OPTIONS } from '../forms/frameSizes';
 import { useConfigForm } from '../forms/useConfigForm';
+import { hasGroupTests } from '../lib/testGroups';
 import { Y1564ConfigSchema } from '../schemas/configs';
 import { CollapsibleSection } from './CollapsibleSection';
 import { FieldError } from './FieldError';
@@ -82,7 +83,7 @@ export function Y1564ConfigForm({
   setConfig,
   selectedTests,
 }: Y1564ConfigFormProps): ReactElement | null {
-  const hasY1564Tests = selectedTests.some((t) => t.startsWith('y1564') || t.startsWith('mef'));
+  const hasY1564Tests = hasGroupTests('y1564', selectedTests);
 
   const form = useConfigForm<Y1564Config>({
     schema: Y1564ConfigSchema,

@@ -8,6 +8,7 @@ import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { FrameSizeOption } from '../forms/frameSizes';
 import { useConfigForm } from '../forms/useConfigForm';
+import { hasGroupTests } from '../lib/testGroups';
 import { Y1731ConfigSchema } from '../schemas/configs';
 import { CollapsibleSection } from './CollapsibleSection';
 import { FieldError } from './FieldError';
@@ -78,7 +79,7 @@ export function Y1731ConfigForm({
   setConfig,
   selectedTests,
 }: Y1731ConfigFormProps): ReactElement | null {
-  const hasY1731Tests = selectedTests.some((t) => t.startsWith('y1731'));
+  const hasY1731Tests = hasGroupTests('y1731', selectedTests);
 
   const form = useConfigForm<Y1731Config>({
     schema: Y1731ConfigSchema,
