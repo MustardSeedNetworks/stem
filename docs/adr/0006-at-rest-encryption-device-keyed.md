@@ -1,6 +1,6 @@
 # ADR 0006: At-rest secret encryption is device-keyed; DEK/JWT separation is N/A
 
-**Status:** Accepted (2026-06-08)
+**Status:** Accepted (2026-06-08); amended 2026-09-14
 
 ## Context
 
@@ -58,3 +58,14 @@ ADR is amended.
 
 - seed ADR-0015 (DEK separation); the DEK-parity item in the stem/niac
   remediation plan.
+
+### Amendment 2026-09-14 — mechanism now lives in `foundation`
+
+The decision stands: the activation state is the only at-rest secret and it is
+keyed from the device fingerprint, so no separate DEK exists and the JWT
+secret is not involved. What moved is the code. Since the 2026-07-10 shared
+security core, `deriveKey`, the AES-GCM activation file and the fingerprint
+live in `github.com/MustardSeedNetworks/foundation/pkg/license`
+(`activation.go`); stem's `internal/license/policy.go` supplies only the
+product policy (`EncryptionSalt`, product code, tiers). The file paths cited
+above no longer exist in this repo.

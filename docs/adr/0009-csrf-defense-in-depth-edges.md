@@ -1,6 +1,6 @@
 # ADR 0009: Accepted CSRF defense-in-depth edges (refresh, trial)
 
-**Status:** Accepted (2026-06-11)
+**Status:** Accepted (2026-06-11); amended 2026-09-14
 
 ## Context
 
@@ -61,3 +61,12 @@ does not re-flag them as gaps.
 
 - ADR-0001 (capability registry), ADR-0004 (auth + CORS posture)
 - Cross-repo security-invariant audit, 2026-06-11
+
+### Amendment 2026-09-14 — the CSRF manager moved to `foundation` (2026-07-10)
+
+The accepted edges are unchanged: `/auth/refresh` and `/license/trial` still
+skip the token check when the request carries no session, and `SameSite=Strict`
+is still what protects them. What moved is the manager: token storage,
+generation, validation and expiry, keyed by `sha256(bearer)`, live in
+`github.com/MustardSeedNetworks/foundation/pkg/csrf`, imported by
+`internal/auth/csrf.go`. The exempt list and the response format stay local.

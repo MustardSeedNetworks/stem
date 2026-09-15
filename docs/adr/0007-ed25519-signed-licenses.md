@@ -1,6 +1,6 @@
 # ADR 0007: Ed25519-signed license tokens
 
-**Status:** Accepted (2026-06-08)
+**Status:** Accepted (2026-06-08); amended 2026-06-16, 2026-09-14
 
 ## Context
 
@@ -76,3 +76,14 @@ longer mint 3001 (cross-repo follow-up in msn-internal-tools/keygen).
 
 - The Ed25519 license item in the stem/niac remediation plan; the parallel niac
   (#802) and seed adoptions and the keygen signing change.
+
+### Amendment 2026-09-14 — the signing core moved to `foundation` (2026-07-10)
+
+"Each repo owns its own copy (no master module)" is superseded. The Ed25519
+verifier, the `MSN1.<payload>.<sig>` format, activation and the device
+fingerprint live once in `github.com/MustardSeedNetworks/foundation/pkg/license`;
+stem imports it from `internal/license/license.go` and `internal/license/policy.go`
+and keeps only product policy (product codes 1001/2001, the tier catalog, the
+encryption salt). Seed's `internal/license` is the same shape over the same
+module; NIAC dropped runtime licensing altogether (niac ADR 0005). Change the
+crypto in `foundation` and tag a release; change policy here.
