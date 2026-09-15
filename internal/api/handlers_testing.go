@@ -39,6 +39,10 @@ func (s *Server) handleTestStart(w http.ResponseWriter, r *http.Request) {
 			s.sendFeatureGate(w, feature)
 			return
 		}
+		if frameErr := validateFrameSizes(step); frameErr != nil {
+			WriteInvalidRequest(w, frameErr.Error())
+			return
+		}
 	}
 
 	iface, ifaceErr := s.resolveTestInterface(req.Interface)
