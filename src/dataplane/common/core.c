@@ -188,8 +188,20 @@ extern const platform_ops_t *get_dataplane_xdp_platform_ops(void);
 extern const platform_ops_t *get_dataplane_packet_platform_ops(void);
 #endif
 
+const platform_ops_t *rfc2544_preferred_platform(void)
+{
+#if HAVE_AF_XDP
+    return get_dataplane_xdp_platform_ops();
+#elif PLATFORM_LINUX
+    return get_dataplane_packet_platform_ops();
+#else
+    return NULL;
+#endif
+}
+
 static const platform_ops_t *select_platform(const rfc2544_ctx_t *ctx)
 {
+    (void)ctx;
 #if PLATFORM_LINUX
     /* Force AF_PACKET for veth/testing compatibility */
     if (ctx->config.force_packet) {
@@ -198,16 +210,32 @@ static const platform_ops_t *select_platform(const rfc2544_ctx_t *ctx)
     }
 #endif
 
+    const platform_ops_t *preferred = rfc2544_preferred_platform();
+    if (!preferred) {
+        rfc2544_log(LOG_ERROR, "No supported platform available");
+        return NULL;
+    }
 #if HAVE_AF_XDP
     rfc2544_log(LOG_INFO, "Platform: AF_XDP (high performance)");
-    return get_dataplane_xdp_platform_ops();
-#elif PLATFORM_LINUX
-    rfc2544_log(LOG_INFO, "Platform: AF_PACKET (fallback)");
-    return get_dataplane_packet_platform_ops();
 #else
-    rfc2544_log(LOG_ERROR, "No supported platform available");
-    return NULL;
+    rfc2544_log(LOG_INFO, "Platform: AF_PACKET (fallback)");
 #endif
+    return preferred;
+}
+
+const platform_ops_t *rfc2544_fallback_platform(const platform_ops_t *tried)
+{
+#if HAVE_AF_XDP && PLATFORM_LINUX
+    /* HAVE_AF_XDP only records that <linux/if_xdp.h> was present at build time;
+     * the running host may still have no UMEM. The reflector degrades to
+     * AF_PACKET in that case (src/reflector/core.c) and so must the test
+     * master. AF_PACKET itself is the last resort. */
+    if (tried == get_dataplane_xdp_platform_ops()) {
+        return get_dataplane_packet_platform_ops();
+    }
+#endif
+    (void)tried;
+    return NULL;
 }
 
 /* ============================================================================
@@ -581,35 +609,23 @@ void report_progress(rfc2544_ctx_t *ctx, const char *message, double pct)
     }
 }
 
-static int prepare_platform(rfc2544_ctx_t *ctx)
+static int init_workers(rfc2544_ctx_t *ctx, const platform_ops_t *platform)
 {
-    if (!ctx) {
-        return -EINVAL;
-    }
-    if (ctx->platform && ctx->workers && ctx->num_workers > 0) {
-        return 0;
-    }
-
-    ctx->platform = select_platform(ctx);
-    if (!ctx->platform) {
-        return -ENOTSUP;
-    }
-
     ctx->num_workers = 1;
     ctx->workers     = calloc((size_t)ctx->num_workers, sizeof(worker_ctx_t));
     if (!ctx->workers) {
-        ctx->platform    = NULL;
         ctx->num_workers = 0;
         return -ENOMEM;
     }
+    ctx->platform = platform;
 
     for (int i = 0; i < ctx->num_workers; i++) {
         ctx->workers[i].worker_id = i;
         ctx->workers[i].queue_id  = i;
-        if (ctx->platform->init(ctx, &ctx->workers[i]) < 0) {
+        if (platform->init(ctx, &ctx->workers[i]) < 0) {
             rfc2544_log(LOG_ERROR, "Failed to initialize platform");
             for (int j = 0; j < i; j++) {
-                ctx->platform->cleanup(&ctx->workers[j]);
+                platform->cleanup(&ctx->workers[j]);
             }
             free(ctx->workers);
             ctx->workers     = NULL;
@@ -620,6 +636,34 @@ static int prepare_platform(rfc2544_ctx_t *ctx)
     }
 
     return 0;
+}
+
+static int prepare_platform(rfc2544_ctx_t *ctx)
+{
+    if (!ctx) {
+        return -EINVAL;
+    }
+    if (ctx->platform && ctx->workers && ctx->num_workers > 0) {
+        return 0;
+    }
+
+    const platform_ops_t *platform = select_platform(ctx);
+    if (!platform) {
+        return -ENOTSUP;
+    }
+
+    int ret = init_workers(ctx, platform);
+    if (ret < 0) {
+        const platform_ops_t *fallback = rfc2544_fallback_platform(platform);
+        if (!fallback) {
+            return ret;
+        }
+        rfc2544_log(LOG_WARN, "Platform initialization failed; continuing with AF_PACKET "
+                              "(reduced performance)");
+        ret = init_workers(ctx, fallback);
+    }
+
+    return ret;
 }
 
 int rfc2544_run(rfc2544_ctx_t *ctx)

@@ -128,12 +128,15 @@ ifeq ($(UNAME),Linux)
 		src/reflector/netally.c src/reflector/packet.c src/reflector/util.c $(C_LDFLAGS)
 	$(CC) $(CFLAGS) -o bin/test_latency_lifecycle tests/c/test_latency_lifecycle.c \
 		$(C_TEST_DATAPLANE_SRCS) $(C_LDFLAGS) -lxdp -lbpf
+	$(CC) $(CFLAGS) -o bin/test_platform_fallback tests/c/test_platform_fallback.c \
+		$(C_TEST_DATAPLANE_SRCS) $(C_LDFLAGS) -lxdp -lbpf
 	@echo "Running C tests..."
 	./bin/test_pacing
 	./bin/test_protocols
 	./bin/test_packet_parse
 	./bin/test_netally_reflector
 	./bin/test_latency_lifecycle
+	./bin/test_platform_fallback
 else ifeq ($(UNAME),Darwin)
 	@echo "Building C tests (common code only, macOS)..."
 	mkdir -p bin
