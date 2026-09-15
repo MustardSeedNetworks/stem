@@ -113,6 +113,30 @@ describe('TestResults', () => {
     expect(screen.getByText(/^Completed:/)).toBeInTheDocument();
   });
 
+  // A reflector's stored result carries the start acknowledgement in
+  // `success`, so reading it printed PASSED over a run the operator had
+  // stopped (#1248). A stopped run has no verdict.
+  it('says a stopped run was stopped rather than claiming it passed', () => {
+    render(
+      <TestResults
+        testStatus="stopped"
+        result={result({
+          testType: 'reflect',
+          module: 'reflector',
+          status: 'stopped',
+          success: true,
+          metrics: { frames_reflected: 12 },
+        })}
+      />,
+    );
+
+    expect(screen.getByText('STOPPED')).toBeInTheDocument();
+    expect(screen.queryByText('PASSED')).toBeNull();
+    // What the run did capture is still shown.
+    expect(screen.getByText(/frames reflected/i)).toBeInTheDocument();
+    expect(screen.queryByText(/No tests running/)).toBeNull();
+  });
+
   it('formats a sub-minute duration in seconds', () => {
     render(<TestResults testStatus="completed" result={result({ duration: 4300 })} />);
 
@@ -126,6 +150,7 @@ describe('TestResults', () => {
     ['starting', /Test is starting/],
     ['running', /Test in progress/],
     ['cancelled', /Test cancelled/],
+    ['stopped', /Stopped by the operator/],
     ['error', /An error occurred during the test/],
   ] as const)('says what is happening while %s and no result exists', (status, expected) => {
     render(<TestResults testStatus={status} result={null} />);

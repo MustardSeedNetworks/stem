@@ -131,9 +131,7 @@ func (s *Server) handleTestStop(w http.ResponseWriter, r *http.Request) {
 		s.statsMu.Unlock()
 		exec.Stop()
 		s.statsMu.Lock()
-		s.testStatus = statusStopped
-		s.currentTest = ""
-		s.currentRunID = ""
+		s.markStoppedLocked()
 		s.statsMu.Unlock()
 		logging.Info("Reflector stopped via API")
 		writeJSON(w, StatusResponse{Status: statusStopped})
@@ -162,6 +160,31 @@ func (s *Server) handleTestStop(w http.ResponseWriter, r *http.Request) {
 
 	logging.Info("Test cancelled", "testType", testType)
 	writeJSON(w, StatusResponse{Status: statusStopped})
+}
+
+// markStoppedLocked records a run that was stopped rather than finished,
+// including in the result the UI reads back.
+//
+// startReflector stores a result with Status "running" so the run is
+// observable while it runs; the stop path used to leave it there, so
+// /api/v1/test/result went on describing a run that had ended and the web UI
+// — which only keeps a terminal result — showed "no tests running" straight
+// after a real one (#1248). The captured data is kept: what the run measured
+// is still what it measured.
+//
+// A copy is stored rather than the stored pointer mutated, because
+// handleTestResult releases statsMu before serialising it.
+//
+// Callers must hold s.statsMu.
+func (s *Server) markStoppedLocked() {
+	s.testStatus = statusStopped
+	s.currentTest = ""
+	s.currentRunID = ""
+	if s.testResult != nil {
+		stopped := *s.testResult
+		stopped.Status = statusStopped
+		s.testResult = &stopped
+	}
 }
 
 // handleTestResult returns the result of the last completed test.

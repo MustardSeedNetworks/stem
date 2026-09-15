@@ -3,8 +3,15 @@
  * @description Centralized type definitions for API responses and requests
  */
 
-/** Test status values */
-export type TestStatus = 'idle' | 'starting' | 'running' | 'completed' | 'cancelled' | 'error';
+/** Test status values. Mirrors the daemon's constants in internal/api/types.go. */
+export type TestStatus =
+  | 'idle'
+  | 'starting'
+  | 'running'
+  | 'completed'
+  | 'cancelled'
+  | 'stopped'
+  | 'error';
 
 /** Network interface information from /api/v1/interfaces */
 export interface InterfaceInfo {

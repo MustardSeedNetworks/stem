@@ -60,6 +60,9 @@ export function TestResults({ testStatus, result }: TestResultsProps): ReactElem
       case 'cancelled':
         message = 'Test cancelled. Adjust settings or restart when ready.';
         break;
+      case 'stopped':
+        message = 'Stopped by the operator. No result was captured before it ended.';
+        break;
       case 'error':
         message = 'An error occurred during the test.';
         break;
@@ -80,8 +83,16 @@ export function TestResults({ testStatus, result }: TestResultsProps): ReactElem
     );
   }
 
-  // Show actual test results
-  const statusColor = result.success ? 'text-status-success' : 'text-status-error';
+  // Show actual test results. A run the operator stopped has no verdict:
+  // result.success is the start acknowledgement for a reflector, so reading it
+  // would print PASSED over a run that never finished (#1248).
+  const stopped = result.status === 'stopped';
+  const statusColor = stopped
+    ? 'text-status-warning'
+    : result.success
+      ? 'text-status-success'
+      : 'text-status-error';
+  const verdict = stopped ? 'STOPPED' : result.success ? 'PASSED' : 'FAILED';
 
   return (
     <div className="card">
@@ -119,7 +130,7 @@ export function TestResults({ testStatus, result }: TestResultsProps): ReactElem
           <div className="text-sm text-text-muted">Module: {result.module}</div>
         </div>
         <div className="text-right">
-          <div className={`heading-3 ${statusColor}`}>{result.success ? 'PASSED' : 'FAILED'}</div>
+          <div className={`heading-3 ${statusColor}`}>{verdict}</div>
           {result.duration !== undefined && (
             <div className="text-sm text-text-muted">
               Duration: {formatDuration(result.duration)}
