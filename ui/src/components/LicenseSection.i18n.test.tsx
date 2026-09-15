@@ -14,22 +14,41 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import i18n from '../i18n';
+import { invalidateCsrfToken } from '../lib/csrf';
+import { useAuthStore } from '../stores/auth-store';
 import { LicenseSection } from './LicenseSection';
 
+/**
+ * Answers the license route with `body` and the CSRF route with a token.
+ *
+ * Routing by URL is not tidiness: the panel's POSTs go through `authFetch`,
+ * which fetches `/api/v1/auth/csrf-token` first, and a mock that hands the
+ * license payload to that call makes `getCsrfToken` throw — every assertion
+ * below would then be reading the network-error copy (#1247).
+ */
 function stubLicense(body: unknown, ok = true) {
-  vi.spyOn(globalThis, 'fetch').mockImplementation((async () => ({
-    ok,
-    status: ok ? 200 : 500,
-    json: async () => body,
+  vi.spyOn(globalThis, 'fetch').mockImplementation((async (url: string) => ({
+    ok: url === CSRF_ENDPOINT ? true : ok,
+    status: url === CSRF_ENDPOINT || ok ? 200 : 500,
+    headers: new Headers({ 'Content-Type': 'application/json' }),
+    json: async () => (url === CSRF_ENDPOINT ? { token: 'test-csrf-token' } : body),
   })) as unknown as typeof fetch);
 }
 
+const CSRF_ENDPOINT = '/api/v1/auth/csrf-token';
+
 beforeEach(() => {
+  invalidateCsrfToken();
+  // The panel only renders behind a session, and `authFetch` refuses to send
+  // anything without one.
+  useAuthStore.setState({ isAuthenticated: true });
   stubLicense({ activated: false, tier: 'free', deviceId: 'dev-1', features: [] });
 });
 
 afterEach(async () => {
   vi.restoreAllMocks();
+  invalidateCsrfToken();
+  useAuthStore.setState({ isAuthenticated: false });
   await i18n.changeLanguage('en');
 });
 
