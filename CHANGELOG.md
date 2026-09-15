@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.119](https://github.com/MustardSeedNetworks/stem/compare/v0.24.118...v0.24.119) (2026-09-15)
+
+
+### Bug Fixes
+
+* **deps:** update module golang.org/x/crypto to v0.57.0 ([#1274](https://github.com/MustardSeedNetworks/stem/issues/1274)) ([c39d066](https://github.com/MustardSeedNetworks/stem/commit/c39d0664bcc236c20ff86fba29c7fac023c3dcd6))
+* **ui:** keep the result of a run that was stopped ([#1273](https://github.com/MustardSeedNetworks/stem/issues/1273)) ([60d5b3b](https://github.com/MustardSeedNetworks/stem/commit/60d5b3bf11104e9c2abc9f309f39ac1aabb4a5f2)), closes [#1248](https://github.com/MustardSeedNetworks/stem/issues/1248)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1276](https://github.com/MustardSeedNetworks/stem/issues/1276)) ([781b8ea](https://github.com/MustardSeedNetworks/stem/commit/781b8ea7acd5c656b6943b78bc5b5710949d5af5))
+
 ## [0.24.118](https://github.com/MustardSeedNetworks/stem/compare/v0.24.117...v0.24.118) (2026-09-15)
 
 
