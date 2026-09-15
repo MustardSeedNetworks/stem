@@ -1,6 +1,6 @@
 # ADR 0008: Memory-safety gate for the C dataplane packet parser
 
-**Status:** Accepted (2026-06-08)
+**Status:** Accepted (2026-06-08); amended 2026-09-14
 
 ## Context
 
@@ -57,3 +57,14 @@ finding, and there was no sanitizer or fuzz coverage of the parser.
 ## Related issues and PRs
 
 - The C dataplane hardening item in the stem/niac remediation plan.
+
+### Amendment 2026-09-14 — the deferred scope shipped a defect; the gate widens
+
+The "future work" above fired in production: on 2026-09-12 a double free in
+`packet_platform_init`'s failure-exit paths reached the CT307 reflector and
+was found by a real-hardware deploy, not by this gate, because the reflector
+platform code sits outside the `packet.c` scope. Owner decision 2026-09-14:
+widen the gate rather than re-accept the risk — ASAN unit coverage of
+`packet_platform_init` and its failure paths, blocking cppcheck over the
+reflector platform code, and a fuzz target for the reflector frame path.
+Tracked as stem#1228 (plan row STM-22). The parser scope above is unchanged.
