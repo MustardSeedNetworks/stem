@@ -219,7 +219,7 @@ int packet_platform_init(reflector_ctx_t *rctx, worker_ctx_t *wctx)
     pctx->sock_fd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
     if (pctx->sock_fd < 0) {
         reflector_log(LOG_ERROR, "Failed to create AF_PACKET socket: %s", stem_strerror(errno));
-        packet_platform_cleanup(wctx);
+        free(pctx);
         return -1;
     }
     if (ignore_outgoing_packets(pctx->sock_fd) < 0) {
