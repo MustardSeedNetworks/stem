@@ -17,10 +17,16 @@ interface RoleGuardProps {
   requires: StemRole;
   /** Module display name interpolated into the banner message. */
   moduleName?: string;
+  /**
+   * Another banner on the page already tells the operator what to do. Two
+   * stacked banners that name different roles read as a contradiction, so the
+   * role advice yields to the more specific one.
+   */
+  superseded?: boolean;
   children: ReactNode;
 }
 
-export const RoleGuard: FC<RoleGuardProps> = ({ requires, moduleName, children }) => {
+export const RoleGuard: FC<RoleGuardProps> = ({ requires, moduleName, superseded, children }) => {
   const { t } = useTranslation();
   const { role, setRole } = useRole();
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -38,7 +44,7 @@ export const RoleGuard: FC<RoleGuardProps> = ({ requires, moduleName, children }
     setConfirmOpen(false);
   }, []);
 
-  if (role === requires) {
+  if (role === requires || superseded === true) {
     return <>{children}</>;
   }
 

@@ -10,7 +10,7 @@
 # never lowered: a drop is a regression to fix, not a number to edit.
 #
 # metric      floor   target
-statements    68.7    88
-branches      52.4    80
-functions     62.6    92
-lines         80.0    88
+statements    70.2    88
+branches      53.7    80
+functions     66.3    92
+lines         81.8    88
