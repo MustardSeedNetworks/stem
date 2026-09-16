@@ -91,7 +91,7 @@ export function Y1731ConfigForm({
     watch,
     formState: { errors },
   } = form;
-  const { t } = useTranslation('settings');
+  const { t } = useTranslation(['settings', 'help']);
 
   if (!hasY1731Tests) {
     return null;
@@ -130,7 +130,7 @@ export function Y1731ConfigForm({
             <div>
               <label htmlFor="y1731-mepid" className="flex items-center gap-tight label">
                 {t('testConfig.y1731.mep.mepId')}
-                <HelpIcon tooltip={t('testConfig.y1731.mep.mepIdHelp')} />
+                <HelpIcon tooltip={t('help:tooltips.testConfig.y1731.mep.mepIdHelp')} />
               </label>
               <input
                 id="y1731-mepid"
@@ -145,7 +145,7 @@ export function Y1731ConfigForm({
             <div>
               <label htmlFor="y1731-meglevel" className="flex items-center gap-tight label">
                 {t('testConfig.y1731.mep.megLevel')}
-                <HelpIcon tooltip={t('testConfig.y1731.mep.megLevelHelp')} />
+                <HelpIcon tooltip={t('help:tooltips.testConfig.y1731.mep.megLevelHelp')} />
               </label>
               <input
                 id="y1731-meglevel"
@@ -160,7 +160,7 @@ export function Y1731ConfigForm({
             <div>
               <label htmlFor="y1731-megid" className="flex items-center gap-tight label">
                 {t('testConfig.y1731.mep.megId')}
-                <HelpIcon tooltip={t('testConfig.y1731.mep.megIdHelp')} />
+                <HelpIcon tooltip={t('help:tooltips.testConfig.y1731.mep.megIdHelp')} />
               </label>
               <input
                 id="y1731-megid"
@@ -179,7 +179,7 @@ export function Y1731ConfigForm({
             <div>
               <label htmlFor="y1731-ccm" className="flex items-center gap-tight label">
                 {t('testConfig.y1731.oam.ccm')}
-                <HelpIcon tooltip={t('testConfig.y1731.oam.ccmHelp')} />
+                <HelpIcon tooltip={t('help:tooltips.testConfig.y1731.oam.ccmHelp')} />
               </label>
               <select
                 id="y1731-ccm"
@@ -198,7 +198,7 @@ export function Y1731ConfigForm({
             <div>
               <label htmlFor="y1731-priority" className="flex items-center gap-tight label">
                 {t('testConfig.y1731.oam.priority')}
-                <HelpIcon tooltip={t('testConfig.y1731.oam.priorityHelp')} />
+                <HelpIcon tooltip={t('help:tooltips.testConfig.y1731.oam.priorityHelp')} />
               </label>
               <input
                 id="y1731-priority"
@@ -219,12 +219,9 @@ export function Y1731ConfigForm({
               aria-label={t('testConfig.y1731.oam.taggedAria')}
               className="rounded border-surface-border"
             />
-            <label
-              htmlFor="y1731-tagged"
-              title={t('testConfig.y1731.oam.taggedTitle')}
-              className="text-sm text-text-primary"
-            >
+            <label htmlFor="y1731-tagged" className="text-sm text-text-primary">
               {t('testConfig.y1731.oam.tagged')}
+              <HelpIcon tooltip={t('help:tooltips.testConfig.y1731.oam.taggedTitle')} />
             </label>
           </div>
         </FormSection>
@@ -234,7 +231,7 @@ export function Y1731ConfigForm({
             <div>
               <label htmlFor="y1731-framesize" className="flex items-center gap-tight label">
                 {t('testConfig.y1731.measurement.frameSize')}
-                <HelpIcon tooltip={t('testConfig.y1731.measurement.frameSizeHelp')} />
+                <HelpIcon tooltip={t('help:tooltips.testConfig.y1731.measurement.frameSizeHelp')} />
               </label>
               <select
                 id="y1731-framesize"
@@ -253,7 +250,7 @@ export function Y1731ConfigForm({
             <div>
               <label htmlFor="y1731-interval" className="flex items-center gap-tight label">
                 {t('testConfig.y1731.measurement.interval')}
-                <HelpIcon tooltip={t('testConfig.y1731.measurement.intervalHelp')} />
+                <HelpIcon tooltip={t('help:tooltips.testConfig.y1731.measurement.intervalHelp')} />
               </label>
               <input
                 id="y1731-interval"
@@ -270,7 +267,7 @@ export function Y1731ConfigForm({
             <div>
               <label htmlFor="y1731-count" className="flex items-center gap-tight label">
                 {t('testConfig.y1731.measurement.count')}
-                <HelpIcon tooltip={t('testConfig.y1731.measurement.countHelp')} />
+                <HelpIcon tooltip={t('help:tooltips.testConfig.y1731.measurement.countHelp')} />
               </label>
               <input
                 id="y1731-count"
@@ -285,7 +282,7 @@ export function Y1731ConfigForm({
             <div>
               <label htmlFor="y1731-duration" className="flex items-center gap-tight label">
                 {t('testConfig.y1731.measurement.duration')}
-                <HelpIcon tooltip={t('testConfig.y1731.measurement.durationHelp')} />
+                <HelpIcon tooltip={t('help:tooltips.testConfig.y1731.measurement.durationHelp')} />
               </label>
               <input
                 id="y1731-duration"

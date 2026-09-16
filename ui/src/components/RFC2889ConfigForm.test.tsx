@@ -51,6 +51,6 @@ describe('RFC2889ConfigForm — i18n', () => {
     await i18n.changeLanguage('es');
     renderForm();
 
-    expect(screen.getAllByTitle(/RFC 2889/).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('button', { description: /RFC 2889/ }).length).toBeGreaterThan(0);
   });
 });

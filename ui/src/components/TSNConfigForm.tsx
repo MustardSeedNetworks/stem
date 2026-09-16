@@ -88,14 +88,14 @@ function TestParametersSection(): ReactElement {
     register,
     formState: { errors },
   } = useFormContext<TSNConfig>();
-  const { t } = useTranslation('settings');
+  const { t } = useTranslation(['settings', 'help']);
   return (
     <FormSection title={t('testConfig.tsn.params.title')}>
       <div className="grid grid-cols-3 gap-default">
         <div>
           <label htmlFor="tsn-duration" className="flex items-center gap-tight label">
             {t('testConfig.tsn.params.duration')}
-            <HelpIcon tooltip={t('testConfig.tsn.params.durationHelp')} />
+            <HelpIcon tooltip={t('help:tooltips.testConfig.tsn.params.durationHelp')} />
           </label>
           <input
             id="tsn-duration"
@@ -109,7 +109,7 @@ function TestParametersSection(): ReactElement {
         <div>
           <label htmlFor="tsn-warmup" className="flex items-center gap-tight label">
             {t('testConfig.tsn.params.warmup')}
-            <HelpIcon tooltip={t('testConfig.tsn.params.warmupHelp')} />
+            <HelpIcon tooltip={t('help:tooltips.testConfig.tsn.params.warmupHelp')} />
           </label>
           <input
             id="tsn-warmup"
@@ -123,7 +123,7 @@ function TestParametersSection(): ReactElement {
         <div>
           <label htmlFor="tsn-framesize" className="flex items-center gap-tight label">
             {t('testConfig.tsn.params.frameSize')}
-            <HelpIcon tooltip={t('testConfig.tsn.params.frameSizeHelp')} />
+            <HelpIcon tooltip={t('help:tooltips.testConfig.tsn.params.frameSizeHelp')} />
           </label>
           <select
             id="tsn-framesize"
@@ -148,14 +148,14 @@ function TimingRequirementsSection(): ReactElement {
     register,
     formState: { errors },
   } = useFormContext<TSNConfig>();
-  const { t } = useTranslation('settings');
+  const { t } = useTranslation(['settings', 'help']);
   return (
     <FormSection title={t('testConfig.tsn.timing.title')}>
       <div className="grid grid-cols-2 gap-default">
         <div>
           <label htmlFor="tsn-maxlatency" className="flex items-center gap-tight label">
             {t('testConfig.tsn.timing.maxLatency')}
-            <HelpIcon tooltip={t('testConfig.tsn.timing.maxLatencyHelp')} />
+            <HelpIcon tooltip={t('help:tooltips.testConfig.tsn.timing.maxLatencyHelp')} />
           </label>
           <input
             id="tsn-maxlatency"
@@ -169,7 +169,7 @@ function TimingRequirementsSection(): ReactElement {
         <div>
           <label htmlFor="tsn-maxjitter" className="flex items-center gap-tight label">
             {t('testConfig.tsn.timing.maxJitter')}
-            <HelpIcon tooltip={t('testConfig.tsn.timing.maxJitterHelp')} />
+            <HelpIcon tooltip={t('help:tooltips.testConfig.tsn.timing.maxJitterHelp')} />
           </label>
           <input
             id="tsn-maxjitter"
@@ -191,7 +191,7 @@ function PTPConfigSection(): ReactElement {
     watch,
     formState: { errors },
   } = useFormContext<TSNConfig>();
-  const { t } = useTranslation('settings');
+  const { t } = useTranslation(['settings', 'help']);
   const ptpEnabled = watch('ptpEnabled');
   return (
     <FormSection title={t('testConfig.tsn.ptp.title')}>
@@ -204,12 +204,9 @@ function PTPConfigSection(): ReactElement {
             aria-label={t('testConfig.tsn.ptp.enableAria')}
             className="rounded border-surface-border"
           />
-          <label
-            htmlFor="tsn-ptpenabled"
-            title={t('testConfig.tsn.ptp.enableTitle')}
-            className="text-sm text-text-primary"
-          >
+          <label htmlFor="tsn-ptpenabled" className="text-sm text-text-primary">
             {t('testConfig.tsn.ptp.enable')}
+            <HelpIcon tooltip={t('help:tooltips.testConfig.tsn.ptp.enableTitle')} />
           </label>
         </div>
         <div className="flex items-center gap-compact">
@@ -220,12 +217,9 @@ function PTPConfigSection(): ReactElement {
             aria-label={t('testConfig.tsn.ptp.requireAria')}
             className="rounded border-surface-border"
           />
-          <label
-            htmlFor="tsn-requiresync"
-            title={t('testConfig.tsn.ptp.requireTitle')}
-            className="text-sm text-text-primary"
-          >
+          <label htmlFor="tsn-requiresync" className="text-sm text-text-primary">
             {t('testConfig.tsn.ptp.require')}
+            <HelpIcon tooltip={t('help:tooltips.testConfig.tsn.ptp.requireTitle')} />
           </label>
         </div>
       </div>
@@ -233,7 +227,7 @@ function PTPConfigSection(): ReactElement {
         <div>
           <label htmlFor="tsn-syncoffset" className="flex items-center gap-tight label">
             {t('testConfig.tsn.ptp.syncOffset')}
-            <HelpIcon tooltip={t('testConfig.tsn.ptp.syncOffsetHelp')} />
+            <HelpIcon tooltip={t('help:tooltips.testConfig.tsn.ptp.syncOffsetHelp')} />
           </label>
           <input
             id="tsn-syncoffset"
@@ -254,7 +248,7 @@ function SchedulingConfigSection(): ReactElement {
     register,
     formState: { errors },
   } = useFormContext<TSNConfig>();
-  const { t } = useTranslation('settings');
+  const { t } = useTranslation(['settings', 'help']);
   return (
     <FormSection title={t('testConfig.tsn.scheduling.title')}>
       <div className="flex items-center gap-compact">
@@ -265,19 +259,16 @@ function SchedulingConfigSection(): ReactElement {
           aria-label={t('testConfig.tsn.scheduling.preemptionAria')}
           className="rounded border-surface-border"
         />
-        <label
-          htmlFor="tsn-preemption"
-          title={t('testConfig.tsn.scheduling.preemptionTitle')}
-          className="text-sm text-text-primary"
-        >
+        <label htmlFor="tsn-preemption" className="text-sm text-text-primary">
           {t('testConfig.tsn.scheduling.preemption')}
+          <HelpIcon tooltip={t('help:tooltips.testConfig.tsn.scheduling.preemptionTitle')} />
         </label>
       </div>
       <div className="grid grid-cols-2 gap-default">
         <div>
           <label htmlFor="tsn-cycletime" className="flex items-center gap-tight label">
             {t('testConfig.tsn.scheduling.cycleTime')}
-            <HelpIcon tooltip={t('testConfig.tsn.scheduling.cycleTimeHelp')} />
+            <HelpIcon tooltip={t('help:tooltips.testConfig.tsn.scheduling.cycleTimeHelp')} />
           </label>
           <select
             id="tsn-cycletime"
@@ -295,7 +286,7 @@ function SchedulingConfigSection(): ReactElement {
         <div>
           <label htmlFor="tsn-trafficclass" className="flex items-center gap-tight label">
             {t('testConfig.tsn.scheduling.trafficClass')}
-            <HelpIcon tooltip={t('testConfig.tsn.scheduling.trafficClassHelp')} />
+            <HelpIcon tooltip={t('help:tooltips.testConfig.tsn.scheduling.trafficClassHelp')} />
           </label>
           <input
             id="tsn-trafficclass"
@@ -310,7 +301,7 @@ function SchedulingConfigSection(): ReactElement {
       <div>
         <label htmlFor="tsn-numclasses" className="flex items-center gap-tight label">
           {t('testConfig.tsn.scheduling.numClasses')}
-          <HelpIcon tooltip={t('testConfig.tsn.scheduling.numClassesHelp')} />
+          <HelpIcon tooltip={t('help:tooltips.testConfig.tsn.scheduling.numClassesHelp')} />
         </label>
         <input
           id="tsn-numclasses"
@@ -324,7 +315,7 @@ function SchedulingConfigSection(): ReactElement {
       <div>
         <label htmlFor="tsn-basetime" className="flex items-center gap-tight label">
           {t('testConfig.tsn.scheduling.baseTime')}
-          <HelpIcon tooltip={t('testConfig.tsn.scheduling.baseTimeHelp')} />
+          <HelpIcon tooltip={t('help:tooltips.testConfig.tsn.scheduling.baseTimeHelp')} />
         </label>
         <input
           id="tsn-basetime"
@@ -355,7 +346,7 @@ function TestSummarySection({
   hasScheduling,
 }: TestSummarySectionProps): ReactElement {
   const { watch } = useFormContext<TSNConfig>();
-  const { t } = useTranslation('settings');
+  const { t } = useTranslation(['settings', 'help']);
   const v = watch();
   const selectedTestNames = [
     hasLatency && t('testConfig.tsn.tests.latency'),

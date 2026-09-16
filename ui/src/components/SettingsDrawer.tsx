@@ -1,3 +1,4 @@
+import { Tooltip } from './ui/Tooltip';
 /**
  * SettingsDrawer Component
  *
@@ -109,13 +110,14 @@ export function SettingsDrawer({
   return (
     <>
       {/* Backdrop */}
-      <button
-        type="button"
-        className="fixed inset-0 bg-scrim/50 z-40 cursor-default"
-        onClick={onClose}
-        title={t('accessibility.closeSettings')}
-        aria-label={t('accessibility.closeSettings')}
-      />
+      <Tooltip text={t('accessibility.closeSettings')}>
+        <button
+          type="button"
+          className="fixed inset-0 bg-scrim/50 z-40 cursor-default"
+          onClick={onClose}
+          aria-label={t('accessibility.closeSettings')}
+        />
+      </Tooltip>
 
       {/* Drawer */}
       <div
@@ -131,16 +133,22 @@ export function SettingsDrawer({
           <h2 id="settings-drawer-title" className="heading-3 text-text-primary">
             {t('settings:title')}
           </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            data-testid="settings-drawer-close"
-            className={cn(spacing.pad.sm, 'hover:bg-surface-hover', radius.lg, 'transition-colors')}
-            title={t('accessibility.closeSettings')}
-            aria-label={t('accessibility.closeSettings')}
-          >
-            <X className="w-5 h-5 text-text-muted" aria-hidden="true" />
-          </button>
+          <Tooltip text={t('accessibility.closeSettings')}>
+            <button
+              type="button"
+              onClick={onClose}
+              data-testid="settings-drawer-close"
+              className={cn(
+                spacing.pad.sm,
+                'hover:bg-surface-hover',
+                radius.lg,
+                'transition-colors',
+              )}
+              aria-label={t('accessibility.closeSettings')}
+            >
+              <X className="w-5 h-5 text-text-muted" aria-hidden="true" />
+            </button>
+          </Tooltip>
         </div>
 
         {/* Content */}
@@ -240,34 +248,36 @@ function ViewToggle({ viewMode, onViewModeChange }: ViewToggleProps): React.Reac
     <div className={cn('flex-between', spacing.pad.sm, 'bg-surface-base', radius.lg, 'mb-2')}>
       <span className="body-small text-text-muted">{t('settings:viewBy')}:</span>
       <div className={cn('flex', radius.lg, 'overflow-hidden border border-surface-border')}>
-        <button
-          type="button"
-          onClick={(): void => onViewModeChange('standard')}
-          title={t('settings:viewStandardHint')}
-          className={cn(
-            'flex items-center gap-tight px-3 py-compact-md caption',
-            viewMode === 'standard'
-              ? 'bg-brand-primary text-on-brand'
-              : 'bg-surface-raised text-text-muted hover:bg-surface-hover',
-          )}
-        >
-          <List className="w-3 h-3" aria-hidden="true" />
-          {t('settings:viewStandard')}
-        </button>
-        <button
-          type="button"
-          onClick={(): void => onViewModeChange('module')}
-          title={t('settings:viewModuleHint')}
-          className={cn(
-            'flex items-center gap-tight px-3 py-compact-md caption',
-            viewMode === 'module'
-              ? 'bg-brand-primary text-on-brand'
-              : 'bg-surface-raised text-text-muted hover:bg-surface-hover',
-          )}
-        >
-          <Grid className="w-3 h-3" aria-hidden="true" />
-          {t('settings:viewModule')}
-        </button>
+        <Tooltip text={t('settings:viewStandardHint')}>
+          <button
+            type="button"
+            onClick={(): void => onViewModeChange('standard')}
+            className={cn(
+              'flex items-center gap-tight px-3 py-compact-md caption',
+              viewMode === 'standard'
+                ? 'bg-brand-primary text-on-brand'
+                : 'bg-surface-raised text-text-muted hover:bg-surface-hover',
+            )}
+          >
+            <List className="w-3 h-3" aria-hidden="true" />
+            {t('settings:viewStandard')}
+          </button>
+        </Tooltip>
+        <Tooltip text={t('settings:viewModuleHint')}>
+          <button
+            type="button"
+            onClick={(): void => onViewModeChange('module')}
+            className={cn(
+              'flex items-center gap-tight px-3 py-compact-md caption',
+              viewMode === 'module'
+                ? 'bg-brand-primary text-on-brand'
+                : 'bg-surface-raised text-text-muted hover:bg-surface-hover',
+            )}
+          >
+            <Grid className="w-3 h-3" aria-hidden="true" />
+            {t('settings:viewModule')}
+          </button>
+        </Tooltip>
       </div>
     </div>
   );

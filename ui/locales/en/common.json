@@ -89,7 +89,6 @@
     "help": "Help",
     "version": "Version",
     "license": "License",
-    "dashboard": "Dashboard",
     "tests": "Tests",
     "noResults": "No results found",
     "success": "Success",
@@ -132,7 +131,7 @@
     "switchToLightMode": "Switch to light mode",
     "switchToDarkMode": "Switch to dark mode",
     "selectInterface": "Select network interface",
-    "peerHost": "Reflector host or IPv4 address",
+    "peerHost": "Reflector host or IP",
     "peerPort": "Reflector UDP port",
     "selectModule": "Select test module",
     "closeSettings": "Close settings",
@@ -172,7 +171,8 @@
     "issues": "Common Issues",
     "params": "Parameters",
     "metrics": "Output Metrics",
-    "clickForDetails": "Click for more details"
+    "clickForDetails": "Click for more details",
+    "label": "Help: {{topic}}"
   },
   "errorBoundary": {
     "title": "Something went wrong",

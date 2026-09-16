@@ -18,7 +18,6 @@ interface TestCheckboxProps {
 export function TestCheckbox({ test, checked, onChange }: TestCheckboxProps): React.JSX.Element {
   return (
     <label
-      title={test.tooltip}
       className={cn(
         'flex items-start gap-default',
         spacing.pad.sm,

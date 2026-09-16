@@ -21,8 +21,9 @@ import {
 } from 'lucide-react';
 import { type FC, lazy } from 'react';
 import { useTranslation } from 'react-i18next';
-
+import type { HelpTab } from './components/HelpDrawer';
 // Eager — default landing.
+import type { GlossaryId, TestHelpId } from './data/help/types';
 import { ReflectorPage } from './pages/ReflectorPage';
 
 const BenchmarkPage = lazy(() =>
@@ -54,6 +55,7 @@ const SecurityPage = lazy(() =>
  */
 export interface PageConfig {
   path: string;
+  help: { initialTab: HelpTab; initialTestId?: TestHelpId; initialGlossaryId?: GlossaryId };
   label: string;
   /** Kicker above the title naming the product domain. */
   eyebrow?: string;
@@ -86,6 +88,7 @@ type PageI18nKey =
  */
 interface PageDef {
   path: string;
+  help: PageConfig['help'];
   i18nKey: PageI18nKey;
   icon: LucideIcon;
   iconColorClass?: string;
@@ -95,6 +98,7 @@ interface PageDef {
 const staticPages: PageDef[] = [
   {
     path: '/reflector',
+    help: { initialTab: 'glossary', initialGlossaryId: 'reflector' },
     i18nKey: 'reflector',
     icon: Repeat,
     iconColorClass: 'text-module-reflector',
@@ -102,6 +106,7 @@ const staticPages: PageDef[] = [
   },
   {
     path: '/tests/benchmark',
+    help: { initialTab: 'tests', initialTestId: 'throughput' },
     i18nKey: 'benchmark',
     icon: BarChart3,
     iconColorClass: 'text-module-benchmark',
@@ -109,6 +114,7 @@ const staticPages: PageDef[] = [
   },
   {
     path: '/tests/servicetest',
+    help: { initialTab: 'tests', initialTestId: 'y1564_config' },
     i18nKey: 'serviceTest',
     icon: Settings2,
     iconColorClass: 'text-module-servicetest',
@@ -116,6 +122,7 @@ const staticPages: PageDef[] = [
   },
   {
     path: '/tests/trafficgen',
+    help: { initialTab: 'tests', initialTestId: 'custom_stream' },
     i18nKey: 'trafficGen',
     icon: Zap,
     iconColorClass: 'text-module-trafficgen',
@@ -123,6 +130,7 @@ const staticPages: PageDef[] = [
   },
   {
     path: '/tests/measure',
+    help: { initialTab: 'tests', initialTestId: 'frame_delay' },
     i18nKey: 'measure',
     icon: Waves,
     iconColorClass: 'text-module-measure',
@@ -130,14 +138,22 @@ const staticPages: PageDef[] = [
   },
   {
     path: '/tests/certify',
+    help: { initialTab: 'tests', initialTestId: 'tsn_full' },
     i18nKey: 'certify',
     icon: Award,
     iconColorClass: 'text-module-certify',
     component: CertifyPage,
   },
-  { path: '/history', i18nKey: 'history', icon: History, component: HistoryPage },
+  {
+    path: '/history',
+    help: { initialTab: 'glossary', initialGlossaryId: 'history' },
+    i18nKey: 'history',
+    icon: History,
+    component: HistoryPage,
+  },
   {
     path: '/account/security',
+    help: { initialTab: 'glossary', initialGlossaryId: 'security' },
     i18nKey: 'accountSecurity',
     icon: ShieldCheck,
     component: SecurityPage,
@@ -153,6 +169,7 @@ export function usePages(): PageConfig[] {
   const { t } = useTranslation('pages');
   return staticPages.map((p) => ({
     path: p.path,
+    help: p.help,
     label: t(`${p.i18nKey}.label`),
     // A page has an eyebrow when its locale namespace declares one, so the
     // copy lives in one place instead of being mirrored by a flag here.

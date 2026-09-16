@@ -89,7 +89,6 @@
     "help": "Ayuda",
     "version": "Versión",
     "license": "Licencia",
-    "dashboard": "Panel de Control",
     "tests": "Pruebas",
     "noResults": "No se encontraron resultados",
     "success": "Exito",
@@ -132,7 +131,7 @@
     "switchToLightMode": "Cambiar a modo claro",
     "switchToDarkMode": "Cambiar a modo oscuro",
     "selectInterface": "Seleccionar interfaz de red",
-    "peerHost": "Host o dirección IPv4 del Reflector",
+    "peerHost": "Host o IP del Reflector",
     "peerPort": "Puerto UDP del Reflector",
     "selectModule": "Seleccionar modulo de prueba",
     "closeSettings": "Cerrar configuración",
@@ -172,7 +171,8 @@
     "issues": "Problemas Comunes",
     "params": "Parámetros",
     "metrics": "Metricas de Salida",
-    "clickForDetails": "Haga clic para más detalles"
+    "clickForDetails": "Haga clic para más detalles",
+    "label": "Ayuda: {{topic}}"
   },
   "errorBoundary": {
     "title": "Algo salio mal",

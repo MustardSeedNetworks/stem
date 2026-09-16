@@ -14,7 +14,6 @@ export const rfc2889Tests: Record<string, TestHelp> = {
     summary: 'Measures how fast a switch can move packets between ports.',
     techDesc: 'Measures maximum forwarding rate across multiple ports.',
     laymanDesc: 'How fast can your switch shuffle packets between all its ports at once?',
-    whenToUse: 'Switch aggregate capacity testing',
     whenNotToUse: 'Single port-pair testing',
     parameters: [],
     metrics: [],
@@ -22,7 +21,7 @@ export const rfc2889Tests: Record<string, TestHelp> = {
     failMeaning: 'Switch fabric bottleneck',
     examples: [],
     tips: [],
-    seeAlso: ['throughput'],
+    seeAlso: ['https://www.rfc-editor.org/rfc/rfc2889.html', 'throughput'],
   },
 
   address_cache: {
@@ -33,7 +32,6 @@ export const rfc2889Tests: Record<string, TestHelp> = {
     summary: 'Determines how many MAC addresses a switch can remember.',
     techDesc: 'Tests MAC address table capacity while maintaining forwarding.',
     laymanDesc: 'How many devices can this switch keep track of?',
-    whenToUse: 'Large campus network planning',
     whenNotToUse: 'Small networks',
     parameters: [],
     metrics: [],
@@ -41,7 +39,7 @@ export const rfc2889Tests: Record<string, TestHelp> = {
     failMeaning: 'May need larger MAC table',
     examples: [],
     tips: [],
-    seeAlso: ['learning_rate'],
+    seeAlso: ['https://www.rfc-editor.org/rfc/rfc2889.html', 'learning_rate'],
   },
 
   learning_rate: {
@@ -52,7 +50,6 @@ export const rfc2889Tests: Record<string, TestHelp> = {
     summary: 'Measures how fast a switch can learn new device addresses.',
     techDesc: 'Tests how quickly a switch populates its MAC table.',
     laymanDesc: 'When new devices connect, how fast can the switch register them?',
-    whenToUse: 'Highly dynamic environments',
     whenNotToUse: 'Static networks',
     parameters: [],
     metrics: [],
@@ -60,7 +57,7 @@ export const rfc2889Tests: Record<string, TestHelp> = {
     failMeaning: 'May cause delays for new devices',
     examples: [],
     tips: [],
-    seeAlso: ['address_cache'],
+    seeAlso: ['https://www.rfc-editor.org/rfc/rfc2889.html', 'address_cache'],
   },
 
   broadcast: {
@@ -71,7 +68,6 @@ export const rfc2889Tests: Record<string, TestHelp> = {
     summary: 'Tests how the switch handles broadcast traffic.',
     techDesc: 'Measures broadcast handling and impact on unicast.',
     laymanDesc: 'How does your switch handle messages to ALL devices?',
-    whenToUse: 'Networks with broadcast-heavy protocols',
     whenNotToUse: 'Point-to-point testing',
     parameters: [],
     metrics: [],
@@ -79,7 +75,7 @@ export const rfc2889Tests: Record<string, TestHelp> = {
     failMeaning: 'Broadcasts affecting normal traffic',
     examples: [],
     tips: [],
-    seeAlso: ['forwarding'],
+    seeAlso: ['https://www.rfc-editor.org/rfc/rfc2889.html', 'forwarding'],
   },
 
   congestion: {
@@ -90,7 +86,6 @@ export const rfc2889Tests: Record<string, TestHelp> = {
     summary: 'Tests switch behavior when ports are oversubscribed.',
     techDesc: 'Characterizes queuing, dropping, and fairness during congestion.',
     laymanDesc: 'What happens when too much traffic tries to go to the same place?',
-    whenToUse: 'Server farm switch validation',
     whenNotToUse: 'Non-blocking architectures',
     parameters: [],
     metrics: [],
@@ -98,6 +93,6 @@ export const rfc2889Tests: Record<string, TestHelp> = {
     failMeaning: 'Unfair bandwidth allocation',
     examples: [],
     tips: [],
-    seeAlso: ['forwarding'],
+    seeAlso: ['https://www.rfc-editor.org/rfc/rfc2889.html', 'forwarding'],
   },
 };

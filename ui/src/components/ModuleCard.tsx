@@ -1,3 +1,4 @@
+import { Tooltip } from './ui/Tooltip';
 /**
  * @fileoverview The Stem - Module Card Component
  * @description Card component for each test module (Benchmark, ServiceTest, etc.)
@@ -134,28 +135,26 @@ function ModuleActionButton({
   }
   if (isRunning) {
     return (
-      <button
-        type="button"
-        onClick={onStop}
-        title={t('card.stop.title', { name: config.displayName })}
-        aria-label={t('card.stop.ariaLabel', { name: config.displayName })}
-        className={cn(
-          'px-4 py-row rounded-lg flex items-center gap-compact transition-colors',
-          statusColor.badge.error,
-          statusColor.hover.errorStrong,
-        )}
-      >
-        <Square className="w-4 h-4" />
-        <span className="text-sm font-medium">{t('card.action.stopLabel')}</span>
-      </button>
+      <Tooltip text={t('card.stop.title', { name: config.displayName })}>
+        <button
+          type="button"
+          onClick={onStop}
+          aria-label={t('card.stop.ariaLabel', { name: config.displayName })}
+          className={cn(
+            'px-4 py-row rounded-lg flex items-center gap-compact transition-colors',
+            statusColor.badge.error,
+            statusColor.hover.errorStrong,
+          )}
+        >
+          <Square className="w-4 h-4" />
+          <span className="text-sm font-medium">{t('card.action.stopLabel')}</span>
+        </button>
+      </Tooltip>
     );
   }
   return (
-    <button
-      type="button"
-      onClick={onStart}
-      disabled={enabledTestCount === 0}
-      title={
+    <Tooltip
+      text={
         enabledTestCount === 0
           ? t('card.start.titleEmpty', { name: config.displayName })
           : t('card.start.titleEnabled', {
@@ -163,17 +162,23 @@ function ModuleActionButton({
               name: config.displayName,
             })
       }
-      aria-label={t('card.start.ariaLabel', { name: config.displayName })}
-      className={cn(
-        'px-4 py-row rounded-lg flex items-center gap-compact transition-colors',
-        enabledTestCount > 0
-          ? 'bg-brand-primary text-on-brand hover:bg-brand-primary'
-          : 'bg-surface-base text-text-muted cursor-not-allowed',
-      )}
     >
-      <Play className="w-4 h-4" />
-      <span className="text-sm font-medium">{t('card.action.startLabel')}</span>
-    </button>
+      <button
+        type="button"
+        onClick={onStart}
+        disabled={enabledTestCount === 0}
+        aria-label={t('card.start.ariaLabel', { name: config.displayName })}
+        className={cn(
+          'px-4 py-row rounded-lg flex items-center gap-compact transition-colors',
+          enabledTestCount > 0
+            ? 'bg-brand-primary text-on-brand hover:bg-brand-primary'
+            : 'bg-surface-base text-text-muted cursor-not-allowed',
+        )}
+      >
+        <Play className="w-4 h-4" />
+        <span className="text-sm font-medium">{t('card.action.startLabel')}</span>
+      </button>
+    </Tooltip>
   );
 }
 
@@ -257,29 +262,32 @@ function ModuleExpandedContent({
           <RefreshCw className={cn(iconTokens.size.sm, 'text-text-muted')} />
           <span className="text-sm text-text-secondary">{t('card.section.autoStartLabel')}</span>
         </div>
-        <button
-          type="button"
-          onClick={(): void => onToggleAutoStart(!config.autoStart)}
-          title={
+        <Tooltip
+          text={
             config.autoStart ? t('card.autoStart.titleEnabled') : t('card.autoStart.titleDisabled')
           }
-          aria-label={
-            config.autoStart
-              ? t('card.autoStart.ariaLabelEnabled')
-              : t('card.autoStart.ariaLabelDisabled')
-          }
-          className={cn(
-            'w-10 h-6 rounded-full relative transition-colors',
-            config.autoStart ? 'bg-brand-primary' : 'bg-surface-border',
-          )}
         >
-          <span
+          <button
+            type="button"
+            onClick={(): void => onToggleAutoStart(!config.autoStart)}
+            aria-label={
+              config.autoStart
+                ? t('card.autoStart.ariaLabelEnabled')
+                : t('card.autoStart.ariaLabelDisabled')
+            }
             className={cn(
-              'absolute top-1 w-4 h-4 rounded-full bg-knob transition-transform',
-              config.autoStart ? 'translate-x-5' : 'translate-x-1',
+              'w-10 h-6 rounded-full relative transition-colors',
+              config.autoStart ? 'bg-brand-primary' : 'bg-surface-border',
             )}
-          />
-        </button>
+          >
+            <span
+              className={cn(
+                'absolute top-1 w-4 h-4 rounded-full bg-knob transition-transform',
+                config.autoStart ? 'translate-x-5' : 'translate-x-1',
+              )}
+            />
+          </button>
+        </Tooltip>
       </div>
 
       {/* Test List */}
@@ -289,34 +297,42 @@ function ModuleExpandedContent({
         </div>
         <div className="stack-xs">
           {config.tests.map((test) => (
-            <label
+            <Tooltip
+              text={t('card.test.title', { description: test.description, name: test.name })}
               key={test.id}
-              title={t('card.test.title', { description: test.description, name: test.name })}
-              className={cn(
-                'flex items-center gap-default pad-xs rounded-lg cursor-pointer transition-colors',
-                'hover:bg-surface-hover',
-                // The unchecked box already says "off"; dimming cost contrast.
-                test.enabled ? '' : 'text-text-muted',
-              )}
             >
-              <input
-                type="checkbox"
-                checked={test.enabled}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-                  onToggleTest(test.id, e.target.checked)
-                }
-                aria-label={t('card.test.ariaLabel', { name: test.name })}
-                className="w-4 h-4"
-                style={{ accentColor: config.color }}
-              />
-              <div className="flex-1 min-w-0">
-                <div className="label">{test.name}</div>
-                <div className="text-xs text-text-muted truncate">{test.description}</div>
-              </div>
-              {isRunning && status.currentTest === test.id && (
-                <span className={cn(statusColor.dot, statusColor.bg.success, 'animate-pulse')} />
+              {(description) => (
+                <label
+                  className={cn(
+                    'flex items-center gap-default pad-xs rounded-lg cursor-pointer transition-colors',
+                    'hover:bg-surface-hover',
+                    // The unchecked box already says "off"; dimming cost contrast.
+                    test.enabled ? '' : 'text-text-muted',
+                  )}
+                >
+                  <input
+                    {...description}
+                    type="checkbox"
+                    checked={test.enabled}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                      onToggleTest(test.id, e.target.checked)
+                    }
+                    aria-label={t('card.test.ariaLabel', { name: test.name })}
+                    className="w-4 h-4"
+                    style={{ accentColor: config.color }}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="label">{test.name}</div>
+                    <div className="text-xs text-text-muted truncate">{test.description}</div>
+                  </div>
+                  {isRunning && status.currentTest === test.id && (
+                    <span
+                      className={cn(statusColor.dot, statusColor.bg.success, 'animate-pulse')}
+                    />
+                  )}
+                </label>
               )}
-            </label>
+            </Tooltip>
           ))}
         </div>
       </div>
@@ -361,14 +377,8 @@ export function ModuleCard({
       <div className={cn(spacing.pad.default, 'flex-between')}>
         <div className="flex items-center gap-default flex-1">
           {/* Enable Toggle */}
-          <button
-            type="button"
-            onClick={(): void => onToggleModule(!config.enabled)}
-            className={cn(
-              'w-8 h-8 rounded-lg flex-center transition-colors',
-              config.enabled ? statusColor.badge.successStrong : 'bg-surface-base text-text-muted',
-            )}
-            title={
+          <Tooltip
+            text={
               config.enabled
                 ? t('card.module.titleEnabled', {
                     name: config.displayName,
@@ -379,14 +389,25 @@ export function ModuleCard({
                     standard: config.standard,
                   })
             }
-            aria-label={
-              config.enabled
-                ? t('card.module.ariaLabelEnabled', { name: config.displayName })
-                : t('card.module.ariaLabelDisabled', { name: config.displayName })
-            }
           >
-            <Power className="w-4 h-4" />
-          </button>
+            <button
+              type="button"
+              onClick={(): void => onToggleModule(!config.enabled)}
+              className={cn(
+                'w-8 h-8 rounded-lg flex-center transition-colors',
+                config.enabled
+                  ? statusColor.badge.successStrong
+                  : 'bg-surface-base text-text-muted',
+              )}
+              aria-label={
+                config.enabled
+                  ? t('card.module.ariaLabelEnabled', { name: config.displayName })
+                  : t('card.module.ariaLabelDisabled', { name: config.displayName })
+              }
+            >
+              <Power className="w-4 h-4" />
+            </button>
+          </Tooltip>
 
           {/* Module Info */}
           <div className="flex-1 min-w-0">
@@ -415,19 +436,20 @@ export function ModuleCard({
         {/* Actions */}
         <div className="flex items-center gap-compact">
           {/* Configure Button */}
-          <button
-            type="button"
-            onClick={onConfigure}
-            className={cn(
-              'pad-xs rounded-lg transition-colors',
-              'text-text-muted hover:text-text-primary',
-              'hover:bg-surface-hover',
-            )}
-            title={t('card.configure.title', { name: config.displayName })}
-            aria-label={t('card.configure.ariaLabel', { name: config.displayName })}
-          >
-            <Settings2 className="w-4 h-4" />
-          </button>
+          <Tooltip text={t('card.configure.title', { name: config.displayName })}>
+            <button
+              type="button"
+              onClick={onConfigure}
+              className={cn(
+                'pad-xs rounded-lg transition-colors',
+                'text-text-muted hover:text-text-primary',
+                'hover:bg-surface-hover',
+              )}
+              aria-label={t('card.configure.ariaLabel', { name: config.displayName })}
+            >
+              <Settings2 className="w-4 h-4" />
+            </button>
+          </Tooltip>
 
           {/* Start/Stop Button */}
           <ModuleActionButton
@@ -439,25 +461,28 @@ export function ModuleCard({
           />
 
           {/* Expand Toggle */}
-          <button
-            type="button"
-            onClick={(): void => setExpanded(!expanded)}
-            className={cn(
-              'pad-xs rounded-lg transition-colors',
-              'text-text-muted hover:text-text-primary',
-              'hover:bg-surface-hover',
-            )}
-            title={
+          <Tooltip
+            text={
               expanded
                 ? t('card.expand.titleExpanded', { name: config.displayName })
                 : t('card.expand.titleCollapsed', { name: config.displayName })
             }
-            aria-label={
-              expanded ? t('card.expand.ariaLabelExpanded') : t('card.expand.ariaLabelCollapsed')
-            }
           >
-            {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-          </button>
+            <button
+              type="button"
+              onClick={(): void => setExpanded(!expanded)}
+              className={cn(
+                'pad-xs rounded-lg transition-colors',
+                'text-text-muted hover:text-text-primary',
+                'hover:bg-surface-hover',
+              )}
+              aria-label={
+                expanded ? t('card.expand.ariaLabelExpanded') : t('card.expand.ariaLabelCollapsed')
+              }
+            >
+              {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </button>
+          </Tooltip>
         </div>
       </div>
 

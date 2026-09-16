@@ -10,6 +10,7 @@
 import { ChevronRight } from 'lucide-react';
 import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
+import { tests } from '../../data/help/tests';
 import type { TestHelp } from '../../data/help/types';
 import { cn, icon as iconTokens, layout, radius, spacing, status } from '../../styles/theme';
 import { CopyCommandButton } from './CopyCommandButton';
@@ -20,6 +21,7 @@ interface TestDetailViewProps {
   onBack: () => void;
   onCopy: (cmd: string) => void;
   copiedCommand: string | null;
+  onSelectTest: (test: TestHelp) => void;
 }
 
 export function TestDetailView({
@@ -28,6 +30,7 @@ export function TestDetailView({
   onBack,
   onCopy,
   copiedCommand,
+  onSelectTest,
 }: TestDetailViewProps): ReactElement {
   const { t } = useTranslation('help');
   return (
@@ -36,6 +39,7 @@ export function TestDetailView({
       <button
         type="button"
         onClick={onBack}
+        data-testid="help-back-to-tests"
         className={cn(layout.inline.tight, 'body-small text-text-muted hover:text-text-primary')}
       >
         <ChevronRight className={cn(iconTokens.size.sm, 'rotate-180')} />
@@ -63,7 +67,9 @@ export function TestDetailView({
         <h4 className={cn('section-title', status.text.success, spacing.margin.bottom.inline)}>
           {t('detail.whenToUse')}
         </h4>
-        <p className="body-small text-text-primary whitespace-pre-line">{test.whenToUse}</p>
+        <p className="body-small text-text-primary whitespace-pre-line">
+          {t(`tests.${test.id}.whenToUse`)}
+        </p>
       </div>
 
       {/* When NOT to Use */}
@@ -186,14 +192,35 @@ export function TestDetailView({
             {t('detail.relatedTests')}
           </h4>
           <div className={layout.inline.wrap}>
-            {test.seeAlso.map((related: string) => (
-              <span
-                key={related}
-                className={cn('caption bg-surface-base px-cell py-compact', radius.default)}
-              >
-                {related}
-              </span>
-            ))}
+            {test.seeAlso.map((related: string) => {
+              const relatedTest = tests[related];
+              return !relatedTest ? (
+                <a
+                  key={related}
+                  href={related}
+                  target="_blank"
+                  rel="noreferrer"
+                  data-testid="help-standard-link"
+                  className="caption underline text-brand-primary"
+                >
+                  {test.id === 'custom_stream'
+                    ? t('detail.relatedMethodology')
+                    : `${t('detail.standardReference')}: ${test.standard}`}
+                </a>
+              ) : (
+                <button
+                  type="button"
+                  key={related}
+                  onClick={() => onSelectTest(relatedTest)}
+                  className={cn(
+                    'caption bg-surface-base px-cell py-compact text-brand-primary underline',
+                    radius.default,
+                  )}
+                >
+                  {relatedTest.name}
+                </button>
+              );
+            })}
           </div>
         </div>
       ) : null}

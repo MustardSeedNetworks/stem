@@ -19,6 +19,7 @@ import { StopOutcomeMessage } from '../components/StopOutcomeMessage';
 import { ReflectorSection } from '../components/settings/ReflectorSection';
 import { Alert } from '../components/ui/Alert';
 import { Button } from '../components/ui/Button';
+import { Tooltip } from '../components/ui/Tooltip';
 import { useAppContext } from '../contexts/AppContext';
 import { useRole } from '../contexts/RoleContext';
 import { useCapabilities } from '../hooks/useCapabilities';
@@ -302,28 +303,29 @@ export function ReflectorPage(): ReactElement {
               )}
             </button>
           ) : (
-            <button
-              type="button"
-              onClick={onStartReflector}
-              className="btn btn-primary"
-              disabled={!selectedInterface || isStartingReflector || !reflectorSupported}
-              aria-busy={isStartingReflector}
-              aria-disabled={!reflectorSupported}
-              title={!reflectorSupported ? unsupportedTooltip : undefined}
-              data-testid="reflector-start-button"
-            >
-              {isStartingReflector ? (
-                <>
-                  <RefreshCw className="w-4 h-4 animate-spin" aria-hidden="true" />
-                  {t('status.starting')}
-                </>
-              ) : (
-                <>
-                  <Play className="w-4 h-4" aria-hidden="true" />
-                  {t('reflector.startButton')}
-                </>
-              )}
-            </button>
+            <Tooltip text={!reflectorSupported ? unsupportedTooltip : undefined}>
+              <button
+                type="button"
+                onClick={onStartReflector}
+                className="btn btn-primary"
+                disabled={!selectedInterface || isStartingReflector || !reflectorSupported}
+                aria-busy={isStartingReflector}
+                aria-disabled={!reflectorSupported}
+                data-testid="reflector-start-button"
+              >
+                {isStartingReflector ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" aria-hidden="true" />
+                    {t('status.starting')}
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-4 h-4" aria-hidden="true" />
+                    {t('reflector.startButton')}
+                  </>
+                )}
+              </button>
+            </Tooltip>
           )}
 
           <StopOutcomeMessage outcome={reflectorStopOutcome} />

@@ -9,8 +9,17 @@
  * @license Proprietary
  */
 
-import { lazy, type ReactElement, type ReactNode, Suspense, useEffect, useState } from 'react';
-import { Navigate, Route, Routes } from 'react-router';
+import {
+  lazy,
+  type ReactElement,
+  type ReactNode,
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
+import { matchPath, Navigate, Route, Routes, useLocation } from 'react-router';
 import { TestResults } from './components/TestResults';
 import { useNavGroups } from './navGroups';
 import { type PageConfig, usePages } from './pageRegistry';
@@ -44,12 +53,24 @@ export function AppShell({ version, topBar, testResult, testStatus }: AppShellPr
   useRecordTestResult(testResult);
   const navGroups = useNavGroups();
   const pages = usePages();
+  const location = useLocation();
+  const routePath = pages.find((page) => matchPath(page.path, location.pathname))?.path;
+  const helpTopic = pages.find((page) => page.path === routePath)?.help;
   const settingsOpen = useShellStore((s) => s.settingsOpen);
   const setSettingsOpen = useShellStore((s) => s.setSettingsOpen);
   const helpOpen = useShellStore((s) => s.helpOpen);
   const setHelpOpen = useShellStore((s) => s.setHelpOpen);
+  const closeHelp = useCallback(() => setHelpOpen(false), [setHelpOpen]);
   const [settingsLoaded, setSettingsLoaded] = useState(settingsOpen);
   const [helpLoaded, setHelpLoaded] = useState(helpOpen);
+
+  const previousRoute = useRef(routePath);
+  useEffect(() => {
+    if (previousRoute.current !== routePath) {
+      previousRoute.current = routePath;
+      setHelpOpen(false);
+    }
+  }, [routePath, setHelpOpen]);
 
   useEffect(() => {
     if (settingsOpen) {
@@ -143,7 +164,7 @@ export function AppShell({ version, topBar, testResult, testStatus }: AppShellPr
 
       {helpLoaded ? (
         <Suspense fallback={null}>
-          <HelpDrawer isOpen={helpOpen} onClose={() => setHelpOpen(false)} />
+          {helpOpen ? <HelpDrawer isOpen={true} {...helpTopic} onClose={closeHelp} /> : null}
         </Suspense>
       ) : null}
     </>
@@ -156,6 +177,7 @@ export function AppShell({ version, topBar, testResult, testStatus }: AppShellPr
  * than from the page body. Pages render only their own content.
  */
 function PageWithHeader({ page, children }: { page: PageConfig; children: ReactNode }) {
+  const setHelpOpen = useShellStore((state) => state.setHelpOpen);
   return (
     <section className="stack-xl">
       <Breadcrumbs />
@@ -165,6 +187,7 @@ function PageWithHeader({ page, children }: { page: PageConfig; children: ReactN
         eyebrow={page.eyebrow}
         title={page.title}
         description={page.description}
+        onHelp={() => setHelpOpen(true)}
       />
       {children}
     </section>

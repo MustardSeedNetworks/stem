@@ -45,7 +45,7 @@ describe('TSNConfigForm — i18n', () => {
     renderForm();
 
     expect(screen.getByText('Planificación del tráfico (802.1Qbv)')).toBeInTheDocument();
-    expect(screen.getByText(/IEEE 1588/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { description: /IEEE 1588/ })).toBeInTheDocument();
   });
 
   it('uses the shared summary, so no form is left with its own copy', () => {

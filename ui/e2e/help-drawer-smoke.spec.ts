@@ -22,7 +22,7 @@ import { skipSetupWizard } from './helpers/auth';
 test.describe('Help Drawer (smoke)', () => {
   test.beforeEach(async ({ page }) => {
     await skipSetupWizard(page);
-    await page.goto('/');
+    await page.goto('/tests/benchmark');
   });
 
   test('opens, shows content, switches a tab, and closes', async ({ page }) => {
@@ -40,6 +40,11 @@ test.describe('Help Drawer (smoke)', () => {
     // own container rather than `.first()` of a drawer-wide text match: the
     // index pick passed against whichever node happened to come first, which
     // was not necessarily in the tests list at all (#941).
+    await expect(drawer.getByTestId('help-standard-link')).toHaveAttribute(
+      'href',
+      'https://www.rfc-editor.org/rfc/rfc2544.html',
+    );
+    await drawer.getByTestId('help-back-to-tests').click();
     const testsPanel = drawer.getByTestId('help-drawer-tests');
     await expect(testsPanel).toBeVisible();
     await expect(testsPanel).toContainText(/RFC 2544/i);

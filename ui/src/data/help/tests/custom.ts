@@ -17,10 +17,6 @@ including burst mode, specific MAC addresses, VLAN tagging, and controlled rates
 Useful for stress testing, QoS validation, and network diagnostics.`,
     laymanDesc: `Create your own custom traffic patterns for specialized tests.
 Useful when standard tests don't cover your specific scenario.`,
-    whenToUse: `• Custom stress testing scenarios
-• QoS and traffic shaping validation
-• Network diagnostics and debugging
-• Vendor-specific testing requirements`,
     whenNotToUse: `• Use standard tests (RFC 2544, Y.1564) when applicable
 • For certification or compliance testing`,
     parameters: [
@@ -184,6 +180,6 @@ Useful when standard tests don't cover your specific scenario.`,
       'VLAN tagging requires 802.1Q-capable equipment',
       'Monitor receiver to verify packet delivery',
     ],
-    seeAlso: ['throughput', 'back_to_back'],
+    seeAlso: ['https://www.rfc-editor.org/rfc/rfc2544.html', 'throughput', 'back_to_back'],
   },
 };

@@ -87,7 +87,7 @@ export function RFC2889ConfigForm({
     watch,
     formState: { errors },
   } = form;
-  const { t } = useTranslation('settings');
+  const { t } = useTranslation(['settings', 'help']);
 
   if (!hasRFC2889Tests) {
     return null;
@@ -122,7 +122,7 @@ export function RFC2889ConfigForm({
             <div>
               <label htmlFor="rfc2889-duration" className="flex items-center gap-tight label">
                 {t('testConfig.rfc2889.params.duration')}
-                <HelpIcon tooltip={t('testConfig.rfc2889.params.durationHelp')} />
+                <HelpIcon tooltip={t('help:tooltips.testConfig.rfc2889.params.durationHelp')} />
               </label>
               <input
                 id="rfc2889-duration"
@@ -137,7 +137,7 @@ export function RFC2889ConfigForm({
             <div>
               <label htmlFor="rfc2889-warmup" className="flex items-center gap-tight label">
                 {t('testConfig.rfc2889.params.warmup')}
-                <HelpIcon tooltip={t('testConfig.rfc2889.params.warmupHelp')} />
+                <HelpIcon tooltip={t('help:tooltips.testConfig.rfc2889.params.warmupHelp')} />
               </label>
               <input
                 id="rfc2889-warmup"
@@ -154,7 +154,7 @@ export function RFC2889ConfigForm({
         <div>
           <label htmlFor="rfc2889-framesize" className="flex items-center gap-tight label">
             {t('testConfig.rfc2889.params.frameSize')}
-            <HelpIcon tooltip={t('testConfig.rfc2889.params.frameSizeHelp')} />
+            <HelpIcon tooltip={t('help:tooltips.testConfig.rfc2889.params.frameSizeHelp')} />
           </label>
           <select
             id="rfc2889-framesize"
@@ -175,7 +175,7 @@ export function RFC2889ConfigForm({
             <div>
               <label htmlFor="rfc2889-portcount" className="flex items-center gap-tight label">
                 {t('testConfig.rfc2889.switch.portCount')}
-                <HelpIcon tooltip={t('testConfig.rfc2889.switch.portCountHelp')} />
+                <HelpIcon tooltip={t('help:tooltips.testConfig.rfc2889.switch.portCountHelp')} />
               </label>
               <input
                 id="rfc2889-portcount"
@@ -190,7 +190,7 @@ export function RFC2889ConfigForm({
             <div>
               <label htmlFor="rfc2889-pattern" className="flex items-center gap-tight label">
                 {t('testConfig.rfc2889.switch.pattern')}
-                <HelpIcon tooltip={t('testConfig.rfc2889.switch.patternHelp')} />
+                <HelpIcon tooltip={t('help:tooltips.testConfig.rfc2889.switch.patternHelp')} />
               </label>
               <select
                 id="rfc2889-pattern"
@@ -212,7 +212,7 @@ export function RFC2889ConfigForm({
           <div>
             <label htmlFor="rfc2889-addresscount" className="flex items-center gap-tight label">
               {t('testConfig.rfc2889.switch.addressCount')}
-              <HelpIcon tooltip={t('testConfig.rfc2889.switch.addressCountHelp')} />
+              <HelpIcon tooltip={t('help:tooltips.testConfig.rfc2889.switch.addressCountHelp')} />
             </label>
             <input
               id="rfc2889-addresscount"
@@ -228,7 +228,7 @@ export function RFC2889ConfigForm({
         <div>
           <label htmlFor="rfc2889-loss" className="flex items-center gap-tight label">
             {t('testConfig.rfc2889.switch.loss')}
-            <HelpIcon tooltip={t('testConfig.rfc2889.switch.lossHelp')} />
+            <HelpIcon tooltip={t('help:tooltips.testConfig.rfc2889.switch.lossHelp')} />
           </label>
           <input
             id="rfc2889-loss"

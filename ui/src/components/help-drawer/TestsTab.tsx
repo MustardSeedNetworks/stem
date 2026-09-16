@@ -21,7 +21,16 @@ interface TestsTabProps {
   getCategoryIcon: (id: string) => ReactElement;
 }
 
-const categoryOrder = ['rfc2544', 'y1564', 'rfc2889', 'rfc6349', 'y1731', 'mef', 'tsn'];
+const categoryOrder = [
+  'rfc2544',
+  'y1564',
+  'rfc2889',
+  'rfc6349',
+  'y1731',
+  'mef',
+  'tsn',
+  'trafficgen',
+];
 
 export function TestsTab({
   filteredTests,

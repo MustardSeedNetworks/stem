@@ -1,3 +1,4 @@
+import { Tooltip } from './ui/Tooltip';
 /**
  * @fileoverview TopBar — the shell's top strip + test-master control row.
  * @description Connection badge, role chip, theme/refresh/logout controls, the
@@ -96,43 +97,48 @@ export function TopBar({
         </div>
         <div className="flex items-center gap-compact">
           <RoleChip />
-          <button
-            type="button"
-            data-testid="header-theme-toggle"
-            onClick={onToggleTheme}
-            className="pad-xs rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover"
-            title={
-              isDark ? t('accessibility.switchToLightMode') : t('accessibility.switchToDarkMode')
-            }
-            aria-label={
+          <Tooltip
+            text={
               isDark ? t('accessibility.switchToLightMode') : t('accessibility.switchToDarkMode')
             }
           >
-            {isDark ? (
-              <Sun className="h-5 w-5" aria-hidden="true" />
-            ) : (
-              <Moon className="h-5 w-5" aria-hidden="true" />
-            )}
-          </button>
-          <button
-            type="button"
-            onClick={onRefresh}
-            className="pad-xs rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover"
-            title={t('tooltips.chrome.refresh')}
-            aria-label={t('accessibility.refreshInterfaces')}
-          >
-            <RefreshCw className="h-5 w-5" aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            onClick={onLogout}
-            className="pad-xs rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover"
-            title={t('tooltips.chrome.logout')}
-            aria-label={t('buttons.logout')}
-            data-testid="logout-button"
-          >
-            <LogOut className="h-5 w-5" aria-hidden="true" />
-          </button>
+            <button
+              type="button"
+              data-testid="header-theme-toggle"
+              onClick={onToggleTheme}
+              className="pad-xs rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover"
+              aria-label={
+                isDark ? t('accessibility.switchToLightMode') : t('accessibility.switchToDarkMode')
+              }
+            >
+              {isDark ? (
+                <Sun className="h-5 w-5" aria-hidden="true" />
+              ) : (
+                <Moon className="h-5 w-5" aria-hidden="true" />
+              )}
+            </button>
+          </Tooltip>
+          <Tooltip text={t('tooltips.chrome.refresh')}>
+            <button
+              type="button"
+              onClick={onRefresh}
+              className="pad-xs rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover"
+              aria-label={t('accessibility.refreshInterfaces')}
+            >
+              <RefreshCw className="h-5 w-5" aria-hidden="true" />
+            </button>
+          </Tooltip>
+          <Tooltip text={t('tooltips.chrome.logout')}>
+            <button
+              type="button"
+              onClick={onLogout}
+              className="pad-xs rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-hover"
+              aria-label={t('buttons.logout')}
+              data-testid="logout-button"
+            >
+              <LogOut className="h-5 w-5" aria-hidden="true" />
+            </button>
+          </Tooltip>
         </div>
       </div>
 

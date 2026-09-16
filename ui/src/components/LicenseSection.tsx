@@ -1,3 +1,4 @@
+import { Tooltip } from './ui/Tooltip';
 /**
  * @fileoverview The Stem - License Section Component
  * @description Displays license status and provides activation functionality.
@@ -189,35 +190,37 @@ function ActivationForm({
         />
       </div>
 
-      <button
-        type="button"
-        onClick={onActivate}
-        disabled={loading || !licenseKey.trim()}
-        title={t('settings:license.activateTooltip')}
-        className="btn btn-primary w-full"
-      >
-        {loading ? (
-          <>
-            <Loader2 className="w-4 h-4 animate-spin" /> {t('settings:license.activating')}
-          </>
-        ) : (
-          <>
-            <Shield className="w-4 h-4" /> {t('settings:license.activate')}
-          </>
-        )}
-      </button>
-
-      {showTrial ? (
+      <Tooltip text={t('settings:license.activateTooltip')}>
         <button
           type="button"
-          onClick={onStartTrial}
-          disabled={loading}
-          title={t('settings:license.trialTooltip', { days: TRIAL_DAYS })}
-          className="btn btn-secondary w-full"
+          onClick={onActivate}
+          disabled={loading || !licenseKey.trim()}
+          className="btn btn-primary w-full"
         >
-          <Clock className="w-4 h-4" />
-          {t('settings:license.startTrialDays', { days: TRIAL_DAYS })}
+          {loading ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" /> {t('settings:license.activating')}
+            </>
+          ) : (
+            <>
+              <Shield className="w-4 h-4" /> {t('settings:license.activate')}
+            </>
+          )}
         </button>
+      </Tooltip>
+
+      {showTrial ? (
+        <Tooltip text={t('settings:license.trialTooltip', { days: TRIAL_DAYS })}>
+          <button
+            type="button"
+            onClick={onStartTrial}
+            disabled={loading}
+            className="btn btn-secondary w-full"
+          >
+            <Clock className="w-4 h-4" />
+            {t('settings:license.startTrialDays', { days: TRIAL_DAYS })}
+          </button>
+        </Tooltip>
       ) : null}
     </div>
   );

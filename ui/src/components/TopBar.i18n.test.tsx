@@ -95,8 +95,7 @@ describe('TopBar — renders real locale copy', () => {
     renderTopBar();
 
     const refresh = screen.getByLabelText('Refresh interfaces');
-    expect(refresh).toHaveAttribute(
-      'title',
+    expect(refresh).toHaveAccessibleDescription(
       'Rescan available network interfaces and reload current status',
     );
   });

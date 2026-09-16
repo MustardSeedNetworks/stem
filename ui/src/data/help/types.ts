@@ -3,15 +3,19 @@
  * @description Shared interfaces for help content data structures.
  */
 
+import type { HelpTranslations } from '../../i18n/types';
+
+export type TestHelpId = Exclude<keyof HelpTranslations['tests'], 'intro'>;
+export type GlossaryId = keyof HelpTranslations['glossary']['entries'];
+
 export interface TestHelp {
-  id: string;
+  id: TestHelpId;
   name: string;
   standard: string;
   category: string;
   summary: string;
   techDesc: string;
   laymanDesc: string;
-  whenToUse: string;
   whenNotToUse: string;
   parameters: Parameter[];
   metrics: Metric[];

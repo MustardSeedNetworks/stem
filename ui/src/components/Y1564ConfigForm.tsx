@@ -1,3 +1,4 @@
+import { Tooltip } from './ui/Tooltip';
 /**
  * @fileoverview The Stem - Y.1564 Service Activation Test Configuration
  * @description Advanced configuration form for ITU-T Y.1564 / MEF Service Activation Testing.
@@ -141,7 +142,7 @@ export function Y1564ConfigForm({
 
   // Cross-field error (fdv > fd). valibot's v.check() surfaces under
   // formState.errors.root.<unique-key>; we render the first one found.
-  const { t } = useTranslation('settings');
+  const { t } = useTranslation(['settings', 'help']);
   const rootErrors = errors.root;
   const crossFieldError = rootErrors
     ? Object.values(rootErrors).find(
@@ -167,7 +168,7 @@ export function Y1564ConfigForm({
           <div>
             <label htmlFor="y1564-cir" className="flex items-center gap-tight label">
               {t('testConfig.y1564.bandwidth.cir')}
-              <HelpIcon tooltip={t('testConfig.y1564.bandwidth.cirHelp')} />
+              <HelpIcon tooltip={t('help:tooltips.testConfig.y1564.bandwidth.cirHelp')} />
             </label>
             <input
               id="y1564-cir"
@@ -183,7 +184,7 @@ export function Y1564ConfigForm({
           <div>
             <label htmlFor="y1564-eir" className="flex items-center gap-tight label">
               {t('testConfig.y1564.bandwidth.eir')}
-              <HelpIcon tooltip={t('testConfig.y1564.bandwidth.eirHelp')} />
+              <HelpIcon tooltip={t('help:tooltips.testConfig.y1564.bandwidth.eirHelp')} />
             </label>
             <input
               id="y1564-eir"
@@ -199,7 +200,7 @@ export function Y1564ConfigForm({
           <div>
             <label htmlFor="y1564-cbs" className="flex items-center gap-tight label">
               {t('testConfig.y1564.bandwidth.cbs')}
-              <HelpIcon tooltip={t('testConfig.y1564.bandwidth.cbsHelp')} />
+              <HelpIcon tooltip={t('help:tooltips.testConfig.y1564.bandwidth.cbsHelp')} />
             </label>
             <input
               id="y1564-cbs"
@@ -215,7 +216,7 @@ export function Y1564ConfigForm({
           <div>
             <label htmlFor="y1564-ebs" className="flex items-center gap-tight label">
               {t('testConfig.y1564.bandwidth.ebs')}
-              <HelpIcon tooltip={t('testConfig.y1564.bandwidth.ebsHelp')} />
+              <HelpIcon tooltip={t('help:tooltips.testConfig.y1564.bandwidth.ebsHelp')} />
             </label>
             <input
               id="y1564-ebs"
@@ -233,7 +234,7 @@ export function Y1564ConfigForm({
           <div>
             <label htmlFor="y1564-flr" className="flex items-center gap-tight label">
               {t('testConfig.y1564.sla.flr')}
-              <HelpIcon tooltip={t('testConfig.y1564.sla.flrHelp')} />
+              <HelpIcon tooltip={t('help:tooltips.testConfig.y1564.sla.flrHelp')} />
             </label>
             <input
               id="y1564-flr"
@@ -249,7 +250,7 @@ export function Y1564ConfigForm({
           <div>
             <label htmlFor="y1564-fd" className="flex items-center gap-tight label">
               {t('testConfig.y1564.sla.fd')}
-              <HelpIcon tooltip={t('testConfig.y1564.sla.fdHelp')} />
+              <HelpIcon tooltip={t('help:tooltips.testConfig.y1564.sla.fdHelp')} />
             </label>
             <input
               id="y1564-fd"
@@ -265,7 +266,7 @@ export function Y1564ConfigForm({
           <div>
             <label htmlFor="y1564-fdv" className="flex items-center gap-tight label">
               {t('testConfig.y1564.sla.fdv')}
-              <HelpIcon tooltip={t('testConfig.y1564.sla.fdvHelp')} />
+              <HelpIcon tooltip={t('help:tooltips.testConfig.y1564.sla.fdvHelp')} />
             </label>
             <input
               id="y1564-fdv"
@@ -280,26 +281,30 @@ export function Y1564ConfigForm({
 
         <FormSection
           title={t('testConfig.common.frameSizesTitle')}
-          help={<HelpIcon tooltip={t('testConfig.y1564.frameSizes.help')} />}
+          help={<HelpIcon tooltip={t('help:tooltips.testConfig.y1564.frameSizes.help')} />}
         >
           <div className="grid grid-cols-2 gap-compact">
             {EXTENDED_FRAME_SIZE_OPTIONS.map((option) => (
-              <label
+              <Tooltip
+                text={t('testConfig.y1564.frameSizes.includeTitle', { size: option.value })}
                 key={option.value}
-                title={t('testConfig.y1564.frameSizes.includeTitle', { size: option.value })}
-                className="flex items-center gap-compact pad-xs rounded-lg cursor-pointer hover:bg-surface-hover text-sm"
               >
-                <input
-                  type="checkbox"
-                  checked={frameSizes.includes(option.value)}
-                  onChange={() => toggleFrameSize(option.value)}
-                  aria-label={t('testConfig.common.frameSizeAria', { size: option.value })}
-                  className="w-4 h-4 accent-brand-primary"
-                />
-                <span className="text-text-primary">
-                  {t(`testConfig.common.${option.qualifier}`, { size: option.value })}
-                </span>
-              </label>
+                {(description) => (
+                  <label className="flex items-center gap-compact pad-xs rounded-lg cursor-pointer hover:bg-surface-hover text-sm">
+                    <input
+                      {...description}
+                      type="checkbox"
+                      checked={frameSizes.includes(option.value)}
+                      onChange={() => toggleFrameSize(option.value)}
+                      aria-label={t('testConfig.common.frameSizeAria', { size: option.value })}
+                      className="w-4 h-4 accent-brand-primary"
+                    />
+                    <span className="text-text-primary">
+                      {t(`testConfig.common.${option.qualifier}`, { size: option.value })}
+                    </span>
+                  </label>
+                )}
+              </Tooltip>
             ))}
           </div>
           <FieldError message={errors.frameSizes?.message} />
@@ -310,7 +315,7 @@ export function Y1564ConfigForm({
             <div>
               <label htmlFor="y1564-config-duration" className="flex items-center gap-tight label">
                 {t('testConfig.y1564.duration.configStep')}
-                <HelpIcon tooltip={t('testConfig.y1564.duration.configStepHelp')} />
+                <HelpIcon tooltip={t('help:tooltips.testConfig.y1564.duration.configStepHelp')} />
               </label>
               <input
                 id="y1564-config-duration"
@@ -332,7 +337,7 @@ export function Y1564ConfigForm({
             <div>
               <label htmlFor="y1564-perf-duration" className="flex items-center gap-tight label">
                 {t('testConfig.y1564.duration.perf')}
-                <HelpIcon tooltip={t('testConfig.y1564.duration.perfHelp')} />
+                <HelpIcon tooltip={t('help:tooltips.testConfig.y1564.duration.perfHelp')} />
               </label>
               <input
                 id="y1564-perf-duration"
@@ -355,7 +360,7 @@ export function Y1564ConfigForm({
           <div>
             <label htmlFor="y1564-vlan" className="flex items-center gap-tight label">
               {t('testConfig.y1564.vlan.id')}
-              <HelpIcon tooltip={t('testConfig.y1564.vlan.idHelp')} />
+              <HelpIcon tooltip={t('help:tooltips.testConfig.y1564.vlan.idHelp')} />
             </label>
             <input
               id="y1564-vlan"
@@ -376,7 +381,7 @@ export function Y1564ConfigForm({
             <div>
               <label htmlFor="y1564-pcp" className="flex items-center gap-tight label">
                 {t('testConfig.y1564.vlan.pcp')}
-                <HelpIcon tooltip={t('testConfig.y1564.vlan.pcpHelp')} />
+                <HelpIcon tooltip={t('help:tooltips.testConfig.y1564.vlan.pcpHelp')} />
               </label>
               <select
                 id="y1564-pcp"
@@ -394,10 +399,7 @@ export function Y1564ConfigForm({
           )}
 
           {/* Color-Aware Mode */}
-          <label
-            title={t('testConfig.y1564.vlan.colorAwareTitle')}
-            className="flex items-center gap-default pad-xs rounded-lg cursor-pointer hover:bg-surface-hover"
-          >
+          <label className="flex items-center gap-default pad-xs rounded-lg cursor-pointer hover:bg-surface-hover">
             <input
               type="checkbox"
               {...register('colorAware')}
@@ -407,7 +409,7 @@ export function Y1564ConfigForm({
             <div>
               <div className="font-medium text-sm flex items-center gap-tight">
                 {t('testConfig.y1564.vlan.colorAware')}
-                <HelpIcon tooltip={t('testConfig.y1564.vlan.colorAwareHelp')} />
+                <HelpIcon tooltip={t('help:tooltips.testConfig.y1564.vlan.colorAwareHelp')} />
               </div>
               <div className="text-xs text-text-muted">
                 {t('testConfig.y1564.vlan.colorAwareHint')}
