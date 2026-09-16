@@ -188,3 +188,9 @@ settings:testConfig.y1731.summary.
 # `satisfies Record<RollupState, string>`, so a missing state is a type error
 # rather than a silently absent label.
 common:statusRollup.
+
+# HelpDrawer and getGlossary index these by the typed production test/term
+# registries. scripts/check-help-i18n.ts validates every concrete key and
+# rejects orphan IDs; its negative fixtures run in the same CI job.
+help:tests.
+help:glossary.entries.

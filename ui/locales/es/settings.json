@@ -283,35 +283,26 @@
       "duration": {
         "title": "Duración de la prueba",
         "perTest": "Duración por prueba (s)",
-        "perTestHelp": "Duración de cada iteración de la prueba. Una duración mayor da resultados más precisos pero tarda más.",
         "warmup": "Duración del calentamiento (s)",
-        "warmupHelp": "Tiempo para estabilizar el flujo de tráfico antes de iniciar las mediciones.",
-        "trials": "Número de repeticiones",
-        "trialsHelp": "Cuántas veces se repite cada punto de prueba. Más repeticiones mejoran la precisión estadística."
+        "trials": "Número de repeticiones"
       },
       "throughput": {
         "title": "Prueba de throughput",
         "resolution": "Resolución (%)",
-        "resolutionHelp": "Resolución de la búsqueda binaria. Predeterminado: 0,1 %.",
-        "maxLoss": "Pérdida máxima aceptable (%)",
-        "maxLossHelp": "Pérdida de tramas considerada aceptable. RFC 2544 especifica 0 %."
+        "maxLoss": "Pérdida máxima aceptable (%)"
       },
       "frameLoss": {
         "title": "Prueba de pérdida de tramas",
         "stepSize": "Tamaño del paso (%)",
-        "stepSizeHelp": "Incremento de carga para la medición de la tasa de pérdida de tramas.",
         "testsAt": "Se prueba en: {{points}}"
       },
       "frameSizes": {
-        "help": "Elija los tamaños de trama a probar. RFC 2544 especifica: 64, 128, 256, 512, 1024, 1280, 1518 bytes.",
         "includeTitle": "Incluir tramas de {{size}} bytes en el barrido RFC 2544"
       },
       "advanced": {
         "title": "Opciones avanzadas",
         "bidirectional": "Prueba bidireccional",
-        "bidirectionalHelp": "Ejecutar las pruebas en ambos sentidos a la vez.",
         "bidirectionalHint": "Probar las rutas TX y RX",
-        "bidirectionalTitle": "Enviar y medir tráfico en ambos sentidos a la vez",
         "bidirectionalAria": "Activar la prueba bidireccional"
       },
       "summary": {
@@ -335,43 +326,31 @@
       "bandwidth": {
         "title": "Parámetros de ancho de banda",
         "cir": "CIR (Mbps)",
-        "cirHelp": "Committed Information Rate: el ancho de banda garantizado que el servicio siempre proporciona.",
         "eir": "EIR (Mbps)",
-        "eirHelp": "Excess Information Rate: ancho de banda adicional disponible cuando la capacidad de la red lo permite (best-effort).",
         "cbs": "CBS (KB)",
-        "cbsHelp": "Committed Burst Size: ráfaga máxima de tráfico permitida al CIR antes de marcar el exceso.",
-        "ebs": "EBS (KB)",
-        "ebsHelp": "Excess Burst Size: ráfaga máxima de tráfico en exceso (por encima del CIR) que puede permitirse."
+        "ebs": "EBS (KB)"
       },
       "sla": {
         "title": "Umbrales de SLA",
         "flr": "Pérdida máxima de tramas (%)",
-        "flrHelp": "Frame Loss Ratio (FLR) máximo aceptable. Valores típicos de SLA: 0,01 % a 0,1 %.",
         "fd": "Retardo máximo de trama (ms)",
-        "fdHelp": "Frame Delay (FD) unidireccional máximo aceptable. Valores típicos: 5-50 ms según la clase de servicio.",
-        "fdv": "Jitter máximo (ms)",
-        "fdvHelp": "Frame Delay Variation (FDV/jitter) máxima aceptable. Valores típicos: 2-10 ms."
+        "fdv": "Jitter máximo (ms)"
       },
       "frameSizes": {
-        "help": "Elija los tamaños de trama a probar. RFC 2544 recomienda: 64, 128, 256, 512, 1024, 1280, 1518 bytes.",
         "includeTitle": "Incluir tramas de {{size}} bytes en el barrido de activación de servicio Y.1564"
       },
       "duration": {
         "title": "Duración de la prueba",
         "configStep": "Duración de cada escalón (s)",
-        "configStepHelp": "Duración de cada escalón de carga (25 %, 50 %, 75 %, 100 % del CIR) durante la prueba de configuración.",
         "configTotal": "Prueba de configuración total: ~{{seconds}} s",
         "perf": "Duración de rendimiento (s)",
-        "perfHelp": "Duración de la prueba de rendimiento sostenido al 100 % del CIR. Y.1564 recomienda un mínimo de 15 minutos (900 s).",
         "perfMinutes": "= {{minutes}} minutos"
       },
       "vlan": {
         "title": "Ajustes de VLAN",
         "id": "VLAN ID",
-        "idHelp": "Etiqueta VLAN para el tráfico de prueba. Use 0 para tráfico sin etiquetar.",
         "untagged": "Tráfico sin etiquetar",
         "pcp": "Prioridad (PCP)",
-        "pcpHelp": "Priority Code Point (802.1p). 0 = Best Effort, 7 = prioridad máxima.",
         "pcp0": "0 - Best Effort (BE)",
         "pcp1": "1 - Background (BK)",
         "pcp2": "2 - Excellent Effort (EE)",
@@ -381,7 +360,6 @@
         "pcp6": "6 - Internetwork Control (IC)",
         "pcp7": "7 - Network Control (NC)",
         "colorAware": "Modo consciente del color",
-        "colorAwareHelp": "Activar la prueba de doble tasa con tráfico verde (CIR) y amarillo (EIR).",
         "colorAwareHint": "Probar la separación de tráfico verde/amarillo",
         "colorAwareTitle": "Enviar tráfico como verde (dentro de perfil, conforme al CIR) y amarillo (fuera de perfil, conforme al EIR) y verificar que cada color se trata correctamente",
         "colorAwareAria": "Activar la prueba Y.1564 consciente del color"
@@ -398,42 +376,30 @@
       "traffic": {
         "title": "Parámetros de tráfico",
         "frameSize": "Tamaño de trama",
-        "frameSizeHelp": "Tamaño de la trama Ethernet, FCS incluido.",
         "rate": "Tasa (% de la tasa de línea)",
-        "rateHelp": "Tasa de tráfico como porcentaje de la tasa de línea de la interfaz.",
         "duration": "Duración (s)",
-        "durationHelp": "Duración de la generación de tráfico.",
-        "warmup": "Calentamiento (s)",
-        "warmupHelp": "Periodo de calentamiento antes de medir."
+        "warmup": "Calentamiento (s)"
       },
       "stream": {
         "title": "Configuración del flujo",
-        "id": "ID del flujo",
-        "idHelp": "Identificador único de este flujo de tráfico."
+        "id": "ID del flujo"
       },
       "burst": {
         "title": "Modo ráfaga",
         "enable": "Activar el modo ráfaga",
-        "enableTitle": "Enviar tramas en ráfagas cortas separadas por huecos de inactividad en lugar de a tasa continua; útil para probar el comportamiento de los búferes",
         "enableAria": "Activar la generación de tráfico en modo ráfaga",
         "size": "Tamaño de ráfaga (tramas)",
-        "sizeHelp": "Número de tramas por ráfaga.",
-        "gap": "Hueco entre ráfagas (µs)",
-        "gapHelp": "Hueco entre ráfagas en microsegundos."
+        "gap": "Hueco entre ráfagas (µs)"
       },
       "vlan": {
         "title": "Configuración de VLAN",
         "id": "VLAN ID",
-        "idHelp": "VLAN ID (0 = sin etiquetar).",
-        "priority": "Prioridad de VLAN",
-        "priorityHelp": "Prioridad 802.1p (0-7)."
+        "priority": "Prioridad de VLAN"
       },
       "mac": {
         "title": "Direcciones MAC (opcional)",
         "src": "MAC de origen",
-        "srcHelp": "Dirección MAC de origen (vacío = automática). Formato: AA:BB:CC:DD:EE:FF.",
-        "dst": "MAC de destino",
-        "dstHelp": "Dirección MAC de destino (vacío = difusión). Formato: AA:BB:CC:DD:EE:FF."
+        "dst": "MAC de destino"
       },
       "tests": {
         "customStream": "Flujo personalizado",
@@ -452,32 +418,22 @@
       "mep": {
         "title": "Configuración de MEP/MEG",
         "mepId": "MEP ID",
-        "mepIdHelp": "Identificador del Maintenance End Point (1-8191).",
         "megLevel": "Nivel de MEG",
-        "megLevelHelp": "Nivel del Maintenance Entity Group (0-7). Mayor = dominio más amplio.",
-        "megId": "MEG ID",
-        "megIdHelp": "Cadena identificadora del Maintenance Entity Group."
+        "megId": "MEG ID"
       },
       "oam": {
         "title": "Parámetros OAM",
         "ccm": "Intervalo de CCM",
-        "ccmHelp": "Intervalo de los Continuity Check Message según Y.1731.",
         "priority": "Prioridad",
-        "priorityHelp": "Valor de prioridad 802.1p (0-7). Normalmente 6-7 para OAM.",
         "tagged": "Usar etiquetado de prioridad (802.1Q)",
-        "taggedTitle": "Añadir una etiqueta VLAN IEEE 802.1Q con la prioridad elegida a todas las tramas OAM Y.1731",
         "taggedAria": "Usar el etiquetado de prioridad 802.1Q en las tramas OAM"
       },
       "measurement": {
         "title": "Parámetros de medición",
         "frameSize": "Tamaño de trama",
-        "frameSizeHelp": "Tamaño de las tramas OAM usadas para medir.",
         "interval": "Intervalo de medición (ms)",
-        "intervalHelp": "Intervalo entre sondas de medición.",
         "count": "Tramas por intervalo",
-        "countHelp": "Número de tramas de medición por intervalo.",
-        "duration": "Duración (s)",
-        "durationHelp": "Duración total de la medición."
+        "duration": "Duración (s)"
       },
       "tests": {
         "delay": "Medición de retardo",
@@ -498,25 +454,18 @@
       "params": {
         "title": "Parámetros de la prueba",
         "duration": "Duración (s)",
-        "durationHelp": "Duración de cada iteración de la prueba, en segundos.",
         "warmup": "Calentamiento (s)",
-        "warmupHelp": "Periodo de calentamiento antes de empezar a medir.",
-        "frameSize": "Tamaño de trama",
-        "frameSizeHelp": "Tamaño de la trama Ethernet usada en la prueba."
+        "frameSize": "Tamaño de trama"
       },
       "switch": {
         "title": "Configuración del switch",
         "portCount": "Número de puertos",
-        "portCountHelp": "Número de puertos del switch a probar.",
         "pattern": "Patrón de tráfico",
-        "patternHelp": "Cómo se reparte el tráfico entre los puertos.",
         "patternFullMesh": "Malla completa",
         "patternPair": "Por pares",
         "patternBroadcast": "Difusión",
         "addressCount": "Número de direcciones",
-        "addressCountHelp": "Número de direcciones MAC para las pruebas de aprendizaje y caché. RFC 2889 recomienda probar con 1, 10, 100, 1000 y 10000 direcciones.",
-        "loss": "Pérdida aceptable (%)",
-        "lossHelp": "Porcentaje máximo de pérdida de tramas aceptable. RFC 2889 especifica 0 %."
+        "loss": "Pérdida aceptable (%)"
       },
       "tests": {
         "forwarding": "Reenvío",
@@ -536,31 +485,23 @@
       "network": {
         "title": "Parámetros de red",
         "targetRate": "Tasa objetivo (Mbps)",
-        "targetRateHelp": "Throughput objetivo para la prueba TCP.",
         "minRtt": "RTT mínimo (ms)",
-        "minRttHelp": "Round-trip time mínimo esperado.",
-        "maxRtt": "RTT máximo (ms)",
-        "maxRttHelp": "Round-trip time máximo esperado."
+        "maxRtt": "RTT máximo (ms)"
       },
       "tcp": {
         "title": "Parámetros TCP",
         "rwnd": "Tamaño de RWND (bytes)",
-        "rwndHelp": "Tamaño de la ventana de recepción TCP. Debe ser >= BDP para un throughput óptimo.",
         "mss": "MSS",
-        "mssHelp": "Maximum Segment Size de TCP.",
         "mssMin": "{{size}} B (mín.)",
         "mssIpv6": "{{size}} B (IPv6)",
         "mssStandard": "{{size}} B (estándar)",
         "mssJumbo": "{{size}} B (jumbo)",
         "streams": "Flujos paralelos",
-        "streamsHelp": "Número de conexiones TCP en paralelo.",
         "mode": "Modo de prueba",
-        "modeHelp": "Sentido de la prueba de throughput.",
         "modeBidirectional": "Bidireccional",
         "modeUpstream": "Subida",
         "modeDownstream": "Bajada",
-        "duration": "Duración (s)",
-        "durationHelp": "Duración de la prueba en segundos."
+        "duration": "Duración (s)"
       },
       "tests": {
         "throughput": "Throughput",
@@ -580,43 +521,30 @@
       "params": {
         "title": "Parámetros de la prueba",
         "duration": "Duración (s)",
-        "durationHelp": "Duración de la prueba en segundos.",
         "warmup": "Calentamiento (s)",
-        "warmupHelp": "Periodo de calentamiento para la sincronización.",
-        "frameSize": "Tamaño de trama",
-        "frameSizeHelp": "Tamaño de la trama Ethernet usada en la prueba."
+        "frameSize": "Tamaño de trama"
       },
       "timing": {
         "title": "Requisitos de temporización",
         "maxLatency": "Latency máxima (ns)",
-        "maxLatencyHelp": "Latency extremo a extremo máxima aceptable, en nanosegundos.",
-        "maxJitter": "Jitter máximo (ns)",
-        "maxJitterHelp": "Jitter (PDV) máximo aceptable, en nanosegundos."
+        "maxJitter": "Jitter máximo (ns)"
       },
       "ptp": {
         "title": "Sincronización PTP",
         "enable": "Activar marcas de tiempo PTP (IEEE 1588)",
-        "enableTitle": "Usar marcas de tiempo hardware PTP IEEE 1588 para medir retardos por debajo del microsegundo; requiere una NIC compatible con PTP",
         "enableAria": "Activar las marcas de tiempo hardware PTP IEEE 1588",
         "require": "Exigir la sincronización PTP antes de la prueba",
-        "requireTitle": "Impedir que la prueba empiece hasta que el reloj PTP local se haya enganchado al grandmaster dentro de la tolerancia configurada",
         "requireAria": "Exigir la sincronización PTP antes de iniciar la prueba",
-        "syncOffset": "Desfase máximo de sincronización (ns)",
-        "syncOffsetHelp": "Desfase máximo aceptable del reloj PTP."
+        "syncOffset": "Desfase máximo de sincronización (ns)"
       },
       "scheduling": {
         "title": "Planificación del tráfico (802.1Qbv)",
         "preemption": "Activar la preempción de tramas (802.1Qbu)",
-        "preemptionTitle": "Permitir que el tráfico express interrumpa tramas preemptables en vuelo según IEEE 802.1Qbu; reduce el latency del tráfico crítico",
         "preemptionAria": "Activar la preempción de tramas IEEE 802.1Qbu",
         "cycleTime": "Tiempo de ciclo",
-        "cycleTimeHelp": "Duración del ciclo del Time-Aware Shaper.",
         "trafficClass": "Clase de tráfico",
-        "trafficClassHelp": "Clase de tráfico de las tramas de prueba (0-7).",
         "numClasses": "Número de clases de tráfico",
-        "numClassesHelp": "Total de clases de tráfico configuradas (1-8).",
-        "baseTime": "Tiempo base (ns)",
-        "baseTimeHelp": "Tiempo base de la planificación de puertas (ns desde epoch). 0 = usar la hora actual."
+        "baseTime": "Tiempo base (ns)"
       },
       "tests": {
         "latency": "Latency",

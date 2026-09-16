@@ -20,10 +20,6 @@ frames were lost, converging on the maximum lossless rate.`,
 (data packets) can travel on it before traffic jams (packet loss) start happening.
 It keeps increasing traffic until packets start getting dropped, then backs off to find
 the sweet spot.`,
-    whenToUse: `• Validating new network equipment before deployment
-• Troubleshooting slow network performance
-• Verifying ISP is delivering promised bandwidth
-• Baseline testing after configuration changes`,
     whenNotToUse: `• If you need latency measurements (use Latency test)
 • For TCP application performance (use RFC 6349)
 • For switch MAC table testing (use RFC 2889)`,
@@ -137,7 +133,12 @@ the sweet spot.`,
       'Run multiple iterations for production validation',
       'Small frames (64 bytes) stress packet processing; large frames test raw bandwidth',
     ],
-    seeAlso: ['latency', 'frame_loss', 'y1564_config'],
+    seeAlso: [
+      'https://www.rfc-editor.org/rfc/rfc2544.html',
+      'latency',
+      'frame_loss',
+      'y1564_config',
+    ],
   },
 
   latency: {
@@ -154,9 +155,6 @@ point A to point B and back. Lower numbers are better:
 • Under 1ms: Excellent (good for video calls, gaming)
 • 1-10ms: Good for most applications
 • Over 50ms: May cause noticeable delays`,
-    whenToUse: `• Validating low-latency network requirements
-• VoIP and video conferencing quality assurance
-• Real-time applications testing`,
     whenNotToUse: `• If you only need bandwidth measurements
 • For packet loss analysis at various rates`,
     parameters: [
@@ -195,7 +193,7 @@ point A to point B and back. Lower numbers are better:
       },
     ],
     tips: ['Test at multiple rates to understand how latency changes with load'],
-    seeAlso: ['throughput', 'frame_delay'],
+    seeAlso: ['https://www.rfc-editor.org/rfc/rfc2544.html', 'throughput', 'frame_delay'],
   },
 
   frame_loss: {
@@ -208,9 +206,6 @@ point A to point B and back. Lower numbers are better:
 by the DUT at various offered loads, starting at 100% and decreasing until zero loss.`,
     laymanDesc: `This test answers: "How many packets get lost as I push more traffic
 through the network?" It creates a stress curve showing when loss starts happening.`,
-    whenToUse: `• Understanding network behavior under overload
-• Capacity planning and upgrade justification
-• Comparing equipment performance`,
     whenNotToUse: `• For finding maximum lossless rate (use Throughput)
 • For latency analysis`,
     parameters: [],
@@ -232,7 +227,7 @@ through the network?" It creates a stress curve showing when loss starts happeni
       },
     ],
     tips: ['Use results to set traffic engineering thresholds'],
-    seeAlso: ['throughput'],
+    seeAlso: ['https://www.rfc-editor.org/rfc/rfc2544.html', 'throughput'],
   },
 
   back_to_back: {
@@ -245,9 +240,6 @@ through the network?" It creates a stress curve showing when loss starts happeni
 transmitted at minimum inter-frame gap before a frame is lost.`,
     laymanDesc: `This test measures "burst capacity" - how much data can be sent all at once.
 Higher numbers are better for handling waves of data like video streams.`,
-    whenToUse: `• Buffer sizing validation
-• Video streaming infrastructure
-• Burst traffic applications`,
     whenNotToUse: '• For sustained throughput (use Throughput test)',
     parameters: [],
     metrics: [
@@ -268,7 +260,7 @@ Higher numbers are better for handling waves of data like video streams.`,
       },
     ],
     tips: ['Results indicate effective buffer size of the DUT'],
-    seeAlso: ['throughput', 'congestion'],
+    seeAlso: ['https://www.rfc-editor.org/rfc/rfc2544.html', 'throughput', 'congestion'],
   },
 
   system_recovery: {
@@ -281,8 +273,6 @@ Higher numbers are better for handling waves of data like video streams.`,
 overload condition by transmitting at 110% of max throughput then reducing to 50%.`,
     laymanDesc: `After your network gets overwhelmed, how long does it take to get back to normal?
 Fast recovery (under 1 second) is good.`,
-    whenToUse: `• Mission-critical network validation
-• Understanding DUT behavior after congestion`,
     whenNotToUse: '• For normal operating conditions',
     parameters: [],
     metrics: [
@@ -303,7 +293,7 @@ Fast recovery (under 1 second) is good.`,
       },
     ],
     tips: [],
-    seeAlso: ['throughput', 'reset'],
+    seeAlso: ['https://www.rfc-editor.org/rfc/rfc2544.html', 'throughput', 'reset'],
   },
 
   reset: {
@@ -316,8 +306,6 @@ Fast recovery (under 1 second) is good.`,
 hardware or software reset events.`,
     laymanDesc: `When network equipment restarts, how long is the network down?
 Lower reset times mean less disruption during maintenance.`,
-    whenToUse: `• Maintenance window planning
-• High-availability architecture design`,
     whenNotToUse: '• For normal performance testing',
     parameters: [],
     metrics: [
@@ -338,6 +326,6 @@ Lower reset times mean less disruption during maintenance.`,
       },
     ],
     tips: [],
-    seeAlso: ['system_recovery'],
+    seeAlso: ['https://www.rfc-editor.org/rfc/rfc2544.html', 'system_recovery'],
   },
 };

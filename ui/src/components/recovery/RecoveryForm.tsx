@@ -1,3 +1,4 @@
+import { Tooltip } from '../ui/Tooltip';
 /**
  * @fileoverview Password Recovery Form Component
  * @description Allows admin to recover password using filesystem-based token.
@@ -104,15 +105,16 @@ function PasswordField({
           )}
           placeholder={placeholder}
         />
-        <button
-          type="button"
-          onClick={onToggleVisibility}
-          className="absolute right-2 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
-          title={showPassword ? hidePasswordLabel : showPasswordLabel}
-          aria-label={showPassword ? hidePasswordLabel : showPasswordLabel}
-        >
-          {showPassword ? <EyeOff className={icon.size.sm} /> : <Eye className={icon.size.sm} />}
-        </button>
+        <Tooltip text={showPassword ? hidePasswordLabel : showPasswordLabel}>
+          <button
+            type="button"
+            onClick={onToggleVisibility}
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
+            aria-label={showPassword ? hidePasswordLabel : showPasswordLabel}
+          >
+            {showPassword ? <EyeOff className={icon.size.sm} /> : <Eye className={icon.size.sm} />}
+          </button>
+        </Tooltip>
       </div>
       {helperText !== undefined && !hasError && (
         <p className={cn('caption mt-tight text-text-muted')}>{helperText}</p>

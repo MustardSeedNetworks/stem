@@ -8,7 +8,7 @@
  * with no traffic"; and a run that ended in error, which must not read as idle.
  * These assert what the operator sees, not which helpers were called.
  */
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { AppContextValue } from '../contexts/AppContext';
@@ -133,10 +133,10 @@ describe('ReflectorPage — platform support', () => {
     renderPage({ reflectorSupported: false, reason: 'CGO + Linux required' });
 
     const start = screen.getByTestId('reflector-start-button');
-    expect(start).toBeDisabled();
     expect(start).toHaveAttribute('aria-disabled', 'true');
-    expect(start).toHaveAttribute('title');
-    expect(start.getAttribute('title')).not.toBe('');
+    expect(start).toHaveAccessibleDescription(/Linux/i);
+    fireEvent.click(start);
+    expect(start).toHaveAttribute('aria-disabled', 'true');
   });
 
   it('offers the Test Master switch from the platform banner', async () => {

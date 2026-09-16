@@ -1,3 +1,4 @@
+import { Tooltip } from './ui/Tooltip';
 /**
  * @fileoverview The Stem - RFC 2544 Benchmark Test Configuration
  * @description Advanced configuration form for RFC 2544 Benchmarking Tests.
@@ -68,7 +69,7 @@ export function RFC2544ConfigForm({
   selectedTests,
   testId = 'rfc2544-config-form',
 }: RFC2544ConfigFormProps): ReactElement | null {
-  const { t } = useTranslation('settings');
+  const { t } = useTranslation(['settings', 'help']);
   const hasRFC2544Tests = hasGroupTests('rfc2544', selectedTests);
 
   const form = useConfigForm<RFC2544Config>({
@@ -126,7 +127,7 @@ export function RFC2544ConfigForm({
         <div>
           <label htmlFor="rfc2544-duration" className="flex items-center gap-tight label">
             {t('testConfig.rfc2544.duration.perTest')}
-            <HelpIcon tooltip={t('testConfig.rfc2544.duration.perTestHelp')} />
+            <HelpIcon tooltip={t('help:tooltips.testConfig.rfc2544.duration.perTestHelp')} />
           </label>
           <input
             id="rfc2544-duration"
@@ -141,7 +142,7 @@ export function RFC2544ConfigForm({
         <div>
           <label htmlFor="rfc2544-warmup" className="flex items-center gap-tight label">
             {t('testConfig.rfc2544.duration.warmup')}
-            <HelpIcon tooltip={t('testConfig.rfc2544.duration.warmupHelp')} />
+            <HelpIcon tooltip={t('help:tooltips.testConfig.rfc2544.duration.warmupHelp')} />
           </label>
           <input
             id="rfc2544-warmup"
@@ -156,7 +157,7 @@ export function RFC2544ConfigForm({
         <div>
           <label htmlFor="rfc2544-trials" className="flex items-center gap-tight label">
             {t('testConfig.rfc2544.duration.trials')}
-            <HelpIcon tooltip={t('testConfig.rfc2544.duration.trialsHelp')} />
+            <HelpIcon tooltip={t('help:tooltips.testConfig.rfc2544.duration.trialsHelp')} />
           </label>
           <input
             id="rfc2544-trials"
@@ -174,7 +175,7 @@ export function RFC2544ConfigForm({
           <div>
             <label htmlFor="rfc2544-resolution" className="flex items-center gap-tight label">
               {t('testConfig.rfc2544.throughput.resolution')}
-              <HelpIcon tooltip={t('testConfig.rfc2544.throughput.resolutionHelp')} />
+              <HelpIcon tooltip={t('help:tooltips.testConfig.rfc2544.throughput.resolutionHelp')} />
             </label>
             <input
               id="rfc2544-resolution"
@@ -189,7 +190,7 @@ export function RFC2544ConfigForm({
           <div>
             <label htmlFor="rfc2544-maxloss" className="flex items-center gap-tight label">
               {t('testConfig.rfc2544.throughput.maxLoss')}
-              <HelpIcon tooltip={t('testConfig.rfc2544.throughput.maxLossHelp')} />
+              <HelpIcon tooltip={t('help:tooltips.testConfig.rfc2544.throughput.maxLossHelp')} />
             </label>
             <input
               id="rfc2544-maxloss"
@@ -208,7 +209,7 @@ export function RFC2544ConfigForm({
           <div>
             <label htmlFor="rfc2544-stepsize" className="flex items-center gap-tight label">
               {t('testConfig.rfc2544.frameLoss.stepSize')}
-              <HelpIcon tooltip={t('testConfig.rfc2544.frameLoss.stepSizeHelp')} />
+              <HelpIcon tooltip={t('help:tooltips.testConfig.rfc2544.frameLoss.stepSizeHelp')} />
             </label>
             <input
               id="rfc2544-stepsize"
@@ -232,36 +233,37 @@ export function RFC2544ConfigForm({
 
       <FormSection
         title={t('testConfig.common.frameSizesTitle')}
-        help={<HelpIcon tooltip={t('testConfig.rfc2544.frameSizes.help')} />}
+        help={<HelpIcon tooltip={t('help:tooltips.testConfig.rfc2544.frameSizes.help')} />}
       >
         <div className="grid grid-cols-2 gap-compact">
           {FRAME_SIZE_OPTIONS.map((option) => (
-            <label
+            <Tooltip
+              text={t('testConfig.rfc2544.frameSizes.includeTitle', { size: option.value })}
               key={option.value}
-              title={t('testConfig.rfc2544.frameSizes.includeTitle', { size: option.value })}
-              className="flex items-center gap-compact pad-xs rounded-lg cursor-pointer hover:bg-surface-hover text-sm"
             >
-              <input
-                type="checkbox"
-                checked={frameSizes.includes(option.value)}
-                onChange={() => toggleFrameSize(option.value)}
-                aria-label={t('testConfig.common.frameSizeAria', { size: option.value })}
-                className="w-4 h-4 accent-brand-primary"
-              />
-              <span className="text-text-primary">
-                {t(`testConfig.common.${option.qualifier}`, { size: option.value })}
-              </span>
-            </label>
+              {(description) => (
+                <label className="flex items-center gap-compact pad-xs rounded-lg cursor-pointer hover:bg-surface-hover text-sm">
+                  <input
+                    {...description}
+                    type="checkbox"
+                    checked={frameSizes.includes(option.value)}
+                    onChange={() => toggleFrameSize(option.value)}
+                    aria-label={t('testConfig.common.frameSizeAria', { size: option.value })}
+                    className="w-4 h-4 accent-brand-primary"
+                  />
+                  <span className="text-text-primary">
+                    {t(`testConfig.common.${option.qualifier}`, { size: option.value })}
+                  </span>
+                </label>
+              )}
+            </Tooltip>
           ))}
         </div>
         <FieldError message={errors.frameSizes?.message} />
       </FormSection>
 
       <FormSection title={t('testConfig.rfc2544.advanced.title')}>
-        <label
-          title={t('testConfig.rfc2544.advanced.bidirectionalTitle')}
-          className="flex items-center gap-default pad-xs rounded-lg cursor-pointer hover:bg-surface-hover"
-        >
+        <label className="flex items-center gap-default pad-xs rounded-lg cursor-pointer hover:bg-surface-hover">
           <input
             type="checkbox"
             {...register('bidirectional')}
@@ -271,7 +273,9 @@ export function RFC2544ConfigForm({
           <div>
             <div className="font-medium text-sm flex items-center gap-tight">
               {t('testConfig.rfc2544.advanced.bidirectional')}
-              <HelpIcon tooltip={t('testConfig.rfc2544.advanced.bidirectionalHelp')} />
+              <HelpIcon
+                tooltip={t('help:tooltips.testConfig.rfc2544.advanced.bidirectionalHelp')}
+              />
             </div>
             <div className="text-xs text-text-muted">
               {t('testConfig.rfc2544.advanced.bidirectionalHint')}

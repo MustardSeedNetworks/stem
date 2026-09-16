@@ -16,9 +16,6 @@ export const y1564Tests: Record<string, TestHelp> = {
 meets its SLA parameters at progressive load steps (25%, 50%, 75%, 100% of CIR).`,
     laymanDesc: `When you buy an ethernet service from a carrier, this test verifies
 you're getting what you paid for at different load levels.`,
-    whenToUse: `• New service activation
-• Service verification after maintenance
-• SLA dispute resolution`,
     whenNotToUse: '• For raw equipment benchmarking (use RFC 2544)',
     parameters: [
       {
@@ -178,7 +175,7 @@ you're getting what you paid for at different load levels.`,
       },
     ],
     tips: ['CIR should match your contract exactly'],
-    seeAlso: ['y1564_performance', 'mef_config'],
+    seeAlso: ['https://www.itu.int/rec/T-REC-Y.1564', 'y1564_performance', 'mef_config'],
   },
 
   y1564_performance: {
@@ -191,8 +188,6 @@ you're getting what you paid for at different load levels.`,
 over an extended period (typically 15 minutes to hours).`,
     laymanDesc: `After passing the initial speed test, can your network connection
 maintain that performance for hours?`,
-    whenToUse: `• After passing Configuration Test
-• Extended burn-in testing`,
     whenNotToUse: '• Initial service turn-up (do Config Test first)',
     parameters: [
       {
@@ -224,7 +219,7 @@ maintain that performance for hours?`,
       },
     ],
     tips: [],
-    seeAlso: ['y1564_config'],
+    seeAlso: ['https://www.itu.int/rec/T-REC-Y.1564', 'y1564_config'],
   },
 
   y1564_full: {
@@ -237,8 +232,6 @@ maintain that performance for hours?`,
 into a complete validation sequence.`,
     laymanDesc: `The complete, official test for verifying a carrier ethernet service.
 This is what carriers use to officially "turn up" a new service.`,
-    whenToUse: `• Official service activation
-• Complete service validation`,
     whenNotToUse: '• Quick troubleshooting',
     parameters: [],
     metrics: [],
@@ -252,6 +245,6 @@ This is what carriers use to officially "turn up" a new service.`,
       },
     ],
     tips: [],
-    seeAlso: ['y1564_config', 'y1564_performance'],
+    seeAlso: ['https://www.itu.int/rec/T-REC-Y.1564', 'y1564_config', 'y1564_performance'],
   },
 };

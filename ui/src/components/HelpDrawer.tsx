@@ -1,3 +1,4 @@
+import { Tooltip } from './ui/Tooltip';
 /**
  * @fileoverview The Stem - Help Drawer Component
  * @description Comprehensive help panel with tests, tutorials, and glossary.
@@ -6,9 +7,8 @@
  *              The drawer orchestrates tab/search/mode state and delegates
  *              rendering of each tab and detail view to focused components
  *              under ./help-drawer/. Framing/chrome strings are localized via
- *              the `help` i18n namespace; the help content corpus itself
- *              (per-test descriptions, glossary entries, tutorial bodies)
- *              stays English in the data/help corpus.
+ *              the `help` i18n namespace. Short usage and glossary copy are
+ *              translated; technical descriptions and tutorials remain English.
  */
 
 import {
@@ -25,11 +25,11 @@ import {
   Zap,
 } from 'lucide-react';
 import type { ReactElement } from 'react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { searchGlossary } from '../data/help/glossary';
-import { searchTests } from '../data/help/tests';
-import type { TestHelp, Tutorial } from '../data/help/types';
+import { getGlossary } from '../data/help/glossary';
+import { searchTests, tests } from '../data/help/tests';
+import type { GlossaryId, TestHelp, TestHelpId, Tutorial } from '../data/help/types';
 import { useBuildVersion } from '../hooks/useBuildVersion';
 import { useFocusTrap } from '../hooks/useFocusTrap';
 import { cn, icon as iconTokens, layout, modal, radius, spacing, status } from '../styles/theme';
@@ -39,26 +39,44 @@ import { TestsTab } from './help-drawer/TestsTab';
 import { TutorialDetailView } from './help-drawer/TutorialDetailView';
 import { TutorialsTab } from './help-drawer/TutorialsTab';
 
-type Tab = 'tests' | 'tutorials' | 'glossary';
+export type HelpTab = 'tests' | 'tutorials' | 'glossary';
 
 interface HelpDrawerProps {
   isOpen: boolean;
+  initialTab?: HelpTab;
+  initialTestId?: TestHelpId;
+  initialGlossaryId?: GlossaryId;
   onClose: () => void;
 }
 
-export function HelpDrawer({ isOpen, onClose }: HelpDrawerProps): ReactElement | null {
+export function HelpDrawer({
+  isOpen,
+  onClose,
+  initialTab = 'tests',
+  initialTestId,
+  initialGlossaryId,
+}: HelpDrawerProps): ReactElement | null {
   const { t } = useTranslation('help');
-  const [activeTab, setActiveTab] = useState<Tab>('tests');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState<HelpTab>(initialTab);
+  const [searchQuery, setSearchQuery] = useState<string>(() =>
+    initialGlossaryId ? t(`glossary.entries.${initialGlossaryId}.term`) : '',
+  );
   const [simpleMode, setSimpleMode] = useState(true);
-  const [selectedTest, setSelectedTest] = useState<TestHelp | null>(null);
+  const [selectedTest, setSelectedTest] = useState<TestHelp | null>(() =>
+    initialTestId ? (tests[initialTestId] ?? null) : null,
+  );
   const [selectedTutorial, setSelectedTutorial] = useState<Tutorial | null>(null);
   const [copiedCommand, setCopiedCommand] = useState<string | null>(null);
   const buildVersion = useBuildVersion();
+  const searchRef = useRef<HTMLInputElement>(null);
   const drawerRef = useFocusTrap<HTMLDivElement>({
     isActive: isOpen,
     onEscape: onClose,
+    autoFocus: false,
   });
+  useEffect(() => {
+    if (isOpen) searchRef.current?.focus();
+  }, [isOpen]);
 
   if (!isOpen) {
     return null;
@@ -92,8 +110,24 @@ export function HelpDrawer({ isOpen, onClose }: HelpDrawerProps): ReactElement |
   };
 
   // Filter tests and glossary based on search
-  const filteredTests = searchQuery ? searchTests(searchQuery) : null;
-  const filteredGlossary = searchQuery ? searchGlossary(searchQuery) : null;
+  const matchingTests = searchQuery ? new Set(searchTests(searchQuery)) : null;
+  const filteredTests = searchQuery
+    ? Object.values(tests).filter(
+        (test) =>
+          matchingTests?.has(test) ||
+          t(`tests.${test.id}.whenToUse`)
+            .toLocaleLowerCase()
+            .includes(searchQuery.toLocaleLowerCase()),
+      )
+    : null;
+  const glossaryEntries = getGlossary(t);
+  const filteredGlossary = searchQuery
+    ? glossaryEntries.filter((entry) =>
+        [entry.term, entry.fullName, entry.techDef, entry.laymanDef].some((value) =>
+          value.toLocaleLowerCase().includes(searchQuery.toLocaleLowerCase()),
+        ),
+      )
+    : glossaryEntries;
   const searchTabLabel = t(`tabs.${activeTab}`);
 
   return (
@@ -126,87 +160,98 @@ export function HelpDrawer({ isOpen, onClose }: HelpDrawerProps): ReactElement |
               <BookOpen className={cn(iconTokens.size.md, 'text-brand-primary')} />
               <div>
                 <h2 className="heading-3">{t('drawer.title')}</h2>
-                <p
-                  className="caption text-text-muted"
-                  data-testid="help-drawer-version"
-                  title={`commit ${buildVersion.commit} · built ${buildVersion.buildTime}`}
+                <Tooltip
+                  text={t('drawer.buildInfo', {
+                    commit: buildVersion.commit,
+                    time: buildVersion.buildTime,
+                  })}
                 >
-                  Stem v{buildVersion.version}
-                </p>
+                  <button
+                    type="button"
+                    className="caption text-text-muted"
+                    data-testid="help-drawer-version"
+                  >
+                    Stem v{buildVersion.version.replace(/^v/, '')}
+                  </button>
+                </Tooltip>
               </div>
             </div>
-            <button
-              type="button"
-              data-testid="help-drawer-close"
-              onClick={onClose}
-              className={cn(
-                'pad-xs text-text-muted hover:text-text-primary transition-colors',
-                radius.lg,
-                'hover:bg-surface-hover',
-              )}
-              title={t('drawer.closeTooltip')}
-              aria-label={t('drawer.close')}
-            >
-              <X className={iconTokens.size.md} aria-hidden="true" />
-            </button>
+            <Tooltip text={t('drawer.closeTooltip')}>
+              <button
+                type="button"
+                data-testid="help-drawer-close"
+                onClick={onClose}
+                className={cn(
+                  'pad-xs text-text-muted hover:text-text-primary transition-colors',
+                  radius.lg,
+                  'hover:bg-surface-hover',
+                )}
+                aria-label={t('drawer.close')}
+              >
+                <X className={iconTokens.size.md} aria-hidden="true" />
+              </button>
+            </Tooltip>
           </div>
 
           {/* Tabs */}
           <div className={cn('flex gap-tight bg-surface-base p-1', radius.lg)}>
-            <button
-              type="button"
-              onClick={(): void => setActiveTab('tests')}
-              title={t('tabs.testsTooltip')}
-              data-testid="help-drawer-tab-tests"
-              className={cn(
-                'flex-1 px-3 py-row text-sm font-medium transition-colors',
-                radius.md,
-                layout.inline.default,
-                'justify-center',
-                activeTab === 'tests'
-                  ? 'bg-brand-primary text-on-brand'
-                  : 'text-text-muted hover:text-text-primary hover:bg-surface-hover',
-              )}
-            >
-              <Book className={iconTokens.size.sm} />
-              {t('tabs.tests')}
-            </button>
-            <button
-              type="button"
-              onClick={(): void => setActiveTab('tutorials')}
-              title={t('tabs.tutorialsTooltip')}
-              data-testid="help-drawer-tab-tutorials"
-              className={cn(
-                'flex-1 px-3 py-row text-sm font-medium transition-colors',
-                radius.md,
-                layout.inline.default,
-                'justify-center',
-                activeTab === 'tutorials'
-                  ? 'bg-brand-primary text-on-brand'
-                  : 'text-text-muted hover:text-text-primary hover:bg-surface-hover',
-              )}
-            >
-              <GraduationCap className={iconTokens.size.sm} />
-              {t('tabs.tutorials')}
-            </button>
-            <button
-              type="button"
-              onClick={(): void => setActiveTab('glossary')}
-              title={t('tabs.glossaryTooltip')}
-              data-testid="help-drawer-tab-glossary"
-              className={cn(
-                'flex-1 px-3 py-row text-sm font-medium transition-colors',
-                radius.md,
-                layout.inline.default,
-                'justify-center',
-                activeTab === 'glossary'
-                  ? 'bg-brand-primary text-on-brand'
-                  : 'text-text-muted hover:text-text-primary hover:bg-surface-hover',
-              )}
-            >
-              <BookOpen className={iconTokens.size.sm} />
-              {t('tabs.glossary')}
-            </button>
+            <Tooltip text={t('tabs.testsTooltip')}>
+              <button
+                type="button"
+                onClick={(): void => setActiveTab('tests')}
+                data-testid="help-drawer-tab-tests"
+                className={cn(
+                  'flex-1 px-3 py-row text-sm font-medium transition-colors',
+                  radius.md,
+                  layout.inline.default,
+                  'justify-center',
+                  activeTab === 'tests'
+                    ? 'bg-brand-primary text-on-brand'
+                    : 'text-text-muted hover:text-text-primary hover:bg-surface-hover',
+                )}
+              >
+                <Book className={iconTokens.size.sm} />
+                {t('tabs.tests')}
+              </button>
+            </Tooltip>
+            <Tooltip text={t('tabs.tutorialsTooltip')}>
+              <button
+                type="button"
+                onClick={(): void => setActiveTab('tutorials')}
+                data-testid="help-drawer-tab-tutorials"
+                className={cn(
+                  'flex-1 px-3 py-row text-sm font-medium transition-colors',
+                  radius.md,
+                  layout.inline.default,
+                  'justify-center',
+                  activeTab === 'tutorials'
+                    ? 'bg-brand-primary text-on-brand'
+                    : 'text-text-muted hover:text-text-primary hover:bg-surface-hover',
+                )}
+              >
+                <GraduationCap className={iconTokens.size.sm} />
+                {t('tabs.tutorials')}
+              </button>
+            </Tooltip>
+            <Tooltip text={t('tabs.glossaryTooltip')}>
+              <button
+                type="button"
+                onClick={(): void => setActiveTab('glossary')}
+                data-testid="help-drawer-tab-glossary"
+                className={cn(
+                  'flex-1 px-3 py-row text-sm font-medium transition-colors',
+                  radius.md,
+                  layout.inline.default,
+                  'justify-center',
+                  activeTab === 'glossary'
+                    ? 'bg-brand-primary text-on-brand'
+                    : 'text-text-muted hover:text-text-primary hover:bg-surface-hover',
+                )}
+              >
+                <BookOpen className={iconTokens.size.sm} />
+                {t('tabs.glossary')}
+              </button>
+            </Tooltip>
           </div>
 
           {/* Search and Mode Toggle */}
@@ -221,6 +266,9 @@ export function HelpDrawer({ isOpen, onClose }: HelpDrawerProps): ReactElement |
               />
               <input
                 type="text"
+                ref={searchRef}
+                data-testid="help-search"
+                aria-label={t('drawer.searchPlaceholder', { tab: searchTabLabel })}
                 placeholder={t('drawer.searchPlaceholder', { tab: searchTabLabel })}
                 value={searchQuery}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
@@ -234,21 +282,22 @@ export function HelpDrawer({ isOpen, onClose }: HelpDrawerProps): ReactElement |
                 )}
               />
             </div>
-            <button
-              type="button"
-              onClick={(): void => setSimpleMode(!simpleMode)}
-              className={cn(
-                'px-3 py-row text-xs font-medium transition-colors',
-                radius.lg,
-                simpleMode
-                  ? cn(status.bg.info, 'text-text-inverse')
-                  : 'bg-surface-base text-text-muted border border-surface-border hover:bg-surface-hover',
-              )}
-              title={simpleMode ? t('mode.toggleToTechnical') : t('mode.toggleToSimple')}
-              aria-label={simpleMode ? t('mode.ariaToTechnical') : t('mode.ariaToSimple')}
-            >
-              {simpleMode ? t('mode.simple') : t('mode.technical')}
-            </button>
+            <Tooltip text={simpleMode ? t('mode.toggleToTechnical') : t('mode.toggleToSimple')}>
+              <button
+                type="button"
+                onClick={(): void => setSimpleMode(!simpleMode)}
+                className={cn(
+                  'px-3 py-row text-xs font-medium transition-colors',
+                  radius.lg,
+                  simpleMode
+                    ? cn(status.bg.info, 'text-text-inverse')
+                    : 'bg-surface-base text-text-muted border border-surface-border hover:bg-surface-hover',
+                )}
+                aria-label={simpleMode ? t('mode.ariaToTechnical') : t('mode.ariaToSimple')}
+              >
+                {simpleMode ? t('mode.simple') : t('mode.technical')}
+              </button>
+            </Tooltip>
           </div>
         </div>
 
@@ -262,6 +311,7 @@ export function HelpDrawer({ isOpen, onClose }: HelpDrawerProps): ReactElement |
               onBack={(): void => setSelectedTest(null)}
               onCopy={copyCommand}
               copiedCommand={copiedCommand}
+              onSelectTest={setSelectedTest}
             />
           )}
 

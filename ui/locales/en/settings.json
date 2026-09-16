@@ -283,35 +283,26 @@
       "duration": {
         "title": "Test Duration",
         "perTest": "Duration per Test (s)",
-        "perTestHelp": "Duration for each test iteration. Longer durations provide more accurate results but take more time.",
         "warmup": "Warmup Duration (s)",
-        "warmupHelp": "Time to stabilize traffic flow before starting measurements.",
-        "trials": "Number of Trials",
-        "trialsHelp": "Number of times to repeat each test point. More trials improve statistical accuracy."
+        "trials": "Number of Trials"
       },
       "throughput": {
         "title": "Throughput Test",
         "resolution": "Resolution (%)",
-        "resolutionHelp": "Binary search resolution. Default: 0.1%.",
-        "maxLoss": "Max Acceptable Loss (%)",
-        "maxLossHelp": "Maximum frame loss considered acceptable. RFC 2544 specifies 0%."
+        "maxLoss": "Max Acceptable Loss (%)"
       },
       "frameLoss": {
         "title": "Frame Loss Test",
         "stepSize": "Step Size (%)",
-        "stepSizeHelp": "Load increment step for frame loss rate measurement.",
         "testsAt": "Tests at: {{points}}"
       },
       "frameSizes": {
-        "help": "Select frame sizes to test. RFC 2544 specifies: 64, 128, 256, 512, 1024, 1280, 1518 bytes.",
         "includeTitle": "Include {{size}}-byte frames in the RFC 2544 sweep"
       },
       "advanced": {
         "title": "Advanced Options",
         "bidirectional": "Bidirectional Testing",
-        "bidirectionalHelp": "Run tests in both directions simultaneously.",
         "bidirectionalHint": "Test both TX and RX paths",
-        "bidirectionalTitle": "Send and measure traffic in both directions simultaneously",
         "bidirectionalAria": "Enable bidirectional testing"
       },
       "summary": {
@@ -335,43 +326,31 @@
       "bandwidth": {
         "title": "Bandwidth Parameters",
         "cir": "CIR (Mbps)",
-        "cirHelp": "Committed Information Rate - the guaranteed bandwidth that the service will always provide.",
         "eir": "EIR (Mbps)",
-        "eirHelp": "Excess Information Rate - additional bandwidth available when network capacity permits (best-effort).",
         "cbs": "CBS (KB)",
-        "cbsHelp": "Committed Burst Size - maximum burst of traffic allowed at CIR before excess marking.",
-        "ebs": "EBS (KB)",
-        "ebsHelp": "Excess Burst Size - maximum burst of excess traffic (beyond CIR) that may be allowed."
+        "ebs": "EBS (KB)"
       },
       "sla": {
         "title": "SLA Thresholds",
         "flr": "Max Frame Loss (%)",
-        "flrHelp": "Maximum acceptable Frame Loss Ratio (FLR). Typical SLA values: 0.01% to 0.1%.",
         "fd": "Max Frame Delay (ms)",
-        "fdHelp": "Maximum acceptable one-way Frame Delay (FD). Typical values: 5-50ms depending on service class.",
-        "fdv": "Max Jitter (ms)",
-        "fdvHelp": "Maximum acceptable Frame Delay Variation (FDV/jitter). Typical values: 2-10ms."
+        "fdv": "Max Jitter (ms)"
       },
       "frameSizes": {
-        "help": "Select frame sizes to test. RFC 2544 recommends: 64, 128, 256, 512, 1024, 1280, 1518 bytes.",
         "includeTitle": "Include {{size}}-byte frames in the Y.1564 service activation sweep"
       },
       "duration": {
         "title": "Test Duration",
         "configStep": "Config Step Duration (s)",
-        "configStepHelp": "Duration for each step load (25%, 50%, 75%, 100% of CIR) during configuration test.",
         "configTotal": "Total config test: ~{{seconds}}s",
         "perf": "Performance Duration (s)",
-        "perfHelp": "Duration of the sustained performance test at 100% CIR. Y.1564 recommends minimum 15 minutes (900s).",
         "perfMinutes": "= {{minutes}} minutes"
       },
       "vlan": {
         "title": "VLAN Settings",
         "id": "VLAN ID",
-        "idHelp": "VLAN tag for test traffic. Set to 0 for untagged traffic.",
         "untagged": "Untagged traffic",
         "pcp": "Priority (PCP)",
-        "pcpHelp": "Priority Code Point (802.1p). 0=Best Effort, 7=Highest Priority.",
         "pcp0": "0 - Best Effort (BE)",
         "pcp1": "1 - Background (BK)",
         "pcp2": "2 - Excellent Effort (EE)",
@@ -381,7 +360,6 @@
         "pcp6": "6 - Internetwork Control (IC)",
         "pcp7": "7 - Network Control (NC)",
         "colorAware": "Color-Aware Mode",
-        "colorAwareHelp": "Enable dual-rate testing with green (CIR) and yellow (EIR) traffic classes.",
         "colorAwareHint": "Test green/yellow traffic separation",
         "colorAwareTitle": "Send traffic as green (in-profile, conforms to CIR) and yellow (out-of-profile, conforms to EIR) and verify each color is treated correctly",
         "colorAwareAria": "Enable color-aware Y.1564 testing"
@@ -398,42 +376,30 @@
       "traffic": {
         "title": "Traffic Parameters",
         "frameSize": "Frame Size",
-        "frameSizeHelp": "Ethernet frame size including FCS.",
         "rate": "Rate (% of line rate)",
-        "rateHelp": "Traffic rate as percentage of interface line rate.",
         "duration": "Duration (s)",
-        "durationHelp": "Traffic generation duration.",
-        "warmup": "Warmup (s)",
-        "warmupHelp": "Warmup period before measurement."
+        "warmup": "Warmup (s)"
       },
       "stream": {
         "title": "Stream Configuration",
-        "id": "Stream ID",
-        "idHelp": "Unique identifier for this traffic stream."
+        "id": "Stream ID"
       },
       "burst": {
         "title": "Burst Mode",
         "enable": "Enable burst mode",
-        "enableTitle": "Send frames in short bursts separated by idle gaps rather than at a continuous rate; useful for testing buffer behavior",
         "enableAria": "Enable burst mode traffic generation",
         "size": "Burst Size (frames)",
-        "sizeHelp": "Number of frames per burst.",
-        "gap": "Inter-Burst Gap (µs)",
-        "gapHelp": "Gap between bursts in microseconds."
+        "gap": "Inter-Burst Gap (µs)"
       },
       "vlan": {
         "title": "VLAN Configuration",
         "id": "VLAN ID",
-        "idHelp": "VLAN ID (0 = untagged).",
-        "priority": "VLAN Priority",
-        "priorityHelp": "802.1p priority (0-7)."
+        "priority": "VLAN Priority"
       },
       "mac": {
         "title": "MAC Addresses (Optional)",
         "src": "Source MAC",
-        "srcHelp": "Source MAC address (leave empty for auto). Format: AA:BB:CC:DD:EE:FF.",
-        "dst": "Destination MAC",
-        "dstHelp": "Destination MAC address (leave empty for broadcast). Format: AA:BB:CC:DD:EE:FF."
+        "dst": "Destination MAC"
       },
       "tests": {
         "customStream": "Custom Stream",
@@ -452,32 +418,22 @@
       "mep": {
         "title": "MEP/MEG Configuration",
         "mepId": "MEP ID",
-        "mepIdHelp": "Maintenance End Point identifier (1-8191).",
         "megLevel": "MEG Level",
-        "megLevelHelp": "Maintenance Entity Group level (0-7). Higher = wider domain.",
-        "megId": "MEG ID",
-        "megIdHelp": "Maintenance Entity Group identifier string."
+        "megId": "MEG ID"
       },
       "oam": {
         "title": "OAM Parameters",
         "ccm": "CCM Interval",
-        "ccmHelp": "Continuity Check Message interval per Y.1731.",
         "priority": "Priority",
-        "priorityHelp": "802.1p priority value (0-7). 6-7 typically for OAM.",
         "tagged": "Use priority tagging (802.1Q)",
-        "taggedTitle": "Add an IEEE 802.1Q VLAN tag with the selected priority to all Y.1731 OAM frames",
         "taggedAria": "Use 802.1Q priority tagging on OAM frames"
       },
       "measurement": {
         "title": "Measurement Parameters",
         "frameSize": "Frame Size",
-        "frameSizeHelp": "OAM frame size for measurements.",
         "interval": "Measurement Interval (ms)",
-        "intervalHelp": "Interval between measurement probes.",
         "count": "Frames per Interval",
-        "countHelp": "Number of measurement frames per interval.",
-        "duration": "Duration (s)",
-        "durationHelp": "Total measurement duration."
+        "duration": "Duration (s)"
       },
       "tests": {
         "delay": "Delay Measurement",
@@ -498,25 +454,18 @@
       "params": {
         "title": "Test Parameters",
         "duration": "Duration (s)",
-        "durationHelp": "Duration for each test iteration in seconds.",
         "warmup": "Warmup (s)",
-        "warmupHelp": "Warmup period before measurement begins.",
-        "frameSize": "Frame Size",
-        "frameSizeHelp": "Ethernet frame size for testing."
+        "frameSize": "Frame Size"
       },
       "switch": {
         "title": "Switch Configuration",
         "portCount": "Port Count",
-        "portCountHelp": "Number of switch ports to test.",
         "pattern": "Traffic Pattern",
-        "patternHelp": "How traffic is distributed across ports.",
         "patternFullMesh": "Full Mesh",
         "patternPair": "Pair",
         "patternBroadcast": "Broadcast",
         "addressCount": "Address Count",
-        "addressCountHelp": "Number of MAC addresses for learning/caching tests. RFC 2889 recommends testing at 1, 10, 100, 1000, 10000 addresses.",
-        "loss": "Acceptable Loss (%)",
-        "lossHelp": "Maximum acceptable frame loss percentage. RFC 2889 specifies 0%."
+        "loss": "Acceptable Loss (%)"
       },
       "tests": {
         "forwarding": "Forwarding",
@@ -536,31 +485,23 @@
       "network": {
         "title": "Network Parameters",
         "targetRate": "Target Rate (Mbps)",
-        "targetRateHelp": "Target throughput rate for TCP testing.",
         "minRtt": "Min RTT (ms)",
-        "minRttHelp": "Minimum expected round-trip time.",
-        "maxRtt": "Max RTT (ms)",
-        "maxRttHelp": "Maximum expected round-trip time."
+        "maxRtt": "Max RTT (ms)"
       },
       "tcp": {
         "title": "TCP Parameters",
         "rwnd": "RWND Size (bytes)",
-        "rwndHelp": "TCP Receive Window size. Should be >= BDP for optimal throughput.",
         "mss": "MSS",
-        "mssHelp": "Maximum Segment Size for TCP.",
         "mssMin": "{{size}} B (min)",
         "mssIpv6": "{{size}} B (IPv6)",
         "mssStandard": "{{size}} B (standard)",
         "mssJumbo": "{{size}} B (jumbo)",
         "streams": "Parallel Streams",
-        "streamsHelp": "Number of parallel TCP connections.",
         "mode": "Test Mode",
-        "modeHelp": "Direction of throughput testing.",
         "modeBidirectional": "Bidirectional",
         "modeUpstream": "Upstream",
         "modeDownstream": "Downstream",
-        "duration": "Duration (s)",
-        "durationHelp": "Test duration in seconds."
+        "duration": "Duration (s)"
       },
       "tests": {
         "throughput": "Throughput",
@@ -580,43 +521,30 @@
       "params": {
         "title": "Test Parameters",
         "duration": "Duration (s)",
-        "durationHelp": "Test duration in seconds.",
         "warmup": "Warmup (s)",
-        "warmupHelp": "Warmup period for synchronization.",
-        "frameSize": "Frame Size",
-        "frameSizeHelp": "Ethernet frame size for testing."
+        "frameSize": "Frame Size"
       },
       "timing": {
         "title": "Timing Requirements",
         "maxLatency": "Max Latency (ns)",
-        "maxLatencyHelp": "Maximum acceptable end-to-end latency in nanoseconds.",
-        "maxJitter": "Max Jitter (ns)",
-        "maxJitterHelp": "Maximum acceptable jitter (PDV) in nanoseconds."
+        "maxJitter": "Max Jitter (ns)"
       },
       "ptp": {
         "title": "PTP Synchronization",
         "enable": "Enable PTP timestamping (IEEE 1588)",
-        "enableTitle": "Use IEEE 1588 PTP hardware timestamps for sub-microsecond delay measurement; requires PTP-capable NIC",
         "enableAria": "Enable IEEE 1588 PTP hardware timestamping",
         "require": "Require PTP synchronization before test",
-        "requireTitle": "Block the test from starting until the local PTP clock has locked to the grandmaster within the configured tolerance",
         "requireAria": "Require PTP synchronization before starting test",
-        "syncOffset": "Max Sync Offset (ns)",
-        "syncOffsetHelp": "Maximum acceptable PTP clock offset."
+        "syncOffset": "Max Sync Offset (ns)"
       },
       "scheduling": {
         "title": "Traffic Scheduling (802.1Qbv)",
         "preemption": "Enable frame preemption (802.1Qbu)",
-        "preemptionTitle": "Allow express traffic to preempt in-flight preemptable frames per IEEE 802.1Qbu; reduces latency for critical traffic classes",
         "preemptionAria": "Enable IEEE 802.1Qbu frame preemption",
         "cycleTime": "Cycle Time",
-        "cycleTimeHelp": "Time-Aware Shaper cycle duration.",
         "trafficClass": "Traffic Class",
-        "trafficClassHelp": "Traffic class for test frames (0-7).",
         "numClasses": "Number of Traffic Classes",
-        "numClassesHelp": "Total traffic classes configured (1-8).",
-        "baseTime": "Base Time (ns)",
-        "baseTimeHelp": "Base time for gate schedule (ns since epoch). 0 = use current time."
+        "baseTime": "Base Time (ns)"
       },
       "tests": {
         "latency": "Latency",

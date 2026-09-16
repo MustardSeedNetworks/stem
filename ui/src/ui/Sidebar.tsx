@@ -23,6 +23,7 @@ import {
 import { createElement, type FC, type ReactNode, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router';
+import { Tooltip } from '../components/ui/Tooltip';
 import { iconSizes } from '../constants/sizes';
 import { prefetchRoute } from '../utils/prefetch';
 import { safeGetItem, safeSetItem } from '../utils/storage';
@@ -72,43 +73,45 @@ function badgeClass(badge: string): string {
 }
 
 const NavItemButton: FC<NavItemButtonProps> = ({ item, active, collapsed, onNavigate }) => (
-  <button
-    type="button"
-    onClick={() => onNavigate(item.path)}
-    onMouseEnter={() => prefetchRoute(item.path)}
-    aria-current={active ? 'page' : undefined}
-    /* 44px minimum target, 11px radius, and a 3px left bar for the active
+  <Tooltip text={collapsed ? item.label : undefined}>
+    <button
+      type="button"
+      onClick={() => onNavigate(item.path)}
+      onMouseEnter={() => prefetchRoute(item.path)}
+      aria-current={active ? 'page' : undefined}
+      aria-label={item.label}
+      /* 44px minimum target, 11px radius, and a 3px left bar for the active
        route. The bar carries the state rather than a gradient fill: a filled
        row competes with status colour, and the rail is chrome. */
-    className={`group relative flex items-center gap-default w-full min-h-11 px-3 py-2.5 rounded-[11px] text-sm font-medium transition-all duration-200 ${
-      active
-        ? 'bg-[color-mix(in_oklab,var(--color-brand-primary)_16%,transparent)] text-text-primary'
-        : 'text-text-muted hover:text-text-primary hover:bg-surface-hover'
-    }`}
-    title={collapsed ? item.label : undefined}
-  >
-    {active ? (
-      <span
-        aria-hidden="true"
-        className="absolute inset-y-1 left-0 w-[3px] rounded-full bg-brand-primary"
-      />
-    ) : null}
-    {createElement(item.icon, {
-      className: `${iconSizes.lg} flex-shrink-0 ${
-        active ? 'text-brand-primary' : 'text-text-muted group-hover:text-text-secondary'
-      }`,
-    })}
-    {!collapsed ? (
-      <>
-        <span className="flex-1 text-left truncate">{item.label}</span>
-        {item.badge ? (
-          <span className={`px-1.5 py-0.5 text-xs rounded font-medium ${badgeClass(item.badge)}`}>
-            {item.badge}
-          </span>
-        ) : null}
-      </>
-    ) : null}
-  </button>
+      className={`group relative flex items-center gap-default w-full min-h-11 px-3 py-2.5 rounded-[11px] text-sm font-medium transition-all duration-200 ${
+        active
+          ? 'bg-[color-mix(in_oklab,var(--color-brand-primary)_16%,transparent)] text-text-primary'
+          : 'text-text-muted hover:text-text-primary hover:bg-surface-hover'
+      }`}
+    >
+      {active ? (
+        <span
+          aria-hidden="true"
+          className="absolute inset-y-1 left-0 w-[3px] rounded-full bg-brand-primary"
+        />
+      ) : null}
+      {createElement(item.icon, {
+        className: `${iconSizes.lg} flex-shrink-0 ${
+          active ? 'text-brand-primary' : 'text-text-muted group-hover:text-text-secondary'
+        }`,
+      })}
+      {!collapsed ? (
+        <>
+          <span className="flex-1 text-left truncate">{item.label}</span>
+          {item.badge ? (
+            <span className={`px-1.5 py-0.5 text-xs rounded font-medium ${badgeClass(item.badge)}`}>
+              {item.badge}
+            </span>
+          ) : null}
+        </>
+      ) : null}
+    </button>
+  </Tooltip>
 );
 
 interface FooterIconButtonProps {
@@ -128,19 +131,23 @@ const FooterIconButton: FC<FooterIconButtonProps> = ({
   title,
   'data-testid': dataTestId,
 }) => (
-  <button
-    type="button"
-    onClick={onClick}
-    data-testid={dataTestId}
-    className={`${collapsed ? 'w-full' : 'flex-1'} flex items-center ${
-      collapsed ? 'justify-center' : 'gap-compact'
-    } px-3 py-row rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors text-sm font-medium`}
-    title={title}
-    aria-label={title}
-  >
-    {createElement(icon, { className: `${iconSizes.md} flex-shrink-0` })}
-    {!collapsed ? <span>{label}</span> : null}
-  </button>
+  <Tooltip text={title}>
+    <button
+      type="button"
+      onClick={(event) => {
+        event.currentTarget.focus();
+        onClick();
+      }}
+      data-testid={dataTestId}
+      className={`${collapsed ? 'w-full' : 'flex-1'} flex items-center ${
+        collapsed ? 'justify-center' : 'gap-compact'
+      } px-3 py-row rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors text-sm font-medium`}
+      aria-label={title}
+    >
+      {createElement(icon, { className: `${iconSizes.md} flex-shrink-0` })}
+      {!collapsed ? <span>{label}</span> : null}
+    </button>
+  </Tooltip>
 );
 
 interface SidebarHeaderProps {
@@ -170,15 +177,16 @@ const SidebarHeader: FC<SidebarHeaderProps> = ({ collapsed, onCollapse }) => {
         ) : null}
       </div>
       {!collapsed ? (
-        <button
-          type="button"
-          onClick={onCollapse}
-          className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors lg:flex hidden"
-          title={t('accessibility.collapseSidebar')}
-          aria-label={t('accessibility.collapseSidebar')}
-        >
-          <ChevronLeft className={iconSizes.md} />
-        </button>
+        <Tooltip text={t('accessibility.collapseSidebar')}>
+          <button
+            type="button"
+            onClick={onCollapse}
+            className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors lg:flex hidden"
+            aria-label={t('accessibility.collapseSidebar')}
+          >
+            <ChevronLeft className={iconSizes.md} />
+          </button>
+        </Tooltip>
       ) : null}
     </div>
   );
@@ -215,17 +223,21 @@ const FullWidthDrawerButton: FC<FullWidthDrawerButtonProps> = ({
   title,
   'data-testid': dataTestId,
 }) => (
-  <button
-    type="button"
-    onClick={onClick}
-    data-testid={dataTestId}
-    className="w-full mb-heading flex items-center gap-compact px-3 py-row rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors text-sm font-medium"
-    title={title}
-    aria-label={title}
-  >
-    {createElement(icon, { className: `${iconSizes.md} flex-shrink-0` })}
-    <span>{label}</span>
-  </button>
+  <Tooltip text={title}>
+    <button
+      type="button"
+      onClick={(event) => {
+        event.currentTarget.focus();
+        onClick();
+      }}
+      data-testid={dataTestId}
+      className="w-full mb-heading flex items-center gap-compact px-3 py-row rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors text-sm font-medium"
+      aria-label={title}
+    >
+      {createElement(icon, { className: `${iconSizes.md} flex-shrink-0` })}
+      <span>{label}</span>
+    </button>
+  </Tooltip>
 );
 
 const SidebarFooter: FC<SidebarFooterProps> = ({
@@ -283,15 +295,16 @@ const SidebarFooter: FC<SidebarFooterProps> = ({
         at the top of the rail is the one that has to be recognised. */}
       <MsnMark collapsed={collapsed} className="mt-3" />
       {collapsed ? (
-        <button
-          type="button"
-          onClick={onExpand}
-          className="mt-inline p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
-          title={t('accessibility.expandSidebar')}
-          aria-label={t('accessibility.expandSidebar')}
-        >
-          <ChevronRight className={iconSizes.md} />
-        </button>
+        <Tooltip text={t('accessibility.expandSidebar')}>
+          <button
+            type="button"
+            onClick={onExpand}
+            className="mt-inline p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
+            aria-label={t('accessibility.expandSidebar')}
+          >
+            <ChevronRight className={iconSizes.md} />
+          </button>
+        </Tooltip>
       ) : null}
     </div>
   );
@@ -385,21 +398,23 @@ const MobileTopBar: FC<MobileTopBarProps> = ({ mobileOpen, toggleMobile }) => {
         </div>
         <span className="font-display font-bold text-text-primary">{t('app.title')}</span>
       </div>
-      <button
-        type="button"
-        onClick={toggleMobile}
-        className="pad-xs rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
-        // The only way into the navigation below the lg breakpoint, and it had
-        // no test id — so mobile navigation could not be driven at all (#639).
-        data-testid="mobile-nav-toggle"
-        // Was hardcoded English in both attributes. `accessibility.closeMenu`
-        // already existed and is used by the scrim two elements down; only
-        // `openMenu` was missing.
-        title={mobileOpen ? t('accessibility.closeMenu') : t('accessibility.openMenu')}
-        aria-label={mobileOpen ? t('accessibility.closeMenu') : t('accessibility.openMenu')}
-      >
-        {mobileOpen ? <X className={iconSizes.lg} /> : <Menu className={iconSizes.lg} />}
-      </button>
+      <Tooltip text={mobileOpen ? t('accessibility.closeMenu') : t('accessibility.openMenu')}>
+        <button
+          type="button"
+          onClick={toggleMobile}
+          className="pad-xs rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
+          // The only way into the navigation below the lg breakpoint, and it had
+          // no test id — so mobile navigation could not be driven at all (#639).
+          data-testid="mobile-nav-toggle"
+          // Was hardcoded English in both attributes. `accessibility.closeMenu`
+          // already existed and is used by the scrim two elements down; only
+          // `openMenu` was missing.
+
+          aria-label={mobileOpen ? t('accessibility.closeMenu') : t('accessibility.openMenu')}
+        >
+          {mobileOpen ? <X className={iconSizes.lg} /> : <Menu className={iconSizes.lg} />}
+        </button>
+      </Tooltip>
     </header>
   );
 };

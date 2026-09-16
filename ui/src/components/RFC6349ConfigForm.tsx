@@ -90,7 +90,7 @@ export function RFC6349ConfigForm({
     watch,
     formState: { errors },
   } = form;
-  const { t } = useTranslation('settings');
+  const { t } = useTranslation(['settings', 'help']);
 
   if (!hasRFC6349Tests) {
     return null;
@@ -137,7 +137,7 @@ export function RFC6349ConfigForm({
             <div>
               <label htmlFor="rfc6349-rate" className="flex items-center gap-tight label">
                 {t('testConfig.rfc6349.network.targetRate')}
-                <HelpIcon tooltip={t('testConfig.rfc6349.network.targetRateHelp')} />
+                <HelpIcon tooltip={t('help:tooltips.testConfig.rfc6349.network.targetRateHelp')} />
               </label>
               <input
                 id="rfc6349-rate"
@@ -152,7 +152,7 @@ export function RFC6349ConfigForm({
             <div>
               <label htmlFor="rfc6349-minrtt" className="flex items-center gap-tight label">
                 {t('testConfig.rfc6349.network.minRtt')}
-                <HelpIcon tooltip={t('testConfig.rfc6349.network.minRttHelp')} />
+                <HelpIcon tooltip={t('help:tooltips.testConfig.rfc6349.network.minRttHelp')} />
               </label>
               <input
                 id="rfc6349-minrtt"
@@ -167,7 +167,7 @@ export function RFC6349ConfigForm({
             <div>
               <label htmlFor="rfc6349-maxrtt" className="flex items-center gap-tight label">
                 {t('testConfig.rfc6349.network.maxRtt')}
-                <HelpIcon tooltip={t('testConfig.rfc6349.network.maxRttHelp')} />
+                <HelpIcon tooltip={t('help:tooltips.testConfig.rfc6349.network.maxRttHelp')} />
               </label>
               <input
                 id="rfc6349-maxrtt"
@@ -186,7 +186,7 @@ export function RFC6349ConfigForm({
             <div>
               <label htmlFor="rfc6349-rwnd" className="flex items-center gap-tight label">
                 {t('testConfig.rfc6349.tcp.rwnd')}
-                <HelpIcon tooltip={t('testConfig.rfc6349.tcp.rwndHelp')} />
+                <HelpIcon tooltip={t('help:tooltips.testConfig.rfc6349.tcp.rwndHelp')} />
               </label>
               <input
                 id="rfc6349-rwnd"
@@ -201,7 +201,7 @@ export function RFC6349ConfigForm({
             <div>
               <label htmlFor="rfc6349-mss" className="flex items-center gap-tight label">
                 {t('testConfig.rfc6349.tcp.mss')}
-                <HelpIcon tooltip={t('testConfig.rfc6349.tcp.mssHelp')} />
+                <HelpIcon tooltip={t('help:tooltips.testConfig.rfc6349.tcp.mssHelp')} />
               </label>
               <select
                 id="rfc6349-mss"
@@ -222,7 +222,7 @@ export function RFC6349ConfigForm({
             <div>
               <label htmlFor="rfc6349-streams" className="flex items-center gap-tight label">
                 {t('testConfig.rfc6349.tcp.streams')}
-                <HelpIcon tooltip={t('testConfig.rfc6349.tcp.streamsHelp')} />
+                <HelpIcon tooltip={t('help:tooltips.testConfig.rfc6349.tcp.streamsHelp')} />
               </label>
               <input
                 id="rfc6349-streams"
@@ -237,7 +237,7 @@ export function RFC6349ConfigForm({
             <div>
               <label htmlFor="rfc6349-mode" className="flex items-center gap-tight label">
                 {t('testConfig.rfc6349.tcp.mode')}
-                <HelpIcon tooltip={t('testConfig.rfc6349.tcp.modeHelp')} />
+                <HelpIcon tooltip={t('help:tooltips.testConfig.rfc6349.tcp.modeHelp')} />
               </label>
               <select
                 id="rfc6349-mode"
@@ -258,7 +258,7 @@ export function RFC6349ConfigForm({
         <div>
           <label htmlFor="rfc6349-duration" className="flex items-center gap-tight label">
             {t('testConfig.rfc6349.tcp.duration')}
-            <HelpIcon tooltip={t('testConfig.rfc6349.tcp.durationHelp')} />
+            <HelpIcon tooltip={t('help:tooltips.testConfig.rfc6349.tcp.durationHelp')} />
           </label>
           <input
             id="rfc6349-duration"

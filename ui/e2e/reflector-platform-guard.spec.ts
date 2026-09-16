@@ -50,10 +50,15 @@ test.describe('Reflector page platform guard', () => {
     const startButton = page.getByTestId('reflector-start-button');
     await expect(startButton).toBeVisible();
     await expect(startButton).toBeDisabled();
-    await expect(startButton).toHaveAttribute(
-      'title',
+    await expect(startButton).toHaveAccessibleDescription(
       /Reflector mode is not available on this platform/i,
     );
+    await startButton.focus();
+    await expect(page.getByRole('tooltip')).toContainText(
+      /Reflector mode is not available on this platform/i,
+    );
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('tooltip')).toBeHidden();
   });
 
   test('renders no platform banner when reflector is supported', async ({ page }) => {
@@ -82,8 +87,7 @@ test.describe('Reflector page platform guard', () => {
     // path and not the concern of this spec.
     const startButton = page.getByTestId('reflector-start-button');
     await expect(startButton).toBeVisible();
-    await expect(startButton).not.toHaveAttribute(
-      'title',
+    await expect(startButton).not.toHaveAccessibleDescription(
       /Reflector mode is not available on this platform/i,
     );
   });

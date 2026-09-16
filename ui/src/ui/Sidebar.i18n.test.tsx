@@ -66,11 +66,12 @@ describe('Sidebar — real locale copy', () => {
     await i18n.changeLanguage('en');
     renderSidebar();
 
-    // The distinction matters: `labels.help` is the visible word, while
-    // `tooltips.chrome.help` is the sentence #750 wired in from the unused keys.
-    expect(
-      screen.getAllByTitle('Open the help drawer with test references, tutorials, and a glossary')
-        .length,
-    ).toBeGreaterThan(0);
+    for (const button of screen.getAllByRole('button', {
+      name: 'Open the help drawer with test references, tutorials, and a glossary',
+    })) {
+      expect(button).toHaveAccessibleDescription(
+        'Open the help drawer with test references, tutorials, and a glossary',
+      );
+    }
   });
 });

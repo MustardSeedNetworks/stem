@@ -82,7 +82,7 @@ export function TrafficGenConfigForm({
     setValue,
     formState: { errors },
   } = form;
-  const { t } = useTranslation('settings');
+  const { t } = useTranslation(['settings', 'help']);
 
   if (!hasTrafficGenTests) {
     return null;
@@ -126,7 +126,9 @@ export function TrafficGenConfigForm({
             <div>
               <label htmlFor="tgen-framesize" className="flex items-center gap-tight label">
                 {t('testConfig.trafficgen.traffic.frameSize')}
-                <HelpIcon tooltip={t('testConfig.trafficgen.traffic.frameSizeHelp')} />
+                <HelpIcon
+                  tooltip={t('help:tooltips.testConfig.trafficgen.traffic.frameSizeHelp')}
+                />
               </label>
               <select
                 id="tgen-framesize"
@@ -145,7 +147,7 @@ export function TrafficGenConfigForm({
             <div>
               <label htmlFor="tgen-rate" className="flex items-center gap-tight label">
                 {t('testConfig.trafficgen.traffic.rate')}
-                <HelpIcon tooltip={t('testConfig.trafficgen.traffic.rateHelp')} />
+                <HelpIcon tooltip={t('help:tooltips.testConfig.trafficgen.traffic.rateHelp')} />
               </label>
               <div className="mt-tight flex gap-compact">
                 <input
@@ -185,7 +187,7 @@ export function TrafficGenConfigForm({
             <div>
               <label htmlFor="tgen-duration" className="flex items-center gap-tight label">
                 {t('testConfig.trafficgen.traffic.duration')}
-                <HelpIcon tooltip={t('testConfig.trafficgen.traffic.durationHelp')} />
+                <HelpIcon tooltip={t('help:tooltips.testConfig.trafficgen.traffic.durationHelp')} />
               </label>
               <input
                 id="tgen-duration"
@@ -200,7 +202,7 @@ export function TrafficGenConfigForm({
             <div>
               <label htmlFor="tgen-warmup" className="flex items-center gap-tight label">
                 {t('testConfig.trafficgen.traffic.warmup')}
-                <HelpIcon tooltip={t('testConfig.trafficgen.traffic.warmupHelp')} />
+                <HelpIcon tooltip={t('help:tooltips.testConfig.trafficgen.traffic.warmupHelp')} />
               </label>
               <input
                 id="tgen-warmup"
@@ -219,7 +221,7 @@ export function TrafficGenConfigForm({
             <div>
               <label htmlFor="tgen-streamid" className="flex items-center gap-tight label">
                 {t('testConfig.trafficgen.stream.id')}
-                <HelpIcon tooltip={t('testConfig.trafficgen.stream.idHelp')} />
+                <HelpIcon tooltip={t('help:tooltips.testConfig.trafficgen.stream.idHelp')} />
               </label>
               <input
                 id="tgen-streamid"
@@ -243,12 +245,9 @@ export function TrafficGenConfigForm({
                 aria-label={t('testConfig.trafficgen.burst.enableAria')}
                 className="rounded border-surface-border"
               />
-              <label
-                htmlFor="tgen-burstmode"
-                title={t('testConfig.trafficgen.burst.enableTitle')}
-                className="text-sm text-text-primary"
-              >
+              <label htmlFor="tgen-burstmode" className="text-sm text-text-primary">
                 {t('testConfig.trafficgen.burst.enable')}
+                <HelpIcon tooltip={t('help:tooltips.testConfig.trafficgen.burst.enableTitle')} />
               </label>
             </div>
 
@@ -257,7 +256,7 @@ export function TrafficGenConfigForm({
                 <div>
                   <label htmlFor="tgen-burstsize" className="flex items-center gap-tight label">
                     {t('testConfig.trafficgen.burst.size')}
-                    <HelpIcon tooltip={t('testConfig.trafficgen.burst.sizeHelp')} />
+                    <HelpIcon tooltip={t('help:tooltips.testConfig.trafficgen.burst.sizeHelp')} />
                   </label>
                   <input
                     id="tgen-burstsize"
@@ -271,7 +270,7 @@ export function TrafficGenConfigForm({
                 <div>
                   <label htmlFor="tgen-ibg" className="flex items-center gap-tight label">
                     {t('testConfig.trafficgen.burst.gap')}
-                    <HelpIcon tooltip={t('testConfig.trafficgen.burst.gapHelp')} />
+                    <HelpIcon tooltip={t('help:tooltips.testConfig.trafficgen.burst.gapHelp')} />
                   </label>
                   <input
                     id="tgen-ibg"
@@ -292,7 +291,7 @@ export function TrafficGenConfigForm({
             <div>
               <label htmlFor="tgen-vlanid" className="flex items-center gap-tight label">
                 {t('testConfig.trafficgen.vlan.id')}
-                <HelpIcon tooltip={t('testConfig.trafficgen.vlan.idHelp')} />
+                <HelpIcon tooltip={t('help:tooltips.testConfig.trafficgen.vlan.idHelp')} />
               </label>
               <input
                 id="tgen-vlanid"
@@ -306,7 +305,7 @@ export function TrafficGenConfigForm({
             <div>
               <label htmlFor="tgen-vlanpri" className="flex items-center gap-tight label">
                 {t('testConfig.trafficgen.vlan.priority')}
-                <HelpIcon tooltip={t('testConfig.trafficgen.vlan.priorityHelp')} />
+                <HelpIcon tooltip={t('help:tooltips.testConfig.trafficgen.vlan.priorityHelp')} />
               </label>
               <input
                 id="tgen-vlanpri"
@@ -326,7 +325,7 @@ export function TrafficGenConfigForm({
             <div>
               <label htmlFor="tgen-srcmac" className="flex items-center gap-tight label">
                 {t('testConfig.trafficgen.mac.src')}
-                <HelpIcon tooltip={t('testConfig.trafficgen.mac.srcHelp')} />
+                <HelpIcon tooltip={t('help:tooltips.testConfig.trafficgen.mac.srcHelp')} />
               </label>
               <input
                 id="tgen-srcmac"
@@ -340,7 +339,7 @@ export function TrafficGenConfigForm({
             <div>
               <label htmlFor="tgen-dstmac" className="flex items-center gap-tight label">
                 {t('testConfig.trafficgen.mac.dst')}
-                <HelpIcon tooltip={t('testConfig.trafficgen.mac.dstHelp')} />
+                <HelpIcon tooltip={t('help:tooltips.testConfig.trafficgen.mac.dstHelp')} />
               </label>
               <input
                 id="tgen-dstmac"

@@ -1,3 +1,4 @@
+import { Tooltip } from '../ui/Tooltip';
 /**
  * CopyCommandButton
  *
@@ -25,18 +26,19 @@ export function CopyCommandButton({
 }: CopyCommandButtonProps): ReactElement {
   const { t } = useTranslation('help');
   return (
-    <button
-      type="button"
-      onClick={(): void => onCopy(command)}
-      className={cn('p-1 hover:bg-surface-hover', radius.default)}
-      title={t('detail.copyCommand')}
-      aria-label={t('detail.copyCommandAria')}
-    >
-      {copiedCommand === command ? (
-        <Check className={cn(iconTokens.size.xs, status.text.success)} />
-      ) : (
-        <Copy className={cn(iconTokens.size.xs, 'text-text-muted')} />
-      )}
-    </button>
+    <Tooltip text={t('detail.copyCommand')}>
+      <button
+        type="button"
+        onClick={(): void => onCopy(command)}
+        className={cn('p-1 hover:bg-surface-hover', radius.default)}
+        aria-label={t('detail.copyCommandAria')}
+      >
+        {copiedCommand === command ? (
+          <Check className={cn(iconTokens.size.xs, status.text.success)} />
+        ) : (
+          <Copy className={cn(iconTokens.size.xs, 'text-text-muted')} />
+        )}
+      </button>
+    </Tooltip>
   );
 }

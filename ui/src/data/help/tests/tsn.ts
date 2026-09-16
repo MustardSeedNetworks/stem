@@ -14,7 +14,6 @@ export const tsnTests: Record<string, TestHelp> = {
     summary: 'Verifies Time-Aware Shaper gate timing accuracy.',
     techDesc: 'Validates TAS gates open and close at correct times per IEEE 802.1Qbv.',
     laymanDesc: 'Verifies network "time gates" for industrial automation.',
-    whenToUse: 'Industrial automation networks',
     whenNotToUse: 'Traditional IT networks',
     parameters: [
       {
@@ -135,7 +134,7 @@ export const tsnTests: Record<string, TestHelp> = {
       'Ensure PTP is configured and synchronized before testing',
       'Use IEEE 802.1AS-compliant hardware for best results',
     ],
-    seeAlso: ['traffic_isolation'],
+    seeAlso: ['https://1.ieee802.org/tsn/', 'traffic_isolation'],
   },
 
   traffic_isolation: {
@@ -146,7 +145,6 @@ export const tsnTests: Record<string, TestHelp> = {
     summary: 'Verifies critical traffic is protected from other classes.',
     techDesc: 'Tests traffic class isolation and frame preemption.',
     laymanDesc: 'Verifies important packets get through regardless of other traffic.',
-    whenToUse: 'Mixed traffic TSN networks',
     whenNotToUse: 'Networks without traffic classes',
     parameters: [],
     metrics: [],
@@ -154,7 +152,7 @@ export const tsnTests: Record<string, TestHelp> = {
     failMeaning: 'Critical traffic affected',
     examples: [],
     tips: [],
-    seeAlso: ['gate_timing'],
+    seeAlso: ['https://1.ieee802.org/tsn/', 'gate_timing'],
   },
 
   scheduled_latency: {
@@ -165,7 +163,6 @@ export const tsnTests: Record<string, TestHelp> = {
     summary: 'Measures if packets arrive exactly when scheduled.',
     techDesc: 'Validates deterministic latency for scheduled traffic.',
     laymanDesc: 'Verifies packets arrive at EXACTLY the right time.',
-    whenToUse: 'Deterministic latency validation',
     whenNotToUse: 'Networks without timing requirements',
     parameters: [],
     metrics: [],
@@ -173,7 +170,7 @@ export const tsnTests: Record<string, TestHelp> = {
     failMeaning: 'Traffic not meeting timing',
     examples: [],
     tips: [],
-    seeAlso: ['gate_timing'],
+    seeAlso: ['https://1.ieee802.org/tsn/', 'gate_timing'],
   },
 
   tsn_full: {
@@ -184,7 +181,6 @@ export const tsnTests: Record<string, TestHelp> = {
     summary: 'Complete TSN network validation.',
     techDesc: 'Complete TSN validation including all timing and isolation tests.',
     laymanDesc: 'The complete test for Time-Sensitive Networks.',
-    whenToUse: 'Complete TSN validation',
     whenNotToUse: 'Troubleshooting specific issues',
     parameters: [],
     metrics: [],
@@ -192,6 +188,11 @@ export const tsnTests: Record<string, TestHelp> = {
     failMeaning: 'Network not suitable for TSN',
     examples: [],
     tips: [],
-    seeAlso: ['gate_timing', 'traffic_isolation', 'scheduled_latency'],
+    seeAlso: [
+      'https://1.ieee802.org/tsn/',
+      'gate_timing',
+      'traffic_isolation',
+      'scheduled_latency',
+    ],
   },
 };

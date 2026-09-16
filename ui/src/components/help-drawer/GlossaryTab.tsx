@@ -9,14 +9,13 @@
 
 import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
-import { glossary } from '../../data/help/glossary';
 import type { GlossaryEntry } from '../../data/help/types';
 import { cn, layout, radius, spacing } from '../../styles/theme';
 import { CollapsibleSection } from '../CollapsibleSection';
 
 interface GlossaryTabProps {
   searchQuery: string;
-  filteredGlossary: GlossaryEntry[] | null;
+  filteredGlossary: GlossaryEntry[];
   simpleMode: boolean;
 }
 
@@ -26,7 +25,7 @@ export function GlossaryTab({
   simpleMode,
 }: GlossaryTabProps): ReactElement {
   const { t } = useTranslation(['help', 'common']);
-  const glossaryEntries = filteredGlossary || Object.values(glossary);
+  const glossaryEntries = filteredGlossary;
 
   // Group by category
   const byCategory = glossaryEntries.reduce(
@@ -53,7 +52,7 @@ export function GlossaryTab({
       ) : null}
       {categoryNames.map((category) => (
         <CollapsibleSection
-          key={category}
+          key={`${category}:${searchQuery.length > 0}`}
           title={<span>{category}</span>}
           defaultOpen={searchQuery.length > 0}
         >

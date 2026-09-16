@@ -1,3 +1,4 @@
+import { Tooltip } from './ui/Tooltip';
 /**
  * @fileoverview The Stem - Module Selector Component
  * @description A component that displays tests organized by module (Reflector, Benchmark,
@@ -19,166 +20,41 @@ interface Module {
   tests: string[];
 }
 
-// Test descriptions for tooltips
-// Keys use underscores to match backend API test IDs
-const testDescriptions: Record<string, { name: string; desc: string; tooltip: string }> = {
-  // Benchmark (RFC 2544) - with rfc2544_ prefix
-  rfc2544_throughput: {
-    name: 'Throughput',
-    desc: 'Max rate with 0% loss',
-    tooltip: 'Find the maximum rate at which the DUT can forward frames with zero packet loss.',
-  },
-  rfc2544_latency: {
-    name: 'Latency',
-    desc: 'Round-trip time',
-    tooltip: 'Measure round-trip packet delay at various loads and frame sizes.',
-  },
-  rfc2544_frame_loss: {
-    name: 'Frame Loss',
-    desc: 'Loss vs offered load',
-    tooltip: 'Measure packet loss percentage across different offered load levels.',
-  },
-  rfc2544_back_to_back: {
-    name: 'Back-to-Back',
-    desc: 'Burst capacity',
-    tooltip: 'Test maximum burst capacity - how many frames at line rate before drops.',
-  },
-  rfc2544_system_recovery: {
-    name: 'System Recovery',
-    desc: 'Recovery after overload',
-    tooltip: 'Measure time to recover normal forwarding after sustained overload.',
-  },
-  rfc2544_reset: {
-    name: 'Reset',
-    desc: 'Device reset recovery',
-    tooltip: 'Measure time from device restart to when it resumes forwarding.',
-  },
-
-  // ServiceTest (Y.1564 / MEF)
-  y1564_config: {
-    name: 'Y.1564 Config',
-    desc: 'Service config validation',
-    tooltip: 'Validate service at step loads (25%, 50%, 75%, 100% of CIR).',
-  },
-  y1564_perf: {
-    name: 'Y.1564 Performance',
-    desc: 'Sustained 15+ min test',
-    tooltip: 'Extended duration test at full CIR to verify SLA compliance.',
-  },
-  y1564: {
-    name: 'Y.1564 Full',
-    desc: 'Both config and perf',
-    tooltip: 'Complete Service Activation Test combining both phases.',
-  },
-  mef_config: {
-    name: 'MEF Config',
-    desc: 'MEF service step test',
-    tooltip: 'MEF service configuration test - validates service at step loads.',
-  },
-  mef_perf: {
-    name: 'MEF Performance',
-    desc: 'MEF sustained test',
-    tooltip: 'MEF service performance test - verifies SLA compliance.',
-  },
-  mef: {
-    name: 'MEF Full',
-    desc: 'Both MEF phases',
-    tooltip: 'Complete MEF validation including configuration and performance.',
-  },
-
-  // Reflector (Tier 1 - standalone operational mode)
-  reflect: {
-    name: 'Reflect',
-    desc: 'Packet reflection mode',
-    tooltip: 'Echo received packets back to sender for remote device testing.',
-  },
-
-  // TrafficGen
-  custom_stream: {
-    name: 'Custom Stream',
-    desc: 'Custom traffic generation',
-    tooltip: 'Generate custom traffic patterns for specific testing needs.',
-  },
-
-  // Measure (Y.1731)
-  y1731_delay: {
-    name: 'Delay (DMM/DMR)',
-    desc: 'Frame delay measurement',
-    tooltip: 'Measure one-way and two-way frame delay using DMM/DMR OAM.',
-  },
-  y1731_loss: {
-    name: 'Loss (LMM/LMR)',
-    desc: 'Frame loss measurement',
-    tooltip: 'Measure frame loss ratio using LMM/LMR OAM messages.',
-  },
-  y1731_slm: {
-    name: 'Synthetic Loss',
-    desc: 'SLM measurement',
-    tooltip: 'Synthetic loss measurement using SLM/SLR frames.',
-  },
-  y1731_loopback: {
-    name: 'Loopback',
-    desc: 'LBM/LBR test',
-    tooltip: 'Verify connectivity using OAM loopback messages.',
-  },
-
-  // Certify (RFC 2889, RFC 6349, TSN)
-  rfc2889_forwarding: {
-    name: 'Forwarding Rate',
-    desc: 'Switch forwarding capacity',
-    tooltip: 'Measure aggregate forwarding rate across all switch ports.',
-  },
-  rfc2889_caching: {
-    name: 'Address Caching',
-    desc: 'MAC table capacity',
-    tooltip: 'Determine maximum MAC addresses the switch can learn.',
-  },
-  rfc2889_learning: {
-    name: 'Address Learning',
-    desc: 'Learning rate',
-    tooltip: 'Measure how quickly the switch learns new MAC addresses.',
-  },
-  rfc2889_broadcast: {
-    name: 'Broadcast',
-    desc: 'Broadcast forwarding',
-    tooltip: 'Test how the switch handles broadcast traffic flooding.',
-  },
-  rfc2889_congestion: {
-    name: 'Congestion Control',
-    desc: 'Backpressure handling',
-    tooltip: 'Verify backpressure and flow control under congestion.',
-  },
-  rfc6349_throughput: {
-    name: 'TCP Throughput',
-    desc: 'BDP analysis',
-    tooltip: 'Measure real TCP performance with Bandwidth-Delay Product.',
-  },
-  rfc6349_path: {
-    name: 'Path Analysis',
-    desc: 'RTT/Bandwidth',
-    tooltip: 'Characterize network path properties including RTT and loss.',
-  },
-  tsn_timing: {
-    name: 'Gate Timing',
-    desc: 'GCL accuracy',
-    tooltip: 'Verify Time-Aware Shaper gate control list timing accuracy.',
-  },
-  tsn_isolation: {
-    name: 'Traffic Isolation',
-    desc: 'Class isolation',
-    tooltip: 'Verify traffic class separation and priority enforcement.',
-  },
-  tsn_latency: {
-    name: 'Scheduled Latency',
-    desc: 'Deterministic delay',
-    tooltip: 'Measure deterministic latency for scheduled traffic.',
-  },
-  tsn: {
-    name: 'TSN Full Suite',
-    desc: 'All TSN tests',
-    tooltip: 'Complete TSN validation including timing and isolation.',
-  },
-};
+const testTranslationKeys = {
+  custom_stream: 'tests.trafficgen.stream',
+  trafficgen_burst: 'tests.trafficgen.burst',
+  trafficgen_multistream: 'tests.trafficgen.multistream',
+  tsn_timing: 'tests.tsn.timing',
+  tsn_isolation: 'tests.tsn.isolation',
+  tsn_latency: 'tests.tsn.latency',
+  tsn_full: 'tests.tsn.full',
+  mef_config: 'tests.mef.config',
+  mef_perf: 'tests.mef.performance',
+  mef_full: 'tests.mef.full',
+  y1731_delay: 'tests.y1731.delay',
+  y1731_loss: 'tests.y1731.loss',
+  y1731_slm: 'tests.y1731.slm',
+  y1731_loopback: 'tests.y1731.loopback',
+  rfc2889_forwarding: 'tests.rfc2889.forwarding',
+  rfc2889_caching: 'tests.rfc2889.caching',
+  rfc2889_learning: 'tests.rfc2889.learning',
+  rfc2889_broadcast: 'tests.rfc2889.broadcast',
+  rfc2889_congestion: 'tests.rfc2889.congestion',
+  y1564_config: 'tests.y1564.config',
+  y1564_perf: 'tests.y1564.performance',
+  y1564_full: 'tests.y1564.full',
+  rfc6349_throughput: 'tests.rfc6349.capacity',
+  rfc6349_path: 'tests.rfc6349.path',
+  rfc2544_throughput: 'tests.rfc2544.throughput',
+  rfc2544_latency: 'tests.rfc2544.latency',
+  rfc2544_frame_loss: 'tests.rfc2544.frameLoss',
+  rfc2544_back_to_back: 'tests.rfc2544.backToBack',
+  rfc2544_system_recovery: 'tests.rfc2544.systemRecovery',
+  rfc2544_reset: 'tests.rfc2544.reset',
+  y1564: 'tests.y1564.full',
+  mef: 'tests.mef.full',
+  tsn: 'tests.tsn.full',
+} as const;
 
 interface ModuleSelectorProps {
   selectedTests: string[];
@@ -189,7 +65,7 @@ export function ModuleSelector({
   selectedTests,
   setSelectedTests,
 }: ModuleSelectorProps): ReactElement {
-  const { t } = useTranslation('common');
+  const { t } = useTranslation(['common', 'settings', 'modules', 'help']);
   const [modules, setModules] = useState<Module[]>([]);
   const [expandedModule, setExpandedModule] = useState<string | null>('benchmark');
   const [loading, setLoading] = useState(true);
@@ -280,84 +156,101 @@ export function ModuleSelector({
       {modules.map((mod) => (
         <div key={mod.name} className="border border-surface-border rounded-lg overflow-hidden">
           {/* Module Header */}
-          <button
-            type="button"
-            data-testid={`module-toggle-${mod.name}`}
-            onClick={(): void => toggleModule(mod.name)}
-            title={`${mod.description}. Click to ${expandedModule === mod.name ? 'collapse and hide' : 'expand and choose'} ${mod.tests.length} ${mod.standard} test${mod.tests.length === 1 ? '' : 's'}.`}
-            aria-label={`${mod.displayName} module — ${expandedModule === mod.name ? 'collapse' : 'expand'} test list`}
-            aria-expanded={expandedModule === mod.name}
-            className="w-full flex-between pad-sm hover:bg-surface-hover transition-colors"
-            style={{ borderLeft: `4px solid ${mod.color}` }}
+          <Tooltip
+            text={t(
+              expandedModule === mod.name
+                ? 'modules:card.expand.titleExpanded'
+                : 'modules:card.expand.titleCollapsed',
+              { name: mod.displayName },
+            )}
           >
-            <div className="flex items-center gap-default">
-              <div
-                className="w-3 h-3 rounded-full"
-                style={{ backgroundColor: mod.color }}
-                title={mod.displayName}
-              />
-              <div className="text-left">
-                <div className="font-medium text-sm">{mod.displayName}</div>
-                <div className="text-xs text-text-muted">{mod.standard}</div>
+            <button
+              type="button"
+              data-testid={`module-toggle-${mod.name}`}
+              onClick={(): void => toggleModule(mod.name)}
+              aria-label={t(
+                expandedModule === mod.name
+                  ? 'modules:card.expand.titleExpanded'
+                  : 'modules:card.expand.titleCollapsed',
+                { name: mod.displayName },
+              )}
+              aria-expanded={expandedModule === mod.name}
+              className="w-full flex-between pad-sm hover:bg-surface-hover transition-colors"
+              style={{ borderLeft: `4px solid ${mod.color}` }}
+            >
+              <div className="flex items-center gap-default">
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: mod.color }} />
+                <div className="text-left">
+                  <div className="font-medium text-sm">{mod.displayName}</div>
+                  <div className="text-xs text-text-muted">{mod.standard}</div>
+                </div>
               </div>
-            </div>
-            <div className="flex items-center gap-compact">
-              <span className="text-xs text-text-muted">
-                {getSelectedCount(mod)}/{mod.tests.length}
-              </span>
-              <svg
-                className={`w-4 h-4 transition-transform ${expandedModule === mod.name ? 'rotate-180' : ''}`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
-            </div>
-          </button>
+              <div className="flex items-center gap-compact">
+                <span className="text-xs text-text-muted">
+                  {getSelectedCount(mod)}/{mod.tests.length}
+                </span>
+                <svg
+                  className={`w-4 h-4 transition-transform ${expandedModule === mod.name ? 'rotate-180' : ''}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+              </div>
+            </button>
+          </Tooltip>
 
           {/* Module Tests */}
           {expandedModule === mod.name && (
             <div className="border-t border-surface-border bg-surface-base">
               {/* Select All / Deselect All */}
               <div className="flex justify-end gap-compact px-3 py-row border-b border-surface-border">
-                <button
-                  type="button"
-                  onClick={() => selectAllInModule(mod)}
-                  title={`Select every test in ${mod.displayName} (${mod.tests.length} test${mod.tests.length === 1 ? '' : 's'})`}
-                  className="text-xs text-status-info hover:underline"
-                >
-                  {t('buttons.selectAll')}
-                </button>
+                <Tooltip text={t('help:tooltips.selectAll', { name: mod.displayName })}>
+                  <button
+                    type="button"
+                    onClick={() => selectAllInModule(mod)}
+                    className="text-xs text-status-info hover:underline"
+                  >
+                    {t('buttons.selectAll')}
+                  </button>
+                </Tooltip>
                 <span className="text-text-muted">|</span>
-                <button
-                  type="button"
-                  onClick={() => deselectAllInModule(mod)}
-                  title={`Clear all test selections in ${mod.displayName}`}
-                  className="text-xs text-text-muted hover:underline"
-                >
-                  {t('buttons.deselectAll')}
-                </button>
+                <Tooltip text={t('help:tooltips.clearAll', { name: mod.displayName })}>
+                  <button
+                    type="button"
+                    onClick={() => deselectAllInModule(mod)}
+                    className="text-xs text-text-muted hover:underline"
+                  >
+                    {t('buttons.deselectAll')}
+                  </button>
+                </Tooltip>
               </div>
 
               {/* Test List */}
               <div className="pad-xs stack-xs">
                 {mod.tests.map((testId) => {
-                  const testInfo = testDescriptions[testId] || {
-                    name: testId,
-                    desc: '',
-                    tooltip: `Run ${testId} test`,
-                  };
+                  const key = testTranslationKeys[testId as keyof typeof testTranslationKeys];
+                  const testInfo = key
+                    ? {
+                        name: t(`settings:${key}.name`),
+                        desc: t(`settings:${key}.desc`),
+                        tooltip: t(`settings:${key}.tooltip`),
+                      }
+                    : {
+                        name: testId,
+                        desc: '',
+                        tooltip: t('help:tooltips.runTest', { test: testId }),
+                      };
                   return (
                     <label
                       key={testId}
-                      title={testInfo.tooltip}
                       className="flex items-start gap-default pad-xs rounded-lg cursor-pointer hover:bg-surface-hover"
                     >
                       <input
@@ -365,7 +258,7 @@ export function ModuleSelector({
                         data-testid={`test-checkbox-${testId}`}
                         checked={selectedTests.includes(testId)}
                         onChange={() => toggleTest(testId)}
-                        aria-label={`Include ${testInfo.name} (${testId}) in the test run`}
+                        aria-label={t('modules:card.test.ariaLabel', { name: testInfo.name })}
                         className="mt-0.5 w-4 h-4"
                         style={{ accentColor: mod.color }}
                       />

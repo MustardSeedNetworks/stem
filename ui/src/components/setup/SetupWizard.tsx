@@ -1,3 +1,4 @@
+import { Tooltip } from '../ui/Tooltip';
 /**
  * @fileoverview Initial Setup Wizard Component
  * @description Guides users through the first-time setup process for The Stem application.
@@ -48,7 +49,7 @@ export function SetupWizard({
   username = 'admin',
   setupToken,
 }: SetupWizardProps): ReactElement {
-  const { t } = useTranslation('setup');
+  const { t } = useTranslation(['setup', 'help']);
   const { role: currentRole, setRole } = useRole();
   const [selectedRole, setSelectedRole] = useState<StemRole>(currentRole);
   const [passwordMode, setPasswordMode] = useState<'generated' | 'custom'>('custom');
@@ -265,15 +266,16 @@ export function SetupWizard({
                         <code className="flex-1 font-mono text-xs text-brand-primary select-all break-all">
                           {suggestedPassword}
                         </code>
-                        <button
-                          type="button"
-                          onClick={handleCopyPassword}
-                          className="shrink-0 p-1.5 rounded-md text-text-muted hover:text-text-primary hover:bg-surface-base border border-surface-border"
-                          title={t('buttons.copyTooltip')}
-                          aria-label={t('buttons.copyPassword')}
-                        >
-                          <Copy className="w-3.5 h-3.5" />
-                        </button>
+                        <Tooltip text={t('buttons.copyTooltip')}>
+                          <button
+                            type="button"
+                            onClick={handleCopyPassword}
+                            className="shrink-0 p-1.5 rounded-md text-text-muted hover:text-text-primary hover:bg-surface-base border border-surface-border"
+                            aria-label={t('buttons.copyPassword')}
+                          >
+                            <Copy className="w-3.5 h-3.5" />
+                          </button>
+                        </Tooltip>
                       </div>
                       {copied ? (
                         <p className="text-xs text-status-success mt-tight">
@@ -305,19 +307,22 @@ export function SetupWizard({
                     className="w-full rounded-xl border border-surface-border bg-surface-base px-3 py-row pr-icon text-sm text-text-primary focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/30"
                     placeholder={t('password.placeholder')}
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
-                    title={
+                  <Tooltip
+                    text={
                       showPassword
-                        ? 'Hide the password (mask characters with dots)'
-                        : 'Show the password in plain text to verify what you typed'
+                        ? t('help:tooltips.hidePassword')
+                        : t('help:tooltips.showPassword')
                     }
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </Tooltip>
                 </div>
                 {errors.password ? (
                   <p className="text-xs text-status-error mt-tight">{errors.password.message}</p>

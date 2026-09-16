@@ -1,12 +1,7 @@
-/**
- * @fileoverview The Stem - Help Icon Component
- * @description A (?) icon that shows a tooltip on hover and opens help on click.
- */
-
 import { HelpCircle } from 'lucide-react';
 import type { ReactElement } from 'react';
-import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Tooltip } from './ui/Tooltip';
 
 interface HelpIconProps {
   tooltip: string;
@@ -15,6 +10,8 @@ interface HelpIconProps {
   size?: 'sm' | 'md' | 'lg';
 }
 
+const sizeClasses = { sm: 'w-3.5 h-3.5', md: 'w-4 h-4', lg: 'w-5 h-5' };
+
 export function HelpIcon({
   tooltip,
   onClick,
@@ -22,82 +19,31 @@ export function HelpIcon({
   size = 'sm',
 }: HelpIconProps): ReactElement {
   const { t } = useTranslation('common');
-  const [showTooltip, setShowTooltip] = useState(false);
-  const [tooltipPosition, setTooltipPosition] = useState<'top' | 'bottom'>('top');
-  const iconRef = useRef<HTMLButtonElement>(null);
-  const tooltipRef = useRef<HTMLDivElement>(null);
-
-  const sizeClasses = {
-    sm: 'w-3.5 h-3.5',
-    md: 'w-4 h-4',
-    lg: 'w-5 h-5',
-  };
-
-  // Calculate tooltip position based on available space
-  useEffect(() => {
-    if (showTooltip && iconRef.current && tooltipRef.current) {
-      const iconRect = iconRef.current.getBoundingClientRect();
-      const tooltipRect = tooltipRef.current.getBoundingClientRect();
-
-      // Check if there's room above
-      if (iconRect.top - tooltipRect.height - 8 < 0) {
-        setTooltipPosition('bottom');
-      } else {
-        setTooltipPosition('top');
-      }
-    }
-  }, [showTooltip]);
-
   return (
-    <div className={`relative inline-block ${className}`}>
-      <button
-        ref={iconRef}
-        type="button"
-        onClick={(e: React.MouseEvent<HTMLButtonElement>): void => {
-          e.stopPropagation();
-          onClick?.();
-        }}
-        onMouseEnter={(): void => setShowTooltip(true)}
-        onMouseLeave={(): void => setShowTooltip(false)}
-        onFocus={(): void => setShowTooltip(true)}
-        onBlur={(): void => setShowTooltip(false)}
-        className="p-0.5 rounded-full hover:bg-surface-hover transition-colors focus:outline-none focus:ring-2 focus:ring-brand-primary/50"
-        title={onClick ? `${tooltip} (click for details)` : tooltip}
-        aria-label={`Help: ${tooltip}`}
-      >
-        <HelpCircle
-          className={`${sizeClasses[size]} text-text-muted hover:text-brand-primary transition-colors`}
-        />
-      </button>
-
-      {/* Tooltip */}
-      {showTooltip ? (
-        <div
-          ref={tooltipRef}
-          role="tooltip"
-          className={`absolute z-50 px-cell py-compact-md text-xs bg-surface-raised border border-surface-border rounded-lg shadow-lg max-w-xs whitespace-normal text-text-secondary ${
-            tooltipPosition === 'top'
-              ? 'bottom-full mb-2 left-1/2 -translate-x-1/2'
-              : 'top-full mt-inline left-1/2 -translate-x-1/2'
-          }`}
-        >
+    <Tooltip
+      text={
+        <>
           {tooltip}
           {onClick ? (
-            <span className="block text-brand-primary mt-tight text-[10px]">
-              {t('help.clickForDetails')}
-            </span>
+            <span className="block text-brand-primary mt-tight">{t('help.clickForDetails')}</span>
           ) : null}
-          {/* Tooltip Arrow */}
-          <div
-            className={`absolute w-2 h-2 bg-surface-raised border-surface-border rotate-45 ${
-              tooltipPosition === 'top'
-                ? 'top-full -mt-1 left-1/2 -translate-x-1/2 border-r border-b'
-                : 'bottom-full -mb-1 left-1/2 -translate-x-1/2 border-l border-t'
-            }`}
-          />
-        </div>
-      ) : null}
-    </div>
+        </>
+      }
+    >
+      <button
+        type="button"
+        data-testid="help-icon"
+        onClick={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          onClick?.();
+        }}
+        className={`p-0.5 rounded-full hover:bg-surface-hover transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary ${className}`}
+        aria-label={t('help.label', { topic: tooltip })}
+      >
+        <HelpCircle className={`${sizeClasses[size]} text-text-muted`} aria-hidden="true" />
+      </button>
+    </Tooltip>
   );
 }
 

@@ -13,9 +13,9 @@ import { HelpDrawer } from './HelpDrawer';
 vi.mock('../utils/logger', () => ({ logWarn: vi.fn() }));
 
 describe('HelpDrawer — About / version surface', () => {
-  it('renders the version badge using /__version payload', async () => {
+  it.each(['0.21.4', 'v0.21.4'])('renders one v for version %s', async (version) => {
     const payload = {
-      version: '0.21.4',
+      version,
       commit: 'deadbee',
       buildTime: '2026-05-29T00:00:00Z',
       uiBuildHash: 'abc123',
@@ -29,7 +29,7 @@ describe('HelpDrawer — About / version surface', () => {
     const badge = await screen.findByTestId('help-drawer-version');
     expect(badge).toBeInTheDocument();
     await waitFor(() => {
-      expect(badge).toHaveTextContent(/v0\.21\.4/);
+      expect(badge).toHaveTextContent(/^Stem v0\.21\.4$/);
     });
     expect(badge).toHaveTextContent(/Stem/);
   });

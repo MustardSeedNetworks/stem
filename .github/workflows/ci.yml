@@ -1268,6 +1268,14 @@ jobs:
       # fallback sites and a version assertion that was wrong in all three
       # repos. See scripts/i18n/README.md and
       # msn-docs-internal/05-Engineering/I18N_CONVENTIONS.md.
+      - uses: ./.github/actions/setup-node
+      - name: Install frontend dependencies
+        run: npm ci --prefix ui
+      - name: Check help consumers and negative fixture
+        run: |
+          node --test scripts/check-help-i18n.test.ts
+          node scripts/check-help-i18n.ts
+
       - name: Validate i18n (parity, glossary, banned vocab, etc.)
         uses: MustardSeedNetworks/.github/.github/actions/i18n-validate@048d173dd72ca0f9e5fa832fb5b9fd2a6447e5e9 # v1.13.0
         with:
