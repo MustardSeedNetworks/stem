@@ -272,6 +272,7 @@ func (s *Server) beginTestRun(testType, module string) (string, error) {
 		return "", errTestAlreadyRunning
 	}
 	s.testStatus = statusStarting
+	s.testError = ""
 	s.currentTest = testType
 	s.currentModule = module
 	s.testResult = nil
@@ -287,6 +288,7 @@ func (s *Server) beginRunPlan(plan *runPlan) (uint64, error) {
 		return 0, errTestAlreadyRunning
 	}
 	s.testStatus = statusStarting
+	s.testError = ""
 	plan.ID = s.newRunIDLocked()
 	s.runPlan = plan
 	s.currentTest = plan.Steps[0].TestType
@@ -302,6 +304,7 @@ func (s *Server) respondTestExecutionError(
 ) {
 	s.statsMu.Lock()
 	s.testStatus = statusError
+	s.testError = classifyRunCause(execErr.Error())
 	// Store a sanitized error message for internal state - don't leak details.
 	s.testResult = &TestResultResponse{
 		Status:   statusError,

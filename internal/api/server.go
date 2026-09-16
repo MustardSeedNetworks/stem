@@ -133,6 +133,7 @@ type Server struct {
 	currentTest          string
 	currentRunID         string // ID naming the run in flight, for runs with no plan (#1193)
 	testResult           *TestResultResponse
+	testError            string // classified cause of the failed run, reported on /api/v1/stats
 	runPlan              *runPlan
 	startTime            time.Time
 	selectedIface        string
@@ -283,6 +284,7 @@ func NewServer(port int) (*Server, error) {
 		CurrentTest:     nil,
 	}
 	s.testStatus = statusIdle
+	s.testError = ""
 	s.currentTest = ""
 	s.currentRunID = ""
 	s.testResult = nil

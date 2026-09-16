@@ -94,6 +94,7 @@ func (s *Server) runModuleTest(
 
 		if execErr != nil {
 			s.testStatus = statusError
+			s.testError = classifyRunCause(execErr.Error())
 			errResult := &TestResultResponse{
 				Status:   statusError,
 				TestType: testType,

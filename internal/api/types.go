@@ -335,6 +335,9 @@ type Stats struct {
 	Phase                     string        `json:"phase,omitempty"`
 	ElapsedSeconds            int64         `json:"elapsedSeconds,omitempty"`
 	EstimatedRemainingSeconds *int64        `json:"estimatedRemainingSeconds"`
+	// Classified cause of a failed run — the UI headline (#1251). Empty unless
+	// TestStatus is "error", and never the raw error: see classifyRunCause.
+	ErrorMessage string `json:"errorMessage,omitempty"`
 }
 
 // RunPlanStep is the observable state of one ordered run-plan step.
