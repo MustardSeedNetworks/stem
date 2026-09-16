@@ -177,6 +177,7 @@ func (s *Server) finishPlanStep(
 			s.runPlan.Steps[later].Status = stepSkipped
 		}
 		s.testStatus = statusError
+		s.testError = classifyRunCause(logCause)
 		s.currentTest = ""
 		s.currentRunID = ""
 		s.currentModule = ""

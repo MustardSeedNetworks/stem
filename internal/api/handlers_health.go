@@ -49,6 +49,7 @@ func (s *Server) snapshotStats() Stats {
 	stats := *s.stats
 	stats.Uptime = int64(time.Since(s.startTime).Seconds())
 	stats.TestStatus = s.testStatus
+	stats.ErrorMessage = s.testError
 	if s.currentTest != "" {
 		currentTest := s.currentTest
 		stats.CurrentTest = &currentTest

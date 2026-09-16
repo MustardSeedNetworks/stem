@@ -160,9 +160,13 @@ describe('ReflectorPage — run state', () => {
   afterEach(cleanup);
 
   it('surfaces the reflector error message instead of showing the page as idle', () => {
-    renderPage({ stats: { testStatus: 'error', errorMessage: 'bind: address in use' } });
+    // One of the five sentences internal/api/run_error.go classifies a failure
+    // into, verbatim: the fixture used to invent wording the daemon never sent,
+    // because /api/v1/stats carried no errorMessage at all before #1251.
+    const cause = 'The interface or port is already in use by another process.';
+    renderPage({ stats: { testStatus: 'error', errorMessage: cause } });
 
-    expect(screen.getByText('bind: address in use')).toBeInTheDocument();
+    expect(screen.getByText(cause)).toBeInTheDocument();
     expect(screen.queryByText('Reflector is idle')).toBeNull();
   });
 

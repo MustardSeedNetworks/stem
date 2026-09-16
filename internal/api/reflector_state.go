@@ -117,6 +117,7 @@ func (s *Server) autostartReflector() {
 	if execErr := s.executeReflector(cfg.Interface, cfg.Profile); execErr != nil {
 		s.statsMu.Lock()
 		s.testStatus = statusError
+		s.testError = classifyRunCause(execErr.Error())
 		s.currentTest = ""
 		s.currentRunID = ""
 		s.statsMu.Unlock()
