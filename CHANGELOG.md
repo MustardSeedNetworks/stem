@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.123](https://github.com/MustardSeedNetworks/stem/compare/v0.24.122...v0.24.123) (2026-09-16)
+
+
+### Bug Fixes
+
+* **ui:** adopt the canonical fleet theme and hue set C ([#1297](https://github.com/MustardSeedNetworks/stem/issues/1297)) ([42c7783](https://github.com/MustardSeedNetworks/stem/commit/42c7783c1562733625c4d904c9aa16ce6ccc3b93)), closes [#1263](https://github.com/MustardSeedNetworks/stem/issues/1263)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1294](https://github.com/MustardSeedNetworks/stem/issues/1294)) ([c78baa2](https://github.com/MustardSeedNetworks/stem/commit/c78baa2bb4d68bc70e6f0dd5b2ff909881031177))
+
 ## [0.24.122](https://github.com/MustardSeedNetworks/stem/compare/v0.24.121...v0.24.122) (2026-09-16)
 
 
