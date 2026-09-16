@@ -117,7 +117,12 @@ test.describe('RFC 2544 sub-test selection', () => {
       });
     });
 
-    // Close the drawer so it is not covering the start control.
+    // Escape dismisses the focused control's tooltip before its enclosing drawer.
+    await page.getByTestId('settings-drawer-close').focus();
+    await expect(page.getByRole('tooltip')).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('tooltip')).toBeHidden();
+    await expect(page.getByTestId('settings-drawer')).toBeVisible();
     await page.keyboard.press('Escape');
     await expect(page.getByTestId('settings-drawer')).toBeHidden();
 
