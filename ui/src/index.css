@@ -31,7 +31,7 @@
   /* Brand Colors - Mustard Seed Networks */
   --color-brand-primary: var(--color-brand-primary);
   --color-brand-accent: var(--color-brand-accent);
-  --color-brand-gold: var(--color-brand-gold);
+  --color-accent-gold: var(--color-accent-gold);
 
   /* Surface Colors - Elevation system */
   --color-surface-base: var(--color-surface-base);
@@ -157,7 +157,7 @@ body {
   background:
     radial-gradient(
       1200px 600px at 80% -10%,
-      color-mix(in oklab, var(--color-brand-gold) 8%, transparent),
+      color-mix(in oklab, var(--color-accent-gold) 8%, transparent),
       transparent
     ),
     radial-gradient(
