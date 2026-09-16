@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.122](https://github.com/MustardSeedNetworks/stem/compare/v0.24.121...v0.24.122) (2026-09-16)
+
+
+### Bug Fixes
+
+* **ui:** finish contextual help and keyboard tooltips ([#1290](https://github.com/MustardSeedNetworks/stem/issues/1290)) ([b1881b5](https://github.com/MustardSeedNetworks/stem/commit/b1881b5f427b24ca7a682bdfc0adeccf9e47e709))
+
 ## [0.24.121](https://github.com/MustardSeedNetworks/stem/compare/v0.24.120...v0.24.121) (2026-09-16)
 
 
