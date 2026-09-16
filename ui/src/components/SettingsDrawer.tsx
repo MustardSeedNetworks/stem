@@ -256,7 +256,7 @@ function ViewToggle({ viewMode, onViewModeChange }: ViewToggleProps): React.Reac
               'flex items-center gap-tight px-3 py-compact-md caption',
               viewMode === 'standard'
                 ? 'bg-brand-primary text-on-brand'
-                : 'bg-surface-raised text-text-muted hover:bg-surface-hover',
+                : 'bg-surface-raised text-text-secondary hover:bg-surface-hover',
             )}
           >
             <List className="w-3 h-3" aria-hidden="true" />
@@ -271,7 +271,7 @@ function ViewToggle({ viewMode, onViewModeChange }: ViewToggleProps): React.Reac
               'flex items-center gap-tight px-3 py-compact-md caption',
               viewMode === 'module'
                 ? 'bg-brand-primary text-on-brand'
-                : 'bg-surface-raised text-text-muted hover:bg-surface-hover',
+                : 'bg-surface-raised text-text-secondary hover:bg-surface-hover',
             )}
           >
             <Grid className="w-3 h-3" aria-hidden="true" />

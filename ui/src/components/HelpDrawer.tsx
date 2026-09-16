@@ -291,7 +291,7 @@ export function HelpDrawer({
                   radius.lg,
                   simpleMode
                     ? cn(status.bg.info, 'text-text-inverse')
-                    : 'bg-surface-base text-text-muted border border-surface-border hover:bg-surface-hover',
+                    : 'bg-surface-base text-text-secondary border border-surface-border hover:bg-surface-hover',
                 )}
                 aria-label={simpleMode ? t('mode.ariaToTechnical') : t('mode.ariaToSimple')}
               >
