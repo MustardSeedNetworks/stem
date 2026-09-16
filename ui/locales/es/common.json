@@ -206,7 +206,8 @@
     },
     "platform": {
       "bannerTitle": "El modo Reflector no está disponible en esta plataforma.",
-      "bannerBody": "Las compilaciones para macOS y Windows usan la pila de red pura en Go, que soporta el modo Test Master pero no el dataplane de Reflector a velocidad de linea. Usa la compilación para Linux para actuar como nodo Reflector, o cambia este stem al modo Test Master.",
+      "bannerBody": "Las compilaciones para macOS y Windows usan la pila de red pura en Go, que soporta el modo Test Master pero no el dataplane de Reflector a velocidad de linea. Usa la compilación para Linux para actuar como nodo Reflector.",
+      "bannerSwitchHint": "O cambia este stem al modo Test Master.",
       "switchToTestMaster": "Cambiar a Test Master",
       "startDisabledTooltip": "El modo Reflector no está disponible en esta plataforma. Usa la compilación para Linux para actuar como nodo Reflector."
     },

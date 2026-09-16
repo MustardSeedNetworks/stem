@@ -135,13 +135,19 @@ function InterfaceDetails({ iface }: InterfaceDetailsProps): ReactElement {
 
 interface PlatformBannerProps {
   reason: string;
+  /** False once the operator already holds the role the banner would offer. */
+  offerSwitch: boolean;
   onSwitchToTestMaster: () => void;
 }
 
 // Surfaces when the backend reports reflector.supported=false (macOS / Windows
 // builds ship without the CGO + Linux dataplane). Splits the rendering out of
 // the main page function to keep its complexity below the Biome ceiling.
-function PlatformBanner({ reason, onSwitchToTestMaster }: PlatformBannerProps): ReactElement {
+function PlatformBanner({
+  reason,
+  offerSwitch,
+  onSwitchToTestMaster,
+}: PlatformBannerProps): ReactElement {
   const { t } = useTranslation();
   return (
     <Alert status="warning" className="flex-wrap" data-testid="reflector-platform-banner">
@@ -149,11 +155,14 @@ function PlatformBanner({ reason, onSwitchToTestMaster }: PlatformBannerProps): 
         <span className="flex-1 min-w-[16rem]">
           <strong className="font-semibold">{t('role.platform.bannerTitle')}</strong>{' '}
           {t('role.platform.bannerBody')}
+          {offerSwitch ? ` ${t('role.platform.bannerSwitchHint')}` : null}
           {reason ? <span className="ml-tight opacity-80">({reason})</span> : null}
         </span>
-        <Button variant="outline" tone="violet" size="sm" onClick={onSwitchToTestMaster}>
-          {t('role.platform.switchToTestMaster')}
-        </Button>
+        {offerSwitch ? (
+          <Button variant="outline" tone="violet" size="sm" onClick={onSwitchToTestMaster}>
+            {t('role.platform.switchToTestMaster')}
+          </Button>
+        ) : null}
       </div>
     </Alert>
   );
@@ -206,7 +215,7 @@ export function ReflectorPage(): ReactElement {
     reflectorStartError,
   } = useAppContext();
   const capabilities = useCapabilities();
-  const { setRole } = useRole();
+  const { role, setRole } = useRole();
 
   const selectedIface = interfaces.find((i) => i.name === selectedInterface);
   const reflectorRunning = stats.testStatus === 'running' || stats.testStatus === 'starting';
@@ -268,9 +277,15 @@ export function ReflectorPage(): ReactElement {
         ]}
       />
 
-      <RoleGuard requires="reflector">
+      {/* The platform banner is the more specific of the two: where there is no
+        dataplane, "switch to Reflector" is advice the operator cannot act on. */}
+      <RoleGuard requires="reflector" superseded={!reflectorSupported}>
         {!reflectorSupported ? (
-          <PlatformBanner reason={platformReason} onSwitchToTestMaster={handleSwitchToTestMaster} />
+          <PlatformBanner
+            reason={platformReason}
+            offerSwitch={role !== 'test_master'}
+            onSwitchToTestMaster={handleSwitchToTestMaster}
+          />
         ) : null}
 
         {/* Control row: interface picker + start/stop + status */}

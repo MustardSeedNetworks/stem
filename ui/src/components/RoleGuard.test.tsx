@@ -181,4 +181,16 @@ describe('switching role from the banner', () => {
     expect(setRole).not.toHaveBeenCalled();
     expect(screen.queryByText('Switch to Test Master?')).not.toBeInTheDocument();
   });
+
+  it('yields to a more specific banner when the page says one is showing', () => {
+    currentRole = 'test_master';
+    render(
+      <RoleGuard requires="reflector" superseded={true}>
+        <p>module body</p>
+      </RoleGuard>,
+    );
+
+    expect(screen.queryByTestId('role-guard-banner')).toBeNull();
+    expect(screen.getByText('module body')).toBeInTheDocument();
+  });
 });

@@ -12,7 +12,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { AppContextValue } from '../contexts/AppContext';
-import type { RoleContextValue } from '../contexts/RoleContext';
+import type { RoleContextValue, StemRole } from '../contexts/RoleContext';
 import type { Capabilities } from '../hooks/useCapabilities';
 import type { StopOutcome } from '../stores/test-store';
 import type { InterfaceInfo, Stats } from '../types/api';
@@ -65,6 +65,7 @@ function makeStats(overrides: Partial<Stats> = {}): Stats {
 
 interface Options {
   stats?: Partial<Stats>;
+  role?: StemRole;
   reflectorSupported?: boolean;
   reason?: string;
   selectedInterface?: string;
@@ -87,7 +88,7 @@ function renderPage(options: Options = {}) {
   };
 
   roleContext.current = {
-    role: 'reflector',
+    role: options.role ?? 'reflector',
     setRole,
     isSwitchingRole: false,
     roleSwitchError: null,
@@ -239,5 +240,29 @@ describe('ReflectorPage — counters', () => {
     renderPage({ selectedInterface: 'eth9' });
 
     expect(screen.queryByText('00:11:22:33:44:55')).toBeNull();
+  });
+});
+
+describe('ReflectorPage — role and platform banners together', () => {
+  afterEach(cleanup);
+
+  it('leaves only the platform banner when the dataplane is missing on a Test Master', () => {
+    renderPage({ reflectorSupported: false, reason: 'CGO + Linux required', role: 'test_master' });
+
+    expect(screen.getByTestId('reflector-platform-banner')).toBeInTheDocument();
+    expect(screen.queryByTestId('role-guard-banner')).toBeNull();
+  });
+
+  it('drops the switch action the operator has already taken', () => {
+    renderPage({ reflectorSupported: false, role: 'test_master' });
+
+    expect(screen.queryByRole('button', { name: /switch to test master/i })).toBeNull();
+  });
+
+  it('still asks a Test Master to switch roles where the reflector can run', () => {
+    renderPage({ role: 'test_master' });
+
+    expect(screen.getByTestId('role-guard-banner')).toBeInTheDocument();
+    expect(screen.queryByTestId('reflector-platform-banner')).toBeNull();
   });
 });
