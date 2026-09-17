@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.130](https://github.com/MustardSeedNetworks/stem/compare/v0.24.129...v0.24.130) (2026-09-17)
+
+
+### Bug Fixes
+
+* **types:** generate the response DTOs the UI reads, delete the dead executor path ([#1334](https://github.com/MustardSeedNetworks/stem/issues/1334)) ([f6d2f46](https://github.com/MustardSeedNetworks/stem/commit/f6d2f46a8368f179e63d1b0c12f83d607d3c6166))
+* **ui:** the product is Stem, not "The Stem" ([#1267](https://github.com/MustardSeedNetworks/stem/issues/1267)) ([#1344](https://github.com/MustardSeedNetworks/stem/issues/1344)) ([c5eff81](https://github.com/MustardSeedNetworks/stem/commit/c5eff81d30ccabd3a5bff7d05446b5cccb4fbd97))
+
+
+### Tests
+
+* **api:** drop two stale runModuleTest references left by [#1332](https://github.com/MustardSeedNetworks/stem/issues/1332) ([#1339](https://github.com/MustardSeedNetworks/stem/issues/1339)) ([e00bd67](https://github.com/MustardSeedNetworks/stem/commit/e00bd677c254922021a0d9aca93518e78210f5f8))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1340](https://github.com/MustardSeedNetworks/stem/issues/1340)) ([dee4865](https://github.com/MustardSeedNetworks/stem/commit/dee4865824ba247a554a1f392dff7fa1cfd7b04b))
+* **deps:** update dependency @babel/core to v8.0.5 ([#1345](https://github.com/MustardSeedNetworks/stem/issues/1345)) ([8c89b5e](https://github.com/MustardSeedNetworks/stem/commit/8c89b5e0c0adc88dd9f497824e83212d0d0c3272))
+
 ## [0.24.129](https://github.com/MustardSeedNetworks/stem/compare/v0.24.128...v0.24.129) (2026-09-17)
 
 
