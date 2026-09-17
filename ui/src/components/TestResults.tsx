@@ -12,31 +12,6 @@ import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Stats, TestResult } from '../types/api';
 
-function formatNumber(num: number): string {
-  if (num >= 1e9) {
-    return `${(num / 1e9).toFixed(2)}B`;
-  }
-  if (num >= 1e6) {
-    return `${(num / 1e6).toFixed(2)}M`;
-  }
-  if (num >= 1e3) {
-    return `${(num / 1e3).toFixed(2)}K`;
-  }
-  return num.toString();
-}
-
-function formatDuration(ms: number): string {
-  if (ms < 1000) {
-    return `${ms}ms`;
-  }
-  if (ms < 60000) {
-    return `${(ms / 1000).toFixed(1)}s`;
-  }
-  const minutes = Math.floor(ms / 60000);
-  const seconds = ((ms % 60000) / 1000).toFixed(0);
-  return `${minutes}m ${seconds}s`;
-}
-
 export interface TestResultsProps {
   testStatus: Stats['testStatus'];
   result: TestResult | null;
@@ -122,11 +97,6 @@ export function TestResults({ testStatus, result }: TestResultsProps): ReactElem
         </div>
         <div className="text-right">
           <div className={`heading-3 ${statusColor}`}>{verdict}</div>
-          {result.duration !== undefined && (
-            <div className="text-sm text-text-muted">
-              Duration: {formatDuration(result.duration)}
-            </div>
-          )}
         </div>
       </div>
 
@@ -137,36 +107,6 @@ export function TestResults({ testStatus, result }: TestResultsProps): ReactElem
           <div className="text-sm text-text-primary">{result.error}</div>
         </div>
       ) : null}
-
-      {/* Metrics Grid */}
-      {result.metrics && Object.keys(result.metrics).length > 0 && (
-        <div className="mb-content">
-          <div className="text-sm font-semibold text-text-muted mb-2">Metrics</div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-default">
-            {Object.entries(result.metrics).map(([key, value]) => (
-              <div
-                key={key}
-                className="pad-sm rounded-lg bg-surface-base border border-surface-border"
-              >
-                <div className="text-xs text-text-muted capitalize">{key.replace(/_/g, ' ')}</div>
-                <div className="heading-3 text-text-primary">
-                  {typeof value === 'number' ? formatNumber(value) : String(value)}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Timestamps */}
-      <div className="text-xs text-text-muted flex gap-comfortable">
-        {result.startedAt ? (
-          <span>Started: {new Date(result.startedAt).toLocaleString()}</span>
-        ) : null}
-        {result.completedAt ? (
-          <span>Completed: {new Date(result.completedAt).toLocaleString()}</span>
-        ) : null}
-      </div>
     </div>
   );
 }

@@ -9,7 +9,9 @@ const (
 	DefaultProfile    = "all"
 )
 
-// Status constants for test execution state.
+// Status constants for test execution state. schema.go narrows the generated
+// JSON Schema — and through it the TypeScript the UI reads — to exactly these
+// values.
 const (
 	statusIdle      = "idle"
 	statusStarting  = "starting"
@@ -344,7 +346,7 @@ type Stats struct {
 type RunPlanStep struct {
 	TestType string              `json:"testType"`
 	Module   string              `json:"module"`
-	Status   string              `json:"status"`
+	Status   string              `json:"status"           jsonschema:"enum=pending,enum=running,enum=passed,enum=failed,enum=skipped,enum=cancelled"`
 	Config   *TestConfig         `json:"config,omitempty"`
 	Error    string              `json:"error,omitempty"`
 	Result   *TestResultResponse `json:"result,omitempty"`

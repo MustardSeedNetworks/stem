@@ -10,7 +10,6 @@
  * finished, not because a drawer happened to be open.
  */
 
-import { useEffect } from 'react';
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 
@@ -110,15 +109,8 @@ export const useHistoryStore = create<HistoryStore>()(
   ),
 );
 
-/**
- * Records a run as it completes. Called once, high in the tree, so recording
- * does not depend on the History page being open.
- */
-export function useRecordTestResult(result: Omit<HistoricalResult, 'id'> | null): void {
-  const record = useHistoryStore((s) => s.record);
-  useEffect(() => {
-    if (result?.completedAt) {
-      record(result);
-    }
-  }, [result, record]);
-}
+// NOTE: nothing records a run today. The recorder this store was written
+// for gated on `completedAt`, which `/api/v1/test/result` never sends — the
+// daemon tracks no per-run timing or metrics at all, so the History page can
+// never show a row (#1333). It is removed rather than left dead; the store,
+// its shape and the page stay for the daemon-side fix to fill.

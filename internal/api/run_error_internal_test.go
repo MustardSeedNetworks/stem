@@ -7,7 +7,6 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/MustardSeedNetworks/stem/internal/services/modtypes"
 )
@@ -93,36 +92,45 @@ func TestAutostartReflectorRecordsTheCause(t *testing.T) {
 	}
 }
 
-// runModuleTest's asynchronous failure branch keeps the same bookkeeping as
-// the plan path. NOTE: no production caller reaches it today — executeTest is
-// called only from startReflectorRequest, whose module is always the
-// reflector, so this branch is exercised here and nowhere else (#1251).
-func TestRunModuleTestFailureRecordsTheCause(t *testing.T) {
+// The asynchronous failure site is the run plan: a step whose executor
+// returns an error must classify the cause the same way the synchronous
+// reflector start does (#1251). Nothing drove this path before — the
+// bookkeeping that WAS covered lived in runModuleTest, which no production
+// caller reached (#1332).
+func TestPlanStepFailureRecordsTheCause(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "runmodcauseuser")
 	t.Setenv("STEM_AUTH_PASSWORD", "runmodcausepass123")
 	s := newTestServer(t)
 
+	plan, err := newRunPlan("", TestStartRequest{
+		Peer:  "198.51.100.7",
+		Tests: []TestStepRequest{{TestType: "rfc2544_throughput"}},
+	})
+	if err != nil {
+		t.Fatalf("newRunPlan: %v", err)
+	}
 	exec := &causeExecutor{err: errors.New("bind eth0: address already in use")}
-	factory := func(string) (testExecutor, error) { return exec, nil }
-	if err := s.runModuleTest(factory, "benchmark", "throughput", "lo0", nil); err != nil {
-		t.Fatalf("runModuleTest() error: %v", err)
+	s.executorResolver = func(string) (executorFactory, bool) {
+		return func(string) (testExecutor, error) { return exec, nil }, true
 	}
 
-	deadline := time.Now().Add(2 * time.Second)
-	for {
-		s.statsMu.RLock()
-		status, cause := s.testStatus, s.testError
-		s.statsMu.RUnlock()
-		if status == statusError {
-			if cause != causeInterfaceBusy {
-				t.Errorf("testError = %q, want %q", cause, causeInterfaceBusy)
-			}
-			return
-		}
-		if time.Now().After(deadline) {
-			t.Fatalf("testStatus = %q, want %q within the deadline", status, statusError)
-		}
-		time.Sleep(time.Millisecond)
+	runID, beginErr := s.beginRunPlan(plan)
+	if beginErr != nil {
+		t.Fatalf("beginRunPlan: %v", beginErr)
+	}
+	s.runTestPlan(runID, "lo0")
+
+	s.statsMu.RLock()
+	status, cause, stepStatus := s.testStatus, s.testError, s.runPlan.Steps[0].Status
+	s.statsMu.RUnlock()
+	if status != statusError {
+		t.Errorf("testStatus = %q, want %q", status, statusError)
+	}
+	if cause != causeInterfaceBusy {
+		t.Errorf("testError = %q, want %q", cause, causeInterfaceBusy)
+	}
+	if stepStatus != stepFailed {
+		t.Errorf("step status = %q, want %q", stepStatus, stepFailed)
 	}
 }
 

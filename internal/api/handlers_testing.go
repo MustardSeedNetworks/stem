@@ -104,7 +104,9 @@ func (s *Server) startReflectorRequest(
 		WriteInternalError(w, err)
 		return
 	}
-	if execErr := s.executeTest(step.Module, step.TestType, iface, req.Profile, step.Config); execErr != nil {
+	// The only module that reaches this path is the reflector: a plan of one
+	// step whose module is the reflector, checked by the caller.
+	if execErr := s.executeReflector(iface, req.Profile); execErr != nil {
 		s.respondTestExecutionError(w, execErr, step.Module, step.TestType)
 		return
 	}

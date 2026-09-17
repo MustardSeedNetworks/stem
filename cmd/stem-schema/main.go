@@ -25,6 +25,7 @@ import (
 	"github.com/invopop/jsonschema"
 
 	"github.com/MustardSeedNetworks/stem/internal/api"
+	"github.com/MustardSeedNetworks/stem/internal/netif"
 )
 
 // schemaTarget pairs a Go DTO with the on-disk filename it should be
@@ -38,9 +39,12 @@ type schemaTarget struct {
 
 // schemaTargets returns the DTOs we currently publish schemas for.
 //
-// Today the list is the auth + license + mode + recovery DTOs — the
-// surface that already carries `validate:` tags (#268). The list will
-// grow as more handlers adopt the strict-decode + validator pattern.
+// Requests: the auth + license + mode + recovery DTOs — the surface that
+// carries `validate:` tags (#268). Responses: the DTOs the UI reads on
+// every poll. Those were hand-transcribed into ui/src/types/api.ts and
+// compared to nothing, which is how a TypeScript-only Stats.errorMessage
+// survived (#1251); generating them is what makes a Go field added
+// without its TS counterpart fail check-types-drift.sh.
 //
 // Function rather than package-level var to keep gochecknoglobals
 // happy and to make the list lazily constructed.
@@ -70,6 +74,28 @@ func schemaTargets() []schemaTarget {
 			value:    &api.RecoveryCompleteRequest{},
 			filename: "recovery-complete.schema.json",
 			title:    "RecoveryCompleteRequest",
+		},
+		{
+			value:    &api.AuthLoginResponse{},
+			filename: "auth-login-response.schema.json",
+			title:    "AuthLoginResponse",
+		},
+		{
+			value:    &api.Stats{},
+			filename: "stats.schema.json",
+			title:    "Stats",
+		},
+		{
+			value:    &api.TestResultResponse{},
+			filename: "test-result.schema.json",
+			title:    "TestResultResponse",
+		},
+		{
+			// The /api/v1/interfaces handler writes netif's type straight
+			// to the wire, so that is the DTO, package boundary or not.
+			value:    &netif.InterfaceInfo{},
+			filename: "interface-info.schema.json",
+			title:    "InterfaceInfo",
 		},
 	}
 }

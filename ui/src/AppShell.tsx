@@ -23,7 +23,6 @@ import { matchPath, Navigate, Route, Routes, useLocation } from 'react-router';
 import { TestResults } from './components/TestResults';
 import { useNavGroups } from './navGroups';
 import { type PageConfig, usePages } from './pageRegistry';
-import { useRecordTestResult } from './stores/history-store';
 import { useShellStore } from './stores/shell-store';
 import { useTestStore } from './stores/test-store';
 import type { Stats, TestResult } from './types/api';
@@ -49,8 +48,6 @@ export interface AppShellProps {
 }
 
 export function AppShell({ version, topBar, testResult, testStatus }: AppShellProps): ReactElement {
-  // A run is recorded because it finished, not because a view is open.
-  useRecordTestResult(testResult);
   const navGroups = useNavGroups();
   const pages = usePages();
   const location = useLocation();

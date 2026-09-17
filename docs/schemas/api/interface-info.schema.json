@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/stem/main/docs/schemas/api/interface-info.schema.json",
+  "$ref": "#/$defs/InterfaceInfo",
+  "$defs": {
+    "InterfaceInfo": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "mac": {
+          "type": "string"
+        },
+        "speed": {
+          "type": "integer"
+        },
+        "duplex": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        },
+        "driver": {
+          "type": "string"
+        },
+        "physical": {
+          "type": "boolean"
+        },
+        "xdp": {
+          "type": "boolean"
+        },
+        "score": {
+          "type": "integer"
+        },
+        "mtu": {
+          "type": "integer"
+        },
+        "ipv4": {
+          "type": "string"
+        },
+        "ipv6": {
+          "type": "string"
+        },
+        "usable": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "mac",
+        "speed",
+        "duplex",
+        "state",
+        "driver",
+        "physical",
+        "xdp",
+        "score",
+        "mtu",
+        "ipv4",
+        "ipv6",
+        "usable"
+      ]
+    }
+  },
+  "title": "InterfaceInfo",
+  "description": "InterfaceInfo — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/stem/main/docs/schemas/api/auth-login-response.schema.json",
+  "$ref": "#/$defs/AuthLoginResponse",
+  "$defs": {
+    "AuthLoginResponse": {
+      "properties": {
+        "token": {
+          "type": "string"
+        },
+        "refreshToken": {
+          "type": "string"
+        },
+        "expiresAt": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "token",
+        "expiresAt"
+      ]
+    }
+  },
+  "title": "AuthLoginResponse",
+  "description": "AuthLoginResponse — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

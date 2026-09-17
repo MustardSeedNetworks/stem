@@ -14,7 +14,7 @@ export interface TestProgress {
   phase: string;
   elapsedSeconds: number;
   estimatedRemainingSeconds: number | null;
-  steps: Stats['steps'];
+  steps: NonNullable<Stats['steps']>;
 }
 
 interface TestProgressBarProps {
@@ -157,16 +157,19 @@ export function TestProgressBar({ progress }: TestProgressBarProps): ReactElemen
   );
 }
 
+// The counters and the step list carry `omitempty` on the daemon side, so
+// an idle or single-step run simply omits them. This is where absent
+// becomes the zero the bar renders; the view model stays total.
 export function useTestProgress(stats: Stats): TestProgress {
   return {
     status: stats.testStatus,
     currentTest: stats.currentTest,
-    currentStep: stats.currentStep,
-    stepsTotal: stats.stepsTotal,
-    phase: stats.phase,
-    elapsedSeconds: stats.elapsedSeconds,
+    currentStep: stats.currentStep ?? 0,
+    stepsTotal: stats.stepsTotal ?? 0,
+    phase: stats.phase ?? '',
+    elapsedSeconds: stats.elapsedSeconds ?? 0,
     estimatedRemainingSeconds: stats.estimatedRemainingSeconds,
-    steps: stats.steps,
+    steps: stats.steps ?? [],
   };
 }
 

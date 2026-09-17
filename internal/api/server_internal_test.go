@@ -23,12 +23,27 @@ import (
 type blockingCancelableExecutor struct {
 	cancelled chan struct{}
 	done      chan struct{}
+	started   chan struct{}
 	once      sync.Once
+	startOnce sync.Once
 }
 
 func (e *blockingCancelableExecutor) Execute(testType string, _ *modtypes.TestConfig) (*modtypes.Result, error) {
+	e.startOnce.Do(func() { close(e.started) })
 	<-e.cancelled
 	return &modtypes.Result{TestType: testType, Success: false}, errors.New("cancelled")
+}
+
+// waitStarted blocks until the plan runner has handed this executor the run,
+// which is also when the server holds it as the active executor a stop can
+// cancel.
+func (e *blockingCancelableExecutor) waitStarted(t *testing.T) {
+	t.Helper()
+	select {
+	case <-e.started:
+	case <-time.After(2 * time.Second):
+		t.Fatal("executor was never started")
+	}
 }
 
 func (e *blockingCancelableExecutor) Cancel() {
@@ -1234,17 +1249,27 @@ func TestStopCancelsActiveExecutorWithoutStatusOverwrite(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "canceltestuser")
 	t.Setenv("STEM_AUTH_PASSWORD", "canceltestpass123")
 	s := newTestServer(t)
-	if _, err := s.beginTestRun("throughput", "benchmark"); err != nil {
-		t.Fatalf("beginTestRun() error: %v", err)
-	}
 	exec := &blockingCancelableExecutor{
 		cancelled: make(chan struct{}),
 		done:      make(chan struct{}),
+		started:   make(chan struct{}),
 	}
-	factory := func(string) (testExecutor, error) { return exec, nil }
-	if err := s.runModuleTest(factory, "benchmark", "throughput", "lo", nil); err != nil {
-		t.Fatalf("runModuleTest() error: %v", err)
+	s.executorResolver = func(string) (executorFactory, bool) {
+		return func(string) (testExecutor, error) { return exec, nil }, true
 	}
+	plan, planErr := newRunPlan("", TestStartRequest{
+		Peer:  "198.51.100.7",
+		Tests: []TestStepRequest{{TestType: "rfc2544_throughput"}},
+	})
+	if planErr != nil {
+		t.Fatalf("newRunPlan: %v", planErr)
+	}
+	runID, beginErr := s.beginRunPlan(plan)
+	if beginErr != nil {
+		t.Fatalf("beginRunPlan() error: %v", beginErr)
+	}
+	go s.runTestPlan(runID, "lo")
+	exec.waitStarted(t)
 
 	w := httptest.NewRecorder()
 	s.handleTestStop(w, httptest.NewRequest(http.MethodPost, "/api/v1/test/stop", nil))
@@ -1426,21 +1451,6 @@ func TestApplyReflectorDataplaneUpdate(t *testing.T) {
 		applyErr := s.applyReflectorDataplaneUpdate(nil, changes)
 		if applyErr != nil {
 			t.Errorf("applyReflectorDataplaneUpdate() error: %v", applyErr)
-		}
-	})
-}
-
-// TestExecuteTest tests the executeTest function.
-func TestExecuteTest(t *testing.T) {
-	t.Setenv("STEM_AUTH_USERNAME", "exectestuser")
-	t.Setenv("STEM_AUTH_PASSWORD", "exectestpass123")
-
-	s := newTestServer(t)
-
-	t.Run("unknown module", func(t *testing.T) {
-		execErr := s.executeTest("unknown_module", "test", "eth0", "", nil)
-		if execErr == nil {
-			t.Error("Expected error for unknown module")
 		}
 	})
 }
@@ -2178,29 +2188,6 @@ func TestExecuteReflectorCoverage(t *testing.T) {
 		execErr := s.executeReflector("nonexistent_iface_xyz123", "")
 		if execErr == nil {
 			t.Error("Expected error for nonexistent interface")
-		}
-	})
-}
-
-// TestRunModuleTestCoverage tests runModuleTest for coverage.
-func TestRunModuleTestCoverage(t *testing.T) {
-	t.Setenv("STEM_AUTH_USERNAME", "runmoduser")
-	t.Setenv("STEM_AUTH_PASSWORD", "runmodpass123")
-
-	s := newTestServer(t)
-
-	t.Run("with valid module", func(t *testing.T) {
-		// This tests the executeTest path for benchmark module.
-		execErr := s.executeTest(
-			"benchmark",
-			"rfc2544_throughput",
-			"nonexistent_iface_xyz123",
-			"",
-			nil,
-		)
-		// May fail due to interface, but that's expected.
-		if execErr != nil {
-			t.Logf("Expected error for nonexistent interface: %v", execErr)
 		}
 	})
 }
@@ -3427,26 +3414,6 @@ func TestExecuteReflectorVariations(t *testing.T) {
 	})
 }
 
-// TestRunModuleTestVariations tests runModuleTest variations.
-func TestRunModuleTestVariations(t *testing.T) {
-	t.Setenv("STEM_AUTH_USERNAME", "runmodvaruser")
-	t.Setenv("STEM_AUTH_PASSWORD", "runmodvarpass123")
-
-	t.Run("run with nil factory", func(t *testing.T) {
-		s := newTestServer(t)
-
-		// Create a factory that returns an error.
-		factory := func(_ string) (testExecutor, error) {
-			return nil, errors.New("factory error")
-		}
-
-		runErr := s.runModuleTest(factory, "test", "test_type", "lo0", nil)
-		if runErr == nil {
-			t.Error("Expected error from factory")
-		}
-	})
-}
-
 // TestValidateInterfaceExistsVariations tests validateInterfaceExists variations.
 func TestValidateInterfaceExistsVariations(t *testing.T) {
 	t.Run("interface not found", func(t *testing.T) {
@@ -3765,19 +3732,6 @@ func TestHandleRecoveryCompleteWithoutManager(t *testing.T) {
 
 	if w.Code != http.StatusServiceUnavailable {
 		t.Errorf("Expected status 503, got %d", w.Code)
-	}
-}
-
-// TestExecuteTestWithUnknownModule tests executeTest with unknown module.
-func TestExecuteTestWithUnknownModule(t *testing.T) {
-	t.Setenv("STEM_AUTH_USERNAME", "execunknownuser")
-	t.Setenv("STEM_AUTH_PASSWORD", "execunknownpass123")
-
-	s := newTestServer(t)
-
-	execErr := s.executeTest("unknown_module_xyz", "throughput", "en0", "", nil)
-	if execErr == nil {
-		t.Error("Expected error for unknown module")
 	}
 }
 
