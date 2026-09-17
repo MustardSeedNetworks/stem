@@ -71,12 +71,12 @@ func licenseCmd(args []string) {
 		os.Exit(1)
 	}
 
-	mgr, loadStatus, err := license.Load()
+	mgr, err := license.Load()
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stdout, "Error: Failed to initialize license manager: %v\n", err)
 		os.Exit(1)
 	}
-	if !loadStatus.Usable() {
+	if loadStatus := mgr.LoadStatus(); !loadStatus.Usable() {
 		// The operator asked about licensing, so say what is on disk. The
 		// subcommands still run: --activate and --trial are how a damaged
 		// file is replaced.

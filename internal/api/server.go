@@ -220,13 +220,14 @@ func NewServer(port int) (*Server, error) {
 	// Initialize license manager. A state Stem cannot use is reported once
 	// here rather than on every gated request; the entitlement consequence is
 	// hasFeature's, which grants only the Free features without a manager.
-	licMgr, licStatus, err := license.Load()
+	licMgr, err := license.Load()
 	if err != nil {
 		logging.Error("license manager unavailable; entitlements limited to Free",
 			"event", "license.unusable", "error", err)
-	} else if !licStatus.Usable() {
+	} else if licStatus := licMgr.LoadStatus(); !licStatus.Usable() {
 		logging.Error("license file unusable; entitlements limited to Free",
-			"event", "license.unusable", "status", licStatus.String(), "path", license.DefaultLicensePath())
+			"event", "license.unusable", "status", licStatus.String(),
+			"path", license.DefaultLicensePath(), "error", licMgr.LoadError())
 	}
 
 	// Auto-select best interface if available.

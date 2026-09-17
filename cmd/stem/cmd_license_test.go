@@ -13,7 +13,7 @@ import (
 // must be told they are unlicensed and given both ways out.
 func TestDisplayLicenseStatusOnAFreshInstall(t *testing.T) {
 	licenseHome(t)
-	mgr, _, err := license.Load()
+	mgr, err := license.Load()
 	if err != nil {
 		t.Fatalf("license.Load: %v", err)
 	}
@@ -37,7 +37,7 @@ func TestDisplayLicenseStatusOnAFreshInstall(t *testing.T) {
 // number the operator acts on.
 func TestDisplayLicenseStatusInTrialMode(t *testing.T) {
 	licenseHome(t)
-	mgr, _, err := license.Load()
+	mgr, err := license.Load()
 	if err != nil {
 		t.Fatalf("license.Load: %v", err)
 	}

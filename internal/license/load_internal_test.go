@@ -14,6 +14,8 @@ import (
 	"path/filepath"
 	"testing"
 	"time"
+
+	fnd "github.com/MustardSeedNetworks/foundation/pkg/license"
 )
 
 // stateKeyFor derives the key foundation encrypts activation state with:
@@ -89,7 +91,7 @@ func stateGCM(t *testing.T, mgr *Manager) cipher.AEAD {
 func startedTrial(t *testing.T) (string, *Manager) {
 	t.Helper()
 	dir := t.TempDir()
-	mgr, _, err := LoadFromDir(dir)
+	mgr, err := LoadFromDir(dir)
 	if err != nil {
 		t.Fatalf("LoadFromDir: %v", err)
 	}
@@ -141,6 +143,44 @@ func dirWithExpiredLicence(t *testing.T) string {
 	return dir
 }
 
+// dirWithForgedLicence holds a state file that decrypts and parses but whose
+// claimed grant no signature stands behind: a hand-made activation, or a real
+// one after the signing key rotated. The core keeps such a state — deleting it
+// would let a trial overwrite a licence — with its tier and features stripped.
+func dirWithForgedLicence(t *testing.T) string {
+	t.Helper()
+	dir, mgr := startedTrial(t)
+	rewriteState(t, dir, mgr, func(state *ActivationState) {
+		state.IsTrialMode = false
+		state.LicenseKey = "STEM-FORGED-NOT-SIGNED"
+		state.ExpiresAt = time.Now().AddDate(1, 0, 0)
+	})
+	return dir
+}
+
+// TestLoadFromDirReportsAnUnvouchedState is #1312: a state nothing vouches for
+// must be reported unusable, because the two surfaces that tell an operator
+// their licence is not working — the startup log in internal/api/server.go and
+// stem license --status — are driven by this status alone. Entitlements are
+// already safe; silence is the defect.
+func TestLoadFromDirReportsAnUnvouchedState(t *testing.T) {
+	mgr, err := LoadFromDir(dirWithForgedLicence(t))
+	if err != nil {
+		t.Fatalf("LoadFromDir: %v", err)
+	}
+	if status := mgr.LoadStatus(); status.Usable() {
+		t.Errorf("status = %v, Usable() = true; a state no signature backs is not usable", status)
+	}
+	if mgr.IsActivated() {
+		t.Error("IsActivated() = true on a state no signature backs")
+	}
+	for _, feature := range ProFeatures() {
+		if mgr.HasFeature(feature) {
+			t.Errorf("HasFeature(%q) = true; want the Free grant only", feature)
+		}
+	}
+}
+
 // TestLoadFromDirFailsClosedToFree is the entitlement half of #1068: whatever
 // is on disk, a state Stem cannot stand behind grants no paid standard. The
 // cases are the four ways an install arrives without a usable licence.
@@ -148,21 +188,22 @@ func TestLoadFromDirFailsClosedToFree(t *testing.T) {
 	tests := []struct {
 		name       string
 		setup      func(t *testing.T) string
-		wantStatus Status
+		wantStatus fnd.LoadStatus
 	}{
-		{name: "missing", setup: dirWithNoLicence, wantStatus: StatusMissing},
-		{name: "unreadable", setup: dirWithUnreadableLicence, wantStatus: StatusUnreadable},
-		{name: "malformed", setup: dirWithMalformedLicence, wantStatus: StatusMalformed},
-		{name: "expired", setup: dirWithExpiredLicence, wantStatus: StatusLoaded},
+		{name: "missing", setup: dirWithNoLicence, wantStatus: fnd.StatusMissing},
+		{name: "unreadable", setup: dirWithUnreadableLicence, wantStatus: fnd.StatusUnreadable},
+		{name: "malformed", setup: dirWithMalformedLicence, wantStatus: fnd.StatusMalformed},
+		{name: "expired", setup: dirWithExpiredLicence, wantStatus: fnd.StatusLoaded},
+		{name: "unvouched", setup: dirWithForgedLicence, wantStatus: fnd.StatusUnverified},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mgr, status, err := LoadFromDir(tt.setup(t))
+			mgr, err := LoadFromDir(tt.setup(t))
 			if err != nil {
 				t.Fatalf("LoadFromDir: %v", err)
 			}
-			if status != tt.wantStatus {
+			if status := mgr.LoadStatus(); status != tt.wantStatus {
 				t.Errorf("status = %v, want %v", status, tt.wantStatus)
 			}
 			if mgr.IsActivated() {
@@ -193,7 +234,7 @@ func TestEffectiveTierReflectsActiveEntitlement(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mgr, _, err := LoadFromDir(tt.dir(t))
+			mgr, err := LoadFromDir(tt.dir(t))
 			if err != nil {
 				t.Fatalf("LoadFromDir: %v", err)
 			}
@@ -211,44 +252,17 @@ func TestEffectiveTierReflectsActiveEntitlement(t *testing.T) {
 func TestLoadFromDirReportsAUsableLicence(t *testing.T) {
 	dir, _ := startedTrial(t)
 
-	mgr, status, err := LoadFromDir(dir)
+	mgr, err := LoadFromDir(dir)
 	if err != nil {
 		t.Fatalf("LoadFromDir: %v", err)
 	}
-	if status != StatusLoaded {
-		t.Fatalf("status = %v, want %v", status, StatusLoaded)
+	if status := mgr.LoadStatus(); status != fnd.StatusLoaded {
+		t.Fatalf("status = %v, want %v", status, fnd.StatusLoaded)
 	}
 	for _, feature := range ProFeatures() {
 		if !mgr.HasFeature(feature) {
 			t.Errorf("HasFeature(%q) = false on an active trial", feature)
 		}
-	}
-}
-
-// TestStatusNamesItself pins the strings an operator message and the startup
-// log print, and the Usable predicate that decides whether a trial may start.
-func TestStatusNamesItself(t *testing.T) {
-	tests := []struct {
-		status     Status
-		wantName   string
-		wantUsable bool
-	}{
-		{StatusLoaded, "loaded", true},
-		{StatusMissing, "missing", true},
-		{StatusUnreadable, "unreadable", false},
-		{StatusMalformed, "malformed", false},
-		{Status(99), "unknown", false},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.wantName, func(t *testing.T) {
-			if got := tt.status.String(); got != tt.wantName {
-				t.Errorf("String() = %q, want %q", got, tt.wantName)
-			}
-			if got := tt.status.Usable(); got != tt.wantUsable {
-				t.Errorf("Usable() = %v, want %v", got, tt.wantUsable)
-			}
-		})
 	}
 }
 
@@ -264,12 +278,12 @@ func TestLoadUsesTheHomeConfigDirectory(t *testing.T) {
 		t.Fatalf("DefaultLicensePath() = %q, want %q", got, want)
 	}
 
-	mgr, status, err := Load()
+	mgr, err := Load()
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
-	if status != StatusMissing {
-		t.Errorf("status = %v on an empty home, want %v", status, StatusMissing)
+	if status := mgr.LoadStatus(); status != fnd.StatusMissing {
+		t.Errorf("status = %v on an empty home, want %v", status, fnd.StatusMissing)
 	}
 	if result := mgr.StartTrial(); !result.Success {
 		t.Fatalf("StartTrial: %s", result.Message)
