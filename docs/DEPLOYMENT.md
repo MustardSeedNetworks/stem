@@ -232,8 +232,10 @@ stem test -i eth0 -t y1564 --cir 100 --eir 50
 
 ### Systemd Service
 
-The `.deb` and `.rpm` install their own hardened unit at this path; this
-example is for a tarball install. Start from `deploy/systemd/stem.service`
+The `.deb` and `.rpm` install their own hardened unit at
+`/usr/lib/systemd/system/stem.service`; a file at the path below overrides it,
+so do not create one on a package install unless you mean to override. This
+example is for a tarball install — start from `deploy/systemd/stem.service`
 rather than this excerpt if you want the full hardening.
 
 Create `/etc/systemd/system/stem.service`:
