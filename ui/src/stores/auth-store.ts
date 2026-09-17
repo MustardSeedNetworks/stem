@@ -84,6 +84,14 @@ function refreshAccessToken(): Promise<boolean> {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({}),
         });
+        if (response.ok) {
+          // The daemon keys CSRF tokens by sha256(bearer), so the new access
+          // token lands on a session key that holds no token. Dropping the
+          // cache here — inside the single-flight promise, before it resolves —
+          // means every waiter woken by this refresh re-fetches, rather than
+          // retrying with a token the daemon will 403 (#1315).
+          invalidateCsrfToken();
+        }
         return response.ok;
       } catch {
         return false;
