@@ -163,8 +163,10 @@ releases the device.
 | `make fmt` | Format all (Go + TS + C) |
 | `make quick` | Backend-only dev iteration (do **not** ship) |
 
-Packaging has no `make` target: `.deb`, `.rpm`, macOS `.pkg` and Windows
-`.zip` are produced only by GoReleaser in `.github/workflows/release.yml`.
+Packaging has no `make` target: `.deb`, `.rpm`, the Linux/macOS tarballs and
+the Windows `.zip` are produced only by GoReleaser in
+`.github/workflows/release.yml`. The macOS `.pkg` is built by
+`deploy/macos/build-pkg.sh` as a local convenience and is not published.
 
 Verified versions: **Go 1.27.0**, Node.js 26.8.1, golangci-lint v2.13.2.
 
@@ -204,8 +206,8 @@ build if a route bypasses that policy.
 Conventional commits drive [release-please](https://github.com/googleapis/release-please).
 Release tags trigger `release.yml` which cross-builds binaries
 (Linux amd64/arm64, macOS arm64 — Intel was dropped fleet-wide 2026-06-08 —
-and Windows amd64/arm64), `.deb`, `.rpm`, macOS `.pkg`, and Windows
-`.zip` — all signed via cosign keyless OIDC and shipped with SLSA-3
+and Windows amd64/arm64), `.deb`, `.rpm`, the Linux/macOS tarballs and the
+Windows `.zip` — all signed via cosign keyless OIDC and shipped with SLSA-3
 provenance + Syft SBOM.
 
 ## License

@@ -147,7 +147,8 @@ export STEM_JWT_SECRET="$(openssl rand -base64 32)"
 
 ### Persistent Configuration
 
-Create `/etc/stem/stem.env`:
+The packages create `/etc/stem/environment` and the shipped unit reads it.
+Set the variables there:
 
 ```bash
 STEM_AUTH_USERNAME=admin
@@ -172,9 +173,6 @@ stem web -p 9443
 
 # Start with host binding
 stem web --host 0.0.0.0 -p 8444
-
-# Plaintext HTTP only (legacy)
-stem web --http -p 8444
 ```
 
 Access at: `https://localhost:8444` (self-signed cert; run
@@ -221,10 +219,10 @@ curl -sk https://localhost:8444/api/v1/reflector/stats
 
 ```bash
 # RFC 2544 throughput test
-stem test -i eth0 -t throughput
+stem test -i eth0 -t rfc2544_throughput
 
 # Multiple tests
-stem test -i eth0 -t throughput,latency,frame_loss
+stem test -i eth0 -t rfc2544_throughput,rfc2544_latency,rfc2544_frame_loss
 
 # Y.1564 service activation
 stem test -i eth0 -t y1564 --cir 100 --eir 50
@@ -233,6 +231,10 @@ stem test -i eth0 -t y1564 --cir 100 --eir 50
 ## Production Deployment
 
 ### Systemd Service
+
+The `.deb` and `.rpm` install their own hardened unit at this path; this
+example is for a tarball install. Start from `deploy/systemd/stem.service`
+rather than this excerpt if you want the full hardening.
 
 Create `/etc/systemd/system/stem.service`:
 
@@ -245,7 +247,7 @@ After=network.target
 Type=simple
 User=stem
 Group=stem
-EnvironmentFile=/etc/stem/stem.env
+EnvironmentFile=-/etc/stem/environment
 ExecStart=/usr/local/bin/stem web -p 8444
 Restart=always
 RestartSec=5
