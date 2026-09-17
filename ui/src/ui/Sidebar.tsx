@@ -286,9 +286,16 @@ const SidebarFooter: FC<SidebarFooterProps> = ({
       ) : null}
 
       {version ? (
-        <div className={`text-xs font-mono text-text-muted ${collapsed ? '' : 'flex-between'}`}>
-          {!collapsed ? <span>{t('labels.version')}</span> : null}
-          <span>{version}</span>
+        <div
+          className={`text-xs font-mono text-text-muted ${collapsed ? '' : 'flex-between gap-tight'}`}
+        >
+          {!collapsed ? <span className="shrink-0">{t('labels.version')}</span> : null}
+          {/* A development build's version carries the commit and a -dirty
+              suffix, which wrapped onto the label once the rail narrowed to
+              224px (UI-STEM-18). Truncate with the full string on hover. */}
+          <span className="truncate" title={version}>
+            {version}
+          </span>
         </div>
       ) : null}
       {/* Whose tool this is, under what it is. Quiet by design: the product mark
@@ -502,15 +509,18 @@ export const SidebarLayout: FC<SidebarLayoutProps> = ({
       </aside>
 
       <aside
-        /* 252px, a vertical rail gradient, and a hairline right edge. The
+        /* 224px, a vertical rail gradient, and a hairline right edge. The
            previous 1px solid surface-border drew a hard line down the page;
-           the rail should read as a different plane, not a bordered box. */
+           the rail should read as a different plane, not a bordered box.
+           The width and main's left offset below are one Tailwind step
+           (w-56 / pl-56) so they cannot drift — they were 252px against
+           256px before the density pass (UI-STEM-18). */
         // Named for the same reason as the mobile copy above: both asides are
         // always in the DOM, so a spec asserting on sidebar copy has to say
         // which surface it means rather than picking an index (#941).
         data-testid="desktop-sidebar"
         className={`hidden lg:flex fixed top-0 left-0 z-40 h-full flex-col bg-gradient-to-b from-rail-from to-rail-to backdrop-blur-xl border-r border-hairline transition-all duration-300 ease-in-out ${
-          collapsed ? 'w-16' : 'w-[252px]'
+          collapsed ? 'w-16' : 'w-56'
         }`}
       >
         {body(true)}
@@ -519,7 +529,7 @@ export const SidebarLayout: FC<SidebarLayoutProps> = ({
       <main
         id="main-content"
         className={`transition-all duration-300 ease-in-out pt-16 lg:pt-0 ${
-          collapsed ? 'lg:pl-16' : 'lg:pl-64'
+          collapsed ? 'lg:pl-16' : 'lg:pl-56'
         }`}
       >
         {topBar}

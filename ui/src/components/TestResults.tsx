@@ -56,15 +56,17 @@ export function TestResults({ testStatus, result }: TestResultsProps): ReactElem
     };
     const message = placeholders[testStatus] ?? t('results.placeholder.unknown');
 
+    // One strip, not a panel. This card renders under every route, including
+    // the ones where no test can be started, and a header over 96px of empty
+    // card read as a region that had failed to load (UI-STEM-18). With no
+    // result there is one sentence to show, so it sits on the header's line.
     return (
-      <div className="card">
-        <div className="card-header">
+      <div className="card flex flex-wrap items-center gap-default">
+        <div className="card-header mb-0">
           <AlertTriangle className="w-4 h-4" />
           {t('labels.testResults')}
         </div>
-        <div className="text-center py-centered text-text-muted">
-          <p>{message}</p>
-        </div>
+        <p className="text-sm text-text-muted">{message}</p>
       </div>
     );
   }
