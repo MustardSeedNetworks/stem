@@ -388,6 +388,14 @@ jobs:
           ./scripts/test-check-file-size.sh
           ./scripts/check-file-size.sh
 
+      # The *.i18n.test.tsx suites query with getByText, which cannot see an
+      # attribute, so an English aria-label is invisible to every i18n test
+      # the repo has (#1252).
+      - name: aria-label i18n gate
+        run: |
+          ./scripts/test-check-aria-label-i18n.sh
+          ./scripts/check-aria-label-i18n.sh
+
       - name: Banned-vocabulary gate (strategy reset)
         # Catches retired tier names and banned vocabulary in current
         # customer-facing copy.

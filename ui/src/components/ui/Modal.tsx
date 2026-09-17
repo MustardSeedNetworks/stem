@@ -6,6 +6,7 @@
  */
 import { X } from 'lucide-react';
 import { type FC, type KeyboardEvent, type ReactNode, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { iconSizes } from '../../constants/sizes';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 
@@ -56,6 +57,7 @@ export const Modal: FC<ModalProps> = ({
   closeOnEscape = true,
   className = '',
 }) => {
+  const { t } = useTranslation('common');
   const containerRef = useFocusTrap<HTMLDivElement>({
     isActive: isOpen,
     onEscape: closeOnEscape ? onClose : undefined,
@@ -87,7 +89,7 @@ export const Modal: FC<ModalProps> = ({
           type="button"
           className="absolute inset-0 bg-scrim/70 backdrop-blur-sm"
           onClick={onClose}
-          aria-label="Close modal"
+          aria-label={t('accessibility.closeModal')}
         />
       ) : (
         <div className="absolute inset-0 bg-scrim/70 backdrop-blur-sm" />
@@ -113,7 +115,7 @@ export const Modal: FC<ModalProps> = ({
                 type="button"
                 onClick={onClose}
                 className="ml-auto p-1 text-text-muted hover:text-text-primary transition-colors rounded-lg hover:bg-surface-hover"
-                aria-label="Close modal"
+                aria-label={t('accessibility.closeModal')}
               >
                 <X className={iconSizes.lg} />
               </button>
