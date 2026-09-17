@@ -1,5 +1,5 @@
 /**
- * @fileoverview The Stem - RFC 2544 Test Definitions
+ * @fileoverview Stem - RFC 2544 Test Definitions
  * @description Help content for RFC 2544 benchmarking tests.
  */
 

@@ -1,5 +1,5 @@
 /**
- * @fileoverview The Stem - RFC 2889 LAN Switch Test Configuration
+ * @fileoverview Stem - RFC 2889 LAN Switch Test Configuration
  * @description Configuration form for RFC 2889 LAN Switch Benchmarking Tests.
  *              Migrated to react-hook-form + valibot per #325.
  */

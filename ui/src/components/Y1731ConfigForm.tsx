@@ -1,5 +1,5 @@
 /**
- * @fileoverview The Stem - Y.1731 OAM Test Configuration
+ * @fileoverview Stem - Y.1731 OAM Test Configuration
  * @description Migrated to react-hook-form + valibot per #325.
  */
 

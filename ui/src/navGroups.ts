@@ -1,5 +1,5 @@
 /**
- * Sidebar navigation for The Stem.
+ * Sidebar navigation for Stem.
  *
  * Reflector and History are top-level items (no group header). Tests
  * remain grouped under a single 'Tests' header (one entry per module).

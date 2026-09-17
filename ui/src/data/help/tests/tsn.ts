@@ -1,5 +1,5 @@
 /**
- * @fileoverview The Stem - TSN Test Definitions
+ * @fileoverview Stem - TSN Test Definitions
  * @description Help content for IEEE 802.1 Time-Sensitive Networking tests.
  */
 

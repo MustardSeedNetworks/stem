@@ -1,7 +1,7 @@
 /**
  * AppContext — shared state surface for the routed Stem pages.
  *
- * The Stem App owns all the test/auth/state hooks; pages read from
+ * Stem App owns all the test/auth/state hooks; pages read from
  * this context to render their slice (Reflector view, Benchmark form,
  * etc.). This keeps state ownership in one place during the Phase A
  * router refactor — pages don't fetch anything themselves.

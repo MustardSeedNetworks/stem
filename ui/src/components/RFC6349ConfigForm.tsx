@@ -1,5 +1,5 @@
 /**
- * @fileoverview The Stem - RFC 6349 TCP Throughput Test Configuration
+ * @fileoverview Stem - RFC 6349 TCP Throughput Test Configuration
  * @description Configuration form for RFC 6349 TCP Throughput Testing.
  *              Migrated to react-hook-form + valibot per #325; the
  *              cross-field rule (minRTT ≤ maxRTT) is enforced by the

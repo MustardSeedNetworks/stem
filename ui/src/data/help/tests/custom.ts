@@ -1,5 +1,5 @@
 /**
- * @fileoverview The Stem - Custom Traffic Generation Test Definitions
+ * @fileoverview Stem - Custom Traffic Generation Test Definitions
  * @description Help content for custom traffic generation tests.
  */
 

@@ -1,5 +1,5 @@
 /*
- * The Stem - Tutorials
+ * Stem - Tutorials
  *
  * Step-by-step guides for common tasks.
  */
@@ -32,7 +32,7 @@ func QuickstartTutorial() Tutorial {
 				Content: `Before running tests, make sure you have:
 • Two network interfaces (one for testing, one for management)
 • OR a remote reflector device
-• The Stem installed and licensed
+• Stem installed and licensed
 
 Check your interfaces:`,
 				Command:  "ip link show",
@@ -151,7 +151,7 @@ Access it at:`,
 Create /etc/systemd/system/stem-reflector.service:
 
 [Unit]
-Description=The Stem Reflector
+Description=Stem Reflector
 After=network.target
 
 [Service]

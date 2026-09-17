@@ -1,5 +1,5 @@
 /**
- * @fileoverview The Stem - TypeScript Type Definitions
+ * @fileoverview Stem - TypeScript Type Definitions
  * @description Defines all TypeScript interfaces and types used throughout the WebUI.
  *              Includes interface info, test configurations, license info, and app settings.
  */

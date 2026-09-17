@@ -466,7 +466,7 @@ tests, and network testing concepts. You can get help on:
 func TutorialCommand() CommandHelp {
 	return CommandHelp{
 		Name:    "tutorial",
-		Summary: "Interactive tutorials for learning The Stem",
+		Summary: "Interactive tutorials for learning Stem",
 		Description: `The tutorial command provides step-by-step guides for common
 tasks. Tutorials are designed for both beginners and experienced users who
 want to learn specific features.

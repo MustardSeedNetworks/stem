@@ -1,11 +1,11 @@
 {
   "welcome": {
-    "title": "Welcome to The Stem",
+    "title": "Welcome to Stem",
     "subtitle": "Set up your admin password to get started"
   },
   "username": {
     "label": "Username:",
-    "description": "This is your admin username for The Stem."
+    "description": "This is your admin username for Stem."
   },
   "password": {
     "chooseMethod": "Choose password method",

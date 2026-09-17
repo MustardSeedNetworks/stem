@@ -1,5 +1,5 @@
 /**
- * @fileoverview The Stem - Traffic Generator Configuration
+ * @fileoverview Stem - Traffic Generator Configuration
  * @description Migrated to react-hook-form + valibot per #325. MAC fields
  *              now validate format (or accept empty string for "auto").
  */

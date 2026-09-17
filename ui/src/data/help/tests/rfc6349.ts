@@ -1,5 +1,5 @@
 /**
- * @fileoverview The Stem - RFC 6349 Test Definitions
+ * @fileoverview Stem - RFC 6349 Test Definitions
  * @description Help content for RFC 6349 TCP throughput testing.
  */
 

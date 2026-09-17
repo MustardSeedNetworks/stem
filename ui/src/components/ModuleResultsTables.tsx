@@ -1,5 +1,5 @@
 /**
- * @fileoverview The Stem - Module result tables
+ * @fileoverview Stem - Module result tables
  * @description The three read-only result tables a module card renders, and the
  *              number/colour formatting they share.
  *

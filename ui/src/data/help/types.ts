@@ -1,5 +1,5 @@
 /**
- * @fileoverview The Stem - Help Content Types
+ * @fileoverview Stem - Help Content Types
  * @description Shared interfaces for help content data structures.
  */
 

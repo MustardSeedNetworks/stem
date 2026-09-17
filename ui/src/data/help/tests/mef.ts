@@ -1,5 +1,5 @@
 /**
- * @fileoverview The Stem - MEF Test Definitions
+ * @fileoverview Stem - MEF Test Definitions
  * @description Help content for Metro Ethernet Forum service tests.
  */
 

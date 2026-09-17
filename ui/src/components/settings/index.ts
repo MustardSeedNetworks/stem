@@ -1,7 +1,7 @@
 /**
  * Settings Components
  *
- * Modular settings drawer components for The Stem.
+ * Modular settings drawer components for Stem.
  * Follows Seed patterns for profile-based settings.
  */
 

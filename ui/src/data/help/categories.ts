@@ -1,5 +1,5 @@
 /**
- * @fileoverview The Stem - Help Content Categories
+ * @fileoverview Stem - Help Content Categories
  * @description Test category definitions for the WebUI help system.
  */
 
