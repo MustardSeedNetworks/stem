@@ -10,9 +10,7 @@ extend-exclude = [
     "ui/coverage/",
     "go.sum",
     # Exclude i18n - Spanish/other languages aren't typos
-    "ui/locales/es/",
-    "ui/locales/de/",
-    "ui/locales/fr/",
+    "internal/i18n/locales/es/",
 ]
 
 [default.extend-words]

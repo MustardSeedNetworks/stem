@@ -166,7 +166,7 @@ export function checkHelp(root: string): string[] {
     }
   };
   scan(join(root, 'ui/src'));
-  const locale: unknown = JSON.parse(readFileSync(join(root, 'ui/locales/en/help.json'), 'utf8'));
+  const locale: unknown = JSON.parse(readFileSync(join(root, 'internal/i18n/locales/en/help.json'), 'utf8'));
   return leafKeys(locale)
     .filter((key) => !used.has(key))
     .sort();
