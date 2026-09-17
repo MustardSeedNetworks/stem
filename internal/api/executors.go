@@ -9,7 +9,6 @@ import (
 	"github.com/MustardSeedNetworks/stem/internal/logging"
 	reflectorConfig "github.com/MustardSeedNetworks/stem/internal/reflector/config"
 	reflectorDP "github.com/MustardSeedNetworks/stem/internal/reflector/dataplane"
-	"github.com/MustardSeedNetworks/stem/internal/services"
 	"github.com/MustardSeedNetworks/stem/internal/services/modtypes"
 	"github.com/MustardSeedNetworks/stem/internal/services/reflector"
 )
@@ -32,122 +31,10 @@ type (
 	executorFactory = modtypes.ExecutorFactory
 )
 
-// executeTest runs the test via the appropriate module executor.
-func (s *Server) executeTest(
-	moduleName, testType, iface, profile string,
-	config *TestConfig,
-) error {
-	// Handle reflector separately as it has different lifecycle.
-	if moduleName == moduleReflector {
-		return s.executeReflector(iface, profile)
-	}
-
-	resolver := s.testExecutorResolver()
-	if resolver == nil {
-		resolver = services.Factory
-	}
-	factory, ok := resolver(moduleName)
-	if !ok {
-		return fmt.Errorf("executor not implemented for module: %s", moduleName)
-	}
-
-	return s.runModuleTest(factory, moduleName, testType, iface, config)
-}
-
 func (s *Server) testExecutorResolver() func(string) (executorFactory, bool) {
 	s.statsMu.RLock()
 	defer s.statsMu.RUnlock()
 	return s.executorResolver
-}
-
-// runModuleTest is the generic test execution function that eliminates duplication.
-func (s *Server) runModuleTest(
-	factory executorFactory,
-	moduleName, testType, iface string,
-	config *TestConfig,
-) error {
-	exec, err := factory(iface)
-	if err != nil {
-		return fmt.Errorf("create %s executor: %w", moduleName, err)
-	}
-	s.statsMu.Lock()
-	runID := s.testRunID
-	s.activeTestExec = exec
-	s.testStatus = statusRunning
-	s.statsMu.Unlock()
-
-	// Run test in goroutine.
-	go func() {
-		defer exec.Close()
-
-		// Convert server config to module config with params map.
-		cfg := convertToModuleConfig(iface, testType, config)
-
-		result, execErr := exec.Execute(testType, cfg)
-
-		s.statsMu.Lock()
-		if s.testRunID != runID {
-			s.statsMu.Unlock()
-			return
-		}
-		s.activeTestExec = nil
-
-		if execErr != nil {
-			s.testStatus = statusError
-			s.testError = classifyRunCause(execErr.Error())
-			errResult := &TestResultResponse{
-				Status:   statusError,
-				TestType: testType,
-				Module:   moduleName,
-				Success:  false,
-				Error:    execErr.Error(),
-				Message:  "",
-				Data:     nil,
-			}
-			s.testResult = errResult
-			s.currentTest = ""
-			s.currentRunID = ""
-			s.currentModule = ""
-			s.statsMu.Unlock()
-			logging.Error(
-				"Test failed",
-				"module",
-				moduleName,
-				"testType",
-				testType,
-				"error",
-				execErr,
-			)
-			return
-		}
-
-		s.testStatus = statusCompleted
-		completedResult := &TestResultResponse{
-			Status:   statusCompleted,
-			TestType: testType,
-			Module:   moduleName,
-			Success:  result.Success,
-			Error:    result.Error,
-			Message:  "",
-			Data:     result.Data,
-		}
-		s.testResult = completedResult
-		s.currentTest = ""
-		s.currentRunID = ""
-		s.currentModule = ""
-		s.statsMu.Unlock()
-		logging.Info(
-			"Test completed",
-			"module",
-			moduleName,
-			"testType",
-			testType,
-			"success",
-			result.Success,
-		)
-	}()
-
-	return nil
 }
 
 // executeReflector starts the reflector mode.

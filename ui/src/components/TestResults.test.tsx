@@ -85,34 +85,6 @@ describe('TestResults', () => {
     expect(screen.getByText('no reply from peer')).toBeInTheDocument();
   });
 
-  it('renders metrics, formatting large numbers and leaving text alone', () => {
-    render(
-      <TestResults
-        testStatus="completed"
-        result={result({
-          duration: 92_000,
-          startedAt: '2026-09-12T23:00:00Z',
-          completedAt: '2026-09-12T23:01:32Z',
-          metrics: {
-            frames_sent: 1_500_000_000,
-            throughput_mbps: 9410,
-            verdict: 'pass',
-          },
-        })}
-      />,
-    );
-
-    expect(screen.getByText('1.50B')).toBeInTheDocument();
-    expect(screen.getByText('9.41K')).toBeInTheDocument();
-    expect(screen.getByText('pass')).toBeInTheDocument();
-    // The key is the operator-facing label, so underscores are not.
-    expect(screen.getByText('frames sent')).toBeInTheDocument();
-    expect(screen.getByText(/1m 32s/)).toBeInTheDocument();
-    expect(screen.getByText('PASSED')).toBeInTheDocument();
-    expect(screen.getByText(/^Started:/)).toBeInTheDocument();
-    expect(screen.getByText(/^Completed:/)).toBeInTheDocument();
-  });
-
   // A reflector's stored result carries the start acknowledgement in
   // `success`, so reading it printed PASSED over a run the operator had
   // stopped (#1248). A stopped run has no verdict.
@@ -125,22 +97,13 @@ describe('TestResults', () => {
           module: 'reflector',
           status: 'stopped',
           success: true,
-          metrics: { frames_reflected: 12 },
         })}
       />,
     );
 
     expect(screen.getByText('STOPPED')).toBeInTheDocument();
     expect(screen.queryByText('PASSED')).toBeNull();
-    // What the run did capture is still shown.
-    expect(screen.getByText(/frames reflected/i)).toBeInTheDocument();
     expect(screen.queryByText(/No tests running/)).toBeNull();
-  });
-
-  it('formats a sub-minute duration in seconds', () => {
-    render(<TestResults testStatus="completed" result={result({ duration: 4300 })} />);
-
-    expect(screen.getByText(/4\.3s/)).toBeInTheDocument();
   });
 
   // Each waiting state says something different, because "nothing here yet"

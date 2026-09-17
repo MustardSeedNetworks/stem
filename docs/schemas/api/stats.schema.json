@@ -1,0 +1,554 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/stem/main/docs/schemas/api/stats.schema.json",
+  "$ref": "#/$defs/Stats",
+  "$defs": {
+    "RFC2544TestConfig": {
+      "properties": {
+        "duration": {
+          "type": "integer"
+        },
+        "frameSizes": {
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "resolution": {
+          "type": "number"
+        },
+        "maxLoss": {
+          "type": "number"
+        },
+        "warmup": {
+          "type": "integer"
+        },
+        "trials": {
+          "type": "integer"
+        },
+        "stepSize": {
+          "type": "number"
+        },
+        "bidirectional": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "duration",
+        "frameSizes",
+        "resolution",
+        "maxLoss",
+        "warmup",
+        "trials",
+        "stepSize",
+        "bidirectional"
+      ]
+    },
+    "RFC2889TestConfig": {
+      "properties": {
+        "frameSize": {
+          "type": "integer"
+        },
+        "duration": {
+          "type": "integer"
+        },
+        "warmup": {
+          "type": "integer"
+        },
+        "addressCount": {
+          "type": "integer"
+        },
+        "acceptableLoss": {
+          "type": "number"
+        },
+        "portCount": {
+          "type": "integer"
+        },
+        "pattern": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "frameSize",
+        "duration",
+        "warmup",
+        "addressCount",
+        "acceptableLoss",
+        "portCount",
+        "pattern"
+      ]
+    },
+    "RFC6349TestConfig": {
+      "properties": {
+        "targetRateMbps": {
+          "type": "number"
+        },
+        "minRTTMs": {
+          "type": "number"
+        },
+        "maxRTTMs": {
+          "type": "number"
+        },
+        "rwndSize": {
+          "type": "integer"
+        },
+        "duration": {
+          "type": "integer"
+        },
+        "parallelStreams": {
+          "type": "integer"
+        },
+        "mss": {
+          "type": "integer"
+        },
+        "mode": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "targetRateMbps",
+        "minRTTMs",
+        "maxRTTMs",
+        "rwndSize",
+        "duration",
+        "parallelStreams",
+        "mss",
+        "mode"
+      ]
+    },
+    "RunPlanStep": {
+      "properties": {
+        "testType": {
+          "type": "string"
+        },
+        "module": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "pending",
+            "running",
+            "passed",
+            "failed",
+            "skipped",
+            "cancelled"
+          ]
+        },
+        "config": {
+          "$ref": "#/$defs/TestConfig"
+        },
+        "error": {
+          "type": "string"
+        },
+        "result": {
+          "$ref": "#/$defs/TestResultResponse"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "testType",
+        "module",
+        "status"
+      ]
+    },
+    "Stats": {
+      "properties": {
+        "packetsReceived": {
+          "type": "integer"
+        },
+        "packetsSent": {
+          "type": "integer"
+        },
+        "bytesReceived": {
+          "type": "integer"
+        },
+        "bytesSent": {
+          "type": "integer"
+        },
+        "currentPps": {
+          "type": "number"
+        },
+        "currentMbps": {
+          "type": "number"
+        },
+        "uptime": {
+          "type": "integer"
+        },
+        "testStatus": {
+          "type": "string",
+          "enum": [
+            "idle",
+            "starting",
+            "running",
+            "completed",
+            "error",
+            "stopped",
+            "cancelled"
+          ]
+        },
+        "currentTest": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "suiteId": {
+          "type": "string"
+        },
+        "steps": {
+          "items": {
+            "$ref": "#/$defs/RunPlanStep"
+          },
+          "type": "array"
+        },
+        "currentStep": {
+          "type": "integer"
+        },
+        "stepsComplete": {
+          "type": "integer"
+        },
+        "stepsTotal": {
+          "type": "integer"
+        },
+        "phase": {
+          "type": "string"
+        },
+        "elapsedSeconds": {
+          "type": "integer"
+        },
+        "estimatedRemainingSeconds": {
+          "oneOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "errorMessage": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "packetsReceived",
+        "packetsSent",
+        "bytesReceived",
+        "bytesSent",
+        "currentPps",
+        "currentMbps",
+        "uptime",
+        "testStatus",
+        "currentTest",
+        "estimatedRemainingSeconds"
+      ]
+    },
+    "TSNTestConfig": {
+      "properties": {
+        "duration": {
+          "type": "integer"
+        },
+        "warmup": {
+          "type": "integer"
+        },
+        "frameSize": {
+          "type": "integer"
+        },
+        "maxLatencyNs": {
+          "type": "integer"
+        },
+        "maxJitterNs": {
+          "type": "integer"
+        },
+        "requirePTPSync": {
+          "type": "boolean"
+        },
+        "maxSyncOffsetNs": {
+          "type": "integer"
+        },
+        "ptpEnabled": {
+          "type": "boolean"
+        },
+        "preemptionEnabled": {
+          "type": "boolean"
+        },
+        "numTrafficClasses": {
+          "type": "integer"
+        },
+        "baseTimeNs": {
+          "type": "integer"
+        },
+        "cycleTimeNs": {
+          "type": "integer"
+        },
+        "trafficClass": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "duration",
+        "warmup",
+        "frameSize",
+        "maxLatencyNs",
+        "maxJitterNs",
+        "requirePTPSync",
+        "maxSyncOffsetNs",
+        "ptpEnabled",
+        "preemptionEnabled",
+        "numTrafficClasses",
+        "baseTimeNs",
+        "cycleTimeNs",
+        "trafficClass"
+      ]
+    },
+    "TestConfig": {
+      "properties": {
+        "rfc2544": {
+          "$ref": "#/$defs/RFC2544TestConfig"
+        },
+        "rfc2889": {
+          "$ref": "#/$defs/RFC2889TestConfig"
+        },
+        "rfc6349": {
+          "$ref": "#/$defs/RFC6349TestConfig"
+        },
+        "y1564": {
+          "$ref": "#/$defs/Y1564TestConfig"
+        },
+        "y1731": {
+          "$ref": "#/$defs/Y1731TestConfig"
+        },
+        "tsn": {
+          "$ref": "#/$defs/TSNTestConfig"
+        },
+        "trafficGen": {
+          "$ref": "#/$defs/TrafficGenTestConfig"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "TestResultResponse": {
+      "properties": {
+        "status": {
+          "type": "string"
+        },
+        "testType": {
+          "type": "string"
+        },
+        "module": {
+          "type": "string"
+        },
+        "success": {
+          "type": "boolean"
+        },
+        "error": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "data": true,
+        "suiteId": {
+          "type": "string"
+        },
+        "steps": {
+          "items": {
+            "$ref": "#/$defs/RunPlanStep"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "status"
+      ]
+    },
+    "TrafficGenTestConfig": {
+      "properties": {
+        "frameSize": {
+          "type": "integer"
+        },
+        "ratePct": {
+          "type": "number"
+        },
+        "duration": {
+          "type": "integer"
+        },
+        "warmup": {
+          "type": "integer"
+        },
+        "streamId": {
+          "type": "integer"
+        },
+        "burstMode": {
+          "type": "boolean"
+        },
+        "burstSize": {
+          "type": "integer"
+        },
+        "interBurstGapUs": {
+          "type": "integer"
+        },
+        "srcMac": {
+          "type": "string"
+        },
+        "dstMac": {
+          "type": "string"
+        },
+        "vlanId": {
+          "type": "integer"
+        },
+        "vlanPriority": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "frameSize",
+        "ratePct",
+        "duration",
+        "warmup",
+        "streamId",
+        "burstMode",
+        "burstSize",
+        "interBurstGapUs",
+        "srcMac",
+        "dstMac",
+        "vlanId",
+        "vlanPriority"
+      ]
+    },
+    "Y1564TestConfig": {
+      "properties": {
+        "cir": {
+          "type": "number"
+        },
+        "eir": {
+          "type": "number"
+        },
+        "cbs": {
+          "type": "integer"
+        },
+        "ebs": {
+          "type": "integer"
+        },
+        "frameSizes": {
+          "items": {
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "configStepDuration": {
+          "type": "integer"
+        },
+        "perfTestDuration": {
+          "type": "integer"
+        },
+        "vlanId": {
+          "type": "integer"
+        },
+        "pcp": {
+          "type": "integer"
+        },
+        "colorAware": {
+          "type": "boolean"
+        },
+        "flrThreshold": {
+          "type": "number"
+        },
+        "fdThreshold": {
+          "type": "number"
+        },
+        "fdvThreshold": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "cir",
+        "eir",
+        "cbs",
+        "ebs",
+        "frameSizes",
+        "configStepDuration",
+        "perfTestDuration",
+        "vlanId",
+        "pcp",
+        "colorAware",
+        "flrThreshold",
+        "fdThreshold",
+        "fdvThreshold"
+      ]
+    },
+    "Y1731TestConfig": {
+      "properties": {
+        "mepId": {
+          "type": "integer"
+        },
+        "megLevel": {
+          "type": "integer"
+        },
+        "megId": {
+          "type": "string"
+        },
+        "ccmInterval": {
+          "type": "integer"
+        },
+        "priority": {
+          "type": "integer"
+        },
+        "duration": {
+          "type": "integer"
+        },
+        "intervalMs": {
+          "type": "integer"
+        },
+        "count": {
+          "type": "integer"
+        },
+        "frameSize": {
+          "type": "integer"
+        },
+        "priorityTagged": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "mepId",
+        "megLevel",
+        "megId",
+        "ccmInterval",
+        "priority",
+        "duration",
+        "intervalMs",
+        "count",
+        "frameSize",
+        "priorityTagged"
+      ]
+    }
+  },
+  "title": "Stats",
+  "description": "Stats — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}
