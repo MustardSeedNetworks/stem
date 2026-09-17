@@ -30,7 +30,7 @@
 # remains portable until releases run on a native arm64 builder; Darwin and
 # Windows do not support this dataplane.
 #
-# Tested against goreleaser v2.x inside goreleaser-cross:v1.26.2-3.
+# Tested against goreleaser v2.x inside goreleaser-cross:v1.27.0.
 # =============================================================================
 
 version: 2
