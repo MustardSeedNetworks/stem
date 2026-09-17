@@ -59,7 +59,7 @@ func TestKeygenContract(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			t.Parallel()
-			mgr, _, err := license.LoadFromDir(t.TempDir())
+			mgr, err := license.LoadFromDir(t.TempDir())
 			if err != nil {
 				t.Fatalf("LoadFromDir: %v", err)
 			}
@@ -75,7 +75,7 @@ func TestKeygenContract(t *testing.T) {
 
 	t.Run("enterprise-retired", func(t *testing.T) {
 		t.Parallel()
-		mgr, _, err := license.LoadFromDir(t.TempDir())
+		mgr, err := license.LoadFromDir(t.TempDir())
 		if err != nil {
 			t.Fatalf("LoadFromDir: %v", err)
 		}

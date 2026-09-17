@@ -20,7 +20,7 @@ import (
 // says, not whatever activation state the developer's ~/.config/stem holds.
 func proLicense(t testing.TB) *license.Manager {
 	t.Helper()
-	mgr, _, err := license.LoadFromDir(t.TempDir())
+	mgr, err := license.LoadFromDir(t.TempDir())
 	if err != nil {
 		t.Fatalf("LoadFromDir() error: %v", err)
 	}
@@ -34,7 +34,7 @@ func proLicense(t testing.TB) *license.Manager {
 // which is what a fresh install answers with.
 func unlicensed(t testing.TB) *license.Manager {
 	t.Helper()
-	mgr, _, err := license.LoadFromDir(t.TempDir())
+	mgr, err := license.LoadFromDir(t.TempDir())
 	if err != nil {
 		t.Fatalf("LoadFromDir() error: %v", err)
 	}

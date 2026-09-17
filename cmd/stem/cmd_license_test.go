@@ -3,6 +3,7 @@
 package main
 
 import (
+	"os"
 	"strings"
 	"testing"
 
@@ -13,7 +14,7 @@ import (
 // must be told they are unlicensed and given both ways out.
 func TestDisplayLicenseStatusOnAFreshInstall(t *testing.T) {
 	licenseHome(t)
-	mgr, _, err := license.Load()
+	mgr, err := license.Load()
 	if err != nil {
 		t.Fatalf("license.Load: %v", err)
 	}
@@ -37,7 +38,7 @@ func TestDisplayLicenseStatusOnAFreshInstall(t *testing.T) {
 // number the operator acts on.
 func TestDisplayLicenseStatusInTrialMode(t *testing.T) {
 	licenseHome(t)
-	mgr, _, err := license.Load()
+	mgr, err := license.Load()
 	if err != nil {
 		t.Fatalf("license.Load: %v", err)
 	}
@@ -56,5 +57,35 @@ func TestDisplayLicenseStatusInTrialMode(t *testing.T) {
 	}
 	if !strings.Contains(out, "full access during trial") {
 		t.Errorf("status output does not say the trial grants full access:\n%s", out)
+	}
+}
+
+// TestLicenseCmdWarnsOnAnUnusableFile is the CLI half of #1312: when the state
+// on disk is one Stem cannot stand behind, the operator asking about licensing
+// is told so and told which file to replace. The warning is what makes a
+// stripped or damaged licence visible — the entitlements are silently Free
+// either way.
+func TestLicenseCmdWarnsOnAnUnusableFile(t *testing.T) {
+	if os.Geteuid() == 0 {
+		t.Skip("root reads a 0000 file; the case cannot be built")
+	}
+	licenseHome(t)
+	mgr, err := license.Load()
+	if err != nil {
+		t.Fatalf("license.Load: %v", err)
+	}
+	if result := mgr.StartTrial(); !result.Success {
+		t.Fatalf("StartTrial: %s", result.Message)
+	}
+	path := license.DefaultLicensePath()
+	if chmodErr := os.Chmod(path, 0o000); chmodErr != nil {
+		t.Fatalf("chmod: %v", chmodErr)
+	}
+
+	out := captureStdout(t, func() { licenseCmd([]string{"--status"}) })
+
+	want := "Warning: license file " + path + " is unreadable"
+	if !strings.Contains(out, want) {
+		t.Errorf("status output does not warn that the licence file is unusable:\nwant %q in:\n%s", want, out)
 	}
 }
