@@ -1286,11 +1286,6 @@ jobs:
 
       - name: Validate i18n (parity, glossary, banned vocab, etc.)
         uses: MustardSeedNetworks/.github/.github/actions/i18n-validate@048d173dd72ca0f9e5fa832fb5b9fd2a6447e5e9 # v1.13.0
-        with:
-          # The action defaults to internal/i18n/locales, which is where these
-          # lived while they sat inside a dead Go package. They belong to the
-          # frontend and now live with it.
-          locales-dir: ui/locales
 
   # ============================================================================
   # Documentation Checks

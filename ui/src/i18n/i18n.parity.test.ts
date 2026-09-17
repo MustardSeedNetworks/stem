@@ -32,7 +32,7 @@ import { namespaces } from './index';
 
 type Json = string | number | boolean | null | Json[] | { [k: string]: Json };
 
-/** `../../locales/<lang>/<ns>.json` -> `<ns>`. */
+/** `../../../internal/i18n/locales/<lang>/<ns>.json` -> `<ns>`. */
 function namespaceOf(path: string): string {
   return path.replace(/^.*\//, '').replace(/\.json$/, '');
 }
@@ -46,8 +46,12 @@ function localeModules(mods: Record<string, unknown>): Map<string, Json> {
   );
 }
 
-const EN = localeModules(import.meta.glob('../../locales/en/*.json', { eager: true }));
-const ES = localeModules(import.meta.glob('../../locales/es/*.json', { eager: true }));
+const EN = localeModules(
+  import.meta.glob('../../../internal/i18n/locales/en/*.json', { eager: true }),
+);
+const ES = localeModules(
+  import.meta.glob('../../../internal/i18n/locales/es/*.json', { eager: true }),
+);
 
 const FIXTURES: { ns: string; en: Json; es: Json }[] = [...EN.keys()].sort().flatMap((ns) => {
   const es = ES.get(ns);

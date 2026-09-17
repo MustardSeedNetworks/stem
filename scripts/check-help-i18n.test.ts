@@ -9,9 +9,9 @@ test('an unused help key fails even when mentioned in a comment or test', () => 
   const root = mkdtempSync(join(tmpdir(), 'stem-help-i18n-'));
   try {
     mkdirSync(join(root, 'ui/src'), { recursive: true });
-    mkdirSync(join(root, 'ui/locales/en'), { recursive: true });
+    mkdirSync(join(root, 'internal/i18n/locales/en'), { recursive: true });
     writeFileSync(
-      join(root, 'ui/locales/en/help.json'),
+      join(root, 'internal/i18n/locales/en/help.json'),
       JSON.stringify({ modal: { title: 'Help', orphan: 'Unused' } }),
     );
     writeFileSync(
@@ -42,9 +42,9 @@ test('commented registry IDs cannot hide orphaned dynamic translations', () => {
   const root = mkdtempSync(join(tmpdir(), 'stem-help-registry-'));
   try {
     mkdirSync(join(root, 'ui/src/data/help/tests'), { recursive: true });
-    mkdirSync(join(root, 'ui/locales/en'), { recursive: true });
+    mkdirSync(join(root, 'internal/i18n/locales/en'), { recursive: true });
     writeFileSync(
-      join(root, 'ui/locales/en/help.json'),
+      join(root, 'internal/i18n/locales/en/help.json'),
       JSON.stringify({
         tests: { throughput: { whenToUse: 'Use this' }, orphan: { whenToUse: 'Unused' } },
       }),

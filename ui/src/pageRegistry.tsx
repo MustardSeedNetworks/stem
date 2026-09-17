@@ -84,7 +84,7 @@ type PageI18nKey =
 /**
  * PageDef is the static, language-agnostic definition. The matching
  * translation lives at pages.{i18nKey}.{label,title,description} in
- * ui/locales/{en,es}/pages.json.
+ * internal/i18n/locales/{en,es}/pages.json.
  */
 interface PageDef {
   path: string;
