@@ -88,7 +88,10 @@ export function TestResults({ testStatus, result }: TestResultsProps): ReactElem
       </div>
 
       {result.steps && result.steps.length > 0 ? (
-        <section className="mb-content grid gap-default" aria-label="Run plan results">
+        <section
+          className="mb-content grid gap-default"
+          aria-label={t('accessibility.runPlanResults')}
+        >
           {result.steps.map((step, index) => (
             <div
               key={`${step.testType}-${index}`}

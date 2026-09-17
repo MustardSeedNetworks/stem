@@ -1,6 +1,13 @@
 /**
  * i18n.parity.test.ts — locks en/es locale parity in CI.
  *
+ * The fixture list is DERIVED from the locale directories, not hand-written.
+ * It used to be ten entries maintained by hand against eleven declared
+ * namespaces, and `pages` — every route title and description — was the one
+ * nobody added (#1252); deleting an `es/pages.json` key failed nothing. A
+ * hand-maintained list of the things to check is a list that will be one
+ * short again, so the glob below is the gate's real subject.
+ *
  * Asserts two invariants for every shipped namespace:
  *   1. KEY PARITY  — en and es JSON files have identical key sets at every
  *      depth. Adding or removing a key in one language without the other
@@ -20,42 +27,32 @@
  * discipline + code review instead.
  */
 
-import enCli from '@locales/en/cli.json';
-import enCommon from '@locales/en/common.json';
-import enErrors from '@locales/en/errors.json';
-import enHelp from '@locales/en/help.json';
-import enModules from '@locales/en/modules.json';
-import enParams from '@locales/en/params.json';
-import enRecovery from '@locales/en/recovery.json';
-import enSecurity from '@locales/en/security.json';
-import enSettings from '@locales/en/settings.json';
-import enSetup from '@locales/en/setup.json';
-import esCli from '@locales/es/cli.json';
-import esCommon from '@locales/es/common.json';
-import esErrors from '@locales/es/errors.json';
-import esHelp from '@locales/es/help.json';
-import esModules from '@locales/es/modules.json';
-import esParams from '@locales/es/params.json';
-import esRecovery from '@locales/es/recovery.json';
-import esSecurity from '@locales/es/security.json';
-import esSettings from '@locales/es/settings.json';
-import esSetup from '@locales/es/setup.json';
 import { describe, expect, it } from 'vitest';
+import { namespaces } from './index';
 
 type Json = string | number | boolean | null | Json[] | { [k: string]: Json };
 
-const FIXTURES: { ns: string; en: Json; es: Json }[] = [
-  { ns: 'cli', en: enCli as Json, es: esCli as Json },
-  { ns: 'common', en: enCommon as Json, es: esCommon as Json },
-  { ns: 'errors', en: enErrors as Json, es: esErrors as Json },
-  { ns: 'help', en: enHelp as Json, es: esHelp as Json },
-  { ns: 'modules', en: enModules as Json, es: esModules as Json },
-  { ns: 'params', en: enParams as Json, es: esParams as Json },
-  { ns: 'recovery', en: enRecovery as Json, es: esRecovery as Json },
-  { ns: 'security', en: enSecurity as Json, es: esSecurity as Json },
-  { ns: 'settings', en: enSettings as Json, es: esSettings as Json },
-  { ns: 'setup', en: enSetup as Json, es: esSetup as Json },
-];
+/** `../../locales/<lang>/<ns>.json` -> `<ns>`. */
+function namespaceOf(path: string): string {
+  return path.replace(/^.*\//, '').replace(/\.json$/, '');
+}
+
+function localeModules(mods: Record<string, unknown>): Map<string, Json> {
+  return new Map(
+    Object.entries(mods).map(([path, mod]) => [
+      namespaceOf(path),
+      (mod as { default: Json }).default,
+    ]),
+  );
+}
+
+const EN = localeModules(import.meta.glob('../../locales/en/*.json', { eager: true }));
+const ES = localeModules(import.meta.glob('../../locales/es/*.json', { eager: true }));
+
+const FIXTURES: { ns: string; en: Json; es: Json }[] = [...EN.keys()].sort().flatMap((ns) => {
+  const es = ES.get(ns);
+  return es === undefined ? [] : [{ ns, en: EN.get(ns) as Json, es }];
+});
 
 /**
  * Standard terms that must NEVER be translated. Acronyms / RFC numbers /
@@ -151,4 +148,16 @@ describe('i18n DNT — standard terms appear verbatim in es', () => {
       expect(violations).toEqual([]);
     });
   }
+});
+
+describe('i18n parity — the fixture list covers everything shipped', () => {
+  it('has a fixture for every namespace i18n/index.ts declares', () => {
+    const covered = new Set(FIXTURES.map((f) => f.ns));
+    const missing = [...namespaces].filter((ns) => !covered.has(ns)).sort();
+    expect(missing, 'declared namespaces with no parity fixture').toEqual([]);
+  });
+
+  it('ships the same namespace files in en and es', () => {
+    expect([...ES.keys()].sort()).toEqual([...EN.keys()].sort());
+  });
 });

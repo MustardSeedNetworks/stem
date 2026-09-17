@@ -20,7 +20,7 @@ export function LanguageSwitcher({
   showNative = true,
   className = '',
 }: LanguageSwitcherProps): ReactElement {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation('common');
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>): void => {
     i18n.changeLanguage(e.target.value).catch(() => {
@@ -33,7 +33,7 @@ export function LanguageSwitcher({
       value={i18n.language}
       onChange={handleChange}
       className={`language-switcher ${className}`}
-      aria-label="Select language"
+      aria-label={t('accessibility.selectLanguage')}
     >
       {languages.map((lang) => (
         <option key={lang.code} value={lang.code}>

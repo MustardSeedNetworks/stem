@@ -58,7 +58,8 @@
     "testCompleted": "Completado: {{test}}",
     "testError": "Error: {{test}}",
     "testStopped": "Detenido: {{test}}",
-    "loadingModules": "Cargando módulos..."
+    "loadingModules": "Cargando módulos...",
+    "skipped": "Omitido"
   },
   "results": {
     "pass": "APROBADO",
@@ -142,7 +143,17 @@
     "expandSidebar": "Expandir barra lateral",
     "closeMenu": "Cerrar menú",
     "openMenu": "Abrir menú",
-    "skipToContent": "Saltar al contenido principal"
+    "skipToContent": "Saltar al contenido principal",
+    "selectLanguage": "Seleccionar idioma",
+    "clearSearch": "Borrar búsqueda",
+    "dismissAlert": "Descartar alerta",
+    "closeModal": "Cerrar diálogo",
+    "closeCommandPalette": "Cerrar la paleta de comandos",
+    "breadcrumb": "Ruta de navegación",
+    "home": "Inicio",
+    "runPlanProgress": "Progreso del plan de ejecución",
+    "runPlanSteps": "Pasos del plan de ejecución",
+    "runPlanResults": "Resultados del plan de ejecución"
   },
   "sections": {
     "modules": "Módulos de Prueba",
@@ -266,5 +277,12 @@
     "title": "No hay pruebas de {{module}} seleccionadas",
     "body": "Elija en Configuración las pruebas que debe ejecutar este módulo y su configuración aparecerá aquí.",
     "openSettings": "Abrir Configuración"
+  },
+  "progress": {
+    "elapsed": "Transcurrido: {{time}}",
+    "eta": "ETA: {{eta}}",
+    "etaSeconds": "~{{count}} s",
+    "etaMinutes": "~{{count}} min",
+    "stepOf": "Paso {{current}} de {{total}}"
   }
 }

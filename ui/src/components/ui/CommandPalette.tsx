@@ -69,7 +69,7 @@ export const CommandPalette: FC<CommandPaletteProps> = ({
         type="button"
         className="absolute inset-0 bg-scrim/70 backdrop-blur-sm"
         onClick={() => onOpenChange(false)}
-        aria-label="Close command palette"
+        aria-label={t('accessibility.closeCommandPalette')}
       />
       <div className="relative mx-4 w-full max-w-xl rounded-2xl border border-surface-border bg-bg-surface/95 shadow-2xl">
         <div className="flex items-center gap-compact border-b border-surface-border px-4 py-row-lg">

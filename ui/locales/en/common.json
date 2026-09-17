@@ -58,7 +58,8 @@
     "testCompleted": "Completed: {{test}}",
     "testError": "Error: {{test}}",
     "testStopped": "Stopped: {{test}}",
-    "loadingModules": "Loading modules..."
+    "loadingModules": "Loading modules...",
+    "skipped": "Skipped"
   },
   "results": {
     "pass": "PASS",
@@ -142,7 +143,17 @@
     "expandSidebar": "Expand sidebar",
     "closeMenu": "Close menu",
     "openMenu": "Open menu",
-    "skipToContent": "Skip to main content"
+    "skipToContent": "Skip to main content",
+    "selectLanguage": "Select language",
+    "clearSearch": "Clear search",
+    "dismissAlert": "Dismiss alert",
+    "closeModal": "Close dialog",
+    "closeCommandPalette": "Close command palette",
+    "breadcrumb": "Breadcrumb",
+    "home": "Home",
+    "runPlanProgress": "Run plan progress",
+    "runPlanSteps": "Run plan steps",
+    "runPlanResults": "Run plan results"
   },
   "sections": {
     "modules": "Test Modules",
@@ -266,5 +277,12 @@
     "title": "No {{module}} tests selected",
     "body": "Pick the tests this module should run in Settings, and their configuration appears here.",
     "openSettings": "Open Settings"
+  },
+  "progress": {
+    "elapsed": "Elapsed: {{time}}",
+    "eta": "ETA: {{eta}}",
+    "etaSeconds": "~{{count}}s",
+    "etaMinutes": "~{{count}}m",
+    "stepOf": "Step {{current}} of {{total}}"
   }
 }

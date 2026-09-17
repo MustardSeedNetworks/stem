@@ -1,7 +1,10 @@
 /** Displays progress reported by the server-owned run plan. */
+
+import type { TFunction } from 'i18next';
 import { Clock, Loader2 } from 'lucide-react';
 import type { ReactElement } from 'react';
-import type { Stats } from '../types/api';
+import { useTranslation } from 'react-i18next';
+import type { RunPlanStep, Stats } from '../types/api';
 
 export interface TestProgress {
   status: Stats['testStatus'];
@@ -25,30 +28,55 @@ function formatTime(seconds: number): string {
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
-function formatETA(seconds: number): string {
-  if (seconds <= 0) return 'Complete';
-  if (seconds < 60) return `~${Math.ceil(seconds)}s`;
-  return `~${Math.ceil(seconds / 60)}m`;
+function formatETA(t: TFunction<'common'>, seconds: number): string {
+  if (seconds <= 0) return t('status.complete');
+  if (seconds < 60) return t('progress.etaSeconds', { count: Math.ceil(seconds) });
+  return t('progress.etaMinutes', { count: Math.ceil(seconds / 60) });
 }
 
-function statusPresentation(status: TestProgress['status']): [string, string, string] {
+function statusPresentation(
+  t: TFunction<'common'>,
+  status: TestProgress['status'],
+): [string, string, string] {
   switch (status) {
     case 'starting':
-      return ['Starting...', 'text-status-info', 'bg-status-info'];
+      return [t('status.starting'), 'text-status-info', 'bg-status-info'];
     case 'running':
-      return ['Running', 'text-status-success', 'bg-brand-primary'];
+      return [t('status.running'), 'text-status-success', 'bg-brand-primary'];
     case 'completed':
-      return ['Completed', 'text-status-success', 'bg-status-success'];
+      return [t('status.completed'), 'text-status-success', 'bg-status-success'];
     case 'cancelled':
-      return ['Cancelled', 'text-status-warning', 'bg-status-warning'];
+      return [t('status.cancelled'), 'text-status-warning', 'bg-status-warning'];
     case 'error':
-      return ['Error', 'text-status-error', 'bg-status-error'];
+      return [t('status.error'), 'text-status-error', 'bg-status-error'];
     default:
-      return ['Idle', 'text-text-muted', 'bg-text-muted'];
+      return [t('status.idle'), 'text-text-muted', 'bg-text-muted'];
+  }
+}
+
+// The server sends the step status as a bare string, so each arm spells its
+// key out literally: a `t(`status.${step.status}`)` would be invisible to the
+// extractor and to the fleet key gate, and the string would be dropped.
+function stepStatusLabel(t: TFunction<'common'>, status: RunPlanStep['status']): string {
+  switch (status) {
+    case 'pending':
+      return t('status.pending');
+    case 'running':
+      return t('status.running');
+    case 'passed':
+      return t('status.passed');
+    case 'failed':
+      return t('status.failed');
+    case 'skipped':
+      return t('status.skipped');
+    case 'cancelled':
+      return t('status.cancelled');
   }
 }
 
 export function TestProgressBar({ progress }: TestProgressBarProps): ReactElement | null {
+  const { t } = useTranslation('common');
+
   if (progress.status === 'idle' || !progress.currentTest) return null;
 
   const active = progress.status === 'running' || progress.status === 'starting';
@@ -60,7 +88,7 @@ export function TestProgressBar({ progress }: TestProgressBarProps): ReactElemen
       : determinate && totalEstimate > 0
         ? Math.min(100, (progress.elapsedSeconds / totalEstimate) * 100)
         : 0;
-  const [statusText, statusColor, barColor] = statusPresentation(progress.status);
+  const [statusText, statusColor, barColor] = statusPresentation(t, progress.status);
 
   return (
     <div className="card mb-section">
@@ -72,10 +100,13 @@ export function TestProgressBar({ progress }: TestProgressBarProps): ReactElemen
         </div>
         <div className="flex items-center gap-default text-sm text-text-muted">
           <span className="flex items-center gap-tight">
-            <Clock className="w-3 h-3" /> Elapsed: {formatTime(progress.elapsedSeconds)}
+            <Clock className="w-3 h-3" />{' '}
+            {t('progress.elapsed', { time: formatTime(progress.elapsedSeconds) })}
           </span>
           {active && determinate ? (
-            <span>ETA: {formatETA(progress.estimatedRemainingSeconds ?? 0)}</span>
+            <span>
+              {t('progress.eta', { eta: formatETA(t, progress.estimatedRemainingSeconds ?? 0) })}
+            </span>
           ) : null}
         </div>
       </div>
@@ -83,7 +114,7 @@ export function TestProgressBar({ progress }: TestProgressBarProps): ReactElemen
       <div
         className="relative h-3 rounded-full bg-surface-base overflow-hidden"
         role="progressbar"
-        aria-label="Run plan progress"
+        aria-label={t('accessibility.runPlanProgress')}
         aria-valuenow={determinate ? Math.round(percent) : undefined}
         aria-valuemin={determinate ? 0 : undefined}
         aria-valuemax={determinate ? 100 : undefined}
@@ -100,18 +131,24 @@ export function TestProgressBar({ progress }: TestProgressBarProps): ReactElemen
       <div className="flex-between mt-inline text-xs text-text-muted">
         <span>
           {progress.currentStep > 0 && progress.stepsTotal > 0
-            ? `Step ${progress.currentStep} of ${progress.stepsTotal}`
+            ? t('progress.stepOf', {
+                current: progress.currentStep,
+                total: progress.stepsTotal,
+              })
             : null}
           {progress.phase ? ` · ${progress.phase}` : null}
         </span>
         {determinate ? <span className="font-medium">{Math.round(percent)}%</span> : null}
       </div>
       {progress.steps.length > 0 ? (
-        <ol className="mt-inline grid gap-tight text-xs" aria-label="Run plan steps">
+        <ol
+          className="mt-inline grid gap-tight text-xs"
+          aria-label={t('accessibility.runPlanSteps')}
+        >
           {progress.steps.map((step, index) => (
             <li key={`${step.testType}-${index}`} className="flex-between">
               <span>{step.testType}</span>
-              <span>{step.status}</span>
+              <span>{stepStatusLabel(t, step.status)}</span>
             </li>
           ))}
         </ol>

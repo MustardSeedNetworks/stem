@@ -5,12 +5,12 @@
     "title": "Seguridad de la cuenta"
   },
   "benchmark": {
-    "description": "Mediciones RFC 2544 de rendimiento, latencia, pérdida de tramas y ráfagas consecutivas.",
+    "description": "Mediciones RFC 2544 de throughput, latency, pérdida de tramas y ráfagas consecutivas.",
     "label": "Benchmark",
     "title": "Benchmark"
   },
   "certify": {
-    "description": "Certificación de reenvío RFC 2889, rendimiento TCP RFC 6349 y redes sensibles al tiempo TSN.",
+    "description": "Certificación de reenvío RFC 2889, throughput TCP RFC 6349 y redes sensibles al tiempo TSN.",
     "label": "Certify",
     "title": "Certify"
   },

@@ -1,5 +1,6 @@
 import { ChevronRight, Home } from 'lucide-react';
 import type { FC } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router';
 import { iconSizes } from '../constants/sizes';
 
@@ -21,6 +22,7 @@ const ROUTE_LABELS: Record<string, string> = {
 };
 
 export const Breadcrumbs: FC = () => {
+  const { t } = useTranslation('common');
   const location = useLocation();
   const pathSegments = location.pathname.split('/').filter(Boolean);
 
@@ -38,13 +40,13 @@ export const Breadcrumbs: FC = () => {
 
   return (
     <nav
-      aria-label="Breadcrumb"
+      aria-label={t('accessibility.breadcrumb')}
       className="flex items-center gap-tight text-sm text-text-muted mb-content"
     >
       <Link
         to="/"
         className="flex items-center gap-tight hover:text-text-primary transition-colors"
-        aria-label="Home"
+        aria-label={t('accessibility.home')}
       >
         <Home className={iconSizes.sm} />
       </Link>

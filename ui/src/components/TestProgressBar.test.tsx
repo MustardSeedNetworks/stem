@@ -35,7 +35,9 @@ describe('TestProgressBar', () => {
     );
     expect(screen.getByText('Elapsed: 0:15')).toBeInTheDocument();
     expect(screen.getByText('rfc2544_throughput')).toBeInTheDocument();
-    expect(screen.getByText('passed')).toBeInTheDocument();
+    // The rendered status is the locale's label, not the server's bare
+    // `passed` — that raw string was the defect in #1252.
+    expect(screen.getByText('Passed')).toBeInTheDocument();
   });
 
   // The bar carries role="progressbar", and axe fails a progressbar with no
