@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.128](https://github.com/MustardSeedNetworks/stem/compare/v0.24.127...v0.24.128) (2026-09-17)
+
+
+### Bug Fixes
+
+* **ci:** assert the release toolchain pins by shape, not by literal value ([#1324](https://github.com/MustardSeedNetworks/stem/issues/1324)) ([9d6f307](https://github.com/MustardSeedNetworks/stem/commit/9d6f30778b25dda3dd73a9f048074b8c1cb7393c))
+* **deps:** update dependency valibot to v1.5.0 ([#1299](https://github.com/MustardSeedNetworks/stem/issues/1299)) ([cf240b4](https://github.com/MustardSeedNetworks/stem/commit/cf240b4fd9248aca61e574b44f0100efad070b62))
+* **deps:** update frontend toolchain ([#1321](https://github.com/MustardSeedNetworks/stem/issues/1321)) ([56c670e](https://github.com/MustardSeedNetworks/stem/commit/56c670efe5f31e0d83e8a922c60c5e08f57d3598))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1300](https://github.com/MustardSeedNetworks/stem/issues/1300)) ([f2bfe61](https://github.com/MustardSeedNetworks/stem/commit/f2bfe61f7416c698bca65b8ce088274ab90899b5))
+
 ## [0.24.127](https://github.com/MustardSeedNetworks/stem/compare/v0.24.126...v0.24.127) (2026-09-17)
 
 
