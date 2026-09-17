@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.129](https://github.com/MustardSeedNetworks/stem/compare/v0.24.128...v0.24.129) (2026-09-17)
+
+
+### Bug Fixes
+
+* **ui:** route MFA through authFetch and delete the dead profile store ([#1327](https://github.com/MustardSeedNetworks/stem/issues/1327)) ([007bea6](https://github.com/MustardSeedNetworks/stem/commit/007bea6b40c2b942e1e3712ce3fb20668d8b5e79)), closes [#1253](https://github.com/MustardSeedNetworks/stem/issues/1253)
+
+
+### Miscellaneous
+
+* **deps:** update github actions ([#1298](https://github.com/MustardSeedNetworks/stem/issues/1298)) ([05f29c3](https://github.com/MustardSeedNetworks/stem/commit/05f29c3b71b2501ae174a5bb813a10c39a7e7d37))
+
 ## [0.24.128](https://github.com/MustardSeedNetworks/stem/compare/v0.24.127...v0.24.128) (2026-09-17)
 
 
