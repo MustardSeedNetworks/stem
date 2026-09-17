@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.124](https://github.com/MustardSeedNetworks/stem/compare/v0.24.123...v0.24.124) (2026-09-17)
+
+
+### Bug Fixes
+
+* **ui:** translate the twelve literal aria-labels and the run-plan progress bar ([#1304](https://github.com/MustardSeedNetworks/stem/issues/1304)) ([c97aa17](https://github.com/MustardSeedNetworks/stem/commit/c97aa17fab1c6608035a95cd8c0c964eaeac4a28))
+
+
+### Miscellaneous
+
+* **theme:** adopt the corrected canonical msn-shared.css ([#1303](https://github.com/MustardSeedNetworks/stem/issues/1303)) ([e43b9d1](https://github.com/MustardSeedNetworks/stem/commit/e43b9d19cf66df41048f50f257b75fc6f26f571d)), closes [#1302](https://github.com/MustardSeedNetworks/stem/issues/1302)
+
 ## [0.24.123](https://github.com/MustardSeedNetworks/stem/compare/v0.24.122...v0.24.123) (2026-09-16)
 
 
