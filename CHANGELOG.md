@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.127](https://github.com/MustardSeedNetworks/stem/compare/v0.24.126...v0.24.127) (2026-09-17)
+
+
+### Bug Fixes
+
+* **api:** require auth on the three license routes ([#1320](https://github.com/MustardSeedNetworks/stem/issues/1320)) ([b0ea2c0](https://github.com/MustardSeedNetworks/stem/commit/b0ea2c0d3c2f225c68eedc64d2b63282e53e7fe6)), closes [#1317](https://github.com/MustardSeedNetworks/stem/issues/1317)
+* **ui:** drop the CSRF cache when a token refresh succeeds ([#1316](https://github.com/MustardSeedNetworks/stem/issues/1316)) ([06d3f8a](https://github.com/MustardSeedNetworks/stem/commit/06d3f8ab8c5976988e68f9ca26a0f8d9e40c1f74)), closes [#1315](https://github.com/MustardSeedNetworks/stem/issues/1315)
+
 ## [0.24.126](https://github.com/MustardSeedNetworks/stem/compare/v0.24.125...v0.24.126) (2026-09-17)
 
 
