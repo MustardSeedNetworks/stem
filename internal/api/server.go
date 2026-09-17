@@ -414,12 +414,14 @@ func (s *Server) setupRoutes() {
 		// Reflector — reconfigures/inspects the dataplane, requires auth (#398).
 		{path: "/api/v1/reflector/config", handler: s.handleReflectorConfig, auth: true, limiter: s.apiLimiter},
 		{path: "/api/v1/reflector/stats", handler: s.handleReflectorStats, auth: true, limiter: s.apiLimiter},
-		// License (pre-session — status/activation before auth).
-		{path: "/api/v1/license", handler: s.handleLicense, limiter: s.apiLimiter},
-		{path: "/api/v1/license/activate", handler: s.handleLicenseActivate, limiter: s.apiLimiter},
-		// trial activation is pre-session/self-serve (no account yet), so CSRF is
-		// skipped; accepted as-is — low abuse impact, SameSite-protected (ADR-0009).
-		{path: "/api/v1/license/trial", handler: s.handleLicenseTrial, limiter: s.apiLimiter},
+		// License — entitlement state, so every route requires a session (#1317).
+		// Without auth: true the CSRF middleware does not cover them either: with
+		// no bearer the session id is empty and the middleware passes through,
+		// expecting an auth layer to answer 401. ADR-0009's amendment records why
+		// the trial route's pre-session exemption was withdrawn.
+		{path: "/api/v1/license", handler: s.handleLicense, auth: true, limiter: s.apiLimiter},
+		{path: "/api/v1/license/activate", handler: s.handleLicenseActivate, auth: true, limiter: s.apiLimiter},
+		{path: "/api/v1/license/trial", handler: s.handleLicenseTrial, auth: true, limiter: s.apiLimiter},
 		// Modules (public catalog).
 		{path: "/api/v1/modules", handler: s.handleModules, limiter: s.apiLimiter},
 		{path: "/api/v1/modules/", handler: s.handleModuleByName, limiter: s.apiLimiter},

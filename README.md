@@ -188,7 +188,7 @@ Verified versions: **Go 1.27.0**, Node.js 26.8.1, golangci-lint v2.13.2.
 | `/api/v1/auth/login` | POST | Issue JWT |
 | `/api/v1/license` | GET | License status |
 | `/api/v1/license/activate` | POST | Activate a license key |
-| `/api/v1/license/trial` | POST | Start trial |
+| `/api/v1/license/trial` | GET / POST | Trial status / start trial |
 | `/api/v1/reflector/config` | GET / POST | Reflector configuration |
 | `/api/v1/reflector/stats` | GET | Reflector counters |
 
@@ -196,8 +196,9 @@ Every API route is under `/api/v1/`; `/__version`, `/health/live`,
 `/health/ready` and `/__capabilities` are unversioned introspection endpoints
 registered outside the capability registry. Test execution, settings, mode,
 interfaces and the reflector routes require a JWT issued by
-`/api/v1/auth/login`. First-run setup, password recovery and the license
-routes are deliberately pre-session (there is no account yet); `internal/api/server.go`
+`/api/v1/auth/login`, as do the license routes — licence state is entitlement
+state (#1317). First-run setup and password recovery are deliberately
+pre-session (there is no account yet); `internal/api/server.go`
 carries the reason per route and `scripts/check-route-policy.sh` fails the
 build if a route bypasses that policy.
 

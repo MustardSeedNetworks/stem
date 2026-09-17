@@ -70,3 +70,37 @@ is still what protects them. What moved is the manager: token storage,
 generation, validation and expiry, keyed by `sha256(bearer)`, live in
 `github.com/MustardSeedNetworks/foundation/pkg/csrf`, imported by
 `internal/auth/csrf.go`. The exempt list and the response format stay local.
+
+### Amendment 2026-09-17 — the trial exemption is withdrawn (#1317)
+
+Edge 2 is reversed. `/api/v1/license`, `/api/v1/license/activate` and
+`/api/v1/license/trial` now carry `auth: true` in the route registry, so an
+unauthenticated request is 401 and the CSRF middleware has a session to key on.
+Edge 1 (`/auth/refresh`) is unchanged.
+
+Three things this ADR relied on turned out not to hold:
+
+- **`SameSite=Strict` was doing nothing here.** It blocks a browser sending
+  _cookies_ cross-site. These routes required no credential at all, so there was
+  nothing for `SameSite` to withhold: a POST carrying only `stem_refresh` was
+  answered 200 on the wire, and a request carrying nothing at all started a
+  trial in a unit test.
+- **The self-serve flow it protected does not exist.** The only caller of all
+  three routes is `LicenseSection`, mounted in `SettingsDrawer` behind
+  `AuthGate`, and it already reaches them through `authFetch` (bearer plus
+  `X-Csrf-Token`). First run forces setup, so there is no "no account yet"
+  state in which the trial button is reachable. The exemption cost the UI
+  nothing to give up.
+- **"No persistent escalation" was wrong.** `StartTrial` writes entitlement
+  state, and foundation D-FDN-2 showed it would overwrite an expired _paid_
+  activation. An unauthenticated caller could therefore change what the product
+  is licensed to do.
+
+Stem has no user roles — a single operator account — so `auth: true` is the
+role gate the standing invariant asks for on a persistent write; no tier was
+invented for it.
+
+`TestLicenseRoutesRequireAuth` (`internal/api/handlers_license_test.go`) asserts
+the 401 on the wire and `TestRoutePolicyManifest` asserts `auth: true` in the
+manifest, so a future registration cannot drop the flag quietly. The test that
+previously asserted the opposite, `TestHandleLicenseNoAuth`, is gone.

@@ -449,114 +449,13 @@ func TestHandleReflectorStats(t *testing.T) {
 	}
 }
 
-func TestHandleLicense(t *testing.T) {
-	s := setupTestServer(t)
+// The five unauthenticated license tests that lived here were removed with
+// #1317: the license routes now require a session, and each one duplicated an
+// authenticated equivalent in handlers_license_test.go
+// (TestHandleLicense_GetSuccess, TestHandleLicenseActivate_InvalidKey /
+// _EmptyKey, TestHandleLicenseTrial_GetStatus / _StartTrial). The 401 itself is
+// pinned by TestLicenseRoutesRequireAuth.
 
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/license", nil)
-	w := httptest.NewRecorder()
-
-	s.ServeHTTP(w, req)
-
-	if w.Code != http.StatusOK {
-		t.Errorf("Expected status 200, got %d", w.Code)
-	}
-
-	var resp map[string]any
-	err := json.Unmarshal(w.Body.Bytes(), &resp)
-	if err != nil {
-		t.Fatalf("Failed to parse response: %v", err)
-	}
-}
-
-func TestHandleLicenseActivate(t *testing.T) {
-	s := setupTestServer(t)
-
-	body := bytes.NewBufferString(`{"licenseKey": "1001-TEST-1234-5678"}`)
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/license/activate", body)
-	w := httptest.NewRecorder()
-
-	s.ServeHTTP(w, req)
-
-	// Response should be valid JSON (success or failure).
-	if w.Code != http.StatusOK {
-		t.Errorf("Expected status 200, got %d", w.Code)
-	}
-
-	var resp map[string]any
-	err := json.Unmarshal(w.Body.Bytes(), &resp)
-	if err != nil {
-		t.Fatalf("Failed to parse response: %v", err)
-	}
-}
-
-func TestHandleLicenseActivateEmpty(t *testing.T) {
-	s := setupTestServer(t)
-
-	body := bytes.NewBufferString(`{"licenseKey": ""}`)
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/license/activate", body)
-	w := httptest.NewRecorder()
-
-	s.ServeHTTP(w, req)
-
-	if w.Code != http.StatusOK {
-		t.Errorf("Expected status 200, got %d", w.Code)
-	}
-
-	var resp map[string]any
-	err := json.Unmarshal(w.Body.Bytes(), &resp)
-	if err != nil {
-		t.Fatalf("Failed to parse response: %v", err)
-	}
-
-	if resp["success"] != false {
-		t.Error("Expected success: false for empty license key")
-	}
-}
-
-func TestHandleLicenseTrialGet(t *testing.T) {
-	s := setupTestServer(t)
-
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/license/trial", nil)
-	w := httptest.NewRecorder()
-
-	s.ServeHTTP(w, req)
-
-	if w.Code != http.StatusOK {
-		t.Errorf("Expected status 200, got %d", w.Code)
-	}
-
-	var resp map[string]any
-	err := json.Unmarshal(w.Body.Bytes(), &resp)
-	if err != nil {
-		t.Fatalf("Failed to parse response: %v", err)
-	}
-
-	// Should have 'active' field.
-	if _, ok := resp["active"]; !ok {
-		t.Error("Expected 'active' field in response")
-	}
-}
-
-func TestHandleLicenseTrialPost(t *testing.T) {
-	s := setupTestServer(t)
-
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/license/trial", nil)
-	w := httptest.NewRecorder()
-
-	s.ServeHTTP(w, req)
-
-	if w.Code != http.StatusOK {
-		t.Errorf("Expected status 200, got %d", w.Code)
-	}
-
-	var resp map[string]any
-	err := json.Unmarshal(w.Body.Bytes(), &resp)
-	if err != nil {
-		t.Fatalf("Failed to parse response: %v", err)
-	}
-}
-
-// Integration tests.
 func TestServerRoutesRegistered(t *testing.T) {
 	s := setupTestServer(t)
 

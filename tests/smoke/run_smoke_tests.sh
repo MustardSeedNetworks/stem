@@ -474,13 +474,6 @@ test_webui() {
     run_test "GET /api/v1/mode returns JSON" \
         "curl -s ${BASE}/api/v1/mode | grep -q 'mode'"
 
-    log_header "License API Endpoints"
-    run_test "GET /api/v1/license returns JSON" \
-        "curl -s ${BASE}/api/v1/license | grep -q '{'"
-
-    run_test "GET /api/v1/license/trial returns JSON" \
-        "curl -s ${BASE}/api/v1/license/trial | grep -q '{'"
-
     log_header "Reflector API Endpoints"
     run_test "GET /api/v1/reflector/config returns JSON" \
         "curl -s ${BASE}/api/v1/reflector/config | grep -q '{'"
@@ -494,6 +487,18 @@ test_webui() {
 
     run_test "POST /api/v1/test/stop requires auth (401)" \
         "curl -s -o /dev/null -w '%{http_code}' -X POST ${BASE}/api/v1/test/stop | grep -q '401'"
+
+    # Licence state is entitlement state (#1317). These assert the status code,
+    # not that a body arrived: a 401 body is JSON too, so the "returns JSON"
+    # check these replaced would have passed either way.
+    run_test "GET /api/v1/license requires auth (401)" \
+        "curl -s -o /dev/null -w '%{http_code}' ${BASE}/api/v1/license | grep -q '401'"
+
+    run_test "POST /api/v1/license/activate requires auth (401)" \
+        "curl -s -o /dev/null -w '%{http_code}' -X POST ${BASE}/api/v1/license/activate | grep -q '401'"
+
+    run_test "POST /api/v1/license/trial requires auth (401)" \
+        "curl -s -o /dev/null -w '%{http_code}' -X POST ${BASE}/api/v1/license/trial | grep -q '401'"
 
     log_header "Authenticated Endpoints"
     local login_payload

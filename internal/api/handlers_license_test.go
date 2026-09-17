@@ -278,23 +278,38 @@ func TestHandleLicense_ContentType(t *testing.T) {
 	}
 }
 
-// TestHandleLicenseNoAuth tests that license endpoints are public (no auth required).
-func TestHandleLicenseNoAuth(t *testing.T) {
+// TestLicenseRoutesRequireAuth pins the fix for #1317: all three license
+// routes carry auth: true, so an unauthenticated request is 401 rather than a
+// read or a write of entitlement state. Driven through ServeHTTP so it fails if
+// a future registration drops the flag — the handler itself never checks auth.
+//
+// This replaces TestHandleLicenseNoAuth, which asserted the defect ("should not
+// require authentication") and so stayed green while entitlement state was
+// writable with no credential and no CSRF.
+func TestLicenseRoutesRequireAuth(t *testing.T) {
 	s := setupLicenseTestServer(t)
 
-	endpoints := []string{"/api/v1/license", "/api/v1/license/trial"}
+	cases := []struct {
+		method string
+		path   string
+		body   string
+	}{
+		{http.MethodGet, "/api/v1/license", ""},
+		{http.MethodPost, "/api/v1/license/activate", `{"licenseKey":"MSN1.x.y"}`},
+		{http.MethodGet, "/api/v1/license/trial", ""},
+		{http.MethodPost, "/api/v1/license/trial", ""},
+	}
 
-	for _, endpoint := range endpoints {
-		t.Run(endpoint, func(t *testing.T) {
-			// Request without any auth headers.
-			req := httptest.NewRequest(http.MethodGet, endpoint, nil)
+	for _, tc := range cases {
+		t.Run(tc.method+" "+tc.path, func(t *testing.T) {
+			req := httptest.NewRequest(tc.method, tc.path, bytes.NewBufferString(tc.body))
 			w := httptest.NewRecorder()
 
 			s.ServeHTTP(w, req)
 
-			// Should succeed without auth.
-			if w.Code == http.StatusUnauthorized {
-				t.Errorf("License endpoint %s should not require authentication", endpoint)
+			if w.Code != http.StatusUnauthorized {
+				t.Errorf("%s %s without credentials: expected 401, got %d: %s",
+					tc.method, tc.path, w.Code, w.Body.String())
 			}
 		})
 	}
