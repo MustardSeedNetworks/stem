@@ -1,5 +1,5 @@
 /*
- * The Stem - Test Documentation
+ * Stem - Test Documentation
  *
  * Comprehensive documentation for all 27 test types across 7 categories.
  */

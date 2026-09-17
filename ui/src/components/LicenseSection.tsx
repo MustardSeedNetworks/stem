@@ -1,6 +1,6 @@
 import { Tooltip } from './ui/Tooltip';
 /**
- * @fileoverview The Stem - License Section Component
+ * @fileoverview Stem - License Section Component
  * @description Displays license status and provides activation functionality.
  *              Supports full license activation and 14-day trial mode.
  */

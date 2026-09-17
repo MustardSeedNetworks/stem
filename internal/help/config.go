@@ -1,5 +1,5 @@
 /*
- * The Stem - Configuration Documentation
+ * Stem - Configuration Documentation
  *
  * Comprehensive documentation for all configuration options.
  */
@@ -389,7 +389,7 @@ type ConfigHelp struct {
 func GetConfigHelp() ConfigHelp {
 	return ConfigHelp{
 		FilePath: "/etc/stem/config.yaml",
-		Description: `The Stem configuration file controls all aspects of the application including
+		Description: `Stem configuration file controls all aspects of the application including
 web server settings, packet processing, and logging. Configuration can also be
 overridden using environment variables (useful for containers and secrets).
 

@@ -1,5 +1,5 @@
 /**
- * @fileoverview The Stem - Application Entry Point
+ * @fileoverview Stem - Application Entry Point
  * @description Bootstraps the React application and mounts it to the DOM.
  */
 

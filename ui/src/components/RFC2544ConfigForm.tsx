@@ -1,6 +1,6 @@
 import { Tooltip } from './ui/Tooltip';
 /**
- * @fileoverview The Stem - RFC 2544 Benchmark Test Configuration
+ * @fileoverview Stem - RFC 2544 Benchmark Test Configuration
  * @description Advanced configuration form for RFC 2544 Benchmarking Tests.
  *              Migrated to react-hook-form + valibot per #325. The schema
  *              lives at src/schemas/configs.ts (RFC2544ConfigSchema).

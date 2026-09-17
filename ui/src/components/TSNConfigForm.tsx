@@ -1,5 +1,5 @@
 /**
- * @fileoverview The Stem - TSN Test Configuration
+ * @fileoverview Stem - TSN Test Configuration
  * @description Migrated to react-hook-form + valibot per #325. Uses
  *              FormProvider/useFormContext so the sub-component
  *              decomposition (test params / timing / PTP / scheduling /

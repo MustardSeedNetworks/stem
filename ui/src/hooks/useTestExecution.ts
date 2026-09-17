@@ -270,7 +270,7 @@ export interface UseTestExecution {
 export function useTestExecution(): UseTestExecution {
   const { t } = useTranslation(['common', 'errors']);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  // The Stem instance role drives the legacy `mode` state. RoleContext
+  // Stem instance role drives the legacy `mode` state. RoleContext
   // persists the choice to localStorage and is mutated by the header
   // RoleChip and per-page RoleGuard.
   const { role: mode } = useRole();

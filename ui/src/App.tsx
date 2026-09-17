@@ -1,5 +1,5 @@
 /**
- * @fileoverview The Stem - Main Application Component
+ * @fileoverview Stem - Main Application Component
  * @description Composition root: wires the providers (Role, ModuleSettings,
  *              Router, AppContext), assembles the AppContext surface the routed
  *              pages read, and switches between the authenticated AppShell and

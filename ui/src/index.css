@@ -80,7 +80,7 @@
   --color-log-error: var(--color-log-error);
   --color-log-fatal: var(--color-log-fatal);
 
-  /* Module Colors - The Stem (unique to this project) */
+  /* Module Colors - Stem (unique to this project) */
   --color-module-reflector: var(--color-module-reflector);
   --color-module-benchmark: var(--color-module-benchmark);
   --color-module-servicetest: var(--color-module-servicetest);
@@ -107,7 +107,7 @@
 @source "../index.html";
 @source "./**/*.{js,ts,jsx,tsx}";
 
-/* The Stem Theme - Mustard Seed Networks */
+/* Stem Theme - Mustard Seed Networks */
 
 :root {
   /* ==========================================================================
@@ -128,7 +128,7 @@
   /* Status Colors - canonical anchors, constant across modes (2026-05-22) */
   /* Log level colors (Syslog/RFC 5424) — constant across light/dark. */
   /* Constant-across-modes utility colors. */
-  /* Module Colors - The Stem specific */
+  /* Module Colors - Stem specific */
 }
 
 .dark {

@@ -34,7 +34,7 @@ describe('SetupWizard — real locale copy', () => {
     renderWizard();
 
     await waitFor(() => {
-      expect(screen.getByText('Welcome to The Stem')).toBeInTheDocument();
+      expect(screen.getByText('Welcome to Stem')).toBeInTheDocument();
     });
     expect(screen.getByText('Set up your admin password to get started')).toBeInTheDocument();
   });
@@ -44,7 +44,7 @@ describe('SetupWizard — real locale copy', () => {
     renderWizard();
 
     await waitFor(() => {
-      expect(screen.getByText('Bienvenido a The Stem')).toBeInTheDocument();
+      expect(screen.getByText('Bienvenido a Stem')).toBeInTheDocument();
     });
     expect(
       screen.getByText('Configure su contraseña de administrador para comenzar'),
@@ -56,11 +56,15 @@ describe('SetupWizard — real locale copy', () => {
     await i18n.changeLanguage('es');
     renderWizard();
 
-    // "The Stem" is a glossary term: the copy around it translates, the name
+    // "Stem" is a glossary term: the copy around it translates, the name
     // itself must survive verbatim. It appears in more than one node, so this
     // asserts presence rather than uniqueness.
+    //
+    // The dropped article is guarded in scripts/i18n/banned-vocab.txt rather
+    // than here, so the locale files are checked directly and this file does
+    // not have to spell out the string the row exists to remove.
     await waitFor(() => {
-      expect(screen.getAllByText(/The Stem/).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/\bStem\b/).length).toBeGreaterThan(0);
     });
   });
 });

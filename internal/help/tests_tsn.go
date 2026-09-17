@@ -1,5 +1,5 @@
 /*
- * The Stem - Test Documentation
+ * Stem - Test Documentation
  *
  * TSN test help content and category registry.
  */

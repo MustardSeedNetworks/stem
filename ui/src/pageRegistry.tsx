@@ -1,5 +1,5 @@
 /**
- * Page registry — declarative route table for The Stem.
+ * Page registry — declarative route table for Stem.
  *
  * Reflector is the default landing route. Heavy test config forms are
  * lazy-loaded so the initial chunk only carries the reflector view.

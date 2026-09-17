@@ -1,4 +1,4 @@
-# The Stem Design System
+# Stem Design System
 
 This design system keeps styling consistent and theme-aware. Use the centralized
 tokens and component classes instead of scattered raw values.

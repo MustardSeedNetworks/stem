@@ -1,5 +1,5 @@
 /*
- * The Stem - Test Documentation
+ * Stem - Test Documentation
  *
  * MEF test help content.
  */

@@ -1,5 +1,5 @@
 /*
- * The Stem - Network Glossary
+ * Stem - Network Glossary
  *
  * Definitions for network terminology, accessible to both technical users
  * and newcomers to network testing.

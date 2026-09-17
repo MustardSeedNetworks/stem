@@ -1,11 +1,11 @@
 {
   "welcome": {
-    "title": "Bienvenido a The Stem",
+    "title": "Bienvenido a Stem",
     "subtitle": "Configure su contraseña de administrador para comenzar"
   },
   "username": {
     "label": "Usuario:",
-    "description": "Este es su nombre de usuario de administrador para The Stem."
+    "description": "Este es su nombre de usuario de administrador para Stem."
   },
   "password": {
     "chooseMethod": "Elija el método de contraseña",

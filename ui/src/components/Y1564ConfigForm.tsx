@@ -1,6 +1,6 @@
 import { Tooltip } from './ui/Tooltip';
 /**
- * @fileoverview The Stem - Y.1564 Service Activation Test Configuration
+ * @fileoverview Stem - Y.1564 Service Activation Test Configuration
  * @description Advanced configuration form for ITU-T Y.1564 / MEF Service Activation Testing.
  *              Allows users to configure service parameters including CIR, EIR, CBS, EBS,
  *              frame sizes, test duration, and VLAN settings.

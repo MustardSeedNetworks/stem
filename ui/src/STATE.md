@@ -1,6 +1,6 @@
 # State management — what goes where
 
-The Stem UI uses four state mechanisms. Picking the wrong one is the most common
+Stem UI uses four state mechanisms. Picking the wrong one is the most common
 source of re-render bugs, stale data, and "why are there two sources of truth"
 confusion. Use this decision order; when two fit, prefer the one higher in the list.
 

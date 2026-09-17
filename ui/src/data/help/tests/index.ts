@@ -1,5 +1,5 @@
 /**
- * @fileoverview The Stem - Tests Index
+ * @fileoverview Stem - Tests Index
  * @description Aggregates all test partials and provides search/lookup helpers.
  */
 

@@ -2,7 +2,7 @@ import { Tooltip } from './ui/Tooltip';
 /**
  * SettingsDrawer Component
  *
- * Slimmed configuration panel for The Stem.
+ * Slimmed configuration panel for Stem.
  *
  * After the #66 redesign the drawer holds only app-global concerns:
  *   - License management
