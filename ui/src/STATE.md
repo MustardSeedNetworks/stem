@@ -26,8 +26,6 @@ confusion. Use this decision order; when two fit, prefer the one higher in the l
    - `stores/auth-store` — authentication state + flows (login/MFA/logout/setup/
      recovery) and the module-level `authFetch` primitive. Security-sensitive; the
      localStorage auth flag is the only persisted bit. NOT a React Query cache.
-   - `stores/profile-store` — test-configuration profiles (CRUD, active profile,
-     backend-defaults fallback); persists via `zustand/persist`.
 
 3. **Is it a cross-cutting capability** scoped to the app — identity/role, or a
    small derived bundle handed to a subtree?
