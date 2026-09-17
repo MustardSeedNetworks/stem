@@ -52,6 +52,16 @@ func displayLicenseStatus(status api.LicenseStatus) {
 		_, _ = fmt.Fprintf(os.Stdout, "Tier:      %s\n", status.TierName)
 		_, _ = fmt.Fprintf(os.Stdout, "Key:       %s\n", status.LicenseKey)
 		_, _ = fmt.Fprintf(os.Stdout, "Expires:   %s\n", status.ExpiresAt.Format("2006-01-02"))
+	case status.LicenseKey != "":
+		// An activation is on disk but is no longer in force. Naming the key
+		// and the date is what the operator renews against; offering a trial
+		// here would be advice the daemon refuses on an expired paid key.
+		_, _ = fmt.Fprintln(os.Stdout, "Status:    Expired")
+		_, _ = fmt.Fprintf(os.Stdout, "Tier:      %s\n", status.TierName)
+		_, _ = fmt.Fprintf(os.Stdout, "Key:       %s\n", status.LicenseKey)
+		_, _ = fmt.Fprintf(os.Stdout, "Expires:   %s\n", status.ExpiresAt.Format("2006-01-02"))
+		_, _ = fmt.Fprintln(os.Stdout, "\nActivate a current key with:")
+		_, _ = fmt.Fprintln(os.Stdout, "  stem license --activate MSN1.<payload>.<signature>")
 	default:
 		_, _ = fmt.Fprintln(os.Stdout, "Status:    Not Activated")
 		_, _ = fmt.Fprintln(os.Stdout, "\nTo start a 14-day trial:")

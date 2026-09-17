@@ -13,7 +13,9 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
+	"github.com/MustardSeedNetworks/stem/internal/api"
 	"github.com/MustardSeedNetworks/stem/internal/daemonconn"
 	"github.com/MustardSeedNetworks/stem/internal/license"
 )
@@ -242,6 +244,30 @@ func TestLicenseDescriptorNotFoundWritesOffline(t *testing.T) {
 	}
 }
 
+// TestLicenseDescriptorFoundButDaemonDeadIsAnError: a published descriptor
+// means a daemon is running, so an unreachable one is a fault to report — not
+// a licence for this process to start writing the file the daemon holds.
+func TestLicenseDescriptorFoundButDaemonDeadIsAnError(t *testing.T) {
+	licenseHome(t)
+	dir := t.TempDir()
+	if err := daemonconn.Publish(dir, daemonconn.Descriptor{
+		URL: "https://127.0.0.1:9", Token: "tok",
+	}); err != nil {
+		t.Fatalf("Publish: %v", err)
+	}
+	t.Setenv("STEM_DATA_DIR", dir)
+
+	captureStdout(t, func() {
+		if err := licenseCmd([]string{"--trial"}); err == nil {
+			t.Error("an unreachable daemon must be an error, not a silent local write")
+		}
+	})
+
+	if _, err := os.Stat(license.DefaultLicensePath()); err == nil {
+		t.Error("the CLI wrote the licence file although a daemon had published a descriptor")
+	}
+}
+
 // TestLicenseDescriptorUnreadableIsAnError: a descriptor that exists but
 // cannot be read means a daemon IS running, so falling back to a local write
 // would be the very race this fix removes.
@@ -269,5 +295,34 @@ func TestLicenseDescriptorUnreadableIsAnError(t *testing.T) {
 
 	if _, err := os.Stat(license.DefaultLicensePath()); err == nil {
 		t.Error("the CLI wrote the licence file after failing to reach the daemon")
+	}
+}
+
+// TestDisplayLicenseStatusForAnExpiredKey: an activation that has lapsed must
+// still name the key and the date the operator renews against. Reporting it
+// as "Not Activated" would hide the key and offer a trial the daemon refuses
+// on an expired paid activation (foundation D-FDN-2).
+func TestDisplayLicenseStatusForAnExpiredKey(t *testing.T) {
+	expired := time.Date(2026, 1, 31, 0, 0, 0, 0, time.UTC)
+
+	out := captureStdout(t, func() {
+		displayLicenseStatus(api.LicenseStatus{
+			Activated:  false,
+			Tier:       int(license.TierProfessional),
+			TierName:   license.TierProfessional.String(),
+			LicenseKey: "MSN1-XXXX-1234",
+			ExpiresAt:  expired,
+			DeviceHash: "device",
+			Message:    "License expired or invalid",
+		})
+	})
+
+	for _, want := range []string{"Status:    Expired", "MSN1-XXXX-1234", "2026-01-31", "--activate"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("expired-licence status is missing %q:\n%s", want, out)
+		}
+	}
+	if strings.Contains(out, "--trial") {
+		t.Errorf("an expired paid activation must not be told to start a trial:\n%s", out)
 	}
 }
