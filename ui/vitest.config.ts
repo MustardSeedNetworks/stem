@@ -76,7 +76,18 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'json-summary', 'html', 'lcov'],
-      exclude: ['node_modules/', 'src/test/', '**/*.d.ts', '**/*.config.*', 'dist/'],
+      // Locale JSON is data, not code. v8 counts each imported .json file as
+      // fully covered lines, so the 22 locale namespaces were adding 192
+      // always-covered 'lines' and inflating the ratchet by ~0.9 points
+      // without a single test asserting anything about them.
+      exclude: [
+        'node_modules/',
+        'src/test/',
+        '**/*.d.ts',
+        '**/*.config.*',
+        'dist/',
+        '**/*.json',
+      ],
       // The enforced gate is scripts/check-ui-coverage.sh, which ratchets
       // against scripts/ui-coverage-baseline.txt (#824). The targets that
       // used to sit here are not gone — they are the target column of that
