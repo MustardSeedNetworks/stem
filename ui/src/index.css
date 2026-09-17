@@ -194,9 +194,14 @@ body {
        <span className="caption">Metadata</span>
      ======================================================================== */
 
-  /* Page titles - largest, used sparingly (login, major pages) */
+  /* Page titles - largest, used sparingly (login, major pages).
+     Stepped down one rung (was text-2xl sm:text-3xl) in the desktop density
+     pass: a 30px extrabold title above a 14px description read as a banner
+     rather than a heading, and cost the page a line of height on every route
+     (UI-STEM-18). Weight, tracking and colour are the design language and
+     are unchanged. */
   .heading-1 {
-    @apply text-2xl sm:text-3xl font-extrabold text-text-primary leading-tight tracking-[-0.025em];
+    @apply text-xl sm:text-2xl font-extrabold text-text-primary leading-tight tracking-[-0.025em];
   }
 
   /* Section/modal titles - prominent but secondary to h1 */
@@ -451,7 +456,9 @@ body {
 
   /* Centered content padding (for loading states, empty states) */
   .py-centered {
-    @apply py-12; /* 48px - centered loading/empty state */
+    @apply py-8; /* 32px - centered loading/empty state (was 48px: 96px of
+                    padding around one sentence left every empty panel reading
+                    as a dead region — UI-STEM-18) */
   }
 
   /* Left margins (for indentation, icon alignment) */
