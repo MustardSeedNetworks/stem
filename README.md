@@ -149,7 +149,9 @@ stem license --trial
 
 `stem license --status` prints the tier, trial days remaining, device ID and
 enabled features; `--activate <token>` activates a key and `--deactivate`
-releases the device.
+releases the device. While `stem web` is running the command is a client of
+that daemon rather than a second writer of the licence file, so a change made
+here is in force immediately and needs no restart.
 
 ## Build
 
@@ -186,7 +188,7 @@ Verified versions: **Go 1.27.0**, Node.js 26.8.1, golangci-lint v2.13.2.
 | `/api/v1/stats` | GET | Live run status |
 | `/api/v1/events` | GET (SSE) | Live test events |
 | `/api/v1/auth/login` | POST | Issue JWT |
-| `/api/v1/license` | GET | License status |
+| `/api/v1/license` | GET / DELETE | License status / remove the activation |
 | `/api/v1/license/activate` | POST | Activate a license key |
 | `/api/v1/license/trial` | GET / POST | Trial status / start trial |
 | `/api/v1/reflector/config` | GET / POST | Reflector configuration |
