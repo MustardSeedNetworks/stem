@@ -67,4 +67,14 @@ func TestRoutePolicyManifest(t *testing.T) {
 	if authByPath["/api/v1/auth/login"] {
 		t.Error("/api/v1/auth/login should NOT require auth in the manifest")
 	}
+
+	// Licence state is entitlement state: reading it, activating a key and
+	// starting a trial all require a session (#1317). Asserted here as well as
+	// on the wire so a registration that drops the flag fails the manifest too.
+	for _, path := range []string{"/api/v1/license", "/api/v1/license/activate", "/api/v1/license/trial"} {
+		auth, present := authByPath[path]
+		if !present || !auth {
+			t.Errorf("%s should be in the manifest with auth=true, got auth=%v present=%v", path, auth, present)
+		}
+	}
 }
