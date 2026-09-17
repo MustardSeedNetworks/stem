@@ -2,6 +2,8 @@
 
 package api
 
+import "time"
+
 // Configuration constants.
 const (
 	DefaultPortFilter = 3842
@@ -361,8 +363,14 @@ type LicenseStatus struct {
 	DaysRemaining int      `json:"daysRemaining"`
 	Features      []string `json:"features"`
 	DeviceHash    string   `json:"deviceHash"`
-	LicenseKey    string   `json:"licenseKey,omitempty"`
-	Message       string   `json:"message,omitempty"`
+	// Platform names the host the fingerprint was taken on, which an
+	// operator quotes together with the hash when buying a key.
+	Platform   string `json:"platform,omitempty"`
+	LicenseKey string `json:"licenseKey,omitempty"`
+	// ExpiresAt is the paid activation's expiry. Zero in trial mode and on
+	// an unlicensed host, where DaysRemaining is the number that matters.
+	ExpiresAt time.Time `json:"expiresAt,omitzero"`
+	Message   string    `json:"message,omitempty"`
 }
 
 // LicenseActivateRequest for license activation.
