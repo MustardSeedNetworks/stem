@@ -272,6 +272,58 @@ describe('authFetch', () => {
     expect(refreshCalls.length).toBe(1);
   });
 
+  /**
+   * The daemon keys CSRF tokens by sha256(bearer) (internal/auth/csrf.go), so a
+   * refresh mints a new access token and with it a new key that holds no token.
+   * A mock that ignores request headers cannot see this: the test above passes
+   * on the defect. This one answers like the daemon does.
+   */
+  function mockRotatingDaemon(): { sentTokens: string[] } {
+    let currentToken = 'csrf-old';
+    let accessTokenValid = false;
+    const sentTokens: string[] = [];
+    vi.spyOn(globalThis, 'fetch').mockImplementation((input, init) => {
+      const url = String(input);
+      if (url.includes('/auth/csrf-token')) {
+        return Promise.resolve(jsonResponse({ token: currentToken }));
+      }
+      if (url.includes('/auth/refresh')) {
+        accessTokenValid = true;
+        currentToken = 'csrf-new';
+        return Promise.resolve(new Response(null, { status: 200 }));
+      }
+      sentTokens.push(new Headers(init?.headers ?? {}).get('X-Csrf-Token') ?? '');
+      if (!accessTokenValid) {
+        return Promise.resolve(new Response(null, { status: 401 }));
+      }
+      if (sentTokens[sentTokens.length - 1] !== currentToken) {
+        return Promise.resolve(textResponse('Invalid CSRF token', 403));
+      }
+      return Promise.resolve(jsonResponse({ ok: true }));
+    });
+    return { sentTokens };
+  }
+
+  it('mutation 401 → refresh → retry carries the NEW CSRF token and succeeds', async () => {
+    useAuthStore.setState({ isAuthenticated: true });
+    const daemon = mockRotatingDaemon();
+    const res = await authFetch('/api/v1/tests/start', { method: 'POST', body: '{}' });
+    expect(res.status).toBe(200);
+    expect(daemon.sentTokens).toEqual(['csrf-old', 'csrf-new']);
+    expect(useAuthStore.getState().isAuthenticated).toBe(true);
+  });
+
+  it('concurrent mutations woken by one refresh all retry with the new token', async () => {
+    useAuthStore.setState({ isAuthenticated: true });
+    const daemon = mockRotatingDaemon();
+    const [a, b] = await Promise.all([
+      authFetch('/api/v1/tests/start', { method: 'POST', body: '{}' }),
+      authFetch('/api/v1/tests/stop', { method: 'POST', body: '{}' }),
+    ]);
+    expect([a.status, b.status]).toEqual([200, 200]);
+    expect(daemon.sentTokens.filter((t) => t === 'csrf-new')).toHaveLength(2);
+  });
+
   it('403 PERMISSION_DENIED → returns the response WITHOUT expiring', async () => {
     useAuthStore.setState({ isAuthenticated: true });
     mockFetchWithCsrf(() =>
