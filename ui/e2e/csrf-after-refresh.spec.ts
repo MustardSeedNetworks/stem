@@ -67,10 +67,14 @@ test.describe('mutation after token refresh', () => {
     const primedToken = starts[0].csrf;
     expect(primedToken, 'the first start carried no CSRF token').not.toBe('');
 
-    // Expire the access token only; the refresh cookie stays. Aligning to a
-    // stats tick leaves the dashboard's one-second poll a full interval away,
-    // so the 401 under test is the mutation's own and not the poll's.
-    await page.waitForResponse((r) => r.url().endsWith('/api/v1/stats'));
+    // Expire the access token only; the refresh cookie stays, so the session
+    // recovers through a refresh. Which request takes the 401 — this mutation
+    // or the dashboard's one-second stats poll — is a race, and the assertions
+    // below deliberately do not depend on winning it. Either way the defect
+    // shows the same signature: a start answered 403 for reusing the token
+    // minted under the old bearer. Pinning the exact
+    // 401 -> refresh -> retry ordering is the unit test's job
+    // (auth-store.test.ts), which controls every response.
     const kept = (await context.cookies()).filter((c) => c.name !== ACCESS_COOKIE);
     await context.clearCookies();
     await context.addCookies(kept);
@@ -80,16 +84,20 @@ test.describe('mutation after token refresh', () => {
     );
     await expect(start).toBeEnabled();
     await start.click();
+    // A refresh really happened — otherwise the cookie never expired and the
+    // rest of this test would pass without exercising anything.
     await refreshed;
-    await expect.poll(() => starts.length, { timeout: 10000 }).toBe(3);
+    await expect
+      .poll(() => starts.length >= 2 && starts[starts.length - 1].status !== 401, {
+        timeout: 10000,
+      })
+      .toBe(true);
 
-    const [, rejected, retry] = starts;
-    expect(rejected.status).toBe(401);
-    expect(rejected.csrf).toBe(primedToken);
-    // 403 here is the defect: the retry reusing the token minted for the old
-    // bearer, under a session key the daemon has no token for.
-    expect(retry.status).not.toBe(403);
-    expect(retry.csrf).not.toBe('');
-    expect(retry.csrf).not.toBe(primedToken);
+    // 403 is the defect, wherever it lands: a start sent with the token minted
+    // under the old bearer, for which the daemon holds nothing.
+    expect(starts.map((s) => s.status)).not.toContain(403);
+    const settled = starts[starts.length - 1];
+    expect(settled.csrf).not.toBe('');
+    expect(settled.csrf).not.toBe(primedToken);
   });
 });
