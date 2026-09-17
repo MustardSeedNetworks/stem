@@ -47,38 +47,7 @@ reusable UI patterns, not test-specific configurations.
 - Service provisioning status
 - Health check progress
 
-## 2. State Management Patterns
-
-### Profile Store Pattern
-
-**Stem**: `src/stores/profileStore.ts`
-
-```typescript
-// Key patterns to port:
-- Backend defaults fallback (Profile → Backend → Hardcoded)
-- Optimistic updates with rollback on error
-- Settings by category with typed updates
-- Import/Export functionality
-```
-
-**Seed Adaptation**:
-
-- Configuration profiles (dev, staging, prod)
-- Environment-specific settings
-- Tenant configuration management
-
-### API Client Pattern
-
-**Stem**: `src/api/profiles.ts`
-
-```typescript
-// Reusable patterns:
-- ApiError class with status codes
-- fetchJson wrapper with credentials
-- Consistent endpoint structure
-```
-
-## 3. Settings Organization
+## 2. Settings Organization
 
 ### Collapsible Section Groups
 
@@ -104,7 +73,7 @@ reusable UI patterns, not test-specific configurations.
 }
 ```
 
-## 4. UI Components Already Shared
+## 3. UI Components Already Shared
 
 These components were harmonized and exist in both projects:
 
@@ -115,7 +84,7 @@ These components were harmonized and exist in both projects:
 - ✅ HeaderBar
 - ✅ Theme tokens (colors, spacing, typography)
 
-## 5. Architecture Patterns
+## 4. Architecture Patterns
 
 ### Module-Based Organization
 
@@ -153,7 +122,7 @@ interface ServiceConfig {
 }
 ```
 
-## 6. Migration Priority
+## 5. Migration Priority
 
 ### High Priority (Port First)
 
@@ -172,7 +141,7 @@ interface ServiceConfig {
 7. **Export/Import functionality**
 8. **Auto-start patterns** → Auto-healing/auto-scaling hooks
 
-## 7. Key Differences
+## 6. Key Differences
 
 | Aspect | Stem | Seed |
 | -------- | ------ | ------ |
@@ -182,7 +151,7 @@ interface ServiceConfig {
 | Configuration | Test parameters | Service parameters |
 | State | Transient (test runs) | Persistent (services) |
 
-## 8. Implementation Notes
+## 7. Implementation Notes
 
 - Keep the same file structure conventions
 - Use identical theme tokens and CSS patterns

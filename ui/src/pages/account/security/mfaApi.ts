@@ -2,19 +2,18 @@
  * MFA API client.
  *
  * Wraps the /api/v1/auth/totp/* and /api/v1/auth/webauthn/* endpoints
- * introduced in Wave 3 (#85). The client mirrors the established
- * ApiError-based pattern from src/api/profiles.ts.
+ * introduced in Wave 3 (#85).
  *
- * CSRF: state-changing POSTs go through `fetchWithCsrf` from lib/csrf, which
- * attaches X-Csrf-Token and re-fetches once on a 403. This module used to carry
- * its own `fetchCsrfToken` and thread the token through every method signature.
- * Two implementations of one thing is how the two get to disagree, and they did:
- * the shared helper caches the token and retries on 403 because the daemon
- * rotates it on login, and the local copy did neither — so MFA enrolment
- * attempted after a session rotation failed where a role switch recovered (#953).
+ * Every post-login call goes through `authFetch`, which is the one client that
+ * carries BOTH halves of the daemon's session contract: the CSRF header with a
+ * re-fetch on 403, and the 401 -> refresh -> retry that this module used to
+ * skip. Without it an expired access token turned every MFA action into a raw
+ * "token expired" body on the Security page, and the operator was stuck until
+ * a reload (#1253). `loginTotp` is the exception on purpose: it runs before a
+ * session exists, so it is CSRF-exempt and `authFetch` would reject it.
  */
 
-import { fetchWithCsrf } from '../../../lib/csrf';
+import { authFetch } from '../../../stores/auth-store';
 
 const API_BASE = '/api/v1';
 
@@ -61,25 +60,21 @@ export function isMFARequired(value: LoginResponse): value is MFARequiredRespons
   return (value as MFARequiredResponse).mfaRequired === true;
 }
 
-// fetchWithCsrf returns the Response rather than throwing, so MFAError's status
-// mapping stays here where the MFA surface's error semantics live.
-async function postJSON<T>(path: string, body: unknown): Promise<T> {
-  const response = await fetchWithCsrf(`${API_BASE}${path}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body ?? {}),
-  });
-  if (!response.ok) {
-    const text = await response.text();
-    throw new MFAError(response.status, text || `HTTP ${response.status}`);
-  }
-  return (await response.json()) as T;
-}
-
-async function getJSON<T>(path: string): Promise<T> {
-  const response = await fetch(`${API_BASE}${path}`, {
-    credentials: 'include',
-  });
+// authFetch returns the Response rather than throwing on a non-2xx, so
+// MFAError's status mapping stays here where the MFA surface's error semantics
+// live. It does throw when the session is gone (401 after a failed refresh,
+// or a CSRF 403 that a fresh token could not clear) — that is a dead session,
+// not an MFA outcome, and it belongs to the auth store.
+async function request<T>(path: string, body?: unknown): Promise<T> {
+  const init: RequestInit =
+    body === undefined
+      ? {}
+      : {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        };
+  const response = await authFetch(`${API_BASE}${path}`, init);
   if (!response.ok) {
     const text = await response.text();
     throw new MFAError(response.status, text || `HTTP ${response.status}`);
@@ -88,18 +83,18 @@ async function getJSON<T>(path: string): Promise<T> {
 }
 
 export const mfaApi = {
-  status: (): Promise<MFAStatusResponse> => getJSON<MFAStatusResponse>('/auth/mfa/status'),
+  status: (): Promise<MFAStatusResponse> => request<MFAStatusResponse>('/auth/mfa/status'),
 
-  totpSetup: (): Promise<TotpSetupResponse> => postJSON<TotpSetupResponse>('/auth/totp/setup', {}),
+  totpSetup: (): Promise<TotpSetupResponse> => request<TotpSetupResponse>('/auth/totp/setup', {}),
 
   totpVerify: (code: string): Promise<{ success: boolean; totpEnabled: boolean }> =>
-    postJSON<{ success: boolean; totpEnabled: boolean }>('/auth/totp/verify', { code }),
+    request<{ success: boolean; totpEnabled: boolean }>('/auth/totp/verify', { code }),
 
   totpDisable: (
     password: string,
     code: string,
   ): Promise<{ success: boolean; totpEnabled: boolean }> =>
-    postJSON<{ success: boolean; totpEnabled: boolean }>('/auth/totp/disable', {
+    request<{ success: boolean; totpEnabled: boolean }>('/auth/totp/disable', {
       password,
       code,
     }),
