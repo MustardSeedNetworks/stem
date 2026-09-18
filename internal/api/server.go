@@ -82,6 +82,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/MustardSeedNetworks/foundation/pkg/instance"
+
 	"github.com/MustardSeedNetworks/stem/internal/api/cors"
 	"github.com/MustardSeedNetworks/stem/internal/api/ratelimit"
 	"github.com/MustardSeedNetworks/stem/internal/api/sse"
@@ -157,6 +159,7 @@ type Server struct {
 	setupModeStartTime   time.Time                  // When setup mode was activated (for timeout)
 	recoveryTokenManager *auth.RecoveryTokenManager // Recovery token manager for password recovery
 	dataDir              string                     // Application data directory for recovery files
+	instanceLock         *instance.Lock             // Single-instance lock on dataDir, held for the lifetime of Run (#1336)
 	publishedURL         atomic.Pointer[string]     // base URL this daemon published for the local CLI (#1166), nil when none
 	runInstanceID        string                     // per-daemon segment of every run ID (#1166)
 	acmeChallengeServer  *http.Server               // HTTP-01 challenge server for ACME
@@ -612,12 +615,30 @@ func apiVersionMiddleware(next http.Handler) http.Handler {
 // Binding goes through bindWithFallback so a busy canonical port (8444)
 // falls back to port+1..+9 instead of refusing to start (see #69).
 func (s *Server) Run() error {
+	// One daemon per data directory (#1336). The port is not the guard: the
+	// +1..+9 fallback below means a second `stem web` does not collide, it
+	// binds a neighbour and then shares this directory's state and
+	// descriptor with the first. The lock is taken before the bind because
+	// a refused start must not have touched anything.
+	lock, lockErr := instance.Acquire(s.dataDir)
+	if lockErr != nil {
+		return lockErr
+	}
+	s.instanceLock = lock
+
 	// Bind first so the actual bound port is known before we announce it.
 	ln, actualPort, bindErr := bindWithFallback(context.Background(), "", s.port)
 	if bindErr != nil {
 		return fmt.Errorf("bind web server: %w", bindErr)
 	}
 	addr := fmt.Sprintf(":%d", actualPort)
+
+	// Record the port in the lock so the next `stem web` can name where the
+	// holder actually ended up rather than where it was asked to go.
+	if portErr := lock.SetPort(actualPort); portErr != nil {
+		logging.Warn("could not record the bound port in the instance lock",
+			"error", portErr.Error())
+	}
 
 	logging.Info("Starting The Stem web server",
 		"address", fmt.Sprintf("https://localhost%s", addr),
@@ -698,6 +719,15 @@ func (s *Server) Shutdown() error {
 	// Withdraw the local CLI credential before anything else: a descriptor
 	// that outlives the daemon points a CLI at whatever binds the port next.
 	s.withdrawConnection()
+
+	// Hand the data directory back after the descriptor is gone, so the next
+	// daemon never finds the lock free and a stale credential still present.
+	if s.instanceLock != nil {
+		if err := s.instanceLock.Release(); err != nil {
+			logging.Warn("failed to release the instance lock", "error", err.Error())
+		}
+		s.instanceLock = nil
+	}
 
 	// Stop rate limiter cleanup goroutines.
 	if s.authLimiter != nil {

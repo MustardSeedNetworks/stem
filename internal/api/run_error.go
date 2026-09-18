@@ -15,6 +15,12 @@ const (
 	causeInterfaceMissing = "The selected interface is not available."
 	causeUnreachable      = "The peer did not answer."
 	causeGeneric          = "The test failed. See the daemon log for the cause."
+	// causeInternalFault is the run that never produced a measurement
+	// because the daemon itself faulted — a supervised panic in the
+	// dataplane (#1336). It is deliberately distinct from causeGeneric:
+	// "the test failed" points the operator at the network, and this one
+	// points at the product.
+	causeInternalFault = "The run stopped on an internal fault. See the daemon log."
 )
 
 // classifyRunCause maps a failure's own wording onto the closed set above.
