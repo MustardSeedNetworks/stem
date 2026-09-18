@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.131](https://github.com/MustardSeedNetworks/stem/compare/v0.24.130...v0.24.131) (2026-09-18)
+
+
+### Bug Fixes
+
+* **daemon:** supervise the dataplane goroutines and lock the data directory ([#1351](https://github.com/MustardSeedNetworks/stem/issues/1351)) ([2853812](https://github.com/MustardSeedNetworks/stem/commit/285381222d8a508338ecf5fe3856676c999993ac))
+
+
+### Code Refactoring
+
+* **i18n:** move stem locales to internal/i18n/locales to match the fleet ([#1349](https://github.com/MustardSeedNetworks/stem/issues/1349)) ([9802712](https://github.com/MustardSeedNetworks/stem/commit/98027127cdbb798f402a3dddc3099636ecd52035))
+
 ## [0.24.130](https://github.com/MustardSeedNetworks/stem/compare/v0.24.129...v0.24.130) (2026-09-17)
 
 
