@@ -38,7 +38,7 @@ import {
   parseModeUpdateResponse,
   type StemRole,
 } from '@/schemas/role';
-import { fetchWithCsrf } from '../lib/csrf';
+import { authFetch } from '../stores/auth-store';
 
 export type { DEFAULT_ROLE, ModeUpdateResponse, StemRole };
 
@@ -81,14 +81,16 @@ type SwitchResult =
 async function requestModeSwitch(next: StemRole): Promise<SwitchResult> {
   let response: Response;
   try {
-    // fetchWithCsrf, not fetch: /api/v1/mode is a mutating route behind the
-    // CSRF manager, and this call omitted the header entirely — every role
-    // switch from the header chip or the RoleGuard banner came back 403
-    // "CSRF token missing".
-    response = await fetchWithCsrf(ROLE_ENDPOINT, {
+    // authFetch, not fetchWithCsrf: /api/v1/mode is auth: true as well as a
+    // mutating route behind the CSRF manager. authFetch attaches the CSRF
+    // header and, unlike fetchWithCsrf, refreshes the access token on a 401
+    // and retries — without it a role switch on an expired access token
+    // failed outright where every other authenticated mutation succeeds
+    // (#1318). It throws rather than returning on a dead session; the caller
+    // below turns that into roleSwitchError.
+    response = await authFetch(ROLE_ENDPOINT, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
         Accept: 'application/json',
       },
       body: JSON.stringify({ mode: next }),

@@ -19,6 +19,13 @@
  * sha256(bearer), so a token refresh mints a new key under which no token
  * exists. `refreshAccessToken` therefore invalidates this cache before its
  * waiters retry (#1315).
+ *
+ * `fetchWithCsrf` has exactly one caller left, and deliberately so: sign-out.
+ * It carries the CSRF header and nothing else — no 401 refresh — because
+ * `/api/v1/auth/logout` is registered without `auth: true` and because
+ * refreshing a session in order to end it is not a thing to do. Every other
+ * mutation runs on an `auth: true` route and belongs on `authFetch`, which
+ * refreshes and retries; routing them here is the #1318 defect.
  */
 
 const CSRF_ENDPOINT = '/api/v1/auth/csrf-token';
