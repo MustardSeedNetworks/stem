@@ -56,10 +56,7 @@ describe('useRecordTestResult', () => {
 
   it('records a stopped run: the operator ended it, so it happened', () => {
     renderHook(() =>
-      useRecordTestResult(
-        { ...completed, status: 'stopped', success: undefined },
-        'stopped',
-      ),
+      useRecordTestResult({ ...completed, status: 'stopped', success: undefined }, 'stopped'),
     );
 
     expect(useHistoryStore.getState().results).toHaveLength(1);
@@ -75,6 +72,16 @@ describe('useRecordTestResult', () => {
     );
 
     expect(useHistoryStore.getState().results).toHaveLength(0);
+  });
+
+  it('does not record the same run twice across a reload', () => {
+    // A reload restores the persisted runs but not `lastRecorded`, and the
+    // daemon still answers with the terminal result the page already holds.
+    renderHook(() => useRecordTestResult(completed, 'completed'));
+    useHistoryStore.setState({ lastRecorded: null });
+    renderHook(() => useRecordTestResult(completed, 'completed'));
+
+    expect(useHistoryStore.getState().results).toHaveLength(1);
   });
 
   it('records the finished run once however often the shell re-renders', () => {
