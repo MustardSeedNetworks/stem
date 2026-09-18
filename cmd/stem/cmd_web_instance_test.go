@@ -48,8 +48,9 @@ func TestSecondWebInstanceIsRefusedNamingPIDAndPort(t *testing.T) {
 
 	ctx, cancel := context.WithTimeout(t.Context(), 30*time.Second)
 	defer cancel()
-	second := exec.CommandContext(ctx, os.Args[0])
-	second.Env = webDaemonEnv(dataDir, "8545")
+	second := exec.CommandContext(ctx, testBinary(t))
+	second.Env = webDaemonEnv(t, dataDir, "8545")
+	second.Dir = t.TempDir()
 	output, runErr := second.CombinedOutput()
 
 	if ctx.Err() != nil {
@@ -72,19 +73,40 @@ func TestSecondWebInstanceIsRefusedNamingPIDAndPort(t *testing.T) {
 	}
 }
 
-func webDaemonEnv(dataDir, port string) []string {
+// webDaemonEnv gives the child daemon a HOME of its own as well as a data
+// directory: the licence manager reads ~/.config/stem, and a test that runs a
+// real daemon under the developer's HOME activates and deactivates their
+// licence (the defect D-STEM-18 fixed in the licence handler tests).
+func webDaemonEnv(t *testing.T, dataDir, port string) []string {
+	t.Helper()
 	return append(os.Environ(),
 		reexecEnv+"="+port,
 		"STEM_DATA_DIR="+dataDir,
+		"HOME="+t.TempDir(),
 		"STEM_AUTH_USERNAME=instanceuser",
 		"STEM_AUTH_PASSWORD=instancepass123",
 	)
 }
 
+// testBinary is this test binary's own absolute path. os.Args[0] can be
+// relative, and the children below run from a working directory of their own.
+func testBinary(t *testing.T) string {
+	t.Helper()
+	path, err := os.Executable()
+	if err != nil {
+		t.Fatalf("os.Executable: %v", err)
+	}
+	return path
+}
+
 func startWebDaemon(t *testing.T, dataDir, port string) *exec.Cmd {
 	t.Helper()
-	cmd := exec.Command(os.Args[0])
-	cmd.Env = webDaemonEnv(dataDir, port)
+	cmd := exec.Command(testBinary(t))
+	cmd.Env = webDaemonEnv(t, dataDir, port)
+	// The daemon writes its self-signed certificate relative to its working
+	// directory, so it gets one of its own rather than leaving a certs/ tree
+	// in the package source.
+	cmd.Dir = t.TempDir()
 	if err := cmd.Start(); err != nil {
 		t.Fatalf("start the first daemon: %v", err)
 	}
