@@ -36,8 +36,11 @@ test.describe('Dashboard', () => {
   });
 
   test('should display connection status', async ({ page }) => {
-    const statusBadge = page.locator('.status-badge').first();
-    await expect(statusBadge).toBeVisible();
+    // The status left the page with the rest of the shell chrome (UI-STEM-9):
+    // it is the rail's product-mark dot now, and it carries the live state.
+    const status = page.locator('[data-testid="rail-status"]:visible');
+    await expect(status).toBeVisible();
+    await expect(status).toHaveAttribute('data-status', /connected|disconnected/);
   });
 
   test('should land on the Reflector page after login', async ({ page }) => {

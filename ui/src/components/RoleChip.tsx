@@ -1,5 +1,5 @@
 /**
- * RoleChip — persistent header control for switching the stem role.
+ * RoleChip — persistent shell control for switching the stem role.
  *
  * Segmented control with two values: Reflector / Test Master. Clicking
  * the inactive value pops a ConfirmModal explaining the consequences
@@ -19,6 +19,13 @@ import { ConfirmModal } from './ui/ConfirmModal';
 
 interface RoleChipProps {
   className?: string;
+  /**
+   * `inline` sizes to its content and sits side by side. `rail` stacks the two
+   * options and fills the width it is given: the inline chip measures 295px
+   * against the rail's 224px, and squeezing it side by side truncated
+   * "Test Master" to "Test Mas…" (UI-STEM-9).
+   */
+  layout?: 'inline' | 'rail';
 }
 
 interface RoleOption {
@@ -43,7 +50,7 @@ const ROLE_OPTIONS: readonly RoleOption[] = [
   },
 ];
 
-export const RoleChip: FC<RoleChipProps> = ({ className = '' }) => {
+export const RoleChip: FC<RoleChipProps> = ({ className = '', layout = 'inline' }) => {
   const { t } = useTranslation();
   const { role, setRole, isSwitchingRole, roleSwitchError, clearRoleSwitchError } = useRole();
   const [pendingRole, setPendingRole] = useState<StemRole | null>(null);
@@ -83,10 +90,18 @@ export const RoleChip: FC<RoleChipProps> = ({ className = '' }) => {
       ? 'role.confirm.toTestMaster.message'
       : 'role.confirm.toReflector.message';
 
+  const rail = layout === 'rail';
+
   return (
-    <div className={`inline-flex flex-col items-start gap-tight ${className}`}>
+    <div
+      className={`flex flex-col items-start gap-tight ${
+        rail ? 'w-full min-w-0' : 'inline-flex'
+      } ${className}`}
+    >
       <fieldset
-        className="inline-flex items-center gap-0 rounded-lg border border-surface-border bg-surface-raised p-0.5"
+        className={`${
+          rail ? 'flex w-full flex-col gap-0.5' : 'inline-flex items-center gap-0'
+        } rounded-lg border border-surface-border bg-surface-raised p-0.5`}
         aria-label={t('role.label')}
         aria-busy={isSwitchingRole}
       >
@@ -101,6 +116,8 @@ export const RoleChip: FC<RoleChipProps> = ({ className = '' }) => {
               onClick={() => handleClick(option.id)}
               disabled={isSwitchingRole}
               className={`inline-flex items-center gap-1.5 px-2.5 py-compact rounded-md text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary disabled:opacity-60 disabled:cursor-not-allowed ${
+                rail ? 'w-full justify-start' : ''
+              } ${
                 active
                   ? 'bg-brand-primary text-on-brand shadow-sm'
                   : 'text-text-muted hover:text-text-primary hover:bg-surface-hover'

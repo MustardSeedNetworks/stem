@@ -185,7 +185,7 @@ function AppContent(): ReactElement {
             onToggleTheme={toggleTheme}
             onRefresh={exec.refetchInterfaces}
             onLogout={handleLogout}
-            roleControl={<RoleChip />}
+            roleControl={<RoleChip layout="rail" />}
           />
         ) : (
           <div className="min-h-screen bg-gradient-to-br from-surface-base via-surface-raised to-surface-deep" />

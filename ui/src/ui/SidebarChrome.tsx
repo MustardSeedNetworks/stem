@@ -46,6 +46,12 @@ interface FooterIconButtonProps {
    * describes what it does, and a screen reader wants both, not one twice.
    */
   ariaLabel?: string;
+  /**
+   * Icon with no visible label. Three labelled buttons measure 295px and the
+   * expanded rail is 224px, so the chrome row scrolled sideways (UI-STEM-9).
+   * The tooltip and the accessible name still carry the meaning.
+   */
+  iconOnly?: boolean;
   'data-testid'?: string;
 }
 
@@ -56,6 +62,7 @@ export const FooterIconButton: FC<FooterIconButtonProps> = ({
   label,
   title,
   ariaLabel,
+  iconOnly = false,
   'data-testid': dataTestId,
 }) => (
   <Tooltip text={title}>
@@ -67,12 +74,12 @@ export const FooterIconButton: FC<FooterIconButtonProps> = ({
       }}
       data-testid={dataTestId}
       className={`${collapsed ? 'w-full' : 'flex-1'} flex items-center ${
-        collapsed ? 'justify-center' : 'gap-compact'
+        collapsed || iconOnly ? 'justify-center' : 'gap-compact'
       } px-3 py-row rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors text-sm font-medium`}
       aria-label={ariaLabel ?? title}
     >
       {createElement(icon, { className: `${iconSizes.md} flex-shrink-0` })}
-      {!collapsed ? <span>{label}</span> : null}
+      {!collapsed && !iconOnly ? <span>{label}</span> : null}
     </button>
   </Tooltip>
 );
@@ -253,6 +260,7 @@ export const SidebarFooter: FC<SidebarFooterProps> = ({
             label={isDark ? t('labels.lightMode') : t('labels.darkMode')}
             title={themeLabel}
             ariaLabel={themeLabel}
+            iconOnly={true}
             data-testid={surfaceTestIds ? 'rail-theme-toggle' : undefined}
           />
         ) : null}
@@ -264,6 +272,7 @@ export const SidebarFooter: FC<SidebarFooterProps> = ({
             label={t('labels.refresh')}
             title={t('tooltips.chrome.refresh')}
             ariaLabel={t('accessibility.refreshInterfaces')}
+            iconOnly={true}
             data-testid={surfaceTestIds ? 'rail-refresh' : undefined}
           />
         ) : null}
@@ -275,6 +284,7 @@ export const SidebarFooter: FC<SidebarFooterProps> = ({
             label={t('buttons.logout')}
             title={t('tooltips.chrome.logout')}
             ariaLabel={t('buttons.logout')}
+            iconOnly={true}
             data-testid={surfaceTestIds ? 'rail-logout' : undefined}
           />
         ) : null}

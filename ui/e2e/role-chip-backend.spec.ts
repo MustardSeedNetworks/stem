@@ -1,5 +1,12 @@
-import { expect, test } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 import { skipSetupWizard } from './helpers/auth';
+
+/**
+ * The role control lives in the rail since UI-STEM-9, and both rails are always
+ * in the DOM — the phone drawer and the `hidden lg:flex` desktop one — so a
+ * bare getByTestId matches two. Scope to the copy actually on screen (#941).
+ */
+const roleControl = (page: Page, testId: string) => page.locator(`[data-testid="${testId}"]:visible`);
 
 /**
  * RoleChip backend wiring (issue #74)
@@ -77,7 +84,7 @@ test.describe('RoleChip backend wiring', () => {
     await page.goto('/');
 
     // The chip should be present in the header.
-    const testMasterChip = page.getByTestId('role-chip-test_master');
+    const testMasterChip = roleControl(page, 'role-chip-test_master');
     await expect(testMasterChip).toBeVisible();
 
     // Click test_master, then confirm the ConfirmModal.
@@ -90,7 +97,7 @@ test.describe('RoleChip backend wiring', () => {
     expect(JSON.parse(observedBody ?? '{}')).toEqual({ mode: 'test_master' });
 
     await expect(testMasterChip).toHaveAttribute('aria-pressed', 'true');
-    await expect(page.getByTestId('role-chip-error')).toHaveCount(0);
+    await expect(roleControl(page, 'role-chip-error')).toHaveCount(0);
   });
 
   test('surfaces an inline error and keeps the role when backend rejects', async ({ page }) => {
@@ -113,8 +120,8 @@ test.describe('RoleChip backend wiring', () => {
 
     await page.goto('/');
 
-    const reflectorChip = page.getByTestId('role-chip-reflector');
-    const testMasterChip = page.getByTestId('role-chip-test_master');
+    const reflectorChip = roleControl(page, 'role-chip-reflector');
+    const testMasterChip = roleControl(page, 'role-chip-test_master');
 
     // The app boots into reflector by default — try switching to
     // test_master so the request actually fires (clicking the
@@ -123,7 +130,7 @@ test.describe('RoleChip backend wiring', () => {
     await page.getByTestId('confirm-modal-confirm').click();
 
     // The inline error appears with the backend reason.
-    const errorTag = page.getByTestId('role-chip-error');
+    const errorTag = roleControl(page, 'role-chip-error');
     await expect(errorTag).toBeVisible();
     await expect(errorTag).toContainText(/CGO \+ Linux required/i);
 
@@ -132,7 +139,7 @@ test.describe('RoleChip backend wiring', () => {
     await expect(testMasterChip).toHaveAttribute('aria-pressed', 'false');
 
     // Dismissing the error removes the tag.
-    await page.getByTestId('role-chip-error-dismiss').click();
+    await roleControl(page, 'role-chip-error-dismiss').click();
     await expect(errorTag).toHaveCount(0);
   });
 });
