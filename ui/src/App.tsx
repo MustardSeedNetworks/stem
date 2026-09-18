@@ -25,6 +25,7 @@ import { useNavGroups } from './navGroups';
 import { useAuthStore } from './stores/auth-store';
 import { useShellStore } from './stores/shell-store';
 import { useTestStore } from './stores/test-store';
+import { useOpenHelp } from './useOpenHelp';
 
 const CommandPalette = lazy(() =>
   import('./components/ui/CommandPalette').then(({ CommandPalette: component }) => ({
@@ -47,7 +48,7 @@ function AppContent(): ReactElement {
   const [paletteLoaded, setPaletteLoaded] = useState(paletteOpen);
   const setPaletteOpen = useShellStore((s) => s.setPaletteOpen);
   const setSettingsOpen = useShellStore((s) => s.setSettingsOpen);
-  const setHelpOpen = useShellStore((s) => s.setHelpOpen);
+  const openHelp = useOpenHelp();
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -206,7 +207,7 @@ function AppContent(): ReactElement {
               open={paletteOpen}
               onOpenChange={setPaletteOpen}
               onOpenSettings={() => setSettingsOpen(true)}
-              onOpenHelp={() => setHelpOpen(true)}
+              onOpenHelp={openHelp}
               onToggleTheme={toggleTheme}
               isDark={isDark}
             />
