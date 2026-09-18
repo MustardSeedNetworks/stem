@@ -85,7 +85,8 @@ describe('passkey registration over the wire', () => {
     useAuthStore.setState({ isAuthenticated: true });
     stubCredentialCeremony();
     let accessTokenValid = false;
-    const fetchMock = vi.fn(async (input: RequestInfo) => {
+    const csrfTokens = new Map<string, string | null>();
+    const fetchMock = vi.fn(async (input: RequestInfo, init: RequestInit = {}) => {
       const url = String(input);
       if (url.includes('/auth/csrf-token')) {
         return new Response(JSON.stringify({ token: 'csrf' }), { status: 200 });
@@ -94,6 +95,7 @@ describe('passkey registration over the wire', () => {
         accessTokenValid = true;
         return new Response(null, { status: 200 });
       }
+      csrfTokens.set(url, new Headers(init.headers ?? {}).get('X-Csrf-Token'));
       if (!accessTokenValid) {
         return new Response(null, { status: 401 });
       }
@@ -119,5 +121,11 @@ describe('passkey registration over the wire', () => {
     const urls = fetchMock.mock.calls.map(([input]) => String(input));
     expect(urls).toContain('/api/v1/auth/refresh');
     expect(urls.filter((url) => url.endsWith('/register/finish'))).toHaveLength(1);
+    // Both posts, not just the one the 401 lands on: a call left on bare fetch
+    // carries no CSRF header and the daemon answers it 403.
+    expect([...csrfTokens]).toEqual([
+      ['/api/v1/auth/webauthn/register/begin', 'csrf'],
+      ['/api/v1/auth/webauthn/register/finish', 'csrf'],
+    ]);
   });
 });
