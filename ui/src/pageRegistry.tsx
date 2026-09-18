@@ -64,6 +64,8 @@ export interface PageConfig {
   icon: LucideIcon;
   iconColorClass?: string;
   component: FC;
+  /** Page runs a test, so it carries the run controls under its header. */
+  runControls?: boolean;
 }
 
 /**
@@ -93,6 +95,7 @@ interface PageDef {
   icon: LucideIcon;
   iconColorClass?: string;
   component: FC;
+  runControls?: boolean;
 }
 
 const staticPages: PageDef[] = [
@@ -111,6 +114,7 @@ const staticPages: PageDef[] = [
     icon: BarChart3,
     iconColorClass: 'text-module-benchmark',
     component: BenchmarkPage,
+    runControls: true,
   },
   {
     path: '/tests/servicetest',
@@ -119,6 +123,7 @@ const staticPages: PageDef[] = [
     icon: Settings2,
     iconColorClass: 'text-module-servicetest',
     component: ServiceTestPage,
+    runControls: true,
   },
   {
     path: '/tests/trafficgen',
@@ -127,6 +132,7 @@ const staticPages: PageDef[] = [
     icon: Zap,
     iconColorClass: 'text-module-trafficgen',
     component: TrafficGenPage,
+    runControls: true,
   },
   {
     path: '/tests/measure',
@@ -135,6 +141,7 @@ const staticPages: PageDef[] = [
     icon: Waves,
     iconColorClass: 'text-module-measure',
     component: MeasurePage,
+    runControls: true,
   },
   {
     path: '/tests/certify',
@@ -143,6 +150,7 @@ const staticPages: PageDef[] = [
     icon: Award,
     iconColorClass: 'text-module-certify',
     component: CertifyPage,
+    runControls: true,
   },
   {
     path: '/history',
@@ -180,5 +188,6 @@ export function usePages(): PageConfig[] {
     icon: p.icon,
     iconColorClass: p.iconColorClass,
     component: p.component,
+    runControls: p.runControls,
   }));
 }

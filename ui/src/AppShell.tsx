@@ -1,7 +1,8 @@
 /**
  * @fileoverview AppShell — the authenticated application shell.
  * @description Sidebar layout + routed pages + the pinned TestResults card, plus
- *              the Settings / Help / History drawers. Reads drawer state from the
+ *              the Settings / Help / History drawers. The shell is the rail and
+ *              the page header; nothing sits above the page (UI-STEM-9). Reads drawer state from the
  *              shell-store and test config from the test-store directly. Mounted
  *              only once signed in. Extracted from App.tsx during the W5.5
  *              providers+routing decomposition.
@@ -20,6 +21,7 @@ import {
 } from 'react';
 import { matchPath, Navigate, Route, Routes, useLocation } from 'react-router';
 import { TestResults } from './components/TestResults';
+import { TestRunControls } from './components/TestRunControls';
 import { useNavGroups } from './navGroups';
 import { type PageConfig, usePages } from './pageRegistry';
 import { useRecordTestResult } from './stores/history-store';
@@ -29,7 +31,7 @@ import type { Stats, TestResult } from './types/api';
 import { Breadcrumbs } from './ui/Breadcrumbs';
 import { PageHeader } from './ui/PageHeader';
 import { PageLoader } from './ui/PageLoader';
-import { SidebarLayout } from './ui/Sidebar';
+import { type RailStatus, SidebarLayout } from './ui/Sidebar';
 import { routeForPathname, useOpenHelp } from './useOpenHelp';
 
 const HelpDrawer = lazy(() =>
@@ -43,12 +45,27 @@ const SettingsDrawer = lazy(() =>
 
 export interface AppShellProps {
   version?: string;
-  topBar: ReactNode;
   testResult: TestResult | null;
   testStatus: Stats['testStatus'];
+  status: RailStatus;
+  isDark: boolean;
+  onToggleTheme: () => void;
+  onRefresh: () => void;
+  onLogout: () => void;
+  roleControl: ReactNode;
 }
 
-export function AppShell({ version, topBar, testResult, testStatus }: AppShellProps): ReactElement {
+export function AppShell({
+  version,
+  testResult,
+  testStatus,
+  status,
+  isDark,
+  onToggleTheme,
+  onRefresh,
+  onLogout,
+  roleControl,
+}: AppShellProps): ReactElement {
   // A run is recorded because it ended, not because a view is open.
   useRecordTestResult(testResult, testStatus);
   const navGroups = useNavGroups();
@@ -123,9 +140,14 @@ export function AppShell({ version, topBar, testResult, testStatus }: AppShellPr
       <SidebarLayout
         groups={navGroups}
         version={version}
+        status={status}
         onOpenHelp={openHelp}
         onOpenSettings={() => setSettingsOpen(true)}
-        topBar={topBar}
+        onToggleTheme={onToggleTheme}
+        isDark={isDark}
+        onRefresh={onRefresh}
+        onLogout={onLogout}
+        roleControl={roleControl}
       >
         <Suspense fallback={<PageLoader />}>
           <Routes>
@@ -204,6 +226,7 @@ function PageWithHeader({ page, children }: { page: PageConfig; children: ReactN
         description={page.description}
         onHelp={openHelp}
       />
+      {page.runControls ? <TestRunControls /> : null}
       {children}
     </section>
   );

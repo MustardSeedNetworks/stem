@@ -10,16 +10,7 @@
  * via callback props so the actual drawer components stay mounted at
  * AppShell level alongside the existing test/state plumbing.
  */
-import {
-  ChevronLeft,
-  ChevronRight,
-  HelpCircle,
-  type LucideIcon,
-  Menu,
-  Settings,
-  Users,
-  X,
-} from 'lucide-react';
+import { type LucideIcon, Menu, X } from 'lucide-react';
 import { createElement, type FC, type ReactNode, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router';
@@ -27,7 +18,9 @@ import { Tooltip } from '../components/ui/Tooltip';
 import { iconSizes } from '../constants/sizes';
 import { prefetchRoute } from '../utils/prefetch';
 import { safeGetItem, safeSetItem } from '../utils/storage';
-import { MsnMark } from './MsnMark';
+import { type RailStatus, SidebarFooter, SidebarHeader } from './SidebarChrome';
+
+export type { RailStatus };
 
 export interface SidebarNavItem {
   path: string;
@@ -45,6 +38,14 @@ interface SidebarLayoutProps {
   groups: SidebarNavGroup[];
   version?: string;
   children: ReactNode;
+  status?: RailStatus;
+  /** Rail-footer controls. Omit a callback and its button does not render. */
+  onToggleTheme?: () => void;
+  isDark?: boolean;
+  onRefresh?: () => void;
+  onLogout?: () => void;
+  /** The role control, rendered in the footer when the rail is expanded. */
+  roleControl?: ReactNode;
   /**
    * Drawer callbacks — all optional. Pass only the ones your product uses;
    * the corresponding footer button only renders when its callback is provided.
@@ -54,7 +55,6 @@ interface SidebarLayoutProps {
   onOpenHelp?: () => void;
   onOpenSettings?: () => void;
   onOpenProfiles?: () => void;
-  topBar?: ReactNode;
 }
 
 const STORAGE_KEY = 'stem-sidebar-collapsed';
@@ -114,213 +114,16 @@ const NavItemButton: FC<NavItemButtonProps> = ({ item, active, collapsed, onNavi
   </Tooltip>
 );
 
-interface FooterIconButtonProps {
-  collapsed: boolean;
-  onClick: () => void;
-  icon: LucideIcon;
-  label: string;
-  title: string;
-  'data-testid'?: string;
-}
-
-const FooterIconButton: FC<FooterIconButtonProps> = ({
-  collapsed,
-  onClick,
-  icon,
-  label,
-  title,
-  'data-testid': dataTestId,
-}) => (
-  <Tooltip text={title}>
-    <button
-      type="button"
-      onClick={(event) => {
-        event.currentTarget.focus();
-        onClick();
-      }}
-      data-testid={dataTestId}
-      className={`${collapsed ? 'w-full' : 'flex-1'} flex items-center ${
-        collapsed ? 'justify-center' : 'gap-compact'
-      } px-3 py-row rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors text-sm font-medium`}
-      aria-label={title}
-    >
-      {createElement(icon, { className: `${iconSizes.md} flex-shrink-0` })}
-      {!collapsed ? <span>{label}</span> : null}
-    </button>
-  </Tooltip>
-);
-
-interface SidebarHeaderProps {
-  collapsed: boolean;
-  onCollapse: () => void;
-}
-
-const SidebarHeader: FC<SidebarHeaderProps> = ({ collapsed, onCollapse }) => {
-  const { t } = useTranslation();
-  return (
-    <div
-      className={`flex items-center ${
-        collapsed ? 'justify-center' : 'justify-between'
-      } px-3 py-4 border-b border-hairline`}
-    >
-      <div className={`flex items-center gap-compact ${collapsed ? 'justify-center' : ''}`}>
-        <div className="relative flex-shrink-0">
-          <div className="h-9 w-9 rounded-[11px] bg-brand-primary flex-center">
-            <span className="figure text-sm font-extrabold tracking-tight text-on-brand">ST</span>
-          </div>
-          <div className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-status-success border-2 border-surface-raised" />
-        </div>
-        {!collapsed ? (
-          <span className="font-display font-bold text-lg text-text-primary tracking-tight">
-            {t('app.title')}
-          </span>
-        ) : null}
-      </div>
-      {!collapsed ? (
-        <Tooltip text={t('accessibility.collapseSidebar')}>
-          <button
-            type="button"
-            onClick={onCollapse}
-            className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors lg:flex hidden"
-            aria-label={t('accessibility.collapseSidebar')}
-          >
-            <ChevronLeft className={iconSizes.md} />
-          </button>
-        </Tooltip>
-      ) : null}
-    </div>
-  );
-};
-
-interface SidebarFooterProps {
-  collapsed: boolean;
-  version?: string;
-  onOpenHelp?: () => void;
-  onOpenSettings?: () => void;
-  onOpenProfiles?: () => void;
-  onExpand: () => void;
-  // SidebarLayout mounts SidebarBody twice (mobile + desktop asides) and
-  // both stay in the DOM regardless of viewport — the responsive classes
-  // only toggle display, not mount. Emitting the testids on both copies
-  // makes every getByTestId('sidebar-*-button') resolve to 2 elements
-  // and trip strict-mode. Layout passes `surfaceTestIds=true` only for
-  // the desktop aside (the default Playwright viewport is 1280x720, lg+).
-  surfaceTestIds: boolean;
-}
-
-interface FullWidthDrawerButtonProps {
-  onClick: () => void;
-  icon: LucideIcon;
-  label: string;
-  title: string;
-  'data-testid'?: string;
-}
-
-const FullWidthDrawerButton: FC<FullWidthDrawerButtonProps> = ({
-  onClick,
-  icon,
-  label,
-  title,
-  'data-testid': dataTestId,
-}) => (
-  <Tooltip text={title}>
-    <button
-      type="button"
-      onClick={(event) => {
-        event.currentTarget.focus();
-        onClick();
-      }}
-      data-testid={dataTestId}
-      className="w-full mb-heading flex items-center gap-compact px-3 py-row rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors text-sm font-medium"
-      aria-label={title}
-    >
-      {createElement(icon, { className: `${iconSizes.md} flex-shrink-0` })}
-      <span>{label}</span>
-    </button>
-  </Tooltip>
-);
-
-const SidebarFooter: FC<SidebarFooterProps> = ({
-  collapsed,
-  version,
-  onOpenHelp,
-  onOpenSettings,
-  onOpenProfiles,
-  onExpand,
-  surfaceTestIds,
-}) => {
-  const { t } = useTranslation();
-
-  return (
-    <div className={`px-3 py-4 border-t border-surface-border ${collapsed ? 'text-center' : ''}`}>
-      <div className={`${collapsed ? 'stack-sm' : 'flex items-center gap-compact'} mb-heading`}>
-        {onOpenHelp ? (
-          <FooterIconButton
-            collapsed={collapsed}
-            onClick={onOpenHelp}
-            icon={HelpCircle}
-            label={t('labels.help')}
-            title={t('tooltips.chrome.help')}
-            data-testid={surfaceTestIds ? 'sidebar-help-button' : undefined}
-          />
-        ) : null}
-        {onOpenSettings ? (
-          <FooterIconButton
-            collapsed={collapsed}
-            onClick={onOpenSettings}
-            icon={Settings}
-            label={t('labels.settings')}
-            title={t('tooltips.chrome.settings')}
-            data-testid={surfaceTestIds ? 'sidebar-settings-button' : undefined}
-          />
-        ) : null}
-      </div>
-
-      {onOpenProfiles && !collapsed ? (
-        <FullWidthDrawerButton
-          onClick={onOpenProfiles}
-          icon={Users}
-          label={t('labels.profiles')}
-          title={t('tooltips.chrome.profiles')}
-        />
-      ) : null}
-
-      {version ? (
-        <div
-          className={`text-xs font-mono text-text-muted ${collapsed ? '' : 'flex-between gap-tight'}`}
-        >
-          {!collapsed ? <span className="shrink-0">{t('labels.version')}</span> : null}
-          {/* A development build's version carries the commit and a -dirty
-              suffix, which wrapped onto the label once the rail narrowed to
-              224px (UI-STEM-18). Truncate with the full string on hover. */}
-          <span className="truncate" title={version}>
-            {version}
-          </span>
-        </div>
-      ) : null}
-      {/* Whose tool this is, under what it is. Quiet by design: the product mark
-        at the top of the rail is the one that has to be recognised. */}
-      <MsnMark collapsed={collapsed} className="mt-3" />
-      {collapsed ? (
-        <Tooltip text={t('accessibility.expandSidebar')}>
-          <button
-            type="button"
-            onClick={onExpand}
-            className="mt-inline p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
-            aria-label={t('accessibility.expandSidebar')}
-          >
-            <ChevronRight className={iconSizes.md} />
-          </button>
-        </Tooltip>
-      ) : null}
-    </div>
-  );
-};
-
 interface SidebarBodyProps {
   groups: SidebarNavGroup[];
   collapsed: boolean;
   version?: string;
+  status?: RailStatus;
+  onToggleTheme?: () => void;
+  isDark?: boolean;
+  onRefresh?: () => void;
+  onLogout?: () => void;
+  roleControl?: ReactNode;
   onCollapse: () => void;
   onExpand: () => void;
   onNavigate: (path: string) => void;
@@ -336,6 +139,7 @@ const SidebarBody: FC<SidebarBodyProps> = ({
   groups,
   collapsed,
   version,
+  status,
   onCollapse,
   onExpand,
   onNavigate,
@@ -343,6 +147,11 @@ const SidebarBody: FC<SidebarBodyProps> = ({
   onOpenHelp,
   onOpenSettings,
   onOpenProfiles,
+  onToggleTheme,
+  isDark,
+  onRefresh,
+  onLogout,
+  roleControl,
   surfaceTestIds,
 }) => {
   const { t } = useTranslation();
@@ -353,7 +162,12 @@ const SidebarBody: FC<SidebarBodyProps> = ({
     label ? t(label, { defaultValue: label }) : '';
   return (
     <>
-      <SidebarHeader collapsed={collapsed} onCollapse={onCollapse} />
+      <SidebarHeader
+        collapsed={collapsed}
+        onCollapse={onCollapse}
+        status={status}
+        surfaceTestIds={surfaceTestIds}
+      />
       <nav className="flex-1 overflow-y-auto py-4 px-cell stack-xl">
         {groups.map((group, groupIndex) => (
           <div key={group.label || `nav-group-${String(groupIndex)}`}>
@@ -383,6 +197,11 @@ const SidebarBody: FC<SidebarBodyProps> = ({
         onOpenHelp={onOpenHelp}
         onOpenSettings={onOpenSettings}
         onOpenProfiles={onOpenProfiles}
+        onToggleTheme={onToggleTheme}
+        isDark={isDark}
+        onRefresh={onRefresh}
+        onLogout={onLogout}
+        roleControl={roleControl}
         onExpand={onExpand}
         surfaceTestIds={surfaceTestIds}
       />
@@ -430,10 +249,15 @@ export const SidebarLayout: FC<SidebarLayoutProps> = ({
   groups,
   version,
   children,
+  status,
   onOpenHelp,
   onOpenSettings,
   onOpenProfiles,
-  topBar,
+  onToggleTheme,
+  isDark,
+  onRefresh,
+  onLogout,
+  roleControl,
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -463,6 +287,7 @@ export const SidebarLayout: FC<SidebarLayoutProps> = ({
       groups={groups}
       collapsed={collapsed}
       version={version}
+      status={status}
       onCollapse={() => setCollapsed(true)}
       onExpand={() => setCollapsed(false)}
       onNavigate={(p) => navigate(p)}
@@ -470,6 +295,11 @@ export const SidebarLayout: FC<SidebarLayoutProps> = ({
       onOpenHelp={onOpenHelp}
       onOpenSettings={onOpenSettings}
       onOpenProfiles={onOpenProfiles}
+      onToggleTheme={onToggleTheme}
+      isDark={isDark}
+      onRefresh={onRefresh}
+      onLogout={onLogout}
+      roleControl={roleControl}
       surfaceTestIds={surfaceTestIds}
     />
   );
@@ -532,7 +362,6 @@ export const SidebarLayout: FC<SidebarLayoutProps> = ({
           collapsed ? 'lg:pl-16' : 'lg:pl-56'
         }`}
       >
-        {topBar}
         <div className="pad sm:pad-lg lg:pad-xl">{children}</div>
       </main>
     </div>

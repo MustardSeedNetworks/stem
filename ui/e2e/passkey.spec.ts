@@ -36,8 +36,8 @@ test.describe('Passkeys', () => {
     await expect(page.getByText('Passkey registered.')).toBeVisible();
     await expect(count).toHaveText(`Registered passkeys: ${initialCount + 1}`);
 
-    await page.getByTestId('logout-button').click();
+    await page.getByTestId('rail-logout').click();
     await page.getByTestId('passkey-login').click();
-    await expect(page.getByTestId('logout-button')).toBeVisible();
+    await expect(page.getByTestId('rail-logout')).toBeVisible();
   });
 });

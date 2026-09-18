@@ -11,6 +11,7 @@ import type { RFC2544Config } from '../components/RFC2544ConfigForm';
 import type { RFC2889Config } from '../components/RFC2889ConfigForm';
 import type { RFC6349Config } from '../components/RFC6349ConfigForm';
 import type { ReflectorProfile } from '../components/settings/types';
+import type { TestProgress } from '../components/TestProgressBar';
 import type { TrafficGenConfig } from '../components/TrafficGenConfigForm';
 import type { TSNConfig } from '../components/TSNConfigForm';
 import type { Y1564Config } from '../components/Y1564ConfigForm';
@@ -53,6 +54,20 @@ export interface AppContextValue {
   isStartingReflector: boolean;
   reflectorStopOutcome: StopOutcome;
   reflectorStartError: string | null;
+
+  // Test-master run surface, read by <TestRunControls> under each test page's
+  // header. It used to be passed down twenty props deep into the retired top
+  // bar; the controls now sit on the page they run (UI-STEM-9).
+  peer: string;
+  setPeer: (peer: string) => void;
+  peerPort: number;
+  setPeerPort: (port: number) => void;
+  onStartTest: () => void;
+  onStopTest: () => void;
+  isStartingTest: boolean;
+  stopOutcome: StopOutcome;
+  testStartError: string | null;
+  testProgress: TestProgress;
 }
 
 export const AppContext = createContext<AppContextValue | null>(null);
