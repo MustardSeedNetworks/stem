@@ -14,8 +14,8 @@
  * spinner.
  *
  * The signature of setRole stays `(role: StemRole) => void` rather
- * than returning a Promise: callers (RoleChip, RoleGuard, SetupWizard,
- * ReflectorPage) fire-and-forget the switch and react to state
+ * than returning a Promise: callers (RoleChip, RoleGuard, ReflectorPage)
+ * fire-and-forget the switch and react to state
  * changes, which avoids forcing every consumer to thread async.
  */
 import {
