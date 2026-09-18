@@ -18,6 +18,9 @@ export interface TestResultResponse {
   data?: unknown;
   suiteId?: string;
   steps?: RunPlanStep[];
+  startedAt?: string;
+  completedAt?: string;
+  duration?: number;
 }
 export interface RunPlanStep {
   testType: string;
@@ -131,4 +134,7 @@ export interface TestResultResponse1 {
   data?: unknown;
   suiteId?: string;
   steps?: RunPlanStep[];
+  startedAt?: string;
+  completedAt?: string;
+  duration?: number;
 }

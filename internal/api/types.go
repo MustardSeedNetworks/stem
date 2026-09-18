@@ -260,6 +260,13 @@ type TestResultResponse struct {
 	Data     any           `json:"data,omitempty"`
 	SuiteID  string        `json:"suiteId,omitempty"`
 	Steps    []RunPlanStep `json:"steps,omitempty"`
+	// StartedAt, CompletedAt and DurationMs are the daemon's own record of
+	// the run. CompletedAt and DurationMs appear together, once the run has
+	// ended; DurationMs is milliseconds, and a pointer because a run that
+	// took under a millisecond measured 0 ms — it did not fail to measure.
+	StartedAt   *time.Time `json:"startedAt,omitempty"`
+	CompletedAt *time.Time `json:"completedAt,omitempty"`
+	DurationMs  *int64     `json:"duration,omitempty"`
 }
 
 // ModeRequest for mode POST requests. Valid values are mirrored from

@@ -23,7 +23,7 @@ import (
 // is that the daemon records the timing, not that the struct can hold it.
 
 func TestCompletedRunCarriesItsTimingOnTheWire(t *testing.T) {
-	s := newTestServer(t)
+	s := newTimingTestServer(t)
 	s.executorResolver = passingExecutorResolver(map[string]any{"throughputMbps": 942.4})
 
 	plan := planFor(t, "rfc2544_throughput")
@@ -146,7 +146,7 @@ func TestEveryTerminalRunCarriesItsTiming(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			s := newTestServer(t)
+			s := newTimingTestServer(t)
 			tc.drive(t, s)
 
 			s.statsMu.RLock()
@@ -164,8 +164,11 @@ func TestEveryTerminalRunCarriesItsTiming(t *testing.T) {
 			if result.CompletedAt == nil {
 				t.Fatal("the ended run carries no completedAt")
 			}
-			if result.DurationMs < 0 {
-				t.Errorf("duration = %d ms, want a non-negative measurement", result.DurationMs)
+			if result.DurationMs == nil {
+				t.Fatal("the ended run carries no duration")
+			}
+			if *result.DurationMs < 0 {
+				t.Errorf("duration = %d ms, want a non-negative measurement", *result.DurationMs)
 			}
 		})
 	}
@@ -174,7 +177,7 @@ func TestEveryTerminalRunCarriesItsTiming(t *testing.T) {
 // A run still in flight has a start and no end: stamping a completion on it
 // would put a finished run in the operator's history while it is still going.
 func TestRunningReflectorHasNoCompletion(t *testing.T) {
-	s := newTestServer(t)
+	s := newTimingTestServer(t)
 	if _, err := s.beginTestRun(testTypeReflect, moduleReflector); err != nil {
 		t.Fatalf("beginTestRun: %v", err)
 	}
@@ -189,9 +192,18 @@ func TestRunningReflectorHasNoCompletion(t *testing.T) {
 	if result.CompletedAt != nil {
 		t.Errorf("a running reflector was stamped complete at %s", result.CompletedAt)
 	}
-	if result.DurationMs != 0 {
-		t.Errorf("duration = %d ms, want 0 while the run is in flight", result.DurationMs)
+	if result.DurationMs != nil {
+		t.Errorf("duration = %d ms, want none while the run is in flight", *result.DurationMs)
 	}
+}
+
+// newTimingTestServer is newTestServer with the credentials the auth manager
+// requires; the package's other suites set them per test the same way.
+func newTimingTestServer(t *testing.T) *Server {
+	t.Helper()
+	t.Setenv("STEM_AUTH_USERNAME", "runtiminguser")
+	t.Setenv("STEM_AUTH_PASSWORD", "runtimingpass123")
+	return newTestServer(t)
 }
 
 func planFor(t *testing.T, testType string) *runPlan {

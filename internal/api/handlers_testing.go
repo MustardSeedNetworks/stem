@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/MustardSeedNetworks/stem/internal/logging"
 	"github.com/MustardSeedNetworks/stem/internal/netif"
@@ -185,6 +186,7 @@ func (s *Server) markStoppedLocked() {
 	if s.testResult != nil {
 		stopped := *s.testResult
 		stopped.Status = statusStopped
+		s.stampRunTimingLocked(&stopped)
 		s.testResult = &stopped
 	}
 }
@@ -275,6 +277,7 @@ func (s *Server) beginTestRun(testType, module string) (string, error) {
 	}
 	s.testStatus = statusStarting
 	s.testError = ""
+	s.runStartedAt = time.Now()
 	s.currentTest = testType
 	s.currentModule = module
 	s.testResult = nil
@@ -291,6 +294,7 @@ func (s *Server) beginRunPlan(plan *runPlan) (uint64, error) {
 	}
 	s.testStatus = statusStarting
 	s.testError = ""
+	s.runStartedAt = time.Now()
 	plan.ID = s.newRunIDLocked()
 	s.runPlan = plan
 	s.currentTest = plan.Steps[0].TestType
@@ -317,6 +321,7 @@ func (s *Server) respondTestExecutionError(
 		Message:  "",
 		Data:     nil,
 	}
+	s.stampRunTimingLocked(s.testResult)
 	s.statsMu.Unlock()
 
 	// Use the centralized error mapping for test errors.
