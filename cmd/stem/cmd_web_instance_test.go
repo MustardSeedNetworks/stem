@@ -88,7 +88,7 @@ func webDaemonEnv(t *testing.T, dataDir, port string) []string {
 	)
 }
 
-// testBinary is this test binary's own absolute path. os.Args[0] can be
+// testBinary is this test binary's own absolute path. [os.Args][0] can be
 // relative, and the children below run from a working directory of their own.
 func testBinary(t *testing.T) string {
 	t.Helper()
