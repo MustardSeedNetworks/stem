@@ -115,12 +115,41 @@ test('help follows trailing-slash routes and stays closed after browser history 
   await expect(page.getByTestId('help-drawer')).toContainText('Frame Delay Measurement');
 });
 
+/**
+ * The regression behind #1305: a help click that reaches React before the
+ * navigation it follows has been rendered used to be swallowed. The drawer
+ * opened, the route-change effect closed it again on the next commit, and
+ * nothing re-opened it, so the user's click did nothing. On CI that window is
+ * whatever the runner's scheduling latency happens to be — 80 ms was enough to
+ * eject PR #1351 from the merge queue. Firing both clicks in one task pins the
+ * ordering instead of leaving it to the machine.
+ */
+test('a help click batched with a navigation opens help for the destination', async ({ page }) => {
+  await skipSetupWizard(page);
+  await useRole(page, 'test_master');
+  await page.goto('/tests/benchmark/');
+  await page.getByTestId('page-help-button').waitFor();
+  await page.evaluate(() => {
+    const sidebar = document.querySelector('[data-testid="desktop-sidebar"]');
+    const measure = [...(sidebar?.querySelectorAll('button') ?? [])].find(
+      (button) => button.textContent?.trim() === 'Measure',
+    );
+    if (!measure) {
+      throw new Error('Measure nav button not found');
+    }
+    measure.click();
+    document.querySelector<HTMLElement>('[data-testid="page-help-button"]')?.click();
+  });
+  await expect(page).toHaveURL(/\/tests\/measure$/);
+  await expect(page.getByTestId('help-drawer')).toContainText('Frame Delay Measurement');
+});
 
 test('embedded help build reports complete metadata', async ({ request }, testInfo) => {
   const response = await request.get('/__version');
   expect(response.ok()).toBe(true);
   const text = await response.text();
-  const version: { version: string; commit: string; buildTime: string; uiBuildHash: string } = JSON.parse(text);
+  const version: { version: string; commit: string; buildTime: string; uiBuildHash: string } =
+    JSON.parse(text);
   expect(version.uiBuildHash).toMatch(/^[a-f0-9]{32}$/);
   expect(version.commit).toMatch(/^[a-f0-9]{7,40}$/);
   expect(version.version).not.toBe('unknown');
