@@ -33,7 +33,7 @@ test.describe('smoke @ authenticated', { tag: '@smoke' }, () => {
   test('theme toggle is interactive', async ({ page }) => {
     await page.goto('/');
     await expect(page.getByTestId('page-header-title')).toBeVisible({ timeout: 10000 });
-    const toggle = page.getByTestId('header-theme-toggle');
+    const toggle = page.getByTestId('rail-theme-toggle');
     await expect(toggle).toBeVisible();
     await toggle.click();
     await expect(toggle).toBeVisible();

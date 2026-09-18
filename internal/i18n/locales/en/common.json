@@ -95,7 +95,10 @@
     "success": "Success",
     "profiles": "Profiles",
     "testResults": "Test Results",
-    "interfaceDetails": "Interface Details"
+    "interfaceDetails": "Interface Details",
+    "lightMode": "Light mode",
+    "darkMode": "Dark mode",
+    "refresh": "Refresh"
   },
   "time": {
     "seconds": "{{count}}s",
