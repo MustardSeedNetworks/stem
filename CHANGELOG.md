@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.133](https://github.com/MustardSeedNetworks/stem/compare/v0.24.132...v0.24.133) (2026-09-18)
+
+
+### Features
+
+* **ui:** one top-of-shell pattern — the rail carries the chrome ([#1358](https://github.com/MustardSeedNetworks/stem/issues/1358)) ([84bd3be](https://github.com/MustardSeedNetworks/stem/commit/84bd3beb14015f8144b4600e8c02b7f278605dd7))
+
+
+### Bug Fixes
+
+* **api:** record when a run started, finished and how long it took ([#1356](https://github.com/MustardSeedNetworks/stem/issues/1356)) ([cc51ca2](https://github.com/MustardSeedNetworks/stem/commit/cc51ca2160625ce51527586f5deea378a7c431d5))
+
+
+### Miscellaneous
+
+* **deps:** update pre-commit hook pre-commit/mirrors-clang-format to v23.1.1 ([#1359](https://github.com/MustardSeedNetworks/stem/issues/1359)) ([58d4ce5](https://github.com/MustardSeedNetworks/stem/commit/58d4ce5965e460115a3ab7d48ae44f745577c257))
+
 ## [0.24.132](https://github.com/MustardSeedNetworks/stem/compare/v0.24.131...v0.24.132) (2026-09-18)
 
 
