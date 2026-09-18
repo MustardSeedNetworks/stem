@@ -76,72 +76,10 @@ func TestEveryTerminalRunCarriesItsTiming(t *testing.T) {
 		drive  func(t *testing.T, s *Server)
 		status string
 	}{
-		{
-			name: "the run plan completes",
-			drive: func(t *testing.T, s *Server) {
-				t.Helper()
-				s.executorResolver = passingExecutorResolver(nil)
-				plan := planFor(t, "rfc2544_throughput")
-				runID, err := s.beginRunPlan(plan)
-				if err != nil {
-					t.Fatalf("beginRunPlan: %v", err)
-				}
-				s.startRunPlan(runID, "lo0", plan.ID)
-				waitForTestStatus(t, s, statusCompleted)
-			},
-			status: statusCompleted,
-		},
-		{
-			name: "a step fails",
-			drive: func(t *testing.T, s *Server) {
-				t.Helper()
-				s.executorResolver = failingExecutorResolver()
-				plan := planFor(t, "rfc2544_throughput")
-				runID, err := s.beginRunPlan(plan)
-				if err != nil {
-					t.Fatalf("beginRunPlan: %v", err)
-				}
-				s.startRunPlan(runID, "lo0", plan.ID)
-				waitForTestStatus(t, s, statusError)
-			},
-			status: statusError,
-		},
-		{
-			name: "the operator stops the reflector",
-			drive: func(t *testing.T, s *Server) {
-				t.Helper()
-				if _, err := s.beginTestRun(testTypeReflect, moduleReflector); err != nil {
-					t.Fatalf("beginTestRun: %v", err)
-				}
-				s.statsMu.Lock()
-				s.testStatus = statusRunning
-				s.testResult = &TestResultResponse{
-					Status:   statusRunning,
-					TestType: testTypeReflect,
-					Module:   moduleReflector,
-				}
-				s.stampRunTimingLocked(s.testResult)
-				s.markStoppedLocked()
-				s.statsMu.Unlock()
-			},
-			status: statusStopped,
-		},
-		{
-			name: "the executor cannot start",
-			drive: func(t *testing.T, s *Server) {
-				t.Helper()
-				if _, err := s.beginTestRun(testTypeReflect, moduleReflector); err != nil {
-					t.Fatalf("beginTestRun: %v", err)
-				}
-				s.respondTestExecutionError(
-					httptest.NewRecorder(),
-					errStubDataplane,
-					moduleReflector,
-					testTypeReflect,
-				)
-			},
-			status: statusError,
-		},
+		{"the run plan completes", drivePassingPlan, statusCompleted},
+		{"a step fails", driveFailingPlan, statusError},
+		{"the operator stops the reflector", driveStoppedReflector, statusStopped},
+		{"the executor cannot start", driveUnstartableExecutor, statusError},
 	}
 
 	for _, tc := range tests {
@@ -172,6 +110,61 @@ func TestEveryTerminalRunCarriesItsTiming(t *testing.T) {
 			}
 		})
 	}
+}
+
+func drivePassingPlan(t *testing.T, s *Server) {
+	t.Helper()
+	s.executorResolver = passingExecutorResolver(nil)
+	runPlanToCompletion(t, s, statusCompleted)
+}
+
+func driveFailingPlan(t *testing.T, s *Server) {
+	t.Helper()
+	s.executorResolver = failingExecutorResolver()
+	runPlanToCompletion(t, s, statusError)
+}
+
+func runPlanToCompletion(t *testing.T, s *Server, want string) {
+	t.Helper()
+	plan := planFor(t, "rfc2544_throughput")
+	runID, err := s.beginRunPlan(plan)
+	if err != nil {
+		t.Fatalf("beginRunPlan: %v", err)
+	}
+	s.startRunPlan(runID, "lo0", plan.ID)
+	waitForTestStatus(t, s, want)
+}
+
+// The reflector's own start is the cgo dataplane, so the state it leaves
+// behind is reproduced here and the stop path — the part under test — is real.
+func driveStoppedReflector(t *testing.T, s *Server) {
+	t.Helper()
+	if _, err := s.beginTestRun(testTypeReflect, moduleReflector); err != nil {
+		t.Fatalf("beginTestRun: %v", err)
+	}
+	s.statsMu.Lock()
+	defer s.statsMu.Unlock()
+	s.testStatus = statusRunning
+	s.testResult = &TestResultResponse{
+		Status:   statusRunning,
+		TestType: testTypeReflect,
+		Module:   moduleReflector,
+	}
+	s.stampRunTimingLocked(s.testResult)
+	s.markStoppedLocked()
+}
+
+func driveUnstartableExecutor(t *testing.T, s *Server) {
+	t.Helper()
+	if _, err := s.beginTestRun(testTypeReflect, moduleReflector); err != nil {
+		t.Fatalf("beginTestRun: %v", err)
+	}
+	s.respondTestExecutionError(
+		httptest.NewRecorder(),
+		errStubDataplane,
+		moduleReflector,
+		testTypeReflect,
+	)
 }
 
 // A run still in flight has a start and no end: stamping a completion on it

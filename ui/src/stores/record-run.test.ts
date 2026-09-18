@@ -63,13 +63,13 @@ describe('useRecordTestResult', () => {
     expect(useHistoryStore.getState().results[0]?.status).toBe('stopped');
   });
 
-  it('does not record a run still in flight', () => {
-    renderHook(() =>
-      useRecordTestResult(
-        { status: 'running', testType: 'rfc2544_throughput', startedAt: completed.startedAt },
-        'running',
-      ),
-    );
+  it('does not record while a run is in flight, even holding a finished payload', () => {
+    // The run state is the authority, not a field in the payload. The shell
+    // keeps the last result until the next run reaches `starting`, so a
+    // payload carrying `completedAt` can be in hand while the daemon is
+    // already running again — and trusting the timestamp over the state is
+    // the mistake #1333 was made of.
+    renderHook(() => useRecordTestResult({ ...completed, status: 'running' }, 'running'));
 
     expect(useHistoryStore.getState().results).toHaveLength(0);
   });
