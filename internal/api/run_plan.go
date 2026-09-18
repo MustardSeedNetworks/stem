@@ -3,10 +3,13 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/MustardSeedNetworks/foundation/pkg/supervise"
 
 	"github.com/MustardSeedNetworks/stem/internal/logging"
 	"github.com/MustardSeedNetworks/stem/internal/services"
@@ -19,6 +22,10 @@ const (
 	stepPassed  = "passed"
 	stepFailed  = "failed"
 	stepSkipped = "skipped"
+
+	// runPlanWorker names the supervised worker in the log line an operator
+	// reads when a run faults.
+	runPlanWorker = "run-plan"
 )
 
 type runPlan struct {
@@ -55,6 +62,67 @@ func newRunPlan(id string, request TestStartRequest) (*runPlan, error) {
 		peerPort = DefaultPortFilter
 	}
 	return &runPlan{ID: id, Peer: strings.TrimSpace(request.Peer), PeerPort: peerPort, Steps: steps, Current: -1}, nil
+}
+
+// startRunPlan launches the run plan under a supervisor. The plan executes
+// the dataplane, which is where a fault becomes a Go panic (a nil executor
+// state, an out-of-range index in a parsed frame): before #1336 this was a
+// bare `go s.runTestPlan(...)`, so that panic killed the daemon and systemd
+// restarted it with every other in-flight run lost. Supervised, the panic is
+// one log line and a failed run, and the daemon keeps serving.
+//
+// The group holds one worker with [supervise.Fatal] because a run is not
+// restartable: repeating a measurement the operator did not ask for twice
+// would be worse than reporting the failure. runPlanFailed records it.
+func (s *Server) startRunPlan(runID uint64, iface string, suiteID string) {
+	// The suite id rides on the supervisor's own logger so the single line it
+	// writes when the worker faults already identifies the run; a second line
+	// from runPlanFailed adding it would report one fault twice.
+	log := logging.WithComponentLogger(runPlanWorker).With("suiteId", suiteID)
+	group := supervise.New(log)
+	group.Add(runPlanWorker, supervise.Fatal, func(context.Context) error {
+		s.runTestPlan(runID, iface)
+		return nil
+	})
+	group.Start(context.Background())
+
+	go func() {
+		if group.Wait() != nil {
+			s.runPlanFailed(runID)
+		}
+	}()
+}
+
+// runPlanFailed records a run that ended in a supervised fault rather than in
+// a result. The running step is marked failed and the rest skipped, exactly
+// as an executor error would (finishPlanStep), so the UI and `stem test`
+// read one vocabulary for "this run did not produce a measurement". The
+// operator-visible cause never carries the panic value: the supervisor has
+// already logged that line, and a raw panic string is not a diagnosis. This
+// function writes nothing to the log for the same reason.
+func (s *Server) runPlanFailed(runID uint64) {
+	s.statsMu.Lock()
+	defer s.statsMu.Unlock()
+	if s.testRunID != runID || s.runPlan == nil {
+		return
+	}
+	s.activeTestExec = nil
+	current := s.runPlan.Current
+	if current >= 0 && current < len(s.runPlan.Steps) {
+		step := &s.runPlan.Steps[current]
+		step.Status = stepFailed
+		step.Error = "Test execution failed"
+		s.runPlan.StepElapsedSec = int64(time.Since(s.runPlan.StepStarted).Seconds())
+	}
+	for later := current + 1; later < len(s.runPlan.Steps); later++ {
+		s.runPlan.Steps[later].Status = stepSkipped
+	}
+	s.testStatus = statusError
+	s.testError = causeInternalFault
+	s.currentTest = ""
+	s.currentRunID = ""
+	s.currentModule = ""
+	s.testResult = s.planResult(false, "Run plan failed")
 }
 
 func (s *Server) runTestPlan(runID uint64, iface string) {

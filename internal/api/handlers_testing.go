@@ -80,7 +80,7 @@ func (s *Server) handleTestStart(w http.ResponseWriter, r *http.Request) {
 		"steps", len(plan.Steps),
 		"interface", iface,
 	)
-	go s.runTestPlan(runID, iface)
+	s.startRunPlan(runID, iface, plan.ID)
 
 	writeJSON(w, TestStartResponse{
 		Status:  "started",

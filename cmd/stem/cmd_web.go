@@ -3,9 +3,12 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"os"
+
+	"github.com/MustardSeedNetworks/foundation/pkg/instance"
 
 	"github.com/MustardSeedNetworks/stem/internal/api"
 	"github.com/MustardSeedNetworks/stem/internal/version"
@@ -45,6 +48,12 @@ func webCmd(args []string) {
 	}
 	err = srv.Run()
 	if err != nil {
+		// A refused start is not a server error: another daemon already owns
+		// this data directory, and the message already names which one.
+		if held, isHeld := errors.AsType[*instance.HeldError](err); isHeld {
+			_, _ = fmt.Fprintf(os.Stderr, "Error: %v\n", held)
+			os.Exit(1)
+		}
 		_, _ = fmt.Fprintf(os.Stderr, "Server error: %v\n", err)
 		os.Exit(1)
 	}
