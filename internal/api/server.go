@@ -133,7 +133,8 @@ type Server struct {
 	testRunID            uint64
 	activeTestExec       testExecutor
 	currentTest          string
-	currentRunID         string // ID naming the run in flight, for runs with no plan (#1193)
+	currentRunID         string    // ID naming the run in flight, for runs with no plan (#1193)
+	runStartedAt         time.Time // When the run in flight began; the daemon's own clock (#1333)
 	testResult           *TestResultResponse
 	testError            string // classified cause of the failed run, reported on /api/v1/stats
 	runPlan              *runPlan

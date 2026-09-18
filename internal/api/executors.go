@@ -100,6 +100,7 @@ func (s *Server) executeReflector(iface, profile string) error {
 		Message:  "",
 		Data:     result.Data,
 	}
+	s.stampRunTimingLocked(s.testResult)
 	s.statsMu.Unlock()
 	logging.Info("Reflector started", "success", result.Success)
 
