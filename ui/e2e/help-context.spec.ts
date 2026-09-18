@@ -129,6 +129,13 @@ test('a help click batched with a navigation opens help for the destination', as
   await useRole(page, 'test_master');
   await page.goto('/tests/benchmark/');
   await page.getByTestId('page-help-button').waitFor();
+  // Hold the destination's chunk back so the window between the address bar
+  // and the committed route is wide enough to assert inside, instead of being
+  // whatever the machine gives us.
+  await page.route(/MeasurePage.*\.js(\?.*)?$/, async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    await route.continue();
+  });
   await page.evaluate(() => {
     const sidebar = document.querySelector('[data-testid="desktop-sidebar"]');
     const measure = [...(sidebar?.querySelectorAll('button') ?? [])].find(
@@ -141,6 +148,10 @@ test('a help click batched with a navigation opens help for the destination', as
     document.querySelector<HTMLElement>('[data-testid="page-help-button"]')?.click();
   });
   await expect(page).toHaveURL(/\/tests\/measure$/);
+  // Still on the Benchmark page as far as React is concerned: the drawer
+  // belongs to Measure, so it waits rather than opening over the page the
+  // user is leaving with that page's help in it.
+  await expect(page.getByTestId('help-drawer')).toBeHidden();
   await expect(page.getByTestId('help-drawer')).toContainText('Frame Delay Measurement');
 });
 
