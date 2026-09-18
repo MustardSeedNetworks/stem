@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.132](https://github.com/MustardSeedNetworks/stem/compare/v0.24.131...v0.24.132) (2026-09-18)
+
+
+### Bug Fixes
+
+* **ui:** refresh the access token on a role switch and passkey enrolment ([#1353](https://github.com/MustardSeedNetworks/stem/issues/1353)) ([1ca0f82](https://github.com/MustardSeedNetworks/stem/commit/1ca0f82dfc26a482e0998cc61816e0648e2ecf1f))
+
+
+### Miscellaneous
+
+* **deps:** update dependency fast-uri to v4.1.5 ([#1354](https://github.com/MustardSeedNetworks/stem/issues/1354)) ([4a107e5](https://github.com/MustardSeedNetworks/stem/commit/4a107e5d80d5729ae866980a2ca48d52bc9977fd))
+
 ## [0.24.131](https://github.com/MustardSeedNetworks/stem/compare/v0.24.130...v0.24.131) (2026-09-18)
 
 
