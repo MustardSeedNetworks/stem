@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.134](https://github.com/MustardSeedNetworks/stem/compare/v0.24.133...v0.24.134) (2026-09-19)
+
+
+### Bug Fixes
+
+* **deps:** update dependency react-hook-form to v7.88.0 ([#1360](https://github.com/MustardSeedNetworks/stem/issues/1360)) ([a17985b](https://github.com/MustardSeedNetworks/stem/commit/a17985b04fe6cfec972ac84d4526200d74de2b56))
+
+
+### Miscellaneous
+
+* **deps:** update dependency @biomejs/biome to v2.5.14 ([#1362](https://github.com/MustardSeedNetworks/stem/issues/1362)) ([d54c34a](https://github.com/MustardSeedNetworks/stem/commit/d54c34ac0ca4bd0f8b6a736f513e1b179cc58739))
+
 ## [0.24.133](https://github.com/MustardSeedNetworks/stem/compare/v0.24.132...v0.24.133) (2026-09-18)
 
 
