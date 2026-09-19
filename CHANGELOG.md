@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.135](https://github.com/MustardSeedNetworks/stem/compare/v0.24.134...v0.24.135) (2026-09-19)
+
+
+### Bug Fixes
+
+* **deps:** update dependency tailwind-merge to v3.7.0 ([#1363](https://github.com/MustardSeedNetworks/stem/issues/1363)) ([0ea20e4](https://github.com/MustardSeedNetworks/stem/commit/0ea20e414bae4f5e42ac178bcd2d0fc54103369d))
+
+
+### Miscellaneous
+
+* delete dead packaging, phantom licence knob, unreachable multiport C ([#1364](https://github.com/MustardSeedNetworks/stem/issues/1364)) ([3277347](https://github.com/MustardSeedNetworks/stem/commit/32773473de690460dbaf8ff4239789d2febe6aea)), closes [#1255](https://github.com/MustardSeedNetworks/stem/issues/1255)
+
 ## [0.24.134](https://github.com/MustardSeedNetworks/stem/compare/v0.24.133...v0.24.134) (2026-09-19)
 
 
