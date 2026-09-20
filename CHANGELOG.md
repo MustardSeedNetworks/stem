@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.138](https://github.com/MustardSeedNetworks/stem/compare/v0.24.137...v0.24.138) (2026-09-20)
+
+
+### Bug Fixes
+
+* **deps:** update dependency react-i18next to v17.0.14 ([#1375](https://github.com/MustardSeedNetworks/stem/issues/1375)) ([43b7df0](https://github.com/MustardSeedNetworks/stem/commit/43b7df03b735ade04af0cee58dfe6a55a9e10e44))
+
+
+### Miscellaneous
+
+* **deps:** update dependency @testing-library/dom to v10.4.2 ([#1374](https://github.com/MustardSeedNetworks/stem/issues/1374)) ([0ea04e9](https://github.com/MustardSeedNetworks/stem/commit/0ea04e924f474c866317e07520e3890753904e33))
+
 ## [0.24.137](https://github.com/MustardSeedNetworks/stem/compare/v0.24.136...v0.24.137) (2026-09-20)
 
 
