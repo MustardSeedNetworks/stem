@@ -361,6 +361,11 @@ jobs:
       - name: Route-policy gate (capability registry)
         run: ./scripts/check-route-policy.sh
 
+      - name: Module-feature parity — a UI module gate names a feature the server sells
+        run: |
+          python3 scripts/test-check-module-feature-parity.py
+          python3 scripts/check-module-feature-parity.py
+
       - name: Request-field read gate
         run: ./scripts/check-request-fields.sh
 

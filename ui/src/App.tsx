@@ -16,6 +16,7 @@ import { AppShell } from './AppShell';
 import { AuthGate } from './components/auth/AuthGate';
 import { RoleChip } from './components/RoleChip';
 import { AppContext, type AppContextValue } from './contexts/AppContext';
+import { LicenseProvider } from './contexts/LicenseContext';
 import { ModuleSettingsProvider } from './contexts/ModuleSettingsContext';
 import { RoleProvider } from './contexts/RoleContext';
 import { useBuildVersion } from './hooks/useBuildVersion';
@@ -218,7 +219,9 @@ function App(): ReactElement {
   return (
     <RoleProvider>
       <ModuleSettingsProvider>
-        <AppContent />
+        <LicenseProvider>
+          <AppContent />
+        </LicenseProvider>
       </ModuleSettingsProvider>
     </RoleProvider>
   );

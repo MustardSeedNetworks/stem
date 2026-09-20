@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/MustardSeedNetworks/stem/main/docs/schemas/api/license-status.schema.json",
+  "$ref": "#/$defs/LicenseStatus",
+  "$defs": {
+    "LicenseStatus": {
+      "properties": {
+        "activated": {
+          "type": "boolean"
+        },
+        "isTrialMode": {
+          "type": "boolean"
+        },
+        "tier": {
+          "type": "integer"
+        },
+        "tierName": {
+          "type": "string"
+        },
+        "daysRemaining": {
+          "type": "integer"
+        },
+        "features": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "deviceHash": {
+          "type": "string"
+        },
+        "platform": {
+          "type": "string"
+        },
+        "licenseKey": {
+          "type": "string"
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "message": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "activated",
+        "isTrialMode",
+        "tier",
+        "tierName",
+        "daysRemaining",
+        "features",
+        "deviceHash"
+      ]
+    }
+  },
+  "title": "LicenseStatus",
+  "description": "LicenseStatus — generated from the Go struct in internal/api; refresh with `make schema` after struct changes."
+}

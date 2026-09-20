@@ -19,6 +19,7 @@ import { defaultTSNConfig } from '../components/TSNConfigForm';
 import { defaultY1564Config } from '../components/Y1564ConfigForm';
 import { defaultY1731Config } from '../components/Y1731ConfigForm';
 import type { AppContextValue } from '../contexts/AppContext';
+import { LicenseProvider } from '../contexts/LicenseContext';
 import type { RoleContextValue } from '../contexts/RoleContext';
 import { useShellStore } from '../stores/shell-store';
 import { BenchmarkPage } from './BenchmarkPage';
@@ -35,6 +36,16 @@ const { appContext, roleContext } = vi.hoisted(() => ({
 vi.mock('../contexts/AppContext', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../contexts/AppContext')>()),
   useAppContext: () => appContext.current,
+}));
+
+// The pages gate their form on the licence now, so they need the provider.
+// Its fetch never settles here, which is the "status unknown" branch: the
+// module renders exactly as it did before the gate, so these keep asserting
+// the empty state and the form rather than the pitch. A settling fetch would
+// also update the provider after the assertions, outside act().
+vi.mock('../stores/auth-store', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../stores/auth-store')>()),
+  authFetch: () => new Promise<Response>(() => undefined),
 }));
 
 vi.mock('../contexts/RoleContext', async (importOriginal) => ({
@@ -66,6 +77,14 @@ function setContext(selectedTests: string[]): void {
   } as unknown as RoleContextValue;
 }
 
+function renderPage(Page: () => React.ReactElement): void {
+  render(
+    <LicenseProvider>
+      <Page />
+    </LicenseProvider>,
+  );
+}
+
 afterEach(() => {
   cleanup();
   useShellStore.getState().setSettingsOpen(false);
@@ -82,20 +101,20 @@ const pages = [
 describe.each(pages)('$name page with nothing of its own selected', ({ Page, selected }) => {
   it('renders an empty state instead of an empty body', () => {
     setContext(['reflect']);
-    render(<Page />);
+    renderPage(Page);
     expect(screen.getByTestId('module-empty-state')).toBeInTheDocument();
   });
 
   it('offers an action that opens Settings', async () => {
     setContext(['reflect']);
-    render(<Page />);
+    renderPage(Page);
     await userEvent.click(screen.getByTestId('module-empty-state-open-settings'));
     expect(useShellStore.getState().settingsOpen).toBe(true);
   });
 
   it('renders the form, and no empty state, once one of its tests is selected', () => {
     setContext([selected]);
-    render(<Page />);
+    renderPage(Page);
     expect(screen.queryByTestId('module-empty-state')).toBeNull();
   });
 });
