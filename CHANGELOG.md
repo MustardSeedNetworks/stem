@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.137](https://github.com/MustardSeedNetworks/stem/compare/v0.24.136...v0.24.137) (2026-09-20)
+
+
+### Features
+
+* **ui:** a Pro module on Free pitches itself before the run, not after it ([#1371](https://github.com/MustardSeedNetworks/stem/issues/1371)) ([c918946](https://github.com/MustardSeedNetworks/stem/commit/c918946a899535eb89b72e67f6efcfdc7994b678)), closes [#1283](https://github.com/MustardSeedNetworks/stem/issues/1283)
+
+
+### Continuous Integration
+
+* run the macOS and Windows backend jobs once per commit ([#1370](https://github.com/MustardSeedNetworks/stem/issues/1370)) ([fa86a69](https://github.com/MustardSeedNetworks/stem/commit/fa86a695f22e25b23b403748bbf8474e5586c0ed)), closes [#1369](https://github.com/MustardSeedNetworks/stem/issues/1369)
+
 ## [0.24.136](https://github.com/MustardSeedNetworks/stem/compare/v0.24.135...v0.24.136) (2026-09-20)
 
 
