@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { skipSetupWizard } from './helpers/auth';
+import { PRO_FEATURES, stubLicence } from './helpers/license';
 import { useRole } from './helpers/role';
 
 const routes = [
@@ -69,6 +70,10 @@ for (const language of ['en', 'es']) {
 test('Spanish form help works on keyboard focus, hover and Escape', async ({ page }) => {
   await skipSetupWizard(page);
   await useRole(page, 'test_master');
+  // This drives the real form, so the module must not be behind its licence
+  // gate: the gate renders an inert preview, which by design answers neither
+  // focus nor hover (UI-STEM-15).
+  await stubLicence(page, PRO_FEATURES);
   await page.addInitScript(() => localStorage.setItem('stem-language', 'es'));
   await page.goto('/tests/benchmark');
   const help = page.getByTestId('rfc2544-config-form').getByTestId('help-icon').first();

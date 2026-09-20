@@ -194,3 +194,10 @@ common:statusRollup.
 # rejects orphan IDs; its negative fixtures run in the same CI job.
 help:tests.
 help:glossary.entries.
+
+# common.license.gated.modules.* — ModuleGate resolves the gated module's name
+# and pitch through t(`license.gated.modules.${i18nKey}.name`), where i18nKey
+# comes from MODULE_FEATURES in ui/src/constants/moduleFeatures.ts. The static
+# analyzer sees t(expr); scripts/check-module-feature-parity.py holds that map
+# to the server's own price list, so an orphan entry is not silent.
+common:license.gated.modules.
