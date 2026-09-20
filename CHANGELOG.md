@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.136](https://github.com/MustardSeedNetworks/stem/compare/v0.24.135...v0.24.136) (2026-09-20)
+
+
+### Miscellaneous
+
+* **deps:** update dependency js-yaml to v5.4.2 ([#1367](https://github.com/MustardSeedNetworks/stem/issues/1367)) ([4e9b6c0](https://github.com/MustardSeedNetworks/stem/commit/4e9b6c041463dab3ac7c6235e17e0ab3ce8c44fc))
+* **lint:** bump the Linux lint image tag and assert its golangci version ([#1366](https://github.com/MustardSeedNetworks/stem/issues/1366)) ([80a07e9](https://github.com/MustardSeedNetworks/stem/commit/80a07e90a2a097bbe5838d60d1ad705eab13d55c)), closes [#1338](https://github.com/MustardSeedNetworks/stem/issues/1338)
+
 ## [0.24.135](https://github.com/MustardSeedNetworks/stem/compare/v0.24.134...v0.24.135) (2026-09-19)
 
 
