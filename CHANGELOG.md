@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.142](https://github.com/MustardSeedNetworks/stem/compare/v0.24.141...v0.24.142) (2026-09-22)
+
+
+### Bug Fixes
+
+* **ci:** lock dead-code dependencies ([#1385](https://github.com/MustardSeedNetworks/stem/issues/1385)) ([28ca350](https://github.com/MustardSeedNetworks/stem/commit/28ca350b44b83f3c8f686b7ea61cbaab18edf898))
+
+
+### Tests
+
+* **ui:** remove the CSRF refresh response race ([#1386](https://github.com/MustardSeedNetworks/stem/issues/1386)) ([4696181](https://github.com/MustardSeedNetworks/stem/commit/4696181cfc897646375862f5914b1a4f65bbd7ad))
+
 ## [0.24.141](https://github.com/MustardSeedNetworks/stem/compare/v0.24.140...v0.24.141) (2026-09-22)
 
 
