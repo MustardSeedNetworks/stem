@@ -5,6 +5,149 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.141](https://github.com/MustardSeedNetworks/stem/compare/v0.24.140...v0.24.141) (2026-09-22)
+
+
+### Bug Fixes
+
+* **deps:** update dependency react-router to v8.4.0 ([#1382](https://github.com/MustardSeedNetworks/stem/issues/1382)) ([97711bd](https://github.com/MustardSeedNetworks/stem/commit/97711bdef9f7e7b2ae52f7e5dfd467adba11dd5c))
+* **deps:** update module modernc.org/sqlite to v1.59.0 ([#1383](https://github.com/MustardSeedNetworks/stem/issues/1383)) ([61b3ea2](https://github.com/MustardSeedNetworks/stem/commit/61b3ea27fe20077655444a9e88be471e7eab9ac1))
+
+
+### Miscellaneous
+
+* **deps:** update commitlint monorepo to v21.2.3 ([#1381](https://github.com/MustardSeedNetworks/stem/issues/1381)) ([ffa8a2b](https://github.com/MustardSeedNetworks/stem/commit/ffa8a2bdb2fd79fba7effdbb3c3de2fc00b7abaf))
+
+## [0.24.140](https://github.com/MustardSeedNetworks/stem/compare/v0.24.139...v0.24.140) (2026-09-22)
+
+
+### Miscellaneous
+
+* **deps:** update dependency fast-uri to v4.2.1 ([#1379](https://github.com/MustardSeedNetworks/stem/issues/1379)) ([3449bec](https://github.com/MustardSeedNetworks/stem/commit/3449bec37c291ae8ffc0c4fc63024fa721a84559))
+
+## [0.24.139](https://github.com/MustardSeedNetworks/stem/compare/v0.24.138...v0.24.139) (2026-09-21)
+
+
+### Miscellaneous
+
+* **deps:** update dependency fast-uri to v4.2.0 ([#1377](https://github.com/MustardSeedNetworks/stem/issues/1377)) ([816466a](https://github.com/MustardSeedNetworks/stem/commit/816466a1c6380993bb7fd5acb329e7577ac80d72))
+
+## [0.24.138](https://github.com/MustardSeedNetworks/stem/compare/v0.24.137...v0.24.138) (2026-09-20)
+
+
+### Bug Fixes
+
+* **deps:** update dependency react-i18next to v17.0.14 ([#1375](https://github.com/MustardSeedNetworks/stem/issues/1375)) ([43b7df0](https://github.com/MustardSeedNetworks/stem/commit/43b7df03b735ade04af0cee58dfe6a55a9e10e44))
+
+
+### Miscellaneous
+
+* **deps:** update dependency @testing-library/dom to v10.4.2 ([#1374](https://github.com/MustardSeedNetworks/stem/issues/1374)) ([0ea04e9](https://github.com/MustardSeedNetworks/stem/commit/0ea04e924f474c866317e07520e3890753904e33))
+
+## [0.24.137](https://github.com/MustardSeedNetworks/stem/compare/v0.24.136...v0.24.137) (2026-09-20)
+
+
+### Features
+
+* **ui:** a Pro module on Free pitches itself before the run, not after it ([#1371](https://github.com/MustardSeedNetworks/stem/issues/1371)) ([c918946](https://github.com/MustardSeedNetworks/stem/commit/c918946a899535eb89b72e67f6efcfdc7994b678)), closes [#1283](https://github.com/MustardSeedNetworks/stem/issues/1283)
+
+
+### Continuous Integration
+
+* run the macOS and Windows backend jobs once per commit ([#1370](https://github.com/MustardSeedNetworks/stem/issues/1370)) ([fa86a69](https://github.com/MustardSeedNetworks/stem/commit/fa86a695f22e25b23b403748bbf8474e5586c0ed)), closes [#1369](https://github.com/MustardSeedNetworks/stem/issues/1369)
+
+## [0.24.136](https://github.com/MustardSeedNetworks/stem/compare/v0.24.135...v0.24.136) (2026-09-20)
+
+
+### Miscellaneous
+
+* **deps:** update dependency js-yaml to v5.4.2 ([#1367](https://github.com/MustardSeedNetworks/stem/issues/1367)) ([4e9b6c0](https://github.com/MustardSeedNetworks/stem/commit/4e9b6c041463dab3ac7c6235e17e0ab3ce8c44fc))
+* **lint:** bump the Linux lint image tag and assert its golangci version ([#1366](https://github.com/MustardSeedNetworks/stem/issues/1366)) ([80a07e9](https://github.com/MustardSeedNetworks/stem/commit/80a07e90a2a097bbe5838d60d1ad705eab13d55c)), closes [#1338](https://github.com/MustardSeedNetworks/stem/issues/1338)
+
+## [0.24.135](https://github.com/MustardSeedNetworks/stem/compare/v0.24.134...v0.24.135) (2026-09-19)
+
+
+### Bug Fixes
+
+* **deps:** update dependency tailwind-merge to v3.7.0 ([#1363](https://github.com/MustardSeedNetworks/stem/issues/1363)) ([0ea20e4](https://github.com/MustardSeedNetworks/stem/commit/0ea20e414bae4f5e42ac178bcd2d0fc54103369d))
+
+
+### Miscellaneous
+
+* delete dead packaging, phantom licence knob, unreachable multiport C ([#1364](https://github.com/MustardSeedNetworks/stem/issues/1364)) ([3277347](https://github.com/MustardSeedNetworks/stem/commit/32773473de690460dbaf8ff4239789d2febe6aea)), closes [#1255](https://github.com/MustardSeedNetworks/stem/issues/1255)
+
+## [0.24.134](https://github.com/MustardSeedNetworks/stem/compare/v0.24.133...v0.24.134) (2026-09-19)
+
+
+### Bug Fixes
+
+* **deps:** update dependency react-hook-form to v7.88.0 ([#1360](https://github.com/MustardSeedNetworks/stem/issues/1360)) ([a17985b](https://github.com/MustardSeedNetworks/stem/commit/a17985b04fe6cfec972ac84d4526200d74de2b56))
+
+
+### Miscellaneous
+
+* **deps:** update dependency @biomejs/biome to v2.5.14 ([#1362](https://github.com/MustardSeedNetworks/stem/issues/1362)) ([d54c34a](https://github.com/MustardSeedNetworks/stem/commit/d54c34ac0ca4bd0f8b6a736f513e1b179cc58739))
+
+## [0.24.133](https://github.com/MustardSeedNetworks/stem/compare/v0.24.132...v0.24.133) (2026-09-18)
+
+
+### Features
+
+* **ui:** one top-of-shell pattern — the rail carries the chrome ([#1358](https://github.com/MustardSeedNetworks/stem/issues/1358)) ([84bd3be](https://github.com/MustardSeedNetworks/stem/commit/84bd3beb14015f8144b4600e8c02b7f278605dd7))
+
+
+### Bug Fixes
+
+* **api:** record when a run started, finished and how long it took ([#1356](https://github.com/MustardSeedNetworks/stem/issues/1356)) ([cc51ca2](https://github.com/MustardSeedNetworks/stem/commit/cc51ca2160625ce51527586f5deea378a7c431d5))
+
+
+### Miscellaneous
+
+* **deps:** update pre-commit hook pre-commit/mirrors-clang-format to v23.1.1 ([#1359](https://github.com/MustardSeedNetworks/stem/issues/1359)) ([58d4ce5](https://github.com/MustardSeedNetworks/stem/commit/58d4ce5965e460115a3ab7d48ae44f745577c257))
+
+## [0.24.132](https://github.com/MustardSeedNetworks/stem/compare/v0.24.131...v0.24.132) (2026-09-18)
+
+
+### Bug Fixes
+
+* **ui:** refresh the access token on a role switch and passkey enrolment ([#1353](https://github.com/MustardSeedNetworks/stem/issues/1353)) ([1ca0f82](https://github.com/MustardSeedNetworks/stem/commit/1ca0f82dfc26a482e0998cc61816e0648e2ecf1f))
+
+
+### Miscellaneous
+
+* **deps:** update dependency fast-uri to v4.1.5 ([#1354](https://github.com/MustardSeedNetworks/stem/issues/1354)) ([4a107e5](https://github.com/MustardSeedNetworks/stem/commit/4a107e5d80d5729ae866980a2ca48d52bc9977fd))
+
+## [0.24.131](https://github.com/MustardSeedNetworks/stem/compare/v0.24.130...v0.24.131) (2026-09-18)
+
+
+### Bug Fixes
+
+* **daemon:** supervise the dataplane goroutines and lock the data directory ([#1351](https://github.com/MustardSeedNetworks/stem/issues/1351)) ([2853812](https://github.com/MustardSeedNetworks/stem/commit/285381222d8a508338ecf5fe3856676c999993ac))
+
+
+### Code Refactoring
+
+* **i18n:** move stem locales to internal/i18n/locales to match the fleet ([#1349](https://github.com/MustardSeedNetworks/stem/issues/1349)) ([9802712](https://github.com/MustardSeedNetworks/stem/commit/98027127cdbb798f402a3dddc3099636ecd52035))
+
+## [0.24.130](https://github.com/MustardSeedNetworks/stem/compare/v0.24.129...v0.24.130) (2026-09-17)
+
+
+### Bug Fixes
+
+* **types:** generate the response DTOs the UI reads, delete the dead executor path ([#1334](https://github.com/MustardSeedNetworks/stem/issues/1334)) ([f6d2f46](https://github.com/MustardSeedNetworks/stem/commit/f6d2f46a8368f179e63d1b0c12f83d607d3c6166))
+* **ui:** the product is Stem, not "The Stem" ([#1267](https://github.com/MustardSeedNetworks/stem/issues/1267)) ([#1344](https://github.com/MustardSeedNetworks/stem/issues/1344)) ([c5eff81](https://github.com/MustardSeedNetworks/stem/commit/c5eff81d30ccabd3a5bff7d05446b5cccb4fbd97))
+
+
+### Tests
+
+* **api:** drop two stale runModuleTest references left by [#1332](https://github.com/MustardSeedNetworks/stem/issues/1332) ([#1339](https://github.com/MustardSeedNetworks/stem/issues/1339)) ([e00bd67](https://github.com/MustardSeedNetworks/stem/commit/e00bd677c254922021a0d9aca93518e78210f5f8))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1340](https://github.com/MustardSeedNetworks/stem/issues/1340)) ([dee4865](https://github.com/MustardSeedNetworks/stem/commit/dee4865824ba247a554a1f392dff7fa1cfd7b04b))
+* **deps:** update dependency @babel/core to v8.0.5 ([#1345](https://github.com/MustardSeedNetworks/stem/issues/1345)) ([8c89b5e](https://github.com/MustardSeedNetworks/stem/commit/8c89b5e0c0adc88dd9f497824e83212d0d0c3272))
+
 ## [0.24.129](https://github.com/MustardSeedNetworks/stem/compare/v0.24.128...v0.24.129) (2026-09-17)
 
 

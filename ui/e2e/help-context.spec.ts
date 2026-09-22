@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { skipSetupWizard } from './helpers/auth';
+import { PRO_FEATURES, stubLicence } from './helpers/license';
 import { useRole } from './helpers/role';
 
 const routes = [
@@ -69,6 +70,10 @@ for (const language of ['en', 'es']) {
 test('Spanish form help works on keyboard focus, hover and Escape', async ({ page }) => {
   await skipSetupWizard(page);
   await useRole(page, 'test_master');
+  // This drives the real form, so the module must not be behind its licence
+  // gate: the gate renders an inert preview, which by design answers neither
+  // focus nor hover (UI-STEM-15).
+  await stubLicence(page, PRO_FEATURES);
   await page.addInitScript(() => localStorage.setItem('stem-language', 'es'));
   await page.goto('/tests/benchmark');
   const help = page.getByTestId('rfc2544-config-form').getByTestId('help-icon').first();
@@ -115,12 +120,52 @@ test('help follows trailing-slash routes and stays closed after browser history 
   await expect(page.getByTestId('help-drawer')).toContainText('Frame Delay Measurement');
 });
 
+/**
+ * The regression behind #1305: a help click that reaches React before the
+ * navigation it follows has been rendered used to be swallowed. The drawer
+ * opened, the route-change effect closed it again on the next commit, and
+ * nothing re-opened it, so the user's click did nothing. On CI that window is
+ * whatever the runner's scheduling latency happens to be — 80 ms was enough to
+ * eject PR #1351 from the merge queue. Firing both clicks in one task pins the
+ * ordering instead of leaving it to the machine.
+ */
+test('a help click batched with a navigation opens help for the destination', async ({ page }) => {
+  await skipSetupWizard(page);
+  await useRole(page, 'test_master');
+  await page.goto('/tests/benchmark/');
+  await page.getByTestId('page-help-button').waitFor();
+  // Hold the destination's chunk back so the window between the address bar
+  // and the committed route is wide enough to assert inside, instead of being
+  // whatever the machine gives us.
+  await page.route(/MeasurePage.*\.js(\?.*)?$/, async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    await route.continue();
+  });
+  await page.evaluate(() => {
+    const sidebar = document.querySelector('[data-testid="desktop-sidebar"]');
+    const measure = [...(sidebar?.querySelectorAll('button') ?? [])].find(
+      (button) => button.textContent?.trim() === 'Measure',
+    );
+    if (!measure) {
+      throw new Error('Measure nav button not found');
+    }
+    measure.click();
+    document.querySelector<HTMLElement>('[data-testid="page-help-button"]')?.click();
+  });
+  await expect(page).toHaveURL(/\/tests\/measure$/);
+  // Still on the Benchmark page as far as React is concerned: the drawer
+  // belongs to Measure, so it waits rather than opening over the page the
+  // user is leaving with that page's help in it.
+  await expect(page.getByTestId('help-drawer')).toBeHidden();
+  await expect(page.getByTestId('help-drawer')).toContainText('Frame Delay Measurement');
+});
 
 test('embedded help build reports complete metadata', async ({ request }, testInfo) => {
   const response = await request.get('/__version');
   expect(response.ok()).toBe(true);
   const text = await response.text();
-  const version: { version: string; commit: string; buildTime: string; uiBuildHash: string } = JSON.parse(text);
+  const version: { version: string; commit: string; buildTime: string; uiBuildHash: string } =
+    JSON.parse(text);
   expect(version.uiBuildHash).toMatch(/^[a-f0-9]{32}$/);
   expect(version.commit).toMatch(/^[a-f0-9]{7,40}$/);
   expect(version.version).not.toBe('unknown');

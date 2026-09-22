@@ -15,6 +15,10 @@ import (
 // setupLicenseTestServer creates a server for license handler tests.
 func setupLicenseTestServer(t testing.TB) *api.Server {
 	t.Helper()
+	// The licence manager reads $HOME/.config/stem, so without a temp HOME
+	// these cases start trials and deactivate licences in the licence file of
+	// whoever runs them.
+	licenseHome(t)
 	t.Setenv("STEM_TEST_MODE", "1")
 	t.Setenv("STEM_DATA_DIR", t.TempDir())
 	t.Setenv("STEM_AUTH_USERNAME", "licensetest")
@@ -83,11 +87,12 @@ func TestHandleLicense_GetSuccess(t *testing.T) {
 	}
 }
 
-// TestHandleLicense_MethodNotAllowed tests non-GET methods.
+// TestHandleLicense_MethodNotAllowed tests methods the route does not serve.
 func TestHandleLicense_MethodNotAllowed(t *testing.T) {
 	s := setupLicenseTestServer(t)
 	token := getLicenseAuthToken(t, s)
-	methods := []string{http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodPatch}
+	// DELETE removes the activation (#1335) and is covered by its own case.
+	methods := []string{http.MethodPost, http.MethodPut, http.MethodPatch}
 
 	for _, method := range methods {
 		t.Run(method, func(t *testing.T) {

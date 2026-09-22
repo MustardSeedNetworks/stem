@@ -10,8 +10,10 @@
  * finished, not because a drawer happened to be open.
  */
 
+import { useEffect } from 'react';
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
+import type { Stats, TestResult } from '../types/api';
 
 /** Test result record stored in history. */
 export interface HistoricalResult {
@@ -88,10 +90,14 @@ export const useHistoryStore = create<HistoryStore>()(
         if (!result.completedAt || result.completedAt === get().lastRecorded) {
           return;
         }
-        const results = [
-          { id: `${result.completedAt}-${result.testType}`, ...result },
-          ...get().results,
-        ].slice(0, HISTORY_MAX_ITEMS);
+        const id = `${result.completedAt}-${result.testType}`;
+        // A reload re-reads the daemon's still-terminal result, and
+        // `lastRecorded` does not survive the reload — the persisted runs do.
+        // Without this the same run comes back as a second row sharing its id.
+        if (get().results.some((existing) => existing.id === id)) {
+          return;
+        }
+        const results = [{ id, ...result }, ...get().results].slice(0, HISTORY_MAX_ITEMS);
         save(results);
         set({ results, lastRecorded: result.completedAt }, false, 'record');
       },
@@ -109,8 +115,64 @@ export const useHistoryStore = create<HistoryStore>()(
   ),
 );
 
-// NOTE: nothing records a run today. The recorder this store was written
-// for gated on `completedAt`, which `/api/v1/test/result` never sends — the
-// daemon tracks no per-run timing or metrics at all, so the History page can
-// never show a row (#1333). It is removed rather than left dead; the store,
-// its shape and the page stay for the daemon-side fix to fill.
+/**
+ * The states in which a run has ended, mirroring the daemon's own
+ * `runHasEnded` (internal/api/run_timing.go). A run is recorded because it
+ * reached one of these, not because a timestamp happened to be present: the
+ * recorder this replaces gated on `completedAt`, which the daemon never sent,
+ * so the History page could never show a row (#1333).
+ */
+const TERMINAL_STATUSES: ReadonlySet<string> = new Set([
+  'completed',
+  'error',
+  'stopped',
+  'cancelled',
+]);
+
+/**
+ * The run's measurements, as the detail pane's metrics panel reads them.
+ *
+ * `data` is whatever the module computed, so only its scalar entries are
+ * measurements a two-column grid can show; a nested object is the module's
+ * own structure and stays in `data`.
+ */
+function metricsOf(data: unknown): Record<string, number | string> | undefined {
+  if (typeof data !== 'object' || data === null || Array.isArray(data)) {
+    return undefined;
+  }
+  const metrics: Record<string, number | string> = {};
+  for (const [key, value] of Object.entries(data)) {
+    if (typeof value === 'number' || typeof value === 'string') {
+      metrics[key] = value;
+    }
+  }
+  return Object.keys(metrics).length > 0 ? metrics : undefined;
+}
+
+/**
+ * Records a run as it ends. Called once, high in the tree, so recording does
+ * not depend on the History page being open.
+ *
+ * The timing is the daemon's: stem is a measurement instrument, and a browser
+ * clock stamping the end of a run would report the moment the answer arrived
+ * rather than the moment the run finished.
+ */
+export function useRecordTestResult(result: TestResult | null, status: Stats['testStatus']): void {
+  const record = useHistoryStore((s) => s.record);
+  useEffect(() => {
+    if (!result || !TERMINAL_STATUSES.has(status) || !result.completedAt) {
+      return;
+    }
+    record({
+      testType: result.testType ?? status,
+      module: result.module ?? '',
+      status: result.status,
+      startedAt: result.startedAt,
+      completedAt: result.completedAt,
+      duration: result.duration,
+      success: result.success,
+      error: result.error,
+      metrics: metricsOf(result.data),
+    });
+  }, [result, status, record]);
+}

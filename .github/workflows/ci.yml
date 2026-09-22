@@ -202,11 +202,21 @@ jobs:
   # which is the package that has a Darwin implementation. It shells out to
   # `security` rather than linking a framework, so the runner needs no keychain
   # access and no signing identity.
+  #
+  # Not on `pull_request`: this ran on the PR AND again on the merge group for
+  # the same commit, and macOS runners carry a 10x minute multiplier. `push:`
+  # is already `branches: [main]`, so it still runs in the queue, on main and
+  # on dispatch -- and the `changes` job forces every filter true on
+  # merge_group, so nothing merges without it. The PR side is not blind:
+  # `Lint (GOOS=windows)` lints the whole Windows tree and
+  # `Darwin compile check (arm64)` cross-compiles the binary, both on PRs.
   backend-darwin:
     name: Backend (macOS)
     runs-on: macos-latest
     needs: changes
-    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.ci_infra == 'true'
+    if: >-
+      github.event_name != 'pull_request' &&
+      (needs.changes.outputs.backend == 'true' || needs.changes.outputs.ci_infra == 'true')
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -225,12 +235,17 @@ jobs:
       - name: Test truststore
         run: go test -race ./internal/truststore/...
 
+  # Off `pull_request` for the same reason as Backend (macOS) above: it ran
+  # once on the PR and again on the merge group for the same commit. The
+  # Windows tree is still linted on every PR by `Lint (GOOS=windows)`.
   backend-windows:
     name: Backend (Windows)
     runs-on: windows-latest
     timeout-minutes: 20
     needs: changes
-    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.ci_infra == 'true'
+    if: >-
+      github.event_name != 'pull_request' &&
+      (needs.changes.outputs.backend == 'true' || needs.changes.outputs.ci_infra == 'true')
     env:
       CGO_ENABLED: "0"
     steps:
@@ -360,6 +375,11 @@ jobs:
 
       - name: Route-policy gate (capability registry)
         run: ./scripts/check-route-policy.sh
+
+      - name: Module-feature parity — a UI module gate names a feature the server sells
+        run: |
+          python3 scripts/test-check-module-feature-parity.py
+          python3 scripts/check-module-feature-parity.py
 
       - name: Request-field read gate
         run: ./scripts/check-request-fields.sh
@@ -1149,12 +1169,6 @@ jobs:
           fi
           echo "No sensitive files found"
 
-      - name: Check for TODO/FIXME in critical paths
-        run: |
-          if grep -rn "TODO\|FIXME" --include="*.go" internal/ cmd/ 2>/dev/null | head -20; then
-            echo "Note: TODOs found in Go code (info only)"
-          fi
-
       - name: Check for unsafe logging patterns
         run: |
           echo "Checking for dangerous logging patterns..."
@@ -1286,11 +1300,6 @@ jobs:
 
       - name: Validate i18n (parity, glossary, banned vocab, etc.)
         uses: MustardSeedNetworks/.github/.github/actions/i18n-validate@048d173dd72ca0f9e5fa832fb5b9fd2a6447e5e9 # v1.13.0
-        with:
-          # The action defaults to internal/i18n/locales, which is where these
-          # lived while they sat inside a dead Go package. They belong to the
-          # frontend and now live with it.
-          locales-dir: ui/locales
 
   # ============================================================================
   # Documentation Checks

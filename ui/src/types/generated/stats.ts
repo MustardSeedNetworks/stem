@@ -140,4 +140,7 @@ export interface TestResultResponse {
   data?: unknown;
   suiteId?: string;
   steps?: RunPlanStep[];
+  startedAt?: string;
+  completedAt?: string;
+  duration?: number;
 }

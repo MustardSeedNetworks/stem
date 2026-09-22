@@ -373,34 +373,6 @@ typedef struct {
 } bidir_result_t;
 
 /* ============================================================================
- * Multi-Port Testing Types
- * ============================================================================
- */
-
-// NOLINTNEXTLINE(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
-#define MAX_TEST_PORTS 8
-
-/* Port configuration */
-typedef struct {
-    char     interface[64]; /* Interface name */
-    uint8_t  src_mac[6];    /* Source MAC */
-    uint8_t  dst_mac[6];    /* Destination MAC */
-    uint32_t src_ip;        /* Source IP */
-    uint32_t dst_ip;        /* Destination IP */
-    uint16_t src_port;      /* Source UDP port */
-    uint16_t dst_port;      /* Destination UDP port */
-    double   rate_pct;      /* Rate percentage of line rate */
-    bool     enabled;       /* Port enabled */
-} port_config_t;
-
-/* Multi-port configuration */
-typedef struct {
-    uint32_t      port_count;            /* Number of ports */
-    port_config_t ports[MAX_TEST_PORTS]; /* Port configurations */
-    bool          aggregate_results;     /* Aggregate or per-port results */
-} multiport_config_t;
-
-/* ============================================================================
  * IPv6 Testing Types (RFC 5180)
  * ============================================================================
  */
@@ -508,9 +480,6 @@ typedef struct {
     /* Bidirectional testing */
     bidir_mode_t bidir_mode;       /* Bidirectional test mode */
     double       reverse_rate_pct; /* Reverse direction rate (for asymmetric) */
-
-    /* Multi-port testing */
-    multiport_config_t multiport; /* Multi-port configuration */
 
     /* IPv6 testing (RFC 5180) */
     ip_mode_t     ip_mode; /* IP version mode */
@@ -763,26 +732,6 @@ double imix_avg_frame_size(const imix_config_t *config);
  */
 int rfc2544_bidir_throughput(rfc2544_ctx_t *ctx, bidir_mode_t mode, double reverse_rate,
                              bidir_result_t *result);
-
-/* ============================================================================
- * Multi-Port Test Functions
- * ============================================================================ */
-
-/**
- * Initialize multi-port test context
- * @param ctx Test context
- * @param config Multi-port configuration
- * @return 0 on success, negative on error
- */
-int rfc2544_multiport_init(rfc2544_ctx_t *ctx, const multiport_config_t *config);
-
-/**
- * Run multi-port throughput test
- * @param ctx Test context
- * @param results Array of results (one per port)
- * @return 0 on success, negative on error
- */
-int rfc2544_multiport_throughput(rfc2544_ctx_t *ctx, throughput_result_t *results);
 
 /* ============================================================================
  * IPv6 Test Functions (RFC 5180)

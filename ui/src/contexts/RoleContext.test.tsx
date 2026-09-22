@@ -13,6 +13,7 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { invalidateCsrfToken } from '../lib/csrf';
+import { useAuthStore } from '../stores/auth-store';
 import { ROLE_ENDPOINT, ROLE_STORAGE_KEY, RoleProvider, useRole } from './RoleContext';
 
 function wrapper({ children }: { children: ReactNode }) {
@@ -62,6 +63,7 @@ let fetchMock: ReturnType<typeof vi.fn>;
  * have passed just as happily on a request the daemon answers with 403.
  */
 const CSRF_ENDPOINT = '/api/v1/auth/csrf-token';
+const REFRESH_ENDPOINT = '/api/v1/auth/refresh';
 
 function csrfResponse(token = 'test-csrf-token'): Response {
   return new Response(JSON.stringify({ token }), {
@@ -108,6 +110,9 @@ function respondWith(modeReply: Response | (() => Promise<Response>)): void {
 
 beforeEach(() => {
   window.localStorage.clear();
+  // The switch runs through authFetch, which refuses to send anything without a
+  // session — every case below is about an operator who is signed in.
+  useAuthStore.setState({ isAuthenticated: true });
   // The token is cached for the session; without this a test inherits the
   // previous test's token and never exercises the fetch.
   invalidateCsrfToken();
@@ -176,8 +181,11 @@ describe('switching succeeds', () => {
     await waitFor(() => expect(result.current.isSwitchingRole).toBe(false));
 
     const [, init] = modeCall();
-    const headers = init.headers as Record<string, string>;
-    expect(headers['X-Csrf-Token']).toBe('test-csrf-token');
+    // authFetch builds a Headers object rather than the plain record
+    // fetchWithCsrf passed, and `(init.headers as Record<string, string>)[...]`
+    // reads undefined off one — an assertion that would go green on a request
+    // carrying no token at all.
+    expect(new Headers(init.headers ?? {}).get('X-Csrf-Token')).toBe('test-csrf-token');
 
     // And the token came from the endpoint rather than being invented.
     expect(fetchMock.mock.calls.map(([url]) => url)).toContain(CSRF_ENDPOINT);
@@ -397,6 +405,91 @@ describe('overlapping switches', () => {
     // misleading as a stale role.
     expect(result.current.roleSwitchError).toBeNull();
     expect(result.current.role).toBe('test_master');
+  });
+});
+
+describe('switching on an expired access token', () => {
+  /**
+   * Answers the way the daemon does when the access token has expired: the mode
+   * POST is 401 until a refresh lands, and the CSRF token rotates with the
+   * refresh because the daemon keys tokens by sha256(bearer). A mock that
+   * ignores headers cannot tell the fix from the defect — it would answer the
+   * retry 200 whichever token it carried.
+   */
+  function respondLikeAnExpiredSession(): { sentTokens: string[] } {
+    let currentToken = 'csrf-old';
+    let accessTokenValid = false;
+    const sentTokens: string[] = [];
+    fetchMock.mockImplementation(async (url: string, init: RequestInit = {}) => {
+      if (url === CSRF_ENDPOINT) {
+        return csrfResponse(currentToken);
+      }
+      if (url === REFRESH_ENDPOINT) {
+        accessTokenValid = true;
+        currentToken = 'csrf-new';
+        return new Response(null, { status: 200 });
+      }
+      sentTokens.push(new Headers(init.headers ?? {}).get('X-Csrf-Token') ?? '');
+      if (!accessTokenValid) {
+        return new Response(null, { status: 401 });
+      }
+      if (sentTokens[sentTokens.length - 1] !== currentToken) {
+        return new Response('Invalid CSRF token', { status: 403 });
+      }
+      return modeResponse('test_master');
+    });
+    return { sentTokens };
+  }
+
+  it('refreshes and retries, so the switch lands', async () => {
+    // The defect (#1318). requestModeSwitch went through fetchWithCsrf, which
+    // retries a 403 and does nothing at all with a 401, so a role switch on an
+    // expired access token failed outright — "Role switch failed (HTTP 401)"
+    // and the chip snapped back — where the same request through authFetch
+    // refreshes and succeeds.
+    const { sentTokens } = respondLikeAnExpiredSession();
+    const { result } = renderRole();
+
+    act(() => result.current.setRole('test_master'));
+
+    await waitFor(() => expect(result.current.role).toBe('test_master'));
+    expect(result.current.roleSwitchError).toBeNull();
+    // A refresh really happened, and the retry carried the token minted after
+    // it rather than the one the 401 invalidated.
+    expect(fetchMock.mock.calls.map(([url]) => url)).toContain(REFRESH_ENDPOINT);
+    expect(sentTokens).toEqual(['csrf-old', 'csrf-new']);
+  });
+
+  it('reports the failure and signs out when the refresh is refused too', async () => {
+    fetchMock.mockImplementation(async (url: string) => {
+      if (url === CSRF_ENDPOINT) {
+        return csrfResponse();
+      }
+      // Both the mode POST and the refresh are 401: the session is gone.
+      return new Response(null, { status: 401 });
+    });
+    const { result } = renderRole();
+
+    act(() => result.current.setRole('test_master'));
+
+    await waitFor(() =>
+      expect(result.current.roleSwitchError).toBe('Role switch failed: Unauthorized'),
+    );
+    expect(result.current.role).toBe('reflector');
+    expect(useAuthStore.getState().isAuthenticated).toBe(false);
+  });
+
+  it('does not post at all when there is no session', async () => {
+    useAuthStore.setState({ isAuthenticated: false });
+    respondWith(modeResponse('test_master'));
+    const { result } = renderRole();
+
+    act(() => result.current.setRole('test_master'));
+
+    await waitFor(() =>
+      expect(result.current.roleSwitchError).toBe('Role switch failed: Not authenticated'),
+    );
+    expect(fetchMock.mock.calls.map(([url]) => url)).not.toContain(ROLE_ENDPOINT);
   });
 });
 

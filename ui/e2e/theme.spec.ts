@@ -18,14 +18,14 @@ test.describe('Theme', () => {
   });
 
   test('should have theme toggle button', async ({ page }) => {
-    await expect(page.getByTestId('header-theme-toggle')).toBeVisible();
+    await expect(page.getByTestId('rail-theme-toggle')).toBeVisible();
   });
 
   test('should toggle between dark and light mode', async ({ page }) => {
     const html = page.locator('html');
     const initialDark = await html.evaluate((el) => el.classList.contains('dark'));
 
-    await page.getByTestId('header-theme-toggle').click();
+    await page.getByTestId('rail-theme-toggle').click();
 
     await expect
       .poll(async () => await html.evaluate((el) => el.classList.contains('dark')), {

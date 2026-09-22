@@ -4,7 +4,8 @@ package api
 
 import (
 	"context"
-	"sync"
+
+	"github.com/MustardSeedNetworks/foundation/pkg/supervise"
 
 	"github.com/MustardSeedNetworks/stem/internal/logging"
 )
@@ -28,32 +29,53 @@ import (
 // suite constructs servers and calls Shutdown directly). Mixing them in would
 // leak those goroutines whenever Start was skipped.
 type BackgroundComponents struct {
-	srv    *Server
-	cancel context.CancelFunc
-	wg     sync.WaitGroup
+	srv     *Server
+	workers []backgroundWorker
+	group   *supervise.Group
+}
+
+// backgroundWorker is one named long-lived loop. The name is what an operator
+// reads in the log line when the worker faults, so it is the component's
+// name, not the function's.
+type backgroundWorker struct {
+	name string
+	run  func(context.Context)
 }
 
 // newBackgroundComponents returns a holder bound to srv. Nothing is started
 // until Start is called.
 func newBackgroundComponents(srv *Server) *BackgroundComponents {
-	return &BackgroundComponents{srv: srv}
+	return &BackgroundComponents{
+		srv: srv,
+		workers: []backgroundWorker{
+			{name: "reflector-stats", run: srv.runReflectorStatsPublisher},
+			{name: "connection-refresher", run: srv.runConnectionRefresher},
+		},
+	}
 }
+
+// backgroundRestarts is how many times a faulted background loop is restarted
+// before the group gives up on it. These loops are resumable — a ticker and a
+// token rotation, both stateless between iterations — so a transient fault
+// should not cost the daemon its server-push channel for the rest of its life.
+// A loop that faults every time stops after this many tries rather than
+// spinning, and the supervisor logs the one line that says so.
+const backgroundRestarts = 3
 
 // Start launches the background goroutines. Each runs under a context derived
 // from ctx, so cancelling ctx (server shutdown signal) or calling Stop both
 // terminate them; the WaitGroup lets Stop block until they have fully exited.
 // Start is not safe to call twice.
 func (b *BackgroundComponents) Start(ctx context.Context) {
-	runCtx, cancel := context.WithCancel(ctx)
-	b.cancel = cancel
-
-	b.wg.Go(func() {
-		b.srv.runReflectorStatsPublisher(runCtx)
-	})
-
-	b.wg.Go(func() {
-		b.srv.runConnectionRefresher(runCtx)
-	})
+	group := supervise.New(logging.WithComponentLogger("background"))
+	for _, w := range b.workers {
+		group.Add(w.name, supervise.RestartN(backgroundRestarts), func(workerCtx context.Context) error {
+			w.run(workerCtx)
+			return nil
+		})
+	}
+	b.group = group
+	group.Start(ctx)
 
 	logging.Debug("background components started")
 }
@@ -61,11 +83,17 @@ func (b *BackgroundComponents) Start(ctx context.Context) {
 // Stop cancels the background goroutines and blocks until they have exited.
 // It is safe to call when Start was never invoked (no-op) and idempotent.
 func (b *BackgroundComponents) Stop() {
-	if b.cancel == nil {
+	if b.group == nil {
 		return
 	}
-	b.cancel()
-	b.cancel = nil
-	b.wg.Wait()
+	group := b.group
+	b.group = nil
+	// The caller's deadline for the ordered stop is the server's own
+	// shutdown timeout, applied by Server.Shutdown around this call; the
+	// workers here all return on context cancellation, so a bound of their
+	// own would only invent a second timeout to disagree with it.
+	if err := group.Stop(context.Background()); err != nil {
+		logging.Warn("background components did not stop cleanly", "error", err.Error())
+	}
 	logging.Debug("background components stopped")
 }

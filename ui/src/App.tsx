@@ -4,20 +4,21 @@
  *              Router, AppContext), assembles the AppContext surface the routed
  *              pages read, and switches between the authenticated AppShell and
  *              the unauthenticated AuthGate overlays. The orchestration logic
- *              lives in useTestExecution; the UI lives in TopBar / AppShell /
- *              AuthGate.
+ *              lives in useTestExecution; the UI lives in AppShell / AuthGate.
  * @copyright 2025 Mustard Seed Networks. All rights reserved.
  * @license Proprietary
  */
 
 import { lazy, type ReactElement, Suspense, useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { BrowserRouter } from 'react-router';
 import { AppShell } from './AppShell';
 import { AuthGate } from './components/auth/AuthGate';
-import { TopBar } from './components/TopBar';
+import { RoleChip } from './components/RoleChip';
 import { AppContext, type AppContextValue } from './contexts/AppContext';
+import { LicenseProvider } from './contexts/LicenseContext';
 import { ModuleSettingsProvider } from './contexts/ModuleSettingsContext';
-import { RoleProvider, useRole } from './contexts/RoleContext';
+import { RoleProvider } from './contexts/RoleContext';
 import { useBuildVersion } from './hooks/useBuildVersion';
 import { useTestExecution } from './hooks/useTestExecution';
 import { useTheme } from './hooks/useTheme';
@@ -25,6 +26,7 @@ import { useNavGroups } from './navGroups';
 import { useAuthStore } from './stores/auth-store';
 import { useShellStore } from './stores/shell-store';
 import { useTestStore } from './stores/test-store';
+import { useOpenHelp } from './useOpenHelp';
 
 const CommandPalette = lazy(() =>
   import('./components/ui/CommandPalette').then(({ CommandPalette: component }) => ({
@@ -36,18 +38,18 @@ const CommandPalette = lazy(() =>
 const REFLECT_ONLY = ['reflect'] as const;
 
 function AppContent(): ReactElement {
+  const { t } = useTranslation('common');
   const navGroups = useNavGroups();
   const { isDark, toggleTheme } = useTheme();
   const buildVersion = useBuildVersion();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  const { role: mode } = useRole();
 
   // Command-palette open state + the drawer openers it shares with the shell.
   const paletteOpen = useShellStore((s) => s.paletteOpen);
   const [paletteLoaded, setPaletteLoaded] = useState(paletteOpen);
   const setPaletteOpen = useShellStore((s) => s.setPaletteOpen);
   const setSettingsOpen = useShellStore((s) => s.setSettingsOpen);
-  const setHelpOpen = useShellStore((s) => s.setHelpOpen);
+  const openHelp = useOpenHelp();
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -141,6 +143,24 @@ function AppContent(): ReactElement {
     isStartingReflector: exec.isStartingTest,
     reflectorStopOutcome: exec.stopOutcome,
     reflectorStartError: exec.testStartError,
+    peer: exec.peer,
+    setPeer: exec.setPeer,
+    peerPort: exec.peerPort,
+    setPeerPort: exec.setPeerPort,
+    isStartingTest: exec.isStartingTest,
+    stopOutcome: exec.stopOutcome,
+    testStartError: exec.testStartError,
+    testProgress: exec.testProgress,
+    onStartTest: () => {
+      exec.handleStartTest().catch(() => {
+        // Errors surface via testStartError state.
+      });
+    },
+    onStopTest: () => {
+      exec.handleStopTest().catch(() => {
+        // Outcomes surface via stopOutcome state.
+      });
+    },
   };
 
   return (
@@ -158,38 +178,15 @@ function AppContent(): ReactElement {
             version={buildVersion.version}
             testResult={exec.testResult}
             testStatus={exec.stats.testStatus}
-            topBar={
-              <TopBar
-                connected={exec.connected}
-                isDark={isDark}
-                onToggleTheme={toggleTheme}
-                onRefresh={exec.refetchInterfaces}
-                onLogout={handleLogout}
-                mode={mode}
-                selectedInterface={exec.selectedInterface}
-                setSelectedInterface={exec.setSelectedInterface}
-                peer={exec.peer}
-                setPeer={exec.setPeer}
-                peerPort={exec.peerPort}
-                setPeerPort={exec.setPeerPort}
-                interfaces={exec.interfaces}
-                stats={exec.stats}
-                isStartingTest={exec.isStartingTest}
-                stopOutcome={exec.stopOutcome}
-                testStartError={exec.testStartError}
-                onStartTest={() => {
-                  exec.handleStartTest().catch(() => {
-                    // Errors surface via testStartError state.
-                  });
-                }}
-                onStopTest={() => {
-                  exec.handleStopTest().catch(() => {
-                    // Outcomes surface via stopOutcome state.
-                  });
-                }}
-                testProgress={exec.testProgress}
-              />
-            }
+            status={{
+              state: exec.connected ? 'connected' : 'disconnected',
+              label: exec.connected ? t('status.connected') : t('status.disconnected'),
+            }}
+            isDark={isDark}
+            onToggleTheme={toggleTheme}
+            onRefresh={exec.refetchInterfaces}
+            onLogout={handleLogout}
+            roleControl={<RoleChip layout="rail" />}
           />
         ) : (
           <div className="min-h-screen bg-gradient-to-br from-surface-base via-surface-raised to-surface-deep" />
@@ -206,7 +203,7 @@ function AppContent(): ReactElement {
               open={paletteOpen}
               onOpenChange={setPaletteOpen}
               onOpenSettings={() => setSettingsOpen(true)}
-              onOpenHelp={() => setHelpOpen(true)}
+              onOpenHelp={openHelp}
               onToggleTheme={toggleTheme}
               isDark={isDark}
             />
@@ -222,7 +219,9 @@ function App(): ReactElement {
   return (
     <RoleProvider>
       <ModuleSettingsProvider>
-        <AppContent />
+        <LicenseProvider>
+          <AppContent />
+        </LicenseProvider>
       </ModuleSettingsProvider>
     </RoleProvider>
   );

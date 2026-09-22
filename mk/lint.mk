@@ -46,6 +46,7 @@ lint-linux: ## Lint cgo/linux-tagged files in a Linux container (macOS gap)
 	@command -v container >/dev/null 2>&1 || { \
 		printf "$(YELLOW)⚠ 'container' not installed — brew install container$(RESET)\n"; exit 1; }
 	@container system start >/dev/null 2>&1 || true
+	@$(MAKE) --no-print-directory lint-linux-image-check
 	@printf "$(BOLD)🐧 Linting linux/cgo-tagged files in a container...$(RESET)\n"
 	@container run --rm --memory 4G --cpus 4 -v "$(CURDIR)":/src -w /src \
 		msn-lint-linux:$(LINT_LINUX_TAG) \
@@ -56,8 +57,25 @@ lint-linux: ## Lint cgo/linux-tagged files in a Linux container (macOS gap)
 # so all four products share one definition.
 lint-linux-image: ## Build the Linux lint container image
 	@container build -t msn-lint-linux:$(LINT_LINUX_TAG) $(LINT_LINUX_CONTEXT)
+	@$(MAKE) --no-print-directory lint-linux-image-check
 
-LINT_LINUX_TAG ?= 1.1.0
+# A tag is a proxy for the toolchain inside the image, and the two drift: the
+# shared Dockerfile moved to $(GOLANGCI_LINT_VERSION) while an image already
+# built under the old tag kept the old binary, and a stale $(LINT_LINUX_CONTEXT)
+# checkout rebuilds the old binary under the new tag. Either way the container
+# lane passes what CI rejects (#1338), so assert the version the way lint-go
+# already does for the host binary.
+lint-linux-image-check:
+	@have="$$(container run --rm msn-lint-linux:$(LINT_LINUX_TAG) version 2>&1 | tail -1)"; \
+	case "$$have" in \
+	*"version $(GOLANGCI_LINT_VERSION:v%=%) "*) ;; \
+	*) printf "$(RED)✗ msn-lint-linux:$(LINT_LINUX_TAG) is not golangci-lint $(GOLANGCI_LINT_VERSION)$(RESET)\n" >&2; \
+	   printf "  got: %s\n" "$$have" >&2; \
+	   printf "  rebuild it: make lint-linux-image (with $(LINT_LINUX_CONTEXT) up to date)\n" >&2; \
+	   exit 1;; \
+	esac
+
+LINT_LINUX_TAG ?= 1.2.0
 LINT_LINUX_CONTEXT ?= ../.github/tools/lint-linux
 
 # internal/api/server_port_fallback_windows.go decides whether a bind failed

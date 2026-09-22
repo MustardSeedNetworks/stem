@@ -305,16 +305,6 @@ func licenseConfig() ConfigSection {
 				LaymanDesc: "Your license key from Mustard Seed Networks. Controls which features are available.",
 				Example:    "key: \"ABCD-1234-EFGH-5678\"",
 			},
-			{
-				Name:       "server",
-				Path:       "license.server",
-				Type:       "string (URL)",
-				Default:    "",
-				EnvVar:     "STEM_LICENSE_SERVER",
-				TechDesc:   "License server URL for online validation. Empty for offline license validation.",
-				LaymanDesc: "License server address. Usually left empty for offline licenses.",
-				Example:    "server: \"https://license.mustard-seed.net\"",
-			},
 		},
 	}
 }

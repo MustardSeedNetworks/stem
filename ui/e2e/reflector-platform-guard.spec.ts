@@ -1,5 +1,12 @@
-import { expect, test } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 import { skipSetupWizard } from './helpers/auth';
+
+/**
+ * The role control lives in the rail since UI-STEM-9, and both rails are always
+ * in the DOM — the phone drawer and the `hidden lg:flex` desktop one — so a
+ * bare getByTestId matches two. Scope to the copy actually on screen (#941).
+ */
+const roleControl = (page: Page, testId: string) => page.locator(`[data-testid="${testId}"]:visible`);
 
 /**
  * Reflector platform guard
@@ -44,7 +51,7 @@ test.describe('Reflector page platform guard', () => {
     await expect(banner).toContainText(/CGO \+ Linux required/i);
 
     // The Switch to Test Master button is reachable inside the banner.
-    await expect(page.getByTestId('role-chip-test_master')).toBeVisible();
+    await expect(roleControl(page, 'role-chip-test_master')).toBeVisible();
 
     // The Start button is disabled with the platform tooltip.
     const startButton = page.getByTestId('reflector-start-button');

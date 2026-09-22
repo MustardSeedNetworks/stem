@@ -1,4 +1,5 @@
 import { ModuleEmptyState } from '../components/ModuleEmptyState';
+import { ModuleGate } from '../components/ModuleGate';
 import { RFC2889ConfigForm } from '../components/RFC2889ConfigForm';
 import { RFC6349ConfigForm } from '../components/RFC6349ConfigForm';
 import { RoleGuard } from '../components/RoleGuard';
@@ -24,27 +25,29 @@ export function CertifyPage() {
 
   return (
     <RoleGuard requires="test_master" moduleName="Certify">
-      {configured ? (
-        <>
-          <RFC2889ConfigForm
-            config={rfc2889Config}
-            setConfig={setRFC2889Config}
-            selectedTests={selectedTests}
-          />
-          <RFC6349ConfigForm
-            config={rfc6349Config}
-            setConfig={setRFC6349Config}
-            selectedTests={selectedTests}
-          />
-          <TSNConfigForm
-            config={tsnConfig}
-            setConfig={setTSNConfig}
-            selectedTests={selectedTests}
-          />
-        </>
-      ) : (
-        <ModuleEmptyState moduleName="Certify" />
-      )}
+      <ModuleGate path="/tests/certify" preview={configured}>
+        {configured ? (
+          <>
+            <RFC2889ConfigForm
+              config={rfc2889Config}
+              setConfig={setRFC2889Config}
+              selectedTests={selectedTests}
+            />
+            <RFC6349ConfigForm
+              config={rfc6349Config}
+              setConfig={setRFC6349Config}
+              selectedTests={selectedTests}
+            />
+            <TSNConfigForm
+              config={tsnConfig}
+              setConfig={setTSNConfig}
+              selectedTests={selectedTests}
+            />
+          </>
+        ) : (
+          <ModuleEmptyState moduleName="Certify" />
+        )}
+      </ModuleGate>
     </RoleGuard>
   );
 }

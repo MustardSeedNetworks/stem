@@ -86,6 +86,15 @@ func schemaTargets() []schemaTarget {
 			title:    "Stats",
 		},
 		{
+			// The licence panel and every module gate read this, and both
+			// hand-typed it until UI-STEM-15: the TS copy was missing
+			// platform, licenseKey and message, and made expiresAt
+			// required where the DTO omits a zero time.
+			value:    &api.LicenseStatus{},
+			filename: "license-status.schema.json",
+			title:    "LicenseStatus",
+		},
+		{
 			value:    &api.TestResultResponse{},
 			filename: "test-result.schema.json",
 			title:    "TestResultResponse",
