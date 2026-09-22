@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.141](https://github.com/MustardSeedNetworks/stem/compare/v0.24.140...v0.24.141) (2026-09-22)
+
+
+### Bug Fixes
+
+* **deps:** update dependency react-router to v8.4.0 ([#1382](https://github.com/MustardSeedNetworks/stem/issues/1382)) ([97711bd](https://github.com/MustardSeedNetworks/stem/commit/97711bdef9f7e7b2ae52f7e5dfd467adba11dd5c))
+* **deps:** update module modernc.org/sqlite to v1.59.0 ([#1383](https://github.com/MustardSeedNetworks/stem/issues/1383)) ([61b3ea2](https://github.com/MustardSeedNetworks/stem/commit/61b3ea27fe20077655444a9e88be471e7eab9ac1))
+
+
+### Miscellaneous
+
+* **deps:** update commitlint monorepo to v21.2.3 ([#1381](https://github.com/MustardSeedNetworks/stem/issues/1381)) ([ffa8a2b](https://github.com/MustardSeedNetworks/stem/commit/ffa8a2bdb2fd79fba7effdbb3c3de2fc00b7abaf))
+
 ## [0.24.140](https://github.com/MustardSeedNetworks/stem/compare/v0.24.139...v0.24.140) (2026-09-22)
 
 
