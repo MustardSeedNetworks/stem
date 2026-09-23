@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.147](https://github.com/MustardSeedNetworks/stem/compare/v0.24.146...v0.24.147) (2026-09-23)
+
+
+### Features
+
+* **auth:** define protected principal state records ([#1402](https://github.com/MustardSeedNetworks/stem/issues/1402)) ([958edbc](https://github.com/MustardSeedNetworks/stem/commit/958edbc9c7fe7d923ae986e2c233219ce1936067))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1401](https://github.com/MustardSeedNetworks/stem/issues/1401)) ([d5e8eb1](https://github.com/MustardSeedNetworks/stem/commit/d5e8eb166b97a8d6d9d14db69d156c3e8422b95f))
+
 ## [0.24.146](https://github.com/MustardSeedNetworks/stem/compare/v0.24.145...v0.24.146) (2026-09-23)
 
 
