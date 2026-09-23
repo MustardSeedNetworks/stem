@@ -164,6 +164,20 @@ test.describe('Mobile navigation', () => {
     await expect(drawer.getByRole('button', { name: 'Benchmark', exact: true })).toBeVisible();
   });
 
+  test('the closed drawer is hidden, not parked off-screen', async ({ page }) => {
+    const drawer = page.getByTestId('mobile-sidebar');
+    const toggle = page.getByTestId('mobile-nav-toggle');
+
+    // Off-canvas alone left the drawer's links in the tab order and its box at
+    // x -288..0, which the fleet's 390px gate fails as leaving the viewport.
+    await expect(drawer).toBeHidden();
+
+    await toggle.tap();
+    await expect(drawer).toBeVisible();
+    await toggle.tap();
+    await expect(drawer).toBeHidden();
+  });
+
   test('a module link in the drawer navigates', async ({ page }) => {
     await page.getByTestId('mobile-nav-toggle').tap();
 

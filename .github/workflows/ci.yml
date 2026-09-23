@@ -1630,21 +1630,9 @@ jobs:
       # tests exercise a build shape that could never ship, and any assertion
       # about version or UI embedding would be meaningless. CLAUDE.md's build
       # contract covers *any* `go build` in this file, not only release ones.
+      # The script is shared with the phone-width job below.
       - name: Build backend
-        env:
-          CGO_ENABLED: '0'
-        run: |
-          VERSION=$(git describe --tags --always --dirty 2>/dev/null || echo "dev")
-          COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
-          BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-          UI_BUILD_HASH=$(find internal/api/ui -type f -exec md5sum {} \; 2>/dev/null | sort | md5sum 2>/dev/null | cut -d' ' -f1)
-          go build -trimpath -buildvcs=false \
-            -ldflags "-s -w \
-              -X github.com/MustardSeedNetworks/stem/internal/version.Version=${VERSION} \
-              -X github.com/MustardSeedNetworks/stem/internal/version.Commit=${COMMIT} \
-              -X github.com/MustardSeedNetworks/stem/internal/version.BuildTime=${BUILD_TIME} \
-              -X github.com/MustardSeedNetworks/stem/internal/version.UIBuildHash=${UI_BUILD_HASH}" \
-            -o bin/stem ./cmd/stem/
+        run: ./scripts/build-backend-e2e.sh
 
       # No browser install, no apt, no cache: the pinned image ships webkit's
       # GStreamer/font stack and the browser binaries already. That removes the
@@ -1753,6 +1741,31 @@ jobs:
         with:
           name: e2e-server-logs
           path: server.log
+
+  # Phone width (owner 2026-09-15: everything works at 390x844). The fleet's one
+  # definition of "works" lives in MustardSeedNetworks/.github; this job points
+  # it at stem's own daemon, since every route is behind a session and a static
+  # serve would answer each one with the login screen. The binary is the
+  # CGO-free E2E build, started by the same script as scripts/run-e2e.sh;
+  # phone-width-sign-in.ts signs it in with the gate's own Playwright. `routes`
+  # must equal pageRegistry's paths — src/pageRegistry.test.tsx fails when the
+  # two diverge.
+  phone-width:
+    needs: [changes]
+    if: needs.changes.outputs.frontend == 'true' || needs.changes.outputs.backend == 'true' || needs.changes.outputs.ci_infra == 'true'
+    permissions:
+      contents: read
+      id-token: write
+    uses: MustardSeedNetworks/.github/.github/workflows/phone-width.yml@042e037814c114aadc2b8b2caaedfba8e0149018 # .github#88, untagged
+    with:
+      base-url: https://localhost:8444
+      prepare-command: ./scripts/build-backend-e2e.sh
+      start-command: ./scripts/e2e-daemon.sh "$RUNNER_TEMP/stem-phone-width" 8444
+      setup-command: node ui/e2e/phone-width-sign-in.ts
+      storage-state: phone-width-state.json
+      routes: '["/reflector", "/tests/benchmark", "/tests/servicetest", "/tests/trafficgen", "/tests/measure", "/tests/certify", "/history", "/account/security"]'
+      rail-testid: desktop-sidebar
+      primary-action-testid: start-test-button
 
   # ============================================================================
   # Reflect-Path Performance Gate
@@ -1893,6 +1906,7 @@ jobs:
       - build
       - darwin-compile-check
       - e2e
+      - phone-width
       - codeql-alert-gate
     if: always()
     steps:
