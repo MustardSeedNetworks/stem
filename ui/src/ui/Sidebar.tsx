@@ -330,9 +330,15 @@ export const SidebarLayout: FC<SidebarLayoutProps> = ({
         // and this one carries none, which is what stops strict mode matching
         // two of everything. Naming the container itself is enough to scope a
         // mobile spec to the copy the operator can actually reach.
+        //
+        // Closed, it is `invisible` as well as off-canvas: parked at x -288..0
+        // it was still a reachable landmark whose every link sat in the tab
+        // order, and the fleet's 390px gate reads it as content leaving the
+        // viewport. Visibility transitions with the slide, so it only hides
+        // once the drawer is out of view.
         data-testid="mobile-sidebar"
-        className={`lg:hidden fixed top-0 left-0 z-50 h-full w-72 bg-surface-raised/95 backdrop-blur-xl border-r border-surface-border transform transition-transform duration-300 ease-in-out ${
-          mobileOpen ? 'translate-x-0' : '-translate-x-full'
+        className={`lg:hidden fixed top-0 left-0 z-50 h-full w-72 bg-surface-raised/95 backdrop-blur-xl border-r border-surface-border transform transition-[transform,visibility] duration-300 ease-in-out ${
+          mobileOpen ? 'translate-x-0' : '-translate-x-full invisible'
         }`}
       >
         <div className="flex flex-col h-full">{body(false)}</div>
