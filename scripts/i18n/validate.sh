@@ -40,5 +40,4 @@ if [ ! -d "$CACHE/scripts/i18n" ]; then
   git -C "$CACHE" checkout -q FETCH_HEAD
 fi
 
-export LOCALES_DIR="${LOCALES_DIR:-ui/locales}"
 exec bash "$CACHE/scripts/i18n/validate.sh" "$@"

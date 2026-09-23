@@ -1,6 +1,6 @@
 import { Tooltip } from './ui/Tooltip';
 /**
- * @fileoverview The Stem - Module Card Component
+ * @fileoverview Stem - Module Card Component
  * @description Card component for each test module (Benchmark, ServiceTest, etc.)
  *              with enable/disable toggles, autostart options, and test execution.
  */

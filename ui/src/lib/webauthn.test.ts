@@ -3,7 +3,6 @@ import {
   decodeCreationOptions,
   decodeRequestOptions,
   loginWithPasskey,
-  registerPasskey,
   serializeAuthenticationCredential,
   serializeRegistrationCredential,
 } from './webauthn';
@@ -95,56 +94,6 @@ describe('WebAuthn wire conversion', () => {
         userHandle: 'Bw',
       },
     });
-  });
-});
-
-describe('passkey registration', () => {
-  it('runs the browser ceremony with decoded options and posts serialized output', async () => {
-    class MockPublicKeyCredential {}
-    const credential = Object.assign(new MockPublicKeyCredential(), {
-      id: 'credential',
-      rawId: new Uint8Array([1]).buffer,
-      type: 'public-key',
-      response: {
-        clientDataJSON: new Uint8Array([2]).buffer,
-        attestationObject: new Uint8Array([3]).buffer,
-        getTransports: () => [],
-      },
-    });
-    const create = vi.fn().mockResolvedValue(credential);
-    vi.stubGlobal('PublicKeyCredential', MockPublicKeyCredential);
-    vi.stubGlobal('navigator', { credentials: { create } });
-    const begin = vi.fn().mockResolvedValue({
-      publicKey: {
-        rp: { name: 'Stem' },
-        user: { id: 'AQ', name: 'admin', displayName: 'Administrator' },
-        challenge,
-        pubKeyCredParams: [{ type: 'public-key', alg: -7 }],
-      },
-    });
-    const finish = vi.fn().mockResolvedValue({ success: true, credentialId: 'credential' });
-
-    await registerPasskey({ begin, finish });
-
-    expect(create).toHaveBeenCalledWith({
-      publicKey: expect.objectContaining({ challenge: expect.any(ArrayBuffer) }),
-    });
-    expect(finish).toHaveBeenCalledWith(
-      expect.objectContaining({
-        rawId: 'AQ',
-        response: expect.objectContaining({ clientDataJSON: 'Ag' }),
-      }),
-    );
-  });
-
-  it('fails before contacting the daemon when WebAuthn is unavailable', async () => {
-    vi.stubGlobal('PublicKeyCredential', undefined);
-    const begin = vi.fn();
-
-    await expect(registerPasskey({ begin, finish: vi.fn() })).rejects.toThrow(
-      'This browser cannot create a passkey.',
-    );
-    expect(begin).not.toHaveBeenCalled();
   });
 });
 

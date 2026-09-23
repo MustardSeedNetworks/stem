@@ -1,5 +1,5 @@
 /**
- * @fileoverview The Stem - Y.1564 Test Definitions
+ * @fileoverview Stem - Y.1564 Test Definitions
  * @description Help content for ITU-T Y.1564 service activation tests.
  */
 

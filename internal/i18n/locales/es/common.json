@@ -1,6 +1,6 @@
 {
   "app": {
-    "title": "The Stem",
+    "title": "Stem",
     "tagline": "Pruebas de Rendimiento de Red por Mustard Seed Networks",
     "description": "Herramienta de Pruebas de Rendimiento de Red",
     "copyright": "© {{year}} Mustard Seed Networks. Todos los derechos reservados."
@@ -95,7 +95,10 @@
     "success": "Exito",
     "profiles": "Perfiles",
     "testResults": "Resultados de la Prueba",
-    "interfaceDetails": "Detalles de la Interfaz"
+    "interfaceDetails": "Detalles de la Interfaz",
+    "lightMode": "Modo claro",
+    "darkMode": "Modo oscuro",
+    "refresh": "Actualizar"
   },
   "time": {
     "seconds": "{{count}}s",
@@ -284,5 +287,33 @@
     "etaSeconds": "~{{count}} s",
     "etaMinutes": "~{{count}} min",
     "stepOf": "Paso {{current}} de {{total}}"
+  },
+  "license": {
+    "gated": {
+      "title": "{{module}} es un módulo Professional",
+      "actions": "Inicie una prueba de 14 días con <code>stem license trial</code> o active una clave Professional con <code2>stem license activate -k &lt;KEY&gt;</code2>.",
+      "modules": {
+        "benchmark": {
+          "name": "Benchmark",
+          "pitch": "Throughput, latency, pérdida de tramas y back-to-back según RFC 2544, ejecutados contra un reflector e informados por tamaño de trama."
+        },
+        "serviceTest": {
+          "name": "ServiceTest",
+          "pitch": "Activación de servicio Y.1564 y las pruebas de servicio MEF: ejecuciones de configuración y rendimiento que demuestran que un circuito cumple el CIR, el EIR y el retardo con los que se vendió."
+        },
+        "trafficGen": {
+          "name": "TrafficGen",
+          "pitch": "Flujos de tráfico personalizados con el tamaño de trama, la tasa y el patrón que elija, para cargar una ruta que las suites estándar no describen."
+        },
+        "measure": {
+          "name": "Measure",
+          "pitch": "Supervisión del rendimiento según Y.1731: retardo de trama, pérdida de trama, medición sintética de pérdida y bucle invertido contra un MEP par."
+        },
+        "certify": {
+          "name": "Certify",
+          "pitch": "Reenvío, almacenamiento en caché, aprendizaje y congestión de conmutadores según RFC 2889; throughput TCP según RFC 6349; y temporización, aislamiento y latency TSN."
+        }
+      }
+    }
   }
 }

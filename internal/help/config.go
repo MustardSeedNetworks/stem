@@ -1,5 +1,5 @@
 /*
- * The Stem - Configuration Documentation
+ * Stem - Configuration Documentation
  *
  * Comprehensive documentation for all configuration options.
  */
@@ -305,16 +305,6 @@ func licenseConfig() ConfigSection {
 				LaymanDesc: "Your license key from Mustard Seed Networks. Controls which features are available.",
 				Example:    "key: \"ABCD-1234-EFGH-5678\"",
 			},
-			{
-				Name:       "server",
-				Path:       "license.server",
-				Type:       "string (URL)",
-				Default:    "",
-				EnvVar:     "STEM_LICENSE_SERVER",
-				TechDesc:   "License server URL for online validation. Empty for offline license validation.",
-				LaymanDesc: "License server address. Usually left empty for offline licenses.",
-				Example:    "server: \"https://license.mustard-seed.net\"",
-			},
 		},
 	}
 }
@@ -389,7 +379,7 @@ type ConfigHelp struct {
 func GetConfigHelp() ConfigHelp {
 	return ConfigHelp{
 		FilePath: "/etc/stem/config.yaml",
-		Description: `The Stem configuration file controls all aspects of the application including
+		Description: `Stem configuration file controls all aspects of the application including
 web server settings, packet processing, and logging. Configuration can also be
 overridden using environment variables (useful for containers and secrets).
 

@@ -1,5 +1,5 @@
 /**
- * @fileoverview The Stem - Module Settings Context
+ * @fileoverview Stem - Module Settings Context
  * @description Manages per-module configuration state including enabled status,
  *              autostart options, and individual test toggles.
  */

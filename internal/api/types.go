@@ -2,6 +2,8 @@
 
 package api
 
+import "time"
+
 // Configuration constants.
 const (
 	DefaultPortFilter = 3842
@@ -258,6 +260,13 @@ type TestResultResponse struct {
 	Data     any           `json:"data,omitempty"`
 	SuiteID  string        `json:"suiteId,omitempty"`
 	Steps    []RunPlanStep `json:"steps,omitempty"`
+	// StartedAt, CompletedAt and DurationMs are the daemon's own record of
+	// the run. CompletedAt and DurationMs appear together, once the run has
+	// ended; DurationMs is milliseconds, and a pointer because a run that
+	// took under a millisecond measured 0 ms — it did not fail to measure.
+	StartedAt   *time.Time `json:"startedAt,omitempty"`
+	CompletedAt *time.Time `json:"completedAt,omitempty"`
+	DurationMs  *int64     `json:"duration,omitempty"`
 }
 
 // ModeRequest for mode POST requests. Valid values are mirrored from
@@ -361,8 +370,14 @@ type LicenseStatus struct {
 	DaysRemaining int      `json:"daysRemaining"`
 	Features      []string `json:"features"`
 	DeviceHash    string   `json:"deviceHash"`
-	LicenseKey    string   `json:"licenseKey,omitempty"`
-	Message       string   `json:"message,omitempty"`
+	// Platform names the host the fingerprint was taken on, which an
+	// operator quotes together with the hash when buying a key.
+	Platform   string `json:"platform,omitempty"`
+	LicenseKey string `json:"licenseKey,omitempty"`
+	// ExpiresAt is the paid activation's expiry. Zero in trial mode and on
+	// an unlicensed host, where DaysRemaining is the number that matters.
+	ExpiresAt time.Time `json:"expiresAt,omitzero"`
+	Message   string    `json:"message,omitempty"`
 }
 
 // LicenseActivateRequest for license activation.

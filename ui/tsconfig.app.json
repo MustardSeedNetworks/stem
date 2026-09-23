@@ -24,10 +24,10 @@
     "types": ["vite/client", "@types/react", "@types/react-dom"],
     "paths": {
       "@/*": ["./src/*"],
-      "@locales/*": ["./locales/*"]
+      "@locales/*": ["../internal/i18n/locales/*"]
     }
   },
-  "include": ["src", "locales"],
+  "include": ["src", "../internal/i18n/locales"],
   "exclude": [
     "src/**/*.test.ts",
     "src/**/*.test.tsx",

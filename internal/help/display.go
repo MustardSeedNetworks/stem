@@ -1,5 +1,5 @@
 /*
- * The Stem - Help Display Formatting
+ * Stem - Help Display Formatting
  *
  * Terminal output formatting for help content.
  */
@@ -381,7 +381,7 @@ func DisplayTutorialListTo(w io.Writer) {
 	_, _ = fmt.Fprintln(w)
 	printHeader(w, "Available Tutorials")
 	_, _ = fmt.Fprintln(w)
-	_, _ = fmt.Fprintln(w, "Step-by-step guides to help you learn The Stem.")
+	_, _ = fmt.Fprintln(w, "Step-by-step guides to help you learn Stem.")
 	_, _ = fmt.Fprintf(w, "Usage: %sstem tutorial <name>%s\n", colorGreen, colorReset)
 	_, _ = fmt.Fprintln(w)
 
@@ -417,7 +417,7 @@ func DisplayTestListTo(w io.Writer) {
 	_, _ = fmt.Fprintln(w)
 	printHeader(w, "Available Tests")
 	_, _ = fmt.Fprintln(w)
-	_, _ = fmt.Fprintln(w, "The Stem supports 27 test types across 7 categories.")
+	_, _ = fmt.Fprintln(w, "Stem supports 27 test types across 7 categories.")
 	_, _ = fmt.Fprintf(w, "Usage: %sstem test -i <interface> -t <test-type>%s\n", colorGreen, colorReset)
 	_, _ = fmt.Fprintln(w)
 
@@ -463,7 +463,7 @@ func DisplayTestListByModuleTo(w io.Writer) {
 		totalTests += len(m.TestTypes())
 	}
 
-	_, _ = fmt.Fprintf(w, "The Stem supports %d test types across %d modules.\n", totalTests, len(allModules))
+	_, _ = fmt.Fprintf(w, "Stem supports %d test types across %d modules.\n", totalTests, len(allModules))
 	_, _ = fmt.Fprintf(w, "Usage: %sstem test -i <interface> -t <test-type>%s\n", colorGreen, colorReset)
 	_, _ = fmt.Fprintln(w)
 

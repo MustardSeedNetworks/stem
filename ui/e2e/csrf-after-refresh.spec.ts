@@ -39,16 +39,6 @@ test.describe('mutation after token refresh', () => {
   });
 
   test('retries with a new CSRF token and reaches the handler', async ({ page, context }) => {
-    const starts: { status: number; csrf: string }[] = [];
-    page.on('response', (response) => {
-      if (response.url().endsWith(START_ROUTE)) {
-        starts.push({
-          status: response.status(),
-          csrf: response.request().headers()['x-csrf-token'] ?? '',
-        });
-      }
-    });
-
     await page.goto('/tests/benchmark');
     await expect(page.getByTestId('rfc2544-config-form')).toBeVisible({ timeout: 10000 });
     const iface = page.getByTestId('interface-select');
@@ -62,17 +52,15 @@ test.describe('mutation after token refresh', () => {
 
     // First start primes the CSRF cache with a token minted for the CURRENT
     // bearer — the precondition the defect needs.
+    const primedStart = page.waitForResponse((r) => r.url().endsWith(START_ROUTE));
     await start.click();
-    await expect.poll(() => starts.length, { timeout: 10000 }).toBe(1);
-    const primedToken = starts[0].csrf;
+    const primedToken = (await primedStart).request().headers()['x-csrf-token'] ?? '';
     expect(primedToken, 'the first start carried no CSRF token').not.toBe('');
 
     // Expire the access token only; the refresh cookie stays, so the session
     // recovers through a refresh. Which request takes the 401 — this mutation
     // or the dashboard's one-second stats poll — is a race, and the assertions
-    // below deliberately do not depend on winning it. Either way the defect
-    // shows the same signature: a start answered 403 for reusing the token
-    // minted under the old bearer. Pinning the exact
+    // below deliberately do not depend on winning it. Pinning the exact
     // 401 -> refresh -> retry ordering is the unit test's job
     // (auth-store.test.ts), which controls every response.
     const kept = (await context.cookies()).filter((c) => c.name !== ACCESS_COOKIE);
@@ -82,22 +70,23 @@ test.describe('mutation after token refresh', () => {
     const refreshed = page.waitForResponse(
       (r) => r.url().endsWith('/api/v1/auth/refresh') && r.status() === 200,
     );
+    const settledStart = page.waitForResponse(
+      (r) =>
+        r.url().endsWith(START_ROUTE) && r.status() !== 401 && r.status() !== 403,
+    );
     await expect(start).toBeEnabled();
     await start.click();
     // A refresh really happened — otherwise the cookie never expired and the
     // rest of this test would pass without exercising anything.
     await refreshed;
-    await expect
-      .poll(() => starts.length >= 2 && starts[starts.length - 1].status !== 401, {
-        timeout: 10000,
-      })
-      .toBe(true);
-
-    // 403 is the defect, wherever it lands: a start sent with the token minted
-    // under the old bearer, for which the daemon holds nothing.
-    expect(starts.map((s) => s.status)).not.toContain(403);
-    const settled = starts[starts.length - 1];
-    expect(settled.csrf).not.toBe('');
-    expect(settled.csrf).not.toBe(primedToken);
+    // If the stats poll refreshes after this mutation has already read the
+    // cached token, its first attempt can legitimately get 403. authFetch then
+    // invalidates that stale token and retries, so neither 401 nor 403 is a
+    // settled response. Waiting for that terminal response directly avoids
+    // racing Playwright's response event listener in WebKit.
+    const response = await settledStart;
+    const settledToken = response.request().headers()['x-csrf-token'] ?? '';
+    expect(settledToken).not.toBe('');
+    expect(settledToken).not.toBe(primedToken);
   });
 });

@@ -1,4 +1,5 @@
 import { ModuleEmptyState } from '../components/ModuleEmptyState';
+import { ModuleGate } from '../components/ModuleGate';
 import { RoleGuard } from '../components/RoleGuard';
 import { Y1564ConfigForm } from '../components/Y1564ConfigForm';
 import { useAppContext } from '../contexts/AppContext';
@@ -11,15 +12,17 @@ export function ServiceTestPage() {
   const configured = hasAnyGroupTests(groups, selectedTests);
   return (
     <RoleGuard requires="test_master" moduleName="ServiceTest">
-      {configured ? (
-        <Y1564ConfigForm
-          config={y1564Config}
-          setConfig={setY1564Config}
-          selectedTests={selectedTests}
-        />
-      ) : (
-        <ModuleEmptyState moduleName="ServiceTest" />
-      )}
+      <ModuleGate path="/tests/servicetest" preview={configured}>
+        {configured ? (
+          <Y1564ConfigForm
+            config={y1564Config}
+            setConfig={setY1564Config}
+            selectedTests={selectedTests}
+          />
+        ) : (
+          <ModuleEmptyState moduleName="ServiceTest" />
+        )}
+      </ModuleGate>
     </RoleGuard>
   );
 }

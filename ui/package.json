@@ -1,11 +1,11 @@
 {
   "name": "stem-ui",
-  "version": "0.24.129",
+  "version": "0.24.143",
   "private": true,
   "type": "module",
   "description": "The Stem WebUI - Network Performance Testing - Mustard Seed Networks",
   "engines": {
-    "node": "26.8.2",
+    "node": "26.9.0",
     "npm": "12.0.2"
   },
   "scripts": {
@@ -41,16 +41,16 @@
     "lucide-react": "1.38.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
-    "react-hook-form": "7.87.0",
-    "react-i18next": "17.0.13",
-    "react-router": "8.3.1",
-    "tailwind-merge": "3.6.0",
+    "react-hook-form": "7.88.0",
+    "react-i18next": "17.0.14",
+    "react-router": "8.4.0",
+    "tailwind-merge": "3.7.0",
     "tailwindcss": "4.3.3",
     "valibot": "1.5.0",
     "zustand": "5.0.15"
   },
   "devDependencies": {
-    "@babel/core": "8.0.1",
+    "@babel/core": "8.0.5",
     "@biomejs/biome": "2.5.13",
     "@chromatic-com/storybook": "5.3.1",
     "@playwright/test": "1.63.0",
@@ -60,7 +60,7 @@
     "@storybook/addon-onboarding": "10.6.0",
     "@storybook/addon-vitest": "10.6.0",
     "@storybook/react-vite": "10.6.0",
-    "@testing-library/dom": "10.4.1",
+    "@testing-library/dom": "10.4.2",
     "@testing-library/jest-dom": "7.0.1",
     "@testing-library/react": "16.3.3",
     "@types/babel__core": "7.20.5",
@@ -78,12 +78,13 @@
     "postcss": "8.5.28",
     "rollup-plugin-visualizer": "7.1.1",
     "storybook": "10.6.0",
+    "ts-prune": "0.10.3",
     "typescript": "7.0.2",
     "vite": "8.3.0",
     "vitest": "4.1.11"
   },
   "overrides": {
-    "js-yaml": "5.4.1",
+    "js-yaml": "5.4.2",
     "nanoid": "6.0.1",
     "undici": "8.10.2"
   },

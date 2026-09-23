@@ -275,6 +275,17 @@
             "$ref": "#/$defs/RunPlanStep"
           },
           "type": "array"
+        },
+        "startedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "completedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "duration": {
+          "type": "integer"
         }
       },
       "additionalProperties": false,

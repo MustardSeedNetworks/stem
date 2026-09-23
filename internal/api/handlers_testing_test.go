@@ -40,7 +40,7 @@ func (f *fakeAPIExecutor) Execute(
 	}, nil
 }
 
-// resetServerTestState gives any in-flight runModuleTest goroutine from
+// resetServerTestState gives any in-flight run-plan goroutine from
 // a prior test-start request a moment to finish, then forcibly clears
 // the Server's transient test state so the next request sees a clean
 // status. The fakeAPIExecutor returns immediately, so a short sleep is

@@ -94,9 +94,9 @@ func TestAutostartReflectorRecordsTheCause(t *testing.T) {
 
 // The asynchronous failure site is the run plan: a step whose executor
 // returns an error must classify the cause the same way the synchronous
-// reflector start does (#1251). Nothing drove this path before — the
-// bookkeeping that WAS covered lived in runModuleTest, which no production
-// caller reached (#1332).
+// reflector start does (#1251). Nothing drove this path before: the
+// bookkeeping that WAS covered lived in the module-executor path deleted
+// in #1332, which no production caller reached.
 func TestPlanStepFailureRecordsTheCause(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "runmodcauseuser")
 	t.Setenv("STEM_AUTH_PASSWORD", "runmodcausepass123")

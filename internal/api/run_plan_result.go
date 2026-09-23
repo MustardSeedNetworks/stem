@@ -3,7 +3,7 @@
 package api
 
 func (s *Server) planResult(success bool, message string) *TestResultResponse {
-	return &TestResultResponse{
+	result := &TestResultResponse{
 		Status:   s.testStatus,
 		TestType: "run_plan",
 		Module:   "orchestrator",
@@ -12,6 +12,8 @@ func (s *Server) planResult(success bool, message string) *TestResultResponse {
 		SuiteID:  s.runPlan.ID,
 		Steps:    append([]RunPlanStep(nil), s.runPlan.Steps...),
 	}
+	s.stampRunTimingLocked(result)
+	return result
 }
 
 func estimateStepSeconds(step RunPlanStep) *int64 {

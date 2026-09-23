@@ -1,7 +1,8 @@
 /**
  * @fileoverview AppShell — the authenticated application shell.
  * @description Sidebar layout + routed pages + the pinned TestResults card, plus
- *              the Settings / Help / History drawers. Reads drawer state from the
+ *              the Settings / Help / History drawers. The shell is the rail and
+ *              the page header; nothing sits above the page (UI-STEM-9). Reads drawer state from the
  *              shell-store and test config from the test-store directly. Mounted
  *              only once signed in. Extracted from App.tsx during the W5.5
  *              providers+routing decomposition.
@@ -16,20 +17,22 @@ import {
   Suspense,
   useCallback,
   useEffect,
-  useRef,
   useState,
 } from 'react';
 import { matchPath, Navigate, Route, Routes, useLocation } from 'react-router';
 import { TestResults } from './components/TestResults';
+import { TestRunControls } from './components/TestRunControls';
 import { useNavGroups } from './navGroups';
 import { type PageConfig, usePages } from './pageRegistry';
+import { useRecordTestResult } from './stores/history-store';
 import { useShellStore } from './stores/shell-store';
 import { useTestStore } from './stores/test-store';
 import type { Stats, TestResult } from './types/api';
 import { Breadcrumbs } from './ui/Breadcrumbs';
 import { PageHeader } from './ui/PageHeader';
 import { PageLoader } from './ui/PageLoader';
-import { SidebarLayout } from './ui/Sidebar';
+import { type RailStatus, SidebarLayout } from './ui/Sidebar';
+import { routeForPathname, useOpenHelp } from './useOpenHelp';
 
 const HelpDrawer = lazy(() =>
   import('./components/HelpDrawer').then(({ HelpDrawer: component }) => ({ default: component })),
@@ -42,12 +45,29 @@ const SettingsDrawer = lazy(() =>
 
 export interface AppShellProps {
   version?: string;
-  topBar: ReactNode;
   testResult: TestResult | null;
   testStatus: Stats['testStatus'];
+  status: RailStatus;
+  isDark: boolean;
+  onToggleTheme: () => void;
+  onRefresh: () => void;
+  onLogout: () => void;
+  roleControl: ReactNode;
 }
 
-export function AppShell({ version, topBar, testResult, testStatus }: AppShellProps): ReactElement {
+export function AppShell({
+  version,
+  testResult,
+  testStatus,
+  status,
+  isDark,
+  onToggleTheme,
+  onRefresh,
+  onLogout,
+  roleControl,
+}: AppShellProps): ReactElement {
+  // A run is recorded because it ended, not because a view is open.
+  useRecordTestResult(testResult, testStatus);
   const navGroups = useNavGroups();
   const pages = usePages();
   const location = useLocation();
@@ -55,19 +75,34 @@ export function AppShell({ version, topBar, testResult, testStatus }: AppShellPr
   const helpTopic = pages.find((page) => page.path === routePath)?.help;
   const settingsOpen = useShellStore((s) => s.settingsOpen);
   const setSettingsOpen = useShellStore((s) => s.setSettingsOpen);
-  const helpOpen = useShellStore((s) => s.helpOpen);
-  const setHelpOpen = useShellStore((s) => s.setHelpOpen);
-  const closeHelp = useCallback(() => setHelpOpen(false), [setHelpOpen]);
+  const helpRoute = useShellStore((s) => s.helpRoute);
+  const setHelpRoute = useShellStore((s) => s.setHelpRoute);
+  const openHelp = useOpenHelp();
+  const closeHelp = useCallback(() => setHelpRoute(null), [setHelpRoute]);
+  // The drawer belongs to one route, so it renders only on that route. A
+  // navigation therefore closes it by arithmetic rather than by an effect that
+  // could fire after the next open and swallow it (#1305).
+  const helpOpen = helpRoute !== null && helpRoute === routePath;
   const [settingsLoaded, setSettingsLoaded] = useState(settingsOpen);
   const [helpLoaded, setHelpLoaded] = useState(helpOpen);
 
-  const previousRoute = useRef(routePath);
+  // Discard a drawer whose page the user has left. Judged against the address
+  // bar, not the committed route: a drawer opened for a route still arriving
+  // has not been left, it has not got there yet.
   useEffect(() => {
-    if (previousRoute.current !== routePath) {
-      previousRoute.current = routePath;
-      setHelpOpen(false);
+    if (helpRoute === null || helpRoute === routePath) {
+      return;
     }
-  }, [routePath, setHelpOpen]);
+    if (
+      helpRoute !==
+      routeForPathname(
+        pages.map((page) => page.path),
+        window.location.pathname,
+      )
+    ) {
+      setHelpRoute(null);
+    }
+  }, [helpRoute, routePath, pages, setHelpRoute]);
 
   useEffect(() => {
     if (settingsOpen) {
@@ -105,9 +140,14 @@ export function AppShell({ version, topBar, testResult, testStatus }: AppShellPr
       <SidebarLayout
         groups={navGroups}
         version={version}
-        onOpenHelp={() => setHelpOpen(true)}
+        status={status}
+        onOpenHelp={openHelp}
         onOpenSettings={() => setSettingsOpen(true)}
-        topBar={topBar}
+        onToggleTheme={onToggleTheme}
+        isDark={isDark}
+        onRefresh={onRefresh}
+        onLogout={onLogout}
+        roleControl={roleControl}
       >
         <Suspense fallback={<PageLoader />}>
           <Routes>
@@ -174,7 +214,7 @@ export function AppShell({ version, topBar, testResult, testStatus }: AppShellPr
  * than from the page body. Pages render only their own content.
  */
 function PageWithHeader({ page, children }: { page: PageConfig; children: ReactNode }) {
-  const setHelpOpen = useShellStore((state) => state.setHelpOpen);
+  const openHelp = useOpenHelp();
   return (
     <section className="stack-xl">
       <Breadcrumbs />
@@ -184,8 +224,9 @@ function PageWithHeader({ page, children }: { page: PageConfig; children: ReactN
         eyebrow={page.eyebrow}
         title={page.title}
         description={page.description}
-        onHelp={() => setHelpOpen(true)}
+        onHelp={openHelp}
       />
+      {page.runControls ? <TestRunControls /> : null}
       {children}
     </section>
   );

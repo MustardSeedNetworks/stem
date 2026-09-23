@@ -1,6 +1,6 @@
 {
   "app": {
-    "title": "The Stem",
+    "title": "Stem",
     "tagline": "Network Performance Testing by Mustard Seed Networks",
     "description": "Network Performance Testing Tool",
     "copyright": "© {{year}} Mustard Seed Networks. All rights reserved."
@@ -95,7 +95,10 @@
     "success": "Success",
     "profiles": "Profiles",
     "testResults": "Test Results",
-    "interfaceDetails": "Interface Details"
+    "interfaceDetails": "Interface Details",
+    "lightMode": "Light mode",
+    "darkMode": "Dark mode",
+    "refresh": "Refresh"
   },
   "time": {
     "seconds": "{{count}}s",
@@ -284,5 +287,33 @@
     "etaSeconds": "~{{count}}s",
     "etaMinutes": "~{{count}}m",
     "stepOf": "Step {{current}} of {{total}}"
+  },
+  "license": {
+    "gated": {
+      "title": "{{module}} is a Professional module",
+      "actions": "Start a 14-day trial with <code>stem license trial</code>, or activate a Professional key with <code2>stem license activate -k &lt;KEY&gt;</code2>.",
+      "modules": {
+        "benchmark": {
+          "name": "Benchmark",
+          "pitch": "RFC 2544 throughput, latency, frame loss and back-to-back, run against a reflector and reported per frame size."
+        },
+        "serviceTest": {
+          "name": "ServiceTest",
+          "pitch": "Y.1564 service activation and the MEF service tests: configuration and performance runs that prove a circuit meets the CIR, EIR and delay it was sold with."
+        },
+        "trafficGen": {
+          "name": "TrafficGen",
+          "pitch": "Custom traffic streams with the frame size, rate and pattern you choose, for loading a path the standard suites do not describe."
+        },
+        "measure": {
+          "name": "Measure",
+          "pitch": "Y.1731 performance monitoring: frame delay, frame loss, synthetic loss measurement and loopback against a peer MEP."
+        },
+        "certify": {
+          "name": "Certify",
+          "pitch": "RFC 2889 switch forwarding, caching, learning and congestion; RFC 6349 TCP throughput; and TSN timing, isolation and latency."
+        }
+      }
+    }
   }
 }

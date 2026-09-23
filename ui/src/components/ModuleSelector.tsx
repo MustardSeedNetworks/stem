@@ -1,6 +1,6 @@
 import { Tooltip } from './ui/Tooltip';
 /**
- * @fileoverview The Stem - Module Selector Component
+ * @fileoverview Stem - Module Selector Component
  * @description A component that displays tests organized by module (Reflector, Benchmark,
  *              ServiceTest, TrafficGen, Measure, Certify) with module-specific colors.
  *              Allows users to select tests using the module-oriented architecture.

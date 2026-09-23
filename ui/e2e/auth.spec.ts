@@ -32,7 +32,7 @@ test.describe('Authentication', () => {
     await page.getByTestId('login-username').fill(TEST_CREDENTIALS.username);
     await page.getByTestId('login-password').fill(TEST_CREDENTIALS.password);
     await page.getByTestId('login-submit').click();
-    await expect(page.locator('[data-testid="logout-button"]')).toBeVisible();
+    await expect(page.locator('[data-testid="rail-logout"]')).toBeVisible();
   });
 
   test('should logout successfully', async ({ page }) => {
@@ -43,7 +43,7 @@ test.describe('Authentication', () => {
     await page.getByTestId('login-submit').click();
 
     // Then logout
-    await page.click('[data-testid="logout-button"]');
+    await page.click('[data-testid="rail-logout"]');
     await expect(page.getByTestId('login-title')).toBeVisible();
   });
 });

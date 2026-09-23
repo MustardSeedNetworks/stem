@@ -1,5 +1,4 @@
 import { deadlineExpired, requestDeadline } from '../utils/http';
-import { fetchWithCsrf } from './csrf';
 import type {
   AuthenticationResponse,
   PasskeyAuthResponse,
@@ -13,10 +12,12 @@ export type { WireCreationOptions, WireRequestOptions } from './webauthn-wire';
 
 const API_BASE = '/api/v1/auth/webauthn';
 
-interface RegistrationAPI {
-  begin: () => Promise<WireCreationOptions>;
-  finish: (credential: RegistrationResponse) => Promise<unknown>;
-}
+/**
+ * The transport a passkey post runs on — narrow enough that both `fetch` and
+ * `authFetch` satisfy it, which `typeof fetch` does not (authFetch takes a
+ * `RequestInfo`, not a `URL`).
+ */
+export type PasskeyTransport = (input: string, init: RequestInit) => Promise<Response>;
 
 function base64UrlToBuffer(value: string): ArrayBuffer {
   const base64 = value.replace(/-/g, '+').replace(/_/g, '/');
@@ -103,10 +104,16 @@ export function serializeAuthenticationCredential(
   };
 }
 
-async function sendJSON(path: string, body: unknown, csrf: boolean): Promise<Response> {
+/**
+ * Posts to one passkey endpoint through `request`, which is the caller's choice
+ * of transport: bare `fetch` for the pre-session sign-in endpoints here, and
+ * `authFetch` for the `auth: true` enrolment endpoints in `webauthn-register`
+ * — which is also why that flow lives in its own module, so this one need not
+ * import the auth store the store itself imports.
+ */
+async function sendJSON(path: string, body: unknown, request: PasskeyTransport): Promise<Response> {
   const deadline = requestDeadline();
   try {
-    const request = csrf ? fetchWithCsrf : fetch;
     return await request(API_BASE + path, {
       method: 'POST',
       credentials: 'include',
@@ -122,47 +129,32 @@ async function sendJSON(path: string, body: unknown, csrf: boolean): Promise<Res
   }
 }
 
-async function postJSON<T>(path: string, body: unknown, csrf: boolean): Promise<T> {
-  const response = await sendJSON(path, body, csrf);
+export async function postPasskeyJSON<T>(
+  path: string,
+  body: unknown,
+  request: PasskeyTransport,
+): Promise<T> {
+  const response = await sendJSON(path, body, request);
   if (!response.ok) {
     throw new Error((await response.text()) || `Passkey request failed (HTTP ${response.status})`);
   }
   return (await response.json()) as T;
 }
 
-const registrationAPI: RegistrationAPI = {
-  begin: () => postJSON<WireCreationOptions>('/register/begin', {}, true),
-  finish: (credential) => postJSON('/register/finish', credential, true),
-};
-
-export async function registerPasskey(api: RegistrationAPI = registrationAPI): Promise<void> {
-  if (!isPasskeySupported()) {
-    throw new Error('This browser cannot create a passkey.');
-  }
-  const options = await api.begin();
-  const credential = await navigator.credentials.create({
-    publicKey: decodeCreationOptions(options),
-  });
-  if (!(credential instanceof PublicKeyCredential)) {
-    throw new Error('Passkey registration was cancelled.');
-  }
-  await api.finish(serializeRegistrationCredential(credential));
-}
-
 export async function loginWithPasskey(): Promise<PasskeyAuthResponse> {
   if (!isPasskeySupported()) {
     throw new Error('This browser cannot use a passkey.');
   }
-  const options = await postJSON<WireRequestOptions>('/login/begin', {}, false);
+  const options = await postPasskeyJSON<WireRequestOptions>('/login/begin', {}, fetch);
   const credential = await navigator.credentials.get({
     publicKey: decodeRequestOptions(options),
   });
   if (!(credential instanceof PublicKeyCredential)) {
     throw new Error('Passkey sign-in was cancelled.');
   }
-  return postJSON<PasskeyAuthResponse>(
+  return postPasskeyJSON<PasskeyAuthResponse>(
     '/login/finish',
     serializeAuthenticationCredential(credential),
-    false,
+    fetch,
   );
 }

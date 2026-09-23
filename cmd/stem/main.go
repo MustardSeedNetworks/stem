@@ -145,7 +145,9 @@ func dispatchSubcommand(cmd string, args []string) bool {
 	case "web":
 		webCmd(args)
 	case "license":
-		licenseCmd(args)
+		if cmdErr := licenseCmd(args); cmdErr != nil {
+			os.Exit(1)
+		}
 	case "list-tests":
 		listTestsCmd(args)
 	case "help", "--help", "-h":

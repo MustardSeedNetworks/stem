@@ -81,3 +81,47 @@ func TestBackgroundComponentsCtxCancelStops(t *testing.T) {
 		t.Fatal("goroutine did not exit after parent context cancellation")
 	}
 }
+
+// A background loop reads live dataplane state (the reflector executor and
+// its stats), so a fault there is a Go panic in a goroutine no caller is
+// waiting on. Before #1336 that panic killed the daemon. Supervised, the
+// worker is restarted and the daemon keeps serving.
+func TestBackgroundPanicIsRestartedAndTheDaemonStaysUp(t *testing.T) {
+	t.Parallel()
+
+	panics := make(chan struct{}, backgroundRestarts+1)
+	bg := newBackgroundComponents(&Server{sseBroadcaster: sse.New()})
+	bg.workers = []backgroundWorker{{
+		name: "panicking-probe",
+		run: func(context.Context) {
+			select {
+			case panics <- struct{}{}:
+			default:
+			}
+			panic("forced background fault")
+		},
+	}}
+
+	bg.Start(context.Background())
+
+	// One entry is the first call; a second proves the supervisor restarted
+	// the worker instead of letting the panic escape.
+	for range 2 {
+		select {
+		case <-panics:
+		case <-time.After(5 * time.Second):
+			t.Fatal("the panicking worker was not restarted")
+		}
+	}
+
+	done := make(chan struct{})
+	go func() {
+		bg.Stop()
+		close(done)
+	}()
+	select {
+	case <-done:
+	case <-time.After(5 * time.Second):
+		t.Fatal("Stop did not return after a worker exhausted its restarts")
+	}
+}

@@ -1,5 +1,5 @@
 /*
- * The Stem - Test Documentation
+ * Stem - Test Documentation
  *
  * RFC 2544 test help content.
  */

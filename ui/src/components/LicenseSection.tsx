@@ -1,6 +1,6 @@
 import { Tooltip } from './ui/Tooltip';
 /**
- * @fileoverview The Stem - License Section Component
+ * @fileoverview Stem - License Section Component
  * @description Displays license status and provides activation functionality.
  *              Supports full license activation and 14-day trial mode.
  */
@@ -9,33 +9,21 @@ import { AlertTriangle, CheckCircle, Clock, Key, Loader2, Shield } from 'lucide-
 import type { ReactElement } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { LICENSE_ENDPOINT } from '../contexts/LicenseContext';
 import { authFetch } from '../stores/auth-store';
+import type { LicenseStatus } from '../types/generated/license-status';
 import { CollapsibleSection } from './CollapsibleSection';
 
-interface LicenseInfo {
-  activated: boolean;
-  tier: number;
-  tierName: string;
-  isTrialMode: boolean;
-  daysRemaining: number;
-  features: string[];
-  deviceHash: string;
-  expiresAt: string;
-}
+/**
+ * The wire type, generated from the Go DTO rather than re-typed here: the
+ * hand-written copy was missing `platform`, `licenseKey` and `message`, and
+ * made `expiresAt` required where the DTO omits a zero time (UI-STEM-15).
+ */
+type LicenseInfo = LicenseStatus;
 
 /** Length of the no-key trial, in days. Interpolated into the copy so the
     number lives in one place rather than in three locale strings. */
 const TRIAL_DAYS = 14;
-
-/**
- * The daemon's license routes (`internal/api/server.go`). The `/v1` is not
- * decoration: `apiVersionMiddleware` only stamps a response header, so an
- * unversioned path is not rewritten and not 404'd either — it falls through to
- * the SPA handler and comes back as index.html with HTTP 200, which is how
- * `/api/license` left this panel on "Loading..." with nothing in the console
- * (#1247, and `/api/modules` before it).
- */
-const LICENSE_ENDPOINT = '/api/v1/license';
 
 /**
  * Reads an activation/trial reply, whichever shape the daemon sent.

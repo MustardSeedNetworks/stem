@@ -27,6 +27,8 @@ import (
 	"os"
 	"time"
 
+	fndlicense "github.com/MustardSeedNetworks/foundation/pkg/license"
+
 	"github.com/MustardSeedNetworks/stem/internal/api"
 	"github.com/MustardSeedNetworks/stem/internal/daemonconn"
 )
@@ -46,6 +48,9 @@ const (
 	pathStats           = "/api/v1/stats"
 	pathCSRF            = "/api/v1/auth/csrf-token"
 	pathResult          = "/api/v1/test/result"
+	pathLicense         = "/api/v1/license"
+	pathLicenseActivate = "/api/v1/license/activate"
+	pathLicenseTrial    = "/api/v1/license/trial"
 	pathReflectorStats  = "/api/v1/reflector/stats"
 	pathReflectorConfig = "/api/v1/reflector/config"
 )
@@ -226,6 +231,48 @@ func (c *Client) Result(ctx context.Context) (api.TestResultResponse, error) {
 	var result api.TestResultResponse
 	if err := c.do(ctx, http.MethodGet, pathResult, nil, &result); err != nil {
 		return api.TestResultResponse{}, err
+	}
+	return result, nil
+}
+
+// License reports the entitlement state the daemon is acting on. Reading the
+// file instead would describe a licence that is not in force: the daemon
+// caches its manager, so the file and the running entitlement diverge the
+// moment either side writes (#1335).
+func (c *Client) License(ctx context.Context) (api.LicenseStatus, error) {
+	var status api.LicenseStatus
+	if err := c.do(ctx, http.MethodGet, pathLicense, nil, &status); err != nil {
+		return api.LicenseStatus{}, err
+	}
+	return status, nil
+}
+
+// ActivateLicense hands a key to the daemon and returns the daemon's verdict.
+// The verdict is the daemon's to give: it owns the manager that would have to
+// honour the key.
+func (c *Client) ActivateLicense(ctx context.Context, key string) (fndlicense.ActivationResult, error) {
+	var result fndlicense.ActivationResult
+	req := api.LicenseActivateRequest{LicenseKey: key}
+	if err := c.do(ctx, http.MethodPost, pathLicenseActivate, req, &result); err != nil {
+		return fndlicense.ActivationResult{}, err
+	}
+	return result, nil
+}
+
+// StartTrial starts the trial clock in the daemon.
+func (c *Client) StartTrial(ctx context.Context) (fndlicense.ActivationResult, error) {
+	var result fndlicense.ActivationResult
+	if err := c.do(ctx, http.MethodPost, pathLicenseTrial, struct{}{}, &result); err != nil {
+		return fndlicense.ActivationResult{}, err
+	}
+	return result, nil
+}
+
+// DeactivateLicense removes the activation the daemon holds.
+func (c *Client) DeactivateLicense(ctx context.Context) (api.ErrorResponse, error) {
+	var result api.ErrorResponse
+	if err := c.do(ctx, http.MethodDelete, pathLicense, nil, &result); err != nil {
+		return api.ErrorResponse{}, err
 	}
 	return result, nil
 }

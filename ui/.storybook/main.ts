@@ -28,7 +28,7 @@ const config: StorybookConfig = {
         ...viteConfig.resolve,
         alias: {
           '@': resolve(currentDir, '../src'),
-          '@locales': resolve(currentDir, '../locales'),
+          '@locales': resolve(currentDir, '../../internal/i18n/locales'),
         },
       },
       optimizeDeps: {

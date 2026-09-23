@@ -1,5 +1,5 @@
 /**
- * @fileoverview The Stem - Help Content Tutorials
+ * @fileoverview Stem - Help Content Tutorials
  * @description Tutorial definitions for the WebUI help system.
  */
 

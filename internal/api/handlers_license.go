@@ -9,78 +9,86 @@ import (
 	"github.com/MustardSeedNetworks/stem/internal/license"
 )
 
-// handleLicense returns current license status.
-func (s *Server) handleLicense(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		WriteMethodNotAllowed(w)
-		return
+// LicenseStatusOf renders a manager's entitlement state in the one shape
+// every reader sees. The CLI renders the same struct whether it read it from
+// a running daemon or, with no daemon on the host, built it here from its own
+// manager — two renderers would be two descriptions of one licence.
+func LicenseStatusOf(mgr *license.Manager) LicenseStatus {
+	if mgr == nil {
+		return LicenseStatus{Message: "License manager not initialized"}
 	}
 
-	if s.licenseManager == nil {
-		writeJSON(w, LicenseStatus{
-			Activated:     false,
-			IsTrialMode:   false,
-			Tier:          0,
-			TierName:      "",
-			DaysRemaining: 0,
-			Features:      nil,
-			DeviceHash:    "",
-			LicenseKey:    "",
-			Message:       "License manager not initialized",
-		})
-		return
-	}
-
-	state := s.licenseManager.GetState()
-	fp := s.licenseManager.GetFingerprint()
-
-	var status LicenseStatus
+	state := mgr.GetState()
+	fp := mgr.GetFingerprint()
 
 	switch {
 	case state == nil:
-		status = LicenseStatus{
-			Activated:     false,
-			IsTrialMode:   false,
-			Tier:          0,
-			TierName:      "",
-			DaysRemaining: 0,
-			Features:      nil,
-			DeviceHash:    fp.Hash(),
-			LicenseKey:    "",
-			Message:       "No license. Start a trial or enter a license key.",
+		return LicenseStatus{
+			DeviceHash: fp.Hash(),
+			Platform:   fp.Platform,
+			Message:    "No license. Start a trial or enter a license key.",
 		}
 	case state.IsTrialMode:
-		status = LicenseStatus{
+		return LicenseStatus{
 			Activated:     true,
 			IsTrialMode:   true,
 			Tier:          int(license.TierProfessional),
 			TierName:      "Trial",
-			DaysRemaining: s.licenseManager.TrialDaysRemaining(),
+			DaysRemaining: mgr.TrialDaysRemaining(),
 			Features:      state.Features,
 			DeviceHash:    fp.Hash(),
-			LicenseKey:    "",
-			Message:       fmt.Sprintf("Trial mode: %d days remaining", s.licenseManager.TrialDaysRemaining()),
+			Platform:      fp.Platform,
+			Message:       fmt.Sprintf("Trial mode: %d days remaining", mgr.TrialDaysRemaining()),
 		}
 	default:
-		activated := s.licenseManager.IsActivated()
+		activated := mgr.IsActivated()
 		message := "License expired or invalid"
 		if activated {
 			message = fmt.Sprintf("Licensed: %s", license.Tier(state.Tier))
 		}
-		status = LicenseStatus{
-			Activated:     activated,
-			IsTrialMode:   false,
-			Tier:          state.Tier,
-			TierName:      license.Tier(state.Tier).String(),
-			DaysRemaining: 0,
-			Features:      state.Features,
-			DeviceHash:    fp.Hash(),
-			LicenseKey:    license.FormatKey(state.LicenseKey),
-			Message:       message,
+		return LicenseStatus{
+			Activated:  activated,
+			Tier:       state.Tier,
+			TierName:   license.Tier(state.Tier).String(),
+			Features:   state.Features,
+			DeviceHash: fp.Hash(),
+			Platform:   fp.Platform,
+			LicenseKey: license.FormatKey(state.LicenseKey),
+			ExpiresAt:  state.ExpiresAt,
+			Message:    message,
 		}
 	}
+}
 
-	writeJSON(w, status)
+// handleLicense reports the current licence state, and on DELETE removes it.
+// Deactivation lives on this route rather than the CLI's own file write: the
+// daemon holds the manager, so a licence removed anywhere else would go on
+// being served from memory until a restart (#1335).
+func (s *Server) handleLicense(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		writeJSON(w, LicenseStatusOf(s.licenseManager))
+	case http.MethodDelete:
+		s.deactivateLicense(w)
+	default:
+		WriteMethodNotAllowed(w)
+	}
+}
+
+// deactivateLicense removes the activation the daemon is holding.
+func (s *Server) deactivateLicense(w http.ResponseWriter) {
+	if s.licenseManager == nil {
+		writeJSON(w, ErrorResponse{Success: false, Message: "License manager not initialized"})
+		return
+	}
+	if err := s.licenseManager.Deactivate(); err != nil {
+		writeJSON(w, ErrorResponse{
+			Success: false,
+			Message: fmt.Sprintf("Failed to deactivate: %v", err),
+		})
+		return
+	}
+	writeJSON(w, ErrorResponse{Success: true, Message: "License deactivated"})
 }
 
 // handleLicenseActivate activates a license key.

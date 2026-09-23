@@ -1,7 +1,7 @@
 import { Tooltip } from '../ui/Tooltip';
 /**
  * @fileoverview Initial Setup Wizard Component
- * @description Guides users through the first-time setup process for The Stem application.
+ * @description Guides users through the first-time setup process for Stem application.
  */
 
 import { valibotResolver } from '@hookform/resolvers/valibot';

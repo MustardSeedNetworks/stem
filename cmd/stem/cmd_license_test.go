@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/MustardSeedNetworks/stem/internal/api"
 	"github.com/MustardSeedNetworks/stem/internal/license"
 )
 
@@ -19,7 +20,7 @@ func TestDisplayLicenseStatusOnAFreshInstall(t *testing.T) {
 		t.Fatalf("license.Load: %v", err)
 	}
 
-	out := captureStdout(t, func() { displayLicenseStatus(mgr) })
+	out := captureStdout(t, func() { displayLicenseStatus(api.LicenseStatusOf(mgr)) })
 
 	if !strings.Contains(out, "Status:    Not Activated") {
 		t.Errorf("status output %q does not report an unactivated host", out)
@@ -46,7 +47,7 @@ func TestDisplayLicenseStatusInTrialMode(t *testing.T) {
 		t.Fatalf("StartTrial: %s", result.Message)
 	}
 
-	out := captureStdout(t, func() { displayLicenseStatus(mgr) })
+	out := captureStdout(t, func() { displayLicenseStatus(api.LicenseStatusOf(mgr)) })
 
 	if !strings.Contains(out, "Status:    Trial Mode") {
 		t.Errorf("status output %q does not report the trial", out)
@@ -70,6 +71,7 @@ func TestLicenseCmdWarnsOnAnUnusableFile(t *testing.T) {
 		t.Skip("root reads a 0000 file; the case cannot be built")
 	}
 	licenseHome(t)
+	emptyDataDir(t)
 	mgr, err := license.Load()
 	if err != nil {
 		t.Fatalf("license.Load: %v", err)
@@ -82,7 +84,11 @@ func TestLicenseCmdWarnsOnAnUnusableFile(t *testing.T) {
 		t.Fatalf("chmod: %v", chmodErr)
 	}
 
-	out := captureStdout(t, func() { licenseCmd([]string{"--status"}) })
+	out := captureStdout(t, func() {
+		if cmdErr := licenseCmd([]string{"--status"}); cmdErr != nil {
+			t.Errorf("licenseCmd --status: %v", cmdErr)
+		}
+	})
 
 	want := "Warning: license file " + path + " is unreadable"
 	if !strings.Contains(out, want) {

@@ -1,5 +1,5 @@
 /**
- * @fileoverview The Stem - RFC 2889 Test Definitions
+ * @fileoverview Stem - RFC 2889 Test Definitions
  * @description Help content for RFC 2889 LAN switching benchmarking tests.
  */
 

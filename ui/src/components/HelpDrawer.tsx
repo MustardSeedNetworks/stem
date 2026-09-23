@@ -1,6 +1,6 @@
 import { Tooltip } from './ui/Tooltip';
 /**
- * @fileoverview The Stem - Help Drawer Component
+ * @fileoverview Stem - Help Drawer Component
  * @description Comprehensive help panel with tests, tutorials, and glossary.
  *              Supports both technical and layman-friendly explanations.
  *

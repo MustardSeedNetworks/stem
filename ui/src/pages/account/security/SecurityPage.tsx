@@ -12,7 +12,7 @@ import { Lock, ShieldCheck, ShieldOff } from 'lucide-react';
 import { type ReactElement, useCallback, useEffect, useState } from 'react';
 import { type SubmitHandler, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { registerPasskey } from '../../../lib/webauthn';
+import { registerPasskey } from '../../../lib/webauthn-register';
 import { TotpDisableSchema } from '../../../schemas/auth';
 import {
   isMFARequired as _isMFARequired,

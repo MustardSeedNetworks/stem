@@ -1,5 +1,5 @@
 /*
- * The Stem - Error Messages
+ * Stem - Error Messages
  *
  * Enhanced error messages with context, causes, and solutions.
  */
