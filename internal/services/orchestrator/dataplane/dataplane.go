@@ -200,8 +200,11 @@ typedef struct {
     double max_rate_pct;
     double max_rate_fps;
     double aggregate_rate_mbps;
+    double offered_rate_pct;
+    bool generator_limited;
     uint64_t frames_tx;
     uint64_t frames_rx;
+    double loss_pct;
 } rfc2889_fwd_result_t;
 
 typedef struct {

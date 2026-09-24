@@ -35,6 +35,9 @@ typedef enum {
     TRAFFIC_MANY_TO_ONE = 4
 } traffic_pattern_t;
 
+// Field for field with rfc2889_fwd_result_t in include/rfc2544.h, which this
+// preamble redeclares rather than includes (#1240). loss_pct was missing here,
+// so the C side wrote eight bytes past the Go-allocated result (#1242).
 typedef struct {
     uint32_t frame_size;
     uint32_t port_count;
@@ -42,8 +45,11 @@ typedef struct {
     double max_rate_pct;
     double max_rate_fps;
     double aggregate_rate_mbps;
+    double offered_rate_pct;
+    bool generator_limited;
     uint64_t frames_tx;
     uint64_t frames_rx;
+    double loss_pct;
 } rfc2889_fwd_result_t;
 
 typedef struct {
@@ -145,6 +151,8 @@ func (c *Context) RunRFC2889ForwardingTest(cfg *RFC2889Config) (*RFC2889Forwardi
 		MaxRatePct:        float64(cResult.max_rate_pct),
 		MaxRateFps:        float64(cResult.max_rate_fps),
 		AggregateRateMbps: float64(cResult.aggregate_rate_mbps),
+		OfferedRatePct:    float64(cResult.offered_rate_pct),
+		GeneratorLimited:  bool(cResult.generator_limited),
 		FramesTx:          uint64(cResult.frames_tx),
 		FramesRx:          uint64(cResult.frames_rx),
 	}, nil

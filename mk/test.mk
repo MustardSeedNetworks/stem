@@ -132,6 +132,8 @@ ifeq ($(UNAME),Linux)
 		$(C_TEST_DATAPLANE_SRCS) $(C_LDFLAGS) -lxdp -lbpf
 	$(CC) $(CFLAGS) -o bin/test_throughput_measured tests/c/test_throughput_measured.c \
 		$(C_TEST_DATAPLANE_SRCS) $(C_LDFLAGS) -lxdp -lbpf
+	$(CC) $(CFLAGS) -o bin/test_rfc2889_forwarding_measured tests/c/test_rfc2889_forwarding_measured.c \
+		$(C_TEST_DATAPLANE_SRCS) $(C_LDFLAGS) -lxdp -lbpf
 	$(CC) $(CFLAGS) -Itests/c -o bin/test_packet_platform_init \
 		tests/c/test_packet_platform_init.c src/reflector/packet_platform.c \
 		src/reflector/util.c $(C_PLATFORM_INIT_WRAPS) $(C_LDFLAGS)
@@ -143,6 +145,7 @@ ifeq ($(UNAME),Linux)
 	./bin/test_latency_lifecycle
 	./bin/test_platform_fallback
 	./bin/test_throughput_measured
+	./bin/test_rfc2889_forwarding_measured
 	./bin/test_packet_platform_init
 else ifeq ($(UNAME),Darwin)
 	@echo "Building C tests (common code only, macOS)..."
