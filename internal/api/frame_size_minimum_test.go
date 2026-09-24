@@ -73,8 +73,8 @@ func TestExtendedFormatsAcceptTheMinimumFrame(t *testing.T) {
 }
 
 // The minimum has one definition, in include/rfc2544.h. Go mirrors it because
-// the Mac build has no CGO and the cgo preamble redeclares the header rather
-// than including it (stem#1240), so nothing else would catch the two drifting.
+// internal/api builds without CGO and so cannot read the header, and nothing
+// else would catch the two drifting.
 func TestExtendedFrameMinimumMatchesTheHeader(t *testing.T) {
 	header, err := os.ReadFile(filepath.Join("..", "..", "include", "rfc2544.h"))
 	if err != nil {

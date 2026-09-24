@@ -10,121 +10,7 @@ package dataplane
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
-
-typedef struct rfc2544_ctx rfc2544_ctx_t;
-
-#define RFC2889_MAX_PORTS 64
-
-typedef enum {
-    RFC2889_FORWARDING_RATE = 0,
-    RFC2889_ADDRESS_CACHING = 1,
-    RFC2889_ADDRESS_LEARNING = 2,
-    RFC2889_BROADCAST_FORWARDING = 3,
-    RFC2889_BROADCAST_LATENCY = 4,
-    RFC2889_CONGESTION_CONTROL = 5,
-    RFC2889_FORWARD_PRESSURE = 6,
-    RFC2889_ERROR_FILTERING = 7,
-    RFC2889_TEST_COUNT = 8
-} rfc2889_test_type_t;
-
-typedef enum {
-    TRAFFIC_FULLY_MESHED = 0,
-    TRAFFIC_PARTIALLY_MESHED = 1,
-    TRAFFIC_PAIR_WISE = 2,
-    TRAFFIC_ONE_TO_MANY = 3,
-    TRAFFIC_MANY_TO_ONE = 4
-} traffic_pattern_t;
-
-// Field for field with rfc2889_fwd_result_t in include/rfc2544.h, which this
-// preamble redeclares rather than includes (#1240). loss_pct was missing here,
-// so the C side wrote eight bytes past the Go-allocated result (#1242).
-typedef struct {
-    uint32_t frame_size;
-    uint32_t port_count;
-    traffic_pattern_t pattern;
-    double max_rate_pct;
-    double max_rate_fps;
-    double aggregate_rate_mbps;
-    double offered_rate_pct;
-    bool generator_limited;
-    uint64_t frames_tx;
-    uint64_t frames_rx;
-    double loss_pct;
-} rfc2889_fwd_result_t;
-
-typedef struct {
-    uint32_t address_count;
-    uint32_t frame_size;
-    uint32_t port_count;
-    uint64_t frames_tx;
-    uint64_t frames_rx;
-    double loss_pct;
-    bool passed;
-} rfc2889_cache_result_t;
-
-typedef struct {
-    uint32_t frame_size;
-    uint32_t port_count;
-    double learning_rate_fps;
-    uint32_t addresses_learned;
-    double learning_time_ms;
-    uint32_t verification_frames;
-    double verification_loss_pct;
-} rfc2889_learning_result_t;
-
-typedef struct {
-    uint32_t frame_size;
-    uint32_t ingress_ports;
-    uint32_t egress_ports;
-    double broadcast_rate_fps;
-    double broadcast_rate_mbps;
-    uint64_t frames_tx;
-    uint64_t frames_rx;
-    double replication_factor;
-} rfc2889_broadcast_result_t;
-
-typedef struct {
-    uint32_t frame_size;
-    double overload_rate_pct;
-    uint64_t frames_tx;
-    uint64_t frames_rx;
-    uint64_t frames_dropped;
-    double head_of_line_blocking;
-    bool backpressure_observed;
-    uint64_t pause_frames_rx;
-} rfc2889_congestion_result_t;
-
-typedef struct {
-    char interface[64];
-    uint8_t mac_base[6];
-    uint32_t mac_count;
-    bool is_ingress;
-    bool is_egress;
-} rfc2889_port_t;
-
-typedef struct {
-    rfc2889_test_type_t test_type;
-    traffic_pattern_t pattern;
-    uint32_t port_count;
-    rfc2889_port_t ports[RFC2889_MAX_PORTS];
-    uint32_t frame_size;
-    uint32_t trial_duration_sec;
-    uint32_t warmup_sec;
-    uint32_t address_count;
-    double acceptable_loss_pct;
-} rfc2889_config_t;
-
-extern int rfc2889_forwarding_test(rfc2544_ctx_t *ctx, const rfc2889_config_t *config,
-                                 rfc2889_fwd_result_t *result);
-extern int rfc2889_caching_test(rfc2544_ctx_t *ctx, const rfc2889_config_t *config,
-                              rfc2889_cache_result_t *result);
-extern int rfc2889_learning_test(rfc2544_ctx_t *ctx, const rfc2889_config_t *config,
-                               rfc2889_learning_result_t *result);
-extern int rfc2889_broadcast_test(rfc2544_ctx_t *ctx, const rfc2889_config_t *config,
-                                rfc2889_broadcast_result_t *result);
-extern int rfc2889_congestion_test(rfc2544_ctx_t *ctx, const rfc2889_config_t *config,
-                                 rfc2889_congestion_result_t *result);
-extern void rfc2889_default_config(rfc2889_config_t *config);
+#include "rfc2544.h"
 */
 import "C"
 import "fmt"
@@ -174,13 +60,12 @@ func (c *Context) RunRFC2889CachingTest(cfg *RFC2889Config) (*RFC2889CachingResu
 	}
 
 	return &RFC2889CachingResult{
-		AddressCount: uint32(cResult.address_count),
-		FrameSize:    uint32(cResult.frame_size),
-		PortCount:    uint32(cResult.port_count),
-		FramesTx:     uint64(cResult.frames_tx),
-		FramesRx:     uint64(cResult.frames_rx),
-		LossPct:      float64(cResult.loss_pct),
-		Passed:       bool(cResult.passed),
+		FrameSize:       uint32(cResult.frame_size),
+		AddressesTested: uint32(cResult.addresses_tested),
+		AddressesCached: uint32(cResult.addresses_cached),
+		CacheCapacity:   uint32(cResult.cache_capacity),
+		LearningTimeMs:  float64(cResult.learning_time_ms),
+		OverflowLossPct: float64(cResult.overflow_loss_pct),
 	}, nil
 }
 
@@ -201,7 +86,6 @@ func (c *Context) RunRFC2889LearningTest(cfg *RFC2889Config) (*RFC2889LearningRe
 
 	return &RFC2889LearningResult{
 		FrameSize:           uint32(cResult.frame_size),
-		PortCount:           uint32(cResult.port_count),
 		LearningRateFps:     float64(cResult.learning_rate_fps),
 		AddressesLearned:    uint32(cResult.addresses_learned),
 		LearningTimeMs:      float64(cResult.learning_time_ms),

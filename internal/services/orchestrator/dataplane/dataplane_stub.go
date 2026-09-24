@@ -208,16 +208,15 @@ type RFC2889ForwardingResult struct {
 }
 
 // RFC2889CachingResult is the outcome of the RFC 2889 address-caching-capacity
-// test: whether the DUT sustains AddressCount learned addresses without
-// dropping frames.
+// test: how many of AddressesTested source addresses the DUT cached before it
+// began flooding.
 type RFC2889CachingResult struct {
-	AddressCount uint32
-	FrameSize    uint32
-	PortCount    uint32
-	FramesTx     uint64
-	FramesRx     uint64
-	LossPct      float64
-	Passed       bool
+	FrameSize       uint32
+	AddressesTested uint32
+	AddressesCached uint32
+	CacheCapacity   uint32
+	LearningTimeMs  float64
+	OverflowLossPct float64
 }
 
 // RFC2889LearningResult is the outcome of the RFC 2889 address-learning-rate
@@ -225,7 +224,6 @@ type RFC2889CachingResult struct {
 // forwarding stays correct once learning completes.
 type RFC2889LearningResult struct {
 	FrameSize           uint32
-	PortCount           uint32
 	LearningRateFps     float64
 	AddressesLearned    uint32
 	LearningTimeMs      float64

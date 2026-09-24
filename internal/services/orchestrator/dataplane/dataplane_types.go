@@ -2,37 +2,42 @@
 
 package dataplane
 
+/*
+#cgo CFLAGS: -I${SRCDIR}/../../../../include
+#include "rfc2544.h"
+*/
+import "C"
+
 import "time"
 
 // TestType mirrors C test_type_t.
 type TestType int
 
-// The RFC 2544, Y.1564 and Y.1731 test types the C dataplane accepts. Order is
-// load-bearing: these are iota values passed across the cgo boundary and must
-// stay in lockstep with test_type_t in the C header.
+// The RFC 2544, Y.1564 and Y.1731 test types the C dataplane accepts, taken
+// from test_type_t itself because they cross the cgo boundary as its values.
 const (
-	TestThroughput TestType = iota
-	TestLatency
-	TestFrameLoss
-	TestBackToBack
-	TestSystemRecovery
-	TestReset
-	TestY1564Config
-	TestY1564Perf
-	TestY1564Full
+	TestThroughput     TestType = C.TEST_THROUGHPUT
+	TestLatency        TestType = C.TEST_LATENCY
+	TestFrameLoss      TestType = C.TEST_FRAME_LOSS
+	TestBackToBack     TestType = C.TEST_BACK_TO_BACK
+	TestSystemRecovery TestType = C.TEST_SYSTEM_RECOVERY
+	TestReset          TestType = C.TEST_RESET
+	TestY1564Config    TestType = C.TEST_Y1564_CONFIG
+	TestY1564Perf      TestType = C.TEST_Y1564_PERF
+	TestY1564Full      TestType = C.TEST_Y1564_FULL
 )
 
 // TestState mirrors C test_state_t.
 type TestState int
 
-// Lifecycle states a dataplane test moves through. Like TestType these are
-// iota values shared with C, so the order must match test_state_t.
+// Lifecycle states a dataplane test moves through, taken from test_state_t
+// for the same reason.
 const (
-	StateIdle TestState = iota
-	StateRunning
-	StateCompleted
-	StateFailed
-	StateCancelled
+	StateIdle      TestState = C.STATE_IDLE
+	StateRunning   TestState = C.STATE_RUNNING
+	StateCompleted TestState = C.STATE_COMPLETED
+	StateFailed    TestState = C.STATE_FAILED
+	StateCancelled TestState = C.STATE_CANCELLED
 )
 
 // LatencyStats contains latency measurements.
@@ -202,16 +207,15 @@ type RFC2889ForwardingResult struct {
 }
 
 // RFC2889CachingResult is the outcome of the RFC 2889 address-caching-capacity
-// test: whether the DUT sustains AddressCount learned addresses without
-// dropping frames.
+// test: how many of AddressesTested source addresses the DUT cached before it
+// began flooding.
 type RFC2889CachingResult struct {
-	AddressCount uint32
-	FrameSize    uint32
-	PortCount    uint32
-	FramesTx     uint64
-	FramesRx     uint64
-	LossPct      float64
-	Passed       bool
+	FrameSize       uint32
+	AddressesTested uint32
+	AddressesCached uint32
+	CacheCapacity   uint32
+	LearningTimeMs  float64
+	OverflowLossPct float64
 }
 
 // RFC2889LearningResult is the outcome of the RFC 2889 address-learning-rate
@@ -219,7 +223,6 @@ type RFC2889CachingResult struct {
 // forwarding stays correct once learning completes.
 type RFC2889LearningResult struct {
 	FrameSize           uint32
-	PortCount           uint32
 	LearningRateFps     float64
 	AddressesLearned    uint32
 	LearningTimeMs      float64

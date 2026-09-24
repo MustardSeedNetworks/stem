@@ -11,71 +11,7 @@ package dataplane
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
-
-typedef struct rfc2544_ctx rfc2544_ctx_t;
-
-typedef struct {
-    double cir_mbps;
-    double eir_mbps;
-    uint32_t cbs_bytes;
-    uint32_t ebs_bytes;
-    double fd_threshold_ms;
-    double fdv_threshold_ms;
-    double flr_threshold_pct;
-} y1564_sla_t;
-
-typedef struct {
-    uint32_t service_id;
-    char service_name[32];
-    y1564_sla_t sla;
-    uint32_t frame_size;
-    uint8_t cos;
-    bool enabled;
-} y1564_service_t;
-
-typedef struct {
-    uint32_t step;
-    double offered_rate_pct;
-    double achieved_rate_mbps;
-    uint64_t frames_tx;
-    uint64_t frames_rx;
-    double flr_pct;
-    double fd_avg_ms;
-    double fd_min_ms;
-    double fd_max_ms;
-    double fdv_ms;
-    bool flr_pass;
-    bool fd_pass;
-    bool fdv_pass;
-    bool step_pass;
-} y1564_step_result_t;
-
-typedef struct {
-    uint32_t service_id;
-    y1564_step_result_t steps[4];
-    bool service_pass;
-} y1564_config_result_t;
-
-typedef struct {
-    uint32_t service_id;
-    uint32_t duration_sec;
-    uint64_t frames_tx;
-    uint64_t frames_rx;
-    double flr_pct;
-    double fd_avg_ms;
-    double fd_min_ms;
-    double fd_max_ms;
-    double fdv_ms;
-    bool flr_pass;
-    bool fd_pass;
-    bool fdv_pass;
-    bool service_pass;
-} y1564_perf_result_t;
-
-extern int y1564_config_test(rfc2544_ctx_t *ctx, const y1564_service_t *service,
-                             y1564_config_result_t *result);
-extern int y1564_perf_test(rfc2544_ctx_t *ctx, const y1564_service_t *service,
-                           uint32_t duration_sec, y1564_perf_result_t *result);
+#include "rfc2544.h"
 */
 import "C"
 import "fmt"
