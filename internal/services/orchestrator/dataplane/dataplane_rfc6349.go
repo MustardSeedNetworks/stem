@@ -10,59 +10,7 @@ package dataplane
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
-
-typedef struct rfc2544_ctx rfc2544_ctx_t;
-
-typedef enum {
-    TCP_THROUGHPUT = 0,
-    TCP_SINGLE_STREAM = 0,
-    TCP_MULTI_STREAM = 1,
-    TCP_BIDIRECTIONAL = 2
-} tcp_test_mode_t;
-
-typedef struct {
-    double achieved_rate_mbps;
-    double theoretical_rate_mbps;
-    double rtt_min_ms;
-    double rtt_avg_ms;
-    double rtt_max_ms;
-    uint64_t bdp_bytes;
-    uint32_t rwnd_used;
-    uint64_t bytes_transferred;
-    uint64_t retransmissions;
-    uint32_t test_duration_ms;
-    double tcp_efficiency;
-    double buffer_delay_pct;
-    double transfer_time_ratio;
-    bool passed;
-} rfc6349_result_t;
-
-typedef struct {
-    uint32_t path_mtu;
-    uint32_t mss;
-    double rtt_min_ms;
-    double rtt_avg_ms;
-    double rtt_max_ms;
-    uint64_t bdp_bytes;
-    uint32_t ideal_rwnd;
-    double bottleneck_bw_mbps;
-} tcp_path_info_t;
-
-typedef struct {
-    double target_rate_mbps;
-    double min_rtt_ms;
-    double max_rtt_ms;
-    uint32_t rwnd_size;
-    uint32_t test_duration_sec;
-    uint32_t parallel_streams;
-    uint32_t mss;
-    tcp_test_mode_t mode;
-} rfc6349_config_t;
-
-extern int rfc6349_path_test(rfc2544_ctx_t *ctx, const rfc6349_config_t *config, tcp_path_info_t *path);
-extern int rfc6349_throughput_test(rfc2544_ctx_t *ctx, const rfc6349_config_t *config,
-                                 rfc6349_result_t *result);
-extern void rfc6349_default_config(rfc6349_config_t *config);
+#include "rfc2544.h"
 */
 import "C"
 import "fmt"
