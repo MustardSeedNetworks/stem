@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.150](https://github.com/MustardSeedNetworks/stem/compare/v0.24.149...v0.24.150) (2026-09-24)
+
+
+### Bug Fixes
+
+* **deps:** update dependency lucide-react to v1.47.0 ([#1419](https://github.com/MustardSeedNetworks/stem/issues/1419)) ([45abcea](https://github.com/MustardSeedNetworks/stem/commit/45abcea15ae0fed53a34d0eff7c48fa3a5048a02))
+* **rfc2889:** report the measured forwarding rate, not the offered rate ([#1418](https://github.com/MustardSeedNetworks/stem/issues/1418)) ([9d33d14](https://github.com/MustardSeedNetworks/stem/commit/9d33d1463057bb103bd95eeaca365d569ca88d86))
+
 ## [0.24.149](https://github.com/MustardSeedNetworks/stem/compare/v0.24.148...v0.24.149) (2026-09-24)
 
 
