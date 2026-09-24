@@ -40,10 +40,6 @@ func webCmd(args []string) {
 	srv, err := api.NewServer(*port)
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-		_, _ = fmt.Fprintf(
-			os.Stderr,
-			"Hint: Set STEM_AUTH_USERNAME and STEM_AUTH_PASSWORD environment variables\n",
-		)
 		os.Exit(1)
 	}
 	err = srv.Run()

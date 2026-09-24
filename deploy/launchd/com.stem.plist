@@ -13,10 +13,13 @@
     <string>/usr/local/stem</string>
     <key>RunAtLoad</key>
     <true/>
+    <!-- Restart after a crash (a fatal signal), never after the daemon exits
+         with an error: that is a refusal to start, and respawning it every
+         ThrottleInterval only fills the error log (#1282). -->
     <key>KeepAlive</key>
     <dict>
-        <key>SuccessfulExit</key>
-        <false/>
+        <key>Crashed</key>
+        <true/>
     </dict>
     <key>StandardOutPath</key>
     <string>/usr/local/stem/logs/stem.log</string>

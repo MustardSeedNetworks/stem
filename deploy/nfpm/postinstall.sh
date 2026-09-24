@@ -15,6 +15,8 @@ fi
 if [ ! -f "$CONFIG_DIR/environment" ]; then
     cat > "$CONFIG_DIR/environment" <<'EOF'
 # Stem environment variables
+# Credentials are optional: with neither set, open https://<host>:8444 and set
+# the administrator password in first-run setup. Set both or neither.
 # STEM_AUTH_USERNAME=<your-admin-username>
 # STEM_AUTH_PASSWORD=<choose-a-strong-unique-password>
 # STEM_JWT_SECRET=generate-a-secure-random-string
@@ -95,24 +97,20 @@ echo ""
 
 if [ "$running" = no ]; then
     cat <<'EOF'
-The service could not start. The usual cause on a fresh install is that no
-credentials are set: /etc/stem/environment ships with every variable
-commented out, and the daemon refuses to start without them.
-
-  1. Edit /etc/stem/environment and set:
-       STEM_AUTH_USERNAME=<your-admin-username>
-       STEM_AUTH_PASSWORD=<choose-a-strong-unique-password>
-       STEM_JWT_SECRET=<a-secure-random-string>
-  2. sudo systemctl restart stem
-  3. systemctl status stem
-
-The exact reason is in the log:
+The service could not start. The reason is in the log:
   journalctl -u stem -n 20 --no-pager
+
+Credentials in /etc/stem/environment are optional; if set, set both
+STEM_AUTH_USERNAME and STEM_AUTH_PASSWORD, or neither. Fix what the log names,
+then:
+  sudo systemctl restart stem
+  systemctl status stem
 
 EOF
 else
     cat <<'EOF'
 Web interface: https://localhost:8444 (self-signed certificate)
+  First visit: set the administrator password (user "admin") in setup.
   Trust the cert: sudo stem install-ca
 
 EOF

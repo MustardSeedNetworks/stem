@@ -328,8 +328,8 @@ func GetEnvironmentVariables() []ConfigOption {
 			Type:       TypeString,
 			Default:    "admin",
 			EnvVar:     "STEM_AUTH_USERNAME",
-			TechDesc:   "Username for web interface authentication. Set in /etc/stem/environment for security.",
-			LaymanDesc: "Login username for the web interface.",
+			TechDesc:   "Web UI username instead of first-run setup; set both or neither. A stored one wins.",
+			LaymanDesc: "Login username for the web interface. Optional: the setup page sets one.",
 			Example:    "STEM_AUTH_USERNAME=operator",
 		},
 		{
@@ -338,8 +338,8 @@ func GetEnvironmentVariables() []ConfigOption {
 			Type:       TypeString,
 			Default:    "",
 			EnvVar:     "STEM_AUTH_PASSWORD",
-			TechDesc:   "Password for web interface authentication. Must be set before enabling auth. Never store in config file.",
-			LaymanDesc: "Login password for the web interface. MUST be changed from default.",
+			TechDesc:   "Web UI password instead of first-run setup. Never store in config file.",
+			LaymanDesc: "Login password for the web interface. Optional: the setup page sets one.",
 			Example:    "STEM_AUTH_PASSWORD=SecureP@ssw0rd!",
 		},
 		{

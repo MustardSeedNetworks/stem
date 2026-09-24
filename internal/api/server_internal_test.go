@@ -674,18 +674,6 @@ func TestApiVersionMiddleware(t *testing.T) {
 	})
 }
 
-// TestNewServer_MissingCredentials tests NewServer with missing credentials.
-func TestNewServer_MissingCredentials(t *testing.T) {
-	// Clear any existing credentials.
-	t.Setenv("STEM_AUTH_USERNAME", "")
-	t.Setenv("STEM_AUTH_PASSWORD", "")
-
-	_, err := NewServer(8444)
-	if err == nil {
-		t.Error("NewServer() should return error with missing credentials")
-	}
-}
-
 // TestNewServer_PartialCredentials tests NewServer with partial credentials.
 func TestNewServer_PartialCredentials(t *testing.T) {
 	t.Run("username only", func(t *testing.T) {
@@ -1088,58 +1076,26 @@ func TestServerShutdown(t *testing.T) {
 	}
 }
 
-// TestNeedsInitialSetup tests the needsInitialSetup function.
+// TestNeedsInitialSetup: setup is needed exactly while the daemon holds no
+// administrator credential.
 func TestNeedsInitialSetup(t *testing.T) {
-	t.Run("setup mode enabled", func(t *testing.T) {
+	t.Run("credential from environment", func(t *testing.T) {
 		t.Setenv("STEM_AUTH_USERNAME", "setupuser")
 		t.Setenv("STEM_AUTH_PASSWORD", "setuppass123")
-		t.Setenv("STEM_SETUP_MODE", "true")
 
-		s := newTestServer(t)
-
-		if !s.needsInitialSetup() {
-			t.Error("Expected needsInitialSetup to return true when STEM_SETUP_MODE=true")
+		if newTestServer(t).needsInitialSetup() {
+			t.Error("needsInitialSetup() = true with a configured credential")
 		}
 	})
 
-	t.Run("setup mode disabled", func(t *testing.T) {
-		t.Setenv("STEM_AUTH_USERNAME", "setupuser2")
-		t.Setenv("STEM_AUTH_PASSWORD", "setuppass123")
-		t.Setenv("STEM_SETUP_MODE", "false")
+	t.Run("unclaimed", func(t *testing.T) {
+		t.Setenv("STEM_AUTH_USERNAME", "")
+		t.Setenv("STEM_AUTH_PASSWORD", "")
 
-		s := newTestServer(t)
-
-		if s.needsInitialSetup() {
-			t.Error("Expected needsInitialSetup to return false when STEM_SETUP_MODE=false")
+		if !newTestServer(t).needsInitialSetup() {
+			t.Error("needsInitialSetup() = false with no credential anywhere")
 		}
 	})
-}
-
-// TestMarkSetupComplete tests the markSetupComplete function.
-func TestMarkSetupComplete(t *testing.T) {
-	t.Setenv("STEM_AUTH_USERNAME", "marksetupuser")
-	t.Setenv("STEM_AUTH_PASSWORD", "marksetuppass123")
-	t.Setenv("STEM_SETUP_MODE", "true")
-
-	s := newTestServer(t)
-
-	// Initially setup should be needed.
-	if !s.needsInitialSetup() {
-		t.Error("Expected needsInitialSetup to return true initially")
-	}
-
-	// Mark setup as complete.
-	s.markSetupComplete()
-
-	// After marking complete, setup should not be needed.
-	if s.needsInitialSetup() {
-		t.Error("Expected needsInitialSetup to return false after markSetupComplete")
-	}
-
-	// setupComplete flag should be set.
-	if !s.setupComplete {
-		t.Error("Expected setupComplete to be true")
-	}
 }
 
 // TestResolveTestInterface tests the resolveTestInterface function.
@@ -1869,7 +1825,6 @@ func TestHandleRecoveryCompleteCoverage(t *testing.T) {
 func TestHandleSetupCompleteCoverage(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "setcompleteuser")
 	t.Setenv("STEM_AUTH_PASSWORD", "setcompletepass123")
-	t.Setenv("STEM_SETUP_MODE", "false")
 
 	s := newTestServer(t)
 
@@ -1885,9 +1840,6 @@ func TestHandleSetupCompleteCoverage(t *testing.T) {
 	})
 
 	t.Run("setup not needed", func(t *testing.T) {
-		// Mark setup as complete.
-		s.markSetupComplete()
-
 		req := httptest.NewRequest(
 			http.MethodPost,
 			"/api/v1/setup/complete",
@@ -2551,9 +2503,8 @@ func TestHandleRecoveryCompleteValidation(t *testing.T) {
 
 // TestHandleSetupCompleteValidation tests handleSetupComplete validation paths.
 func TestHandleSetupCompleteValidation(t *testing.T) {
-	t.Setenv("STEM_AUTH_USERNAME", "setvaluser")
-	t.Setenv("STEM_AUTH_PASSWORD", "setvalpass123")
-	t.Setenv("STEM_SETUP_MODE", "true")
+	t.Setenv("STEM_AUTH_USERNAME", "")
+	t.Setenv("STEM_AUTH_PASSWORD", "")
 
 	s := newTestServer(t)
 
@@ -3068,19 +3019,6 @@ func TestHandleTestResultDifferentStates(t *testing.T) {
 	}
 }
 
-// TestNeedsInitialSetupWithDefaultHash tests needsInitialSetup with default hash.
-func TestNeedsInitialSetupWithDefaultHash(t *testing.T) {
-	t.Setenv("STEM_AUTH_USERNAME", "setuphashuser")
-	t.Setenv("STEM_AUTH_PASSWORD", "setuphashpass123")
-	t.Setenv("STEM_SETUP_MODE", "false")
-
-	s := newTestServer(t)
-
-	// The result depends on whether the password hash is default.
-	result := s.needsInitialSetup()
-	t.Logf("needsInitialSetup returned: %v", result)
-}
-
 // TestHandleRecoveryCompleteWeakPassword tests handleRecoveryComplete with weak password.
 func TestHandleRecoveryCompleteWeakPassword(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "recweakuser")
@@ -3099,34 +3037,6 @@ func TestHandleRecoveryCompleteWeakPassword(t *testing.T) {
 	// Should fail with invalid token (before reaching password validation).
 	if w.Code == http.StatusOK {
 		t.Error("Expected failure with invalid token")
-	}
-}
-
-// TestHandleSetupCompleteWithValidToken tests handleSetupComplete success path.
-func TestHandleSetupCompleteWithValidToken(t *testing.T) {
-	t.Setenv("STEM_AUTH_USERNAME", "setupvaliduser")
-	t.Setenv("STEM_AUTH_PASSWORD", "setupvalidpass123")
-	t.Setenv("STEM_SETUP_MODE", "true")
-
-	s := newTestServer(t)
-
-	// Try with a valid token if available.
-	if s.setupTokenManager != nil {
-		token, genErr := s.setupTokenManager.GenerateToken()
-		if genErr != nil {
-			t.Logf("Failed to generate token: %v", genErr)
-			return
-		}
-		if token != "" {
-			req := httptest.NewRequest(http.MethodPost, "/api/v1/setup/complete",
-				bytes.NewBufferString(`{"setupToken":"`+token+`","password":"ValidPass123!"}`))
-			w := httptest.NewRecorder()
-
-			s.handleSetupComplete(w, req)
-
-			// Check the result (may be success or validation failure).
-			t.Logf("handleSetupComplete response: %d - %s", w.Code, w.Body.String())
-		}
 	}
 }
 

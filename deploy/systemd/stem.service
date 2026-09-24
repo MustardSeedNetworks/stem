@@ -4,10 +4,10 @@ Documentation=https://github.com/MustardSeedNetworks/stem
 After=network-online.target
 Wants=network-online.target
 
-# A daemon with no credentials exits 1 immediately, and Restart=on-failure at a
-# 5 s cadence never fills systemd's default limit (5 starts / 10 s), so an
-# unconfigured install used to respin forever -- 34,763 times on one host.
-# Three attempts in a minute, then the unit stays failed and says why.
+# A daemon that refuses to start exits 1 immediately, and Restart=on-failure at
+# a 5 s cadence never fills systemd's default limit (5 starts / 10 s), so a
+# refused start used to respin forever -- 34,763 times on one host. Three
+# attempts in a minute, then the unit stays failed and says why.
 StartLimitIntervalSec=60
 StartLimitBurst=3
 

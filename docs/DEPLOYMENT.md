@@ -93,21 +93,37 @@ sudo cp bin/stem /usr/local/bin/
 
 ## Configuration
 
-### Environment Variables (Required)
+### First-Run Setup
 
-| Variable | Description | Example |
-| ---------- | ------------- | --------- |
-| `STEM_AUTH_USERNAME` | WebUI username | `admin` |
-| `STEM_AUTH_PASSWORD` | WebUI password | `secure-password-here` |
-| `STEM_JWT_SECRET` | JWT signing secret (256-bit) | Auto-generated if not set |
+A fresh install needs no credentials. The service starts unclaimed: open
+`https://<host>:8444`, and the setup page asks for the password of the
+administrator account `admin`. Until it is set every login is refused. The
+password is stored as an Argon2id hash in `credentials.json` (mode 0600 on
+Linux and macOS) in the data directory, so it survives restarts and upgrades. A password reset
+through password recovery is stored the same way.
 
-### Environment Variables (Optional)
+The setup page is open to anyone who can reach the port until the password is
+set, so complete it right after installing, or install with the port
+firewalled.
+
+| Platform | Data directory |
+| ---------- | ------------- |
+| Linux `.deb` / `.rpm` | `/var/lib/stem` |
+| macOS `.pkg` / tarball with the launchd plist | `/usr/local/stem` |
+
+A `credentials.json` that exists but cannot be read is a start failure, not a
+return to setup: delete it deliberately to reclaim the daemon.
+
+### Environment Variables
 
 | Variable | Description | Default |
 | ---------- | ------------- | --------- |
+| `STEM_AUTH_USERNAME` | WebUI username, instead of first-run setup; set both or neither | unset |
+| `STEM_AUTH_PASSWORD` | WebUI password, instead of first-run setup; set both or neither | unset |
+| `STEM_JWT_SECRET` | JWT signing secret (256-bit) | Auto-generated if not set |
 | `STEM_LOG_LEVEL` | Log level (debug, info, warn, error) | `info` |
 | `STEM_LOG_FORMAT` | Log format (json, text) | `json` |
-| `STEM_DATA_DIR` | Data directory path | `~/.stem` |
+| `STEM_DATA_DIR` | Data directory path | the working directory |
 | `STEM_TRUSTED_PROXIES` | Comma-separated CIDRs whose `X-Forwarded-For` may key rate limits and failed-login counters | unset (loopback only) |
 
 ### Reverse Proxies
@@ -130,7 +146,10 @@ entry is whatever the client chose to send. List only the addresses your own
 proxies connect from: `0.0.0.0/0` and `::/0` are refused at startup, since
 trusting every peer lets any client set its own rate-limit key.
 
-### Setting Credentials
+### Setting Credentials From the Environment
+
+For unattended or scripted installs that must not wait on the setup page. A
+password stored through setup or recovery takes precedence over these.
 
 ```bash
 # Generate a secure password

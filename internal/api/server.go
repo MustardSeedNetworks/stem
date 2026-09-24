@@ -156,8 +156,7 @@ type Server struct {
 	routeManifest        []route                    // capability registry: routes registered via register() (route.go)
 	csrfManager          *auth.CSRFManager          // CSRF token manager for protection against CSRF attacks
 	setupTokenManager    *auth.SetupTokenManager    // Setup token manager for first-time setup security
-	setupComplete        bool                       // Whether initial setup has been completed
-	setupModeStartTime   time.Time                  // When setup mode was activated (for timeout)
+	setupMu              sync.Mutex                 // Serializes first-run setup so only one claim wins
 	recoveryTokenManager *auth.RecoveryTokenManager // Recovery token manager for password recovery
 	dataDir              string                     // Application data directory for recovery files
 	instanceLock         *instance.Lock             // Single-instance lock on dataDir, held for the lifetime of Run (#1336)
@@ -216,10 +215,11 @@ func serveFallbackUIPage(w http.ResponseWriter, _ *http.Request) {
 }
 
 // NewServer builds a Server bound to port: it loads the license manager,
-// auto-selects a network interface, and constructs the auth manager from
-// STEM_JWT_SECRET / STEM_AUTH_USERNAME / STEM_AUTH_PASSWORD (returning an
-// error if those env vars are missing or invalid). The returned Server has
-// not started listening yet; call Run to bind the TLS listener and serve.
+// auto-selects a network interface, and resolves the administrator
+// credential (see newAuthManager), returning an error when the credential
+// store is damaged or the environment names only half a credential. The
+// returned Server has not started listening yet; call Run to bind the TLS
+// listener and serve.
 func NewServer(port int) (*Server, error) {
 	// Initialize license manager. A state Stem cannot use is reported once
 	// here rather than on every gated request; the entitlement consequence is
@@ -251,13 +251,7 @@ func NewServer(port int) (*Server, error) {
 		logging.Warn(msg, "error", hibpErr, "event", "auth.hibp.soft_failure")
 	})
 
-	// Create auth manager - credentials are required via env vars.
-	authMgr, err := auth.NewManager(
-		os.Getenv("STEM_JWT_SECRET"),
-		defaultAuthSessionTimeout,
-		os.Getenv("STEM_AUTH_USERNAME"),
-		os.Getenv("STEM_AUTH_PASSWORD"),
-	)
+	authMgr, err := newAuthManager(getDataDir())
 	if err != nil {
 		return nil, fmt.Errorf("authentication setup failed: %w", err)
 	}
@@ -319,8 +313,6 @@ func NewServer(port int) (*Server, error) {
 	s.corsAllowPrivate = corsAllowPrivateEnabled()
 	s.csrfManager = auth.NewCSRFManager(logging.Get())
 	s.setupTokenManager = auth.NewSetupTokenManager()
-	s.setupComplete = false
-	s.setupModeStartTime = time.Time{}
 	s.recoveryTokenManager = auth.NewRecoveryTokenManager(getDataDir())
 	s.dataDir = getDataDir()
 
