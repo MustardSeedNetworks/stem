@@ -80,7 +80,7 @@ func parseTestFlags(args []string) (*testCmdFlags, error) {
 	// Basic options.
 	iface := fs.String("interface", "", "Network interface")
 	fs.StringVar(iface, "i", "", "Network interface (shorthand)")
-	peer := fs.String("peer", "", "Reflector host or IPv4 address")
+	peer := fs.String("peer", "", "Reflector host or IPv4 address to test through (required)")
 	peerPort := uint16(defaultPeerPort)
 	fs.Func("peer-port", "Reflector UDP port", func(value string) error {
 		parsed, err := strconv.ParseUint(value, 10, 16)

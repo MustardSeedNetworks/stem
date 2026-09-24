@@ -238,13 +238,13 @@ curl -sk https://localhost:8444/api/v1/reflector/stats
 
 ```bash
 # RFC 2544 throughput test
-stem test -i eth0 -t rfc2544_throughput
+stem test -i eth0 --peer 192.0.2.10 -t rfc2544_throughput
 
 # Multiple tests
-stem test -i eth0 -t rfc2544_throughput,rfc2544_latency,rfc2544_frame_loss
+stem test -i eth0 --peer 192.0.2.10 -t rfc2544_throughput,rfc2544_latency,rfc2544_frame_loss
 
 # Y.1564 service activation
-stem test -i eth0 -t y1564 --cir 100 --eir 50
+stem test -i eth0 --peer 192.0.2.10 -t y1564 --cir 100 --eir 50
 ```
 
 ## Production Deployment
