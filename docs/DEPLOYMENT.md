@@ -98,8 +98,8 @@ sudo cp bin/stem /usr/local/bin/
 A fresh install needs no credentials. The service starts unclaimed: open
 `https://<host>:8444`, and the setup page asks for the password of the
 administrator account `admin`. Until it is set every login is refused. The
-password is stored as an Argon2id hash in `credentials.json` (mode 0600) in
-the data directory, so it survives restarts and upgrades. A password reset
+password is stored as an Argon2id hash in `credentials.json` (mode 0600 on
+Linux and macOS) in the data directory, so it survives restarts and upgrades. A password reset
 through password recovery is stored the same way.
 
 The setup page is open to anyone who can reach the port until the password is
