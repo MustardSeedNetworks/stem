@@ -36,6 +36,9 @@ const (
 
 	// headerPadding is the padding added to header text for separator width.
 	headerPadding = 2
+
+	// testSynopsis is the shortest `stem test` invocation the daemon accepts.
+	testSynopsis = "stem test -i <interface> --peer <reflector> -t <test-type>"
 )
 
 // DisplayTest shows detailed help for a test.
@@ -418,7 +421,7 @@ func DisplayTestListTo(w io.Writer) {
 	printHeader(w, "Available Tests")
 	_, _ = fmt.Fprintln(w)
 	_, _ = fmt.Fprintln(w, "Stem supports 27 test types across 7 categories.")
-	_, _ = fmt.Fprintf(w, "Usage: %sstem test -i <interface> -t <test-type>%s\n", colorGreen, colorReset)
+	_, _ = fmt.Fprintf(w, "Usage: %s%s%s\n", colorGreen, testSynopsis, colorReset)
 	_, _ = fmt.Fprintln(w)
 
 	categories := GetAllCategories()
@@ -464,7 +467,7 @@ func DisplayTestListByModuleTo(w io.Writer) {
 	}
 
 	_, _ = fmt.Fprintf(w, "Stem supports %d test types across %d modules.\n", totalTests, len(allModules))
-	_, _ = fmt.Fprintf(w, "Usage: %sstem test -i <interface> -t <test-type>%s\n", colorGreen, colorReset)
+	_, _ = fmt.Fprintf(w, "Usage: %s%s%s\n", colorGreen, testSynopsis, colorReset)
 	_, _ = fmt.Fprintln(w)
 
 	// Define module display order (Tier 1 first, then Tier 2 by color) - use lowercase module names

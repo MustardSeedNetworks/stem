@@ -105,7 +105,7 @@ func TestCommand() CommandHelp {
 	complete test suite run.
 
 	Results are displayed in real-time and can be saved to files for later analysis.`,
-		Usage:    "stem test -i <interface> -t <test_type> [flags]",
+		Usage:    "stem test -i <interface> --peer <reflector> -t <test_type> [flags]",
 		Flags:    testCommandFlags(),
 		Examples: testCommandExamples(),
 		SeeAlso:  []string{"reflect", "web", "help", "tutorial"},
