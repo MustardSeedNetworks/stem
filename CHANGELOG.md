@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.148](https://github.com/MustardSeedNetworks/stem/compare/v0.24.147...v0.24.148) (2026-09-24)
+
+
+### Bug Fixes
+
+* **ui:** give pill text a -strong token measured on its own wash ([#1408](https://github.com/MustardSeedNetworks/stem/issues/1408)) ([5d90c02](https://github.com/MustardSeedNetworks/stem/commit/5d90c02532f7ffa4a940f386f7c221d8b114ed9a))
+
+
+### Miscellaneous
+
+* **deps:** update dependency jsdom to v30.1.0 ([#1409](https://github.com/MustardSeedNetworks/stem/issues/1409)) ([701e258](https://github.com/MustardSeedNetworks/stem/commit/701e258d430f65d8a6e65585b7beda4bf733cc19))
+
 ## [0.24.147](https://github.com/MustardSeedNetworks/stem/compare/v0.24.146...v0.24.147) (2026-09-23)
 
 
