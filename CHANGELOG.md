@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.149](https://github.com/MustardSeedNetworks/stem/compare/v0.24.148...v0.24.149) (2026-09-24)
+
+
+### Bug Fixes
+
+* **dataplane:** stop the AF_PACKET generator blocking on every receive poll ([#1413](https://github.com/MustardSeedNetworks/stem/issues/1413)) ([66e97ee](https://github.com/MustardSeedNetworks/stem/commit/66e97ee888a94af836835dafd61185200dc95302)), closes [#1239](https://github.com/MustardSeedNetworks/stem/issues/1239)
+* **reflector:** keep the daemon's credentials across reflector runs ([#1415](https://github.com/MustardSeedNetworks/stem/issues/1415)) ([b2da5bb](https://github.com/MustardSeedNetworks/stem/commit/b2da5bbe22ef1d9c9c1c72c17a1f6b4864a8bec7)), closes [#1231](https://github.com/MustardSeedNetworks/stem/issues/1231)
+
 ## [0.24.148](https://github.com/MustardSeedNetworks/stem/compare/v0.24.147...v0.24.148) (2026-09-24)
 
 
