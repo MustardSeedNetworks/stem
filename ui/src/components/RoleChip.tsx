@@ -144,7 +144,7 @@ export const RoleChip: FC<RoleChipProps> = ({ className = '', layout = 'inline' 
         <div
           role="alert"
           data-testid="role-chip-error"
-          className="inline-flex items-center gap-compact rounded-md border border-status-error/40 bg-status-error/10 px-cell py-compact text-xs text-status-error"
+          className="inline-flex items-center gap-compact rounded-md border border-status-error/40 bg-status-error/10 px-cell py-compact text-xs text-status-error-strong"
         >
           <span className="font-medium">{t('role.switchError.label')}</span>
           <span className="font-normal text-text-primary">{roleSwitchError}</span>
@@ -152,7 +152,7 @@ export const RoleChip: FC<RoleChipProps> = ({ className = '', layout = 'inline' 
             type="button"
             onClick={clearRoleSwitchError}
             aria-label={t('role.switchError.dismiss')}
-            className="inline-flex h-4 w-4 items-center justify-center rounded text-status-error/80 hover:bg-status-error/20 hover:text-status-error focus:outline-none focus-visible:ring-2 focus-visible:ring-status-error"
+            className="inline-flex h-4 w-4 items-center justify-center rounded text-status-error-strong/80 hover:bg-status-error/20 hover:text-status-error-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-status-error"
             data-testid="role-chip-error-dismiss"
           >
             <X className="h-3 w-3" aria-hidden="true" />

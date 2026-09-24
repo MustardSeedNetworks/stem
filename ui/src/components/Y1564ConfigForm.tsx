@@ -420,7 +420,7 @@ export function Y1564ConfigForm({
 
         {/* Cross-field error footer */}
         {crossFieldError && (
-          <div className="pad-xs rounded-lg bg-status-error/10 text-status-error text-sm flex items-center gap-compact">
+          <div className="pad-xs rounded-lg bg-status-error/10 text-status-error-strong text-sm flex items-center gap-compact">
             <AlertTriangle className="w-4 h-4" />
             {crossFieldError.message}
           </div>

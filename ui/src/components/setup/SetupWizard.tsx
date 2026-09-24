@@ -360,7 +360,7 @@ export function SetupWizard({
           {crossFieldError ? (
             <div
               role="alert"
-              className="mb-content pad-sm rounded-xl bg-status-error/10 border border-status-error/20 text-sm text-status-error"
+              className="mb-content pad-sm rounded-xl bg-status-error/10 border border-status-error/20 text-sm text-status-error-strong"
             >
               {crossFieldError.message}
             </div>
@@ -370,7 +370,7 @@ export function SetupWizard({
           {submitError !== null ? (
             <div
               role="alert"
-              className="mb-content pad-sm rounded-xl bg-status-error/10 border border-status-error/20 text-sm text-status-error"
+              className="mb-content pad-sm rounded-xl bg-status-error/10 border border-status-error/20 text-sm text-status-error-strong"
             >
               {submitError}
             </div>

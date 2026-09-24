@@ -103,7 +103,7 @@ export function TestResults({ testStatus, result }: TestResultsProps): ReactElem
       {/* Error Message */}
       {result.error ? (
         <div className="mb-content pad-sm rounded-lg bg-status-error/10 border border-status-error/20">
-          <div className="text-sm font-medium text-status-error">Error</div>
+          <div className="text-sm font-medium text-status-error-strong">Error</div>
           <div className="text-sm text-text-primary">{result.error}</div>
         </div>
       ) : null}

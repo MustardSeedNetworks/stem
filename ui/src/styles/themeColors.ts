@@ -61,16 +61,16 @@ const statusBorder = {
 
 const statusBadge = {
   // 10% bg + matching text — standard chip
-  success: 'bg-status-success/10 text-status-success',
-  warning: 'bg-status-warning/10 text-status-warning',
-  error: 'bg-status-error/10 text-status-error',
-  info: 'bg-status-info/10 text-status-info',
+  success: 'bg-status-success/10 text-status-success-strong',
+  warning: 'bg-status-warning/10 text-status-warning-strong',
+  error: 'bg-status-error/10 text-status-error-strong',
+  info: 'bg-status-info/10 text-status-info-strong',
 
   // 20% bg + matching text — emphasized chip / active state
-  successStrong: 'bg-status-success/20 text-status-success',
-  warningStrong: 'bg-status-warning/20 text-status-warning',
-  errorStrong: 'bg-status-error/20 text-status-error',
-  infoStrong: 'bg-status-info/20 text-status-info',
+  successStrong: 'bg-status-success/20 text-status-success-strong',
+  warningStrong: 'bg-status-warning/20 text-status-warning-strong',
+  errorStrong: 'bg-status-error/20 text-status-error-strong',
+  infoStrong: 'bg-status-info/20 text-status-info-strong',
 } as const;
 
 const statusHover = {
