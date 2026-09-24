@@ -30,6 +30,7 @@
 
   /* Brand Colors - Mustard Seed Networks */
   --color-brand-primary: var(--color-brand-primary);
+  --color-brand-primary-strong: var(--color-brand-primary-strong);
   --color-brand-accent: var(--color-brand-accent);
   --color-accent-gold: var(--color-accent-gold);
 
@@ -71,6 +72,12 @@
   --color-status-warning: var(--color-status-warning);
   --color-status-error: var(--color-status-error);
   --color-status-info: var(--color-status-info);
+
+  /* Pill text — the hue's text on its own wash (see product-stem.css). */
+  --color-status-success-strong: var(--color-status-success-strong);
+  --color-status-warning-strong: var(--color-status-warning-strong);
+  --color-status-error-strong: var(--color-status-error-strong);
+  --color-status-info-strong: var(--color-status-info-strong);
 
   /* Log level colors (Syslog/RFC 5424) — constant across light/dark. */
   --color-log-trace: var(--color-log-trace);
@@ -701,48 +708,19 @@ body {
   }
 
   .status-badge.success {
-    @apply bg-status-success/10 text-status-success;
+    @apply bg-status-success/10 text-status-success-strong;
   }
 
   .status-badge.warning {
-    @apply bg-status-warning/10 text-status-warning;
+    @apply bg-status-warning/10 text-status-warning-strong;
   }
 
   .status-badge.error {
-    @apply bg-status-error/10 text-status-error;
+    @apply bg-status-error/10 text-status-error-strong;
   }
 
   .status-badge.info {
-    @apply bg-status-info/10 text-status-info;
-  }
-
-  /* Module badges */
-  .module-badge {
-    @apply inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-md uppercase tracking-wider;
-  }
-
-  .module-badge.reflector {
-    @apply bg-module-reflector/10 text-module-reflector border border-module-reflector/20;
-  }
-
-  .module-badge.benchmark {
-    @apply bg-module-benchmark/10 text-module-benchmark border border-module-benchmark/20;
-  }
-
-  .module-badge.servicetest {
-    @apply bg-module-servicetest/10 text-module-servicetest border border-module-servicetest/20;
-  }
-
-  .module-badge.trafficgen {
-    @apply bg-module-trafficgen/10 text-module-trafficgen border border-module-trafficgen/20;
-  }
-
-  .module-badge.measure {
-    @apply bg-module-measure/10 text-module-measure border border-module-measure/20;
-  }
-
-  .module-badge.certify {
-    @apply bg-module-certify/10 text-module-certify border border-module-certify/20;
+    @apply bg-status-info/10 text-status-info-strong;
   }
 
   /* ========================================================================
@@ -882,19 +860,19 @@ body {
   }
 
   .alert.success {
-    @apply bg-status-success/10 border border-status-success/20 text-status-success;
+    @apply bg-status-success/10 border border-status-success/20 text-status-success-strong;
   }
 
   .alert.warning {
-    @apply bg-status-warning/10 border border-status-warning/20 text-status-warning;
+    @apply bg-status-warning/10 border border-status-warning/20 text-status-warning-strong;
   }
 
   .alert.error {
-    @apply bg-status-error/10 border border-status-error/20 text-status-error;
+    @apply bg-status-error/10 border border-status-error/20 text-status-error-strong;
   }
 
   .alert.info {
-    @apply bg-status-info/10 border border-status-info/20 text-status-info;
+    @apply bg-status-info/10 border border-status-info/20 text-status-info-strong;
   }
 
   /* ========================================================================

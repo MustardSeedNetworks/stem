@@ -143,7 +143,7 @@ export function HistoryPage(): JSX.Element {
                   remove(selected.id);
                   setSelectedId(null);
                 }}
-                className="rounded-md px-3 py-2 text-sm text-status-error hover:bg-status-error/10"
+                className="rounded-md px-3 py-2 text-sm text-status-error-strong hover:bg-status-error/10"
               >
                 {t('history.deleteRun')}
               </button>
@@ -151,7 +151,7 @@ export function HistoryPage(): JSX.Element {
           >
             {selected.error ? (
               <div className="rounded-lg border border-status-error/40 bg-status-error/10 pad-sm">
-                <p className="caption text-status-error">{t('history.error')}</p>
+                <p className="caption text-status-error-strong">{t('history.error')}</p>
                 <p className="text-sm text-text-primary">{selected.error}</p>
               </div>
             ) : null}
@@ -193,7 +193,7 @@ function RunVerdict({ result }: { result: HistoricalResult }): JSX.Element {
     );
   }
   return (
-    <span className="rounded-lg border border-status-error/40 bg-status-error/10 px-3 py-1.5 text-xs font-semibold text-status-error">
+    <span className="rounded-lg border border-status-error/40 bg-status-error/10 px-3 py-1.5 text-xs font-semibold text-status-error-strong">
       {t('history.failed')}
     </span>
   );

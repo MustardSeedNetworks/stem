@@ -18,8 +18,8 @@
  * The six module accents remain, with one change of ROLE: they are no longer
  * used as button fills. Six saturated fills competed with status for
  * attention and made the run-state band harder to find. They now appear only
- * as module badges (10% tint + text) and as chart series colours. Their
- * colour-blind-safe re-cut is UI-STEM-10's, not this file's.
+ * as page icons and chart series colours, never as text on their own wash.
+ * Their colour-blind-safe re-cut is UI-STEM-10's, not this file's.
  *
  * brand-gold is gone: the canonical shared theme owns it as
  * --color-accent-gold now, so the value is one fleet decision rather than
@@ -33,6 +33,18 @@
   --color-on-brand: #ffffff;
   --color-on-danger: #ffffff;
   --color-on-success: #ffffff;
+
+  /* Pill text (UI-FLEET-3, .github#74). A hue's own wash pulls the ground
+   * toward it, so the bare hue measures 3.43-3.66:1 as 12px text on a /20
+   * wash over the sunken surface. Each value is the same hue, darkened by
+   * the smallest step to 4.6:1 there; pillText.test.ts measures every
+   * surface up to /20. The status four are the fleet's values and move to
+   * msn-shared.css once all four products use them. */
+  --color-status-success-strong: #235e3a;
+  --color-status-warning-strong: #6d4e07;
+  --color-status-error-strong: #932e2e;
+  --color-status-info-strong: #0f548f;
+  --color-brand-primary-strong: #11529d;
 
   --color-module-reflector: #0e6f80;
   --color-module-benchmark: #a83232;
@@ -51,6 +63,14 @@
   --color-on-brand: #181611;
   --color-on-danger: #181611;
   --color-on-success: #181611;
+
+  /* Pill text, lightened by the smallest step to 4.6:1 on a /20 wash over
+   * the hover surface. */
+  --color-status-success-strong: #56c785;
+  --color-status-warning-strong: #deab34;
+  --color-status-error-strong: #e5a2a2;
+  --color-status-info-strong: #7eb8ea;
+  --color-brand-primary-strong: #76adeb;
 
   --color-module-reflector: #22d3ee;
   --color-module-benchmark: #f87171;

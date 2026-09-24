@@ -134,7 +134,7 @@ function LicenseFeatures({ licenseInfo }: LicenseStatusProps): ReactElement | nu
         {licenseInfo.features.map((feature) => (
           <span
             key={feature}
-            className="px-cell py-0.5 text-xs bg-brand-primary/10 text-brand-primary rounded-full"
+            className="px-cell py-0.5 text-xs bg-brand-primary/10 text-brand-primary-strong rounded-full"
           >
             {feature}
           </span>
@@ -227,10 +227,12 @@ function MessageDisplay({ error, success }: MessageDisplayProps): ReactElement |
   return (
     <>
       {error ? (
-        <div className="text-sm text-status-error bg-status-error/10 pad-xs rounded">{error}</div>
+        <div className="text-sm text-status-error-strong bg-status-error/10 pad-xs rounded">
+          {error}
+        </div>
       ) : null}
       {success ? (
-        <div className="text-sm text-status-success bg-status-success/10 pad-xs rounded">
+        <div className="text-sm text-status-success-strong bg-status-success/10 pad-xs rounded">
           {success}
         </div>
       ) : null}

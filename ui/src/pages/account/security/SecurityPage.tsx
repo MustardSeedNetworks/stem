@@ -99,7 +99,7 @@ export function SecurityPage(): ReactElement {
       {error ? (
         <div
           role="alert"
-          className="rounded-lg border border-status-error/40 bg-status-error/10 pad-sm text-sm text-status-error"
+          className="rounded-lg border border-status-error/40 bg-status-error/10 pad-sm text-sm text-status-error-strong"
         >
           {error}
         </div>
