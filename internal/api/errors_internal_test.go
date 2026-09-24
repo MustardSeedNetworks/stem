@@ -5,8 +5,10 @@ package api
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"syscall"
 	"testing"
 
 	"github.com/MustardSeedNetworks/stem/internal/auth"
@@ -279,6 +281,14 @@ func TestMapTestError(t *testing.T) {
 		{
 			name:         "not supported",
 			err:          dataplane.ErrNotSupported,
+			expectedCode: ErrCodeServiceUnavailable,
+			expectedHTTP: http.StatusServiceUnavailable,
+		},
+		{
+			// A reflector start without CAP_NET_RAW (stem#1231): the cause
+			// reaches the operator instead of a bare 500.
+			name:         "raw socket permission denied",
+			err:          fmt.Errorf("start reflector: failed to start reflector: %w", syscall.EPERM),
 			expectedCode: ErrCodeServiceUnavailable,
 			expectedHTTP: http.StatusServiceUnavailable,
 		},
