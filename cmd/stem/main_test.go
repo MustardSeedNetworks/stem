@@ -11,6 +11,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/MustardSeedNetworks/stem/internal/help"
 	"github.com/MustardSeedNetworks/stem/internal/services"
 	"github.com/MustardSeedNetworks/stem/internal/version"
 )
@@ -110,6 +111,55 @@ func TestUsageExamplesNameRegisteredTestTypes(t *testing.T) {
 	for _, name := range names {
 		if services.GetModuleForTest(name) == nil {
 			t.Errorf("EXAMPLES documents 'stem test -t %s', which no module registers", name)
+		}
+	}
+}
+
+// TestUsageDocumentsEveryTestFlag ties the hand-written TEST and Y.1564
+// OPTIONS blocks of `stem --help` to the flag registry the contract test
+// already holds to the runtime flag set. They drifted once: --peer, the one
+// flag a run cannot start without, was missing from both (#1235).
+func TestUsageDocumentsEveryTestFlag(t *testing.T) {
+	usage := captureOutput(t, printUsage)
+	start := strings.Index(usage, "TEST OPTIONS:")
+	end := strings.Index(usage, "WEB OPTIONS:")
+	if start < 0 || end < start {
+		t.Fatal("printUsage has no TEST OPTIONS block ahead of WEB OPTIONS")
+	}
+	documented := usage[start:end]
+
+	for _, flag := range help.GetAllCommands()["test"].Flags {
+		if !regexp.MustCompile(regexp.QuoteMeta(flag.Long) + `[\s,]`).MatchString(documented) {
+			t.Errorf("stem --help does not document %s under TEST or Y.1564 OPTIONS", flag.Long)
+		}
+	}
+}
+
+// TestTestExamplesNameAPeer keeps every documented `stem test` invocation
+// runnable: the daemon refuses a run with no reflector to send traffic to,
+// so an example without --peer is an instruction that cannot work (#1235).
+func TestTestExamplesNameAPeer(t *testing.T) {
+	usage := captureOutput(t, printUsage)
+	_, examples, found := strings.Cut(usage, "EXAMPLES:")
+	if !found {
+		t.Fatal("printUsage has no EXAMPLES block")
+	}
+	commands := make([]string, 0)
+	for line := range strings.Lines(examples) {
+		if trimmed := strings.TrimSpace(line); strings.HasPrefix(trimmed, "stem test ") {
+			commands = append(commands, trimmed)
+		}
+	}
+	for _, example := range help.GetAllCommands()["test"].Examples {
+		commands = append(commands, example.Command)
+	}
+	if len(commands) == 0 {
+		t.Fatal("no stem test examples found; the extraction is broken, not the docs")
+	}
+
+	for _, command := range commands {
+		if !strings.Contains(command, "--peer ") {
+			t.Errorf("example %q names no --peer", command)
 		}
 	}
 }

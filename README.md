@@ -63,7 +63,7 @@ sudo ./bin/stem reflect -i eth0
 
 # Run a throughput test against a host running `stem reflect`
 # (test type names are exact — see `stem list-tests`)
-sudo ./bin/stem test -t rfc2544_throughput -i eth0
+sudo ./bin/stem test -t rfc2544_throughput -i eth0 --peer <reflector-host>
 # → the web UI shows this run, with the same run ID the CLI printed
 
 # List every test type, grouped by module
@@ -76,7 +76,7 @@ sudo ./bin/stem test -t rfc2544_throughput -i eth0
 | --- | --- |
 | `stem version` | Show version + build metadata |
 | `stem reflect -i <iface>` | Start the reflector in the running daemon |
-| `stem test -t <type> -i <iface>` | Run one or more tests (comma-separated) in the running daemon |
+| `stem test -t <type> -i <iface> --peer <host>` | Run one or more tests (comma-separated) in the running daemon against the reflector at `<host>` |
 | `stem web -p <port>` | Start the web UI + REST API |
 | `stem license --status` | Show license tier + activation state |
 | `stem list-tests` | Catalogue all supported tests, grouped by module |

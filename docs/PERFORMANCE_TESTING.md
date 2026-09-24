@@ -86,16 +86,19 @@ On the reflector host:
 stem reflect -i eth0 --profile all
 ```
 
-On the test master:
+On the test master, naming the reflector with `--peer` (required: the daemon
+refuses a run with nowhere to send its traffic):
 
 ```bash
-stem test -i eth0 -t rfc2544_throughput -d 60
+stem test -i eth0 --peer 192.0.2.10 -t rfc2544_throughput -d 60
 ```
 
 Defaults that matter, all visible in the run banner before traffic starts:
 
 | Flag | Default | Meaning |
 | --- | --- | --- |
+| `--peer` | none (required) | reflector host name or IPv4 address |
+| `--peer-port` | 3842 | reflector UDP port |
 | `--duration` / `-d` | 60 | seconds per trial |
 | `--frame-sizes` | `64,128,256,512,1024,1280,1518` | RFC 2544's frame-size ladder |
 | `--resolution` | 0.1 | binary-search resolution, % of line rate |
@@ -106,13 +109,13 @@ Defaults that matter, all visible in the run banner before traffic starts:
 Several tests in one run, comma-separated, in order:
 
 ```bash
-stem test -i eth0 -t rfc2544_throughput,rfc2544_latency,rfc2544_frame_loss,rfc2544_back_to_back
+stem test -i eth0 --peer 192.0.2.10 -t rfc2544_throughput,rfc2544_latency,rfc2544_frame_loss,rfc2544_back_to_back
 ```
 
 Service activation, where the rates are the point:
 
 ```bash
-stem test -i eth0 -t y1564 --cir 100 --eir 50
+stem test -i eth0 --peer 192.0.2.10 -t y1564 --cir 100 --eir 50
 ```
 
 `--cir` and `--eir` are Mbps. The pass/fail thresholds are `--fd-threshold`
@@ -136,7 +139,7 @@ also why it does not belong on a production path without arrangement.
   seven frame sizes × three trials × sixty seconds is 21 minutes of traffic
   per test type, before the binary search adds its own iterations.
 - **Start small.** One frame size, short duration, then widen:
-  `stem test -i eth0 -t rfc2544_throughput --frame-sizes 512 -d 10 --trials 1`
+  `stem test -i eth0 --peer 192.0.2.10 -t rfc2544_throughput --frame-sizes 512 -d 10 --trials 1`
 
 ---
 
@@ -145,8 +148,8 @@ also why it does not belong on a production path without arrangement.
 Human-readable by default; machine-readable on request:
 
 ```bash
-stem test -i eth0 -t rfc2544_throughput --json
-stem test -i eth0 -t rfc2544_throughput --csv
+stem test -i eth0 --peer 192.0.2.10 -t rfc2544_throughput --json
+stem test -i eth0 --peer 192.0.2.10 -t rfc2544_throughput --csv
 ```
 
 What each RFC 2544 sub-test answers:
@@ -194,8 +197,8 @@ is intended. The certificate is self-signed unless you have installed one;
 Two, over the same engine:
 
 ```bash
-stem test -i eth0 -t rfc2544_throughput   # CLI, scriptable, --json / --csv
-stem web -p 8444                          # HTTPS WebUI (default :8444)
+stem test -i eth0 --peer 192.0.2.10 -t rfc2544_throughput   # CLI, scriptable, --json / --csv
+stem web -p 8444                                          # HTTPS WebUI (default :8444)
 ```
 
 ---

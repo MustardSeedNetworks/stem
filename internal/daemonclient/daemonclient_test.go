@@ -163,8 +163,12 @@ func TestStartReturnsTheDaemonsRunID(t *testing.T) {
 func TestStartSurfacesTheFeatureGate(t *testing.T) {
 	dir, _ := newDaemon(t, func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusPaymentRequired)
-		writeJSON(t, w, map[string]any{
-			"error": map[string]any{"code": "TIER_TOO_LOW", "feature": "rfc2544", "message": "Professional required"},
+		writeJSON(t, w, api.FeatureGateResponse{
+			Error:           "Feature requires a higher tier",
+			Code:            "TIER_TOO_LOW",
+			RequiredFeature: "rfc2544",
+			CurrentTier:     "Reflector",
+			UpgradeMessage:  "Activate a Pro key with `stem license --activate <KEY>`.",
 		})
 	})
 
@@ -184,14 +188,16 @@ func TestStartSurfacesTheFeatureGate(t *testing.T) {
 	if gate.Feature != "rfc2544" {
 		t.Errorf("feature = %q, want %q", gate.Feature, "rfc2544")
 	}
+	if !strings.Contains(gate.Error(), "stem license --activate") {
+		t.Errorf("err = %q, want the daemon's upgrade instruction", gate.Error())
+	}
 }
 
 // Another client already owns the interface. The CLI must say so rather
 // than report a nondescript failure or, worse, appear to have started.
 func TestStartSurfacesAConflict(t *testing.T) {
 	dir, _ := newDaemon(t, func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusConflict)
-		writeJSON(t, w, map[string]any{"error": map[string]any{"message": "A test is already running"}})
+		api.WriteConflict(w, "A test is already running")
 	})
 
 	c, err := daemonclient.Open(dir)
@@ -204,6 +210,48 @@ func TestStartSurfacesAConflict(t *testing.T) {
 	})
 	if !errors.Is(startErr, daemonclient.ErrRunInProgress) {
 		t.Errorf("err = %v, want ErrRunInProgress", startErr)
+	}
+	if !strings.Contains(startErr.Error(), "A test is already running") {
+		t.Errorf("err = %q, want the daemon's own reason", startErr)
+	}
+}
+
+// The daemon says exactly why it refused a run; the operator has to see that
+// sentence, not a bare status code (#1235). The fixture is the writer the
+// daemon's handlers use, so the test cannot agree with a shape the daemon
+// never sends.
+func TestStartSurfacesTheDaemonsReason(t *testing.T) {
+	dir, _ := newDaemon(t, func(w http.ResponseWriter, _ *http.Request) {
+		api.WriteInvalidRequest(w, "A peer is required for test traffic")
+	})
+
+	c, err := daemonclient.Open(dir)
+	if err != nil {
+		t.Fatalf("Open: %v", err)
+	}
+	_, startErr := c.Start(context.Background(), api.TestStartRequest{
+		Interface: "eth0",
+		Tests:     []api.TestStepRequest{{TestType: "rfc2544_throughput"}},
+	})
+	if startErr == nil || !strings.Contains(startErr.Error(), "A peer is required for test traffic") {
+		t.Errorf("err = %v, want the daemon's reason", startErr)
+	}
+}
+
+// The CSRF middleware refuses with [http.Error], a plain-text body. Its reason
+// is as much the operator's answer as a JSON one.
+func TestStopSurfacesAPlainTextRefusal(t *testing.T) {
+	dir, _ := newDaemon(t, func(w http.ResponseWriter, _ *http.Request) {
+		http.Error(w, "Invalid CSRF token", http.StatusForbidden)
+	})
+
+	c, err := daemonclient.Open(dir)
+	if err != nil {
+		t.Fatalf("Open: %v", err)
+	}
+	stopErr := c.Stop(context.Background())
+	if stopErr == nil || !strings.Contains(stopErr.Error(), "Invalid CSRF token") {
+		t.Errorf("err = %v, want the daemon's reason", stopErr)
 	}
 }
 
@@ -493,8 +541,7 @@ func TestClientReloadsTheDescriptorAfterA401(t *testing.T) {
 		want := accepted
 		mu.Unlock()
 		if r.Header.Get("Authorization") != "Bearer "+want {
-			w.WriteHeader(http.StatusUnauthorized)
-			writeJSON(t, w, map[string]any{"error": map[string]any{"message": "expired"}})
+			api.WriteError(w, api.ErrAuthExpired)
 			return
 		}
 		writeJSON(t, w, map[string]any{"suiteId": "stem-abc-1", "testStatus": "running"})
@@ -549,8 +596,7 @@ func TestClientSurfacesA401TheReloadCannotFix(t *testing.T) {
 			writeJSON(t, w, map[string]string{"token": "csrf-value"})
 			return
 		}
-		w.WriteHeader(http.StatusUnauthorized)
-		writeJSON(t, w, map[string]any{"error": map[string]any{"message": "revoked"}})
+		api.WriteError(w, api.ErrAuthFailed)
 	}))
 	t.Cleanup(srv.Close)
 
@@ -587,8 +633,7 @@ func TestClientRetriesOnceThenSurfacesTheRefusal(t *testing.T) {
 			writeJSON(t, w, map[string]string{"token": "csrf-value"})
 			return
 		}
-		w.WriteHeader(http.StatusUnauthorized)
-		writeJSON(t, w, map[string]any{"error": map[string]any{"message": "revoked"}})
+		api.WriteError(w, api.ErrAuthFailed)
 	}))
 	t.Cleanup(srv.Close)
 
@@ -633,8 +678,7 @@ func TestRemoteClientDoesNotReload(t *testing.T) {
 			writeJSON(t, w, map[string]string{"token": "csrf-value"})
 			return
 		}
-		w.WriteHeader(http.StatusUnauthorized)
-		writeJSON(t, w, map[string]any{"error": map[string]any{"message": "no"}})
+		api.WriteError(w, api.ErrAuthFailed)
 	}))
 	t.Cleanup(srv.Close)
 
@@ -689,14 +733,12 @@ func TestClientRefreshesCSRFAfterRotation(t *testing.T) {
 		want := accepted
 		mu.Unlock()
 		if bearer != want {
-			w.WriteHeader(http.StatusUnauthorized)
-			writeJSON(t, w, map[string]any{"error": map[string]any{"message": "expired"}})
+			api.WriteError(w, api.ErrAuthExpired)
 			return
 		}
 		// The CSRF token must be the one issued for THIS bearer.
 		if r.Header.Get("X-Csrf-Token") != csrfFor[bearer] {
-			w.WriteHeader(http.StatusForbidden)
-			writeJSON(t, w, map[string]any{"error": map[string]any{"message": "stale CSRF token"}})
+			http.Error(w, "Invalid CSRF token", http.StatusForbidden)
 			return
 		}
 		writeJSON(t, w, map[string]any{"status": "stopped"})

@@ -25,6 +25,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	fndlicense "github.com/MustardSeedNetworks/foundation/pkg/license"
@@ -373,35 +374,43 @@ func (c *Client) fetchCSRF(ctx context.Context) error {
 	return nil
 }
 
-// apiError is the daemon's error envelope.
-type apiError struct {
-	Error struct {
-		Code    string `json:"code"`
-		Message string `json:"message"`
-		Feature string `json:"feature"`
-	} `json:"error"`
-}
-
 // errorForStatus turns the daemon's refusal into something the CLI can act
 // on, so an operator sees why a run did not start rather than a status code.
+// It decodes the daemon's own wire types: a hand-copied envelope once
+// disagreed with them and silently dropped every reason (#1235).
 func errorForStatus(status int, body []byte) error {
-	var envelope apiError
-	_ = json.Unmarshal(body, &envelope)
+	if status == http.StatusPaymentRequired {
+		var gate api.FeatureGateResponse
+		_ = json.Unmarshal(body, &gate)
+		return &FeatureGateError{Feature: gate.RequiredFeature, Message: gate.UpgradeMessage}
+	}
 
+	reason := daemonReason(body)
 	switch status {
 	case http.StatusConflict:
-		return fmt.Errorf("%w: %s", ErrRunInProgress, envelope.Error.Message)
-	case http.StatusPaymentRequired:
-		return &FeatureGateError{Feature: envelope.Error.Feature, Message: envelope.Error.Message}
+		return fmt.Errorf("%w: %s", ErrRunInProgress, reason)
 	case http.StatusUnauthorized:
-		return fmt.Errorf("%w: the daemon rejected this credential (%d): %s",
-			errUnauthorized, status, envelope.Error.Message)
+		return fmt.Errorf("%w: the daemon rejected this credential (%d): %s", errUnauthorized, status, reason)
 	case http.StatusForbidden:
-		return fmt.Errorf("the daemon rejected this credential (%d): %s", status, envelope.Error.Message)
+		return fmt.Errorf("the daemon rejected this credential (%d): %s", status, reason)
 	default:
-		if envelope.Error.Message != "" {
-			return fmt.Errorf("daemon returned %d: %s", status, envelope.Error.Message)
+		if reason != "" {
+			return fmt.Errorf("daemon returned %d: %s", status, reason)
 		}
 		return fmt.Errorf("daemon returned %d", status)
 	}
+}
+
+// daemonReason extracts the daemon's sentence from an error body: the JSON
+// envelope its handlers write, or the plain text [http.Error] writes (the CSRF
+// middleware refuses that way).
+func daemonReason(body []byte) string {
+	var envelope api.HTTPErrorResponse
+	if json.Unmarshal(body, &envelope) != nil {
+		return strings.TrimSpace(string(body))
+	}
+	if envelope.Message != "" {
+		return envelope.Message
+	}
+	return envelope.Error
 }

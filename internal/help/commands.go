@@ -141,9 +141,9 @@ func testCommandBasicFlags() []FlagHelp {
 			Long:       "--peer",
 			Type:       TypeString,
 			Default:    "",
-			Required:   false,
-			TechDesc:   "Reflector host name or IPv4 address",
-			LaymanDesc: "Remote reflector to test through",
+			Required:   true,
+			TechDesc:   "Reflector host name or IPv4 address that returns the test traffic",
+			LaymanDesc: "The remote reflector the test sends traffic to and back from",
 		},
 		{
 			Long:       "--peer-port",
@@ -259,17 +259,17 @@ func testCommandExamples() []Example {
 	return []Example{
 		{
 			Desc:    "Run throughput test",
-			Command: "stem test -i eth0 -t rfc2544_throughput",
+			Command: "stem test -i eth0 --peer 192.0.2.10 -t rfc2544_throughput",
 			Output:  "Test running... Results: Max Rate 98.5%",
 		},
 		{
 			Desc:    "Run Y.1564 service test",
-			Command: "stem test -i eth0 -t y1564_config --cir 100",
+			Command: "stem test -i eth0 --peer 192.0.2.10 -t y1564_config --cir 100",
 			Output:  "Step 1/4 PASS, Step 2/4 PASS, ...",
 		},
 		{
 			Desc:    "Emit JSON results",
-			Command: "stem test -i eth0 -t rfc2544_latency --json",
+			Command: "stem test -i eth0 --peer 192.0.2.10 -t rfc2544_latency --json",
 			Output:  "{ ... }",
 		},
 	}

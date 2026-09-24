@@ -204,6 +204,8 @@ REFLECT OPTIONS:
 
 TEST OPTIONS:
     -i, --interface    Network interface to use (required)
+    --peer             Reflector host or IPv4 address to test through (required)
+    --peer-port        Reflector UDP port (default: 3842)
     -t, --type         Test type (see 'stem list-tests' for all options)
     -d, --duration     Test duration in seconds (default: 60)
     --frame-sizes      Comma-separated frame sizes (default: 64,128,256,512,1024,1280,1518)
@@ -236,13 +238,13 @@ EXAMPLES:
     stem reflect -i eth0 --profile netally
 
     # RFC 2544 throughput test
-    stem test -i eth0 -t rfc2544_throughput -d 60
+    stem test -i eth0 --peer 192.0.2.10 -t rfc2544_throughput -d 60
 
     # RFC 2544 full suite
-    stem test -i eth0 -t rfc2544_throughput,rfc2544_latency,rfc2544_frame_loss,rfc2544_back_to_back
+    stem test -i eth0 --peer 192.0.2.10 -t rfc2544_throughput,rfc2544_latency,rfc2544_frame_loss,rfc2544_back_to_back
 
     # Y.1564 service test
-    stem test -i eth0 -t y1564 --cir 100 --eir 50
+    stem test -i eth0 --peer 192.0.2.10 -t y1564 --cir 100 --eir 50
 
     # Start WebUI (HTTPS by default on :8444)
     stem web -p 8444
