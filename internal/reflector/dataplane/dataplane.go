@@ -70,6 +70,7 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"syscall"
 	"unsafe"
 
 	"github.com/MustardSeedNetworks/stem/internal/reflector/config"
@@ -241,8 +242,10 @@ func (dp *Dataplane) Start() error {
 	}
 
 	ctx := C.uintptr_t(uintptr(unsafe.Pointer(dp.ctx)))
-	if C.start_reflector(ctx) < 0 {
-		return errors.New("failed to start reflector")
+	if rc := C.start_reflector(ctx); rc < 0 {
+		// reflector_start returns a negative errno, so an operator sees
+		// "operation not permitted" rather than a bare failure (stem#1231).
+		return fmt.Errorf("failed to start reflector: %w", syscall.Errno(-rc))
 	}
 
 	dp.running = true

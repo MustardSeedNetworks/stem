@@ -17,9 +17,7 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 
-#include <grp.h>
 #include <net/if.h>
-#include <pwd.h>
 #include <unistd.h>
 
 /* Safe string copy macro - uses strlcpy on macOS, manual null termination elsewhere */
@@ -335,93 +333,4 @@ bool is_interface_up(const char *ifname)
     }
 
     return (ifr.ifr_flags & IFF_UP) != 0;
-}
-
-#ifdef __linux__
-/*
- * Reentrant user lookup. getpwnam() returns a pointer into storage shared by
- * every thread in the process, so a concurrent lookup can overwrite the result
- * out from under this one -- in the privilege-dropping path, which is the last
- * place that should read another thread's uid.
- *
- * Returns false when the name does not resolve or the buffer is too small; the
- * caller then falls through to the next candidate, ending at 65534. Failing
- * closed like that is safe here because every fallback is less privileged.
- */
-static bool lookup_user(const char *name, uid_t *uid, gid_t *gid)
-{
-    struct passwd  pwd;
-    struct passwd *result = NULL;
-    char           buf[1024];
-
-    if (getpwnam_r(name, &pwd, buf, sizeof buf, &result) != 0 || result == NULL) {
-        return false;
-    }
-
-    *uid = result->pw_uid;
-    *gid = result->pw_gid;
-    return true;
-}
-#endif /* __linux__ -- only drop_privileges() below uses this */
-
-/*
- * Drop unnecessary privileges after socket/interface initialization
- * On Linux: Tries to drop to 'nobody' user if running as root
- * On macOS: No-op (BPF requires root or specific group membership)
- */
-int drop_privileges(void)
-{
-#ifdef __linux__
-    /* Only drop privileges if running as root */
-    if (getuid() != 0 && geteuid() != 0) {
-        reflector_log(LOG_DEBUG, "Not running as root, no privileges to drop");
-        return 0;
-    }
-
-    /* Look up 'nobody' dynamically; see lookup_user() for why not getpwnam() */
-    uid_t nobody_uid;
-    gid_t nobody_gid;
-
-    if (!lookup_user("nobody", &nobody_uid, &nobody_gid)) {
-        reflector_log(LOG_WARN, "User 'nobody' not found, trying 'nfsnobody'");
-        if (!lookup_user("nfsnobody", &nobody_uid, &nobody_gid)) {
-            /* Last resort: use common default values */
-            reflector_log(LOG_WARN, "No unprivileged user found, using UID/GID 65534");
-            nobody_uid = 65534;
-            nobody_gid = 65534;
-        }
-    }
-
-    /* Drop supplementary groups */
-    if (setgroups(0, NULL) < 0) {
-        int saved_errno = errno;
-        reflector_log(LOG_WARN, "Failed to drop supplementary groups: %s",
-                      stem_strerror(saved_errno));
-        /* Continue - not fatal */
-    }
-
-    /* Drop group privileges */
-    if (setgid(nobody_gid) < 0) {
-        int saved_errno = errno;
-        reflector_log(LOG_WARN, "Failed to drop group privileges: %s", stem_strerror(saved_errno));
-        errno = saved_errno;
-        return -1;
-    }
-
-    /* Drop user privileges */
-    if (setuid(nobody_uid) < 0) {
-        int saved_errno = errno;
-        reflector_log(LOG_WARN, "Failed to drop user privileges: %s", stem_strerror(saved_errno));
-        errno = saved_errno;
-        return -1;
-    }
-
-    reflector_log(LOG_INFO, "Dropped privileges to nobody (uid=%d, gid=%d)", nobody_uid,
-                  nobody_gid);
-    return 0;
-#else
-    /* macOS BPF requires root or /dev/bpf group membership - don't drop */
-    reflector_log(LOG_DEBUG, "Privilege dropping not implemented on macOS");
-    return 0;
-#endif
 }

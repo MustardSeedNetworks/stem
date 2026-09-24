@@ -117,9 +117,10 @@ int packet_platform_set_guard_port(worker_ctx_t *wctx, uint16_t port)
 
     int fd = port == 0 ? -1 : open_udp_guard(wctx->config->ifname, port);
     if (port != 0 && fd < 0 && errno != EADDRINUSE) {
+        int err = errno;
         reflector_log(LOG_ERROR, "Failed to bind filtered UDP guard port %u: %s", port,
-                      stem_strerror(errno));
-        return -1;
+                      stem_strerror(err));
+        return -err;
     }
     if (port != 0 && fd < 0) {
         reflector_log(LOG_INFO, "UDP port %u is already claimed; no guard socket needed", port);
@@ -194,6 +195,17 @@ static int try_tpacket_v2(struct platform_ctx *pctx)
 }
 
 /*
+ * Release a half-built worker and report the syscall's errno to the caller as
+ * a negative value. The errno is captured before cleanup, whose close() would
+ * otherwise overwrite it, so the daemon can name the cause (stem#1231).
+ */
+static int packet_platform_init_fail(worker_ctx_t *wctx, int err)
+{
+    packet_platform_cleanup(wctx);
+    return -err;
+}
+
+/*
  * Initialize maximum performance AF_PACKET platform
  * Tries TPACKET_V3 first (best for real hardware), falls back to V2 (for veth/testing)
  */
@@ -218,15 +230,15 @@ int packet_platform_init(reflector_ctx_t *rctx, worker_ctx_t *wctx)
     /* Create AF_PACKET socket */
     pctx->sock_fd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
     if (pctx->sock_fd < 0) {
-        reflector_log(LOG_ERROR, "Failed to create AF_PACKET socket: %s", stem_strerror(errno));
-        packet_platform_cleanup(wctx);
-        return -1;
+        int err = errno;
+        reflector_log(LOG_ERROR, "Failed to create AF_PACKET socket: %s", stem_strerror(err));
+        return packet_platform_init_fail(wctx, err);
     }
     if (ignore_outgoing_packets(pctx->sock_fd) < 0) {
+        int err = errno;
         reflector_log(LOG_ERROR, "Failed to suppress outgoing packet capture: %s",
-                      stem_strerror(errno));
-        packet_platform_cleanup(wctx);
-        return -1;
+                      stem_strerror(err));
+        return packet_platform_init_fail(wctx, err);
     }
 
     /* Try TPACKET_V3 first (better for real hardware) */
@@ -239,9 +251,9 @@ int packet_platform_init(reflector_ctx_t *rctx, worker_ctx_t *wctx)
         pctx->sock_fd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
         if (pctx->sock_fd < 0 || ignore_outgoing_packets(pctx->sock_fd) < 0 ||
             try_tpacket_v2(pctx) < 0) {
-            reflector_log(LOG_ERROR, "Failed to setup TPACKET_V2: %s", stem_strerror(errno));
-            packet_platform_cleanup(wctx);
-            return -1;
+            int err = errno;
+            reflector_log(LOG_ERROR, "Failed to setup TPACKET_V2: %s", stem_strerror(err));
+            return packet_platform_init_fail(wctx, err);
         }
         reflector_log(LOG_DEBUG, "Using TPACKET_V2 (frame-level, veth compatible)");
     }
@@ -283,9 +295,9 @@ int packet_platform_init(reflector_ctx_t *rctx, worker_ctx_t *wctx)
     sll.sll_ifindex        = wctx->config->ifindex;
 
     if (bind(pctx->sock_fd, (struct sockaddr *)&sll, sizeof(sll)) < 0) {
-        reflector_log(LOG_ERROR, "Failed to bind AF_PACKET socket: %s", stem_strerror(errno));
-        packet_platform_cleanup(wctx);
-        return -1;
+        int err = errno;
+        reflector_log(LOG_ERROR, "Failed to bind AF_PACKET socket: %s", stem_strerror(err));
+        return packet_platform_init_fail(wctx, err);
     }
 
     /* AF_PACKET sees the probe before the UDP stack, but it does not claim the
@@ -299,12 +311,11 @@ int packet_platform_init(reflector_ctx_t *rctx, worker_ctx_t *wctx)
         if (wctx->config->ito_port == 0) {
             reflector_log(LOG_ERROR,
                           "AF_PACKET requires a UDP port for ITO reflection to suppress ICMP");
-            packet_platform_cleanup(wctx);
-            return -1;
+            return packet_platform_init_fail(wctx, EINVAL);
         }
-        if (packet_platform_set_guard_port(wctx, wctx->config->ito_port) < 0) {
-            packet_platform_cleanup(wctx);
-            return -1;
+        int guard_rc = packet_platform_set_guard_port(wctx, wctx->config->ito_port);
+        if (guard_rc < 0) {
+            return packet_platform_init_fail(wctx, -guard_rc);
         }
     }
 

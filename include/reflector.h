@@ -345,6 +345,7 @@ typedef struct {
 /* Function declarations */
 int  reflector_init(reflector_ctx_t *rctx, const char *ifname);
 void reflector_cleanup(reflector_ctx_t *rctx);
+/* Returns 0, or a negative errno naming the failure (-EPERM: no CAP_NET_RAW). */
 int  reflector_start(reflector_ctx_t *rctx);
 void reflector_stop(reflector_ctx_t *rctx);
 int  reflector_set_config(reflector_ctx_t *rctx, const reflector_config_t *config);
@@ -363,7 +364,6 @@ void     print_af_packet_warning(const char *ifname);
 void     print_recommended_nics(void);
 int      get_queue_cpu_affinity(const char *ifname, int queue_id);
 uint64_t get_timestamp_ns(void);
-int      drop_privileges(void);
 
 bool is_ito_packet(const uint8_t *data, uint32_t len, const reflector_config_t *config);
 bool is_ito_packet_extended(const uint8_t *data, uint32_t len, const reflector_config_t *config,

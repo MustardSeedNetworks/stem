@@ -189,6 +189,36 @@ TEST(init_failure_exits_leave_no_dangling_context)
 }
 
 /*
+ * A failed init reports which syscall refused and why, as a negative errno, so
+ * the daemon can tell an operator "the raw socket needs CAP_NET_RAW" instead of
+ * a bare 500 (stem#1231). The errno must be saved before the cleanup, whose
+ * close() would otherwise overwrite it.
+ */
+static void assert_failure_reports_errno(fail_point_t where, int want, const char *what)
+{
+    fixture_reset();
+    g_fail = where;
+
+    int rc = packet_platform_init(&g_rctx, &g_wctx);
+    g_fail = FAIL_NONE;
+
+    printf("  %s\n", what);
+    run_reflector_stop_cleanup_loop();
+
+    ASSERT_EQ(-want, rc);
+}
+
+TEST(init_failure_exits_report_the_syscall_errno)
+{
+    assert_failure_reports_errno(FAIL_PACKET_SOCKET, EPERM, "socket(AF_PACKET) refused");
+    assert_failure_reports_errno(FAIL_IGNORE_OUTGOING, ENOPROTOOPT,
+                                 "PACKET_IGNORE_OUTGOING refused");
+    assert_failure_reports_errno(FAIL_TPACKET_RING, EINVAL,
+                                 "neither TPACKET_V3 nor V2 ring available");
+    assert_failure_reports_errno(FAIL_PACKET_BIND, ENODEV, "bind to the interface refused");
+}
+
+/*
  * The guard socket is only opened for worker 0 under a signature filter that
  * reflects UDP, and an unset port there is a configuration error, not a
  * syscall failure — so it is the one exit reached with no injection at all.
@@ -228,6 +258,7 @@ int main(void)
 {
     TEST_SUITE("AF_PACKET worker init (stem#1228)");
     RUN_TEST(init_failure_exits_leave_no_dangling_context);
+    RUN_TEST(init_failure_exits_report_the_syscall_errno);
     RUN_TEST(missing_guard_port_is_a_clean_failure);
     RUN_TEST(successful_init_publishes_a_context_that_cleanup_releases);
     TEST_SUMMARY();

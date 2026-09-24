@@ -439,15 +439,17 @@ int reflector_start(reflector_ctx_t *rctx)
                             : get_queue_cpu_affinity(rctx->config.ifname, i);
         wctx->config  = &rctx->config;
         wctx->running = true;
-        if (pthread_mutex_init(&wctx->stats_mutex, NULL) != 0) {
+        int mutex_rc  = pthread_mutex_init(&wctx->stats_mutex, NULL);
+        if (mutex_rc != 0) {
             reflector_log(LOG_ERROR, "Failed to initialize stats mutex for worker %d", i);
             reflector_stop(rctx);
-            return -1;
+            return -mutex_rc;
         }
         wctx->stats_mutex_initialized = true;
 
         /* Initialize platform */
-        if (platform_ops->init(rctx, wctx) < 0) {
+        int init_rc = platform_ops->init(rctx, wctx);
+        if (init_rc < 0) {
 #if defined(__linux__) && HAVE_AF_XDP
             /* Try AF_PACKET fallback on Linux if AF_XDP fails */
             if (platform_ops == get_xdp_platform_ops()) {
@@ -536,32 +538,31 @@ int reflector_start(reflector_ctx_t *rctx)
                 reflector_log(LOG_WARN, "");
 
                 platform_ops = get_packet_platform_ops();
-                if (platform_ops->init(rctx, wctx) < 0) {
+                init_rc      = platform_ops->init(rctx, wctx);
+                if (init_rc < 0) {
                     reflector_log(LOG_ERROR, "Failed to initialize AF_PACKET for worker %d", i);
                     reflector_stop(rctx);
-                    return -1;
+                    return init_rc;
                 }
             } else {
                 reflector_log(LOG_ERROR, "Failed to initialize platform for worker %d", i);
                 reflector_stop(rctx);
-                return -1;
+                return init_rc;
             }
 #else
             reflector_log(LOG_ERROR, "Failed to initialize platform for worker %d", i);
             reflector_stop(rctx);
-            return -1;
+            return init_rc;
 #endif
         }
 
         rctx->platform_contexts[i] = wctx->pctx;
     }
 
-    /* Every queue needs privileged socket setup. Drop privileges only after all
-     * platform contexts are ready, then launch the packet workers. */
-    if (drop_privileges() < 0) {
-        reflector_log(LOG_WARN, "Failed to drop privileges (continuing anyway)");
-    }
-
+    /* No privilege drop here: the reflector runs inside the long-lived daemon,
+     * and a setuid() changes every thread's credentials, so the next reflector
+     * or test run could not open a raw socket (stem#1231). The service manager
+     * decides the daemon's user and capabilities. */
     for (int i = 0; i < rctx->num_workers; i++) {
         worker_ctx_t *wctx = &rctx->workers[i];
 
@@ -580,7 +581,7 @@ int reflector_start(reflector_ctx_t *rctx)
         if (!rctx->worker_queues[i]) {
             reflector_log(LOG_ERROR, "Failed to create GCD queue for worker %d", i);
             reflector_stop(rctx);
-            return -1;
+            return -ENOMEM;
         }
 
         /* Launch worker on GCD queue */
@@ -592,10 +593,11 @@ int reflector_start(reflector_ctx_t *rctx)
         });
 #else
         /* Create pthread (store TID for joining later) */
-        if (pthread_create(&rctx->worker_tids[i], NULL, worker_thread, wctx) != 0) {
+        int thread_rc = pthread_create(&rctx->worker_tids[i], NULL, worker_thread, wctx);
+        if (thread_rc != 0) {
             reflector_log(LOG_ERROR, "Failed to create worker thread %d", i);
             reflector_stop(rctx);
-            return -1;
+            return -thread_rc;
         }
         wctx->thread_started = true;
 #endif

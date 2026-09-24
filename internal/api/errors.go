@@ -4,6 +4,7 @@ package api
 
 import (
 	"errors"
+	"io/fs"
 	"net/http"
 
 	"github.com/MustardSeedNetworks/stem/internal/auth"
@@ -308,6 +309,13 @@ func MapTestError(err error) *Error {
 			HTTPStatus:  http.StatusServiceUnavailable,
 			Code:        ErrCodeServiceUnavailable,
 			Message:     "Test execution requires Linux with CGO support",
+			InternalErr: err,
+		}
+	case errors.Is(err, fs.ErrPermission):
+		return &Error{
+			HTTPStatus:  http.StatusServiceUnavailable,
+			Code:        ErrCodeServiceUnavailable,
+			Message:     "Raw socket access denied: the daemon needs CAP_NET_RAW",
 			InternalErr: err,
 		}
 	default:
