@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.152](https://github.com/MustardSeedNetworks/stem/compare/v0.24.151...v0.24.152) (2026-09-24)
+
+
+### Bug Fixes
+
+* **dataplane:** include rfc2544.h in the cgo preambles instead of redeclaring it ([#1427](https://github.com/MustardSeedNetworks/stem/issues/1427)) ([5cc2ce6](https://github.com/MustardSeedNetworks/stem/commit/5cc2ce67cdc3c339f3bb11d2cbc87bff6a777b59)), closes [#1240](https://github.com/MustardSeedNetworks/stem/issues/1240)
+* **ui:** re-copy canonical msn-shared.css with the status pill text tokens ([#1426](https://github.com/MustardSeedNetworks/stem/issues/1426)) ([b26a955](https://github.com/MustardSeedNetworks/stem/commit/b26a955f027e1594c519a751e0c2b26f0edebfe4)), closes [#1425](https://github.com/MustardSeedNetworks/stem/issues/1425)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1428](https://github.com/MustardSeedNetworks/stem/issues/1428)) ([8f107a3](https://github.com/MustardSeedNetworks/stem/commit/8f107a335e58f9a44da96ff0f46384dee9856355))
+
 ## [0.24.151](https://github.com/MustardSeedNetworks/stem/compare/v0.24.150...v0.24.151) (2026-09-24)
 
 
