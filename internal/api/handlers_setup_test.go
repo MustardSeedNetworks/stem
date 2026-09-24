@@ -35,15 +35,18 @@ func setupSetupTestServer(t testing.TB) *api.Server {
 	return s
 }
 
-// setupServerWithMode creates a server with the specified setup mode.
-func setupServerWithMode(t testing.TB, setupMode bool) *api.Server {
+// setupServerClaimed creates a server that is unclaimed (no credential in
+// the environment or the store) or claimed from the environment.
+func setupServerClaimed(t testing.TB, claimed bool) *api.Server {
 	t.Helper()
-	t.Setenv("STEM_AUTH_USERNAME", setupTestUsername)
-	t.Setenv("STEM_AUTH_PASSWORD", setupTestPassword)
-	if setupMode {
-		t.Setenv("STEM_SETUP_MODE", "true")
+	t.Setenv("STEM_TEST_MODE", "1")
+	t.Setenv("STEM_DATA_DIR", t.TempDir())
+	if claimed {
+		t.Setenv("STEM_AUTH_USERNAME", setupTestUsername)
+		t.Setenv("STEM_AUTH_PASSWORD", setupTestPassword)
 	} else {
-		t.Setenv("STEM_SETUP_MODE", "false")
+		t.Setenv("STEM_AUTH_USERNAME", "")
+		t.Setenv("STEM_AUTH_PASSWORD", "")
 	}
 
 	s, err := api.NewServer(8444)
@@ -174,7 +177,7 @@ func TestHandleSetupComplete(t *testing.T) {
 	})
 
 	t.Run("invalid JSON when setup needed", func(t *testing.T) {
-		s := setupServerWithMode(t, true)
+		s := setupServerClaimed(t, false)
 		body := bytes.NewBufferString(`{invalid json}`)
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/setup/complete", body)
 		w := httptest.NewRecorder()
@@ -183,7 +186,7 @@ func TestHandleSetupComplete(t *testing.T) {
 	})
 
 	t.Run("empty body when setup needed", func(t *testing.T) {
-		s := setupServerWithMode(t, true)
+		s := setupServerClaimed(t, false)
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/setup/complete", nil)
 		w := httptest.NewRecorder()
 		s.ServeHTTP(w, req)
@@ -191,7 +194,7 @@ func TestHandleSetupComplete(t *testing.T) {
 	})
 
 	t.Run("invalid setup token", func(t *testing.T) {
-		s := setupServerWithMode(t, true)
+		s := setupServerClaimed(t, false)
 		body := bytes.NewBufferString(`{"password":"SecurePassword123!","setupToken":"invalid-token"}`)
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/setup/complete", body)
 		w := httptest.NewRecorder()
@@ -200,7 +203,7 @@ func TestHandleSetupComplete(t *testing.T) {
 	})
 
 	t.Run("setup already complete", func(t *testing.T) {
-		s := setupServerWithMode(t, false)
+		s := setupServerClaimed(t, true)
 		body := bytes.NewBufferString(`{"password":"SecurePassword123!","setupToken":"any-token"}`)
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/setup/complete", body)
 		w := httptest.NewRecorder()
@@ -295,44 +298,35 @@ func assertNeedsSetupBool(t *testing.T, resp map[string]any) bool {
 	return needsSetup
 }
 
-// TestSetupStatusWithSetupMode tests setup status when setup mode is enabled.
-func TestSetupStatusWithSetupMode(t *testing.T) {
-	t.Run("setup mode disabled", func(t *testing.T) {
-		s := setupServerWithMode(t, false)
+// TestSetupStatusFollowsCredential: setup is offered exactly while no
+// administrator credential exists.
+func TestSetupStatusFollowsCredential(t *testing.T) {
+	t.Run("claimed", func(t *testing.T) {
+		s := setupServerClaimed(t, true)
 		resp := getSetupStatusResponse(t, s)
-		needsSetup := assertNeedsSetupBool(t, resp)
-		if needsSetup {
-			t.Log("needsSetup is true - may be expected depending on password hash state")
+		if assertNeedsSetupBool(t, resp) {
+			t.Error("needsSetup = true for a daemon with a configured credential")
+		}
+		if _, leaked := resp["setupToken"]; leaked {
+			t.Error("a claimed daemon issued a setup token")
 		}
 	})
 
-	t.Run("setup mode enabled", func(t *testing.T) {
-		s := setupServerWithMode(t, true)
+	t.Run("unclaimed", func(t *testing.T) {
+		s := setupServerClaimed(t, false)
 		resp := getSetupStatusResponse(t, s)
-		needsSetup := assertNeedsSetupBool(t, resp)
-		if !needsSetup {
-			t.Error("Expected needsSetup to be true when STEM_SETUP_MODE=true")
+		if !assertNeedsSetupBool(t, resp) {
+			t.Error("needsSetup = false for a daemon with no credential")
 		}
-		if needsSetup {
-			if _, hasSuggestedPassword := resp["suggestedPassword"]; !hasSuggestedPassword {
-				t.Log("suggestedPassword field not present")
-			}
+		if token, _ := resp["setupToken"].(string); token == "" {
+			t.Error("an unclaimed daemon issued no setup token")
 		}
 	})
 }
 
-// TestSetupCompleteAlreadyDone tests setup complete when already configured.
+// TestSetupCompleteAlreadyDone: a claimed daemon refuses a second claim.
 func TestSetupCompleteAlreadyDone(t *testing.T) {
-	// When setup is not needed, complete should return 403.
-	t.Setenv("STEM_AUTH_USERNAME", setupTestUsername)
-	t.Setenv("STEM_AUTH_PASSWORD", setupTestPassword)
-	t.Setenv("STEM_SETUP_MODE", "false")
-
-	s, err := api.NewServer(8444)
-	if err != nil {
-		t.Fatalf("NewServer() error: %v", err)
-	}
-	t.Cleanup(func() { _ = s.Shutdown() })
+	s := setupServerClaimed(t, true)
 
 	body := bytes.NewBufferString(`{"password":"NewPassword123!","setupToken":"any-token"}`)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/setup/complete", body)
@@ -340,19 +334,7 @@ func TestSetupCompleteAlreadyDone(t *testing.T) {
 
 	s.ServeHTTP(w, req)
 
-	// Should fail since setup is already complete (but this depends on password hash).
-	// Accept both 403 (setup already done) or other error codes.
-	if w.Code == http.StatusOK {
-		// Check the response body to see if it's actually a success.
-		var resp map[string]any
-		unmarshalErr := json.Unmarshal(w.Body.Bytes(), &resp)
-		if unmarshalErr == nil {
-			status, _ := resp["status"].(string)
-			if status == "success" {
-				t.Log("Setup complete returned success - may be first run")
-			}
-		}
-	}
+	assertStatusCode(t, w, http.StatusForbidden)
 }
 
 // BenchmarkHandleSetupStatus benchmarks the setup status endpoint.

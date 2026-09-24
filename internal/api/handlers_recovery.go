@@ -4,7 +4,6 @@ package api
 
 import (
 	"net/http"
-	"os"
 
 	"github.com/MustardSeedNetworks/stem/internal/auth"
 	"github.com/MustardSeedNetworks/stem/internal/logging"
@@ -115,7 +114,7 @@ func (s *Server) handleRecoveryComplete(w http.ResponseWriter, r *http.Request) 
 
 	// Token is valid - proceed with password reset.
 
-	username := os.Getenv("STEM_AUTH_USERNAME")
+	username := s.authManager.GetUsername()
 	prevAlgorithm := detectHashAlgorithm(s.authManager.GetPasswordHash())
 
 	// Run the layered password-policy check (length / zxcvbn / HIBP).
@@ -136,8 +135,13 @@ func (s *Server) handleRecoveryComplete(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Update the auth manager with the new password hash.
-	s.authManager.UpdatePasswordHash(r.Context(), hash)
+	if saveErr := s.saveCredential(r.Context(), hash); saveErr != nil {
+		logging.Error("Failed to store the recovered password", "error", saveErr)
+		logging.AuditPasswordChange(r.Context(), r, username,
+			logging.PasswordChangeRejected, "store_failed", prevAlgorithm, saveErr.Error())
+		WriteError(w, ErrInternalError)
+		return
+	}
 	logging.AuditPasswordChange(r.Context(), r, username,
 		logging.PasswordChangeSuccess, "", prevAlgorithm, "recovery")
 

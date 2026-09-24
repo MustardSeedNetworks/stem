@@ -4,8 +4,6 @@ package api
 
 import (
 	"net/http"
-	"os"
-	"time"
 
 	"github.com/MustardSeedNetworks/stem/internal/auth"
 	"github.com/MustardSeedNetworks/stem/internal/logging"
@@ -38,12 +36,11 @@ func (s *Server) handleSetupStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check if setup is needed by checking environment variables.
 	needsSetup := s.needsInitialSetup()
 
 	resp := SetupStatusResponse{
 		NeedsSetup:        needsSetup,
-		Username:          os.Getenv("STEM_AUTH_USERNAME"),
+		Username:          s.authManager.GetUsername(),
 		SuggestedPassword: "",
 		SetupToken:        "",
 	}
@@ -80,7 +77,11 @@ func (s *Server) handleSetupComplete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check if setup is actually needed.
+	// One claim at a time: a second request racing the first must see the
+	// credential the first one stored, not an unclaimed daemon.
+	s.setupMu.Lock()
+	defer s.setupMu.Unlock()
+
 	if !s.needsInitialSetup() {
 		http.Error(w, "Setup has already been completed", http.StatusForbidden)
 		return
@@ -99,7 +100,7 @@ func (s *Server) handleSetupComplete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	username := os.Getenv("STEM_AUTH_USERNAME")
+	username := s.authManager.GetUsername()
 	prevAlgorithm := detectHashAlgorithm(s.authManager.GetPasswordHash())
 
 	// Validate password strength.
@@ -117,16 +118,18 @@ func (s *Server) handleSetupComplete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Update the auth manager with the new password hash.
-	s.authManager.UpdatePasswordHash(r.Context(), hash)
+	if saveErr := s.saveCredential(r.Context(), hash); saveErr != nil {
+		logging.Error("Failed to store the administrator credential", "error", saveErr)
+		logging.AuditPasswordChange(r.Context(), r, username,
+			logging.PasswordChangeRejected, "store_failed", prevAlgorithm, saveErr.Error())
+		WriteError(w, ErrInternalError)
+		return
+	}
 
 	// Invalidate the setup token.
 	if s.setupTokenManager != nil {
 		s.setupTokenManager.Invalidate()
 	}
-
-	// Mark setup as complete.
-	s.markSetupComplete()
 
 	// Log successful setup.
 	logging.Info("Initial setup completed - admin password configured",
@@ -141,33 +144,8 @@ func (s *Server) handleSetupComplete(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// needsInitialSetup checks if the initial setup wizard should be shown.
-// Returns true if no password has been configured yet.
+// needsInitialSetup reports whether the daemon is still unclaimed: no
+// administrator password has been stored or configured.
 func (s *Server) needsInitialSetup() bool {
-	// Check if setup has been explicitly marked as complete.
-	if s.setupComplete {
-		return false
-	}
-
-	// Check for the setup mode flag from environment.
-	// If STEM_SETUP_MODE=true, show the setup wizard.
-	if os.Getenv("STEM_SETUP_MODE") == "true" {
-		return true
-	}
-
-	// If password hash is default/empty, setup is needed.
-	if s.authManager != nil {
-		hash := s.authManager.GetPasswordHash()
-		if auth.IsDefaultPasswordHash(hash) {
-			return true
-		}
-	}
-
-	return false
-}
-
-// markSetupComplete marks the initial setup as complete.
-func (s *Server) markSetupComplete() {
-	s.setupComplete = true
-	s.setupModeStartTime = time.Time{} // Reset setup mode timer.
+	return auth.IsDefaultPasswordHash(s.authManager.GetPasswordHash())
 }

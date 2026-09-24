@@ -32,9 +32,10 @@ var (
 	// access token offered for exchange. The kinds have deliberately
 	// different lifetimes; accepting one for the other collapses that.
 	ErrWrongTokenType = errors.New("token is not valid for this use")
-	// ErrMissingCredentials indicates required credentials were not provided.
+	// ErrMissingCredentials indicates a credential given with one half missing.
 	ErrMissingCredentials = errors.New(
-		"missing required credentials: set STEM_AUTH_USERNAME and STEM_AUTH_PASSWORD environment variables",
+		"incomplete credentials: set both STEM_AUTH_USERNAME and STEM_AUTH_PASSWORD, " +
+			"or neither to set the password through first-run setup in the web UI",
 	)
 	// ErrPasswordHashFailed indicates the password hash routine failed.
 	ErrPasswordHashFailed = errors.New("failed to hash password")
@@ -54,6 +55,10 @@ const (
 	// defaultIssuer is the JWT issuer string. Used by the access-token
 	// generator and the Wave-3 mfa_pending token generator alike.
 	defaultIssuer = "The Stem"
+
+	// FirstRunUsername is the administrator an unconfigured daemon offers
+	// for claiming through first-run setup (#1282).
+	FirstRunUsername = "admin"
 )
 
 // Claims represents the custom portion of the JWT payload.
@@ -102,7 +107,8 @@ type Manager struct {
 	webauthnSessions map[string]*WebAuthnSessionState
 }
 
-// NewManager creates an auth manager that can sign tokens.
+// NewManager creates an auth manager for a credential given in plain text,
+// as STEM_AUTH_USERNAME / STEM_AUTH_PASSWORD supply it.
 // Returns ErrMissingCredentials if username or password is empty.
 func NewManager(jwtSecret string, sessionTimeout time.Duration, username, password string) (*Manager, error) {
 	// Require explicit credentials - no defaults allowed.
@@ -110,6 +116,22 @@ func NewManager(jwtSecret string, sessionTimeout time.Duration, username, passwo
 		return nil, ErrMissingCredentials
 	}
 
+	hash, err := HashPassword(password)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %w", ErrPasswordHashFailed, err)
+	}
+	return NewManagerFromHash(jwtSecret, sessionTimeout, username, hash)
+}
+
+// NewManagerFromHash creates an auth manager for an already-hashed
+// credential. An empty passwordHash is an unclaimed daemon: every login is
+// refused, since [VerifyPassword] accepts no empty hash, until first-run
+// setup stores a credential through [Manager.SetCredential].
+func NewManagerFromHash(
+	jwtSecret string,
+	sessionTimeout time.Duration,
+	username, passwordHash string,
+) (*Manager, error) {
 	secret := jwtSecret
 	if secret == "" {
 		var err error
@@ -117,11 +139,6 @@ func NewManager(jwtSecret string, sessionTimeout time.Duration, username, passwo
 		if err != nil {
 			return nil, err
 		}
-	}
-
-	hash, err := HashPassword(password)
-	if err != nil {
-		return nil, fmt.Errorf("%w: %w", ErrPasswordHashFailed, err)
 	}
 
 	if sessionTimeout <= 0 {
@@ -133,7 +150,7 @@ func NewManager(jwtSecret string, sessionTimeout time.Duration, username, passwo
 		jwtSecret:           []byte(secret),
 		sessionTimeout:      sessionTimeout,
 		username:            username,
-		passwordHash:        []byte(hash),
+		passwordHash:        []byte(passwordHash),
 		issuer:              defaultIssuer,
 		blacklist:           NewTokenBlacklist(),
 		randReader:          rand.Reader,

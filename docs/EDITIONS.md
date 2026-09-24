@@ -75,7 +75,8 @@ Two strings were in `proFeatures()` with nothing behind them:
 - **`api`** — see §3. The API is not a separate product.
 - **`multiuser`** — Stem has no second user. The `users` table was dropped
   (`migrationDropUsers`, "Drop the unused users table"); authentication is one
-  operator account from `STEM_AUTH_USERNAME` / `STEM_AUTH_PASSWORD`.
+  operator account, set in first-run setup or from `STEM_AUTH_USERNAME` /
+  `STEM_AUTH_PASSWORD`.
 
 Both were removed from the catalog and from the README's Pro column rather than
 given gates, because gating a capability that does not exist is not

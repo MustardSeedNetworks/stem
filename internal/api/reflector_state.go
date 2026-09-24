@@ -26,9 +26,9 @@ const (
 	// reflectorStateFile holds the persisted reflector configuration.
 	reflectorStateFile = "reflector.json"
 
-	// reflectorStateMode keeps the file writable only by the daemon's own
-	// account; it is daemon state, not operator-editable configuration.
-	reflectorStateMode os.FileMode = 0o600
+	// stateFileMode keeps daemon state files readable and writable only by
+	// the daemon's own account; they are not operator-editable configuration.
+	stateFileMode os.FileMode = 0o600
 )
 
 // reflectorStatePath returns the state file inside dataDir.
@@ -47,27 +47,33 @@ func (s *Server) persistReflectorState() error {
 		return fmt.Errorf("encode reflector state: %w", err)
 	}
 
-	path := reflectorStatePath(s.dataDir)
-	tmp, err := os.CreateTemp(s.dataDir, reflectorStateFile+"-*")
+	return writeStateFile(s.dataDir, reflectorStateFile, encoded)
+}
+
+// writeStateFile replaces name in dataDir atomically, readable only by the
+// daemon's own account: a crash mid-write leaves the previous file intact
+// rather than a truncated one.
+func writeStateFile(dataDir, name string, data []byte) error {
+	tmp, err := os.CreateTemp(dataDir, name+"-*")
 	if err != nil {
-		return fmt.Errorf("create reflector state: %w", err)
+		return fmt.Errorf("create %s: %w", name, err)
 	}
 	tmpName := tmp.Name()
 	defer func() { _ = os.Remove(tmpName) }() // no-op once the rename succeeds
 
-	if chmodErr := tmp.Chmod(reflectorStateMode); chmodErr != nil {
+	if chmodErr := tmp.Chmod(stateFileMode); chmodErr != nil {
 		_ = tmp.Close()
-		return fmt.Errorf("restrict reflector state: %w", chmodErr)
+		return fmt.Errorf("restrict %s: %w", name, chmodErr)
 	}
-	if _, writeErr := tmp.Write(encoded); writeErr != nil {
+	if _, writeErr := tmp.Write(data); writeErr != nil {
 		_ = tmp.Close()
-		return fmt.Errorf("write reflector state: %w", writeErr)
+		return fmt.Errorf("write %s: %w", name, writeErr)
 	}
 	if closeErr := tmp.Close(); closeErr != nil {
-		return fmt.Errorf("close reflector state: %w", closeErr)
+		return fmt.Errorf("close %s: %w", name, closeErr)
 	}
-	if renameErr := os.Rename(tmpName, path); renameErr != nil {
-		return fmt.Errorf("publish reflector state: %w", renameErr)
+	if renameErr := os.Rename(tmpName, filepath.Join(dataDir, name)); renameErr != nil {
+		return fmt.Errorf("publish %s: %w", name, renameErr)
 	}
 	return nil
 }
