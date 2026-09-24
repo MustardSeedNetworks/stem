@@ -81,6 +81,11 @@ int rfc2889_forwarding_test(rfc2544_ctx_t *ctx, const rfc2889_config_t *config,
 
     uint64_t max_pps = calc_max_pps(ctx->line_rate, frame_size);
 
+    /* What the wire actually carried at best_rate, and whether the generator
+     * could offer it at all. */
+    double best_achieved_pps = 0.0;
+    bool   generator_limited = false;
+
     while ((high - low) > RFC2889_DEFAULT_RESOLUTION_PCT && iterations < max_iterations &&
            !ctx->cancel_requested) {
         double current_rate = (low + high) / 2.0;
@@ -100,10 +105,29 @@ int rfc2889_forwarding_test(rfc2544_ctx_t *ctx, const rfc2889_config_t *config,
         result->frames_tx += trial.packets_sent;
         result->frames_rx += trial.packets_recv;
 
+        /* A trial the generator could not drive to the offered load measures
+         * nothing about that load: loss reads 0 % because everything offered
+         * came back, and the search then walks the rate up on evidence it does
+         * not have (#1242, as #1233 was for RFC 2544). Stop, and report what
+         * the wire carried. */
+        const double demanded_pps = (double)max_pps * current_rate / 100.0;
+        if (demanded_pps > 0.0 &&
+            trial.achieved_pps < demanded_pps * (1.0 - RFC2544_GENERATOR_TOLERANCE)) {
+            generator_limited = true;
+            best_rate         = current_rate;
+            best_achieved_pps = trial.achieved_pps;
+            rfc2544_log(LOG_WARN,
+                        "Generator limited at %.2f%%: demanded %.0f fps, achieved %.0f fps; "
+                        "stopping the search",
+                        current_rate, demanded_pps, trial.achieved_pps);
+            break;
+        }
+
         if (trial.loss_pct <= config->acceptable_loss_pct) {
             /* Success - try higher rate */
-            best_rate = current_rate;
-            low       = current_rate;
+            best_rate         = current_rate;
+            low               = current_rate;
+            best_achieved_pps = trial.achieved_pps;
             rfc2544_log(LOG_DEBUG, "  Pass: loss=%.6f%%, rate=%.2f%%", trial.loss_pct, best_rate);
         } else {
             /* Failure - try lower rate */
@@ -114,10 +138,14 @@ int rfc2889_forwarding_test(rfc2544_ctx_t *ctx, const rfc2889_config_t *config,
         iterations++;
     }
 
-    /* Calculate results */
-    result->max_rate_pct        = best_rate;
-    result->max_rate_fps        = max_pps * best_rate / 100.0;
+    /* The reported rate is the best trial's own achieved figure; deriving it
+     * from best_rate reported the offered load as measured. Both sides of the
+     * percentage are wire-size based, like the Mbps figure. */
+    result->max_rate_fps = best_achieved_pps;
+    result->max_rate_pct = (max_pps > 0) ? (best_achieved_pps / (double)max_pps * 100.0) : 0.0;
     result->aggregate_rate_mbps = (result->max_rate_fps * (frame_size + 20) * 8) / 1e6;
+    result->offered_rate_pct    = best_rate;
+    result->generator_limited   = generator_limited;
     /* Guard against underflow when rx > tx */
     if (result->frames_tx > 0 && result->frames_rx < result->frames_tx) {
         result->loss_pct = 100.0 * (result->frames_tx - result->frames_rx) / result->frames_tx;
@@ -125,8 +153,10 @@ int rfc2889_forwarding_test(rfc2544_ctx_t *ctx, const rfc2889_config_t *config,
         result->loss_pct = 0.0;
     }
 
-    rfc2544_log(LOG_INFO, "Forwarding Rate: %.2f%% (%.0f fps, %.2f Mbps)", result->max_rate_pct,
-                result->max_rate_fps, result->aggregate_rate_mbps);
+    rfc2544_log(LOG_INFO,
+                "Forwarding Rate: %.4f%% measured (%.0f fps, %.2f Mbps) at %.2f%% offered%s",
+                result->max_rate_pct, result->max_rate_fps, result->aggregate_rate_mbps,
+                result->offered_rate_pct, generator_limited ? " [generator limited]" : "");
 
     return 0;
 }

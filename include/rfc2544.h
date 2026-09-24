@@ -969,13 +969,20 @@ typedef enum {
 } traffic_pattern_t;
 
 /* Forwarding rate result (Section 5.1) */
+/*
+ * The three rate fields are measurements of what the best trial put on the
+ * wire, not the rate the binary search settled on; `offered_rate_pct` is the
+ * search's own answer (#1242, the twin of #1233 in throughput_result_t).
+ */
 typedef struct {
     uint32_t          frame_size;          /* Frame size tested */
     uint32_t          port_count;          /* Number of ports */
     traffic_pattern_t pattern;             /* Traffic pattern used */
-    double            max_rate_pct;        /* Maximum forwarding rate (% of line rate) */
-    double            max_rate_fps;        /* Maximum forwarding rate (frames/sec) */
-    double            aggregate_rate_mbps; /* Aggregate throughput across all ports */
+    double            max_rate_pct;        /* Measured forwarding rate (% of line rate) */
+    double            max_rate_fps;        /* Measured forwarding rate (frames/sec) */
+    double            aggregate_rate_mbps; /* Measured wire rate across all ports */
+    double            offered_rate_pct;    /* Rate the search settled on, as % of line rate */
+    bool              generator_limited;   /* Generator could not offer offered_rate_pct */
     uint64_t          frames_tx;           /* Total frames transmitted */
     uint64_t          frames_rx;           /* Total frames received */
     double            loss_pct;            /* Frame loss percentage */

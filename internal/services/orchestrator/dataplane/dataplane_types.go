@@ -185,8 +185,9 @@ type RFC2889Config struct {
 }
 
 // RFC2889ForwardingResult is the outcome of the RFC 2889 forwarding-rate
-// test: the binary-search maximum rate the DUT forwards without loss across
-// PortCount ports using the given traffic Pattern.
+// test across PortCount ports using the given traffic Pattern. MaxRate* and
+// AggregateRateMbps are what the best trial measurably put on the wire;
+// OfferedRatePct is the rate the binary search settled on (#1242).
 type RFC2889ForwardingResult struct {
 	FrameSize         uint32
 	PortCount         uint32
@@ -194,6 +195,8 @@ type RFC2889ForwardingResult struct {
 	MaxRatePct        float64
 	MaxRateFps        float64
 	AggregateRateMbps float64
+	OfferedRatePct    float64
+	GeneratorLimited  bool
 	FramesTx          uint64
 	FramesRx          uint64
 }
