@@ -304,12 +304,6 @@ static int packet_recv_batch(worker_ctx_t *wctx, packet_t *pkts, int max_count)
     platform_ctx_t *pctx     = wctx->pctx;
     int             received = 0;
 
-    /* Non-blocking receive with timeout */
-    struct timeval tv;
-    tv.tv_sec  = 0;
-    tv.tv_usec = 1000; /* 1ms timeout */
-    setsockopt(pctx->sock_fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
-
     /* Control message buffer for timestamps */
     char cmsg_buf[CMSG_BUFFER_SIZE];
 
@@ -331,7 +325,10 @@ static int packet_recv_batch(worker_ctx_t *wctx, packet_t *pkts, int max_count)
         msg.msg_control    = cmsg_buf;
         msg.msg_controllen = sizeof(cmsg_buf);
 
-        ret = recvmsg(pctx->sock_fd, &msg, 0);
+        /* Callers poll after every transmitted frame, so an empty queue must
+         * return at once: a timed wait here is rounded up to a whole jiffy and
+         * held the generator to ~100 pps (#1239). */
+        ret = recvmsg(pctx->sock_fd, &msg, MSG_DONTWAIT);
 
         if (ret < 0) {
             if (errno == EAGAIN || errno == EWOULDBLOCK) {

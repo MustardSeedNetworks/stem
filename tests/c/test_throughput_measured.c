@@ -8,7 +8,8 @@
  * put ~110 pps on the wire reported 9990 Mbps at 99.90 % of line rate.
  *
  * This runs a real trial on `lo`, where the generator is nowhere near 10 Gbps
- * and nothing reflects the frames back, so the shortfall is unmissable.
+ * and nothing reflects the frames back, so the shortfall is unmissable. It
+ * also holds the generator above the ~100 pps ceiling of #1239.
  */
 
 #include <stdio.h>
@@ -74,6 +75,11 @@ int main(void)
      * equal to offered_rate_pct. */
     if (result.max_rate_pps >= demanded_pps * (1.0 - RFC2544_GENERATOR_TOLERANCE)) {
         return fail("reported pps is the offered load, not a measurement");
+    }
+    /* #1239: a blocking, timed receive after every frame held the AF_PACKET
+     * generator to ~100 pps on any medium. The floor is 100x that ceiling. */
+    if (result.max_rate_pps < 10000.0) {
+        return fail("the generator is still held to the blocking-receive ceiling (#1239)");
     }
     if (result.max_rate_pct >= result.offered_rate_pct) {
         return fail("reported % of line rate is the offered load, not a measurement");
