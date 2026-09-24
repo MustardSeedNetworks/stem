@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.151](https://github.com/MustardSeedNetworks/stem/compare/v0.24.150...v0.24.151) (2026-09-24)
+
+
+### Bug Fixes
+
+* **auth:** start unclaimed and persist the first-run credential ([#1422](https://github.com/MustardSeedNetworks/stem/issues/1422)) ([ed74984](https://github.com/MustardSeedNetworks/stem/commit/ed749844a09a1cba0850ea752330eb854af4b1b4))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1423](https://github.com/MustardSeedNetworks/stem/issues/1423)) ([ff49b67](https://github.com/MustardSeedNetworks/stem/commit/ff49b6746b8d3ee8db67acb0505f9327edbaeb32))
+
 ## [0.24.150](https://github.com/MustardSeedNetworks/stem/compare/v0.24.149...v0.24.150) (2026-09-24)
 
 
