@@ -98,6 +98,9 @@ func (c *Context) Configure(cfg *Config) error {
 	ccfg.measure_latency = C.bool(cfg.MeasureLatency)
 	ccfg.use_pacing = C.bool(cfg.UsePacing)
 	ccfg.batch_size = C.uint32_t(cfg.BatchSize)
+	if cfg.Y1564StepDuration > 0 {
+		ccfg.y1564.step_duration_sec = C.uint32_t(cfg.Y1564StepDuration.Seconds())
+	}
 
 	if ret := C.rfc2544_configure(c.ctx, ccfg); ret < 0 {
 		return fmt.Errorf("configure failed: %d", ret)

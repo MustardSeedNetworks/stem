@@ -226,6 +226,9 @@ func (e *Executor) configureContext(cfg *modtypes.TestConfig) error {
 	if cfg.Duration > 0 {
 		dpCfg.TrialDuration = time.Duration(cfg.Duration) * time.Second
 	}
+	if stepSec := modtypes.GetUint32Param(cfg.Params, "config_duration_sec", 0); stepSec > 0 {
+		dpCfg.Y1564StepDuration = time.Duration(stepSec) * time.Second
+	}
 
 	err := e.ctx.Configure(dpCfg)
 	if err != nil {

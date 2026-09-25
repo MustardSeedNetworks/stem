@@ -167,4 +167,15 @@ const platform_ops_t *rfc2544_preferred_platform(void);
  */
 const platform_ops_t *rfc2544_fallback_platform(const platform_ops_t *tried);
 
+/**
+ * Create the context's platform and workers unless it already has them.
+ *
+ * Every test entry point that sends frames calls this first; the preferred
+ * platform is tried, then its fallback.
+ *
+ * @param ctx Test context
+ * @return 0 on success, negative errno when no platform could be initialized
+ */
+int rfc2544_prepare_platform(rfc2544_ctx_t *ctx);
+
 #endif /* RFC2544_INTERNAL_H */

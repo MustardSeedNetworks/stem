@@ -562,6 +562,9 @@ type Config struct {
 	MeasureLatency bool
 	UsePacing      bool
 	BatchSize      uint32
+	// Y1564StepDuration is each Y.1564 configuration step's duration; zero
+	// keeps the dataplane default.
+	Y1564StepDuration time.Duration
 }
 
 // PeerConfig preserves the dataplane defaults while directing traffic to a reflector.

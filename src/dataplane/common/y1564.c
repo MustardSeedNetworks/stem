@@ -295,6 +295,14 @@ static int y1564_run_step(rfc2544_ctx_t *ctx, const y1564_service_t *service, do
 
     memset(result, 0, sizeof(*result));
 
+    /* The daemon runs Y.1564 on a fresh context, which no RFC 2544 entry
+     * point has prepared (#1411). */
+    int prepare_ret = rfc2544_prepare_platform(ctx);
+    if (prepare_ret < 0) {
+        y1564_log(LOG_ERROR, "Failed to prepare a platform: %d", prepare_ret);
+        return prepare_ret;
+    }
+
     /* Get platform and worker */
     const platform_ops_t *platform = rfc2544_get_platform(ctx);
     worker_ctx_t         *wctx     = rfc2544_get_worker(ctx, 0);
