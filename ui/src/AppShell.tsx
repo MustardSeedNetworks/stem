@@ -19,6 +19,7 @@ import {
   useEffect,
   useState,
 } from 'react';
+import { useTranslation } from 'react-i18next';
 import { matchPath, Navigate, Route, Routes, useLocation } from 'react-router';
 import { TestResults } from './components/TestResults';
 import { TestRunControls } from './components/TestRunControls';
@@ -212,9 +213,20 @@ export function AppShell({
  * PageWithHeader renders the section frame every routed page shares —
  * breadcrumbs plus the page header — from the registry entry rather
  * than from the page body. Pages render only their own content.
+ *
+ * It also owns `document.title`, so tabs, bookmarks and history entries
+ * name the route rather than all reading the product name from index.html
+ * (#1260). The title is the rail label, the same string the user clicked.
  */
 function PageWithHeader({ page, children }: { page: PageConfig; children: ReactNode }) {
   const openHelp = useOpenHelp();
+  const { t } = useTranslation('common');
+  const productName = t('app.title');
+
+  useEffect(() => {
+    document.title = `${page.label} | ${productName}`;
+  }, [page.label, productName]);
+
   return (
     <section className="stack-xl">
       <Breadcrumbs />

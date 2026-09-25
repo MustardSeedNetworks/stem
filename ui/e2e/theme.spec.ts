@@ -57,3 +57,29 @@ test.describe('Theme', () => {
     expect(darkBg, 'dark mode background must differ from light mode').not.toBe(lightBg);
   });
 });
+
+/**
+ * A fresh profile follows the OS (fleet decision 2026-09-15, UI-STEM-4). The
+ * 2026-09-15 audit saw dark regardless of `prefers-color-scheme`, because the
+ * unset preference resolved to 'dark' and index.html shipped `class="dark"`.
+ * Each scheme gets its own test so both directions are proved: a hard-coded
+ * default of either value fails one of them.
+ */
+for (const scheme of ['light', 'dark'] as const) {
+  test.describe(`a fresh profile with the OS set to ${scheme}`, () => {
+    test.use({ colorScheme: scheme });
+
+    test.beforeEach(async ({ page }) => {
+      await skipSetupWizard(page);
+      await page.addInitScript(() => window.localStorage.removeItem('stem-theme'));
+    });
+
+    test(`opens in ${scheme}`, async ({ page }) => {
+      await page.goto('/', { waitUntil: 'domcontentloaded' });
+      await expect(page.getByTestId('page-header-title')).toBeVisible({ timeout: 20000 });
+
+      const isDark = await page.evaluate(() => document.documentElement.classList.contains('dark'));
+      expect(isDark).toBe(scheme === 'dark');
+    });
+  });
+}

@@ -6,11 +6,13 @@
   },
   "benchmark": {
     "description": "RFC 2544 throughput, latency, frame-loss, and back-to-back measurements.",
+    "eyebrow": "Test module",
     "label": "Benchmark",
     "title": "Benchmark"
   },
   "certify": {
     "description": "RFC 2889 forwarding, RFC 6349 TCP throughput, and TSN time-sensitive networking certification.",
+    "eyebrow": "Test module",
     "label": "Certify",
     "title": "Certify"
   },
@@ -40,6 +42,7 @@
   },
   "measure": {
     "description": "Y.1731 OAM delay / loss / synthetic loss measurement.",
+    "eyebrow": "Test module",
     "label": "Measure",
     "title": "Measure"
   },
@@ -51,11 +54,13 @@
   },
   "serviceTest": {
     "description": "Y.1564 / MEF service activation and performance verification.",
+    "eyebrow": "Test module",
     "label": "ServiceTest",
     "title": "ServiceTest"
   },
   "trafficGen": {
     "description": "Custom traffic generation — shape streams, drive load, and validate paths.",
+    "eyebrow": "Test module",
     "label": "TrafficGen",
     "title": "TrafficGen"
   }

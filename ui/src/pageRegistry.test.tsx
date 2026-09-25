@@ -1,12 +1,13 @@
 /**
  * Guards the registry's locale contract: every route resolves real copy
- * in both locales, and the eyebrow slot stays opt-in — a page has one
+ * in both locales, and every test module wears the eyebrow — a page has one
  * only when its locale namespace declares it.
  */
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { cleanup, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
+import { MODULE_FEATURES } from './constants/moduleFeatures';
 import i18n from './i18n';
 import { useNavGroups } from './navGroups';
 import { usePages } from './pageRegistry';
@@ -30,13 +31,27 @@ describe('page registry translations', () => {
     unmount();
   });
 
-  it('gives an eyebrow only to pages whose locale declares one', () => {
-    const { result } = renderHook(() => usePages());
-    const withEyebrow = result.current.filter((page) => page.eyebrow !== undefined);
+  // The six test modules are the reflector plus the five licensed ones, so a
+  // module added to MODULE_FEATURES without its eyebrow copy fails here.
+  const modulePaths = ['/reflector', ...Object.keys(MODULE_FEATURES)];
 
-    expect(withEyebrow.map((page) => page.path)).toEqual(['/reflector']);
-    expect(withEyebrow[0]?.eyebrow).toBe('Test module');
-  });
+  it.each([
+    ['en', 'Test module'],
+    ['es', 'Módulo de prueba'],
+  ])(
+    'gives every test module an eyebrow in %s, and nothing else one',
+    async (language, eyebrow) => {
+      await i18n.changeLanguage(language);
+      const { result } = renderHook(() => usePages());
+
+      for (const page of result.current) {
+        expect(page.eyebrow, `${page.path} eyebrow`).toBe(
+          modulePaths.includes(page.path) ? eyebrow : undefined,
+        );
+      }
+      expect(result.current.filter((page) => page.eyebrow).length).toBe(modulePaths.length);
+    },
+  );
 });
 
 describe('rail <-> header label agreement', () => {

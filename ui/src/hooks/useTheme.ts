@@ -14,8 +14,9 @@
  * root element, which Tailwind CSS and our index.css use to switch
  * between :root (light) and .dark (dark) custom properties.
  *
- * Default value when no stored preference exists is 'dark' — this matches
- * the seed/niac behaviour and is the intended out-of-the-box appearance.
+ * With no stored preference the theme is 'system', so a fresh profile
+ * follows the OS (fleet decision 2026-09-15: OS default plus a persisted
+ * toggle). The toggle stores an explicit 'light' or 'dark'.
  *
  * Usage:
  * ```typescript
@@ -66,12 +67,12 @@ function applyTheme(theme: Theme): void {
 }
 
 /**
- * Read the stored theme from localStorage. Defaults to 'dark' when no
+ * Read the stored theme from localStorage. Defaults to 'system' when no
  * preference is stored.
  */
 function readStoredTheme(): Theme {
   if (typeof window === 'undefined') {
-    return 'dark';
+    return 'system';
   }
   try {
     const stored = window.localStorage.getItem(STORAGE_KEY) as Theme | null;
@@ -81,7 +82,7 @@ function readStoredTheme(): Theme {
   } catch {
     // localStorage may be unavailable
   }
-  return 'dark';
+  return 'system';
 }
 
 /**
@@ -144,7 +145,7 @@ export function useTheme(): {
 
 /**
  * Apply the initial theme synchronously, before React mounts. This avoids
- * a brief flash of light mode at boot when the user has stored 'dark'.
+ * a flash of the wrong theme at boot.
  *
  * Call from main.tsx before `createRoot(...).render(...)`.
  */
