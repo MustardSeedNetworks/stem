@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.155](https://github.com/MustardSeedNetworks/stem/compare/v0.24.154...v0.24.155) (2026-09-25)
+
+
+### Code Refactoring
+
+* **ui:** move every raw btn button onto the shared Button ([#1443](https://github.com/MustardSeedNetworks/stem/issues/1443)) ([74d6114](https://github.com/MustardSeedNetworks/stem/commit/74d6114228a062acd5b3de824b01c2c17d8a5c84)), closes [#1261](https://github.com/MustardSeedNetworks/stem/issues/1261)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1444](https://github.com/MustardSeedNetworks/stem/issues/1444)) ([9e1934b](https://github.com/MustardSeedNetworks/stem/commit/9e1934b5b97530b0467503b0158658066b8e946c))
+
 ## [0.24.154](https://github.com/MustardSeedNetworks/stem/compare/v0.24.153...v0.24.154) (2026-09-25)
 
 
