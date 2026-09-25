@@ -181,7 +181,7 @@ export function usePages(): PageConfig[] {
     label: t(`${p.i18nKey}.label`),
     // A page has an eyebrow when its locale namespace declares one, so the
     // copy lives in one place instead of being mirrored by a flag here.
-    // Pages still awaiting their archetype pass have none.
+    // The six test modules carry one; History and Security do not.
     eyebrow: t(`${p.i18nKey}.eyebrow`, { defaultValue: '' }) || undefined,
     title: t(`${p.i18nKey}.title`),
     description: t(`${p.i18nKey}.description`),
