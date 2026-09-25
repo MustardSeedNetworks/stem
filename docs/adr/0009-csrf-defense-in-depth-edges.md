@@ -104,3 +104,13 @@ invented for it.
 the 401 on the wire and `TestRoutePolicyManifest` asserts `auth: true` in the
 manifest, so a future registration cannot drop the flag quietly. The test that
 previously asserted the opposite, `TestHandleLicenseNoAuth`, is gone.
+
+### Amendment 2026-09-25 — CSRF is declared per route (STM-FDN-1, #1337)
+
+There is no global `CSRFMiddleware` and no exempt list any more. Each route in
+`internal/api/routes.go` declares `CSRF`, and foundation's route `Registrar`
+applies `csrf.ProtectKeyed` to it, keyed by the same `GetSessionIDFromRequest`.
+`TestCSRFRoutePolicy` reads the served `/__capabilities` manifest and fails if
+any route taking a state-changing method omits it, except the four pre-session
+sign-in steps. Edge 1 is unchanged: refresh declares CSRF, and a request with no
+session still passes it and relies on `SameSite=Strict`.

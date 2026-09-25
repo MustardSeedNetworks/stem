@@ -80,9 +80,12 @@ stem/
 
 ## API
 
-HTTPS-only REST API on port **8444** (TLS 1.2+, self-signed for local dev; the
-HTTP→HTTPS redirector that previously bound 8043 was removed — there is no
-plaintext listener). `GET /__version` (build metadata) and `GET /__capabilities`
+HTTPS-only REST API on port **8444** (TLS 1.3, self-signed for local dev). The
+one listener is foundation's `pkg/httpserver`: it answers a plaintext request
+on the same port with a 308 to `https://` and serves it nothing else, and there
+is no second listener. Every route is declared in `Server.routes` and composed
+by foundation's route registrar; `docs/openapi.yaml` is generated from that
+table (`make openapi`). `GET /__version` (build metadata) and `GET /__capabilities`
 (route-policy manifest) are unauthenticated introspection endpoints.
 
 ## Decisions

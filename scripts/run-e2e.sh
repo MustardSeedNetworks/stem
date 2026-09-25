@@ -94,11 +94,13 @@ if [ -z "$base_url" ]; then
 fi
 
 # HTTPS-only is a product invariant, and it is what makes the origin secure
-# enough for WebKit to send the session cookie. If a plaintext listener ever
-# comes back, the suite would silently return to the #959 failure mode.
+# enough for WebKit to send the session cookie. The port answers plaintext with
+# a 308 to https and nothing else; if it ever served content over plaintext,
+# the suite would silently return to the #959 failure mode.
 plain_url="http://${base_url#https://}"
-if curl -sf --max-time 2 "$plain_url/__version" >/dev/null 2>&1; then
-  printf '%s\n' "Stem served application content over plaintext HTTP at $plain_url" >&2
+plain_reply=$(curl -s --max-time 2 -o /dev/null -w '%{http_code} %{redirect_url}' "$plain_url/__version" || true)
+if [ "$plain_reply" != "308 $base_url/__version" ]; then
+  printf '%s\n' "Stem answered plaintext HTTP at $plain_url with '$plain_reply', want a 308 to $base_url/__version" >&2
   exit 1
 fi
 

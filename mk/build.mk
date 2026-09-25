@@ -11,7 +11,7 @@
 #
 # =============================================================================
 
-.PHONY: ui ui-deps go quick schema \
+.PHONY: ui ui-deps go quick schema openapi \
         build c-build dataplane \
         ui-dev go-dev dev
 
@@ -19,6 +19,10 @@ schema: ## Regenerate docs/schemas/api/*.json from internal/api Go DTOs
 	@echo "Generating JSON Schemas for API DTOs..."
 	@go run ./cmd/stem-schema -o docs/schemas/api
 	@echo "Wrote $$(ls -1 docs/schemas/api/*.json 2>/dev/null | wc -l | tr -d ' ') schema(s) to docs/schemas/api/"
+
+openapi: ## Regenerate docs/openapi.yaml from the capability registry
+	@go run ./cmd/stem-openapi -o docs/openapi.yaml
+	@echo "Wrote docs/openapi.yaml"
 
 # =============================================================================
 # Main Build Targets

@@ -29,6 +29,8 @@ import (
 	"time"
 
 	"gopkg.in/natefinch/lumberjack.v2"
+
+	"github.com/MustardSeedNetworks/foundation/pkg/httpserver/route"
 )
 
 // Config contains logging configuration options.
@@ -86,8 +88,6 @@ func DefaultConfig() *Config {
 type contextKey string
 
 const (
-	// requestIDKey is the context key for request IDs.
-	requestIDKey contextKey = "request_id"
 	// userIDKey is the context key for user IDs.
 	userIDKey contextKey = "user_id"
 	// componentKey is the context key for component names.
@@ -255,17 +255,11 @@ func Reset() {
 	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, nil)))
 }
 
-// WithRequestID returns a new context with the given request ID.
-func WithRequestID(ctx context.Context, requestID string) context.Context {
-	return context.WithValue(ctx, requestIDKey, requestID)
-}
-
-// RequestIDFromContext extracts the request ID from the context.
+// RequestIDFromContext returns the ID the route Registrar assigned to the
+// request, or "" outside one. The Registrar owns request IDs (and the access
+// log line); logs and audit events only read them.
 func RequestIDFromContext(ctx context.Context) string {
-	if id, ok := ctx.Value(requestIDKey).(string); ok {
-		return id
-	}
-	return ""
+	return route.RequestID(ctx)
 }
 
 // WithUserID returns a new context with the given user ID.

@@ -185,9 +185,9 @@ widest).
 **Throughput far below expectation, no loss** — check the negotiated speed and
 duplex of both interfaces before suspecting the path.
 
-**The WebUI is unreachable at `http://host:8444`** — Stem is HTTPS-only. Use
-`https://`. A browser with no scheme typed will get connection refused, which
-is intended. The certificate is self-signed unless you have installed one;
+**`http://host:8444` redirects to `https://`** — Stem is HTTPS-only. A
+plaintext request on the port is answered with a 308 to the same address over
+`https://` and is served nothing else. The certificate is self-signed unless you have installed one;
 `stem install-ca` adds Stem's root to the OS trust store.
 
 ---

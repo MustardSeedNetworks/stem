@@ -1,0 +1,218 @@
+# openapi-source.yaml — the hand-written half of docs/openapi.yaml.
+#
+# docs/openapi.yaml is GENERATED (`make openapi`) and must not be edited. Its
+# `paths` block comes from the capability registry (internal/api
+# Server.routes), so every registered route is documented with the policy it
+# actually carries (auth, CSRF, rate limit, body cap) and no route can be
+# missing. The error schema comes from the Go type api.HTTPErrorResponse.
+#
+# What the registry cannot know (prose, path parameter names) lives here:
+#
+#   preamble   verbatim top-level keys: info, servers, tags, components…
+#   operations keyed "<METHOD> <path>", merged onto the generated operation.
+#              `pathTemplate` renames a prefix route (a path ending in "/")
+#              to its real shape.
+#
+# An operations key naming a path or method the registry does not serve fails
+# the generator, so this file cannot outlive the routes it describes.
+
+preamble:
+  openapi: 3.0.3
+  info:
+    title: The Stem API
+    description: |
+      REST API of the Stem daemon: RFC 2544, Y.1564, Y.1731, RFC 2889,
+      RFC 6349, MEF and TSN test execution, the reflector, licensing and
+      first-run setup. The web UI and the `stem` CLI are both clients of it.
+
+      ## Authentication
+      Operations with the `BearerAuth` requirement need the access token that
+      `POST /api/v1/auth/login` returns. The browser presents it as the
+      `stem_access` cookie; API clients and the CLI send it as
+      `Authorization: Bearer`. `/__version`, `/__capabilities` and the health
+      probes are deliberately unauthenticated deployment introspection.
+
+      ## CSRF protection
+      Operations marked with the `CsrfToken` security scheme need a token from
+      `GET /api/v1/auth/csrf-token` in the `X-Csrf-Token` header. Tokens are
+      per session, keyed by the access token that fetched them. A request that
+      carries no session at all is not checked for CSRF.
+
+      ## Rate limiting
+      Routes marked rate limited answer 429 once their per-IP budget is spent.
+      Credential and MFA endpoints share a strict budget; the rest share a
+      general one.
+    version: v1
+    contact:
+      name: Mustard Seed Networks
+      url: https://github.com/MustardSeedNetworks/stem
+    license:
+      name: Business Source License 1.1
+      url: https://github.com/MustardSeedNetworks/stem/blob/main/LICENSE
+  servers:
+    - url: https://localhost:8444
+      description: Local daemon (paths are absolute from the origin)
+  security:
+    - BearerAuth: []
+  tags:
+    - name: System
+    - name: Authentication
+    - name: Setup
+    - name: Testing
+    - name: Reflector
+    - name: License
+    - name: Modules
+  components:
+    securitySchemes:
+      BearerAuth:
+        type: http
+        scheme: bearer
+        description: >
+          Access token from POST /api/v1/auth/login, sent as the stem_access
+          cookie or an Authorization bearer.
+      CsrfToken:
+        type: apiKey
+        in: header
+        name: X-Csrf-Token
+        description: Per-session CSRF token from GET /api/v1/auth/csrf-token.
+
+operations:
+  GET /__version:
+    summary: Build metadata
+    description: Version, commit, build time and embedded UI hash, for deployment validation.
+    tags: [System]
+  GET /health/live:
+    summary: Liveness probe
+    tags: [System]
+  GET /health/ready:
+    summary: Readiness probe
+    tags: [System]
+  GET /__capabilities:
+    summary: Route-policy manifest
+    description: Every registered route with the policy the daemon enforces on it.
+    tags: [System]
+  GET /api/v1/health:
+    summary: API health
+    tags: [System]
+  GET /api/v1/stats:
+    summary: Run statistics and status
+    tags: [Testing]
+  GET /api/v1/capabilities:
+    summary: Platform capabilities
+    description: What this build and host can run, read before sign-in to gate the UI.
+    tags: [System]
+  GET /api/v1/interfaces:
+    summary: List network interfaces
+    tags: [System]
+  GET /api/v1/settings:
+    summary: Read settings
+    tags: [System]
+  POST /api/v1/settings:
+    summary: Update settings
+    tags: [System]
+  GET /api/v1/mode:
+    summary: Read the operating mode
+    tags: [System]
+  POST /api/v1/mode:
+    summary: Switch the operating mode
+    tags: [System]
+  GET /api/v1/events:
+    summary: Server-sent event stream
+    tags: [System]
+  POST /api/v1/test/start:
+    summary: Start a run plan
+    tags: [Testing]
+  POST /api/v1/test/stop:
+    summary: Stop the run in flight
+    tags: [Testing]
+  GET /api/v1/test/result:
+    summary: Result of the last run
+    tags: [Testing]
+  POST /api/v1/auth/login:
+    summary: Sign in
+    tags: [Authentication]
+  POST /api/v1/auth/logout:
+    summary: Sign out
+    tags: [Authentication]
+  POST /api/v1/auth/refresh:
+    summary: Refresh the access token
+    tags: [Authentication]
+  GET /api/v1/auth/csrf-token:
+    summary: Issue a CSRF token
+    description: >
+      Returns the CSRF token bound to the calling session. Required by every
+      state-changing operation that declares the CsrfToken scheme.
+    tags: [Authentication]
+  POST /api/v1/auth/totp/setup:
+    summary: Begin TOTP enrolment
+    tags: [Authentication]
+  POST /api/v1/auth/totp/verify:
+    summary: Confirm TOTP enrolment
+    tags: [Authentication]
+  POST /api/v1/auth/totp/disable:
+    summary: Remove TOTP
+    tags: [Authentication]
+  POST /api/v1/auth/login/totp:
+    summary: Finish sign-in with a TOTP code
+    tags: [Authentication]
+  GET /api/v1/auth/mfa/status:
+    summary: Second-factor status
+    tags: [Authentication]
+  POST /api/v1/auth/webauthn/register/begin:
+    summary: Begin passkey registration
+    tags: [Authentication]
+  POST /api/v1/auth/webauthn/register/finish:
+    summary: Finish passkey registration
+    tags: [Authentication]
+  POST /api/v1/auth/webauthn/login/begin:
+    summary: Begin passkey sign-in
+    tags: [Authentication]
+  POST /api/v1/auth/webauthn/login/finish:
+    summary: Finish passkey sign-in
+    tags: [Authentication]
+  GET /api/v1/setup/status:
+    summary: First-run setup status
+    tags: [Setup]
+  POST /api/v1/setup/complete:
+    summary: Complete first-run setup
+    tags: [Setup]
+  GET /api/v1/recovery/status:
+    summary: Password recovery status
+    tags: [Setup]
+  POST /api/v1/recovery/complete:
+    summary: Reset the password with a recovery token
+    tags: [Setup]
+  GET /api/v1/recovery/instructions:
+    summary: Password recovery instructions
+    tags: [Setup]
+  GET /api/v1/reflector/config:
+    summary: Read the reflector configuration
+    tags: [Reflector]
+  POST /api/v1/reflector/config:
+    summary: Update the reflector configuration
+    tags: [Reflector]
+  GET /api/v1/reflector/stats:
+    summary: Reflector counters
+    tags: [Reflector]
+  GET /api/v1/license:
+    summary: Licence status
+    tags: [License]
+  DELETE /api/v1/license:
+    summary: Deactivate the licence
+    tags: [License]
+  POST /api/v1/license/activate:
+    summary: Activate a licence key
+    tags: [License]
+  GET /api/v1/license/trial:
+    summary: Trial status
+    tags: [License]
+  POST /api/v1/license/trial:
+    summary: Start a trial
+    tags: [License]
+  GET /api/v1/modules:
+    summary: List test modules
+    tags: [Modules]
+  GET /api/v1/modules/:
+    summary: Read one test module or its tests
+    pathTemplate: /api/v1/modules/{subpath}
+    tags: [Modules]

@@ -74,9 +74,8 @@ func TestReflectorConfigUpdateCanDisableAutostart(t *testing.T) {
 // resolves against its own working directory — is unusable to them.
 func TestPublishedCertificatePathIsAbsolute(t *testing.T) {
 	s := newReflectorUpdateServer(t)
-	s.tlsConfig.Enabled = true
-	s.tlsConfig.CertFile = ""
-	s.tlsConfig.CertsDir = "certs"
+	s.listenConfig.CertFile = ""
+	s.listenConfig.CertDir = "certs"
 
 	got := s.publishedCertPath()
 	if got == "" {
@@ -93,8 +92,8 @@ func TestPublishedCertificatePathIsAbsolute(t *testing.T) {
 // An already-absolute configured certificate is published unchanged.
 func TestPublishedCertificatePathKeepsAnAbsoluteSetting(t *testing.T) {
 	s := newReflectorUpdateServer(t)
-	s.tlsConfig.Enabled = true
-	s.tlsConfig.CertFile = "/etc/stem/tls/server.crt"
+	s.listenConfig.CertFile = "/etc/stem/tls/server.crt"
+	s.listenConfig.KeyFile = "/etc/stem/tls/server.key"
 
 	if got := s.publishedCertPath(); got != "/etc/stem/tls/server.crt" {
 		t.Errorf("publishedCertPath() = %q, want it unchanged", got)
@@ -116,9 +115,8 @@ func TestPublishedDescriptorCarriesAnAbsoluteCertificatePath(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = s.Shutdown() })
 	s.dataDir = dir
-	s.tlsConfig.Enabled = true
-	s.tlsConfig.CertFile = ""
-	s.tlsConfig.CertsDir = "certs"
+	s.listenConfig.CertFile = ""
+	s.listenConfig.CertDir = "certs"
 
 	if publishErr := s.publishConnection("https://localhost:8444"); publishErr != nil {
 		t.Fatalf("publishConnection: %v", publishErr)

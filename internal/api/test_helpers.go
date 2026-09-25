@@ -3,7 +3,8 @@
 package api
 
 import (
-	"github.com/MustardSeedNetworks/stem/internal/auth"
+	"github.com/MustardSeedNetworks/foundation/pkg/csrf"
+
 	"github.com/MustardSeedNetworks/stem/internal/license"
 )
 
@@ -69,10 +70,10 @@ func (s *Server) ResetTestStateForTest() {
 	}
 }
 
-// CSRFManagerForTest exposes the server's CSRFManager for tests that
+// CSRFManagerForTest exposes the server's CSRF manager for tests that
 // need to assert directly on token-lifecycle state (e.g. rotation on
 // login, expiry handling).
-func (s *Server) CSRFManagerForTest() *auth.CSRFManager {
+func (s *Server) CSRFManagerForTest() *csrf.Manager {
 	return s.csrfManager
 }
 

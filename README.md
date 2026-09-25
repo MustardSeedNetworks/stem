@@ -40,8 +40,8 @@ the same install.
 ### Interfaces
 
 - **CLI** — scriptable `stem <cmd>` for CI integration
-- **Web UI** — React/TypeScript control plane on port 8444, HTTPS only
-  (there is no plaintext listener and no HTTP redirector)
+- **Web UI** — React/TypeScript control plane on port 8444, HTTPS only (a
+  plaintext request on that port gets a 308 to `https://` and nothing else)
 - **REST + SSE** — `/api/v1/events` streams live test results
 
 ## Quick Start

@@ -99,7 +99,7 @@ func TestLogSecurityEvent(t *testing.T) {
 	defer handler.Reset()
 
 	ctx := context.Background()
-	ctx = WithRequestID(ctx, "test-request-123")
+	ctx, wantID := withRequestID(ctx, t)
 
 	event := &SecurityEvent{
 		Timestamp:      time.Time{},
@@ -139,7 +139,7 @@ func TestLogSecurityEvent(t *testing.T) {
 	if !strings.Contains(output, "TestAgent/1.0") {
 		t.Error("expected log to contain user agent")
 	}
-	if !strings.Contains(output, "test-request-123") {
+	if !strings.Contains(output, wantID) {
 		t.Error("expected log to contain request ID from context")
 	}
 }

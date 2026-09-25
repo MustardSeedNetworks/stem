@@ -3,7 +3,7 @@ module github.com/MustardSeedNetworks/stem
 go 1.27.0
 
 require (
-	github.com/MustardSeedNetworks/foundation v0.5.17
+	github.com/MustardSeedNetworks/foundation v0.5.20
 	github.com/go-playground/validator/v10 v10.30.4
 	github.com/go-webauthn/webauthn v0.18.2
 	github.com/golang-jwt/jwt/v5 v5.3.1
@@ -43,8 +43,8 @@ require (
 	github.com/test-go/testify v1.1.4 // indirect
 	github.com/tinylib/msgp v1.6.4 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
+	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	go.yaml.in/yaml/v4 v4.0.0-rc.6 // indirect
-	golang.org/x/net v0.58.0 // indirect
 	golang.org/x/text v0.42.0 // indirect
 	modernc.org/libc v1.75.7 // indirect
 	modernc.org/mathutil v1.7.1 // indirect

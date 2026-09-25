@@ -77,7 +77,7 @@ func loginToken(t testing.TB, s *api.Server) string {
 // auth-gated endpoint (#340). It sets the Bearer header always, and for
 // unsafe methods (POST/PUT/DELETE/PATCH) also mints + attaches the CSRF
 // token for the session embedded in jwt. Safe methods skip CSRF, matching
-// the production CSRFMiddleware contract.
+// the Registrar's CSRF layer.
 //
 // Call loginToken(t, s) ONCE per test and reuse the jwt — the auth
 // rate limiter allows only AuthBurstLimit logins per window, so logging
@@ -93,7 +93,7 @@ func stampAuth(t testing.TB, s *api.Server, req *http.Request, jwt string) {
 		if sessionID == "" {
 			t.Fatalf("stampAuth: empty session ID from JWT")
 		}
-		csrfToken, err := s.CSRFManagerForTest().GetOrCreateToken(sessionID)
+		csrfToken, err := s.CSRFManagerForTest().GetOrCreate(sessionID)
 		if err != nil {
 			t.Fatalf("stampAuth: GetOrCreateToken: %v", err)
 		}

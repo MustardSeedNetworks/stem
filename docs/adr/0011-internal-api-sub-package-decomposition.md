@@ -51,6 +51,13 @@ dependency in the other direction.
 
 ### TLS slice (this ADR)
 
+> **Amended by STM-FDN-1 (stem#1337).** The listener, TLS configuration,
+> self-signed certificate and port fallback are now foundation's
+> `pkg/httpserver`, and the never-enabled ACME path was deleted with them.
+> `tlsutil` keeps only the `FingerprintCache`; `activeCertPath` mirrors
+> `httpserver`'s certificate choice. The paragraphs below record the slice as
+> it was cut.
+
 `internal/api/tlsutil` holds the TLS material provisioning: the `Config`/
 `ACMEConfig` settings structs, `ServerConfig` (the TLS 1.3 [tls.Config]
 template), `EnsureSelfSignedCert` (self-signed cert generation), the ACME
