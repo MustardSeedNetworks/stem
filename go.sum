@@ -1,5 +1,5 @@
-github.com/MustardSeedNetworks/foundation v0.5.20 h1:gufli6ckfAy9euY+IK3PsGLSYWfg9Rc9YTetwthRzhw=
-github.com/MustardSeedNetworks/foundation v0.5.20/go.mod h1:pUS7Wo1acXUmOBKiyLr+iM7+slCb+M1dMTAIas8a4kk=
+github.com/MustardSeedNetworks/foundation v0.6.0 h1:+ZvpAY8xRrfCL1evnnOa9peILcz4KRRkgHE7RgMPEz0=
+github.com/MustardSeedNetworks/foundation v0.6.0/go.mod h1:pUS7Wo1acXUmOBKiyLr+iM7+slCb+M1dMTAIas8a4kk=
 github.com/bahlo/generic-list-go v0.2.0 h1:5sz/EEAK+ls5wF+NeqDpk5+iNdMDXrh3z3nPnH1Wvgk=
 github.com/bahlo/generic-list-go v0.2.0/go.mod h1:2KvAjgMlE5NNynlg/5iLrrCCZ2+5xWbdbCW3pNTGyYg=
 github.com/boombuler/barcode v1.0.1-0.20190219062509-6c824513bacc/go.mod h1:paBWMcWSl3LHKBqUq+rly7CNSldXjb2rDl3JlRe0mD8=

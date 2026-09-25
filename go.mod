@@ -3,7 +3,7 @@ module github.com/MustardSeedNetworks/stem
 go 1.27.0
 
 require (
-	github.com/MustardSeedNetworks/foundation v0.5.20
+	github.com/MustardSeedNetworks/foundation v0.6.0
 	github.com/go-playground/validator/v10 v10.30.4
 	github.com/go-webauthn/webauthn v0.18.2
 	github.com/golang-jwt/jwt/v5 v5.3.1
