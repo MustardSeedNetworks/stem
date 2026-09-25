@@ -58,6 +58,7 @@ export function Y1564Section({
 
   return (
     <CollapsibleSection
+      testId="y1564-test-section"
       title={
         <div className="flex items-center gap-compact">
           <Activity className="w-4 h-4" aria-hidden="true" />

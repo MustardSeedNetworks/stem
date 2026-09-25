@@ -146,7 +146,12 @@ export function TestProgressBar({ progress }: TestProgressBarProps): ReactElemen
           aria-label={t('accessibility.runPlanSteps')}
         >
           {progress.steps.map((step, index) => (
-            <li key={`${step.testType}-${index}`} className="flex-between">
+            <li
+              key={`${step.testType}-${index}`}
+              data-testid={`run-plan-step-${index}`}
+              data-status={step.status}
+              className="flex-between"
+            >
               <span>{step.testType}</span>
               <span>{stepStatusLabel(t, step.status)}</span>
             </li>
