@@ -67,9 +67,12 @@ export function useConfigForm<TConfig extends FieldValues>(
   setConfigRef.current = setConfig;
 
   useEffect(() => {
-    const subscription = form.watch((values, { type }) => {
-      // Only forward on actual changes (not the initial subscription event).
-      if (type !== 'change') return;
+    const subscription = form.watch((values, { name }) => {
+      // A field change names its field whether it came from a registered
+      // input or from setValue (the frame-size checkboxes, the rate
+      // presets); only form-wide events such as reset() carry no name.
+      // Filtering on `type === 'change'` dropped every setValue write.
+      if (name === undefined) return;
       // Run an extra parse to be sure cross-field constraints pass before
       // forwarding. Skipping invalid intermediate states keeps the parent
       // store consistent.

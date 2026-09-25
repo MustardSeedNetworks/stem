@@ -10,9 +10,10 @@
  * on Spanish text asserts that this form reads from them — a form that
  * regressed to a hardcoded string would still render English here.
  */
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import i18n from 'i18next';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { defaultRFC2544Config, RFC2544ConfigForm } from './RFC2544ConfigForm';
 
 const ALL_TESTS = ['rfc2544_throughput', 'rfc2544_frame_loss'];
@@ -65,5 +66,29 @@ describe('RFC2544ConfigForm — i18n', () => {
 
     expect(screen.getByText(/Pruebas seleccionadas/)).toBeInTheDocument();
     expect(screen.getByText(/Tiempo estimado/)).toBeInTheDocument();
+  });
+});
+
+/* The frame-size checkboxes write through setValue, not a registered input,
+   so a store sync that listens only for typed input never sees them: the
+   form showed the new sizes and the run started with the old ones (#1465). */
+describe('RFC2544ConfigForm — store sync', () => {
+  it('sends a frame-size toggle to the run config on its own', async () => {
+    const setConfig = vi.fn();
+    render(
+      <RFC2544ConfigForm
+        config={defaultRFC2544Config}
+        setConfig={setConfig}
+        selectedTests={ALL_TESTS}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Test 1518-byte frames' }));
+
+    await waitFor(() =>
+      expect(setConfig).toHaveBeenLastCalledWith(
+        expect.objectContaining({ frameSizes: [64, 128, 256, 512, 1024, 1280] }),
+      ),
+    );
   });
 });

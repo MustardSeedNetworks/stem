@@ -4,9 +4,10 @@
  * "Test Summary". The shared TestSummary resolves that to one heading, so
  * the first assertion here is that this form now says what the others say.
  */
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import i18n from 'i18next';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { defaultTrafficGenConfig, TrafficGenConfigForm } from './TrafficGenConfigForm';
 
 function renderForm(overrides: Partial<typeof defaultTrafficGenConfig> = {}) {
@@ -51,5 +52,26 @@ describe('TrafficGenConfigForm — i18n', () => {
 
     expect(screen.getByRole('option', { name: '64 B (mín.)' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: '9000 B (jumbo)' })).toBeInTheDocument();
+  });
+});
+
+/* The rate presets write through setValue, like the frame-size checkboxes on
+   the RFC 2544 and Y.1564 forms (#1465). */
+describe('TrafficGenConfigForm — store sync', () => {
+  it('sends a rate preset to the run config on its own', async () => {
+    const setConfig = vi.fn();
+    render(
+      <TrafficGenConfigForm
+        config={defaultTrafficGenConfig}
+        setConfig={setConfig}
+        selectedTests={['trafficgen_burst', 'custom_stream']}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: '25%' }));
+
+    await waitFor(() =>
+      expect(setConfig).toHaveBeenLastCalledWith(expect.objectContaining({ ratePct: 25 })),
+    );
   });
 });

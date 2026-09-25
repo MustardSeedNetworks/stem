@@ -8,9 +8,10 @@
  * EIR, FLR and the standard's own name are terms an operator matches against
  * a service order, not words to render into Spanish.
  */
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import i18n from 'i18next';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { defaultY1564Config, Y1564ConfigForm } from './Y1564ConfigForm';
 
 function renderForm(overrides: Partial<typeof defaultY1564Config> = {}) {
@@ -59,5 +60,27 @@ describe('Y1564ConfigForm — i18n', () => {
 
     /* PCP values are 802.1p wire values; the names beside them are labels. */
     expect(screen.getByRole('option', { name: '0 - Best Effort (BE)' })).toBeInTheDocument();
+  });
+});
+
+/* Same defect as RFC 2544 (#1465): the checkboxes write through setValue. */
+describe('Y1564ConfigForm — store sync', () => {
+  it('sends a frame-size toggle to the run config on its own', async () => {
+    const setConfig = vi.fn();
+    render(
+      <Y1564ConfigForm
+        config={defaultY1564Config}
+        setConfig={setConfig}
+        selectedTests={['y1564_full']}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Test 9000-byte frames' }));
+
+    await waitFor(() =>
+      expect(setConfig).toHaveBeenLastCalledWith(
+        expect.objectContaining({ frameSizes: [128, 256, 512, 1024, 1280, 1518, 9000] }),
+      ),
+    );
   });
 });
