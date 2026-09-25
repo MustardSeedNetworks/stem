@@ -13,6 +13,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/MustardSeedNetworks/foundation/pkg/httpserver/route"
 )
 
 // TestDefaultConfig verifies default configuration values.
@@ -214,7 +216,7 @@ func TestRequestIDContext(t *testing.T) {
 		t.Fatalf("InitWithWriter failed: %v", err)
 	}
 
-	ctx := WithRequestID(context.Background(), "req-12345")
+	ctx, wantID := withRequestID(context.Background(), t)
 	InfoContext(ctx, "request with ID")
 
 	var logEntry map[string]any
@@ -223,8 +225,8 @@ func TestRequestIDContext(t *testing.T) {
 		t.Fatalf("failed to parse JSON log: %v", unmarshalErr)
 	}
 
-	if reqID, ok := logEntry[FieldRequestID].(string); !ok || reqID != "req-12345" {
-		t.Errorf("expected request_id 'req-12345', got %v", logEntry[FieldRequestID])
+	if reqID, ok := logEntry[FieldRequestID].(string); !ok || reqID != wantID {
+		t.Errorf("expected request_id %q, got %v", wantID, logEntry[FieldRequestID])
 	}
 }
 
@@ -327,7 +329,7 @@ func TestFullContextLog(t *testing.T) {
 
 	ctx := context.Background()
 	ctx = WithComponent(ctx, "server")
-	ctx = WithRequestID(ctx, "abc123")
+	ctx, wantID := withRequestID(ctx, t)
 	ctx = WithUserID(ctx, "user-1")
 
 	InfoContext(ctx, "full context test", FieldDurationMS, int64(45))
@@ -344,7 +346,7 @@ func TestFullContextLog(t *testing.T) {
 		FieldLevel:      "info",
 		FieldMessage:    "full context test",
 		FieldComponent:  "server",
-		FieldRequestID:  "abc123",
+		FieldRequestID:  wantID,
 		"user_id":       "user-1",
 		FieldDurationMS: float64(45), // JSON numbers are float64.
 	}
@@ -515,12 +517,12 @@ func TestContextExtraction(t *testing.T) {
 	}
 
 	// Test with values.
-	ctx = WithRequestID(ctx, "req-1")
+	ctx, wantID := withRequestID(ctx, t)
 	ctx = WithUserID(ctx, "user-1")
 	ctx = WithComponent(ctx, "comp-1")
 
-	if RequestIDFromContext(ctx) != "req-1" {
-		t.Errorf("expected request_id 'req-1', got %q", RequestIDFromContext(ctx))
+	if RequestIDFromContext(ctx) != wantID {
+		t.Errorf("expected request_id %q, got %q", wantID, RequestIDFromContext(ctx))
 	}
 	if UserIDFromContext(ctx) != "user-1" {
 		t.Errorf("expected user_id 'user-1', got %q", UserIDFromContext(ctx))
@@ -661,207 +663,6 @@ func TestRedactionInJSONLogs(t *testing.T) {
 	// Username should not be redacted.
 	if username, ok := logEntry["username"].(string); !ok || username != "john" {
 		t.Errorf("expected username 'john', got %v", logEntry["username"])
-	}
-}
-
-// TestRequestIDMiddleware verifies the request ID middleware.
-func TestRequestIDMiddleware(t *testing.T) {
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		requestID := RequestIDFromContext(r.Context())
-		if requestID == "" {
-			t.Error("expected request ID in context")
-		}
-		w.WriteHeader(http.StatusOK)
-	})
-
-	wrapped := RequestIDMiddleware(handler)
-
-	t.Run("generates request ID", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/test", nil)
-		rec := httptest.NewRecorder()
-
-		wrapped.ServeHTTP(rec, req)
-
-		respID := rec.Header().Get(RequestIDHeader)
-		if respID == "" {
-			t.Error("expected X-Request-ID in response header")
-		}
-		if len(respID) != 16 { // 8 bytes = 16 hex chars.
-			t.Errorf("expected 16 char request ID, got %d chars: %s", len(respID), respID)
-		}
-	})
-
-	t.Run("uses provided request ID", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/test", nil)
-		req.Header.Set(RequestIDHeader, "custom-request-id")
-		rec := httptest.NewRecorder()
-
-		wrapped.ServeHTTP(rec, req)
-
-		respID := rec.Header().Get(RequestIDHeader)
-		if respID != "custom-request-id" {
-			t.Errorf("expected custom request ID, got %s", respID)
-		}
-	})
-
-	t.Run("rejects invalid request ID", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/test", nil)
-		req.Header.Set(RequestIDHeader, "invalid<script>id")
-		rec := httptest.NewRecorder()
-
-		wrapped.ServeHTTP(rec, req)
-
-		respID := rec.Header().Get(RequestIDHeader)
-		if respID == "invalid<script>id" {
-			t.Error("should have rejected invalid request ID")
-		}
-		if len(respID) != 16 {
-			t.Errorf("expected generated request ID, got %s", respID)
-		}
-	})
-
-	t.Run("rejects too long request ID", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/test", nil)
-		longID := strings.Repeat("a", maxRequestIDLength+1)
-		req.Header.Set(RequestIDHeader, longID)
-		rec := httptest.NewRecorder()
-
-		wrapped.ServeHTTP(rec, req)
-
-		respID := rec.Header().Get(RequestIDHeader)
-		if respID == longID {
-			t.Error("should have rejected too long request ID")
-		}
-	})
-}
-
-// TestIsValidRequestID verifies request ID validation.
-func TestIsValidRequestID(t *testing.T) {
-	testCases := []struct {
-		id    string
-		valid bool
-	}{
-		{"", false},
-		{"abc123", true},
-		{"ABC-123", true},
-		{"abc_123", true},
-		{"abc.123", true},
-		{"abc<script>", false},
-		{"abc\n123", false},
-		{strings.Repeat("a", 64), true},
-		{strings.Repeat("a", 65), false},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.id, func(t *testing.T) {
-			result := isValidRequestID(tc.id)
-			if result != tc.valid {
-				t.Errorf("isValidRequestID(%q) = %v, expected %v", tc.id, result, tc.valid)
-			}
-		})
-	}
-}
-
-// TestLoggingMiddleware verifies the logging middleware.
-func TestLoggingMiddleware(t *testing.T) {
-	Reset()
-	defer Reset()
-
-	var buf bytes.Buffer
-	cfg := &Config{
-		Level:      "info",
-		Format:     "json",
-		AddSource:  false,
-		File:       "",
-		MaxSize:    0,
-		MaxBackups: 0,
-		MaxAge:     0,
-		Compress:   false,
-		Component:  "",
-	}
-
-	err := InitWithWriter(cfg, &buf)
-	if err != nil {
-		t.Fatalf("InitWithWriter failed: %v", err)
-	}
-
-	handler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusCreated)
-	})
-
-	// RequestIDMiddleware must be outermost so request_id is in context for Middleware.
-	wrapped := RequestIDMiddleware(Middleware(handler))
-
-	req := httptest.NewRequest(http.MethodPost, "/api/test", nil)
-	req.Header.Set("User-Agent", "test-agent")
-	rec := httptest.NewRecorder()
-
-	wrapped.ServeHTTP(rec, req)
-
-	var logEntry map[string]any
-	unmarshalErr := json.Unmarshal(buf.Bytes(), &logEntry)
-	if unmarshalErr != nil {
-		t.Fatalf("failed to parse JSON log: %v", unmarshalErr)
-	}
-
-	// Verify logged fields.
-	if method, ok := logEntry["method"].(string); !ok || method != "POST" {
-		t.Errorf("expected method 'POST', got %v", logEntry["method"])
-	}
-	if path, ok := logEntry["path"].(string); !ok || path != "/api/test" {
-		t.Errorf("expected path '/api/test', got %v", logEntry["path"])
-	}
-	if status, ok := logEntry["status"].(float64); !ok || status != 201 {
-		t.Errorf("expected status 201, got %v", logEntry["status"])
-	}
-	if _, ok := logEntry["duration_ms"]; !ok {
-		t.Error("expected duration_ms field")
-	}
-	if _, ok := logEntry[FieldRequestID]; !ok {
-		t.Error("expected request_id field")
-	}
-}
-
-// TestHealthCheckNotLogged verifies health check endpoints are not logged.
-func TestHealthCheckNotLogged(t *testing.T) {
-	Reset()
-	defer Reset()
-
-	var buf bytes.Buffer
-	cfg := &Config{
-		Level:      "info",
-		Format:     "json",
-		AddSource:  false,
-		File:       "",
-		MaxSize:    0,
-		MaxBackups: 0,
-		MaxAge:     0,
-		Compress:   false,
-		Component:  "",
-	}
-
-	err := InitWithWriter(cfg, &buf)
-	if err != nil {
-		t.Fatalf("InitWithWriter failed: %v", err)
-	}
-
-	handler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	})
-
-	wrapped := Middleware(handler)
-
-	endpoints := []string{"/health", "/api/health"}
-	for _, endpoint := range endpoints {
-		buf.Reset()
-		req := httptest.NewRequest(http.MethodGet, endpoint, nil)
-		rec := httptest.NewRecorder()
-
-		wrapped.ServeHTTP(rec, req)
-
-		if buf.Len() > 0 {
-			t.Errorf("health check %s should not be logged", endpoint)
-		}
 	}
 }
 
@@ -1046,55 +847,6 @@ func (e *testError) Error() string {
 	return e.msg
 }
 
-// TestResponseWriter verifies the response writer wrapper.
-func TestResponseWriter(t *testing.T) {
-	t.Run("captures status code", func(t *testing.T) {
-		rec := httptest.NewRecorder()
-		wrapped := &responseWriter{
-			ResponseWriter: rec,
-			status:         http.StatusOK,
-			wroteHeader:    false,
-		}
-
-		wrapped.WriteHeader(http.StatusNotFound)
-
-		if wrapped.status != http.StatusNotFound {
-			t.Errorf("expected status 404, got %d", wrapped.status)
-		}
-	})
-
-	t.Run("default status on write", func(t *testing.T) {
-		rec := httptest.NewRecorder()
-		wrapped := &responseWriter{
-			ResponseWriter: rec,
-			status:         http.StatusOK,
-			wroteHeader:    false,
-		}
-
-		_, err := wrapped.Write([]byte("hello"))
-		if err != nil {
-			t.Fatalf("Write failed: %v", err)
-		}
-
-		if wrapped.status != http.StatusOK {
-			t.Errorf("expected status 200, got %d", wrapped.status)
-		}
-	})
-
-	t.Run("unwrap returns underlying writer", func(t *testing.T) {
-		rec := httptest.NewRecorder()
-		wrapped := &responseWriter{
-			ResponseWriter: rec,
-			status:         0,
-			wroteHeader:    false,
-		}
-
-		if wrapped.Unwrap() != rec {
-			t.Error("Unwrap() should return the underlying ResponseWriter")
-		}
-	})
-}
-
 // BenchmarkJSONLogging benchmarks JSON logging performance.
 func BenchmarkJSONLogging(b *testing.B) {
 	Reset()
@@ -1116,7 +868,7 @@ func BenchmarkJSONLogging(b *testing.B) {
 
 	ctx := context.Background()
 	ctx = WithComponent(ctx, "benchmark")
-	ctx = WithRequestID(ctx, "bench-123")
+	ctx, _ = withRequestID(ctx, b)
 
 	b.ResetTimer()
 	for b.Loop() {
@@ -1148,7 +900,7 @@ func TestDebugContext(t *testing.T) {
 		t.Fatalf("InitWithWriter failed: %v", err)
 	}
 
-	ctx := WithRequestID(context.Background(), "debug-req-123")
+	ctx, wantID := withRequestID(context.Background(), t)
 	DebugContext(ctx, "debug context test")
 
 	var logEntry map[string]any
@@ -1160,8 +912,8 @@ func TestDebugContext(t *testing.T) {
 	if level, ok := logEntry[FieldLevel].(string); !ok || level != "debug" {
 		t.Errorf("expected level 'debug', got %v", logEntry[FieldLevel])
 	}
-	if reqID, ok := logEntry[FieldRequestID].(string); !ok || reqID != "debug-req-123" {
-		t.Errorf("expected request_id 'debug-req-123', got %v", logEntry[FieldRequestID])
+	if reqID, ok := logEntry[FieldRequestID].(string); !ok || reqID != wantID {
+		t.Errorf("expected request_id %q, got %v", wantID, logEntry[FieldRequestID])
 	}
 }
 
@@ -1188,7 +940,7 @@ func TestWarnContext(t *testing.T) {
 		t.Fatalf("InitWithWriter failed: %v", err)
 	}
 
-	ctx := WithRequestID(context.Background(), "warn-req-456")
+	ctx, wantID := withRequestID(context.Background(), t)
 	WarnContext(ctx, "warn context test")
 
 	var logEntry map[string]any
@@ -1200,8 +952,8 @@ func TestWarnContext(t *testing.T) {
 	if level, ok := logEntry[FieldLevel].(string); !ok || level != "warn" {
 		t.Errorf("expected level 'warn', got %v", logEntry[FieldLevel])
 	}
-	if reqID, ok := logEntry[FieldRequestID].(string); !ok || reqID != "warn-req-456" {
-		t.Errorf("expected request_id 'warn-req-456', got %v", logEntry[FieldRequestID])
+	if reqID, ok := logEntry[FieldRequestID].(string); !ok || reqID != wantID {
+		t.Errorf("expected request_id %q, got %v", wantID, logEntry[FieldRequestID])
 	}
 }
 
@@ -1228,7 +980,7 @@ func TestErrorContext(t *testing.T) {
 		t.Fatalf("InitWithWriter failed: %v", err)
 	}
 
-	ctx := WithRequestID(context.Background(), "error-req-789")
+	ctx, wantID := withRequestID(context.Background(), t)
 	ErrorContext(ctx, "error context test")
 
 	var logEntry map[string]any
@@ -1240,8 +992,8 @@ func TestErrorContext(t *testing.T) {
 	if level, ok := logEntry[FieldLevel].(string); !ok || level != "error" {
 		t.Errorf("expected level 'error', got %v", logEntry[FieldLevel])
 	}
-	if reqID, ok := logEntry[FieldRequestID].(string); !ok || reqID != "error-req-789" {
-		t.Errorf("expected request_id 'error-req-789', got %v", logEntry[FieldRequestID])
+	if reqID, ok := logEntry[FieldRequestID].(string); !ok || reqID != wantID {
+		t.Errorf("expected request_id %q, got %v", wantID, logEntry[FieldRequestID])
 	}
 }
 
@@ -1663,96 +1415,6 @@ func TestContains(t *testing.T) {
 	}
 }
 
-// TestHijack verifies the Hijack implementation for connection upgrades (SSE, streaming).
-func TestHijack(t *testing.T) {
-	t.Run("underlying supports hijack", func(t *testing.T) {
-		// Create a hijackable server.
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-			wrapped := &responseWriter{
-				ResponseWriter: w,
-				status:         http.StatusOK,
-				wroteHeader:    false,
-			}
-
-			conn, rw, err := wrapped.Hijack()
-			if err != nil {
-				t.Errorf("Hijack failed: %v", err)
-				return
-			}
-			if conn == nil {
-				t.Error("expected non-nil connection")
-				return
-			}
-			if rw == nil {
-				t.Error("expected non-nil bufio.ReadWriter")
-				return
-			}
-			conn.Close()
-		}))
-		defer server.Close()
-
-		// Make a request to trigger the handler.
-		resp, err := http.Get(server.URL)
-		if err != nil {
-			// Connection will be hijacked, so we may get an error.
-			return
-		}
-		resp.Body.Close()
-	})
-
-	t.Run("underlying does not support hijack", func(t *testing.T) {
-		rec := httptest.NewRecorder()
-		wrapped := &responseWriter{
-			ResponseWriter: rec,
-			status:         http.StatusOK,
-			wroteHeader:    false,
-		}
-
-		_, _, err := wrapped.Hijack()
-		if err == nil {
-			t.Error("expected error when underlying writer doesn't support Hijack")
-		}
-		if !strings.Contains(err.Error(), "does not implement http.Hijacker") {
-			t.Errorf("unexpected error message: %v", err)
-		}
-	})
-}
-
-// TestWriteError verifies Write error handling.
-func TestWriteError(t *testing.T) {
-	// Create a writer that tracks writes but doesn't fail.
-	rec := httptest.NewRecorder()
-	wrapped := &responseWriter{
-		ResponseWriter: rec,
-		status:         http.StatusOK,
-		wroteHeader:    false,
-	}
-
-	// Write data.
-	n, err := wrapped.Write([]byte("test data"))
-	if err != nil {
-		t.Errorf("Write failed: %v", err)
-	}
-	if n != 9 {
-		t.Errorf("expected 9 bytes written, got %d", n)
-	}
-	if !wrapped.wroteHeader {
-		t.Error("expected wroteHeader to be true after Write")
-	}
-}
-
-// TestGenerateRequestIDFallback tests fallback behavior when crypto fails.
-func TestGenerateRequestIDFallback(t *testing.T) {
-	// This test verifies the function returns a valid request ID.
-	id := generateRequestID()
-	if id == "" {
-		t.Error("expected non-empty request ID")
-	}
-	if len(id) != 16 {
-		t.Errorf("expected 16 char request ID, got %d chars: %s", len(id), id)
-	}
-}
-
 // BenchmarkTextLogging benchmarks text logging performance.
 func BenchmarkTextLogging(b *testing.B) {
 	Reset()
@@ -1774,11 +1436,32 @@ func BenchmarkTextLogging(b *testing.B) {
 
 	ctx := context.Background()
 	ctx = WithComponent(ctx, "benchmark")
-	ctx = WithRequestID(ctx, "bench-123")
+	ctx, _ = withRequestID(ctx, b)
 
 	b.ResetTimer()
 	for b.Loop() {
 		buf.Reset()
 		InfoContext(ctx, "benchmark message", "iteration", 0, "duration_ms", 42)
 	}
+}
+
+// withRequestID returns parent carrying an ID the route Registrar assigned,
+// and that ID. The Registrar is the only producer of request IDs, so a test
+// obtains one the way production does: by serving a request through it.
+func withRequestID(parent context.Context, tb testing.TB) (context.Context, string) {
+	tb.Helper()
+	reg := route.New(route.Config{
+		Error:        func(http.ResponseWriter, *http.Request, int, string, string) {},
+		MaxBodyBytes: 1,
+		Logger:       slog.New(slog.DiscardHandler),
+	})
+	var served *http.Request
+	reg.Register(route.Route{Path: "/", Handler: func(_ http.ResponseWriter, r *http.Request) { served = r }})
+	reg.Handler().ServeHTTP(httptest.NewRecorder(), httptest.NewRequestWithContext(parent, http.MethodGet, "/", nil))
+	ctx := served.Context()
+	id := route.RequestID(ctx)
+	if id == "" {
+		tb.Fatal("the Registrar assigned no request ID")
+	}
+	return ctx, id
 }

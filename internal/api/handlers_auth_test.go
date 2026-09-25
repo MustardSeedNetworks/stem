@@ -53,7 +53,7 @@ func authorizeWithCSRF(t testing.TB, s *api.Server, req *http.Request, jwt strin
 	if sessionID == "" {
 		t.Fatalf("authorizeWithCSRF: empty session ID from JWT")
 	}
-	csrfToken, err := s.CSRFManagerForTest().GetOrCreateToken(sessionID)
+	csrfToken, err := s.CSRFManagerForTest().GetOrCreate(sessionID)
 	if err != nil {
 		t.Fatalf("authorizeWithCSRF: GetOrCreateToken: %v", err)
 	}
@@ -537,7 +537,7 @@ func TestHandleAuthCSRFToken_LoginRotatesToken(t *testing.T) {
 		t.Fatal("expected non-empty session ID from JWT")
 	}
 	// After fetching, the first session has a usable CSRF token.
-	if err := s.CSRFManagerForTest().ValidateToken(firstSessionID, firstToken); err != nil {
+	if err := s.CSRFManagerForTest().Validate(firstSessionID, firstToken); err != nil {
 		t.Fatalf("first session should have a valid CSRF token after fetch: %v", err)
 	}
 
@@ -553,7 +553,7 @@ func TestHandleAuthCSRFToken_LoginRotatesToken(t *testing.T) {
 	if secondSessionID == firstSessionID {
 		t.Fatal("two logins must yield distinct session IDs")
 	}
-	if err := s.CSRFManagerForTest().ValidateToken(secondSessionID, firstToken); err == nil {
+	if err := s.CSRFManagerForTest().Validate(secondSessionID, firstToken); err == nil {
 		t.Error("second session must not accept the first session's CSRF token")
 	}
 }

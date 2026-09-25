@@ -1,14 +1,17 @@
 // SPDX-License-Identifier: BUSL-1.1
 
-package tlsutil
-
-// fingerprint.go computes and caches the SHA-256 fingerprint of the active TLS
-// certificate. The fingerprint is exposed via /__version as `tlsFingerprint`
-// so operators can verify the cert their browser sees matches the one the
-// server is serving (matters for self-signed certs installed via
-// `stem install-ca`).
+// Package tlsutil computes and caches the SHA-256 fingerprint of the active
+// TLS certificate. The fingerprint is exposed via /__version as
+// `tlsFingerprint` so operators can verify the cert their browser sees matches
+// the one the server is serving (matters for self-signed certs installed via
+// `stem install-ca`). The listener and its certificate are foundation's
+// pkg/httpserver; this package only reads the file it wrote.
+//
+// It is a leaf of internal/api (ADR-0011), enforced by depguard
+// (api-tlsutil-isolated).
 //
 // Lifted from the seed project (internal/api/tls_fingerprint.go); keep in sync.
+package tlsutil
 
 import (
 	"crypto/sha256"
@@ -22,10 +25,6 @@ import (
 
 // pemCertBlockType is the PEM block header used for X.509 certificates.
 const pemCertBlockType = "CERTIFICATE"
-
-// errEmptyCertPath is returned when the configured cert path is empty
-// (i.e. the server is running in HTTP mode and no cert exists).
-var errEmptyCertPath = errors.New("no certificate configured")
 
 // errNoCertificateBlock is returned when the PEM-encoded file does not
 // contain a CERTIFICATE block.
@@ -45,13 +44,8 @@ type FingerprintCache struct {
 }
 
 // Get returns the fingerprint for the given cert file path, computing
-// and caching it on first access. An empty path returns an empty
-// fingerprint without error (HTTP mode is a supported configuration).
+// and caching it on first access.
 func (c *FingerprintCache) Get(path string) (string, error) {
-	if path == "" {
-		return "", nil
-	}
-
 	c.mu.RLock()
 	if c.path == path && c.fingerprint != "" {
 		fp := c.fingerprint
@@ -77,9 +71,6 @@ func (c *FingerprintCache) Get(path string) (string, error) {
 // returns its SHA-256 fingerprint formatted as 32 uppercase hex pairs
 // separated by colons (standard browser display format).
 func computeCertFingerprint(path string) (string, error) {
-	if path == "" {
-		return "", errEmptyCertPath
-	}
 	// #nosec G304 -- path is server-controlled (Config.CertFile or the
 	// self-signed default at certs/server.crt), not user input.
 	data, err := os.ReadFile(path)

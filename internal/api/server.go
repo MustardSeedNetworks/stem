@@ -72,6 +72,7 @@ import (
 	"fmt"
 	"io/fs"
 	"math"
+	"net"
 	"net/http"
 	"net/netip"
 	"os"
@@ -82,6 +83,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/MustardSeedNetworks/foundation/pkg/csrf"
+	"github.com/MustardSeedNetworks/foundation/pkg/httpserver"
 	"github.com/MustardSeedNetworks/foundation/pkg/instance"
 
 	"github.com/MustardSeedNetworks/stem/internal/api/cors"
@@ -122,7 +125,7 @@ var staticFiles embed.FS
 // Server represents the web server.
 type Server struct {
 	port                 int
-	mux                  *http.ServeMux
+	handler              http.Handler     // every route through the Registrar, inside the global headers (setupRoutes)
 	sseBroadcaster       *sse.Broadcaster // Fan-out for /api/v1/events subscribers; nil when SSE not available.
 	httpServer           *http.Server
 	stats                *Stats
@@ -149,12 +152,11 @@ type Server struct {
 	authLimiter          *ratelimit.RateLimiter     // Rate limiter for auth endpoints (5/min)
 	auditor              *logging.Auditor           // Owns the failed-login tracker and its cleanup loop
 	apiLimiter           *ratelimit.RateLimiter     // Rate limiter for standard API endpoints (100/min)
-	tlsConfig            tlsutil.Config             // TLS configuration for HTTPS
+	listenConfig         httpserver.Config          // the one HTTPS listener: port fallback, TLS, same-port redirect
 	cookieConfig         auth.CookieConfig          // Cookie configuration for secure auth
 	corsAllowPrivate     bool                       // STEM_CORS_ALLOW_PRIVATE: reflect RFC1918 cross-origins (default off)
 	trustedProxies       []netip.Prefix             // STEM_TRUSTED_PROXIES: hops whose X-Forwarded-For may key security counters (default none)
-	routeManifest        []route                    // capability registry: routes registered via register() (route.go)
-	csrfManager          *auth.CSRFManager          // CSRF token manager for protection against CSRF attacks
+	csrfManager          *csrf.Manager              // per-session CSRF tokens, enforced per route by the Registrar
 	setupTokenManager    *auth.SetupTokenManager    // Setup token manager for first-time setup security
 	setupMu              sync.Mutex                 // Serializes first-run setup so only one claim wins
 	recoveryTokenManager *auth.RecoveryTokenManager // Recovery token manager for password recovery
@@ -162,7 +164,6 @@ type Server struct {
 	instanceLock         *instance.Lock             // Single-instance lock on dataDir, held for the lifetime of Run (#1336)
 	publishedURL         atomic.Pointer[string]     // base URL this daemon published for the local CLI (#1166), nil when none
 	runInstanceID        string                     // per-daemon segment of every run ID (#1166)
-	acmeChallengeServer  *http.Server               // HTTP-01 challenge server for ACME
 	tlsFingerprint       tlsutil.FingerprintCache   // Cached SHA-256 fingerprint of the active TLS cert (exposed via /__version)
 	background           *BackgroundComponents      // Run-scoped long-lived goroutines (reflector-stats SSE publisher); ordered Start/Stop (background.go)
 
@@ -262,13 +263,12 @@ func NewServer(port int) (*Server, error) {
 	}
 
 	// HTTPS is required, unconditionally. Auth cookies hardcode Secure=true
-	// and browsers refuse them over plain HTTP. There is no HTTP listener
-	// at all — operators must use https://; typing the host without a
-	// scheme will get connection refused, by design.
+	// and browsers refuse them over plain HTTP. The one listener answers a
+	// plaintext request with a 308 to https on the same port and serves it
+	// nothing else (httpserver.Listen).
 
 	s := &Server{}
 	s.port = port
-	s.mux = http.NewServeMux()
 	s.sseBroadcaster = sse.New()
 	s.statsMu = sync.RWMutex{}
 	s.stats = &Stats{
@@ -303,15 +303,20 @@ func NewServer(port int) (*Server, error) {
 	s.authLimiter = ratelimit.NewAuthRateLimiter(trustedProxies)
 	s.auditor = logging.NewAuditor(trustedProxies)
 	s.apiLimiter = ratelimit.NewAPIRateLimiter(trustedProxies)
-	s.tlsConfig = tlsutil.Config{
-		Enabled:  true,
+	s.listenConfig = httpserver.Config{
+		Addr:     fmt.Sprintf(":%d", port),
 		CertFile: os.Getenv("STEM_TLS_CERT"),
 		KeyFile:  os.Getenv("STEM_TLS_KEY"),
-		CertsDir: os.Getenv("STEM_TLS_CERTS_DIR"),
+		CertDir:  os.Getenv("STEM_TLS_CERTS_DIR"),
+		Cert: httpserver.CertOptions{
+			CommonName: "The Stem Self-Signed",
+			DNSNames:   []string{"localhost", "stem.local"},
+		},
+		Logger: logging.Get(),
 	}
 	s.cookieConfig = auth.DefaultCookieConfig()
 	s.corsAllowPrivate = corsAllowPrivateEnabled()
-	s.csrfManager = auth.NewCSRFManager(logging.Get())
+	s.csrfManager = csrf.NewManager()
 	s.setupTokenManager = auth.NewSetupTokenManager()
 	s.recoveryTokenManager = auth.NewRecoveryTokenManager(getDataDir())
 	s.dataDir = getDataDir()
@@ -339,98 +344,12 @@ func corsAllowPrivateEnabled() bool {
 	}
 }
 
-// setupRoutes configures the HTTP routes.
+// setupRoutes registers every route on one Registrar and wraps it in the
+// headers every response carries.
 func (s *Server) setupRoutes() {
-	// Infrastructure endpoints — unversioned / introspection. Intentionally
-	// registered directly (outside the capability registry); none are /api/.
-	s.handle("/__version", s.handleBuildVersion)             // build metadata (deploy validation)
-	s.handle("/health/live", s.handleHealthLive)             // k8s liveness probe
-	s.handle("/health/ready", s.handleHealthReady)           // k8s readiness probe
-	s.handle("/__capabilities", s.handleRoutePolicyManifest) // route-policy manifest (audit)
-
-	// Every API route goes through the capability registry (register), which
-	// composes its policy — rate limit, authentication — in one canonical order
-	// so a route cannot ship without it. scripts/check-route-policy.sh enforces
-	// that no "/api/" route bypasses register(). CSRF is global (CSRFMiddleware).
-	s.registerAll([]route{
-		// Health & status.
-		{path: "/api/v1/health", handler: s.handleHealth},                                  // public, no RL
-		{path: "/api/v1/stats", handler: s.handleStats, auth: true, limiter: s.apiLimiter}, // telemetry (#340)
-		// Platform capabilities — UI calls this pre-login to gate CGO-less builds.
-		{path: "/api/v1/capabilities", handler: s.handleCapabilities},
-		// Interfaces — discloses the host NIC inventory (#340).
-		{path: "/api/v1/interfaces", handler: s.handleInterfaces, auth: true, limiter: s.apiLimiter},
-		// Settings + mode — POST writes config / flips the operating role.
-		{path: "/api/v1/settings", handler: s.handleSettings, auth: true, limiter: s.apiLimiter},
-		{path: "/api/v1/mode", handler: s.handleMode, auth: true, limiter: s.apiLimiter},
-		// SSE stream — long-lived, unauthenticated (observational frames only).
-		// If privileged frames are ever published here, set auth: true.
-		{path: "/api/v1/events", handler: s.handleSSEEvents},
-		// Test execution.
-		{path: "/api/v1/test/start", handler: s.handleTestStart, auth: true, limiter: s.apiLimiter},
-		{path: "/api/v1/test/stop", handler: s.handleTestStop, auth: true, limiter: s.apiLimiter},
-		{path: "/api/v1/test/result", handler: s.handleTestResult, auth: true, limiter: s.apiLimiter},
-		// Authentication (strict 5/min authLimiter). Login/refresh are pre-session.
-		{path: "/api/v1/auth/login", handler: s.loginWithMFAGate, limiter: s.authLimiter},
-		{path: "/api/v1/auth/logout", handler: s.handleAuthLogout, limiter: s.apiLimiter},
-		// refresh skips active CSRF when the access token has expired (its normal
-		// case, so sessionID is empty); SameSite=Strict cookies block the browser
-		// CSRF vector — accepted defense-in-depth edge, see ADR-0009.
-		{path: "/api/v1/auth/refresh", handler: s.handleAuthRefresh, limiter: s.authLimiter},
-		{path: "/api/v1/auth/csrf-token", handler: s.handleAuthCSRF, auth: true, limiter: s.apiLimiter},
-		// MFA — TOTP management requires auth; the login finisher does not (it
-		// presents an mfa_token from the password stage as proof of intent).
-		{path: "/api/v1/auth/totp/setup", handler: s.handleTOTPSetup, auth: true, limiter: s.authLimiter},
-		{path: "/api/v1/auth/totp/verify", handler: s.handleTOTPVerify, auth: true, limiter: s.authLimiter},
-		{path: "/api/v1/auth/totp/disable", handler: s.handleTOTPDisable, auth: true, limiter: s.authLimiter},
-		{path: "/api/v1/auth/login/totp", handler: s.handleLoginTOTP, limiter: s.authLimiter},
-		{path: "/api/v1/auth/mfa/status", handler: s.handleMFAStatus, auth: true, limiter: s.apiLimiter},
-		// WebAuthn — register requires auth; login does not (the assertion proves identity).
-		{
-			path:    "/api/v1/auth/webauthn/register/begin",
-			handler: s.handleWebAuthnRegisterBegin,
-			auth:    true,
-			limiter: s.authLimiter,
-		},
-		{
-			path:    "/api/v1/auth/webauthn/register/finish",
-			handler: s.handleWebAuthnRegisterFinish,
-			auth:    true,
-			limiter: s.authLimiter,
-		},
-		{path: "/api/v1/auth/webauthn/login/begin", handler: s.handleWebAuthnLoginBegin, limiter: s.authLimiter},
-		{path: "/api/v1/auth/webauthn/login/finish", handler: s.handleWebAuthnLoginFinish, limiter: s.authLimiter},
-		// First-time setup (pre-session, no auth).
-		{path: "/api/v1/setup/status", handler: s.handleSetupStatus, limiter: s.apiLimiter},
-		{path: "/api/v1/setup/complete", handler: s.handleSetupComplete, limiter: s.authLimiter},
-		// Password recovery (pre-session, no auth).
-		{path: "/api/v1/recovery/status", handler: s.handleRecoveryStatus, limiter: s.apiLimiter},
-		{path: "/api/v1/recovery/complete", handler: s.handleRecoveryComplete, limiter: s.authLimiter},
-		{path: "/api/v1/recovery/instructions", handler: s.handleRecoveryInstructions, limiter: s.apiLimiter},
-		// Reflector — reconfigures/inspects the dataplane, requires auth (#398).
-		{path: "/api/v1/reflector/config", handler: s.handleReflectorConfig, auth: true, limiter: s.apiLimiter},
-		{path: "/api/v1/reflector/stats", handler: s.handleReflectorStats, auth: true, limiter: s.apiLimiter},
-		// License — entitlement state, so every route requires a session (#1317).
-		// Without auth: true the CSRF middleware does not cover them either: with
-		// no bearer the session id is empty and the middleware passes through,
-		// expecting an auth layer to answer 401. ADR-0009's amendment records why
-		// the trial route's pre-session exemption was withdrawn.
-		{path: "/api/v1/license", handler: s.handleLicense, auth: true, limiter: s.apiLimiter},
-		{path: "/api/v1/license/activate", handler: s.handleLicenseActivate, auth: true, limiter: s.apiLimiter},
-		{path: "/api/v1/license/trial", handler: s.handleLicenseTrial, auth: true, limiter: s.apiLimiter},
-		// Modules (public catalog).
-		{path: "/api/v1/modules", handler: s.handleModules, limiter: s.apiLimiter},
-		{path: "/api/v1/modules/", handler: s.handleModuleByName, limiter: s.apiLimiter},
-	})
-
-	// Static files (embedded UI).
-	staticFS, err := fs.Sub(staticFiles, "ui")
-	if err != nil {
-		logging.Warn("Could not load embedded UI", "error", err)
-		s.mux.HandleFunc("/", serveFallbackUIPage)
-		return
-	}
-	s.mux.HandleFunc("/", spaFallbackHandler(staticFS))
+	reg := s.newRegistrar()
+	reg.RegisterAll(s.routes(reg))
+	s.handler = securityHeadersMiddleware(s.corsMiddleware(apiVersionMiddleware(reg.Handler())))
 }
 
 // spaFallbackHandler returns an HTTP handler that serves static files from
@@ -457,14 +376,7 @@ func spaFallbackHandler(staticFS fs.FS) http.HandlerFunc {
 	}
 }
 
-// handle registers an infrastructure endpoint directly (no rate limit, no
-// auth) — used only for unversioned introspection routes (/__version,
-// /__capabilities, health probes). API routes go through register() (route.go).
-func (s *Server) handle(path string, handler http.HandlerFunc) {
-	s.mux.HandleFunc(path, handler)
-}
-
-func (s *Server) authMiddleware(handler http.HandlerFunc) http.Handler {
+func (s *Server) authMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authErr := s.requireAuth(r)
 		if authErr != nil {
@@ -473,7 +385,7 @@ func (s *Server) authMiddleware(handler http.HandlerFunc) http.Handler {
 			s.writeAuthError(w, authErr)
 			return
 		}
-		handler(w, r)
+		next.ServeHTTP(w, r)
 	})
 }
 
@@ -605,8 +517,9 @@ func apiVersionMiddleware(next http.Handler) http.Handler {
 // Run starts the web server with graceful shutdown support.
 // Listens for SIGTERM and SIGINT signals to initiate shutdown.
 //
-// Binding goes through bindWithFallback so a busy canonical port (8444)
-// falls back to port+1..+9 instead of refusing to start (see #69).
+// The listener is foundation's: a busy canonical port (8444) falls back to
+// port+1..+9 instead of refusing to start (see #69), and a plaintext request
+// on it is answered with a 308 to https.
 func (s *Server) Run() error {
 	// One daemon per data directory (#1336). The port is not the guard: the
 	// +1..+9 fallback below means a second `stem web` does not collide, it
@@ -620,10 +533,16 @@ func (s *Server) Run() error {
 	s.instanceLock = lock
 
 	// Bind first so the actual bound port is known before we announce it.
-	ln, actualPort, bindErr := bindWithFallback(context.Background(), "", s.port)
-	if bindErr != nil {
-		return fmt.Errorf("bind web server: %w", bindErr)
+	ln, listenErr := httpserver.Listen(context.Background(), s.listenConfig)
+	if listenErr != nil {
+		return fmt.Errorf("start HTTPS listener: %w", listenErr)
 	}
+	tcpAddr, isTCP := ln.Addr().(*net.TCPAddr)
+	if !isTCP {
+		_ = ln.Close()
+		return fmt.Errorf("HTTPS listener bound a non-TCP address %s", ln.Addr())
+	}
+	actualPort := tcpAddr.Port
 	addr := fmt.Sprintf(":%d", actualPort)
 
 	// Record the port in the lock so the next `stem web` can name where the
@@ -648,8 +567,8 @@ func (s *Server) Run() error {
 	// but cheap when nobody's subscribed.
 	// The local CLI is a client of this daemon (#1166); publish how to
 	// reach it before the listener accepts, and withdraw it in Shutdown.
-	// This is after bindWithFallback so the URL names the port actually
-	// bound rather than the one that was asked for.
+	// This is after the bind so the URL names the port actually bound
+	// rather than the one that was asked for.
 	if connErr := s.publishConnection(fmt.Sprintf("https://localhost:%d", actualPort)); connErr != nil {
 		return fmt.Errorf("publish daemon descriptor: %w", connErr)
 	}
@@ -659,28 +578,23 @@ func (s *Server) Run() error {
 
 	s.autostartReflector()
 
-	// Wrap with middleware stack: SecurityHeaders -> CORS -> APIVersion -> RequestID -> Logging -> CSRF -> Handler.
-	handler := securityHeadersMiddleware(
-		s.corsMiddleware(
-			apiVersionMiddleware(
-				logging.RequestIDMiddleware(
-					logging.Middleware(
-						s.csrfManager.CSRFMiddleware(s.mux))))))
 	s.httpServer = &http.Server{
 		Addr:              addr,
-		Handler:           handler,
+		Handler:           s.handler,
 		ReadHeaderTimeout: HTTPReadHeaderTimeout,
 		ReadTimeout:       HTTPReadTimeout,
 		WriteTimeout:      HTTPWriteTimeout,
 		IdleTimeout:       HTTPIdleTimeout,
 	}
 
-	// Start server in goroutine. HTTPS is required, no plaintext branch.
+	logging.Info("Starting HTTPS server", "addr", addr, "cert_file", s.activeCertPath())
+
+	// ln already speaks TLS, so Serve rather than ServeTLS.
 	errChan := make(chan error, 1)
 	go func() {
-		listenErr := s.startTLS(ln)
-		if listenErr != nil && !errors.Is(listenErr, http.ErrServerClosed) {
-			errChan <- fmt.Errorf("server failed: %w", listenErr)
+		serveErr := s.httpServer.Serve(ln)
+		if serveErr != nil && !errors.Is(serveErr, http.ErrServerClosed) {
+			errChan <- fmt.Errorf("server failed: %w", serveErr)
 		}
 		close(errChan)
 	}()
@@ -733,14 +647,6 @@ func (s *Server) Shutdown() error {
 	}
 	if s.apiLimiter != nil {
 		s.apiLimiter.Stop()
-	}
-
-	// Shutdown ACME HTTP-01 challenge server if running.
-	if s.acmeChallengeServer != nil {
-		logging.Info("Shutting down ACME challenge server...")
-		if err := s.acmeChallengeServer.Shutdown(ctx); err != nil {
-			logging.Error("Error shutting down ACME challenge server", "error", err)
-		}
 	}
 
 	// Stop CSRF manager cleanup goroutine.
@@ -819,10 +725,8 @@ func safeIntToUint16(v int) (uint16, bool) {
 	return uint16(v), true
 }
 
-// ServeHTTP implements the [http.Handler] interface for testing purposes.
-// Applies the same middleware stack used in production (API versioning, CORS, CSRF).
+// ServeHTTP implements [http.Handler] with the exact handler Run serves, so
+// tests exercise the production composition.
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// Apply middleware stack for consistent behavior in tests.
-	handler := s.corsMiddleware(apiVersionMiddleware(s.csrfManager.CSRFMiddleware(s.mux)))
-	handler.ServeHTTP(w, r)
+	s.handler.ServeHTTP(w, r)
 }

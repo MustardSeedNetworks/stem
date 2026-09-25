@@ -78,10 +78,11 @@ lint-linux-image-check:
 LINT_LINUX_TAG ?= 1.2.0
 LINT_LINUX_CONTEXT ?= ../.github/tools/lint-linux
 
-# internal/api/server_port_fallback_windows.go decides whether a bind failed
-# on Windows' WSAEADDRINUSE, and a host running the default `./...` lint never
-# type-checks a windows-tagged file at all — it would ship unlinted forever
-# without this second pass (#782).
+# A host running the default `./...` lint never type-checks a windows-tagged
+# file at all, so internal/api — the daemon's transport layer — gets a second
+# pass under GOOS=windows (#782). The port-fallback file that pass was added
+# for now lives in foundation's pkg/httpserver; CI's `Lint (GOOS=windows)` lints
+# the whole Windows tree.
 lint-go: ## Run Go linter (golangci-lint)
 	@printf "$(BOLD)🔍 Running Go linter (golangci-lint)...$(RESET)\n"
 	@GOLANGCI_LINT="$$(go env GOPATH)/bin/golangci-lint"; \

@@ -2,6 +2,15 @@
 
 **Status:** Accepted (2026-06-07)
 
+> **Amended by STM-FDN-1 (stem#1337, 2026-09-25).** The registry is now
+> foundation's `pkg/httpserver/route.Registrar`, shared with seed and niac.
+> Routes are `route.Route` values in `internal/api/routes.go`; the order is
+> limiter → auth → method gate → CSRF → body cap, CSRF is declared per route
+> rather than applied globally, every route declares its methods, and
+> `docs/openapi.yaml` is generated from the same table (`make openapi`,
+> checked by `scripts/check-openapi-drift.sh`). `check-route-policy.sh` runs
+> foundation's rule. The sections below record the decision as first taken.
+
 ## Context
 
 API routes were registered imperatively in `setupRoutes`, each one hand-wrapped

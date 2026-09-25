@@ -62,10 +62,9 @@ func (s *Server) handleAuthLogout(w http.ResponseWriter, r *http.Request) {
 // on the first call after login. Subsequent calls for the same session
 // return the same token until the session is rotated (next login) or the
 // token expires. The token is required in the X-Csrf-Token header on
-// every state-changing request — see csrfManager.CSRFMiddleware.
+// every route that declares CSRF (routes.go).
 //
-// Authentication is required; the handler is registered behind
-// s.authMiddleware (see setupRoutes). CSRF is not required to fetch a
+// Authentication is required; the route declares Auth (routes.go). CSRF is not required to fetch a
 // CSRF token (that would be a chicken-and-egg deadlock): a GET request
 // short-circuits the CSRF middleware via the safe-method check.
 //
@@ -85,7 +84,7 @@ func (s *Server) handleAuthCSRF(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := s.csrfManager.GetOrCreateToken(sessionID)
+	token, err := s.csrfManager.GetOrCreate(sessionID)
 	if err != nil {
 		logging.Error("Failed to generate CSRF token", "error", err)
 		WriteError(w, ErrInternalError)

@@ -14,8 +14,8 @@ package api
 //     X-Csrf-Token. The login-finisher (POST /api/v1/auth/login/totp)
 //     is exempt because it carries the mfa_token, which acts as the
 //     pre-session credential proof of intent — the same role
-//     /api/v1/auth/login already plays in the exempt list. We add
-//     /api/v1/auth/login/totp to isCSRFExemptPath for this reason.
+//     /api/v1/auth/login already plays. Its route therefore declares no
+//     CSRF (routes.go) for this reason.
 //   - Argon2id: the regular login handler performs the bcrypt → Argon2id
 //     migration unconditionally on successful password verification.
 //     The MFA gate happens AFTER the hash upgrade so a user whose
@@ -201,7 +201,7 @@ func (s *Server) handleTOTPDisable(w http.ResponseWriter, r *http.Request) {
 // verifies the TOTP code, and on success issues full access + refresh
 // tokens.
 //
-// This route is CSRF-exempt by listing in isCSRFExemptPath: the
+// This route declares no CSRF (routes.go): the
 // mfa_token is a server-signed proof of the password stage, which is
 // equivalent to /api/v1/auth/login's "credential is the intent". The
 // rate limiter applied at registration time still caps brute-force.
@@ -247,7 +247,7 @@ func (s *Server) handleLoginTOTP(w http.ResponseWriter, r *http.Request) {
 
 	// Same CSRF rotation as the regular login.
 	if newSessionID := sessionIDFromJWT(accessToken); newSessionID != "" {
-		s.csrfManager.RevokeToken(newSessionID)
+		s.csrfManager.Revoke(newSessionID)
 	}
 
 	logging.AuditMFAAttempt(r.Context(), r, username, logging.MFAFactorTOTP,
@@ -441,7 +441,7 @@ func (s *Server) handleWebAuthnLoginFinish(w http.ResponseWriter, r *http.Reques
 	auth.SetAccessTokenCookie(w, accessToken, sessionDuration, s.cookieConfig)
 	auth.SetRefreshTokenCookie(w, refreshToken, sessionDuration*refreshMultiplier, s.cookieConfig)
 	if newSessionID := sessionIDFromJWT(accessToken); newSessionID != "" {
-		s.csrfManager.RevokeToken(newSessionID)
+		s.csrfManager.Revoke(newSessionID)
 	}
 
 	logging.AuditWebAuthnLogin(r.Context(), r, username, logging.MFAResultSuccess, "login completed")
@@ -519,7 +519,7 @@ func (s *Server) loginWithMFAGate(w http.ResponseWriter, r *http.Request) {
 	auth.SetAccessTokenCookie(w, accessToken, sessionDuration, s.cookieConfig)
 	auth.SetRefreshTokenCookie(w, refreshToken, sessionDuration*refreshMultiplier, s.cookieConfig)
 	if newSessionID := sessionIDFromJWT(accessToken); newSessionID != "" {
-		s.csrfManager.RevokeToken(newSessionID)
+		s.csrfManager.Revoke(newSessionID)
 	}
 	s.auditor.LoginSuccess(r.Context(), r, req.Username, req.Username)
 	writeJSON(w, AuthLoginResponse{

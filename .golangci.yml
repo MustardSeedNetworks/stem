@@ -295,8 +295,7 @@ linters:
             - pkg: github.com/MustardSeedNetworks/stem/internal/api
               desc: "sse is a leaf — the broadcaster engine must not import the api transport layer; wire at the api layer"
         # tlsutil is a leaf of internal/api (ADR-0011): it depends only on
-        # stdlib, golang.org/x/crypto (ACME), and internal/logging — never on
-        # the api transport layer itself. This depguard rule enforces that
+        # stdlib — never on the api transport layer itself. This depguard rule enforces that
         # boundary so a future accidental upward import fails CI rather than
         # silently coupling the leaf back into the transport layer.
         # Test files are excluded: the _test.go external package imports the
@@ -307,7 +306,7 @@ linters:
             - "!$test"
           deny:
             - pkg: github.com/MustardSeedNetworks/stem/internal/api
-              desc: "tlsutil is a leaf — cert provisioning, ACME, and TLS config take no api types, so it never imports the api transport layer"
+              desc: "tlsutil is a leaf — the certificate fingerprint takes no api types, so it never imports the api transport layer"
         # cors is a leaf of internal/api (ADR-0011): the origin-classification
         # logic (localhost / same-origin / RFC1918) depends only on stdlib
         # (net/url, strings) — never on the api transport layer itself. This
