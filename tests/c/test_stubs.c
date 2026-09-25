@@ -30,6 +30,12 @@ worker_ctx_t *rfc2544_get_worker(rfc2544_ctx_t *ctx)
     return NULL;
 }
 
+int rfc2544_prepare_platform(rfc2544_ctx_t *ctx)
+{
+    (void)ctx;
+    return 0;
+}
+
 uint64_t rfc2544_get_line_rate_ctx(rfc2544_ctx_t *ctx)
 {
     (void)ctx;

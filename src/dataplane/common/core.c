@@ -285,6 +285,11 @@ void rfc2544_default_config(rfc2544_config_t *config)
     /* Rate control */
     config->use_pacing = true;
     config->batch_size = DEFAULT_BATCH_SIZE;
+
+    /* Y.1564 reads its step table and step duration from here, and the daemon
+     * builds every context from this function, so without it every step ran at
+     * 0 % of the CIR (#1411). */
+    y1564_default_config(&config->y1564);
 }
 
 uint64_t rfc2544_calc_pps(uint64_t line_rate, uint32_t frame_size)
@@ -638,7 +643,7 @@ static int init_workers(rfc2544_ctx_t *ctx, const platform_ops_t *platform)
     return 0;
 }
 
-static int prepare_platform(rfc2544_ctx_t *ctx)
+int rfc2544_prepare_platform(rfc2544_ctx_t *ctx)
 {
     if (!ctx) {
         return -EINVAL;
@@ -677,7 +682,7 @@ int rfc2544_run(rfc2544_ctx_t *ctx)
         return -EBUSY;
     }
 
-    int prepare_ret = prepare_platform(ctx);
+    int prepare_ret = rfc2544_prepare_platform(ctx);
     if (prepare_ret < 0) {
         ctx->state = STATE_FAILED;
         return prepare_ret;
@@ -879,7 +884,7 @@ int run_trial(rfc2544_ctx_t *ctx, uint32_t frame_size, double rate_pct, uint32_t
 
     memset(result, 0, sizeof(*result));
 
-    int prepare_ret = prepare_platform(ctx);
+    int prepare_ret = rfc2544_prepare_platform(ctx);
     if (prepare_ret < 0) {
         return prepare_ret;
     }
@@ -1096,7 +1101,7 @@ int run_trial_custom(rfc2544_ctx_t *ctx, uint32_t frame_size, double rate_pct,
 
     memset(result, 0, sizeof(*result));
 
-    int prepare_ret = prepare_platform(ctx);
+    int prepare_ret = rfc2544_prepare_platform(ctx);
     if (prepare_ret < 0) {
         return prepare_ret;
     }
