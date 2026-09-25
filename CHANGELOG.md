@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.159](https://github.com/MustardSeedNetworks/stem/compare/v0.24.158...v0.24.159) (2026-09-25)
+
+
+### Tests
+
+* **e2e:** run a two-step plan from the UI against a real reflector ([#1467](https://github.com/MustardSeedNetworks/stem/issues/1467)) ([ed1fdd3](https://github.com/MustardSeedNetworks/stem/commit/ed1fdd30dc9e864c49a3a8ef36714afa768ca797)), closes [#1078](https://github.com/MustardSeedNetworks/stem/issues/1078)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1468](https://github.com/MustardSeedNetworks/stem/issues/1468)) ([f503d00](https://github.com/MustardSeedNetworks/stem/commit/f503d00a957f5ba72b071379dad2d855961a98d1))
+
 ## [0.24.158](https://github.com/MustardSeedNetworks/stem/compare/v0.24.157...v0.24.158) (2026-09-25)
 
 
