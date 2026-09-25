@@ -27,7 +27,7 @@ func generated(t *testing.T) generatedPair {
 	t.Helper()
 	dir := t.TempDir()
 	certPath := filepath.Join(dir, httpserver.DefaultCertFileName)
-	if _, err := httpserver.EnsureCertificate(certPath, filepath.Join(dir, httpserver.DefaultKeyFileName),
+	if _, err := httpserver.EnsureCertificate(nil, certPath, filepath.Join(dir, httpserver.DefaultKeyFileName),
 		httpserver.CertOptions{}); err != nil {
 		t.Fatalf("EnsureCertificate: %v", err)
 	}
