@@ -297,10 +297,9 @@ export function ReflectorPage(): ReactElement {
           />
 
           {reflectorRunning ? (
-            <button
-              type="button"
+            <Button
               onClick={onStopReflector}
-              className="btn btn-secondary"
+              variant="outline"
               disabled={isStoppingReflector}
               aria-busy={isStoppingReflector}
               data-testid="reflector-stop-button"
@@ -316,13 +315,11 @@ export function ReflectorPage(): ReactElement {
                   {t('reflector.stopButton')}
                 </>
               )}
-            </button>
+            </Button>
           ) : (
             <Tooltip text={!reflectorSupported ? unsupportedTooltip : undefined}>
-              <button
-                type="button"
+              <Button
                 onClick={onStartReflector}
-                className="btn btn-primary"
                 disabled={!selectedInterface || isStartingReflector || !reflectorSupported}
                 aria-busy={isStartingReflector}
                 aria-disabled={!reflectorSupported}
@@ -339,7 +336,7 @@ export function ReflectorPage(): ReactElement {
                     {t('reflector.startButton')}
                   </>
                 )}
-              </button>
+              </Button>
             </Tooltip>
           )}
 

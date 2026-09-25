@@ -19,6 +19,7 @@ import { LoginSchema, MfaVerifySchema } from '../../schemas/auth';
 import { useAuthStore } from '../../stores/auth-store';
 import { RecoveryForm } from '../recovery/RecoveryForm';
 import { SetupWizard } from '../setup/SetupWizard';
+import { Button } from '../ui/Button';
 
 export function AuthGate(): ReactElement {
   const { t } = useTranslation(['security', 'common']);
@@ -183,13 +184,9 @@ export function AuthGate(): ReactElement {
                     {loginError}
                   </p>
                 ) : null}
-                <button
-                  type="submit"
-                  className="btn btn-primary w-full justify-center"
-                  disabled={loginLoading}
-                >
+                <Button type="submit" className="w-full" disabled={loginLoading}>
                   {loginLoading ? 'Verifying...' : 'Verify'}
-                </button>
+                </Button>
                 <button
                   type="button"
                   onClick={() => {
@@ -250,23 +247,23 @@ export function AuthGate(): ReactElement {
                     {loginError}
                   </p>
                 ) : null}
-                <button
+                <Button
                   type="submit"
                   data-testid="login-submit"
-                  className="btn btn-primary w-full justify-center"
+                  className="w-full"
                   disabled={loginLoading}
                 >
                   {loginLoading ? 'Signing in...' : 'Sign In'}
-                </button>
-                <button
-                  type="button"
+                </Button>
+                <Button
                   data-testid="passkey-login"
-                  className="btn btn-secondary w-full justify-center"
+                  variant="outline"
+                  className="w-full"
                   disabled={loginLoading}
                   onClick={handlePasskeyLogin}
                 >
                   {t('security:login.passkeyButton')}
-                </button>
+                </Button>
 
                 {/* Forgot Password link - only shown when recovery is available */}
                 {recoveryStatus?.active ? (

@@ -14,6 +14,7 @@ import type { ReactElement } from 'react';
 import { useState } from 'react';
 import { type SubmitHandler, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
+import { Button } from '../../../components/ui/Button';
 import { TotpSetupVerifySchema } from '../../../schemas/auth';
 import { mfaApi, type TotpSetupResponse } from './mfaApi';
 
@@ -101,12 +102,12 @@ export function TotpSetupModal({ setup, onComplete, onCancel }: Props): ReactEle
           </div>
           {submitError ? <p className="text-xs text-status-error">{submitError}</p> : null}
           <div className="flex gap-compact justify-end">
-            <button type="button" className="btn btn-secondary" onClick={onCancel}>
+            <Button variant="outline" onClick={onCancel}>
               {t('mfa.setup.cancelButton')}
-            </button>
-            <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? '...' : t('mfa.setup.confirmButton')}
-            </button>
+            </Button>
           </div>
         </form>
       </div>

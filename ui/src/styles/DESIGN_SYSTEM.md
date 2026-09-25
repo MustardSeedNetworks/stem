@@ -14,8 +14,8 @@ Semantic    index.css @theme + :root/.dark                       ← THE source 
             brand-*, status-*, surface-*, text-*, module-*,
             log-*, scrim, knob, z-overlay/z-max
    ↓ alias
-Component   index.css @layer components (.btn-*, .card, .badge,  ← consume semantic tokens
-            .alert, .table, .status-badge …) + the TS class-token
+Component   index.css @layer components (.card, .badge, .alert,  ← consume semantic tokens
+            .table, .status-badge …) + the TS class-token
             objects in styles/ (status.*, layout.* …)
 ```
 

@@ -12,6 +12,7 @@ import { Lock, ShieldCheck, ShieldOff } from 'lucide-react';
 import { type ReactElement, useCallback, useEffect, useState } from 'react';
 import { type SubmitHandler, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
+import { Button } from '../../../components/ui/Button';
 import { registerPasskey } from '../../../lib/webauthn-register';
 import { TotpDisableSchema } from '../../../schemas/auth';
 import {
@@ -126,9 +127,7 @@ export function SecurityPage(): ReactElement {
             {status?.totpEnabled ? (
               <DisableTotpButton onDisabled={refresh} />
             ) : (
-              <button type="button" className="btn btn-primary" onClick={handleEnableTOTP}>
-                {t('mfa.enableButton')}
-              </button>
+              <Button onClick={handleEnableTOTP}>{t('mfa.enableButton')}</Button>
             )}
           </div>
         </div>
@@ -150,14 +149,9 @@ export function SecurityPage(): ReactElement {
               ) : null}
             </div>
           </div>
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={handleAddPasskey}
-            disabled={passkeyBusy}
-          >
+          <Button variant="outline" onClick={handleAddPasskey} disabled={passkeyBusy}>
             {passkeyBusy ? t('passkeys.addingButton') : t('passkeys.addButton')}
-          </button>
+          </Button>
         </div>
       </section>
 
@@ -211,9 +205,9 @@ function DisableTotpButton({ onDisabled }: DisableTotpButtonProps): ReactElement
 
   if (!open) {
     return (
-      <button type="button" className="btn btn-secondary" onClick={() => setOpen(true)}>
+      <Button variant="outline" onClick={() => setOpen(true)}>
         {t('mfa.disableButton')}
-      </button>
+      </Button>
     );
   }
 
@@ -266,12 +260,12 @@ function DisableTotpButton({ onDisabled }: DisableTotpButtonProps): ReactElement
           </div>
           {submitError ? <p className="text-xs text-status-error">{submitError}</p> : null}
           <div className="flex gap-compact justify-end">
-            <button type="button" className="btn btn-secondary" onClick={() => setOpen(false)}>
+            <Button variant="outline" onClick={() => setOpen(false)}>
               {t('mfa.disable.cancelButton')}
-            </button>
-            <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? '...' : t('mfa.disable.confirmButton')}
-            </button>
+            </Button>
           </div>
         </form>
       </div>

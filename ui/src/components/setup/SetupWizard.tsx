@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { type StemRole, useRole } from '../../contexts/RoleContext';
 import { SetupWizardSchema } from '../../schemas/auth';
 import { deadlineExpired, requestDeadline } from '../../utils/http';
+import { Button } from '../ui/Button';
 
 /** Minimum password length (matches backend validation) */
 const MIN_PASSWORD_LENGTH = 12;
@@ -377,13 +378,9 @@ export function SetupWizard({
           ) : null}
 
           {/* Submit button */}
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="btn btn-primary w-full justify-center"
-          >
+          <Button type="submit" disabled={isSubmitting} className="w-full">
             {isSubmitting ? t('buttons.settingUp') : t('buttons.completeSetup')}
-          </button>
+          </Button>
         </form>
 
         {/* Footer */}
