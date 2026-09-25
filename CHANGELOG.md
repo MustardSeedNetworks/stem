@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.156](https://github.com/MustardSeedNetworks/stem/compare/v0.24.155...v0.24.156) (2026-09-25)
+
+
+### Features
+
+* **ui:** export test history as CSV and JSON ([#1451](https://github.com/MustardSeedNetworks/stem/issues/1451)) ([bf1ab69](https://github.com/MustardSeedNetworks/stem/commit/bf1ab69827b94c4c16bc8179154417030e44fe1c)), closes [#1262](https://github.com/MustardSeedNetworks/stem/issues/1262)
+
+
+### Bug Fixes
+
+* **rfc2544:** judge a trial's loss before its generator limit ([#1449](https://github.com/MustardSeedNetworks/stem/issues/1449)) ([b7a1e36](https://github.com/MustardSeedNetworks/stem/commit/b7a1e362260dd9cae5f3ff76e43bba2bd48ac491)), closes [#1446](https://github.com/MustardSeedNetworks/stem/issues/1446)
+
 ## [0.24.155](https://github.com/MustardSeedNetworks/stem/compare/v0.24.154...v0.24.155) (2026-09-25)
 
 
