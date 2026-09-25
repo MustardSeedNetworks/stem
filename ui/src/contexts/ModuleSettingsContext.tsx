@@ -27,7 +27,7 @@ const defaultModules: ModuleConfig[] = [
     name: 'reflector',
     displayName: 'Reflector',
     description: 'Packet reflection and loopback testing',
-    color: 'var(--color-module-reflector)', // Cyan
+    color: 'var(--color-module-reflector)', // Bluish green
     standard: 'Loopback',
     enabled: true,
     autoStart: false,
@@ -50,7 +50,7 @@ const defaultModules: ModuleConfig[] = [
     name: 'benchmark',
     displayName: 'Benchmark',
     description: 'RFC 2544 network benchmarking tests',
-    color: 'var(--color-module-benchmark)', // Red
+    color: 'var(--color-module-benchmark)', // Vermilion
     standard: 'RFC 2544',
     enabled: true,
     autoStart: false,
@@ -97,7 +97,7 @@ const defaultModules: ModuleConfig[] = [
     name: 'servicetest',
     displayName: 'Service Test',
     description: 'ITU-T Y.1564 service activation testing',
-    color: 'var(--color-module-servicetest)', // Orange
+    color: 'var(--color-module-servicetest)', // Sky blue
     standard: 'Y.1564 / MEF',
     enabled: true,
     autoStart: false,
@@ -190,7 +190,7 @@ const defaultModules: ModuleConfig[] = [
     name: 'certify',
     displayName: 'Certify',
     description: 'Network certification tests',
-    color: 'var(--color-module-certify)', // Violet
+    color: 'var(--color-module-certify)', // Reddish purple
     standard: 'RFC 2889/6349',
     enabled: false,
     autoStart: false,

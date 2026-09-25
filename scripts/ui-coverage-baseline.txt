@@ -21,5 +21,5 @@
 # metric      floor   target
 statements    69.9    88
 branches      54.6    80
-functions     67.7    92
+functions     69.0    92
 lines         81.5    88
