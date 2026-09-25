@@ -15,11 +15,18 @@
  * 7.60:1 as text on the page; dark #5a9fea reads 6.53:1 on the page ground
  * and carries the dark ink at 6.53:1.
  *
- * The six module accents remain, with one change of ROLE: they are no longer
- * used as button fills. Six saturated fills competed with status for
- * attention and made the run-state band harder to find. They now appear only
- * as page icons and chart series colours, never as text on their own wash.
- * Their colour-blind-safe re-cut is UI-STEM-10's, not this file's.
+ * The six module accents are no longer used as button fills. Six saturated
+ * fills competed with status for attention and made the run-state band harder
+ * to find. They now appear only as page icons, list dots and borders, and
+ * chart series colours, never as text.
+ *
+ * They are Okabe–Ito hues (UI-STEM-10, stem#1269): bluish green, vermilion,
+ * sky blue, yellow, blue and reddish purple, one per module in that order.
+ * Orange is the set's seventh and is left out: darkened to show on cream it
+ * cannot be told from vermilion and yellow under deuteranopia. Each theme
+ * re-cuts the lightness so every accent is 3:1 on every surface and every
+ * pair stays apart under normal, protan and deutan vision;
+ * moduleColors.test.ts measures both.
  *
  * brand-gold is gone: the canonical shared theme owns it as
  * --color-accent-gold now, so the value is one fleet decision rather than
@@ -41,12 +48,12 @@
    * surface up to /20. The status four live in msn-shared.css. */
   --color-brand-primary-strong: #11529d;
 
-  --color-module-reflector: #0e6f80;
-  --color-module-benchmark: #a83232;
-  --color-module-servicetest: #a14a12;
-  --color-module-trafficgen: #7d5c06;
-  --color-module-measure: #1a4fb0;
-  --color-module-certify: #5b3aa8;
+  --color-module-reflector: #09936c;
+  --color-module-benchmark: #793200;
+  --color-module-servicetest: #248abd;
+  --color-module-trafficgen: #736c01;
+  --color-module-measure: #0068a4;
+  --color-module-certify: #8b3e6b;
 }
 
 .dark {
@@ -63,10 +70,10 @@
    * the hover surface. */
   --color-brand-primary-strong: #76adeb;
 
-  --color-module-reflector: #22d3ee;
-  --color-module-benchmark: #f87171;
-  --color-module-servicetest: #fb923c;
-  --color-module-trafficgen: #fbbf24;
-  --color-module-measure: #60a5fa;
-  --color-module-certify: #a78bfa;
+  --color-module-reflector: #5dd8aa;
+  --color-module-benchmark: #ed742a;
+  --color-module-servicetest: #7fcffe;
+  --color-module-trafficgen: #efe341;
+  --color-module-measure: #4fa9ed;
+  --color-module-certify: #d07caa;
 }
