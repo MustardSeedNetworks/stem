@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.157](https://github.com/MustardSeedNetworks/stem/compare/v0.24.156...v0.24.157) (2026-09-25)
+
+
+### Bug Fixes
+
+* **tls:** log a replaced self-signed certificate (foundation v0.6.0) ([#1453](https://github.com/MustardSeedNetworks/stem/issues/1453)) ([1f11e51](https://github.com/MustardSeedNetworks/stem/commit/1f11e5101ea7818f3debd5674cda6423d2397050)), closes [#1452](https://github.com/MustardSeedNetworks/stem/issues/1452)
+* **ui:** recolour module accents in a colour-blind-safe palette ([#1454](https://github.com/MustardSeedNetworks/stem/issues/1454)) ([ce9d3ce](https://github.com/MustardSeedNetworks/stem/commit/ce9d3cee783d05edbf93fb29a51f845094dc2ea2)), closes [#1269](https://github.com/MustardSeedNetworks/stem/issues/1269)
+
 ## [0.24.156](https://github.com/MustardSeedNetworks/stem/compare/v0.24.155...v0.24.156) (2026-09-25)
 
 
