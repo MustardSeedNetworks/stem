@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.154](https://github.com/MustardSeedNetworks/stem/compare/v0.24.153...v0.24.154) (2026-09-25)
+
+
+### Bug Fixes
+
+* **cli:** surface the daemon's refusal and document --peer ([#1434](https://github.com/MustardSeedNetworks/stem/issues/1434)) ([72c0465](https://github.com/MustardSeedNetworks/stem/commit/72c04657db0052b426ca3b40247496c801d07595))
+* **ui:** per-route document titles, module eyebrows, OS theme default ([#1439](https://github.com/MustardSeedNetworks/stem/issues/1439)) ([f1d0bed](https://github.com/MustardSeedNetworks/stem/commit/f1d0bed1fb775af9dc57510e025a55de3b68cbd0)), closes [#1260](https://github.com/MustardSeedNetworks/stem/issues/1260)
+
 ## [0.24.153](https://github.com/MustardSeedNetworks/stem/compare/v0.24.152...v0.24.153) (2026-09-24)
 
 
