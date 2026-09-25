@@ -1331,6 +1331,17 @@ int rfc2544_throughput_test(rfc2544_ctx_t *ctx, uint32_t frame_size, throughput_
 
         total_frames += trial.packets_sent;
 
+        /* Loss first: a trial that lost frames is not a throughput at any rate,
+         * however far short of its offered load the generator fell. Judged
+         * after the generator limit, a trial with nothing reflected was
+         * reported as the throughput (#1446). */
+        if (trial.loss_pct > ctx->config.acceptable_loss) {
+            high = current_rate;
+            rfc2544_log(LOG_DEBUG, "  Fail: loss=%.4f%%, reducing rate", trial.loss_pct);
+            iterations++;
+            continue;
+        }
+
         /* A trial the generator could not drive to the offered load measures
          * nothing about that load: loss reads 0 % because everything offered
          * came back, and the search then walks the rate up on evidence it does
@@ -1351,22 +1362,15 @@ int rfc2544_throughput_test(rfc2544_ctx_t *ctx, uint32_t frame_size, throughput_
             break;
         }
 
-        if (trial.loss_pct <= ctx->config.acceptable_loss) {
-            /* Success - try higher rate */
-            best_rate          = current_rate;
-            low                = current_rate;
-            best_achieved_pps  = trial.achieved_pps;
-            best_achieved_mbps = trial.achieved_mbps;
-            rfc2544_log(LOG_DEBUG, "  Pass: loss=%.4f%%, new best=%.2f%%", trial.loss_pct,
-                        best_rate);
+        /* Success - try higher rate */
+        best_rate          = current_rate;
+        low                = current_rate;
+        best_achieved_pps  = trial.achieved_pps;
+        best_achieved_mbps = trial.achieved_mbps;
+        rfc2544_log(LOG_DEBUG, "  Pass: loss=%.4f%%, new best=%.2f%%", trial.loss_pct, best_rate);
 
-            /* Store latency from best rate */
-            result->latency = trial.latency;
-        } else {
-            /* Failure - try lower rate */
-            high = current_rate;
-            rfc2544_log(LOG_DEBUG, "  Fail: loss=%.4f%%, reducing rate", trial.loss_pct);
-        }
+        /* Store latency from best rate */
+        result->latency = trial.latency;
 
         iterations++;
     }

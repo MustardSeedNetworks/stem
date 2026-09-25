@@ -9,15 +9,13 @@
  * the top of its range, so the result printed ~99.9 % of line rate over a link
  * that carried a few thousand frames.
  *
- * This runs a real search on `lo` at 64-byte frames against a pinned 10 Gbps
- * line rate: the generator is nowhere near 7.4 Mpps, so the shortfall is
- * unmissable.
+ * The search runs on the fake platform with a reflector that returns every
+ * frame. It used to run on `lo`, where nothing is reflected: every trial lost
+ * every frame and the test passed only because a generator-limited trial was
+ * reported without its loss being checked (#1446).
  */
 
-#include <stdio.h>
-
-#include "rfc2544.h"
-#include "rfc2544_internal.h"
+#include "fake_platform.h"
 
 static int fail(const char *what)
 {
@@ -27,22 +25,10 @@ static int fail(const char *what)
 
 int main(void)
 {
-    rfc2544_ctx_t *ctx = NULL;
-    if (rfc2544_init(&ctx, "lo") < 0) {
-        return fail("rfc2544_init on lo");
+    rfc2544_ctx_t *ctx = fake_context(true);
+    if (!ctx) {
+        return fail("fake context");
     }
-
-    rfc2544_config_t config;
-    rfc2544_default_config(&config);
-    snprintf(config.interface, sizeof(config.interface), "lo");
-    if (rfc2544_configure(ctx, &config) < 0) {
-        rfc2544_cleanup(ctx);
-        return fail("rfc2544_configure");
-    }
-
-    /* The line rate `lo` reports is not 10 Gbps everywhere, so pin it: the
-     * assertions below are about the gap between offered and achieved. */
-    ctx->line_rate = 10000000000ULL;
 
     rfc2889_config_t fwd_config;
     rfc2889_default_config(&fwd_config);
