@@ -12,6 +12,13 @@
 
 import { type JSX, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Button } from '../components/ui/Button';
+import {
+  downloadFile,
+  exportFileName,
+  historyToCsv,
+  historyToJson,
+} from '../stores/history-export';
 import { HISTORY_MAX_ITEMS, type HistoricalResult, useHistoryStore } from '../stores/history-store';
 import {
   DetailEmpty,
@@ -82,16 +89,48 @@ export function HistoryPage(): JSX.Element {
           {t('history.scope', { count: results.length, max: HISTORY_MAX_ITEMS })}
         </p>
         {results.length > 0 ? (
-          <button
-            type="button"
-            onClick={(): void => {
-              clear();
-              setSelectedId(null);
-            }}
-            className="rounded-md px-3 py-2 text-sm text-text-muted hover:text-text-primary"
-          >
-            {t('history.clear')}
-          </button>
+          <div className="flex flex-wrap items-center gap-compact">
+            <Button
+              variant="outline"
+              tone="gray"
+              size="sm"
+              data-testid="history-export-csv"
+              onClick={(): void =>
+                downloadFile(
+                  exportFileName(new Date(), 'csv'),
+                  'text/csv;charset=utf-8',
+                  historyToCsv(results),
+                )
+              }
+            >
+              {t('history.exportCsv')}
+            </Button>
+            <Button
+              variant="outline"
+              tone="gray"
+              size="sm"
+              data-testid="history-export-json"
+              onClick={(): void =>
+                downloadFile(
+                  exportFileName(new Date(), 'json'),
+                  'application/json',
+                  historyToJson(results),
+                )
+              }
+            >
+              {t('history.exportJson')}
+            </Button>
+            <button
+              type="button"
+              onClick={(): void => {
+                clear();
+                setSelectedId(null);
+              }}
+              className="rounded-md px-3 py-2 text-sm text-text-muted hover:text-text-primary"
+            >
+              {t('history.clear')}
+            </button>
+          </div>
         ) : null}
       </div>
 

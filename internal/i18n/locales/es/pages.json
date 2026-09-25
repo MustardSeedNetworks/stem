@@ -38,7 +38,9 @@
     "completed": "Completada",
     "metrics": "Métricas",
     "scope_one": "Guardado solo en este navegador · {{count}} de {{max}} ejecuciones",
-    "scope_other": "Guardado solo en este navegador · {{count}} de {{max}} ejecuciones"
+    "scope_other": "Guardado solo en este navegador · {{count}} de {{max}} ejecuciones",
+    "exportCsv": "Exportar CSV",
+    "exportJson": "Exportar JSON"
   },
   "measure": {
     "description": "Medición Y.1731 OAM de retardo / pérdida / pérdida sintética.",

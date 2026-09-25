@@ -38,7 +38,9 @@
     "status": "Status",
     "title": "Recent results on this browser",
     "scope_one": "Kept in this browser only · {{count}} of {{max}} runs",
-    "scope_other": "Kept in this browser only · {{count}} of {{max}} runs"
+    "scope_other": "Kept in this browser only · {{count}} of {{max}} runs",
+    "exportCsv": "Export CSV",
+    "exportJson": "Export JSON"
   },
   "measure": {
     "description": "Y.1731 OAM delay / loss / synthetic loss measurement.",
