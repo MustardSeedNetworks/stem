@@ -23,6 +23,7 @@ import { useAppContext } from '../contexts/AppContext';
 import { useRole } from '../contexts/RoleContext';
 import { StopOutcomeMessage } from './StopOutcomeMessage';
 import { TestProgressBar } from './TestProgressBar';
+import { Button } from './ui/Button';
 
 export function TestRunControls(): ReactElement | null {
   const { t } = useTranslation('common');
@@ -95,11 +96,10 @@ export function TestRunControls(): ReactElement | null {
         />
 
         {isRunning ? (
-          <button
-            type="button"
+          <Button
             data-testid="stop-test-button"
             onClick={onStopTest}
-            className="btn btn-secondary"
+            variant="outline"
             disabled={isStopping}
             aria-busy={isStopping}
           >
@@ -114,13 +114,11 @@ export function TestRunControls(): ReactElement | null {
                 {t('buttons.stopTest')}
               </>
             )}
-          </button>
+          </Button>
         ) : (
-          <button
-            type="button"
+          <Button
             data-testid="start-test-button"
             onClick={onStartTest}
-            className="btn btn-primary"
             disabled={
               !selectedInterface ||
               !peer.trim() ||
@@ -141,7 +139,7 @@ export function TestRunControls(): ReactElement | null {
                 {t('buttons.runTest')}
               </>
             )}
-          </button>
+          </Button>
         )}
 
         <StopOutcomeMessage outcome={stopOutcome} />

@@ -12,6 +12,7 @@ import {
   useState,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { Button } from './Button';
 
 type Description = { 'aria-describedby': string; onClick: () => void };
 
@@ -33,7 +34,8 @@ function describedChild(
   const child = children as ReactElement<ButtonHTMLAttributes<HTMLButtonElement>>;
   const existing = child.props['aria-describedby'];
   const description = { 'aria-describedby': existing ? `${existing} ${id}` : id };
-  if (child.type !== 'button' || !child.props.disabled) {
+  const isButton = child.type === 'button' || child.type === Button;
+  if (!isButton || !child.props.disabled) {
     return cloneElement(child, {
       ...description,
       onClick: (event) => {

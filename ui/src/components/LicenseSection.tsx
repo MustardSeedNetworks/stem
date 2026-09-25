@@ -13,6 +13,7 @@ import { LICENSE_ENDPOINT } from '../contexts/LicenseContext';
 import { authFetch } from '../stores/auth-store';
 import type { LicenseStatus } from '../types/generated/license-status';
 import { CollapsibleSection } from './CollapsibleSection';
+import { Button } from './ui/Button';
 
 /**
  * The wire type, generated from the Go DTO rather than re-typed here: the
@@ -179,12 +180,7 @@ function ActivationForm({
       </div>
 
       <Tooltip text={t('settings:license.activateTooltip')}>
-        <button
-          type="button"
-          onClick={onActivate}
-          disabled={loading || !licenseKey.trim()}
-          className="btn btn-primary w-full"
-        >
+        <Button onClick={onActivate} disabled={loading || !licenseKey.trim()} className="w-full">
           {loading ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" /> {t('settings:license.activating')}
@@ -194,20 +190,15 @@ function ActivationForm({
               <Shield className="w-4 h-4" /> {t('settings:license.activate')}
             </>
           )}
-        </button>
+        </Button>
       </Tooltip>
 
       {showTrial ? (
         <Tooltip text={t('settings:license.trialTooltip', { days: TRIAL_DAYS })}>
-          <button
-            type="button"
-            onClick={onStartTrial}
-            disabled={loading}
-            className="btn btn-secondary w-full"
-          >
+          <Button onClick={onStartTrial} disabled={loading} variant="outline" className="w-full">
             <Clock className="w-4 h-4" />
             {t('settings:license.startTrialDays', { days: TRIAL_DAYS })}
-          </button>
+          </Button>
         </Tooltip>
       ) : null}
     </div>
