@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.158](https://github.com/MustardSeedNetworks/stem/compare/v0.24.157...v0.24.158) (2026-09-25)
+
+
+### Bug Fixes
+
+* **y1564:** run Y.1564 on the context the daemon builds ([#1458](https://github.com/MustardSeedNetworks/stem/issues/1458)) ([35b7a31](https://github.com/MustardSeedNetworks/stem/commit/35b7a3102053045e100452f53395fd621afb3d56)), closes [#1411](https://github.com/MustardSeedNetworks/stem/issues/1411)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1461](https://github.com/MustardSeedNetworks/stem/issues/1461)) ([aa0f457](https://github.com/MustardSeedNetworks/stem/commit/aa0f4578d11137cd5ecabf6bd3e15326c4982645))
+* **deps:** update dependency @babel/core to v8.0.6 ([#1459](https://github.com/MustardSeedNetworks/stem/issues/1459)) ([6b1b4c1](https://github.com/MustardSeedNetworks/stem/commit/6b1b4c12873a206becabf5f7301ee0c07dff9ae0))
+* **deps:** update github/codeql-action action to v4.38.1 ([#1460](https://github.com/MustardSeedNetworks/stem/issues/1460)) ([1789ab4](https://github.com/MustardSeedNetworks/stem/commit/1789ab48b934984376726f5de2529756da98bb04))
+
 ## [0.24.157](https://github.com/MustardSeedNetworks/stem/compare/v0.24.156...v0.24.157) (2026-09-25)
 
 
