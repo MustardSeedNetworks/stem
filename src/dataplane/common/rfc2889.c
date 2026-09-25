@@ -105,6 +105,16 @@ int rfc2889_forwarding_test(rfc2544_ctx_t *ctx, const rfc2889_config_t *config,
         result->frames_tx += trial.packets_sent;
         result->frames_rx += trial.packets_recv;
 
+        /* Loss first: a trial that lost frames is not a forwarding rate at any
+         * rate, however far short of its offered load the generator fell
+         * (#1446, as for RFC 2544). */
+        if (trial.loss_pct > config->acceptable_loss_pct) {
+            high = current_rate;
+            rfc2544_log(LOG_DEBUG, "  Fail: loss=%.4f%%", trial.loss_pct);
+            iterations++;
+            continue;
+        }
+
         /* A trial the generator could not drive to the offered load measures
          * nothing about that load: loss reads 0 % because everything offered
          * came back, and the search then walks the rate up on evidence it does
@@ -123,17 +133,11 @@ int rfc2889_forwarding_test(rfc2544_ctx_t *ctx, const rfc2889_config_t *config,
             break;
         }
 
-        if (trial.loss_pct <= config->acceptable_loss_pct) {
-            /* Success - try higher rate */
-            best_rate         = current_rate;
-            low               = current_rate;
-            best_achieved_pps = trial.achieved_pps;
-            rfc2544_log(LOG_DEBUG, "  Pass: loss=%.6f%%, rate=%.2f%%", trial.loss_pct, best_rate);
-        } else {
-            /* Failure - try lower rate */
-            high = current_rate;
-            rfc2544_log(LOG_DEBUG, "  Fail: loss=%.4f%%", trial.loss_pct);
-        }
+        /* Success - try higher rate */
+        best_rate         = current_rate;
+        low               = current_rate;
+        best_achieved_pps = trial.achieved_pps;
+        rfc2544_log(LOG_DEBUG, "  Pass: loss=%.6f%%, rate=%.2f%%", trial.loss_pct, best_rate);
 
         iterations++;
     }
