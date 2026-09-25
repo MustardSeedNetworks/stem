@@ -22,6 +22,7 @@ history, not as current state. Current architecture lives in
 | [STM-13_MEASURED_2026-09-15.md](STM-13_MEASURED_2026-09-15.md) | 2026-09-15 | v1 plan STM-13: #1233, a throughput result is a measurement |
 | [D-STEM-3_CRASHLOOP_2026-09-15.md](D-STEM-3_CRASHLOOP_2026-09-15.md) | 2026-09-15 | v1 plan D-STEM-3: #1249, a fresh `.deb` crash-loops while the installer reports success |
 | [D-STEM-24_RFC2889_MEASURED_2026-09-24.md](D-STEM-24_RFC2889_MEASURED_2026-09-24.md) | 2026-09-24 | v1 plan D-STEM-24: #1242, an RFC 2889 forwarding rate is a measurement |
+| [STM-23_UPGRADE_2026-09-25.md](STM-23_UPGRADE_2026-09-25.md) | 2026-09-25 | v1 plan STM-23: in-place upgrades on Ubuntu and Fedora; #1445, an RPM upgrade leaves stem stopped |
 
 New audits produced by the v1 plan land here under the same
 `<TOPIC>_<YYYY-MM-DD>.md` convention and get a row in this table.

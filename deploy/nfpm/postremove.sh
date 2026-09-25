@@ -35,7 +35,7 @@ if [ "$is_purge" -eq 1 ]; then
     fi
 
     rm -rf /etc/stem /var/lib/stem /var/log/stem
-else
+elif [ "$is_final_remove" -eq 1 ]; then
     echo "Stem removed. Data preserved in /var/lib/stem"
 fi
 

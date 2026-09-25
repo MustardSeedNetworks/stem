@@ -6,6 +6,14 @@ CONFIG_DIR=/etc/stem
 AF_XDP_DROPIN_DIR=/etc/systemd/system/stem.service.d
 AF_XDP_DROPIN="$AF_XDP_DROPIN_DIR/10-af-xdp-capability.conf"
 
+# RPM passes 1 on a fresh install and 2 or more on an upgrade; dpkg passes
+# "configure" plus the previously configured version, empty on a fresh install.
+fresh_install=no
+case "${1:-}" in
+    1) fresh_install=yes ;;
+    configure) [ -z "${2:-}" ] && fresh_install=yes ;;
+esac
+
 if [ ! -f "$CONFIG_DIR/config.yaml" ] && [ -f /usr/share/stem/config.yaml ]; then
     cp /usr/share/stem/config.yaml "$CONFIG_DIR/config.yaml"
     chown root:stem "$CONFIG_DIR/config.yaml"
@@ -108,12 +116,12 @@ then:
 
 EOF
 else
-    cat <<'EOF'
-Web interface: https://localhost:8444 (self-signed certificate)
-  First visit: set the administrator password (user "admin") in setup.
-  Trust the cert: sudo stem install-ca
-
-EOF
+    echo "Web interface: https://localhost:8444 (self-signed certificate)"
+    if [ "$fresh_install" = yes ]; then
+        echo '  First visit: set the administrator password (user "admin") in setup.'
+    fi
+    echo "  Trust the cert: sudo stem install-ca"
+    echo ""
 fi
 
 cat <<'EOF'
