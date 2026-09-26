@@ -57,7 +57,7 @@ without adding it to `ci-complete`'s `needs:` list makes that job advisory.
   It catches things a plain YAML parse does not, including duplicate `with:`
   keys, which `yaml.safe_load` accepts silently by keeping the last one.
   `SC2129` is ignored as a pure style preference; every correctness rule stays on.
-- **zizmor** (pinned 1.29.0) — Actions security scanner, run against the whole
+- **zizmor** (pinned 1.30.1) — Actions security scanner, run against the whole
   `.github/workflows/` directory. **Blocks on High findings.** The repo sits
   at zero High. One finding elsewhere in the directory (`release-please.yml`)
   survived review and carries a `# zizmor: ignore[...]` comment with the

@@ -1,10 +1,10 @@
 module github.com/MustardSeedNetworks/stem
 
-go 1.27.0
+go 1.27.1
 
 require (
-	github.com/MustardSeedNetworks/foundation v0.6.0
-	github.com/go-playground/validator/v10 v10.30.4
+	github.com/MustardSeedNetworks/foundation v0.6.1
+	github.com/go-playground/validator/v10 v10.30.5
 	github.com/go-webauthn/webauthn v0.18.2
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/uuid v1.6.0
@@ -24,11 +24,11 @@ require (
 	github.com/boombuler/barcode v1.1.0 // indirect
 	github.com/buger/jsonparser v1.6.1 // indirect
 	github.com/dlclark/regexp2 v1.12.0 // indirect
-	github.com/dustin/go-humanize v1.0.1 // indirect
+	github.com/dustin/go-humanize v1.1.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.4 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.15 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
-	github.com/go-playground/universal-translator v0.18.1 // indirect
+	github.com/go-playground/universal-translator v0.18.2 // indirect
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
 	github.com/go-webauthn/x v0.3.1 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
@@ -46,7 +46,7 @@ require (
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	go.yaml.in/yaml/v4 v4.0.0-rc.6 // indirect
 	golang.org/x/text v0.42.0 // indirect
-	modernc.org/libc v1.75.7 // indirect
+	modernc.org/libc v1.77.1 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.12.1 // indirect
 )

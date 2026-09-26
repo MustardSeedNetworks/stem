@@ -114,9 +114,9 @@ func TestBeginTestRunReturnsTheSameRunIDFormat(t *testing.T) {
 
 // idInstance returns everything but the trailing counter segment.
 func idInstance(id string) string {
-	cut := strings.LastIndex(id, "-")
-	if cut < 0 {
+	before, _, found := strings.CutLast(id, "-")
+	if !found {
 		return id
 	}
-	return id[:cut]
+	return before
 }

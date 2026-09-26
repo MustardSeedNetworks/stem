@@ -170,7 +170,7 @@ the Windows `.zip` are produced only by GoReleaser in
 `.github/workflows/release.yml`. The macOS `.pkg` is built by
 `deploy/macos/build-pkg.sh` as a local convenience and is not published.
 
-Verified versions: **Go 1.27.0**, Node.js 26.8.1, golangci-lint v2.13.2.
+Verified versions: **Go 1.27.1**, Node.js 26.10.0, golangci-lint v2.14.0.
 
 ## REST API (selected)
 
