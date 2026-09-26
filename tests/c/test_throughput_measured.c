@@ -49,6 +49,10 @@ static int search_reports_what_the_wire_carried(void)
     if (result.iterations == 0 || result.max_rate_pps <= 0.0) {
         return fail("no lossless trial was reported, so the assertions below prove nothing");
     }
+    /* #1466: the Go verdict tells a silent peer from a lossy one by this count. */
+    if (result.frames_received == 0 || result.frames_received > result.frames_tested) {
+        return fail("frames_received is not what the reflector returned");
+    }
 
     /* The defect: all three max_rate_* fields were derived from the offered
      * rate, so max_rate_pps came back equal to demanded_pps and max_rate_pct

@@ -39,13 +39,9 @@ func (c *Context) RunThroughputTest() (*ThroughputResultCLI, error) {
 		return nil, errors.New("no results")
 	}
 
-	// A result that ran no iterations measured nothing: the binary search
-	// never called run_trial, so no frame was transmitted. Reporting that as a
-	// successful throughput of zero is worse than failing, because an operator
-	// cannot tell it from a link that genuinely carries nothing. See #1217.
 	r := results[0]
-	if r.Iterations == 0 {
-		return nil, errors.New("throughput test ran no iterations: no frames were transmitted")
+	if err = throughputVerdict(r); err != nil {
+		return nil, err
 	}
 
 	return &ThroughputResultCLI{

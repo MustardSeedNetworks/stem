@@ -47,6 +47,10 @@ static int throughput_without_reflector(void)
     if (result.iterations < 2) {
         return fail("a lossy generator-limited trial must not end the search");
     }
+    /* #1466: zero received is how the Go verdict says the peer did not answer. */
+    if (result.frames_tested == 0 || result.frames_received != 0) {
+        return fail("a search with nothing reflected must report frames sent and none received");
+    }
     return 0;
 }
 

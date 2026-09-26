@@ -2,7 +2,11 @@
 
 package api
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/MustardSeedNetworks/stem/internal/services/orchestrator/dataplane"
+)
 
 // Causes a failed run reports on /api/v1/stats. The operator needs to know
 // which of these happened — each has a different next step — and nothing more:
@@ -53,8 +57,11 @@ func classifyRunCause(cause string) string {
 	case strings.Contains(msg, "no route to host"),
 		strings.Contains(msg, "connection refused"),
 		strings.Contains(msg, "i/o timeout"),
-		strings.Contains(msg, "timed out"):
+		strings.Contains(msg, "timed out"),
+		strings.Contains(msg, dataplane.ErrThroughputNoFramesReturned.Error()):
 		return causeUnreachable
+	case strings.Contains(msg, dataplane.ErrThroughputNoPassingRate.Error()):
+		return causeCriteriaNotMet
 	default:
 		return causeGeneric
 	}
