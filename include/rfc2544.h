@@ -170,6 +170,7 @@ typedef struct {
     double          offered_rate_pct;  /* Rate the search settled on, as % of line rate */
     bool            generator_limited; /* Generator could not offer offered_rate_pct */
     uint64_t        frames_tested;     /* Total frames transmitted */
+    uint64_t        frames_received;   /* Total frames returned by the peer */
     uint32_t        iterations;        /* Binary search iterations */
     latency_stats_t latency;           /* Latency at max throughput */
 } throughput_result_t;

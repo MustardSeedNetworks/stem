@@ -1311,6 +1311,7 @@ int rfc2544_throughput_test(rfc2544_ctx_t *ctx, uint32_t frame_size, throughput_
     double   best_rate    = 0.0;
     uint32_t iterations   = 0;
     uint64_t total_frames = 0;
+    uint64_t total_recv   = 0;
 
     /* What the wire actually carried at best_rate, and whether the generator
      * could offer it at all. */
@@ -1335,6 +1336,7 @@ int rfc2544_throughput_test(rfc2544_ctx_t *ctx, uint32_t frame_size, throughput_
         }
 
         total_frames += trial.packets_sent;
+        total_recv += trial.packets_recv;
 
         /* Loss first: a trial that lost frames is not a throughput at any rate,
          * however far short of its offered load the generator fell. Judged
@@ -1390,6 +1392,7 @@ int rfc2544_throughput_test(rfc2544_ctx_t *ctx, uint32_t frame_size, throughput_
     result->generator_limited = generator_limited;
     result->iterations        = iterations;
     result->frames_tested     = total_frames;
+    result->frames_received   = total_recv;
 
     rfc2544_log(LOG_INFO,
                 "Throughput result: %.4f%% measured (%.2f Mbps, %.0f pps) at %.2f%% offered%s",

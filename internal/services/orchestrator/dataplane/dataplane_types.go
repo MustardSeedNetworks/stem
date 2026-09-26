@@ -63,6 +63,7 @@ type ThroughputResult struct {
 	OfferedRatePct   float64
 	GeneratorLimited bool
 	FramesTested     uint64
+	FramesReceived   uint64
 	Iterations       uint32
 	Latency          LatencyStats
 }

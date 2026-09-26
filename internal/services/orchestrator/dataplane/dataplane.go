@@ -280,6 +280,7 @@ func (c *Context) runThroughputTestInternal(frameSize uint32) ([]ThroughputResul
 			OfferedRatePct:   float64(results[i].offered_rate_pct),
 			GeneratorLimited: bool(results[i].generator_limited),
 			FramesTested:     uint64(results[i].frames_tested),
+			FramesReceived:   uint64(results[i].frames_received),
 			Iterations:       uint32(results[i].iterations),
 			Latency:          newLatencyStats(results[i].latency),
 		}

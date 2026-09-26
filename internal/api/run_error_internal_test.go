@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/MustardSeedNetworks/stem/internal/services/modtypes"
+	"github.com/MustardSeedNetworks/stem/internal/services/orchestrator/dataplane"
 )
 
 func TestClassifyRunCause(t *testing.T) {
@@ -25,6 +26,16 @@ func TestClassifyRunCause(t *testing.T) {
 		{"address gone", "cannot assign requested address", causeInterfaceMissing},
 		{"peer silent", "dial 10.44.40.23:862: i/o timeout", causeUnreachable},
 		{"peer refusing", "connection refused", causeUnreachable},
+		{
+			"throughput search with nothing reflected",
+			"benchmark test rfc2544_throughput failed: " + dataplane.ErrThroughputNoFramesReturned.Error(),
+			causeUnreachable,
+		},
+		{
+			"throughput search lossy at every rate",
+			"benchmark test rfc2544_throughput failed: " + dataplane.ErrThroughputNoPassingRate.Error(),
+			causeCriteriaNotMet,
+		},
 		{"unrecognised", "unexpected EOF while reading frame 9", causeGeneric},
 		{"no cause at all", "", causeGeneric},
 	}
