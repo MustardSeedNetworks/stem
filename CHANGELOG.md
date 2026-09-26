@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.162](https://github.com/MustardSeedNetworks/stem/compare/v0.24.161...v0.24.162) (2026-09-26)
+
+
+### Bug Fixes
+
+* **api:** measure every selected frame size in RFC 2544 and Y.1564 steps ([#1483](https://github.com/MustardSeedNetworks/stem/issues/1483)) ([57b2b52](https://github.com/MustardSeedNetworks/stem/commit/57b2b524e2abd1375478c455c08bc4fb16b82e64)), closes [#1464](https://github.com/MustardSeedNetworks/stem/issues/1464)
+* **rfc2544:** fail a throughput search that found no passing rate ([#1479](https://github.com/MustardSeedNetworks/stem/issues/1479)) ([849270b](https://github.com/MustardSeedNetworks/stem/commit/849270b22fd35161106a84022e262897e0b17952)), closes [#1466](https://github.com/MustardSeedNetworks/stem/issues/1466)
+
 ## [0.24.161](https://github.com/MustardSeedNetworks/stem/compare/v0.24.160...v0.24.161) (2026-09-26)
 
 
