@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.164](https://github.com/MustardSeedNetworks/stem/compare/v0.24.163...v0.24.164) (2026-09-26)
+
+
+### Bug Fixes
+
+* **security:** replace gosec G703 exclusion with os.Root confinement ([#1493](https://github.com/MustardSeedNetworks/stem/issues/1493)) ([4a024cc](https://github.com/MustardSeedNetworks/stem/commit/4a024cc51f36ad6e52cc57b7103680613e3143a6))
+
+
+### Miscellaneous
+
+* **release:** bump minor for feat: while below 1.0 ([#1490](https://github.com/MustardSeedNetworks/stem/issues/1490)) ([2d79b35](https://github.com/MustardSeedNetworks/stem/commit/2d79b35ff15f6e2ab350990114760c715ac7bfc3)), closes [#1489](https://github.com/MustardSeedNetworks/stem/issues/1489)
+
 ## [0.24.163](https://github.com/MustardSeedNetworks/stem/compare/v0.24.162...v0.24.163) (2026-09-26)
 
 
