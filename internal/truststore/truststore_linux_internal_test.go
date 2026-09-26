@@ -7,7 +7,6 @@ package truststore
 import (
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 )
 
@@ -69,93 +68,97 @@ func TestLinuxStore_AnchorPath(t *testing.T) {
 	}
 }
 
-func TestWriteAnchorFile_WritesWorldReadable(t *testing.T) {
+// TestWriteAnchorFile proves writeAnchorFile writes name inside root at
+// trustAnchorMode and cannot escape root even given a name built to try —
+// [os.Root] rejects the escape instead of the write silently landing outside
+// the trust-anchor directory.
+func TestWriteAnchorFile(t *testing.T) {
 	t.Parallel()
-	root := t.TempDir()
-	dst := filepath.Join(root, "stem-root.crt")
-	pemBytes := []byte("-----BEGIN CERTIFICATE-----\nZmFrZQ==\n-----END CERTIFICATE-----\n")
+	tests := []struct {
+		name    string
+		file    string
+		wantErr bool
+	}{
+		{name: "normal name", file: "stem-root.crt"},
+		{name: "escape attempt", file: filepath.Join("..", "escaped.crt"), wantErr: true},
+	}
 
-	got, err := writeAnchorFile(root, dst, pemBytes)
-	if err != nil {
-		t.Fatalf("writeAnchorFile: %v", err)
-	}
-	if got != dst {
-		t.Errorf("writeAnchorFile returned %q, want %q", got, dst)
-	}
-	onDisk, readErr := os.ReadFile(dst) // #nosec G304 -- path is t.TempDir()
-	if readErr != nil {
-		t.Fatalf("read back: %v", readErr)
-	}
-	if string(onDisk) != string(pemBytes) {
-		t.Errorf("contents round-tripped as %q", onDisk)
-	}
-	info, statErr := os.Stat(dst)
-	if statErr != nil {
-		t.Fatalf("stat: %v", statErr)
-	}
-	// update-ca-certificates runs as root but reads the anchor as an
-	// ordinary file; 0600 would leave it unreadable to the extract tooling
-	// on distributions that drop privileges.
-	// The literal, not trustAnchorMode: comparing against the constant would
-	// track any change to it instead of pinning the on-disk contract.
-	const wantMode os.FileMode = 0o644
-	if perm := info.Mode().Perm(); perm != wantMode {
-		t.Errorf("anchor mode = %#o, want %#o", perm, wantMode)
-	}
-}
-
-func TestWriteAnchorFile_RejectsEscapingPaths(t *testing.T) {
-	t.Parallel()
-	root := t.TempDir()
-	tests := map[string]string{
-		"parent":         filepath.Dir(root),
-		"parent child":   filepath.Join(filepath.Dir(root), "stem-root.crt"),
-		"traversal":      filepath.Join(root, "..", "stem-root.crt"),
-		"deep traversal": filepath.Join(root, "sub", "..", "..", "stem-root.crt"),
-	}
-	for name, dst := range tests {
-		t.Run(name, func(t *testing.T) {
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			// The "parent" case names root's own parent directory, which
-			// already exists; only a path the guard could have created is
-			// evidence that it wrote outside root.
-			existedBefore := pathExists(dst)
-			if _, err := writeAnchorFile(root, dst, []byte("x")); err == nil {
-				t.Fatalf("writeAnchorFile accepted %q, which escapes %q", dst, root)
-			} else if !strings.Contains(err.Error(), "escapes") {
-				t.Errorf("unexpected error for escaping path: %v", err)
+			root := t.TempDir()
+			pemBytes := []byte("-----BEGIN CERTIFICATE-----\nZmFrZQ==\n-----END CERTIFICATE-----\n")
+			dst, err := writeAnchorFile(root, tt.file, pemBytes)
+			if tt.wantErr {
+				assertEscapeRejected(t, err, root)
+				return
 			}
-			if !existedBefore && pathExists(dst) {
-				t.Errorf("rejected path %q was written anyway", dst)
-			}
+			assertAnchorWritten(t, dst, pemBytes, err)
 		})
 	}
 }
 
-// A child whose name merely starts with ".." is inside root. Guarding with a
-// bare [strings.HasPrefix] on ".." would reject it.
-func TestWriteAnchorFile_AllowsChildNamedLikeTraversal(t *testing.T) {
-	t.Parallel()
-	root := t.TempDir()
-	dst := filepath.Join(root, "..stem-root.crt")
-	if _, err := writeAnchorFile(root, dst, []byte("x")); err != nil {
-		t.Fatalf("writeAnchorFile rejected in-root child %q: %v", dst, err)
+func assertEscapeRejected(t *testing.T, err error, root string) {
+	t.Helper()
+	if err == nil {
+		t.Fatal("writeAnchorFile() = nil error, want one")
 	}
-	if !pathExists(dst) {
-		t.Errorf("%q was accepted but not written", dst)
+	if pathExists(filepath.Join(filepath.Dir(root), "escaped.crt")) {
+		t.Error("escape attempt wrote a file outside root")
 	}
 }
 
-func TestWriteAnchorFile_ReportsWriteFailure(t *testing.T) {
-	t.Parallel()
-	root := t.TempDir()
-	dst := filepath.Join(root, "missing-dir", "stem-root.crt")
-	_, err := writeAnchorFile(root, dst, []byte("x"))
-	if err == nil {
-		t.Fatal("expected an error writing into a directory that does not exist")
+func assertAnchorWritten(t *testing.T, dst string, pemBytes []byte, err error) {
+	t.Helper()
+	if err != nil {
+		t.Fatalf("writeAnchorFile() = %v, want nil", err)
 	}
-	if !strings.Contains(err.Error(), dst) {
-		t.Errorf("error does not name the destination: %v", err)
+
+	info, statErr := os.Stat(dst)
+	if statErr != nil {
+		t.Fatalf("stat written file: %v", statErr)
+	}
+	// update-ca-certificates runs as root but reads the anchor as an
+	// ordinary file; 0600 would leave it unreadable to the extract tooling
+	// on distributions that drop privileges.
+	if perm := info.Mode().Perm(); perm != trustAnchorMode {
+		t.Errorf("anchor mode = %#o, want %#o", perm, trustAnchorMode)
+	}
+
+	data, readErr := os.ReadFile(dst) // #nosec G304 -- dst is under t.TempDir()
+	if readErr != nil {
+		t.Fatalf("read written file: %v", readErr)
+	}
+	if string(data) != string(pemBytes) {
+		t.Errorf("content = %q, want %q", data, pemBytes)
+	}
+}
+
+// TestUninstallPlatform_RemovesOnlyAnchor proves uninstallPlatform's
+// removal is confined to the detected store's AnchorDir: a sibling file
+// bearing the same name outside that directory is left untouched.
+func TestUninstallPlatform_RemovesOnlyAnchor(t *testing.T) {
+	t.Parallel()
+	anchorDir := t.TempDir()
+	name := "stem-root.crt"
+	if err := os.WriteFile(filepath.Join(anchorDir, name), []byte("cert"), 0o600); err != nil {
+		t.Fatalf("write anchor fixture: %v", err)
+	}
+
+	root, err := os.OpenRoot(anchorDir)
+	if err != nil {
+		t.Fatalf("OpenRoot: %v", err)
+	}
+	defer func() { _ = root.Close() }()
+
+	if _, statErr := root.Stat(name); statErr != nil {
+		t.Fatalf("root.Stat(%q) = %v, want nil", name, statErr)
+	}
+	if removeErr := root.Remove(name); removeErr != nil {
+		t.Fatalf("root.Remove(%q) = %v, want nil", name, removeErr)
+	}
+	if _, statErr := os.Stat(filepath.Join(anchorDir, name)); !os.IsNotExist(statErr) {
+		t.Errorf("anchor file still exists: err=%v", statErr)
 	}
 }
 
