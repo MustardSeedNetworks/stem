@@ -152,7 +152,7 @@ require "- name: Assert the workspace is clean before goreleaser"
 # Pinned toolchain and checksum-verified downloads on the signing path.
 # Renovate owns these five values; the gate owns their shape. See require_pin.
 require_pin 'the goreleaser-cross image' \
-  '^ +image: goreleaser/goreleaser-cross:v[0-9]+\.[0-9]+\.[0-9]+(-v[0-9.]+)?@sha256:[0-9a-f]{64}$'
+  '^ +image: goreleaser/goreleaser-cross:v[0-9]+\.[0-9]+\.[0-9]+(-[0-9]+)?(-v[0-9.]+)?@sha256:[0-9a-f]{64}$'
 require_pin 'SYFT_VERSION' '^ +SYFT_VERSION: "[0-9]+\.[0-9]+\.[0-9]+"$'
 require_pin 'SYFT_SHA256' '^ +SYFT_SHA256: "[0-9a-f]{64}"$'
 require_pin 'COSIGN_VERSION' '^ +COSIGN_VERSION: "v[0-9]+\.[0-9]+\.[0-9]+"$'
