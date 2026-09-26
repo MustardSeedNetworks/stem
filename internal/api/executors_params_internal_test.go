@@ -24,7 +24,7 @@ func TestConvertToModuleConfigUsesExecutorParameterNames(t *testing.T) {
 				MaxLoss: 0.25, Warmup: 3, Trials: 4, StepSize: 2.5, Bidirectional: true,
 			}},
 			want: map[string]any{
-				"duration": 11, "frame_sizes": []uint32{64, 512}, "resolution": 0.5,
+				"duration": 11, "resolution": 0.5,
 				"max_loss": 0.25, "warmup": 3, "trials": 4, "step_size": 2.5,
 				"bidirectional": true,
 			},
@@ -65,8 +65,7 @@ func TestConvertToModuleConfigUsesExecutorParameterNames(t *testing.T) {
 				ColorAware: true, FLRThreshold: 0.01, FDThreshold: 5, FDVThreshold: 2,
 			}},
 			want: map[string]any{
-				"cir": float64(100), "eir": float64(50), "cbs": uint32(32),
-				"ebs": uint32(16), "frame_sizes": []uint32{256},
+				"cir": float64(100), "eir": float64(50), "cbs": uint32(32), "ebs": uint32(16),
 				"config_duration_sec": uint32(14), "perf_duration_sec": uint32(60),
 				"vlan_id": uint16(200), "cos": uint8(5), "color_aware": true,
 				"flr_threshold_pct": 0.01, "fd_threshold_ms": float64(5),

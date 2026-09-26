@@ -16,7 +16,7 @@ func TestRunPlanCarriesPeerIntoModuleConfig(t *testing.T) {
 	if err != nil {
 		t.Fatalf("newRunPlan: %v", err)
 	}
-	cfg := plan.moduleConfig("eth7", plan.Steps[0])
+	cfg := plan.moduleConfig("eth7", plan.Steps[0], 0)
 	if cfg.Interface != "eth7" || cfg.Peer != "198.51.100.7" || cfg.PeerPort != 4842 {
 		t.Fatalf("module config = interface %q peer %s:%d", cfg.Interface, cfg.Peer, cfg.PeerPort)
 	}
