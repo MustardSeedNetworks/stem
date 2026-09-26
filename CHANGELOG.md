@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.160](https://github.com/MustardSeedNetworks/stem/compare/v0.24.159...v0.24.160) (2026-09-26)
+
+
+### Bug Fixes
+
+* **ui:** forward setValue writes from config forms to the run config ([#1472](https://github.com/MustardSeedNetworks/stem/issues/1472)) ([94edda9](https://github.com/MustardSeedNetworks/stem/commit/94edda938ab69755556dc22f46d338673f32b765)), closes [#1465](https://github.com/MustardSeedNetworks/stem/issues/1465)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1470](https://github.com/MustardSeedNetworks/stem/issues/1470)) ([96640a2](https://github.com/MustardSeedNetworks/stem/commit/96640a2a5afea2b0c526fc4e42716518fbb2dbb9))
+
 ## [0.24.159](https://github.com/MustardSeedNetworks/stem/compare/v0.24.158...v0.24.159) (2026-09-25)
 
 
