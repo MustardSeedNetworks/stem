@@ -192,28 +192,110 @@ func (s *Server) executePlanStep(
 	s.activeTestExec = exec
 	s.statsMu.Unlock()
 
-	result, execErr := exec.Execute(
-		step.TestType,
-		plan.moduleConfig(iface, step),
-	)
-	if result == nil {
-		return nil, execErr
+	sizes := stepFrameSizes(step)
+	if len(sizes) == 0 {
+		result, execErr := exec.Execute(step.TestType, plan.moduleConfig(iface, step, 0))
+		if result == nil {
+			return nil, execErr
+		}
+		return stepResponse(step, result.Success, result.Error, result.Data), execErr
 	}
-	response := &TestResultResponse{
+	return s.executeEachFrameSize(runID, exec, plan, iface, step, sizes)
+}
+
+// frameSizeResult is one frame size's measurement within a step that measures
+// several.
+type frameSizeResult struct {
+	FrameSize uint32 `json:"frameSize"`
+	Success   bool   `json:"success"`
+	Error     string `json:"error,omitempty"`
+	Data      any    `json:"data"`
+}
+
+// executeEachFrameSize runs the step once per selected size, because the
+// modules measure one size per call. A size whose verdict fails is still a
+// measurement, so the remaining sizes run; an execution error ends the step
+// with the sizes measured so far.
+func (s *Server) executeEachFrameSize(
+	runID uint64,
+	exec testExecutor,
+	plan *runPlan,
+	iface string,
+	step RunPlanStep,
+	sizes []uint32,
+) (*TestResultResponse, error) {
+	measured := make([]frameSizeResult, 0, len(sizes))
+	success := true
+	firstError := ""
+	for _, size := range sizes {
+		s.statsMu.RLock()
+		cancelled := s.testRunID != runID
+		s.statsMu.RUnlock()
+		if cancelled {
+			return nil, errors.New("run plan cancelled")
+		}
+
+		result, execErr := exec.Execute(step.TestType, plan.moduleConfig(iface, step, size))
+		if result != nil {
+			measured = append(measured, frameSizeResult{
+				FrameSize: size,
+				Success:   result.Success,
+				Error:     result.Error,
+				Data:      result.Data,
+			})
+			if !result.Success && firstError == "" {
+				firstError = fmt.Sprintf("frame size %d: %s", size, result.Error)
+			}
+			success = success && result.Success
+		}
+		if execErr != nil {
+			if result == nil && len(measured) == 0 {
+				return nil, execErr
+			}
+			return stepResponse(step, false, firstError, measured), execErr
+		}
+	}
+	return stepResponse(step, success, firstError, measured), nil
+}
+
+func stepResponse(step RunPlanStep, success bool, errText string, data any) *TestResultResponse {
+	return &TestResultResponse{
 		Status:   statusCompleted,
 		TestType: step.TestType,
 		Module:   step.Module,
-		Success:  result.Success,
-		Error:    result.Error,
-		Data:     result.Data,
+		Success:  success,
+		Error:    errText,
+		Data:     data,
 	}
-	return response, execErr
 }
 
-func (p *runPlan) moduleConfig(iface string, step RunPlanStep) *modtypes.TestConfig {
+// stepFrameSizes is the list of frame sizes a step measures, one call per
+// size, or nil when the step configures a single size. RFC 2544 runs each of
+// its tests at every selected size (RFC 2544 §26), and the Y.1564 form selects
+// several.
+func stepFrameSizes(step RunPlanStep) []uint32 {
+	if step.Config == nil {
+		return nil
+	}
+	switch {
+	case isRFC2544Test(step.TestType) && step.Config.RFC2544 != nil:
+		return step.Config.RFC2544.FrameSizes
+	case isY1564Test(step.TestType) && step.Config.Y1564 != nil:
+		return step.Config.Y1564.FrameSizes
+	default:
+		return nil
+	}
+}
+
+// moduleConfig builds the module's config for one execution. A frameSize of 0
+// leaves the step's own single size, or the module default.
+func (p *runPlan) moduleConfig(iface string, step RunPlanStep, frameSize uint32) *modtypes.TestConfig {
 	cfg := convertToModuleConfig(iface, step.TestType, step.Config)
 	cfg.Peer = p.Peer
 	cfg.PeerPort = p.PeerPort
+	if frameSize > 0 {
+		cfg.FrameSize = frameSize
+	}
 	return cfg
 }
 

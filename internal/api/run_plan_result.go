@@ -21,6 +21,7 @@ func estimateStepSeconds(step RunPlanStep) *int64 {
 		return nil
 	}
 	config := step.Config.RFC2544
-	seconds := int64((config.Duration + config.Warmup) * config.Trials * len(config.FrameSizes))
+	runs := max(1, len(stepFrameSizes(step)))
+	seconds := int64((config.Duration + config.Warmup) * config.Trials * runs)
 	return &seconds
 }

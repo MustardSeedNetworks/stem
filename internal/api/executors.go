@@ -200,11 +200,7 @@ func isTrafficGenTest(testType string) bool {
 // populateRFC2544Params populates the params map with RFC 2544 config.
 func populateRFC2544Params(modCfg *modtypes.TestConfig, c *RFC2544TestConfig) {
 	modCfg.Duration = c.Duration
-	if len(c.FrameSizes) > 0 {
-		modCfg.FrameSize = c.FrameSizes[0]
-	}
 	modCfg.Params["duration"] = c.Duration
-	modCfg.Params["frame_sizes"] = c.FrameSizes
 	modCfg.Params["resolution"] = c.Resolution
 	modCfg.Params["max_loss"] = c.MaxLoss
 	modCfg.Params["warmup"] = c.Warmup
@@ -242,14 +238,10 @@ func populateRFC6349Params(modCfg *modtypes.TestConfig, c *RFC6349TestConfig) {
 // populateY1564Params populates the params map with Y.1564 config.
 func populateY1564Params(modCfg *modtypes.TestConfig, c *Y1564TestConfig) {
 	modCfg.Duration = int(c.PerfTestDuration)
-	if len(c.FrameSizes) > 0 {
-		modCfg.FrameSize = c.FrameSizes[0]
-	}
 	modCfg.Params["cir"] = c.CIR
 	modCfg.Params["eir"] = c.EIR
 	modCfg.Params["cbs"] = c.CBS
 	modCfg.Params["ebs"] = c.EBS
-	modCfg.Params["frame_sizes"] = c.FrameSizes
 	modCfg.Params["config_duration_sec"] = c.ConfigStepDuration
 	modCfg.Params["perf_duration_sec"] = c.PerfTestDuration
 	modCfg.Params["vlan_id"] = c.VlanID
