@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.161](https://github.com/MustardSeedNetworks/stem/compare/v0.24.160...v0.24.161) (2026-09-26)
+
+
+### Miscellaneous
+
+* **deps:** bump toolchain to Go 1.27.1, Node 26.10.0, golangci-lint v2.14.0 ([#1475](https://github.com/MustardSeedNetworks/stem/issues/1475)) ([0dbba24](https://github.com/MustardSeedNetworks/stem/commit/0dbba24146412405dd2aeaba29eb49b6e8c33a02))
+* **deps:** update dependency @types/node to v26.6.2 ([#1476](https://github.com/MustardSeedNetworks/stem/issues/1476)) ([e58df68](https://github.com/MustardSeedNetworks/stem/commit/e58df68a0fa3822a758e81d59b27b2e7180152e1))
+
 ## [0.24.160](https://github.com/MustardSeedNetworks/stem/compare/v0.24.159...v0.24.160) (2026-09-26)
 
 
