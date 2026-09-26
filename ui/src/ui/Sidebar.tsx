@@ -308,7 +308,7 @@ export const SidebarLayout: FC<SidebarLayoutProps> = ({
     <div className="min-h-screen text-text-primary bg-gradient-to-br from-surface-base via-surface-raised to-surface-deep">
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-row focus:rounded-lg focus:bg-brand-primary focus:text-text-inverse focus:outline-none"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:rounded-lg focus:bg-brand-primary focus:text-text-inverse focus:outline-none"
       >
         {t('accessibility.skipToContent')}
       </a>
@@ -368,7 +368,7 @@ export const SidebarLayout: FC<SidebarLayoutProps> = ({
           collapsed ? 'lg:pl-16' : 'lg:pl-56'
         }`}
       >
-        <div className="pad sm:pad-lg lg:pad-xl">{children}</div>
+        <div className="pad">{children}</div>
       </main>
     </div>
   );
