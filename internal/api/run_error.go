@@ -21,6 +21,10 @@ const (
 	// "the test failed" points the operator at the network, and this one
 	// points at the product.
 	causeInternalFault = "The run stopped on an internal fault. See the daemon log."
+	// causeCriteriaNotMet is a run that measured and whose measurement missed
+	// its acceptance criteria (#1463): nothing faulted, and the step's own
+	// result says which criterion failed, so the daemon log has nothing to add.
+	causeCriteriaNotMet = "The test ran and did not meet its acceptance criteria. See the step results."
 )
 
 // classifyRunCause maps a failure's own wording onto the closed set above.

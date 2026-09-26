@@ -27,18 +27,18 @@ func ConfigureContextForTest(exec *Executor, cfg *modtypes.TestConfig) error {
 	return exec.configureContext(cfg)
 }
 
-// ContextForTest exposes executor context for tests.
-func ContextForTest(exec *Executor) *dataplane.Context {
-	return exec.ctx
+// DataplaneForTest exposes the executor's dataplane for tests.
+func DataplaneForTest(exec *Executor) ServiceDataplane {
+	return exec.dp
 }
 
 // RunY1564ForTest exposes Y.1564 execution branches for tests.
-func RunY1564ForTest(exec *Executor, testType string, cfg *modtypes.TestConfig) (any, error) {
+func RunY1564ForTest(exec *Executor, testType string, cfg *modtypes.TestConfig) (any, bool, error) {
 	return exec.runY1564(testType, cfg)
 }
 
 // RunMEFForTest exposes MEF execution branches for tests.
-func RunMEFForTest(exec *Executor, testType string, cfg *modtypes.TestConfig) (any, error) {
+func RunMEFForTest(exec *Executor, testType string, cfg *modtypes.TestConfig) (any, bool, error) {
 	return exec.runMEF(testType, cfg)
 }
 
