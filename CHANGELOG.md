@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.163](https://github.com/MustardSeedNetworks/stem/compare/v0.24.162...v0.24.163) (2026-09-26)
+
+
+### Bug Fixes
+
+* **ui:** drop variants on [@layer](https://github.com/layer) components classes and gate them ([#1485](https://github.com/MustardSeedNetworks/stem/issues/1485)) ([129cb29](https://github.com/MustardSeedNetworks/stem/commit/129cb294a24b6c5941398890f1a2f8e49bb70629)), closes [#1484](https://github.com/MustardSeedNetworks/stem/issues/1484)
+
+
+### Continuous Integration
+
+* **conformance:** pin the policy repo past the OIDC fix ([#1488](https://github.com/MustardSeedNetworks/stem/issues/1488)) ([b48cce3](https://github.com/MustardSeedNetworks/stem/commit/b48cce38ee4fef83d4ada33f4c021fb35f6ed5c8)), closes [#1487](https://github.com/MustardSeedNetworks/stem/issues/1487)
+
 ## [0.24.162](https://github.com/MustardSeedNetworks/stem/compare/v0.24.161...v0.24.162) (2026-09-26)
 
 
