@@ -386,6 +386,11 @@ jobs:
           python3 scripts/test-check-module-feature-parity.py
           python3 scripts/check-module-feature-parity.py
 
+      - name: Variants on @layer components classes
+        run: |
+          python3 scripts/test-check-component-variants.py
+          python3 scripts/check-component-variants.py
+
       - name: Request-field read gate
         run: ./scripts/check-request-fields.sh
 
