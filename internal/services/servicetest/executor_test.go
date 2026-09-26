@@ -26,23 +26,23 @@ func TestNewExecutor(t *testing.T) {
 	}
 }
 
-// TestNewExecutorWithContext tests the NewExecutorWithContext function.
-func TestNewExecutorWithContext(t *testing.T) {
+// TestNewExecutorWithDataplane tests the NewExecutorWithDataplane function.
+func TestNewExecutorWithDataplane(t *testing.T) {
 	t.Run("with nil context", func(t *testing.T) {
-		exec := servicetest.NewExecutorWithContext(nil)
+		exec := servicetest.NewExecutorWithDataplane(nil)
 		if exec == nil {
-			t.Fatal("NewExecutorWithContext(nil) returned nil")
+			t.Fatal("NewExecutorWithDataplane(nil) returned nil")
 		}
 		if exec.Module == nil {
-			t.Error("NewExecutorWithContext(nil) returned executor with nil Module")
+			t.Error("NewExecutorWithDataplane(nil) returned executor with nil Module")
 		}
-		if servicetest.ContextForTest(exec) != nil {
-			t.Error("NewExecutorWithContext(nil) should have nil context")
+		if servicetest.DataplaneForTest(exec) != nil {
+			t.Error("NewExecutorWithDataplane(nil) should have nil context")
 		}
 	})
 
 	t.Run("embeds module correctly", func(t *testing.T) {
-		exec := servicetest.NewExecutorWithContext(nil)
+		exec := servicetest.NewExecutorWithDataplane(nil)
 		if exec.Name() != servicetest.ModuleName {
 			t.Errorf("Embedded module Name() = %q, want %q", exec.Name(), servicetest.ModuleName)
 		}
@@ -55,7 +55,7 @@ func TestNewExecutorWithContext(t *testing.T) {
 
 // TestExecutorSupportsExecution tests the SupportsExecution method.
 func TestExecutorSupportsExecution(t *testing.T) {
-	exec := servicetest.NewExecutorWithContext(nil)
+	exec := servicetest.NewExecutorWithDataplane(nil)
 	if !exec.SupportsExecution() {
 		t.Error("SupportsExecution() = false, want true")
 	}
@@ -64,7 +64,7 @@ func TestExecutorSupportsExecution(t *testing.T) {
 // TestExecutorClose tests the Close method.
 func TestExecutorClose(t *testing.T) {
 	t.Run("with nil context", func(_ *testing.T) {
-		exec := servicetest.NewExecutorWithContext(nil)
+		exec := servicetest.NewExecutorWithDataplane(nil)
 		// Should not panic.
 		exec.Close()
 	})
@@ -72,7 +72,7 @@ func TestExecutorClose(t *testing.T) {
 	t.Run("with context", func(_ *testing.T) {
 		// Create an executor with a mock context if available.
 		// On stub builds, we can't create a real context.
-		exec := servicetest.NewExecutorWithContext(&dataplane.Context{})
+		exec := servicetest.NewExecutorWithDataplane(&dataplane.Context{})
 		// Should not panic.
 		exec.Close()
 	})
@@ -80,7 +80,7 @@ func TestExecutorClose(t *testing.T) {
 
 // TestExecutorExecuteErrors tests Execute error cases.
 func TestExecutorExecuteErrors(t *testing.T) {
-	exec := servicetest.NewExecutorWithContext(nil)
+	exec := servicetest.NewExecutorWithDataplane(nil)
 
 	t.Run("unsupported test type", func(t *testing.T) {
 		cfg := &modtypes.TestConfig{
@@ -123,7 +123,7 @@ func TestExecutorExecuteErrors(t *testing.T) {
 
 // TestExecutorExecuteWithNilContext tests Execute with nil dataplane context.
 func TestExecutorExecuteWithNilContext(t *testing.T) {
-	exec := servicetest.NewExecutorWithContext(nil)
+	exec := servicetest.NewExecutorWithDataplane(nil)
 	cfg := &modtypes.TestConfig{
 		Interface: "eth0",
 		FrameSize: 1518,
@@ -165,7 +165,7 @@ func TestExecutorExecuteWithNilContext(t *testing.T) {
 
 // TestSafeDuration tests the safeDuration method.
 func TestSafeDuration(t *testing.T) {
-	exec := servicetest.NewExecutorWithContext(nil)
+	exec := servicetest.NewExecutorWithDataplane(nil)
 
 	tests := []struct {
 		name     string
@@ -332,7 +332,7 @@ func TestModtypesGetUint8Param(t *testing.T) {
 
 // TestBuildY1564Service tests the buildY1564Service method.
 func TestBuildY1564Service(t *testing.T) {
-	exec := servicetest.NewExecutorWithContext(nil)
+	exec := servicetest.NewExecutorWithDataplane(nil)
 
 	t.Run("default values", func(t *testing.T) {
 		cfg := &modtypes.TestConfig{
@@ -422,7 +422,7 @@ func TestBuildY1564Service(t *testing.T) {
 
 // TestBuildMEFConfig tests the buildMEFConfig method.
 func TestBuildMEFConfig(t *testing.T) {
-	exec := servicetest.NewExecutorWithContext(nil)
+	exec := servicetest.NewExecutorWithDataplane(nil)
 
 	t.Run("default values", func(t *testing.T) {
 		cfg := &modtypes.TestConfig{
@@ -693,7 +693,7 @@ func assertMEFPerfDuration(t *testing.T, mefCfg *dataplane.MEFConfig, expected u
 
 // TestExtractY1564Params tests the extractY1564Params method.
 func TestExtractY1564Params(t *testing.T) {
-	exec := servicetest.NewExecutorWithContext(nil)
+	exec := servicetest.NewExecutorWithDataplane(nil)
 
 	t.Run("nil params does not modify service", func(t *testing.T) {
 		testExtractY1564ParamsNil(exec, t)
@@ -853,7 +853,7 @@ func testExtractY1564ParamsInvalidEnabled(exec *servicetest.Executor, t *testing
 // TestConfigureContext tests the configureContext method.
 func TestConfigureContext(t *testing.T) {
 	t.Run("with nil context", func(t *testing.T) {
-		exec := servicetest.NewExecutorWithContext(nil)
+		exec := servicetest.NewExecutorWithDataplane(nil)
 		cfg := &modtypes.TestConfig{
 			Interface: "eth0",
 			Duration:  60,
@@ -872,7 +872,7 @@ func TestConfigureContext(t *testing.T) {
 
 // TestExecutorModuleEmbedding verifies that Executor properly embeds Module.
 func TestExecutorModuleEmbedding(t *testing.T) {
-	exec := servicetest.NewExecutorWithContext(nil)
+	exec := servicetest.NewExecutorWithDataplane(nil)
 
 	// Test all Module interface methods are accessible.
 	if exec.Name() != servicetest.ModuleName {
@@ -935,7 +935,7 @@ func TestConstants(t *testing.T) {
 
 // TestRunY1564InvalidTestType tests runY1564 with invalid test type.
 func TestRunY1564InvalidTestType(t *testing.T) {
-	exec := servicetest.NewExecutorWithContext(&dataplane.Context{})
+	exec := servicetest.NewExecutorWithDataplane(&dataplane.Context{})
 
 	cfg := &modtypes.TestConfig{
 		Interface: "eth0",
@@ -945,7 +945,7 @@ func TestRunY1564InvalidTestType(t *testing.T) {
 	}
 
 	// This should return ErrTestNotImplemented.
-	_, err := servicetest.RunY1564ForTest(exec, "invalid_y1564_test", cfg)
+	_, _, err := servicetest.RunY1564ForTest(exec, "invalid_y1564_test", cfg)
 	if !errors.Is(err, modtypes.ErrTestNotImplemented) {
 		t.Errorf("runY1564 with invalid type returned wrong error: %v", err)
 	}
@@ -953,7 +953,7 @@ func TestRunY1564InvalidTestType(t *testing.T) {
 
 // TestRunMEFInvalidTestType tests runMEF with invalid test type.
 func TestRunMEFInvalidTestType(t *testing.T) {
-	exec := servicetest.NewExecutorWithContext(&dataplane.Context{})
+	exec := servicetest.NewExecutorWithDataplane(&dataplane.Context{})
 
 	cfg := &modtypes.TestConfig{
 		Interface: "eth0",
@@ -963,7 +963,7 @@ func TestRunMEFInvalidTestType(t *testing.T) {
 	}
 
 	// This should return ErrTestNotImplemented.
-	_, err := servicetest.RunMEFForTest(exec, "invalid_mef_test", cfg)
+	_, _, err := servicetest.RunMEFForTest(exec, "invalid_mef_test", cfg)
 	if !errors.Is(err, modtypes.ErrTestNotImplemented) {
 		t.Errorf("runMEF with invalid type returned wrong error: %v", err)
 	}
@@ -973,7 +973,7 @@ func TestRunMEFInvalidTestType(t *testing.T) {
 // On non-Linux/non-CGO builds, the stub returns ErrNotSupported for all dataplane operations.
 func TestRunY1564WithStubContext(t *testing.T) {
 	// Create executor with a stub context (not nil, so we don't panic).
-	exec := servicetest.NewExecutorWithContext(&dataplane.Context{})
+	exec := servicetest.NewExecutorWithDataplane(&dataplane.Context{})
 
 	cfg := &modtypes.TestConfig{
 		Interface: "eth0",
@@ -983,21 +983,21 @@ func TestRunY1564WithStubContext(t *testing.T) {
 	}
 
 	t.Run("y1564_config returns error on stub", func(t *testing.T) {
-		_, err := servicetest.RunY1564ForTest(exec, "y1564_config", cfg)
+		_, _, err := servicetest.RunY1564ForTest(exec, "y1564_config", cfg)
 		if err == nil {
 			t.Error("runY1564(y1564_config) should return error on stub build")
 		}
 	})
 
 	t.Run("y1564_perf returns error on stub", func(t *testing.T) {
-		_, err := servicetest.RunY1564ForTest(exec, "y1564_perf", cfg)
+		_, _, err := servicetest.RunY1564ForTest(exec, "y1564_perf", cfg)
 		if err == nil {
 			t.Error("runY1564(y1564_perf) should return error on stub build")
 		}
 	})
 
 	t.Run("y1564 (full test) returns error on stub", func(t *testing.T) {
-		_, err := servicetest.RunY1564ForTest(exec, "y1564", cfg)
+		_, _, err := servicetest.RunY1564ForTest(exec, "y1564", cfg)
 		if err == nil {
 			t.Error("runY1564(y1564) should return error on stub build")
 		}
@@ -1006,7 +1006,7 @@ func TestRunY1564WithStubContext(t *testing.T) {
 
 // TestRunMEFWithStubContext tests runMEF with a stub dataplane context.
 func TestRunMEFWithStubContext(t *testing.T) {
-	exec := servicetest.NewExecutorWithContext(&dataplane.Context{})
+	exec := servicetest.NewExecutorWithDataplane(&dataplane.Context{})
 
 	cfg := &modtypes.TestConfig{
 		Interface: "eth0",
@@ -1016,21 +1016,21 @@ func TestRunMEFWithStubContext(t *testing.T) {
 	}
 
 	t.Run("mef_config returns error on stub", func(t *testing.T) {
-		_, err := servicetest.RunMEFForTest(exec, "mef_config", cfg)
+		_, _, err := servicetest.RunMEFForTest(exec, "mef_config", cfg)
 		if err == nil {
 			t.Error("runMEF(mef_config) should return error on stub build")
 		}
 	})
 
 	t.Run("mef_perf returns error on stub", func(t *testing.T) {
-		_, err := servicetest.RunMEFForTest(exec, "mef_perf", cfg)
+		_, _, err := servicetest.RunMEFForTest(exec, "mef_perf", cfg)
 		if err == nil {
 			t.Error("runMEF(mef_perf) should return error on stub build")
 		}
 	})
 
 	t.Run("mef (full test) returns error on stub", func(t *testing.T) {
-		_, err := servicetest.RunMEFForTest(exec, "mef", cfg)
+		_, _, err := servicetest.RunMEFForTest(exec, "mef", cfg)
 		if err == nil {
 			t.Error("runMEF(mef) should return error on stub build")
 		}
@@ -1041,7 +1041,7 @@ func TestRunMEFWithStubContext(t *testing.T) {
 // On stub builds, configureContext fails with ErrNotSupported, so Execute returns
 // nil result and an error. This tests the early exit path.
 func TestExecuteWithStubContext(t *testing.T) {
-	exec := servicetest.NewExecutorWithContext(&dataplane.Context{})
+	exec := servicetest.NewExecutorWithDataplane(&dataplane.Context{})
 
 	cfg := &modtypes.TestConfig{
 		Interface: "eth0",
@@ -1088,7 +1088,7 @@ func TestExecuteWithStubContext(t *testing.T) {
 
 // TestConfigureContextWithStubContext tests configureContext with a stub context.
 func TestConfigureContextWithStubContext(t *testing.T) {
-	exec := servicetest.NewExecutorWithContext(&dataplane.Context{})
+	exec := servicetest.NewExecutorWithDataplane(&dataplane.Context{})
 
 	t.Run("with duration", func(t *testing.T) {
 		cfg := &modtypes.TestConfig{
@@ -1117,7 +1117,7 @@ func TestConfigureContextWithStubContext(t *testing.T) {
 
 // TestBuildMEFConfigDurationEdgeCases tests edge cases for duration conversion.
 func TestBuildMEFConfigDurationEdgeCases(t *testing.T) {
-	exec := servicetest.NewExecutorWithContext(nil)
+	exec := servicetest.NewExecutorWithDataplane(nil)
 
 	t.Run("negative duration uses default", func(t *testing.T) {
 		cfg := &modtypes.TestConfig{
@@ -1166,7 +1166,7 @@ func TestBuildMEFConfigDurationEdgeCases(t *testing.T) {
 // TestExecuteResultFields tests that Execute returns proper errors on stub build.
 // On stub builds, configureContext fails early and returns nil result.
 func TestExecuteResultFields(t *testing.T) {
-	exec := servicetest.NewExecutorWithContext(&dataplane.Context{})
+	exec := servicetest.NewExecutorWithDataplane(&dataplane.Context{})
 
 	cfg := &modtypes.TestConfig{
 		Interface: "eth0",
@@ -1203,7 +1203,7 @@ func TestExecuteResultFields(t *testing.T) {
 
 // TestY1564ServiceFrameSizeOverride tests frame size priority.
 func TestY1564ServiceFrameSizeOverride(t *testing.T) {
-	exec := servicetest.NewExecutorWithContext(nil)
+	exec := servicetest.NewExecutorWithDataplane(nil)
 
 	t.Run("config.FrameSize takes precedence over default", func(t *testing.T) {
 		cfg := &modtypes.TestConfig{
@@ -1251,7 +1251,7 @@ func TestY1564ServiceFrameSizeOverride(t *testing.T) {
 
 // TestMEFConfigServiceID tests service ID handling.
 func TestMEFConfigServiceID(t *testing.T) {
-	exec := servicetest.NewExecutorWithContext(nil)
+	exec := servicetest.NewExecutorWithDataplane(nil)
 
 	t.Run("with string service_id", func(t *testing.T) {
 		cfg := &modtypes.TestConfig{
@@ -1285,7 +1285,7 @@ func TestMEFConfigServiceID(t *testing.T) {
 
 // TestSafeDurationEdgeCases tests edge cases for safeDuration.
 func TestSafeDurationEdgeCases(t *testing.T) {
-	exec := servicetest.NewExecutorWithContext(nil)
+	exec := servicetest.NewExecutorWithDataplane(nil)
 
 	t.Run("exactly 1 second", func(t *testing.T) {
 		result := servicetest.SafeDurationForTest(exec, 1, 100)
@@ -1307,7 +1307,7 @@ func TestSafeDurationEdgeCases(t *testing.T) {
 // is reached for test types that pass CanRun but aren't handled.
 // This shouldn't normally happen since CanRun filters valid types.
 func TestExecuteDefaultCaseNotReached(t *testing.T) {
-	exec := servicetest.NewExecutorWithContext(nil)
+	exec := servicetest.NewExecutorWithDataplane(nil)
 
 	// Test that all valid test types are properly handled (no default case).
 	validTypes := []string{"y1564_config", "y1564_perf", "y1564", "mef_config", "mef_perf", "mef"}
@@ -1345,7 +1345,7 @@ func TestNewExecutorSuccess(t *testing.T) {
 	if exec.Module == nil {
 		t.Error("NewExecutor returned executor with nil Module")
 	}
-	if servicetest.ContextForTest(exec) == nil {
+	if servicetest.DataplaneForTest(exec) == nil {
 		t.Error("NewExecutor returned executor with nil context")
 	}
 
@@ -1355,7 +1355,7 @@ func TestNewExecutorSuccess(t *testing.T) {
 
 // TestExtractY1564ParamsWithTrue tests the enabled=true case.
 func TestExtractY1564ParamsWithTrue(t *testing.T) {
-	exec := servicetest.NewExecutorWithContext(nil)
+	exec := servicetest.NewExecutorWithDataplane(nil)
 
 	service := &dataplane.Y1564Service{
 		Enabled: false, // Start with false.
@@ -1374,7 +1374,7 @@ func TestExtractY1564ParamsWithTrue(t *testing.T) {
 
 // TestBuildMEFConfigNilParams tests buildMEFConfig with nil Params.
 func TestBuildMEFConfigNilParams(t *testing.T) {
-	exec := servicetest.NewExecutorWithContext(nil)
+	exec := servicetest.NewExecutorWithDataplane(nil)
 
 	cfg := &modtypes.TestConfig{
 		Interface: "eth0",
@@ -1393,7 +1393,7 @@ func TestBuildMEFConfigNilParams(t *testing.T) {
 
 // TestExecuteCanRunCheck tests that Execute properly checks CanRun.
 func TestExecuteCanRunCheck(t *testing.T) {
-	exec := servicetest.NewExecutorWithContext(nil)
+	exec := servicetest.NewExecutorWithDataplane(nil)
 
 	// These are test types from other modules - should fail CanRun check.
 	otherModuleTests := []string{
@@ -1437,7 +1437,7 @@ func containsSubstr(str, substr string) bool {
 
 // TestExecuteNilConfigVariants tests Execute with nil config variants.
 func TestExecuteNilConfigVariants(t *testing.T) {
-	exec := servicetest.NewExecutorWithContext(nil)
+	exec := servicetest.NewExecutorWithDataplane(nil)
 
 	nilConfigTestTypes := []string{"y1564_config", "y1564_perf", "y1564", "mef_config", "mef_perf", "mef"}
 	for _, testType := range nilConfigTestTypes {
@@ -1455,7 +1455,7 @@ func TestExecuteNilConfigVariants(t *testing.T) {
 
 // TestBuildY1564ServiceCoS tests CoS value handling.
 func TestBuildY1564ServiceCoS(t *testing.T) {
-	exec := servicetest.NewExecutorWithContext(nil)
+	exec := servicetest.NewExecutorWithDataplane(nil)
 
 	// Test various CoS values.
 	testCases := []struct {
@@ -1493,7 +1493,7 @@ func TestBuildY1564ServiceCoS(t *testing.T) {
 
 // TestModuleDescription verifies module description content.
 func TestModuleDescriptionContent(t *testing.T) {
-	exec := servicetest.NewExecutorWithContext(nil)
+	exec := servicetest.NewExecutorWithDataplane(nil)
 
 	desc := exec.Description()
 
@@ -1510,7 +1510,7 @@ func TestModuleDescriptionContent(t *testing.T) {
 // This tests the code after configureContext succeeds but actual test execution fails.
 // We use a stub context to ensure we hit all the conditional paths in Execute.
 func TestExecuteSuccessPathsWithMockContext(t *testing.T) {
-	exec := servicetest.NewExecutorWithContext(&dataplane.Context{})
+	exec := servicetest.NewExecutorWithDataplane(&dataplane.Context{})
 
 	cfg := &modtypes.TestConfig{
 		Interface: "eth0",
@@ -1545,7 +1545,7 @@ func TestExecuteSuccessPathsWithMockContext(t *testing.T) {
 // TestExecuteDefaultCaseInSwitch tests that the Execute switch statement default case.
 // Although CanRun filters these, we test the switch structure itself for coverage.
 func TestExecuteInternalSwitchCases(t *testing.T) {
-	exec := servicetest.NewExecutorWithContext(&dataplane.Context{})
+	exec := servicetest.NewExecutorWithDataplane(&dataplane.Context{})
 
 	cfg := &modtypes.TestConfig{
 		Interface: "eth0",
@@ -1590,7 +1590,7 @@ func TestNewExecutorErrorHandling(t *testing.T) {
 // TestRunY1564ConfigOnlyPath tests just the config phase.
 // This isolates the y1564_config case in runY1564.
 func TestRunY1564ConfigOnlyPath(t *testing.T) {
-	exec := servicetest.NewExecutorWithContext(&dataplane.Context{})
+	exec := servicetest.NewExecutorWithDataplane(&dataplane.Context{})
 
 	cfg := &modtypes.TestConfig{
 		Interface: "eth0",
@@ -1600,7 +1600,7 @@ func TestRunY1564ConfigOnlyPath(t *testing.T) {
 	}
 
 	// Test y1564_config directly - this is the first branch in runY1564.
-	_, err := servicetest.RunY1564ForTest(exec, "y1564_config", cfg)
+	_, _, err := servicetest.RunY1564ForTest(exec, "y1564_config", cfg)
 
 	// On stub, this fails with error from dataplane.
 	// The path at executor.go:124-127 is covered.
@@ -1612,7 +1612,7 @@ func TestRunY1564ConfigOnlyPath(t *testing.T) {
 // TestRunY1564PerfOnlyPath tests just the perf phase.
 // This isolates the y1564_perf case in runY1564.
 func TestRunY1564PerfOnlyPath(t *testing.T) {
-	exec := servicetest.NewExecutorWithContext(&dataplane.Context{})
+	exec := servicetest.NewExecutorWithDataplane(&dataplane.Context{})
 
 	cfg := &modtypes.TestConfig{
 		Interface: "eth0",
@@ -1622,7 +1622,7 @@ func TestRunY1564PerfOnlyPath(t *testing.T) {
 	}
 
 	// Test y1564_perf - this is the second branch in runY1564.
-	_, err := servicetest.RunY1564ForTest(exec, "y1564_perf", cfg)
+	_, _, err := servicetest.RunY1564ForTest(exec, "y1564_perf", cfg)
 
 	// The path at executor.go:130-135 is covered.
 	if err == nil {
@@ -1633,7 +1633,7 @@ func TestRunY1564PerfOnlyPath(t *testing.T) {
 // TestRunMEFConfigOnlyPath tests just MEF config phase.
 // This isolates the mef_config case in runMEF.
 func TestRunMEFConfigOnlyPath(t *testing.T) {
-	exec := servicetest.NewExecutorWithContext(&dataplane.Context{})
+	exec := servicetest.NewExecutorWithDataplane(&dataplane.Context{})
 
 	cfg := &modtypes.TestConfig{
 		Interface: "eth0",
@@ -1643,7 +1643,7 @@ func TestRunMEFConfigOnlyPath(t *testing.T) {
 	}
 
 	// Test mef_config - first branch in runMEF.
-	_, err := servicetest.RunMEFForTest(exec, "mef_config", cfg)
+	_, _, err := servicetest.RunMEFForTest(exec, "mef_config", cfg)
 
 	// The path at executor.go:164-167 is covered.
 	if err == nil {
@@ -1654,7 +1654,7 @@ func TestRunMEFConfigOnlyPath(t *testing.T) {
 // TestRunMEFPerfOnlyPath tests just MEF perf phase.
 // This isolates the mef_perf case in runMEF.
 func TestRunMEFPerfOnlyPath(t *testing.T) {
-	exec := servicetest.NewExecutorWithContext(&dataplane.Context{})
+	exec := servicetest.NewExecutorWithDataplane(&dataplane.Context{})
 
 	cfg := &modtypes.TestConfig{
 		Interface: "eth0",
@@ -1664,7 +1664,7 @@ func TestRunMEFPerfOnlyPath(t *testing.T) {
 	}
 
 	// Test mef_perf - second branch in runMEF.
-	_, err := servicetest.RunMEFForTest(exec, "mef_perf", cfg)
+	_, _, err := servicetest.RunMEFForTest(exec, "mef_perf", cfg)
 
 	// The path at executor.go:170-173 is covered.
 	if err == nil {
@@ -1675,7 +1675,7 @@ func TestRunMEFPerfOnlyPath(t *testing.T) {
 // TestConfigureContextWithZeroDuration tests configureContext without duration.
 // This tests the conditional at executor.go:212-214.
 func TestConfigureContextWithZeroDuration(t *testing.T) {
-	exec := servicetest.NewExecutorWithContext(&dataplane.Context{})
+	exec := servicetest.NewExecutorWithDataplane(&dataplane.Context{})
 
 	cfg := &modtypes.TestConfig{
 		Interface: "eth0",
@@ -1695,7 +1695,7 @@ func TestConfigureContextWithZeroDuration(t *testing.T) {
 // TestConfigureContextWithPositiveDuration tests configureContext with duration.
 // This tests the conditional at executor.go:212-214 with positive duration.
 func TestConfigureContextWithPositiveDuration(t *testing.T) {
-	exec := servicetest.NewExecutorWithContext(&dataplane.Context{})
+	exec := servicetest.NewExecutorWithDataplane(&dataplane.Context{})
 
 	cfg := &modtypes.TestConfig{
 		Interface: "eth0",
@@ -1712,7 +1712,7 @@ func TestConfigureContextWithPositiveDuration(t *testing.T) {
 
 // TestBuildMEFConfigWithFrameSizes tests that frame sizes are handled correctly.
 func TestBuildMEFConfigWithFrameSizes(t *testing.T) {
-	exec := servicetest.NewExecutorWithContext(nil)
+	exec := servicetest.NewExecutorWithDataplane(nil)
 
 	cfg := &modtypes.TestConfig{
 		Interface: "eth0",
@@ -1730,7 +1730,7 @@ func TestBuildMEFConfigWithFrameSizes(t *testing.T) {
 
 // TestBuildMEFConfigDurationConversion tests line 293-301 duration conversion paths.
 func TestBuildMEFConfigDurationConversion(t *testing.T) {
-	exec := servicetest.NewExecutorWithContext(nil)
+	exec := servicetest.NewExecutorWithDataplane(nil)
 
 	t.Run("duration dividable by 60", func(t *testing.T) {
 		cfg := &modtypes.TestConfig{
@@ -1763,7 +1763,7 @@ func TestBuildMEFConfigDurationConversion(t *testing.T) {
 
 // TestBuildY1564ServiceWithAllParams tests all parameter extraction paths.
 func TestBuildY1564ServiceWithAllParams(t *testing.T) {
-	exec := servicetest.NewExecutorWithContext(nil)
+	exec := servicetest.NewExecutorWithDataplane(nil)
 
 	cfg := &modtypes.TestConfig{
 		Interface: "eth0",
@@ -1813,7 +1813,7 @@ func TestBuildY1564ServiceWithAllParams(t *testing.T) {
 
 // TestSafeDurationBoundary tests boundary values for safeDuration.
 func TestSafeDurationBoundary(t *testing.T) {
-	exec := servicetest.NewExecutorWithContext(nil)
+	exec := servicetest.NewExecutorWithDataplane(nil)
 
 	// Test boundary at max uint32
 	result := servicetest.SafeDurationForTest(exec, int(servicetest.MaxUint32ForTest()), 0)
@@ -1869,7 +1869,7 @@ func TestModtypesGetUint8ParamBoundaries(t *testing.T) {
 
 // TestBuildMEFConfigServiceIDNonString tests service_id parameter handling with non-string values.
 func TestBuildMEFConfigServiceIDNonString(t *testing.T) {
-	exec := servicetest.NewExecutorWithContext(nil)
+	exec := servicetest.NewExecutorWithDataplane(nil)
 
 	cfg := &modtypes.TestConfig{
 		Interface: "eth0",
@@ -1887,7 +1887,7 @@ func TestBuildMEFConfigServiceIDNonString(t *testing.T) {
 
 // TestBuildY1564ServicePartialFrameSizeParams tests frame_size parameter.
 func TestBuildY1564ServicePartialFrameSizeParams(t *testing.T) {
-	exec := servicetest.NewExecutorWithContext(nil)
+	exec := servicetest.NewExecutorWithDataplane(nil)
 
 	cfg := &modtypes.TestConfig{
 		Interface: "eth0",
@@ -1905,7 +1905,7 @@ func TestBuildY1564ServicePartialFrameSizeParams(t *testing.T) {
 
 // TestBuildMEFConfigAllDefaults checks all defaults are correctly applied.
 func TestBuildMEFConfigAllDefaults(t *testing.T) {
-	exec := servicetest.NewExecutorWithContext(nil)
+	exec := servicetest.NewExecutorWithDataplane(nil)
 
 	cfg := &modtypes.TestConfig{
 		Interface: "eth0",
@@ -1944,7 +1944,7 @@ func TestBuildMEFConfigAllDefaults(t *testing.T) {
 
 // TestBuildY1564ServiceEnabledParam tests both true and false enabled values.
 func TestBuildY1564ServiceEnabledParam(t *testing.T) {
-	exec := servicetest.NewExecutorWithContext(nil)
+	exec := servicetest.NewExecutorWithDataplane(nil)
 
 	t.Run("enabled=true", func(t *testing.T) {
 		cfg := &modtypes.TestConfig{
@@ -1989,7 +1989,7 @@ func TestBuildY1564ServiceEnabledParam(t *testing.T) {
 
 // TestConfigureContextBuildsConfig verifies dpCfg is built correctly.
 func TestConfigureContextBuildsConfig(_ *testing.T) {
-	exec := servicetest.NewExecutorWithContext(&dataplane.Context{})
+	exec := servicetest.NewExecutorWithDataplane(&dataplane.Context{})
 
 	cfg := &modtypes.TestConfig{
 		Interface: "eth0",

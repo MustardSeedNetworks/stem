@@ -140,8 +140,7 @@ test.describe('run plan', () => {
     await expect(page.getByTestId('run-plan-step-1')).toHaveAttribute('data-status', 'running');
 
     // The second step finishes in the same run, having stepped through all four
-    // rates with frames sent and reflected at each. Its pass/fail verdict is not
-    // asserted: the step reports passed whatever the service measured (#1463).
+    // rates with frames sent and reflected at each.
     let done: DaemonStats = {};
     await expect
       .poll(
@@ -154,7 +153,8 @@ test.describe('run plan', () => {
       .toBe(true);
     expect(done.suiteId).toBe(snapshot.suiteId);
     expect(done.steps?.[0]?.status).toBe('passed');
-    const y1564Steps = (done.steps?.[1]?.result?.data?.Steps ?? []) as Array<{
+    const y1564Result = done.steps?.[1]?.result?.data ?? {};
+    const y1564Steps = (y1564Result.Steps ?? []) as Array<{
       OfferedRatePct: number;
       FramesTx: number;
       FramesRx: number;
@@ -167,5 +167,16 @@ test.describe('run plan', () => {
         `Y.1564 ${step.OfferedRatePct} % step got nothing back`,
       ).toBeGreaterThan(0);
     }
+
+    // The step's verdict is the service's, not the run's (#1463): on the docker
+    // bridge every step misses the default 5 ms FDV and the service fails, so
+    // the plan ends in error. Asserted against ServicePass, so a bench quiet
+    // enough to pass reads the same claim the other way round.
+    expect(typeof y1564Result.ServicePass, 'Y.1564 result carries no verdict').toBe('boolean');
+    const verdict = y1564Result.ServicePass ? 'passed' : 'failed';
+    expect(done.steps?.[1]?.status).toBe(verdict);
+    expect(done.testStatus).toBe(y1564Result.ServicePass ? 'completed' : 'error');
+    // The live step list closes with the run; the results card keeps the plan.
+    await expect(page.getByTestId('run-plan-result-1')).toHaveAttribute('data-status', verdict);
   });
 });

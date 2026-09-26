@@ -233,19 +233,25 @@ func (s *Server) finishPlanStep(
 	s.runPlan.StepElapsedSec = int64(time.Since(s.runPlan.StepStarted).Seconds())
 	if err != nil || result == nil || !result.Success {
 		step.Status = stepFailed
-		logCause := "test returned an unsuccessful result"
-		if err != nil {
+		var logCause string
+		switch {
+		case err != nil:
 			logCause = err.Error()
 			step.Error = "Test execution failed"
-		} else if result != nil {
+			s.testError = classifyRunCause(logCause)
+		case result == nil:
+			logCause = "test returned no result"
+			s.testError = causeGeneric
+		default:
+			logCause = "test returned an unsuccessful result: " + result.Error
 			step.Error = result.Error
+			s.testError = causeCriteriaNotMet
 		}
 		step.Result = result
 		for later := index + 1; later < len(s.runPlan.Steps); later++ {
 			s.runPlan.Steps[later].Status = stepSkipped
 		}
 		s.testStatus = statusError
-		s.testError = classifyRunCause(logCause)
 		s.currentTest = ""
 		s.currentRunID = ""
 		s.currentModule = ""

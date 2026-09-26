@@ -72,6 +72,8 @@ export function TestResults({ testStatus, result }: TestResultsProps): ReactElem
           {result.steps.map((step, index) => (
             <div
               key={`${step.testType}-${index}`}
+              data-testid={`run-plan-result-${index}`}
+              data-status={step.status}
               className="pad-sm rounded-lg bg-surface-base border border-surface-border"
             >
               <div className="flex-between">

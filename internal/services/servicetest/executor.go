@@ -33,7 +33,7 @@ const (
 type Executor struct {
 	*Module
 
-	ctx *dataplane.Context
+	dp ServiceDataplane
 }
 
 // NewExecutor creates a new ServiceTest executor with a dataplane context.
@@ -45,15 +45,15 @@ func NewExecutor(iface string) (*Executor, error) {
 
 	return &Executor{
 		Module: New(),
-		ctx:    ctx,
+		dp:     ctx,
 	}, nil
 }
 
-// NewExecutorWithContext creates an executor with an existing dataplane context.
-func NewExecutorWithContext(ctx *dataplane.Context) *Executor {
+// NewExecutorWithDataplane creates an executor backed by any ServiceDataplane.
+func NewExecutorWithDataplane(dp ServiceDataplane) *Executor {
 	return &Executor{
 		Module: New(),
-		ctx:    ctx,
+		dp:     dp,
 	}
 }
 
@@ -64,15 +64,15 @@ func (e *Executor) SupportsExecution() bool {
 
 // Close releases the dataplane context resources.
 func (e *Executor) Close() {
-	if e.ctx != nil {
-		e.ctx.Close()
+	if e.dp != nil {
+		e.dp.Close()
 	}
 }
 
 // Cancel requests cancellation of the active dataplane test.
 func (e *Executor) Cancel() {
-	if e.ctx != nil {
-		e.ctx.Cancel()
+	if e.dp != nil {
+		e.dp.Cancel()
 	}
 }
 
@@ -86,8 +86,8 @@ func (e *Executor) Execute(testType string, cfg *modtypes.TestConfig) (*modtypes
 		return nil, modtypes.ErrInvalidConfig
 	}
 
-	if e.ctx == nil {
-		return nil, fmt.Errorf("%w: executor has no dataplane context", modtypes.ErrInvalidConfig)
+	if e.dp == nil {
+		return nil, fmt.Errorf("%w: executor has no dataplane", modtypes.ErrInvalidConfig)
 	}
 
 	// Configure the context.
@@ -106,13 +106,14 @@ func (e *Executor) Execute(testType string, cfg *modtypes.TestConfig) (*modtypes
 	}
 
 	var data any
+	var passed bool
 	var runErr error
 
 	switch testType {
 	case "y1564_config", "y1564_perf", "y1564":
-		data, runErr = e.runY1564(testType, cfg)
+		data, passed, runErr = e.runY1564(testType, cfg)
 	case "mef_config", "mef_perf", "mef":
-		data, runErr = e.runMEF(testType, cfg)
+		data, passed, runErr = e.runMEF(testType, cfg)
 	default:
 		return nil, modtypes.ErrTestNotImplemented
 	}
@@ -122,84 +123,91 @@ func (e *Executor) Execute(testType string, cfg *modtypes.TestConfig) (*modtypes
 		return result, fmt.Errorf("servicetest %s failed: %w", testType, runErr)
 	}
 
-	result.Success = true
+	// The run completing says nothing about the service: the verdict is the
+	// measurement's, and a failed one keeps its data so the operator sees why.
+	result.Success = passed
 	result.Data = data
+	if !passed {
+		result.Error = "the service did not meet its acceptance criteria"
+	}
 	return result, nil
 }
 
-func (e *Executor) runY1564(testType string, cfg *modtypes.TestConfig) (any, error) {
+// runY1564 returns the measurement and whether the service met its
+// acceptance criteria.
+func (e *Executor) runY1564(testType string, cfg *modtypes.TestConfig) (any, bool, error) {
+	service := e.buildY1564Service(cfg)
+	duration := e.safeDuration(cfg.Duration, defaultPerfDurationSec)
+
 	switch testType {
 	case "y1564_config":
-		service := e.buildY1564Service(cfg)
-		data, err := e.ctx.RunY1564ConfigTest(service)
+		data, err := e.dp.RunY1564ConfigTest(service)
 		if err != nil {
-			return nil, fmt.Errorf("y1564 config test: %w", err)
+			return nil, false, fmt.Errorf("y1564 config test: %w", err)
 		}
-		return data, nil
+		return data, data.ServicePass, nil
 	case "y1564_perf":
-		service := e.buildY1564Service(cfg)
-		duration := e.safeDuration(cfg.Duration, defaultPerfDurationSec)
-		data, err := e.ctx.RunY1564PerfTest(service, duration)
+		data, err := e.dp.RunY1564PerfTest(service, duration)
 		if err != nil {
-			return nil, fmt.Errorf("y1564 perf test: %w", err)
+			return nil, false, fmt.Errorf("y1564 perf test: %w", err)
 		}
-		return data, nil
+		return data, data.ServicePass, nil
 	case "y1564":
-		service := e.buildY1564Service(cfg)
-		configResult, configErr := e.ctx.RunY1564ConfigTest(service)
+		configResult, configErr := e.dp.RunY1564ConfigTest(service)
 		if configErr != nil {
-			return nil, fmt.Errorf("y1564 config test: %w", configErr)
+			return nil, false, fmt.Errorf("y1564 config test: %w", configErr)
 		}
 
-		duration := e.safeDuration(cfg.Duration, defaultPerfDurationSec)
-		perfResult, perfErr := e.ctx.RunY1564PerfTest(service, duration)
+		perfResult, perfErr := e.dp.RunY1564PerfTest(service, duration)
 		if perfErr != nil {
-			return nil, fmt.Errorf("y1564 perf test: %w", perfErr)
+			return nil, false, fmt.Errorf("y1564 perf test: %w", perfErr)
 		}
 
 		return map[string]any{
 			"config":      configResult,
 			"performance": perfResult,
-		}, nil
+		}, configResult.ServicePass && perfResult.ServicePass, nil
 	default:
-		return nil, modtypes.ErrTestNotImplemented
+		return nil, false, modtypes.ErrTestNotImplemented
 	}
 }
 
-func (e *Executor) runMEF(testType string, cfg *modtypes.TestConfig) (any, error) {
+// runMEF returns the measurement and whether the service met its acceptance
+// criteria.
+func (e *Executor) runMEF(testType string, cfg *modtypes.TestConfig) (any, bool, error) {
 	mefConfig := e.buildMEFConfig(cfg)
 
 	switch testType {
 	case "mef_config":
-		data, err := e.ctx.RunMEFConfigTest(mefConfig)
+		data, err := e.dp.RunMEFConfigTest(mefConfig)
 		if err != nil {
-			return nil, fmt.Errorf("mef config test: %w", err)
+			return nil, false, fmt.Errorf("mef config test: %w", err)
 		}
-		return data, nil
+		return data, data.OverallPassed, nil
 	case "mef_perf":
-		data, err := e.ctx.RunMEFPerfTest(mefConfig)
+		data, err := e.dp.RunMEFPerfTest(mefConfig)
 		if err != nil {
-			return nil, fmt.Errorf("mef performance test: %w", err)
+			return nil, false, fmt.Errorf("mef performance test: %w", err)
 		}
-		return data, nil
+		return data, data.OverallPassed, nil
 	case "mef":
-		configResult, perfResult, runErr := e.ctx.RunMEFFullTest(mefConfig)
+		configResult, perfResult, runErr := e.dp.RunMEFFullTest(mefConfig)
 		if runErr != nil {
-			return nil, fmt.Errorf("mef full test: %w", runErr)
+			return nil, false, fmt.Errorf("mef full test: %w", runErr)
 		}
 		return map[string]any{
 			"config":      configResult,
 			"performance": perfResult,
-		}, nil
+		}, configResult.OverallPassed && perfResult.OverallPassed, nil
 	default:
-		return nil, modtypes.ErrTestNotImplemented
+		return nil, false, modtypes.ErrTestNotImplemented
 	}
 }
 
 // configureContext sets up the dataplane context from test config.
 func (e *Executor) configureContext(cfg *modtypes.TestConfig) error {
-	if e.ctx == nil {
-		return fmt.Errorf("%w: executor has no dataplane context", modtypes.ErrInvalidConfig)
+	if e.dp == nil {
+		return fmt.Errorf("%w: executor has no dataplane", modtypes.ErrInvalidConfig)
 	}
 
 	dpCfg := &dataplane.Config{
@@ -230,7 +238,7 @@ func (e *Executor) configureContext(cfg *modtypes.TestConfig) error {
 		dpCfg.Y1564StepDuration = time.Duration(stepSec) * time.Second
 	}
 
-	err := e.ctx.Configure(dpCfg)
+	err := e.dp.Configure(dpCfg)
 	if err != nil {
 		return fmt.Errorf("configure dataplane: %w", err)
 	}
