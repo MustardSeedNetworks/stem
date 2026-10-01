@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.168](https://github.com/MustardSeedNetworks/stem/compare/v0.24.167...v0.24.168) (2026-10-01)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1514](https://github.com/MustardSeedNetworks/stem/issues/1514)) ([9a749d2](https://github.com/MustardSeedNetworks/stem/commit/9a749d2ae58858e9a7799da92984c77416178430))
+* **deps:** update dependency vite to v8.3.1 ([#1512](https://github.com/MustardSeedNetworks/stem/issues/1512)) ([067659a](https://github.com/MustardSeedNetworks/stem/commit/067659a03f0bf9d325d2db1c2780a9b051a24dd0))
+* **deps:** update github/codeql-action action to v4.38.2 ([#1513](https://github.com/MustardSeedNetworks/stem/issues/1513)) ([e9e1a8d](https://github.com/MustardSeedNetworks/stem/commit/e9e1a8d1ddd48d6471bc5f8532dbdb0ff49ec83b))
+
 ## [0.24.167](https://github.com/MustardSeedNetworks/stem/compare/v0.24.166...v0.24.167) (2026-10-01)
 
 
