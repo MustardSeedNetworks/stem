@@ -42,23 +42,28 @@ Object.defineProperty(window, 'matchMedia', {
   }),
 });
 
-// ResizeObserver: used by xyflow, codemirror, recharts, headlessui
-global.ResizeObserver = vi.fn().mockImplementation(() => ({
-  observe: vi.fn(),
-  unobserve: vi.fn(),
-  disconnect: vi.fn(),
-})) as unknown as typeof ResizeObserver;
+// Observers are constructed with `new`, and Vitest 4 refuses to construct a
+// vi.fn() whose implementation is an arrow function, so these are classes.
+// ResizeObserver: used by xyflow, codemirror, recharts, headlessui, cmdk
+global.ResizeObserver = class {
+  observe = vi.fn();
+  unobserve = vi.fn();
+  disconnect = vi.fn();
+} as unknown as typeof ResizeObserver;
+
+// JSDOM has no layout, so no scrollIntoView; cmdk scrolls the active item.
+Element.prototype.scrollIntoView = vi.fn();
 
 // IntersectionObserver: used by lazy loading, infinite scroll
-global.IntersectionObserver = vi.fn().mockImplementation(() => ({
-  observe: vi.fn(),
-  unobserve: vi.fn(),
-  disconnect: vi.fn(),
-  takeRecords: vi.fn(() => []),
-  root: null,
-  rootMargin: '',
-  thresholds: [],
-})) as unknown as typeof IntersectionObserver;
+global.IntersectionObserver = class {
+  observe = vi.fn();
+  unobserve = vi.fn();
+  disconnect = vi.fn();
+  takeRecords = vi.fn(() => []);
+  root = null;
+  rootMargin = '';
+  thresholds = [];
+} as unknown as typeof IntersectionObserver;
 
 // axe probes canvas support while auditing contrast. JSDOM reports every probe
 // as a noisy "Not implemented" diagnostic unless the browser API is stubbed.

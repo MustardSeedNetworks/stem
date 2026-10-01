@@ -1,6 +1,6 @@
 /**
  * @fileoverview Stem - Main Application Component
- * @description Composition root: wires the providers (Role, ModuleSettings,
+ * @description Composition root: wires the providers (Role, License,
  *              Router, AppContext), assembles the AppContext surface the routed
  *              pages read, and switches between the authenticated AppShell and
  *              the unauthenticated AuthGate overlays. The orchestration logic
@@ -17,7 +17,6 @@ import { AuthGate } from './components/auth/AuthGate';
 import { RoleChip } from './components/RoleChip';
 import { AppContext, type AppContextValue } from './contexts/AppContext';
 import { LicenseProvider } from './contexts/LicenseContext';
-import { ModuleSettingsProvider } from './contexts/ModuleSettingsContext';
 import { RoleProvider } from './contexts/RoleContext';
 import { useBuildVersion } from './hooks/useBuildVersion';
 import { useTestExecution } from './hooks/useTestExecution';
@@ -218,11 +217,9 @@ function AppContent(): ReactElement {
 function App(): ReactElement {
   return (
     <RoleProvider>
-      <ModuleSettingsProvider>
-        <LicenseProvider>
-          <AppContent />
-        </LicenseProvider>
-      </ModuleSettingsProvider>
+      <LicenseProvider>
+        <AppContent />
+      </LicenseProvider>
     </RoleProvider>
   );
 }

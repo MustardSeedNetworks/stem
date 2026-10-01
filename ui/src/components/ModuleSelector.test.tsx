@@ -13,8 +13,9 @@
  * as success.
  */
 
-import { render, screen, waitFor } from '@testing-library/react';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import i18n from '../i18n';
 import { ModuleSelector } from './ModuleSelector';
 
 const MODULES = {
@@ -81,6 +82,21 @@ describe('ModuleSelector', () => {
     expect(alert).toHaveTextContent(/could not load the test modules/i);
     // No hardcoded catalogue may stand in for the real one.
     expect(screen.queryByText('Benchmark')).not.toBeInTheDocument();
+  });
+
+  it('explains the failure in Spanish, keeping the cause', async () => {
+    await i18n.changeLanguage('es');
+    try {
+      mockFetch({ ok: false, status: 503 });
+      render(<ModuleSelector selectedTests={[]} setSelectedTests={vi.fn()} />);
+
+      expect(await screen.findByRole('alert')).toHaveTextContent(
+        'No se pudieron cargar los módulos de prueba de este stem (HTTP 503).',
+      );
+    } finally {
+      cleanup();
+      await i18n.changeLanguage('en');
+    }
   });
 
   it('surfaces an error on a non-OK response', async () => {

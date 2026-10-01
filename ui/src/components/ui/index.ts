@@ -16,9 +16,7 @@ export { Alert } from './Alert';
 // Buttons
 export { Button, IconButton } from './Button';
 
-// Combobox + command palette
-export type { ComboboxProps } from './Combobox';
-export { Combobox } from './Combobox';
+// Command palette
 export type { CommandPaletteAction, CommandPaletteProps } from './CommandPalette';
 export { CommandPalette } from './CommandPalette';
 

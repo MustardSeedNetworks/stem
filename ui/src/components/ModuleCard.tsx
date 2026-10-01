@@ -17,8 +17,8 @@ import {
   ServiceFlowResultsTable,
 } from './ModuleResultsTables';
 
-// Re-exported so ModuleSettingsContext and the story keep importing the result
-// types from ModuleCard, which is where they have always come from.
+// Re-exported so the story keeps importing the result types from ModuleCard,
+// which is where they have always come from.
 export type {
   FrameSizeResult,
   ModuleTestResults,

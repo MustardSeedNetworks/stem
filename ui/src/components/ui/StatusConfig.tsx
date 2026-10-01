@@ -10,11 +10,9 @@ import { icon as iconTokens, spacing, status as statusColor } from '../../styles
 
 export type Status = 'success' | 'warning' | 'error' | 'unknown' | 'loading';
 
-// Centralized status configuration - icons, colors, and labels
-export const statusConfig: Record<
-  Status,
-  { icon: ReactNode; color: string; bgColor: string; label: string }
-> = {
+// Centralized status configuration - icons and colors. The accessible name is
+// copy, so StatusBadge reads it from the locale.
+export const statusConfig: Record<Status, { icon: ReactNode; color: string; bgColor: string }> = {
   success: {
     icon: (
       <svg className="w-full h-full" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -27,7 +25,6 @@ export const statusConfig: Record<
     ),
     color: statusColor.text.success,
     bgColor: statusColor.bg.successSoft,
-    label: 'Status: success',
   },
   warning: {
     icon: (
@@ -41,7 +38,6 @@ export const statusConfig: Record<
     ),
     color: statusColor.text.warning,
     bgColor: statusColor.bg.warningSoft,
-    label: 'Status: warning',
   },
   error: {
     icon: (
@@ -55,7 +51,6 @@ export const statusConfig: Record<
     ),
     color: statusColor.text.error,
     bgColor: statusColor.bg.errorSoft,
-    label: 'Status: error',
   },
   unknown: {
     icon: (
@@ -66,7 +61,6 @@ export const statusConfig: Record<
     ),
     color: 'text-text-muted',
     bgColor: 'bg-surface-hover',
-    label: 'Status: unknown',
   },
   loading: {
     icon: (
@@ -89,7 +83,6 @@ export const statusConfig: Record<
     ),
     color: statusColor.text.info,
     bgColor: statusColor.bg.infoSoft,
-    label: 'Status: loading',
   },
 };
 
@@ -121,7 +114,6 @@ export function getStatusConfig(status: Status): {
   icon: ReactNode;
   color: string;
   bgColor: string;
-  label: string;
 } {
   switch (status) {
     case 'success':

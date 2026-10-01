@@ -229,7 +229,8 @@
       "label": "Role switch failed:",
       "dismiss": "Dismiss",
       "unsupported": "Reflector mode is not supported on this platform.",
-      "network": "Could not reach the stem backend."
+      "network": "Could not reach the stem backend.",
+      "unexpectedResponse": "unexpected server response"
     }
   },
   "plurals": {
@@ -315,5 +316,16 @@
         }
       }
     }
+  },
+  "commandPalette": {
+    "label": "Command palette",
+    "actions": "Actions"
+  },
+  "statusBadge": {
+    "success": "Status: success",
+    "warning": "Status: warning",
+    "error": "Status: error",
+    "unknown": "Status: unknown",
+    "loading": "Status: loading"
   }
 }

@@ -11,8 +11,7 @@
  * selected-tests toggles) are exact drop-ins and behaviour is preserved.
  *
  * Not persisted: matches the previous useState behaviour (test config resets on
- * reload). The module *catalog* persistence lives separately in
- * ModuleSettingsContext and is intentionally untouched here.
+ * reload).
  */
 
 import { create } from 'zustand';

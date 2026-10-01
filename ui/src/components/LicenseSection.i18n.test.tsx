@@ -76,6 +76,45 @@ describe('LicenseSection — real locale copy', () => {
     expect(screen.queryByText('License')).toBeNull();
   });
 
+  it('localizes an active trial: badge, tier label and remaining days (#1498)', async () => {
+    stubLicense({
+      activated: true,
+      isTrialMode: true,
+      tier: 2,
+      daysRemaining: 9,
+      deviceHash: 'abcdef0123456789',
+      features: [],
+    });
+    await i18n.changeLanguage('es');
+    render(<LicenseSection />);
+
+    expect(await screen.findByText('Prueba activa')).toBeInTheDocument();
+    expect(screen.getByText('Nivel')).toBeInTheDocument();
+    expect(screen.getByText('9 días')).toBeInTheDocument();
+    for (const english of ['Trial Active', 'Tier', '9 days']) {
+      expect(screen.queryByText(english)).toBeNull();
+    }
+  });
+
+  it('localizes a paid licence: badge and expiry label', async () => {
+    stubLicense({
+      activated: true,
+      isTrialMode: false,
+      tier: 2,
+      daysRemaining: 0,
+      expiresAt: '2027-01-15T00:00:00Z',
+      deviceHash: 'abcdef0123456789',
+      features: [],
+    });
+    await i18n.changeLanguage('es');
+    render(<LicenseSection />);
+
+    expect(await screen.findByText('Con licencia')).toBeInTheDocument();
+    expect(screen.getByText('Expira')).toBeInTheDocument();
+    expect(screen.queryByText('Licensed')).toBeNull();
+    expect(screen.queryByText('Expires')).toBeNull();
+  });
+
   it('localizes the activation failure, which is a string literal not JSX', async () => {
     await i18n.changeLanguage('es');
     render(<LicenseSection />);
