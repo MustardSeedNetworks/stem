@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.167](https://github.com/MustardSeedNetworks/stem/compare/v0.24.166...v0.24.167) (2026-10-01)
+
+
+### Bug Fixes
+
+* **deps:** update dependency lucide-react to v1.48.0 ([#1510](https://github.com/MustardSeedNetworks/stem/issues/1510)) ([8289fe9](https://github.com/MustardSeedNetworks/stem/commit/8289fe9b5ce25262bcaff409885bbefec20531d9))
+* **ui:** translate the non-auth copy sites the i18n gate baselined ([#1508](https://github.com/MustardSeedNetworks/stem/issues/1508)) ([d2dbe61](https://github.com/MustardSeedNetworks/stem/commit/d2dbe61c98f7b0f311624eadf93d9f7decfdc371))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1507](https://github.com/MustardSeedNetworks/stem/issues/1507)) ([5aa79bc](https://github.com/MustardSeedNetworks/stem/commit/5aa79bc6d5f3d5aa6d8cd3f2d4c3ecba97790036))
+* **deps:** update dependency undici to v8.11.2 ([#1509](https://github.com/MustardSeedNetworks/stem/issues/1509)) ([fde04f9](https://github.com/MustardSeedNetworks/stem/commit/fde04f9a31ed4afa161e4e6b671cf26d71b38a62))
+
 ## [0.24.166](https://github.com/MustardSeedNetworks/stem/compare/v0.24.165...v0.24.166) (2026-09-30)
 
 
