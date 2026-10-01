@@ -229,7 +229,8 @@
       "label": "Fallo el cambio de rol:",
       "dismiss": "Descartar",
       "unsupported": "El modo Reflector no es compatible con esta plataforma.",
-      "network": "No se pudo conectar con el backend del stem."
+      "network": "No se pudo conectar con el backend del stem.",
+      "unexpectedResponse": "respuesta inesperada del servidor"
     }
   },
   "plurals": {
@@ -315,5 +316,16 @@
         }
       }
     }
+  },
+  "commandPalette": {
+    "label": "Paleta de comandos",
+    "actions": "Acciones"
+  },
+  "statusBadge": {
+    "success": "Estado: correcto",
+    "warning": "Estado: advertencia",
+    "error": "Estado: error",
+    "unknown": "Estado: desconocido",
+    "loading": "Estado: cargando"
   }
 }

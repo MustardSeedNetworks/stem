@@ -61,7 +61,7 @@ export const CommandPalette: FC<CommandPaletteProps> = ({
     <Command.Dialog
       open={open}
       onOpenChange={onOpenChange}
-      label="Command palette"
+      label={t('commandPalette.label')}
       className="fixed inset-0 z-overlay flex items-start justify-center pt-[10vh]"
       shouldFilter={true}
     >
@@ -122,7 +122,7 @@ export const CommandPalette: FC<CommandPaletteProps> = ({
           ))}
 
           <Command.Group
-            heading="Actions"
+            heading={t('commandPalette.actions')}
             className="px-1 py-compact text-xs uppercase tracking-wider text-text-muted"
           >
             {onOpenSettings ? (

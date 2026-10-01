@@ -26,6 +26,7 @@
  */
 
 import type React from 'react';
+import { useTranslation } from 'react-i18next';
 import { cn, layout, radius } from '../../styles/theme';
 import { getSizeConfig, getStatusConfig, type SizeKey, type Status } from './StatusConfig';
 
@@ -57,8 +58,16 @@ export function StatusBadge({
   size = 'sm',
   className = '',
 }: StatusBadgeProps): React.ReactElement {
+  const { t } = useTranslation();
   const config = getStatusConfig(status);
   const sizes = getSizeConfig(size);
+  const labels: Record<Status, string> = {
+    success: t('statusBadge.success'),
+    warning: t('statusBadge.warning'),
+    error: t('statusBadge.error'),
+    unknown: t('statusBadge.unknown'),
+    loading: t('statusBadge.loading'),
+  };
 
   if (variant === 'dot') {
     return (
@@ -71,7 +80,7 @@ export function StatusBadge({
           className,
         )}
         role="img"
-        aria-label={config.label}
+        aria-label={labels[status]}
       />
     );
   }
@@ -88,7 +97,7 @@ export function StatusBadge({
         className,
       )}
       role="img"
-      aria-label={config.label}
+      aria-label={labels[status]}
     >
       <span className={sizes.icon} aria-hidden="true">
         {config.icon}

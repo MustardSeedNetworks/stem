@@ -5,8 +5,9 @@
  * and visual behavior across different status types and variants.
  */
 
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { cleanup, render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it } from 'vitest';
+import i18n from '../../i18n';
 import { StatusBadge } from './StatusBadge';
 import type { Status } from './StatusConfig';
 
@@ -101,6 +102,30 @@ describe('StatusBadge', () => {
       const { container } = render(<StatusBadge status="success" variant="icon" />);
       const icon = container.querySelector('[aria-hidden="true"]');
       expect(icon).toBeInTheDocument();
+    });
+  });
+
+  describe('locale', () => {
+    afterEach(async () => {
+      // Unmount first: switching back with the badge mounted re-renders it
+      // outside act().
+      cleanup();
+      await i18n.changeLanguage('en');
+    });
+
+    // The accessible name is the only text a badge has, and it used to be an
+    // English literal in StatusConfig that no i18n check could see (#1498).
+    it.each([
+      ['success', 'Estado: correcto'],
+      ['warning', 'Estado: advertencia'],
+      ['error', 'Estado: error'],
+      ['unknown', 'Estado: desconocido'],
+      ['loading', 'Estado: cargando'],
+    ] as const)('names %s in Spanish', async (status, name) => {
+      await i18n.changeLanguage('es');
+      render(<StatusBadge status={status} variant="dot" />);
+
+      expect(screen.getByRole('img')).toHaveAccessibleName(name);
     });
   });
 

@@ -62,5 +62,8 @@
     "invalidRequestBody": "Cuerpo de solicitud invalido",
     "notFound": "No encontrado",
     "internalError": "Error interno del servidor"
+  },
+  "modules": {
+    "loadFailed": "No se pudieron cargar los módulos de prueba de este stem ({{reason}})."
   }
 }

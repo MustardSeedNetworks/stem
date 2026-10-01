@@ -244,7 +244,7 @@ describe('switching fails', () => {
         status: 409,
         headers: { 'Content-Type': 'application/json' },
       }),
-      'reflector is busy',
+      { kind: 'failed', detail: 'reflector is busy' },
     ],
     [
       'a JSON error body with only error',
@@ -252,12 +252,12 @@ describe('switching fails', () => {
         status: 409,
         headers: { 'Content-Type': 'application/json' },
       }),
-      'mode locked',
+      { kind: 'failed', detail: 'mode locked' },
     ],
     [
       'a non-JSON error body',
       new Response('gateway down', { status: 502 }),
-      'Role switch failed (HTTP 502)',
+      { kind: 'failed', detail: 'HTTP 502' },
     ],
   ])('surfaces %s', async (_label, response, expected) => {
     respondWith(response);
@@ -265,7 +265,7 @@ describe('switching fails', () => {
 
     act(() => result.current.setRole('test_master'));
 
-    await waitFor(() => expect(result.current.roleSwitchError).toBe(expected));
+    await waitFor(() => expect(result.current.roleSwitchError).toEqual(expected));
   });
 
   it('leaves the role unchanged when the switch is refused', async () => {
@@ -288,7 +288,10 @@ describe('switching fails', () => {
     act(() => result.current.setRole('test_master'));
 
     await waitFor(() =>
-      expect(result.current.roleSwitchError).toBe('Role switch failed: connection refused'),
+      expect(result.current.roleSwitchError).toEqual({
+        kind: 'failed',
+        detail: 'connection refused',
+      }),
     );
     expect(result.current.role).toBe('reflector');
   });
@@ -306,7 +309,7 @@ describe('switching fails', () => {
     act(() => result.current.setRole('test_master'));
 
     await waitFor(() =>
-      expect(result.current.roleSwitchError).toBe('Role switch failed: unexpected server response'),
+      expect(result.current.roleSwitchError).toEqual({ kind: 'unexpectedResponse' }),
     );
     expect(result.current.role).toBe('reflector');
   });
@@ -473,7 +476,7 @@ describe('switching on an expired access token', () => {
     act(() => result.current.setRole('test_master'));
 
     await waitFor(() =>
-      expect(result.current.roleSwitchError).toBe('Role switch failed: Unauthorized'),
+      expect(result.current.roleSwitchError).toEqual({ kind: 'failed', detail: 'Unauthorized' }),
     );
     expect(result.current.role).toBe('reflector');
     expect(useAuthStore.getState().isAuthenticated).toBe(false);
@@ -487,7 +490,10 @@ describe('switching on an expired access token', () => {
     act(() => result.current.setRole('test_master'));
 
     await waitFor(() =>
-      expect(result.current.roleSwitchError).toBe('Role switch failed: Not authenticated'),
+      expect(result.current.roleSwitchError).toEqual({
+        kind: 'failed',
+        detail: 'Not authenticated',
+      }),
     );
     expect(fetchMock.mock.calls.map(([url]) => url)).not.toContain(ROLE_ENDPOINT);
   });

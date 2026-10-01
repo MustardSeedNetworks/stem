@@ -20,7 +20,6 @@ export const Overview: Story = {
           <div className={`w-6 h-6 ${config.color}`}>{config.icon}</div>
           <div>
             <div className="text-sm font-medium text-[var(--color-text-primary)]">{key}</div>
-            <div className="text-xs text-[var(--color-text-muted)]">{config.label}</div>
           </div>
         </div>
       ))}

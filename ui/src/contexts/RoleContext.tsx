@@ -75,8 +75,20 @@ async function extractErrorMessage(response: Response, fallback: string): Promis
  */
 type SwitchResult =
   | { kind: 'ok'; mode: StemRole }
-  | { kind: 'error'; message: string }
+  | { kind: 'error'; error: RoleSwitchError }
   | { kind: 'cancelled' };
+
+/**
+ * Why the last switch failed. The chip already labels it "Role switch
+ * failed:", so `detail` is only the cause: the daemon's own message, the
+ * HTTP status, or the transport error. A 200 whose body is not a mode
+ * reply has no cause text of its own and is rendered from the locale.
+ */
+export type RoleSwitchError = { kind: 'failed'; detail: string } | { kind: 'unexpectedResponse' };
+
+function failed(detail: string): SwitchResult {
+  return { kind: 'error', error: { kind: 'failed', detail } };
+}
 
 async function requestModeSwitch(next: StemRole): Promise<SwitchResult> {
   let response: Response;
@@ -96,29 +108,23 @@ async function requestModeSwitch(next: StemRole): Promise<SwitchResult> {
       body: JSON.stringify({ mode: next }),
     });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : String(err);
-    return { kind: 'error', message: `Role switch failed: ${message}` };
+    return failed(err instanceof Error ? err.message : String(err));
   }
 
   if (!response.ok) {
-    const message = await extractErrorMessage(
-      response,
-      `Role switch failed (HTTP ${response.status})`,
-    );
-    return { kind: 'error', message };
+    return failed(await extractErrorMessage(response, `HTTP ${response.status}`));
   }
 
   let body: unknown;
   try {
     body = await response.json();
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : String(err);
-    return { kind: 'error', message: `Role switch failed: ${message}` };
+    return failed(err instanceof Error ? err.message : String(err));
   }
 
   const parsed = parseModeUpdateResponse(body);
   if (!parsed.ok) {
-    return { kind: 'error', message: 'Role switch failed: unexpected server response' };
+    return { kind: 'error', error: { kind: 'unexpectedResponse' } };
   }
 
   // Trust the server's echoed mode rather than our local request —
@@ -130,7 +136,7 @@ export interface RoleContextValue {
   role: StemRole;
   setRole: (role: StemRole) => void;
   isSwitchingRole: boolean;
-  roleSwitchError: string | null;
+  roleSwitchError: RoleSwitchError | null;
   clearRoleSwitchError: () => void;
 }
 
@@ -143,7 +149,7 @@ interface RoleProviderProps {
 export const RoleProvider: FC<RoleProviderProps> = ({ children }) => {
   const [role, setRoleState] = useState<StemRole>(() => readPersistedRole());
   const [isSwitchingRole, setIsSwitchingRole] = useState<boolean>(false);
-  const [roleSwitchError, setRoleSwitchError] = useState<string | null>(null);
+  const [roleSwitchError, setRoleSwitchError] = useState<RoleSwitchError | null>(null);
 
   // Track the latest in-flight switch so an older response cannot
   // overwrite a newer one if the user clicks quickly.
@@ -164,7 +170,7 @@ export const RoleProvider: FC<RoleProviderProps> = ({ children }) => {
       setRoleState(result.mode);
       setRoleSwitchError(null);
     } else if (result.kind === 'error') {
-      setRoleSwitchError(result.message);
+      setRoleSwitchError(result.error);
     }
     setIsSwitchingRole(false);
   }, []);
@@ -185,8 +191,7 @@ export const RoleProvider: FC<RoleProviderProps> = ({ children }) => {
           applySwitchResult(result, token);
         })
         .catch((err: unknown) => {
-          const message = err instanceof Error ? err.message : String(err);
-          applySwitchResult({ kind: 'error', message: `Role switch failed: ${message}` }, token);
+          applySwitchResult(failed(err instanceof Error ? err.message : String(err)), token);
         });
     },
     [applySwitchResult],

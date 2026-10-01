@@ -1,10 +1,12 @@
 import { Tooltip } from './ui/Tooltip';
+
 /**
  * @fileoverview Stem - License Section Component
  * @description Displays license status and provides activation functionality.
  *              Supports full license activation and 14-day trial mode.
  */
 
+import type { TFunction } from 'i18next';
 import { AlertTriangle, CheckCircle, Clock, Key, Loader2, Shield } from 'lucide-react';
 import type { ReactElement } from 'react';
 import { useCallback, useEffect, useState } from 'react';
@@ -50,18 +52,17 @@ async function readActivation(response: Response): Promise<{ success: boolean; m
   };
 }
 
-const tierNames: Record<number, string> = {
-  0: 'Invalid',
-  1: 'Reflector',
-  2: 'Professional',
-};
-
-function formatDate(dateStr: string): string {
-  if (!dateStr) {
-    return 'N/A';
+function tierName(tier: number, t: TFunction<['common', 'settings', 'errors']>): string {
+  switch (tier) {
+    case 0:
+      return t('settings:license.tiers.invalid');
+    case 1:
+      return t('settings:license.tiers.reflector');
+    case 2:
+      return t('settings:license.tiers.professional');
+    default:
+      return t('settings:license.tiers.unknown');
   }
-  const date = new Date(dateStr);
-  return date.toLocaleDateString();
 }
 
 interface LicenseStatusProps {
@@ -75,7 +76,9 @@ function LicenseStatusBadge({ licenseInfo }: LicenseStatusProps): ReactElement {
       {licenseInfo.activated ? (
         <span className="status-badge success">
           <CheckCircle className="w-3 h-3" />
-          {licenseInfo.isTrialMode ? 'Trial Active' : 'Licensed'}
+          {licenseInfo.isTrialMode
+            ? t('settings:license.trialActive')
+            : t('settings:license.licensed')}
         </span>
       ) : (
         <span className="status-badge warning">
@@ -84,7 +87,7 @@ function LicenseStatusBadge({ licenseInfo }: LicenseStatusProps): ReactElement {
         </span>
       )}
       {licenseInfo.activated ? (
-        <span className="text-sm text-text-muted">{tierNames[licenseInfo.tier] || 'Unknown'}</span>
+        <span className="text-sm text-text-muted">{tierName(licenseInfo.tier, t)}</span>
       ) : null}
     </div>
   );
@@ -99,19 +102,23 @@ function LicenseDetails({ licenseInfo }: LicenseStatusProps): ReactElement | nul
   return (
     <div className="bg-surface-hover rounded-md pad-sm text-sm stack-xs">
       <div className="flex justify-between">
-        <span className="text-text-muted">Tier</span>
-        <span className="font-medium">{tierNames[licenseInfo.tier]}</span>
+        <span className="text-text-muted">{t('settings:license.tier')}</span>
+        <span className="font-medium">{tierName(licenseInfo.tier, t)}</span>
       </div>
       {licenseInfo.isTrialMode ? (
         <div className="flex justify-between">
           <span className="text-text-muted">{t('settings:license.daysRemaining')}</span>
-          <span className="font-medium text-status-warning">{licenseInfo.daysRemaining} days</span>
+          <span className="font-medium text-status-warning">
+            {t('settings:license.daysCount', { count: licenseInfo.daysRemaining })}
+          </span>
         </div>
       ) : null}
       {!licenseInfo.isTrialMode && licenseInfo.expiresAt && (
         <div className="flex justify-between">
-          <span className="text-text-muted">Expires</span>
-          <span className="font-medium">{formatDate(licenseInfo.expiresAt)}</span>
+          <span className="text-text-muted">{t('settings:license.expiresAt')}</span>
+          <span className="font-medium">
+            {new Date(licenseInfo.expiresAt).toLocaleDateString()}
+          </span>
         </div>
       )}
       <div className="flex justify-between">

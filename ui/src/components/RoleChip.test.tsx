@@ -10,6 +10,7 @@ import { cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { RoleContextValue } from '../contexts/RoleContext';
+import i18n from '../i18n';
 import { RoleChip } from './RoleChip';
 
 const { roleContext } = vi.hoisted(() => ({
@@ -107,15 +108,33 @@ describe('RoleChip', () => {
   });
 
   it('surfaces a rejected switch as an alert', () => {
-    renderChip({ roleSwitchError: 'reflector dataplane unavailable' });
+    renderChip({ roleSwitchError: { kind: 'failed', detail: 'reflector dataplane unavailable' } });
 
     const error = screen.getByTestId('role-chip-error');
     expect(error).toHaveAttribute('role', 'alert');
-    expect(error).toHaveTextContent('reflector dataplane unavailable');
+    // The chip supplies the "Role switch failed:" label; the cause must not
+    // carry it again, which the client-side causes used to.
+    expect(error).toHaveTextContent(/^Role switch failed:\s*reflector dataplane unavailable$/);
+  });
+
+  it('names an unreadable reply from the locale, in Spanish too', async () => {
+    await i18n.changeLanguage('es');
+    try {
+      renderChip({ roleSwitchError: { kind: 'unexpectedResponse' } });
+
+      expect(screen.getByTestId('role-chip-error')).toHaveTextContent(
+        /^Fallo el cambio de rol:\s*respuesta inesperada del servidor$/,
+      );
+    } finally {
+      cleanup();
+      await i18n.changeLanguage('en');
+    }
   });
 
   it('lets the operator dismiss the error', async () => {
-    const { clearRoleSwitchError } = renderChip({ roleSwitchError: 'nope' });
+    const { clearRoleSwitchError } = renderChip({
+      roleSwitchError: { kind: 'failed', detail: 'nope' },
+    });
 
     await userEvent.click(screen.getByTestId('role-chip-error-dismiss'));
 

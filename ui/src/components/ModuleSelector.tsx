@@ -65,7 +65,7 @@ export function ModuleSelector({
   selectedTests,
   setSelectedTests,
 }: ModuleSelectorProps): ReactElement {
-  const { t } = useTranslation(['common', 'settings', 'modules', 'help']);
+  const { t } = useTranslation(['common', 'settings', 'modules', 'help', 'errors']);
   const [modules, setModules] = useState<Module[]>([]);
   const [expandedModule, setExpandedModule] = useState<string | null>('benchmark');
   const [loading, setLoading] = useState(true);
@@ -100,7 +100,7 @@ export function ModuleSelector({
         // how this went unnoticed; an operator choosing tests the daemon does
         // not offer would fail at start time anyway.
         setModules([]);
-        setError(cause instanceof Error ? cause.message : 'Failed to load modules');
+        setError(cause instanceof Error ? cause.message : String(cause));
       } finally {
         setLoading(false);
       }
@@ -144,7 +144,7 @@ export function ModuleSelector({
   if (error) {
     return (
       <div role="alert" className="text-center py-8 text-status-error">
-        Could not load the test modules from this stem ({error}).
+        {t('errors:modules.loadFailed', { reason: error })}
       </div>
     );
   }

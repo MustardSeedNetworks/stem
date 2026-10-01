@@ -35,7 +35,6 @@ confusion. Use this decision order; when two fit, prefer the one higher in the l
      persisted; drives the header RoleChip + per-page RoleGuard.
    - `contexts/AppContext` — the per-render bundle handed to the routed test pages
      (configs, interfaces, stats, reflector start/stop). Assembled in `App.tsx`.
-   - `contexts/ModuleSettingsContext` — per-module settings consumed by test pages.
 
 4. **Is it local to one component / subtree** (open/closed, hovered, form draft)?
    → **`useState` / `useReducer`**. Default for anything not shared. Lift only when

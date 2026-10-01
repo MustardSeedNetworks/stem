@@ -30,8 +30,7 @@ interface RoleChipProps {
 
 interface RoleOption {
   id: StemRole;
-  labelKey: string;
-  labelDefault: string;
+  labelKey: 'role.reflector' | 'role.testMaster';
   icon: typeof Repeat;
 }
 
@@ -39,13 +38,11 @@ const ROLE_OPTIONS: readonly RoleOption[] = [
   {
     id: 'reflector',
     labelKey: 'role.reflector',
-    labelDefault: 'Reflector',
     icon: Repeat,
   },
   {
     id: 'test_master',
     labelKey: 'role.testMaster',
-    labelDefault: 'Test Master',
     icon: Target,
   },
 ];
@@ -134,20 +131,24 @@ export const RoleChip: FC<RoleChipProps> = ({ className = '', layout = 'inline' 
               ) : (
                 <Icon className="h-3.5 w-3.5" aria-hidden="true" />
               )}
-              <span>{t(option.labelKey, option.labelDefault)}</span>
+              <span>{t(option.labelKey)}</span>
             </button>
           );
         })}
       </fieldset>
 
-      {roleSwitchError !== null && roleSwitchError.length > 0 ? (
+      {roleSwitchError !== null ? (
         <div
           role="alert"
           data-testid="role-chip-error"
           className="inline-flex items-center gap-compact rounded-md border border-status-error/40 bg-status-error/10 px-cell py-compact text-xs text-status-error-strong"
         >
           <span className="font-medium">{t('role.switchError.label')}</span>
-          <span className="font-normal text-text-primary">{roleSwitchError}</span>
+          <span className="font-normal text-text-primary">
+            {roleSwitchError.kind === 'failed'
+              ? roleSwitchError.detail
+              : t('role.switchError.unexpectedResponse')}
+          </span>
           <button
             type="button"
             onClick={clearRoleSwitchError}

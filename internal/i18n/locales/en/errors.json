@@ -62,5 +62,8 @@
     "invalidRequestBody": "Invalid request body",
     "notFound": "Not found",
     "internalError": "Internal server error"
+  },
+  "modules": {
+    "loadFailed": "Could not load the test modules from this stem ({{reason}})."
   }
 }
