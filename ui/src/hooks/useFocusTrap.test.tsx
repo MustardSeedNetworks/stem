@@ -57,7 +57,40 @@ function Trapped({ empty = false }: { empty?: boolean }) {
   );
 }
 
+function AutoFocused() {
+  const ref = useFocusTrap<HTMLDivElement>({ isActive: true });
+  return (
+    <div ref={ref}>
+      <button type="button">close</button>
+      <input aria-label="key" />
+    </div>
+  );
+}
+
+const nextFrame = (): Promise<void> =>
+  new Promise((resolve) => {
+    requestAnimationFrame(() => resolve());
+  });
+
 describe('useFocusTrap', () => {
+  it('focuses the first element once the frame lands', async () => {
+    render(<AutoFocused />);
+
+    await nextFrame();
+
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'close' }));
+  });
+
+  it('leaves focus alone when the user is already inside before the frame (#1372)', async () => {
+    render(<AutoFocused />);
+    const input = screen.getByRole('textbox', { name: 'key' });
+    input.focus();
+
+    await nextFrame();
+
+    expect(document.activeElement).toBe(input);
+  });
+
   it('wraps Tab from the last element back to the first', () => {
     render(<Trapped />);
     screen.getByRole('button', { name: 'last' }).focus();
