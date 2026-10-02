@@ -1806,12 +1806,13 @@ jobs:
     steps:
       # The base image has no git (checkout would fall back to a tarball and
       # the version to a bare SHA), no CA bundle, no curl for the readiness
-      # probe, no zstd (the cache actions' archive format, else every restore
-      # misses) and no libatomic, which the Node binaries link.
+      # probe, no python3 for the flake-budget action, no zstd (the cache
+      # actions' archive format, else every restore misses) and no libatomic,
+      # which the Node binaries link.
       - name: Install container prerequisites
         run: |
           apt-get update
-          apt-get install -y --no-install-recommends ca-certificates curl git libatomic1 zstd
+          apt-get install -y --no-install-recommends ca-certificates curl git libatomic1 python3 zstd
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
