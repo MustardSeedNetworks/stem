@@ -15,7 +15,7 @@
 .PHONY: test test-all test-backend test-backend-quiet test-frontend test-frontend-quiet \
         test-coverage test-coverage-html c-test c-test-asan c-fuzz c-fuzz-reflector c-bench \
         c-bench-compare smoke-test \
-        test-e2e test-e2e-ui test-e2e-install check-stale-tests
+        test-e2e test-e2e-ui test-e2e-install check-stale-tests validate-touched
 
 # =============================================================================
 # Main Test Targets
@@ -42,6 +42,11 @@ test: check-stale-tests ## Run unit tests (backend + frontend)
 
 test-all: check-stale-tests test c-test test-e2e ## Run ALL tests (Go + C + E2E)
 	@echo "All tests complete"
+
+# The inner loop: only what differs from origin/main. `make test` still runs
+# once before the PR; see the script for the selection rules.
+validate-touched: check-stale-tests ## Lint and test only what this branch changed
+	@./scripts/validate-touched.py
 
 # =============================================================================
 # Backend Tests

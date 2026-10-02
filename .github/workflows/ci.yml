@@ -1277,6 +1277,12 @@ jobs:
       - name: Verify token-discipline rules
         run: ./scripts/test-check-token-discipline.sh
 
+      # A reverse dependency validate-touched fails to find is a test that
+      # silently stops running in the inner loop, and a scripts/check-* gate
+      # missing from its table never runs there at all.
+      - name: Verify validate-touched selection and gate table
+        run: python3 scripts/test-validate-touched.py
+
   # ============================================================================
   # Internationalization (i18n) Validation
   # ============================================================================

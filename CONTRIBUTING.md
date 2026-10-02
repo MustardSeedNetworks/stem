@@ -121,6 +121,12 @@ chore(deps): upgrade Go to 1.25.5
 
 ### Running Tests
 
+Between edits, `make validate-touched` lints the Go packages the branch
+changed, tests them and every package that depends on them, runs Vitest on the
+UI files it changed, and runs each `scripts/check-*` gate whose inputs changed.
+It compares against `origin/main` and prints every command it runs. Run the
+full `make test` once before opening the PR.
+
 ```bash
 # All tests
 make test
