@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.25.0](https://github.com/MustardSeedNetworks/stem/compare/v0.24.169...v0.25.0) (2026-10-02)
+
+
+### Features
+
+* **make:** add validate-touched, the targeted inner loop ([#1520](https://github.com/MustardSeedNetworks/stem/issues/1520)) ([8dbad65](https://github.com/MustardSeedNetworks/stem/commit/8dbad65516364ce0f8be17dc2129ab551eab9c5e)), closes [#1519](https://github.com/MustardSeedNetworks/stem/issues/1519)
+
+
+### Bug Fixes
+
+* **lint:** enforce domain-layer direction over services and reflector ([#1523](https://github.com/MustardSeedNetworks/stem/issues/1523)) ([5925684](https://github.com/MustardSeedNetworks/stem/commit/5925684f97a49279a6959e935d18ceed192c00bb)), closes [#1522](https://github.com/MustardSeedNetworks/stem/issues/1522)
+
 ## [0.24.169](https://github.com/MustardSeedNetworks/stem/compare/v0.24.168...v0.24.169) (2026-10-01)
 
 
