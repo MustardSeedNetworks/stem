@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.25.1](https://github.com/MustardSeedNetworks/stem/compare/v0.25.0...v0.25.1) (2026-10-02)
+
+
+### Bug Fixes
+
+* **ui:** stop the focus trap's late first-frame focus taking focus back ([#1524](https://github.com/MustardSeedNetworks/stem/issues/1524)) ([040c5cb](https://github.com/MustardSeedNetworks/stem/commit/040c5cbb126de77583ea866979f04b94194bdb29)), closes [#1372](https://github.com/MustardSeedNetworks/stem/issues/1372)
+
 ## [0.25.0](https://github.com/MustardSeedNetworks/stem/compare/v0.24.169...v0.25.0) (2026-10-02)
 
 
