@@ -187,6 +187,9 @@ NOT_INPUT_DRIVEN = {
     # Reads ui/coverage/coverage-summary.json, which only a whole-suite
     # coverage run (`npm run test:coverage`) writes.
     "scripts/check-ui-coverage.sh",
+    # Inspects the installed Playwright WebKit build, not repo files; only the
+    # e2e-webkit CI job runs it. Temporary, goes with that job (#1528).
+    "scripts/check-webkit-libsoup.sh",
 }
 
 
