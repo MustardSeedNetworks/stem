@@ -124,6 +124,9 @@ ui/test-results/
 vendor/
 yarn-error.log*
 
+# Python bytecode left by the gates' self-tests
+__pycache__/
+
 # Build output
 dist/
 *.coverage.out

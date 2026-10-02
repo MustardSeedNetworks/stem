@@ -28,6 +28,7 @@ npm install
 # Backend
 make dev          # Run backend with hot reload
 make test         # Run tests
+make validate-touched  # Lint and test only what this branch changed
 make lint         # Run linters (Go + C)
 
 # Frontend (cd ui/)
@@ -50,6 +51,7 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md) for detailed architecture documentation
 | ------ | ------- |
 | Build all | `make build` |
 | Run tests | `make test` |
+| Test what the branch changed | `make validate-touched` |
 | Lint Go | `make lint-go` |
 | Lint C | `make lint-c` |
 | Clean | `make clean` |
