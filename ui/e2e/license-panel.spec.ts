@@ -47,6 +47,33 @@ test.describe('License panel', () => {
     await expect(drawer.getByText('Not Activated')).toBeVisible();
   });
 
+  test('the key field keeps focus when the drawer focuses late (#1372)', async ({ page }) => {
+    // The drawer moves focus to its first element on the next animation frame.
+    // WebKit can deliver that frame after the field is already focused, which
+    // sent the typed key to the close button. Holding the clock delivers the
+    // frame at exactly that moment, every run.
+    await page.clock.install();
+    await page.goto('/');
+    const drawer = page.getByTestId('settings-drawer');
+    // The first open loads the drawer's code at full speed; the second, with
+    // the clock held, is the one under test.
+    await page.getByTestId('sidebar-settings-button').click();
+    await expect(drawer.getByText('Not Activated')).toBeVisible();
+    await drawer.getByTestId('settings-drawer-close').click();
+    await expect(drawer).toBeHidden();
+
+    await page.clock.pauseAt(new Date(Date.now() + 60_000));
+    await page.getByTestId('sidebar-settings-button').click();
+    await expect(drawer.getByText('Not Activated')).toBeVisible();
+
+    const field = drawer.getByPlaceholder('MSN1.<payload>.<signature>');
+    await field.focus();
+    await page.clock.runFor(100);
+
+    await expect(field).toBeFocused();
+    await expect(drawer.getByTestId('settings-drawer-close')).not.toBeFocused();
+  });
+
   test('an activation attempt reaches the daemon with CSRF and is answered', async ({ page }) => {
     await page.goto('/');
     await page.getByTestId('sidebar-settings-button').click();

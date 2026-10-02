@@ -125,8 +125,13 @@ export function useFocusTrap<T extends HTMLElement = HTMLDivElement>(
       const focusableElements = getFocusableElements(container);
       const [firstElement] = focusableElements;
       if (firstElement) {
+        // The frame can land late (WebKit), after the user has already moved
+        // into the dialog; taking focus then sends their typing to the first
+        // element instead of the field they chose (#1372).
         requestAnimationFrame(() => {
-          firstElement.focus();
+          if (!container.contains(document.activeElement)) {
+            firstElement.focus();
+          }
         });
       }
     }
