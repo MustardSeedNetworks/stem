@@ -251,21 +251,31 @@ linters:
           deny:
             - pkg: log$
               desc: Use log/slog instead, see https://go.dev/blog/slog
-        # Architectural direction: the module/service layer (internal/services)
-        # is the inward core. It must not depend on the web/API, auth, or
-        # license layers — those concerns are composed at the API layer.
-        # This codifies the dependency direction so a future upward import
-        # fails CI instead of silently coupling the layers.
-        "service-layer-inward-only":
+        # Architectural direction (ADR-0003): the domain layer — the modules
+        # (internal/services) and the reflection subsystem they drive
+        # (internal/reflector) — is the inward core. Transport, auth, license,
+        # storage and the CLI's daemon client are composed around it at
+        # internal/api and cmd/, so an upward import fails CI instead of
+        # silently coupling the layers.
+        "domain-inward-only":
           files:
             - "**/internal/services/**"
+            - "**/internal/reflector/**"
           deny:
             - pkg: github.com/MustardSeedNetworks/stem/internal/api
-              desc: "service layer must not import the API/web layer — dependencies point inward; wire at internal/api"
+              desc: "domain must not import the API/web layer — dependencies point inward; wire at internal/api"
             - pkg: github.com/MustardSeedNetworks/stem/internal/auth
-              desc: "service layer must not import auth — authentication is an API-layer concern"
+              desc: "domain must not import auth — authentication is an API-layer concern"
             - pkg: github.com/MustardSeedNetworks/stem/internal/license
-              desc: "service layer must not import license — gate features at the API layer, not inside modules"
+              desc: "domain must not import license — gate features at the API layer, not inside modules"
+            - pkg: github.com/MustardSeedNetworks/stem/internal/database
+              desc: "domain must not import storage — persist results at the API layer"
+            - pkg: github.com/MustardSeedNetworks/stem/internal/backup
+              desc: "domain must not import storage — backup is composed at the API/CLI layer"
+            - pkg: github.com/MustardSeedNetworks/stem/internal/daemonconn
+              desc: "domain must not import the CLI's daemon connection — the CLI is a client of the domain, not a dependency"
+            - pkg: github.com/spf13/cobra
+              desc: "domain must not import the CLI framework — commands live in cmd/stem"
         # ratelimit is a leaf of internal/api (ADR-0003): it depends only on
         # stdlib, golang.org/x/time/rate, and internal/logging — never on the
         # api transport layer itself. This depguard rule enforces that boundary

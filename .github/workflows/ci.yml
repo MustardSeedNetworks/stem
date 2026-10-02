@@ -93,9 +93,11 @@ jobs:
               - 'go.sum'
               - 'Makefile'
               - 'mk/**'
-              # Generated from the route registry and checked against it.
+              # Generated from the route registry and the Go DTOs and checked
+              # against them; a hand edit to one alone must still run the gate.
               - 'docs/openapi-source.yaml'
               - 'docs/openapi.yaml'
+              - 'docs/schemas/**'
             frontend:
               - 'ui/**'
             c:

@@ -35,6 +35,10 @@
 └───────────────────────────────────────────────────────────────────────┘
 ```
 
+The depguard rule covers the modules and `internal/reflector`. They must not
+import the API, auth, license, storage (`database`, `backup`), the CLI's daemon
+connection or cobra. A forbidden import fails `make lint`.
+
 The web layer registers every route through a capability registry
 (`internal/api/route.go`, ADR-0001): routes are declared as data and a single
 `register()` composes auth + rate limiting in one canonical order, so a route
