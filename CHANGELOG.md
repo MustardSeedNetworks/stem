@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.25.4](https://github.com/MustardSeedNetworks/stem/compare/v0.25.3...v0.25.4) (2026-10-03)
+
+
+### Bug Fixes
+
+* **y1564:** fail a step that transmitted no frames ([#1540](https://github.com/MustardSeedNetworks/stem/issues/1540)) ([95ceec2](https://github.com/MustardSeedNetworks/stem/commit/95ceec217d9a38719d907c72379b8d8ce8ded20c)), closes [#1482](https://github.com/MustardSeedNetworks/stem/issues/1482)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1544](https://github.com/MustardSeedNetworks/stem/issues/1544)) ([b70fc91](https://github.com/MustardSeedNetworks/stem/commit/b70fc91ffbfa482f9d224bbcf56ce8cf1f244af2))
+
 ## [0.25.3](https://github.com/MustardSeedNetworks/stem/compare/v0.25.2...v0.25.3) (2026-10-03)
 
 
