@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.25.5](https://github.com/MustardSeedNetworks/stem/compare/v0.25.4...v0.25.5) (2026-10-03)
+
+
+### Bug Fixes
+
+* **deps:** update module github.com/mustardseednetworks/foundation to v0.6.3 ([#1538](https://github.com/MustardSeedNetworks/stem/issues/1538)) ([7e717f4](https://github.com/MustardSeedNetworks/stem/commit/7e717f45a6b378bc650139ac7a126a4e4f9c1fb2))
+
+
+### Tests
+
+* **e2e:** give each desktop-density route its own test budget ([#1547](https://github.com/MustardSeedNetworks/stem/issues/1547)) ([72d1772](https://github.com/MustardSeedNetworks/stem/commit/72d17729220da5d8d1a9e93e996b0d5b626431ed)), closes [#1480](https://github.com/MustardSeedNetworks/stem/issues/1480)
+
 ## [0.25.4](https://github.com/MustardSeedNetworks/stem/compare/v0.25.3...v0.25.4) (2026-10-03)
 
 
