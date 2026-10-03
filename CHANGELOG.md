@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.25.3](https://github.com/MustardSeedNetworks/stem/compare/v0.25.2...v0.25.3) (2026-10-03)
+
+
+### Bug Fixes
+
+* **ci:** drop ts-prune, which pulls an unpatched braces advisory ([#1542](https://github.com/MustardSeedNetworks/stem/issues/1542)) ([42f07b5](https://github.com/MustardSeedNetworks/stem/commit/42f07b51d05ed9d686611dc0d5e5a1f2323bfe11))
+* **dataplane:** let the AF_XDP test master receive reflected frames ([#1534](https://github.com/MustardSeedNetworks/stem/issues/1534)) ([decc274](https://github.com/MustardSeedNetworks/stem/commit/decc274b48d884cf6e5ad378c5313f2396c97200)), closes [#1328](https://github.com/MustardSeedNetworks/stem/issues/1328)
+
+
+### Continuous Integration
+
+* **e2e:** run WebKit on Ubuntu 26.04 to avoid bundled libsoup 3.6.5 ([#1529](https://github.com/MustardSeedNetworks/stem/issues/1529)) ([36c35e8](https://github.com/MustardSeedNetworks/stem/commit/36c35e8b6b229032e70e94805e67ad7f601b7058))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1537](https://github.com/MustardSeedNetworks/stem/issues/1537)) ([7097993](https://github.com/MustardSeedNetworks/stem/commit/7097993c3d010f21b820ac5fba332d2cf28c9a55))
+
 ## [0.25.2](https://github.com/MustardSeedNetworks/stem/compare/v0.25.1...v0.25.2) (2026-10-02)
 
 
