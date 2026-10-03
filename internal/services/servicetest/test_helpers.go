@@ -33,12 +33,12 @@ func DataplaneForTest(exec *Executor) ServiceDataplane {
 }
 
 // RunY1564ForTest exposes Y.1564 execution branches for tests.
-func RunY1564ForTest(exec *Executor, testType string, cfg *modtypes.TestConfig) (any, bool, error) {
+func RunY1564ForTest(exec *Executor, testType string, cfg *modtypes.TestConfig) (any, string, error) {
 	return exec.runY1564(testType, cfg)
 }
 
 // RunMEFForTest exposes MEF execution branches for tests.
-func RunMEFForTest(exec *Executor, testType string, cfg *modtypes.TestConfig) (any, bool, error) {
+func RunMEFForTest(exec *Executor, testType string, cfg *modtypes.TestConfig) (any, string, error) {
 	return exec.runMEF(testType, cfg)
 }
 

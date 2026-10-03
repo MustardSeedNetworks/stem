@@ -108,3 +108,62 @@ func TestExecuteReportsServiceVerdict(t *testing.T) {
 		})
 	}
 }
+
+// A failed Y.1564 half that sent no frame measured nothing, and the failure
+// says so instead of blaming the service's criteria (#1482).
+func TestExecuteReportsAY1564HalfThatTransmittedNothing(t *testing.T) {
+	sent := func(d *verdictDataplane) {
+		for i := range d.y1564Config.Steps {
+			d.y1564Config.Steps[i].FramesTx = 1000
+		}
+		d.y1564Perf.FramesTx = 1000
+	}
+	tests := []struct {
+		name     string
+		testType string
+		fail     func(*verdictDataplane)
+		want     string
+	}{
+		{
+			"config step sent nothing", "y1564_config",
+			func(d *verdictDataplane) { d.y1564Config.ServicePass = false; d.y1564Config.Steps[3].FramesTx = 0 },
+			dataplane.ErrY1564NothingTransmitted.Error(),
+		},
+		{
+			"perf sent nothing", "y1564_perf",
+			func(d *verdictDataplane) { d.y1564Perf.ServicePass = false; d.y1564Perf.FramesTx = 0 },
+			dataplane.ErrY1564NothingTransmitted.Error(),
+		},
+		{
+			"full test, perf half sent nothing", "y1564",
+			func(d *verdictDataplane) { d.y1564Perf.ServicePass = false; d.y1564Perf.FramesTx = 0 },
+			dataplane.ErrY1564NothingTransmitted.Error(),
+		},
+		{
+			"config sent and missed its criteria", "y1564_config",
+			func(d *verdictDataplane) { d.y1564Config.ServicePass = false },
+			"the service did not meet its acceptance criteria",
+		},
+		{
+			"full test, config sent and missed, perf passed", "y1564",
+			func(d *verdictDataplane) { d.y1564Config.ServicePass = false },
+			"the service did not meet its acceptance criteria",
+		},
+	}
+	cfg := &modtypes.TestConfig{Interface: "eth0", Duration: 1, Params: map[string]any{}}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dp := passingDataplane()
+			sent(dp)
+			tt.fail(dp)
+			result, err := servicetest.NewExecutorWithDataplane(dp).Execute(tt.testType, cfg)
+			if err != nil {
+				t.Fatalf("Execute: %v", err)
+			}
+			if result.Success || result.Error != tt.want {
+				t.Errorf("success=%v error=%q, want failure %q", result.Success, result.Error, tt.want)
+			}
+		})
+	}
+}

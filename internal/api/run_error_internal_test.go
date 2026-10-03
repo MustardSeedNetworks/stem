@@ -48,6 +48,30 @@ func TestClassifyRunCause(t *testing.T) {
 	}
 }
 
+func TestClassifyResultCause(t *testing.T) {
+	tests := []struct {
+		name    string
+		failure string
+		want    string
+	}{
+		{"criteria missed", "the service did not meet its acceptance criteria", causeCriteriaNotMet},
+		{"nothing transmitted", dataplane.ErrY1564NothingTransmitted.Error(), causeNothingSent},
+		{
+			"nothing transmitted at one frame size",
+			"frame size 1518: " + dataplane.ErrY1564NothingTransmitted.Error(),
+			causeNothingSent,
+		},
+		{"no failure text", "", causeCriteriaNotMet},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := classifyResultCause(tc.failure); got != tc.want {
+				t.Errorf("classifyResultCause(%q) = %q, want %q", tc.failure, got, tc.want)
+			}
+		})
+	}
+}
+
 // Whatever the cause text carries, the classification must not repeat it: the
 // raw error names interfaces, socket paths and peer addresses.
 func TestClassifyRunCauseNeverEchoesItsInput(t *testing.T) {
