@@ -28,7 +28,14 @@ func TestClassifyRunCause(t *testing.T) {
 		{"peer refusing", "connection refused", causeUnreachable},
 		{
 			"throughput search with nothing reflected",
-			"benchmark test rfc2544_throughput failed: " + dataplane.ErrThroughputNoFramesReturned.Error(),
+			"benchmark test rfc2544_throughput failed: throughput test " +
+				dataplane.ErrNoFramesReturned.Error(),
+			causeUnreachable,
+		},
+		{
+			"back-to-back with nothing reflected",
+			"benchmark test rfc2544_back_to_back failed: back-to-back test " +
+				dataplane.ErrNoFramesReturned.Error(),
 			causeUnreachable,
 		},
 		{

@@ -62,7 +62,7 @@ func classifyRunCause(cause string) string {
 		strings.Contains(msg, "connection refused"),
 		strings.Contains(msg, "i/o timeout"),
 		strings.Contains(msg, "timed out"),
-		strings.Contains(msg, dataplane.ErrThroughputNoFramesReturned.Error()):
+		strings.Contains(msg, dataplane.ErrNoFramesReturned.Error()):
 		return causeUnreachable
 	case strings.Contains(msg, dataplane.ErrThroughputNoPassingRate.Error()):
 		return causeCriteriaNotMet
