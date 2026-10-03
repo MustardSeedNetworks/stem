@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.25.8](https://github.com/MustardSeedNetworks/stem/compare/v0.25.7...v0.25.8) (2026-10-03)
+
+
+### Bug Fixes
+
+* **dataplane:** leave the FCS to the NIC on the custom and Y.1564 paths ([#1558](https://github.com/MustardSeedNetworks/stem/issues/1558)) ([c374242](https://github.com/MustardSeedNetworks/stem/commit/c374242352b3cb67646285221ba62f50be5165b3)), closes [#1265](https://github.com/MustardSeedNetworks/stem/issues/1265)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1557](https://github.com/MustardSeedNetworks/stem/issues/1557)) ([05bd061](https://github.com/MustardSeedNetworks/stem/commit/05bd061301fffba303c1dc8fe3d63353057befaf))
+
 ## [0.25.7](https://github.com/MustardSeedNetworks/stem/compare/v0.25.6...v0.25.7) (2026-10-03)
 
 
