@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.25.7](https://github.com/MustardSeedNetworks/stem/compare/v0.25.6...v0.25.7) (2026-10-03)
+
+
+### Bug Fixes
+
+* **rfc2544:** fail latency, frame loss and back-to-back when nothing came back ([#1552](https://github.com/MustardSeedNetworks/stem/issues/1552)) ([1389562](https://github.com/MustardSeedNetworks/stem/commit/13895624ee034b1524f9912d2479204d65442620)), closes [#1275](https://github.com/MustardSeedNetworks/stem/issues/1275)
+* **ui:** stop a late 401 from refreshing twice and signing the user out ([#1554](https://github.com/MustardSeedNetworks/stem/issues/1554)) ([6ce871e](https://github.com/MustardSeedNetworks/stem/commit/6ce871eb02a556d763717773bc9884d827cdcb9e)), closes [#1455](https://github.com/MustardSeedNetworks/stem/issues/1455)
+
 ## [0.25.6](https://github.com/MustardSeedNetworks/stem/compare/v0.25.5...v0.25.6) (2026-10-03)
 
 
