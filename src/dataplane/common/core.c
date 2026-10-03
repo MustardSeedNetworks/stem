@@ -507,6 +507,13 @@ static void cleanup_platform(rfc2544_ctx_t *ctx)
     ctx->num_workers = 0;
 }
 
+/* The configuration fields a platform's init reads. */
+static bool platform_inputs_changed(const rfc2544_config_t *was, const rfc2544_config_t *now)
+{
+    return strncmp(was->interface, now->interface, sizeof(was->interface)) != 0 ||
+           was->force_packet != now->force_packet || was->hw_timestamp != now->hw_timestamp;
+}
+
 int rfc2544_configure(rfc2544_ctx_t *ctx, const rfc2544_config_t *config)
 {
     if (!ctx || !config) {
@@ -518,7 +525,13 @@ int rfc2544_configure(rfc2544_ctx_t *ctx, const rfc2544_config_t *config)
         return -EBUSY;
     }
 
-    cleanup_platform(ctx);
+    /* Rebuild the platform only when an input to it changes. The kernel
+     * releases an AF_XDP socket's queue in deferred work, so binding the same
+     * queue straight after a teardown fails EBUSY, and every frame size after
+     * the first in a run would fall back to AF_PACKET. */
+    if (platform_inputs_changed(&ctx->config, config)) {
+        cleanup_platform(ctx);
+    }
     memcpy(&ctx->config, config, sizeof(rfc2544_config_t));
 
     /* Validate */

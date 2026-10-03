@@ -30,6 +30,7 @@
 
 #include <bpf/bpf.h>
 #include <bpf/libbpf.h>
+#include <dirent.h>
 #include <net/if.h>
 #include <poll.h>
 #include <pthread.h>
@@ -82,10 +83,6 @@ typedef struct {
     int     if_index;
     uint8_t if_mac[6];
     int     xsk_fd;
-
-    /* BPF program (optional, for multi-queue) */
-    struct bpf_object *bpf_obj;
-    int                bpf_prog_fd;
 
     /* Statistics */
     uint64_t tx_wakeups;
@@ -142,8 +139,46 @@ static void frame_alloc_put(frame_allocator_t *alloc, uint64_t frame)
  * XDP Platform Operations
  * ============================================================================ */
 
+static int is_rx_queue(const struct dirent *entry)
+{
+    return strncmp(entry->d_name, "rx-", 3) == 0;
+}
+
+static int rx_queue_count(const char *interface)
+{
+    char path[128];
+    snprintf(path, sizeof(path), "/sys/class/net/%s/queues", interface);
+    struct dirent **queues = NULL;
+    int             count  = scandir(path, &queues, is_rx_queue, NULL);
+    if (count < 0) {
+        return -errno;
+    }
+    for (int i = 0; i < count; i++) {
+        free(queues[i]);
+    }
+    free(queues);
+    return count;
+}
+
 static int xdp_init(rfc2544_ctx_t *ctx, worker_ctx_t *wctx)
 {
+    /* One socket serves one receive queue. On a multi-queue NIC, RSS spreads
+     * the reflected stream over queues this socket never sees, and the trial
+     * would report that as loss. AF_PACKET sees every queue. */
+    int queues = rx_queue_count(ctx->config.interface);
+    if (queues < 0) {
+        fprintf(stderr, "[xdp] Failed to count receive queues on %s: %s\n", ctx->config.interface,
+                stem_strerror(-queues));
+        return queues;
+    }
+    if (queues != 1) {
+        fprintf(stderr,
+                "[xdp] %s has %d receive queues; AF_XDP reads queue %d only and would "
+                "report the rest as loss\n",
+                ctx->config.interface, queues, wctx->queue_id);
+        return -EOPNOTSUPP;
+    }
+
     platform_ctx_t *pctx = calloc(1, sizeof(platform_ctx_t));
     if (!pctx) {
         return -ENOMEM;
@@ -208,32 +243,27 @@ static int xdp_init(rfc2544_ctx_t *ctx, worker_ctx_t *wctx)
         return ret;
     }
 
-    /* Create XDP socket */
+    /* Create XDP socket. libxdp attaches its default program, which redirects
+     * the queue's frames into this socket, and detaches it on delete. Without
+     * a program nothing reaches the RX ring (stem#1328). No mode flag: libxdp
+     * binds the socket before it attaches the program, so retrying in another
+     * mode after a failed attach rebinds a queue the kernel has not released
+     * yet and fails EBUSY. Unset, the attach itself picks native or generic. */
     struct xsk_socket_config xsk_cfg = {
-        .rx_size      = NUM_FRAMES / 2,
-        .tx_size      = NUM_FRAMES / 2,
-        .xdp_flags    = XDP_FLAGS_DRV_MODE, /* Try native mode first */
-        .bind_flags   = XDP_USE_NEED_WAKEUP,
-        .libbpf_flags = XSK_LIBBPF_FLAGS__INHIBIT_PROG_LOAD,
+        .rx_size    = NUM_FRAMES / 2,
+        .tx_size    = NUM_FRAMES / 2,
+        .bind_flags = XDP_USE_NEED_WAKEUP,
     };
 
     ret = xsk_socket__create(&pctx->xsk, ctx->config.interface, wctx->queue_id, pctx->umem,
                              &pctx->rx_ring, &pctx->tx_ring, &xsk_cfg);
-
     if (ret) {
-        /* Fall back to SKB mode */
-        xsk_cfg.xdp_flags = XDP_FLAGS_SKB_MODE;
-        ret = xsk_socket__create(&pctx->xsk, ctx->config.interface, wctx->queue_id, pctx->umem,
-                                 &pctx->rx_ring, &pctx->tx_ring, &xsk_cfg);
-        if (ret) {
-            fprintf(stderr, "[xdp] Failed to create XDP socket: %s\n", stem_strerror(-ret));
-            xsk_umem__delete(pctx->umem);
-            frame_alloc_cleanup(&pctx->frame_alloc);
-            munmap(pctx->umem_area, pctx->umem_size);
-            free(pctx);
-            return ret;
-        }
-        fprintf(stderr, "[xdp] Using SKB mode (lower performance)\n");
+        fprintf(stderr, "[xdp] Failed to create XDP socket: %s\n", stem_strerror(-ret));
+        xsk_umem__delete(pctx->umem);
+        frame_alloc_cleanup(&pctx->frame_alloc);
+        munmap(pctx->umem_area, pctx->umem_size);
+        free(pctx);
+        return ret;
     }
 
     pctx->xsk_fd = xsk_socket__fd(pctx->xsk);
