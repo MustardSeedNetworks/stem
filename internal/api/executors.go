@@ -5,6 +5,7 @@ package api
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/MustardSeedNetworks/stem/internal/logging"
 	reflectorConfig "github.com/MustardSeedNetworks/stem/internal/reflector/config"
@@ -149,13 +150,13 @@ func convertToModuleConfig(iface, testType string, cfg *TestConfig) *modtypes.Te
 
 	// Route config based on test type prefix.
 	switch {
-	case isRFC2544Test(testType) && cfg.RFC2544 != nil:
+	case IsRFC2544Test(testType) && cfg.RFC2544 != nil:
 		populateRFC2544Params(modCfg, cfg.RFC2544)
 	case isRFC2889Test(testType) && cfg.RFC2889 != nil:
 		populateRFC2889Params(modCfg, cfg.RFC2889)
 	case isRFC6349Test(testType) && cfg.RFC6349 != nil:
 		populateRFC6349Params(modCfg, cfg.RFC6349)
-	case isY1564Test(testType) && cfg.Y1564 != nil:
+	case IsY1564Test(testType) && cfg.Y1564 != nil:
 		populateY1564Params(modCfg, cfg.Y1564)
 	case isY1731Test(testType) && cfg.Y1731 != nil:
 		populateY1731Params(modCfg, cfg.Y1731)
@@ -168,29 +169,34 @@ func convertToModuleConfig(iface, testType string, cfg *TestConfig) *modtypes.Te
 	return modCfg
 }
 
-// Test type classification helpers.
-func isRFC2544Test(testType string) bool {
-	return len(testType) >= 7 && testType[:7] == "rfc2544"
+// Test type classification helpers. Each test type reads exactly one block of
+// TestConfig, chosen by these; the CLI uses the exported two to send only the
+// block its RFC 2544 and Y.1564 flags fill (stem#1412).
+
+// IsRFC2544Test reports whether testType reads TestConfig.RFC2544.
+func IsRFC2544Test(testType string) bool {
+	return strings.HasPrefix(testType, "rfc2544")
 }
 
 func isRFC2889Test(testType string) bool {
-	return len(testType) >= 7 && testType[:7] == "rfc2889"
+	return strings.HasPrefix(testType, "rfc2889")
 }
 
 func isRFC6349Test(testType string) bool {
-	return len(testType) >= 7 && testType[:7] == "rfc6349"
+	return strings.HasPrefix(testType, "rfc6349")
 }
 
-func isY1564Test(testType string) bool {
-	return len(testType) >= 5 && testType[:5] == "y1564"
+// IsY1564Test reports whether testType reads TestConfig.Y1564.
+func IsY1564Test(testType string) bool {
+	return strings.HasPrefix(testType, "y1564")
 }
 
 func isY1731Test(testType string) bool {
-	return len(testType) >= 5 && testType[:5] == "y1731"
+	return strings.HasPrefix(testType, "y1731")
 }
 
 func isTSNTest(testType string) bool {
-	return len(testType) >= 3 && testType[:3] == "tsn"
+	return strings.HasPrefix(testType, "tsn")
 }
 
 func isTrafficGenTest(testType string) bool {

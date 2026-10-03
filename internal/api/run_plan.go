@@ -278,9 +278,9 @@ func stepFrameSizes(step RunPlanStep) []uint32 {
 		return nil
 	}
 	switch {
-	case isRFC2544Test(step.TestType) && step.Config.RFC2544 != nil:
+	case IsRFC2544Test(step.TestType) && step.Config.RFC2544 != nil:
 		return step.Config.RFC2544.FrameSizes
-	case isY1564Test(step.TestType) && step.Config.Y1564 != nil:
+	case IsY1564Test(step.TestType) && step.Config.Y1564 != nil:
 		return step.Config.Y1564.FrameSizes
 	default:
 		return nil

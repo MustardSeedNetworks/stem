@@ -185,26 +185,7 @@ func buildStartRequest(
 	for _, testType := range tests {
 		steps = append(steps, api.TestStepRequest{
 			TestType: testType,
-			Config: &api.TestConfig{
-				RFC2544: &api.RFC2544TestConfig{
-					Duration:   flags.duration,
-					FrameSizes: frameSizes,
-					Resolution: flags.resolution,
-					MaxLoss:    flags.maxLoss,
-					Warmup:     flags.warmup,
-					Trials:     defaultTrials,
-				},
-				Y1564: &api.Y1564TestConfig{
-					CIR:                flags.cir,
-					EIR:                flags.eir,
-					FrameSizes:         frameSizes,
-					FDThreshold:        flags.fdThreshold,
-					FDVThreshold:       flags.fdvThreshold,
-					FLRThreshold:       flags.flrThreshold,
-					ConfigStepDuration: seconds,
-					PerfTestDuration:   seconds,
-				},
-			},
+			Config:   stepConfig(flags, testType, frameSizes, seconds),
 		})
 	}
 	return api.TestStartRequest{
@@ -212,6 +193,38 @@ func buildStartRequest(
 		Peer:      flags.peer,
 		PeerPort:  flags.peerPort,
 		Tests:     steps,
+	}
+}
+
+// stepConfig is the one config block testType reads, filled from the flags.
+// The daemon validates every block a step carries, so a block for another
+// standard is not inert: a Y.1564 block holding the RFC 2544 sizes refused the
+// default 64-byte throughput run (stem#1412). A test type the flags do not
+// configure gets no block, and its module applies its own defaults.
+func stepConfig(flags *testCmdFlags, testType string, frameSizes []uint32, seconds uint32) *api.TestConfig {
+	switch {
+	case api.IsRFC2544Test(testType):
+		return &api.TestConfig{RFC2544: &api.RFC2544TestConfig{
+			Duration:   flags.duration,
+			FrameSizes: frameSizes,
+			Resolution: flags.resolution,
+			MaxLoss:    flags.maxLoss,
+			Warmup:     flags.warmup,
+			Trials:     defaultTrials,
+		}}
+	case api.IsY1564Test(testType):
+		return &api.TestConfig{Y1564: &api.Y1564TestConfig{
+			CIR:                flags.cir,
+			EIR:                flags.eir,
+			FrameSizes:         frameSizes,
+			FDThreshold:        flags.fdThreshold,
+			FDVThreshold:       flags.fdvThreshold,
+			FLRThreshold:       flags.flrThreshold,
+			ConfigStepDuration: seconds,
+			PerfTestDuration:   seconds,
+		}}
+	default:
+		return nil
 	}
 }
 
