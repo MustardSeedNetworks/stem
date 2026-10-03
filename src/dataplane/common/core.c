@@ -1121,15 +1121,16 @@ int run_trial_custom(rfc2544_ctx_t *ctx, uint32_t frame_size, double rate_pct,
 
     worker_ctx_t *wctx = &ctx->workers[0];
 
-    /* Create packet template */
-    uint8_t *pkt_buffer = malloc(frame_size);
+    /* As in run_trial: the NIC appends the FCS. */
+    const uint32_t packet_size = frame_size - RFC2544_FCS_SIZE;
+    uint8_t       *pkt_buffer  = malloc(packet_size);
     if (!pkt_buffer) {
         return -ENOMEM;
     }
 
     /* Create packet with custom signature */
     custom_payload_t *payload = custom_create_packet_template(
-        pkt_buffer, frame_size, ctx->local_mac, ctx->remote_mac, ctx->local_ip, ctx->remote_ip,
+        pkt_buffer, packet_size, ctx->local_mac, ctx->remote_mac, ctx->local_ip, ctx->remote_ip,
         ctx->source_port, ctx->remote_port, stream_id, signature);
 
     if (!payload) {
@@ -1168,7 +1169,7 @@ int run_trial_custom(rfc2544_ctx_t *ctx, uint32_t frame_size, double rate_pct,
     /* Prepare TX packet */
     packet_t tx_pkt;
     tx_pkt.data = pkt_buffer;
-    tx_pkt.len  = frame_size;
+    tx_pkt.len  = packet_size;
 
     /* RX buffer */
     packet_t rx_pkts[64];

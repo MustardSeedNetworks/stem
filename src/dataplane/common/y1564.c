@@ -357,8 +357,10 @@ static int y1564_run_step(rfc2544_ctx_t *ctx, const y1564_service_t *service, do
         return -EINVAL;
     }
 
-    /* Create packet template */
-    uint8_t *pkt_buffer = malloc(frame_size);
+    /* The NIC appends the FCS, so the buffer is four bytes shorter than the
+     * frame size used for pacing and results. */
+    const uint32_t packet_size = frame_size - RFC2544_FCS_SIZE;
+    uint8_t       *pkt_buffer  = malloc(packet_size);
     if (!pkt_buffer) {
         return -ENOMEM;
     }
@@ -376,7 +378,7 @@ static int y1564_run_step(rfc2544_ctx_t *ctx, const y1564_service_t *service, do
 
     /* Create Y.1564 packet with service DSCP marking */
     y1564_payload_t *payload =
-        y1564_create_packet_template(pkt_buffer, frame_size, src_mac, dst_mac, src_ip, dst_ip,
+        y1564_create_packet_template(pkt_buffer, packet_size, src_mac, dst_mac, src_ip, dst_ip,
                                      source_port, remote_port, service->service_id, service->cos);
     if (!payload) {
         free(pkt_buffer);
@@ -418,7 +420,7 @@ static int y1564_run_step(rfc2544_ctx_t *ctx, const y1564_service_t *service, do
     /* Prepare TX packet */
     packet_t tx_pkt;
     tx_pkt.data = pkt_buffer;
-    tx_pkt.len  = frame_size;
+    tx_pkt.len  = packet_size;
 
     /* RX buffer */
     packet_t rx_pkts[64];
