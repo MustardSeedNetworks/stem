@@ -12,7 +12,8 @@
  * - NOT persisted via Zustand (the localStorage flag is the only persisted bit).
  * - `refreshAccessToken` is single-flight: concurrent 401s share one in-flight
  *   refresh, so one failed refresh can't expire a session another request just
- *   renewed.
+ *   renewed. A 401 for a request sent before the last refresh retries without
+ *   refreshing again.
  * - On logout/expiry we `cancelQueries()` THEN `clear()` the React Query cache,
  *   so a request in flight at logout cannot resolve afterwards and repopulate
  *   cross-session data.
@@ -72,6 +73,13 @@ function writeAuthFlag(value: boolean): void {
 
 // Single-flight refresh: all concurrent 401s await the same in-flight promise.
 let refreshPromise: Promise<boolean> | null = null;
+// Bumped by every successful refresh. A 401 can arrive after the refresh that
+// already cured it: the request went out with the expired cookie, and the
+// single-flight promise has since settled. Refreshing again would present the
+// new access token, and the daemon CSRF-checks a refresh that carries one, so
+// the header-less second refresh is refused and the user is signed out (#1455).
+// Such a 401 retries instead.
+let refreshGeneration = 0;
 
 function refreshAccessToken(): Promise<boolean> {
   if (!refreshPromise) {
@@ -91,6 +99,7 @@ function refreshAccessToken(): Promise<boolean> {
           // means every waiter woken by this refresh re-fetches, rather than
           // retrying with a token the daemon will 403 (#1315).
           invalidateCsrfToken();
+          refreshGeneration += 1;
         }
         return response.ok;
       } catch {
@@ -392,10 +401,11 @@ export async function authFetch(input: RequestInfo, init: RequestInit = {}): Pro
     return fetch(input, { ...init, headers, credentials: 'include' });
   };
 
+  const sentAt = refreshGeneration;
   const response = await send();
 
   if (response.status === 401) {
-    const refreshed = await refreshAccessToken();
+    const refreshed = refreshGeneration !== sentAt || (await refreshAccessToken());
     if (refreshed) {
       const retry = await send();
       // Only a retry that is *still* 401 means the session is truly gone; any

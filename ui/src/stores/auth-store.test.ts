@@ -272,6 +272,43 @@ describe('authFetch', () => {
     expect(refreshCalls.length).toBe(1);
   });
 
+  it('a 401 delivered after another request refreshed retries without refreshing again', async () => {
+    useAuthStore.setState({ isAuthenticated: true });
+    let accessTokenValid = false;
+    let deliverStale: (() => void) | undefined;
+    const answer = (): Response =>
+      accessTokenValid ? jsonResponse({ ok: true }) : new Response(null, { status: 401 });
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation((input) => {
+      const url = String(input);
+      if (url.includes('/auth/refresh')) {
+        // The daemon CSRF-checks a refresh that presents a live access token,
+        // and authFetch's refresh carries no header (routes.go).
+        if (accessTokenValid) {
+          return Promise.resolve(textResponse('CSRF token missing', 403));
+        }
+        accessTokenValid = true;
+        return Promise.resolve(new Response(null, { status: 200 }));
+      }
+      if (url.endsWith('/stats') && deliverStale === undefined) {
+        // Answered for the expired cookie, delivered only once released.
+        const stale = answer();
+        return new Promise((resolve) => {
+          deliverStale = () => resolve(stale);
+        });
+      }
+      return Promise.resolve(answer());
+    });
+
+    const poll = authFetch('/api/v1/stats');
+    expect((await authFetch('/api/v1/tests/status')).status).toBe(200);
+    deliverStale?.();
+
+    expect((await poll).status).toBe(200);
+    const refreshCalls = fetchSpy.mock.calls.filter((c) => String(c[0]).includes('/auth/refresh'));
+    expect(refreshCalls).toHaveLength(1);
+    expect(useAuthStore.getState().isAuthenticated).toBe(true);
+  });
+
   /**
    * The daemon keys CSRF tokens by sha256(bearer) (internal/auth/csrf.go), so a
    * refresh mints a new access token and with it a new key that holds no token.
