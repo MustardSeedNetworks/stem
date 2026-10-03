@@ -276,6 +276,44 @@ typedef struct {
 } y1564_trial_t;
 
 /**
+ * Drain one receive batch, counting this service's frames sent inside the
+ * measured window.
+ *
+ * A frame stamped during warmup, or by an earlier step, can come back after
+ * the counters reset; it was never counted as sent, so counting it on receipt
+ * hides real loss (#1457). The TX timestamp it carries tells them apart.
+ *
+ * @param warmup_last_tx_ns TX timestamp of the last frame stamped before the
+ *                          measured window
+ */
+static void y1564_receive_measured(const platform_ops_t *platform, worker_ctx_t *wctx,
+                                   packet_t *rx_pkts, uint32_t service_id,
+                                   uint64_t warmup_last_tx_ns, uint64_t *frames_rx,
+                                   uint64_t *latency_samples, uint32_t *latency_count,
+                                   uint32_t latency_capacity)
+{
+    int recv_count = platform->recv_batch(wctx, rx_pkts, 64);
+    for (int i = 0; i < recv_count; i++) {
+        const uint8_t *data = rx_pkts[i].data;
+        uint32_t       len  = rx_pkts[i].len;
+        if (!y1564_is_valid_response(data, len) || y1564_get_service_id(data, len) != service_id) {
+            continue;
+        }
+        uint64_t tx_ts = y1564_get_tx_timestamp(data, len);
+        if (tx_ts <= warmup_last_tx_ns) {
+            continue;
+        }
+        (*frames_rx)++;
+        if (*latency_count < latency_capacity) {
+            latency_samples[(*latency_count)++] = rx_pkts[i].timestamp - tx_ts;
+        }
+    }
+    if (recv_count > 0) {
+        platform->release_batch(wctx, rx_pkts, recv_count);
+    }
+}
+
+/**
  * Run a single Y.1564 step trial
  *
  * @param ctx          Test context
@@ -387,10 +425,11 @@ static int y1564_run_step(rfc2544_ctx_t *ctx, const y1564_service_t *service, do
     memset(rx_pkts, 0, sizeof(rx_pkts));
 
     /* Start trial */
-    uint32_t seq_num        = 0;
-    uint64_t frames_tx      = 0;
-    uint64_t frames_rx      = 0;
-    bool     in_measurement = false;
+    uint32_t seq_num           = 0;
+    uint64_t frames_tx         = 0;
+    uint64_t frames_rx         = 0;
+    uint64_t warmup_last_tx_ns = 0;
+    bool     in_measurement    = false;
 
     trial_timer_start(timer);
     pacing_reset(pacer);
@@ -414,6 +453,9 @@ static int y1564_run_step(rfc2544_ctx_t *ctx, const y1564_service_t *service, do
         y1564_stamp_packet(payload, seq_num, tx_ts);
         tx_pkt.timestamp = tx_ts;
         tx_pkt.seq_num   = seq_num;
+        if (!in_measurement) {
+            warmup_last_tx_ns = tx_ts;
+        }
 
         int sent = platform->send_batch(wctx, &tx_pkt, 1);
         if (sent > 0 && in_measurement) {
@@ -422,53 +464,15 @@ static int y1564_run_step(rfc2544_ctx_t *ctx, const y1564_service_t *service, do
             pacing_record_tx(pacer, 1, frame_size);
         }
 
-        /* RX: Check for returned packets */
-        int recv_count = platform->recv_batch(wctx, rx_pkts, 64);
-        for (int i = 0; i < recv_count; i++) {
-            if (y1564_is_valid_response(rx_pkts[i].data, rx_pkts[i].len)) {
-                uint32_t rx_service = y1564_get_service_id(rx_pkts[i].data, rx_pkts[i].len);
-
-                /* Only count packets for this service */
-                if (rx_service == service->service_id && in_measurement) {
-                    frames_rx++;
-
-                    /* Record latency */
-                    if (latency_count < latency_capacity) {
-                        uint64_t tx_ts_pkt =
-                            y1564_get_tx_timestamp(rx_pkts[i].data, rx_pkts[i].len);
-                        uint64_t latency                 = rx_pkts[i].timestamp - tx_ts_pkt;
-                        latency_samples[latency_count++] = latency;
-                    }
-                }
-            }
-        }
-
-        if (recv_count > 0) {
-            platform->release_batch(wctx, rx_pkts, recv_count);
-        }
+        y1564_receive_measured(platform, wctx, rx_pkts, service->service_id, warmup_last_tx_ns,
+                               &frames_rx, latency_samples, &latency_count, latency_capacity);
     }
 
     /* Wait for straggler packets */
     for (int i = 0; i < 10 && !rfc2544_is_cancelled(ctx); i++) {
         usleep(10000);
-        int recv_count = platform->recv_batch(wctx, rx_pkts, 64);
-        for (int j = 0; j < recv_count; j++) {
-            if (y1564_is_valid_response(rx_pkts[j].data, rx_pkts[j].len)) {
-                uint32_t rx_service = y1564_get_service_id(rx_pkts[j].data, rx_pkts[j].len);
-                if (rx_service == service->service_id) {
-                    frames_rx++;
-                    if (latency_count < latency_capacity) {
-                        uint64_t tx_ts_pkt =
-                            y1564_get_tx_timestamp(rx_pkts[j].data, rx_pkts[j].len);
-                        uint64_t latency                 = rx_pkts[j].timestamp - tx_ts_pkt;
-                        latency_samples[latency_count++] = latency;
-                    }
-                }
-            }
-        }
-        if (recv_count > 0) {
-            platform->release_batch(wctx, rx_pkts, recv_count);
-        }
+        y1564_receive_measured(platform, wctx, rx_pkts, service->service_id, warmup_last_tx_ns,
+                               &frames_rx, latency_samples, &latency_count, latency_capacity);
     }
 
     /* Calculate results */
