@@ -106,14 +106,14 @@ func (e *Executor) Execute(testType string, cfg *modtypes.TestConfig) (*modtypes
 	}
 
 	var data any
-	var passed bool
+	var failure string
 	var runErr error
 
 	switch testType {
 	case "y1564_config", "y1564_perf", "y1564":
-		data, passed, runErr = e.runY1564(testType, cfg)
+		data, failure, runErr = e.runY1564(testType, cfg)
 	case "mef_config", "mef_perf", "mef":
-		data, passed, runErr = e.runMEF(testType, cfg)
+		data, failure, runErr = e.runMEF(testType, cfg)
 	default:
 		return nil, modtypes.ErrTestNotImplemented
 	}
@@ -125,17 +125,40 @@ func (e *Executor) Execute(testType string, cfg *modtypes.TestConfig) (*modtypes
 
 	// The run completing says nothing about the service: the verdict is the
 	// measurement's, and a failed one keeps its data so the operator sees why.
-	result.Success = passed
+	result.Success = failure == ""
 	result.Data = data
-	if !passed {
-		result.Error = "the service did not meet its acceptance criteria"
-	}
+	result.Error = failure
 	return result, nil
 }
 
-// runY1564 returns the measurement and whether the service met its
-// acceptance criteria.
-func (e *Executor) runY1564(testType string, cfg *modtypes.TestConfig) (any, bool, error) {
+// errCriteriaNotMet is the failure of a service that was measured and missed
+// its acceptance criteria.
+const errCriteriaNotMet = "the service did not meet its acceptance criteria"
+
+// verdict turns a service verdict into the operator-facing failure, empty
+// when the service passed.
+func verdict(passed bool) string {
+	if passed {
+		return ""
+	}
+	return errCriteriaNotMet
+}
+
+// y1564Verdict is verdict for Y.1564, which also says when a failed half sent
+// nothing and so measured nothing (#1482). Either half may be nil.
+func y1564Verdict(config *dataplane.Y1564ConfigResult, perf *dataplane.Y1564PerfResult) string {
+	if (config == nil || config.ServicePass) && (perf == nil || perf.ServicePass) {
+		return ""
+	}
+	if (config != nil && !config.ServicePass && config.NothingTransmitted()) ||
+		(perf != nil && !perf.ServicePass && perf.NothingTransmitted()) {
+		return dataplane.ErrY1564NothingTransmitted.Error()
+	}
+	return errCriteriaNotMet
+}
+
+// runY1564 returns the measurement and, when the service failed, why.
+func (e *Executor) runY1564(testType string, cfg *modtypes.TestConfig) (any, string, error) {
 	service := e.buildY1564Service(cfg)
 	duration := e.safeDuration(cfg.Duration, defaultPerfDurationSec)
 
@@ -143,64 +166,63 @@ func (e *Executor) runY1564(testType string, cfg *modtypes.TestConfig) (any, boo
 	case "y1564_config":
 		data, err := e.dp.RunY1564ConfigTest(service)
 		if err != nil {
-			return nil, false, fmt.Errorf("y1564 config test: %w", err)
+			return nil, "", fmt.Errorf("y1564 config test: %w", err)
 		}
-		return data, data.ServicePass, nil
+		return data, y1564Verdict(data, nil), nil
 	case "y1564_perf":
 		data, err := e.dp.RunY1564PerfTest(service, duration)
 		if err != nil {
-			return nil, false, fmt.Errorf("y1564 perf test: %w", err)
+			return nil, "", fmt.Errorf("y1564 perf test: %w", err)
 		}
-		return data, data.ServicePass, nil
+		return data, y1564Verdict(nil, data), nil
 	case "y1564":
 		configResult, configErr := e.dp.RunY1564ConfigTest(service)
 		if configErr != nil {
-			return nil, false, fmt.Errorf("y1564 config test: %w", configErr)
+			return nil, "", fmt.Errorf("y1564 config test: %w", configErr)
 		}
 
 		perfResult, perfErr := e.dp.RunY1564PerfTest(service, duration)
 		if perfErr != nil {
-			return nil, false, fmt.Errorf("y1564 perf test: %w", perfErr)
+			return nil, "", fmt.Errorf("y1564 perf test: %w", perfErr)
 		}
 
 		return map[string]any{
 			"config":      configResult,
 			"performance": perfResult,
-		}, configResult.ServicePass && perfResult.ServicePass, nil
+		}, y1564Verdict(configResult, perfResult), nil
 	default:
-		return nil, false, modtypes.ErrTestNotImplemented
+		return nil, "", modtypes.ErrTestNotImplemented
 	}
 }
 
-// runMEF returns the measurement and whether the service met its acceptance
-// criteria.
-func (e *Executor) runMEF(testType string, cfg *modtypes.TestConfig) (any, bool, error) {
+// runMEF returns the measurement and, when the service failed, why.
+func (e *Executor) runMEF(testType string, cfg *modtypes.TestConfig) (any, string, error) {
 	mefConfig := e.buildMEFConfig(cfg)
 
 	switch testType {
 	case "mef_config":
 		data, err := e.dp.RunMEFConfigTest(mefConfig)
 		if err != nil {
-			return nil, false, fmt.Errorf("mef config test: %w", err)
+			return nil, "", fmt.Errorf("mef config test: %w", err)
 		}
-		return data, data.OverallPassed, nil
+		return data, verdict(data.OverallPassed), nil
 	case "mef_perf":
 		data, err := e.dp.RunMEFPerfTest(mefConfig)
 		if err != nil {
-			return nil, false, fmt.Errorf("mef performance test: %w", err)
+			return nil, "", fmt.Errorf("mef performance test: %w", err)
 		}
-		return data, data.OverallPassed, nil
+		return data, verdict(data.OverallPassed), nil
 	case "mef":
 		configResult, perfResult, runErr := e.dp.RunMEFFullTest(mefConfig)
 		if runErr != nil {
-			return nil, false, fmt.Errorf("mef full test: %w", runErr)
+			return nil, "", fmt.Errorf("mef full test: %w", runErr)
 		}
 		return map[string]any{
 			"config":      configResult,
 			"performance": perfResult,
-		}, configResult.OverallPassed && perfResult.OverallPassed, nil
+		}, verdict(configResult.OverallPassed && perfResult.OverallPassed), nil
 	default:
-		return nil, false, modtypes.ErrTestNotImplemented
+		return nil, "", modtypes.ErrTestNotImplemented
 	}
 }
 

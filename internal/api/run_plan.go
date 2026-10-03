@@ -327,7 +327,7 @@ func (s *Server) finishPlanStep(
 		default:
 			logCause = "test returned an unsuccessful result: " + result.Error
 			step.Error = result.Error
-			s.testError = causeCriteriaNotMet
+			s.testError = classifyResultCause(result.Error)
 		}
 		step.Result = result
 		for later := index + 1; later < len(s.runPlan.Steps); later++ {

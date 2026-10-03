@@ -34,18 +34,26 @@ func (*planExecutor) Execute(testType string, _ *modtypes.TestConfig) (*modtypes
 	}, nil
 }
 
-// failedServiceDataplane answers a Y.1564 configuration test with the
-// verdict the ST-2 bench saw with its reflector stopped: every frame lost.
+// failedServiceDataplane answers a Y.1564 configuration test with a failed
+// verdict whose steps each sent framesTx frames and got none back: with
+// framesTx > 0 that is the ST-2 bench with its reflector stopped, and with 0
+// it is a frame too large for the MTU, which never left the host (#1482).
 // The embedded interface is nil, so any other runner panics if called.
 type failedServiceDataplane struct {
 	servicetest.ServiceDataplane
+
+	framesTx uint64
 }
 
 func (failedServiceDataplane) Configure(*dataplane.Config) error { return nil }
 func (failedServiceDataplane) Close()                            {}
 
-func (failedServiceDataplane) RunY1564ConfigTest(*dataplane.Y1564Service) (*dataplane.Y1564ConfigResult, error) {
-	return &dataplane.Y1564ConfigResult{ServiceID: 1, ServicePass: false}, nil
+func (d failedServiceDataplane) RunY1564ConfigTest(*dataplane.Y1564Service) (*dataplane.Y1564ConfigResult, error) {
+	result := &dataplane.Y1564ConfigResult{ServiceID: 1, ServicePass: false}
+	for i := range result.Steps {
+		result.Steps[i] = dataplane.Y1564StepResult{Step: uint32(i + 1), FramesTx: d.framesTx}
+	}
+	return result, nil
 }
 
 func TestRunPlanStopsAfterFailedStep(t *testing.T) {
@@ -64,7 +72,7 @@ func TestRunPlanStopsAfterFailedStep(t *testing.T) {
 // plan, keeps its measurements, and skips what follows (#1463).
 func TestRunPlanFailsOnFailedServiceVerdict(t *testing.T) {
 	s, token, ifaceName := startPlanServer(t, func(string) (api.TestExecutor, error) {
-		return servicetest.NewExecutorWithDataplane(failedServiceDataplane{}), nil
+		return servicetest.NewExecutorWithDataplane(failedServiceDataplane{framesTx: 1000}), nil
 	})
 	stats := runPlanUntilFailed(t, s, token, ifaceName, `
 		{"testType":"y1564_config"},
@@ -78,6 +86,24 @@ func TestRunPlanFailsOnFailedServiceVerdict(t *testing.T) {
 	}
 	if stats.Steps[0].Result == nil || stats.Steps[0].Result.Data == nil {
 		t.Errorf("the failed step dropped its measurements: %+v", stats.Steps[0].Result)
+	}
+}
+
+// A Y.1564 step that put no frame on the wire fails, and the run says nothing
+// was sent rather than that the service missed its criteria (#1482).
+func TestRunPlanReportsAServiceThatTransmittedNothing(t *testing.T) {
+	s, token, ifaceName := startPlanServer(t, func(string) (api.TestExecutor, error) {
+		return servicetest.NewExecutorWithDataplane(failedServiceDataplane{framesTx: 0}), nil
+	})
+	stats := runPlanUntilFailed(t, s, token, ifaceName, `
+		{"testType":"y1564_config"},
+		{"testType":"y1564_config"}`)
+	assertStepStatuses(t, stats, "failed", "skipped")
+	if !strings.Contains(stats.Steps[0].Error, "transmitted no frames") {
+		t.Errorf("step error = %q, want it to say no frames were transmitted", stats.Steps[0].Error)
+	}
+	if !strings.Contains(stats.ErrorMessage, "transmitted no frames") {
+		t.Errorf("run error = %q, want it to say no frames were transmitted", stats.ErrorMessage)
 	}
 }
 

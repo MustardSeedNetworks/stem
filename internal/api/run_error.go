@@ -29,6 +29,10 @@ const (
 	// its acceptance criteria (#1463): nothing faulted, and the step's own
 	// result says which criterion failed, so the daemon log has nothing to add.
 	causeCriteriaNotMet = "The test ran and did not meet its acceptance criteria. See the step results."
+	// causeNothingSent is a run that failed because a step put no frame on the
+	// wire, so it measured nothing (#1482). A frame larger than the interface
+	// MTU is the usual reason, which is what the operator should check first.
+	causeNothingSent = "The test transmitted no frames. Check the frame size against the interface MTU."
 )
 
 // classifyRunCause maps a failure's own wording onto the closed set above.
@@ -65,4 +69,13 @@ func classifyRunCause(cause string) string {
 	default:
 		return causeGeneric
 	}
+}
+
+// classifyResultCause is the cause of a run whose step measured and returned
+// an unsuccessful result, from the result's own failure text.
+func classifyResultCause(failure string) string {
+	if strings.Contains(failure, dataplane.ErrY1564NothingTransmitted.Error()) {
+		return causeNothingSent
+	}
+	return causeCriteriaNotMet
 }

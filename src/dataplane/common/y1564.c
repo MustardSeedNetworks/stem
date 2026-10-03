@@ -561,10 +561,16 @@ int y1564_config_test(rfc2544_ctx_t *ctx, const y1564_service_t *service,
         sr->fd_max_ms           = trial.fd_max_ms;
         sr->fdv_ms              = trial.fdv_ms;
 
-        /* Evaluate pass/fail against SLA thresholds */
-        sr->flr_pass  = (trial.flr_pct <= service->sla.flr_threshold_pct);
-        sr->fd_pass   = (trial.fd_avg_ms <= service->sla.fd_threshold_ms);
-        sr->fdv_pass  = (trial.fdv_ms <= service->sla.fdv_threshold_ms);
+        /* A step that put nothing on the wire measured nothing: FLR, FD and FDV
+         * keep their zero initial values, which every threshold accepts (#1482). */
+        bool measured = trial.frames_tx > 0;
+        if (!measured) {
+            y1564_log(LOG_ERROR, "Step %d transmitted no frames (frame size %u)", step + 1,
+                      service->frame_size);
+        }
+        sr->flr_pass  = measured && (trial.flr_pct <= service->sla.flr_threshold_pct);
+        sr->fd_pass   = measured && (trial.fd_avg_ms <= service->sla.fd_threshold_ms);
+        sr->fdv_pass  = measured && (trial.fdv_ms <= service->sla.fdv_threshold_ms);
         sr->step_pass = sr->flr_pass && sr->fd_pass && sr->fdv_pass;
 
         if (!sr->step_pass) {
@@ -628,10 +634,15 @@ int y1564_perf_test(rfc2544_ctx_t *ctx, const y1564_service_t *service, uint32_t
     result->fd_max_ms = trial.fd_max_ms;
     result->fdv_ms    = trial.fdv_ms;
 
-    /* Evaluate pass/fail */
-    result->flr_pass     = (trial.flr_pct <= service->sla.flr_threshold_pct);
-    result->fd_pass      = (trial.fd_avg_ms <= service->sla.fd_threshold_ms);
-    result->fdv_pass     = (trial.fdv_ms <= service->sla.fdv_threshold_ms);
+    /* As in the configuration test, nothing sent is nothing measured (#1482). */
+    bool measured = trial.frames_tx > 0;
+    if (!measured) {
+        y1564_log(LOG_ERROR, "Performance test transmitted no frames (frame size %u)",
+                  service->frame_size);
+    }
+    result->flr_pass     = measured && (trial.flr_pct <= service->sla.flr_threshold_pct);
+    result->fd_pass      = measured && (trial.fd_avg_ms <= service->sla.fd_threshold_ms);
+    result->fdv_pass     = measured && (trial.fdv_ms <= service->sla.fdv_threshold_ms);
     result->service_pass = result->flr_pass && result->fd_pass && result->fdv_pass;
 
     y1564_log(LOG_INFO,
