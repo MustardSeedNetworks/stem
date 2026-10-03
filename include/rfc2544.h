@@ -188,6 +188,7 @@ typedef struct {
     uint64_t max_burst;      /* Maximum burst length with 0% loss */
     double   burst_duration; /* Burst duration in microseconds */
     uint32_t trials;         /* Number of trials performed */
+    uint64_t frames_recv;    /* Frames returned by the peer across every trial */
 } burst_result_t;
 
 /* System recovery test result (Section 26.5) */

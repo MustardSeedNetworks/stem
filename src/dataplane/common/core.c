@@ -1528,6 +1528,7 @@ int rfc2544_back_to_back_test(rfc2544_ctx_t *ctx, uint32_t frame_size, burst_res
     uint64_t max_burst     = 0;
     uint64_t current_burst = ctx->config.initial_burst;
     uint32_t trials_passed = 0;
+    uint64_t frames_recv   = 0;
 
     /* Calculate max theoretical burst based on memory */
     uint64_t max_possible = 1000000; /* Cap at 1M frames */
@@ -1555,6 +1556,7 @@ int rfc2544_back_to_back_test(rfc2544_ctx_t *ctx, uint32_t frame_size, burst_res
                 rfc2544_log(LOG_ERROR, "Burst trial failed: %d", ret);
                 return ret;
             }
+            frames_recv += trial_result.packets_recv;
 
             if (trial_result.loss_pct > 0) {
                 all_passed = false;
@@ -1576,6 +1578,7 @@ int rfc2544_back_to_back_test(rfc2544_ctx_t *ctx, uint32_t frame_size, burst_res
     result->max_burst      = max_burst;
     result->burst_duration = (double)max_burst * 1e6 / calc_max_pps(ctx->line_rate, frame_size);
     result->trials         = trials_passed;
+    result->frames_recv    = frames_recv;
 
     rfc2544_log(LOG_INFO, "Back-to-back result: max_burst=%lu frames (%.1f us)", result->max_burst,
                 result->burst_duration);

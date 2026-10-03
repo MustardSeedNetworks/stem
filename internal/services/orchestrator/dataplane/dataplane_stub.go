@@ -91,6 +91,7 @@ type BurstResult struct {
 	MaxBurst      uint64
 	BurstDuration float64
 	Trials        uint32
+	FramesRecv    uint64
 }
 
 // RecoveryResult holds RFC 2544 system recovery test results.

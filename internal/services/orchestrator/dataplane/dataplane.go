@@ -348,5 +348,6 @@ func (c *Context) runBackToBackTestInternal(frameSize uint32) (*BurstResult, err
 		MaxBurst:      uint64(result.max_burst),
 		BurstDuration: float64(result.burst_duration),
 		Trials:        uint32(result.trials),
+		FramesRecv:    uint64(result.frames_recv),
 	}, nil
 }

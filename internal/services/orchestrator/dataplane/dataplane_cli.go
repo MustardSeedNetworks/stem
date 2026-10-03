@@ -75,6 +75,9 @@ func (c *Context) RunLatencyTest(loadLevels []float64) ([]LatencyResultCLI, erro
 	if len(results) == 0 {
 		return nil, errors.New("no latency results")
 	}
+	if err := latencyVerdict(results); err != nil {
+		return nil, err
+	}
 
 	return results, nil
 }
@@ -83,6 +86,9 @@ func (c *Context) RunLatencyTest(loadLevels []float64) ([]LatencyResultCLI, erro
 func (c *Context) RunFrameLossTest(_, _, _ float64) ([]FrameLossResultCLI, error) {
 	results, err := c.runFrameLossTestInternal(c.frameSize)
 	if err != nil {
+		return nil, err
+	}
+	if err = frameLossVerdict(results); err != nil {
 		return nil, err
 	}
 
@@ -104,6 +110,9 @@ func (c *Context) RunFrameLossTest(_, _, _ float64) ([]FrameLossResultCLI, error
 func (c *Context) RunBackToBackTest(_ uint64, _ uint32) (*BackToBackResultCLI, error) {
 	result, err := c.runBackToBackTestInternal(c.frameSize)
 	if err != nil {
+		return nil, err
+	}
+	if err = backToBackVerdict(*result); err != nil {
 		return nil, err
 	}
 
