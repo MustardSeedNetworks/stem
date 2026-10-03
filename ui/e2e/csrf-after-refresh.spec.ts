@@ -57,22 +57,23 @@ test.describe('mutation after token refresh', () => {
     const primedToken = (await primedStart).request().headers()['x-csrf-token'] ?? '';
     expect(primedToken, 'the first start carried no CSRF token').not.toBe('');
 
-    // Expire the access token only; the refresh cookie stays, so the session
-    // recovers through a refresh. Which request takes the 401 — this mutation
-    // or the dashboard's one-second stats poll — is a race, and the assertions
-    // below deliberately do not depend on winning it. Pinning the exact
-    // 401 -> refresh -> retry ordering is the unit test's job
-    // (auth-store.test.ts), which controls every response.
-    const kept = (await context.cookies()).filter((c) => c.name !== ACCESS_COOKIE);
-    await context.clearCookies();
-    await context.addCookies(kept);
-
+    // Which request takes the 401 — this mutation or the one-second stats
+    // poll — is a race, and the assertions below deliberately do not depend on
+    // winning it. Pinning the exact 401 -> refresh -> retry ordering is the
+    // unit test's job (auth-store.test.ts), which controls every response.
+    // Listen before expiring: a poll-driven refresh can complete before the
+    // next line runs, and a listener registered after it waits out the test
+    // timeout (#1455).
     const refreshed = page.waitForResponse(
       (r) => r.url().endsWith('/api/v1/auth/refresh') && r.status() === 200,
     );
+    // Expire the access token only, in one call. The refresh cookie must never
+    // be absent: a poll landing in that gap fails its refresh and ends the
+    // session.
+    await context.clearCookies({ name: ACCESS_COOKIE });
+
     const settledStart = page.waitForResponse(
-      (r) =>
-        r.url().endsWith(START_ROUTE) && r.status() !== 401 && r.status() !== 403,
+      (r) => r.url().endsWith(START_ROUTE) && r.status() !== 401 && r.status() !== 403,
     );
     await expect(start).toBeEnabled();
     await start.click();
