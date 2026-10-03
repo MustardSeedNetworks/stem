@@ -134,58 +134,49 @@ test.describe('Desktop clarity and density', () => {
     await skipSetupWizard(page);
   });
 
+  // One test per route, so one slow navigation spends its own 30 s budget
+  // rather than the whole walk's, and a failure names the route (stem#1480).
   for (const width of DESKTOP_WIDTHS) {
-    test(`content fits its container at ${width}px on every route`, async ({ page }) => {
-      await page.setViewportSize({ width, height: VIEWPORT_HEIGHT });
-
-      const offenders: string[] = [];
-      for (const route of ROUTES) {
+    for (const route of ROUTES) {
+      test(`${route} content fits its container at ${width}px`, async ({ page }) => {
+        await page.setViewportSize({ width, height: VIEWPORT_HEIGHT });
         await page.goto(route);
         await expect(page.getByTestId('page-header-title')).toBeVisible();
 
-        for (const overflow of await findHorizontalOverflow(page)) {
-          offenders.push(
-            `${route} → ${overflow.selector} (content ${overflow.scrollWidth}px in ${overflow.clientWidth}px)`,
-          );
-        }
-      }
+        const offenders = (await findHorizontalOverflow(page)).map(
+          (overflow) =>
+            `${overflow.selector} (content ${overflow.scrollWidth}px in ${overflow.clientWidth}px)`,
+        );
 
-      expect(
-        offenders,
-        `no element may scroll sideways at ${width}px without data-phone-width-exempt`,
-      ).toEqual([]);
-    });
+        expect(
+          offenders,
+          `no element may scroll sideways at ${width}px without data-phone-width-exempt`,
+        ).toEqual([]);
+      });
+    }
   }
 
-  test('page chrome stays within its density budget at 1440px', async ({ page }, testInfo) => {
-    await page.setViewportSize({ width: 1440, height: VIEWPORT_HEIGHT });
-
-    const measured: Record<string, Density> = {};
-    const tooTall: string[] = [];
-
-    for (const route of ROUTES) {
+  for (const route of ROUTES) {
+    test(`${route} page chrome stays within its density budget at 1440px`, async ({
+      page,
+    }, testInfo) => {
+      await page.setViewportSize({ width: 1440, height: VIEWPORT_HEIGHT });
       await page.goto(route);
       await expect(page.getByTestId('page-header-title')).toBeVisible();
 
       const density = await measureDensity(page);
-      measured[route] = density;
+      await testInfo.attach('density-1440.json', {
+        body: JSON.stringify({ [route]: density }, null, 2),
+        contentType: 'application/json',
+      });
 
-      expect(density.headerFootprint, `${route} should render a page header`).toBeGreaterThan(0);
-      if (density.headerFootprint > MAX_PAGE_HEADER_FOOTPRINT_PX) {
-        tooTall.push(`${route} → page header ${density.headerFootprint}px`);
-      }
-    }
-
-    await testInfo.attach('density-1440.json', {
-      body: JSON.stringify(measured, null, 2),
-      contentType: 'application/json',
+      expect(density.headerFootprint, 'the route should render a page header').toBeGreaterThan(0);
+      expect(
+        density.headerFootprint,
+        `page header must stay within ${MAX_PAGE_HEADER_FOOTPRINT_PX}px (UI-STEM-18 ratchet)`,
+      ).toBeLessThanOrEqual(MAX_PAGE_HEADER_FOOTPRINT_PX);
     });
-
-    expect(
-      tooTall,
-      `page header must stay within ${MAX_PAGE_HEADER_FOOTPRINT_PX}px (UI-STEM-18 ratchet)`,
-    ).toEqual([]);
-  });
+  }
 
   test('the idle results strip is a strip, not an empty panel', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: VIEWPORT_HEIGHT });
