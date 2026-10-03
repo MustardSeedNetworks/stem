@@ -7,6 +7,7 @@ import (
 	"flag"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -230,7 +231,7 @@ func TestTestCmdRefusesUnknownTestTypes(t *testing.T) {
 // buildStartRequest is where a mistyped mapping silently changes what the
 // operator measured — the run plan the daemon executes comes from here.
 func TestBuildStartRequestCarriesTheFlagsItIsGiven(t *testing.T) {
-	req := buildStartRequest(&testCmdFlags{
+	flags := &testCmdFlags{
 		iface:        "eth3",
 		peer:         "192.0.2.10",
 		peerPort:     4842,
@@ -243,7 +244,8 @@ func TestBuildStartRequestCarriesTheFlagsItIsGiven(t *testing.T) {
 		fdThreshold:  3.5,
 		fdvThreshold: 1.25,
 		flrThreshold: 0.01,
-	}, []string{"rfc2544_throughput"}, []uint32{64, 1518}, 45)
+	}
+	req := buildStartRequest(flags, []string{"rfc2544_throughput", "y1564"}, []uint32{64, 1518}, 45)
 
 	if req.Interface != "eth3" {
 		t.Errorf("Interface = %q, want eth3", req.Interface)
@@ -251,8 +253,8 @@ func TestBuildStartRequestCarriesTheFlagsItIsGiven(t *testing.T) {
 	if req.Peer != "192.0.2.10" || req.PeerPort != 4842 {
 		t.Errorf("Peer = %s:%d, want 192.0.2.10:4842", req.Peer, req.PeerPort)
 	}
-	if len(req.Tests) != 1 || req.Tests[0].TestType != "rfc2544_throughput" {
-		t.Fatalf("Tests = %+v, want one rfc2544_throughput step", req.Tests)
+	if len(req.Tests) != 2 || req.Tests[0].TestType != "rfc2544_throughput" || req.Tests[1].TestType != "y1564" {
+		t.Fatalf("Tests = %+v, want rfc2544_throughput then y1564", req.Tests)
 	}
 
 	rfc := req.Tests[0].Config.RFC2544
@@ -262,11 +264,11 @@ func TestBuildStartRequestCarriesTheFlagsItIsGiven(t *testing.T) {
 	if rfc.Resolution != 0.25 || rfc.MaxLoss != 2.5 {
 		t.Errorf("RFC2544 resolution/maxLoss = %v/%v, want 0.25/2.5", rfc.Resolution, rfc.MaxLoss)
 	}
-	if len(rfc.FrameSizes) != 2 || rfc.FrameSizes[0] != 64 || rfc.FrameSizes[1] != 1518 {
+	if !slices.Equal(rfc.FrameSizes, []uint32{64, 1518}) {
 		t.Errorf("RFC2544 frame sizes = %v, want [64 1518]", rfc.FrameSizes)
 	}
 
-	y := req.Tests[0].Config.Y1564
+	y := req.Tests[1].Config.Y1564
 	if y.CIR != 100 || y.EIR != 20 {
 		t.Errorf("Y.1564 CIR/EIR = %v/%v, want 100/20", y.CIR, y.EIR)
 	}
@@ -275,6 +277,44 @@ func TestBuildStartRequestCarriesTheFlagsItIsGiven(t *testing.T) {
 	}
 	if y.ConfigStepDuration != 45 || y.PerfTestDuration != 45 {
 		t.Errorf("Y.1564 durations = %d/%d, want 45/45", y.ConfigStepDuration, y.PerfTestDuration)
+	}
+	if !slices.Equal(y.FrameSizes, []uint32{64, 1518}) {
+		t.Errorf("Y.1564 frame sizes = %v, want [64 1518]", y.FrameSizes)
+	}
+}
+
+// Each step carries only the block its standard reads. The daemon validates
+// every block present, so a stray Y.1564 block on an RFC 2544 step refused the
+// default 64-byte run (stem#1412).
+func TestBuildStartRequestSendsOnlyTheStepsOwnBlock(t *testing.T) {
+	for _, tc := range []struct {
+		testType      string
+		wantRFC2544   bool
+		wantY1564     bool
+		wantNilConfig bool
+	}{
+		{testType: "rfc2544_throughput", wantRFC2544: true},
+		{testType: "rfc2544_back_to_back", wantRFC2544: true},
+		{testType: "y1564", wantY1564: true},
+		{testType: "y1564_perf", wantY1564: true},
+		{testType: "tsn_isolation", wantNilConfig: true},
+	} {
+		t.Run(tc.testType, func(t *testing.T) {
+			req := buildStartRequest(&testCmdFlags{iface: "eth0", duration: 5}, []string{tc.testType}, []uint32{64}, 5)
+			cfg := req.Tests[0].Config
+			if tc.wantNilConfig {
+				if cfg != nil {
+					t.Fatalf("config = %+v, want none: the flags configure no block %s reads", cfg, tc.testType)
+				}
+				return
+			}
+			if got := cfg.RFC2544 != nil; got != tc.wantRFC2544 {
+				t.Errorf("RFC2544 block present = %v, want %v", got, tc.wantRFC2544)
+			}
+			if got := cfg.Y1564 != nil; got != tc.wantY1564 {
+				t.Errorf("Y1564 block present = %v, want %v", got, tc.wantY1564)
+			}
+		})
 	}
 }
 
