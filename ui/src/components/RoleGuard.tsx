@@ -8,7 +8,7 @@
  * ConfirmModal used by the header RoleChip.
  */
 import { AlertTriangle } from 'lucide-react';
-import { type FC, type ReactNode, useCallback, useState } from 'react';
+import { type ReactNode, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { type StemRole, useRole } from '../contexts/RoleContext';
 import { ConfirmModal } from './ui/ConfirmModal';
@@ -26,7 +26,7 @@ interface RoleGuardProps {
   children: ReactNode;
 }
 
-export const RoleGuard: FC<RoleGuardProps> = ({ requires, moduleName, superseded, children }) => {
+export function RoleGuard({ requires, moduleName, superseded, children }: RoleGuardProps) {
   const { t } = useTranslation();
   const { role, setRole } = useRole();
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -97,6 +97,6 @@ export const RoleGuard: FC<RoleGuardProps> = ({ requires, moduleName, superseded
       {children}
     </>
   );
-};
+}
 
 export default RoleGuard;

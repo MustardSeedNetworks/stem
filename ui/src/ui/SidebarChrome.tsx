@@ -17,7 +17,7 @@ import {
   Sun,
   Users,
 } from 'lucide-react';
-import { createElement, type FC, type ReactNode } from 'react';
+import { createElement, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Tooltip } from '../components/ui/Tooltip';
 import { iconSizes } from '../constants/sizes';
@@ -55,7 +55,7 @@ interface FooterIconButtonProps {
   'data-testid'?: string;
 }
 
-export const FooterIconButton: FC<FooterIconButtonProps> = ({
+export function FooterIconButton({
   collapsed,
   onClick,
   icon,
@@ -64,25 +64,27 @@ export const FooterIconButton: FC<FooterIconButtonProps> = ({
   ariaLabel,
   iconOnly = false,
   'data-testid': dataTestId,
-}) => (
-  <Tooltip text={title}>
-    <button
-      type="button"
-      onClick={(event) => {
-        event.currentTarget.focus();
-        onClick();
-      }}
-      data-testid={dataTestId}
-      className={`${collapsed ? 'w-full' : 'flex-1'} flex items-center ${
-        collapsed || iconOnly ? 'justify-center' : 'gap-compact'
-      } px-3 py-row rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors text-sm font-medium`}
-      aria-label={ariaLabel ?? title}
-    >
-      {createElement(icon, { className: `${iconSizes.md} flex-shrink-0` })}
-      {!collapsed && !iconOnly ? <span>{label}</span> : null}
-    </button>
-  </Tooltip>
-);
+}: FooterIconButtonProps) {
+  return (
+    <Tooltip text={title}>
+      <button
+        type="button"
+        onClick={(event) => {
+          event.currentTarget.focus();
+          onClick();
+        }}
+        data-testid={dataTestId}
+        className={`${collapsed ? 'w-full' : 'flex-1'} flex items-center ${
+          collapsed || iconOnly ? 'justify-center' : 'gap-compact'
+        } px-3 py-row rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors text-sm font-medium`}
+        aria-label={ariaLabel ?? title}
+      >
+        {createElement(icon, { className: `${iconSizes.md} flex-shrink-0` })}
+        {!collapsed && !iconOnly ? <span>{label}</span> : null}
+      </button>
+    </Tooltip>
+  );
+}
 
 export interface SidebarHeaderProps {
   collapsed: boolean;
@@ -91,12 +93,12 @@ export interface SidebarHeaderProps {
   surfaceTestIds: boolean;
 }
 
-export const SidebarHeader: FC<SidebarHeaderProps> = ({
+export function SidebarHeader({
   collapsed,
   onCollapse,
   status,
   surfaceTestIds,
-}) => {
+}: SidebarHeaderProps) {
   const { t } = useTranslation();
   return (
     <div
@@ -145,7 +147,7 @@ export const SidebarHeader: FC<SidebarHeaderProps> = ({
       ) : null}
     </div>
   );
-};
+}
 
 export interface SidebarFooterProps {
   collapsed: boolean;
@@ -176,31 +178,33 @@ interface FullWidthDrawerButtonProps {
   'data-testid'?: string;
 }
 
-const FullWidthDrawerButton: FC<FullWidthDrawerButtonProps> = ({
+function FullWidthDrawerButton({
   onClick,
   icon,
   label,
   title,
   'data-testid': dataTestId,
-}) => (
-  <Tooltip text={title}>
-    <button
-      type="button"
-      onClick={(event) => {
-        event.currentTarget.focus();
-        onClick();
-      }}
-      data-testid={dataTestId}
-      className="w-full mb-heading flex items-center gap-compact px-3 py-row rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors text-sm font-medium"
-      aria-label={title}
-    >
-      {createElement(icon, { className: `${iconSizes.md} flex-shrink-0` })}
-      <span>{label}</span>
-    </button>
-  </Tooltip>
-);
+}: FullWidthDrawerButtonProps) {
+  return (
+    <Tooltip text={title}>
+      <button
+        type="button"
+        onClick={(event) => {
+          event.currentTarget.focus();
+          onClick();
+        }}
+        data-testid={dataTestId}
+        className="w-full mb-heading flex items-center gap-compact px-3 py-row rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors text-sm font-medium"
+        aria-label={title}
+      >
+        {createElement(icon, { className: `${iconSizes.md} flex-shrink-0` })}
+        <span>{label}</span>
+      </button>
+    </Tooltip>
+  );
+}
 
-export const SidebarFooter: FC<SidebarFooterProps> = ({
+export function SidebarFooter({
   collapsed,
   version,
   onOpenHelp,
@@ -213,7 +217,7 @@ export const SidebarFooter: FC<SidebarFooterProps> = ({
   roleControl,
   onExpand,
   surfaceTestIds,
-}) => {
+}: SidebarFooterProps) {
   const { t } = useTranslation();
   const themeLabel = isDark
     ? t('accessibility.switchToLightMode')
@@ -329,4 +333,4 @@ export const SidebarFooter: FC<SidebarFooterProps> = ({
       ) : null}
     </div>
   );
-};
+}

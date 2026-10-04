@@ -2,7 +2,7 @@
  * Alert primitive — ported from niac UI kit (Phase B).
  */
 import { AlertCircle, AlertTriangle, CheckCircle, Info, X } from 'lucide-react';
-import type { FC, ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { iconSizes } from '../../constants/sizes';
 
@@ -47,13 +47,13 @@ const statusConfig: Record<
   },
 };
 
-export const Alert: FC<AlertProps> = ({
+export function Alert({
   status,
   children,
   onDismiss,
   className = '',
   'data-testid': testId,
-}) => {
+}: AlertProps) {
   const { t } = useTranslation('common');
   const config = statusConfig[status];
   const Icon = config.icon;
@@ -78,4 +78,4 @@ export const Alert: FC<AlertProps> = ({
       ) : null}
     </div>
   );
-};
+}

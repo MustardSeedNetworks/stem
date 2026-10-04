@@ -1,5 +1,4 @@
 import { ChevronRight, Home } from 'lucide-react';
-import type { FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router';
 import { iconSizes } from '../constants/sizes';
@@ -21,7 +20,7 @@ const ROUTE_LABELS: Record<string, string> = {
   '/history': 'History',
 };
 
-export const Breadcrumbs: FC = () => {
+export function Breadcrumbs() {
   const { t } = useTranslation('common');
   const location = useLocation();
   const pathSegments = location.pathname.split('/').filter(Boolean);
@@ -66,4 +65,4 @@ export const Breadcrumbs: FC = () => {
       ))}
     </nav>
   );
-};
+}
