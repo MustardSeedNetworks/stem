@@ -207,6 +207,7 @@ clean: ## Clean build artifacts
 	find internal/api/ui -mindepth 1 ! -name .gitkeep -exec rm -rf {} +
 	rm -rf bin/test_*
 	find src -name '*.o' -delete
+	rm -f $(addsuffix /c_abi_stamp.c,$(CGO_DATAPLANE_PKGS))
 
 clean-all: clean ## Clean everything including dependencies
 	rm -rf ui/node_modules
