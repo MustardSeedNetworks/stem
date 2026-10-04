@@ -13,6 +13,14 @@
 # Release cadence (owner 2026-09-14): the release PR is armed only once two or
 # more PRs have merged since the latest release tag; see the arm step.
 #
+# Arming is not the last word on the changelog. A commit that lands on main
+# after the arm step ran still rides into the tag: the queue builds the
+# release PR on top of it, and the queued PR's branch is locked, so
+# release-please cannot regenerate it (stem#1197). CI's `Release Notes` job
+# (scripts/check-release-notes.py --pending) closes that window on the
+# merge-queue tree: a release PR that omits a commit it would ship is ejected,
+# and release-please regenerates it on a later tick.
+#
 # Why the schedule exists (stem#662): the workflow_run gate means a TRANSIENT
 # CI failure on main does not merely go red, it skips the release outright and
 # says nothing — a merged release PR, no tag, and a workflow that "succeeded"
