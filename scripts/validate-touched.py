@@ -190,6 +190,9 @@ NOT_INPUT_DRIVEN = {
     # Inspects the installed Playwright WebKit build, not repo files; only the
     # e2e-webkit CI job runs it. Temporary, goes with that job (#1528).
     "scripts/check-webkit-libsoup.sh",
+    # Compares the changelog against the commits since the last tag, so its
+    # input is git history; the Release Notes CI job runs it on every PR.
+    "scripts/check-release-notes.py",
 }
 
 
