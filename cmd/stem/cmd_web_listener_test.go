@@ -26,7 +26,7 @@ import (
 // and reports that certificate's fingerprint on /__version.
 func TestWebListenerServesTLSAndRedirectsPlaintext(t *testing.T) {
 	dataDir := t.TempDir()
-	daemon := startWebDaemon(t, dataDir, "8644")
+	daemon := startWebDaemon(t, dataDir, "--port", "8644")
 	port := strconv.Itoa(waitForLockRecord(t, dataDir).Port)
 	origin := "127.0.0.1:" + port
 

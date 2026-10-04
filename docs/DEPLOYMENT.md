@@ -190,9 +190,13 @@ stem web
 # Start on custom port
 stem web -p 9443
 
-# Start with host binding
-stem web --host 0.0.0.0 -p 8444
+# Listen on loopback only, keeping the web UI off the network
+stem web --host 127.0.0.1
 ```
+
+Without `--host` the server listens on every address. A port named with `-p`
+must be free: `stem web` exits rather than move to another port. Without
+`-p`, a busy 8444 falls back to the next free port up to 8453.
 
 Access at: `https://localhost:8444` (self-signed cert; run
 `sudo stem install-ca` once to trust it system-wide).

@@ -27,7 +27,7 @@ func setupAuthTestServer(t testing.TB) *api.Server {
 	t.Setenv("STEM_AUTH_USERNAME", authTestUsername)
 	t.Setenv("STEM_AUTH_PASSWORD", authTestPassword)
 
-	s, err := api.NewServer(8444)
+	s, err := api.NewServer(api.ListenAddr{Port: 8444})
 	if err != nil {
 		t.Fatalf("NewServer() error: %v", err)
 	}
@@ -593,7 +593,7 @@ func BenchmarkHandleAuthCSRF(b *testing.B) {
 	b.Setenv("STEM_AUTH_USERNAME", "benchuser")
 	b.Setenv("STEM_AUTH_PASSWORD", "benchpass123")
 
-	s, err := api.NewServer(8444)
+	s, err := api.NewServer(api.ListenAddr{Port: 8444})
 	if err != nil {
 		b.Fatalf("NewServer() error: %v", err)
 	}

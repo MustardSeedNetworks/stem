@@ -46,7 +46,7 @@ func startupLog(t *testing.T) string {
 	}
 	t.Cleanup(logging.Reset)
 
-	s, err := NewServer(8444)
+	s, err := NewServer(ListenAddr{Port: 8444})
 	if err != nil {
 		t.Fatalf("NewServer: %v", err)
 	}

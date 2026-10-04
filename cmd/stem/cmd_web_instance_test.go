@@ -15,14 +15,15 @@ import (
 	"github.com/MustardSeedNetworks/foundation/pkg/instance"
 )
 
-// reexecEnv makes the test binary run webCmd instead of the test suite, so
-// both daemons below are real processes: an in-process check could not show
-// that the refusal names another process's PID.
+// reexecEnv makes the test binary run webCmd, with the space-separated
+// arguments it holds, instead of the test suite, so the daemons below are real
+// processes: an in-process check could not show that the refusal names another
+// process's PID.
 const reexecEnv = "STEM_TEST_REEXEC_WEB"
 
 func TestMain(m *testing.M) {
-	if port := os.Getenv(reexecEnv); port != "" {
-		webCmd([]string{"--port", port})
+	if args := os.Getenv(reexecEnv); args != "" {
+		webCmd(strings.Fields(args))
 		os.Exit(0)
 	}
 	os.Exit(m.Run())
@@ -40,7 +41,7 @@ func TestMain(m *testing.M) {
 func TestSecondWebInstanceIsRefusedNamingPIDAndPort(t *testing.T) {
 	dataDir := t.TempDir()
 
-	first := startWebDaemon(t, dataDir, "8544")
+	first := startWebDaemon(t, dataDir, "--port", "8544")
 	held := waitForLockRecord(t, dataDir)
 	if held.PID != first.Process.Pid {
 		t.Fatalf("the lock names pid %d, the daemon is %d", held.PID, first.Process.Pid)
@@ -49,7 +50,7 @@ func TestSecondWebInstanceIsRefusedNamingPIDAndPort(t *testing.T) {
 	ctx, cancel := context.WithTimeout(t.Context(), 30*time.Second)
 	defer cancel()
 	second := exec.CommandContext(ctx, testBinary(t))
-	second.Env = webDaemonEnv(t, dataDir, "8545")
+	second.Env = webDaemonEnv(t, dataDir, "--port", "8545")
 	second.Dir = t.TempDir()
 	output, runErr := second.CombinedOutput()
 
@@ -77,10 +78,10 @@ func TestSecondWebInstanceIsRefusedNamingPIDAndPort(t *testing.T) {
 // directory: the licence manager reads ~/.config/stem, and a test that runs a
 // real daemon under the developer's HOME activates and deactivates their
 // licence (the defect D-STEM-18 fixed in the licence handler tests).
-func webDaemonEnv(t *testing.T, dataDir, port string) []string {
+func webDaemonEnv(t *testing.T, dataDir string, args ...string) []string {
 	t.Helper()
 	return append(os.Environ(),
-		reexecEnv+"="+port,
+		reexecEnv+"="+strings.Join(args, " "),
 		"STEM_DATA_DIR="+dataDir,
 		"HOME="+t.TempDir(),
 		"STEM_AUTH_USERNAME=instanceuser",
@@ -99,10 +100,10 @@ func testBinary(t *testing.T) string {
 	return path
 }
 
-func startWebDaemon(t *testing.T, dataDir, port string) *exec.Cmd {
+func startWebDaemon(t *testing.T, dataDir string, args ...string) *exec.Cmd {
 	t.Helper()
 	cmd := exec.Command(testBinary(t))
-	cmd.Env = webDaemonEnv(t, dataDir, port)
+	cmd.Env = webDaemonEnv(t, dataDir, args...)
 	// The daemon writes its self-signed certificate relative to its working
 	// directory, so it gets one of its own rather than leaving a certs/ tree
 	// in the package source.

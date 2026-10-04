@@ -16,7 +16,7 @@ func newReflectorStateServer(t *testing.T) (*Server, string) {
 	t.Setenv("STEM_DATA_DIR", t.TempDir())
 	t.Setenv("STEM_AUTH_USERNAME", "reflectorstate")
 	t.Setenv("STEM_AUTH_PASSWORD", "reflectorstate123")
-	s, err := NewServer(8444)
+	s, err := NewServer(ListenAddr{Port: 8444})
 	if err != nil {
 		t.Fatalf("NewServer: %v", err)
 	}

@@ -16,7 +16,7 @@ func newReflectorUpdateServer(t *testing.T) *Server {
 	t.Setenv("STEM_DATA_DIR", t.TempDir())
 	t.Setenv("STEM_AUTH_USERNAME", "reflectorupdate")
 	t.Setenv("STEM_AUTH_PASSWORD", "reflectorupdate123")
-	s, err := NewServer(8444)
+	s, err := NewServer(ListenAddr{Port: 8444})
 	if err != nil {
 		t.Fatalf("NewServer: %v", err)
 	}
@@ -109,7 +109,7 @@ func TestPublishedDescriptorCarriesAnAbsoluteCertificatePath(t *testing.T) {
 	t.Setenv("STEM_DATA_DIR", dir)
 	t.Setenv("STEM_AUTH_USERNAME", "descriptorpath")
 	t.Setenv("STEM_AUTH_PASSWORD", "descriptorpath123")
-	s, err := NewServer(8444)
+	s, err := NewServer(ListenAddr{Port: 8444})
 	if err != nil {
 		t.Fatalf("NewServer: %v", err)
 	}

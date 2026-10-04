@@ -224,8 +224,8 @@ Y.1564 OPTIONS:
     --flr-threshold    Frame Loss Rate threshold % (default: 0.01)
 
 WEB OPTIONS:
-    -p, --port         HTTPS port (default: 8444)
-    --host             Bind address (default: 0.0.0.0)
+    -p, --port         HTTPS port (default: 8444; a port given here must be free)
+    --host             Bind address (default: every address)
 
 LICENSE OPTIONS:
     --activate <key>   Activate with license key
