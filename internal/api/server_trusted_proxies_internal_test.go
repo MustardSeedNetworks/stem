@@ -55,7 +55,7 @@ func TestNewServerRejectsWildcardTrustedProxy(t *testing.T) {
 	for _, list := range []string{"0.0.0.0/0", "::/0", "10.0.0.0/24,0.0.0.0/0", "10.0.0.0"} {
 		trustedProxyEnv(t, list)
 
-		s, err := NewServer(8444)
+		s, err := NewServer(ListenAddr{Port: 8444})
 		if err == nil {
 			t.Errorf("NewServer() accepted %s=%q", logging.TrustedProxiesEnv, list)
 			_ = s.Shutdown()
@@ -75,7 +75,7 @@ func TestNewServerRejectsWildcardTrustedProxy(t *testing.T) {
 func TestNewServerTrustedProxiesReachTheAuthLimiter(t *testing.T) {
 	trustedProxyEnv(t, "10.0.0.0/24")
 
-	s, err := NewServer(8444)
+	s, err := NewServer(ListenAddr{Port: 8444})
 	if err != nil {
 		t.Fatalf("NewServer() error: %v", err)
 	}
@@ -103,7 +103,7 @@ func TestNewServerTrustedProxiesReachTheAuthLimiter(t *testing.T) {
 func TestNewServerWithoutTrustedProxiesSharesOneBucket(t *testing.T) {
 	trustedProxyEnv(t, "")
 
-	s, err := NewServer(8444)
+	s, err := NewServer(ListenAddr{Port: 8444})
 	if err != nil {
 		t.Fatalf("NewServer() error: %v", err)
 	}

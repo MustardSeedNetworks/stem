@@ -77,6 +77,7 @@ import (
 	"net/netip"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -124,7 +125,6 @@ var staticFiles embed.FS
 
 // Server represents the web server.
 type Server struct {
-	port                 int
 	handler              http.Handler     // every route through the Registrar, inside the global headers (setupRoutes)
 	sseBroadcaster       *sse.Broadcaster // Fan-out for /api/v1/events subscribers; nil when SSE not available.
 	httpServer           *http.Server
@@ -215,13 +215,23 @@ func serveFallbackUIPage(w http.ResponseWriter, _ *http.Request) {
 </html>`))
 }
 
-// NewServer builds a Server bound to port: it loads the license manager,
+// ListenAddr is where the daemon's one HTTPS listener binds.
+type ListenAddr struct {
+	// Host is the address to bind; empty binds every address.
+	Host string
+	Port int
+	// Explicit marks Port as the operator's choice: a busy port is then
+	// refused instead of walked past to a neighbour (httpserver.BindExact).
+	Explicit bool
+}
+
+// NewServer builds a Server that will listen on listen: it loads the license manager,
 // auto-selects a network interface, and resolves the administrator
 // credential (see newAuthManager), returning an error when the credential
 // store is damaged or the environment names only half a credential. The
 // returned Server has not started listening yet; call Run to bind the TLS
 // listener and serve.
-func NewServer(port int) (*Server, error) {
+func NewServer(listen ListenAddr) (*Server, error) {
 	// Initialize license manager. A state Stem cannot use is reported once
 	// here rather than on every gated request; the entitlement consequence is
 	// hasFeature's, which grants only the Free features without a manager.
@@ -268,7 +278,6 @@ func NewServer(port int) (*Server, error) {
 	// nothing else (httpserver.Listen).
 
 	s := &Server{}
-	s.port = port
 	s.sseBroadcaster = sse.New()
 	s.statsMu = sync.RWMutex{}
 	s.stats = &Stats{
@@ -304,7 +313,8 @@ func NewServer(port int) (*Server, error) {
 	s.auditor = logging.NewAuditor(trustedProxies)
 	s.apiLimiter = ratelimit.NewAPIRateLimiter(trustedProxies)
 	s.listenConfig = httpserver.Config{
-		Addr:     fmt.Sprintf(":%d", port),
+		Addr:     net.JoinHostPort(listen.Host, strconv.Itoa(listen.Port)),
+		Explicit: listen.Explicit,
 		CertFile: os.Getenv("STEM_TLS_CERT"),
 		KeyFile:  os.Getenv("STEM_TLS_KEY"),
 		CertDir:  os.Getenv("STEM_TLS_CERTS_DIR"),
@@ -543,7 +553,14 @@ func (s *Server) Run() error {
 		return fmt.Errorf("HTTPS listener bound a non-TCP address %s", ln.Addr())
 	}
 	actualPort := tcpAddr.Port
-	addr := fmt.Sprintf(":%d", actualPort)
+	addr := tcpAddr.String()
+	// The descriptor and the log name an address a local client can reach:
+	// localhost when every address is bound, otherwise the one that was.
+	urlHost := "localhost"
+	if !tcpAddr.IP.IsUnspecified() {
+		urlHost = tcpAddr.IP.String()
+	}
+	baseURL := "https://" + net.JoinHostPort(urlHost, strconv.Itoa(actualPort))
 
 	// Record the port in the lock so the next `stem web` can name where the
 	// holder actually ended up rather than where it was asked to go.
@@ -553,7 +570,7 @@ func (s *Server) Run() error {
 	}
 
 	logging.Info("Starting The Stem web server",
-		"address", fmt.Sprintf("https://localhost%s", addr),
+		"address", baseURL,
 		"version", version.GetVersion(),
 	)
 
@@ -569,7 +586,7 @@ func (s *Server) Run() error {
 	// reach it before the listener accepts, and withdraw it in Shutdown.
 	// This is after the bind so the URL names the port actually bound
 	// rather than the one that was asked for.
-	if connErr := s.publishConnection(fmt.Sprintf("https://localhost:%d", actualPort)); connErr != nil {
+	if connErr := s.publishConnection(baseURL); connErr != nil {
 		return fmt.Errorf("publish daemon descriptor: %w", connErr)
 	}
 

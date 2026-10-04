@@ -18,7 +18,7 @@ func TestRoutePolicyManifest(t *testing.T) {
 	t.Setenv("STEM_AUTH_USERNAME", "manifesttest")
 	t.Setenv("STEM_AUTH_PASSWORD", "manifestpass123")
 
-	s, err := api.NewServer(8444)
+	s, err := api.NewServer(api.ListenAddr{Port: 8444})
 	if err != nil {
 		t.Fatalf("NewServer() error: %v", err)
 	}

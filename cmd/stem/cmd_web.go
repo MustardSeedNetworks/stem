@@ -6,7 +6,9 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"net"
 	"os"
+	"strconv"
 
 	"github.com/MustardSeedNetworks/foundation/pkg/instance"
 
@@ -18,7 +20,7 @@ func webCmd(args []string) {
 	fs := flag.NewFlagSet("web", flag.ExitOnError)
 	port := fs.Int("port", defaultWebPort, "HTTPS port (1-65535)")
 	fs.IntVar(port, "p", defaultWebPort, "HTTPS port (shorthand)")
-	host := fs.String("host", "0.0.0.0", "Bind address")
+	host := fs.String("host", "", "Bind address (default: every address)")
 
 	err := fs.Parse(args)
 	if err != nil {
@@ -32,12 +34,20 @@ func webCmd(args []string) {
 		os.Exit(1)
 	}
 
-	scheme := "https"
+	// A port the operator named is the one they want: a busy one is refused
+	// rather than silently swapped for a neighbour.
+	explicitPort := false
+	fs.Visit(func(f *flag.Flag) {
+		if f.Name == "port" || f.Name == "p" {
+			explicitPort = true
+		}
+	})
+	listen := api.ListenAddr{Host: *host, Port: *port, Explicit: explicitPort}
 
 	_, _ = fmt.Fprintf(os.Stdout, "%s %s - WebUI Server\n", ProductName, version.GetVersion())
-	_, _ = fmt.Fprintf(os.Stdout, "Starting on %s://%s:%d\n", scheme, *host, *port)
+	_, _ = fmt.Fprintf(os.Stdout, "Starting on https://%s\n", net.JoinHostPort(*host, strconv.Itoa(*port)))
 
-	srv, err := api.NewServer(*port)
+	srv, err := api.NewServer(listen)
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)

@@ -35,7 +35,7 @@ func unconfiguredEnv(t *testing.T) string {
 
 func newFirstRunServer(t *testing.T) *api.Server {
 	t.Helper()
-	s, err := api.NewServer(8444)
+	s, err := api.NewServer(api.ListenAddr{Port: 8444})
 	if err != nil {
 		t.Fatalf("NewServer() on a fresh install: %v", err)
 	}
@@ -179,7 +179,7 @@ func TestCredentialSourceRefusals(t *testing.T) {
 		if err := os.WriteFile(filepath.Join(dataDir, "credentials.json"), []byte("{not json"), 0o600); err != nil {
 			t.Fatalf("write damaged store: %v", err)
 		}
-		if _, err := api.NewServer(8444); err == nil {
+		if _, err := api.NewServer(api.ListenAddr{Port: 8444}); err == nil {
 			t.Fatal("NewServer() over a damaged credential store succeeded; want a refusal, not first-run setup")
 		}
 	})
@@ -190,7 +190,7 @@ func TestCredentialSourceRefusals(t *testing.T) {
 			[]byte(`{"username":"admin","passwordHash":""}`), 0o600); err != nil {
 			t.Fatalf("write empty store: %v", err)
 		}
-		if _, err := api.NewServer(8444); err == nil {
+		if _, err := api.NewServer(api.ListenAddr{Port: 8444}); err == nil {
 			t.Fatal("NewServer() over a store with no password succeeded; want a refusal, not first-run setup")
 		}
 	})
@@ -198,7 +198,7 @@ func TestCredentialSourceRefusals(t *testing.T) {
 	t.Run("half-set environment", func(t *testing.T) {
 		unconfiguredEnv(t)
 		t.Setenv("STEM_AUTH_USERNAME", "operator")
-		_, err := api.NewServer(8444)
+		_, err := api.NewServer(api.ListenAddr{Port: 8444})
 		if !errors.Is(err, auth.ErrMissingCredentials) {
 			t.Fatalf("NewServer() with only STEM_AUTH_USERNAME = %v, want ErrMissingCredentials", err)
 		}

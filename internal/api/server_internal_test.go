@@ -680,7 +680,7 @@ func TestNewServer_PartialCredentials(t *testing.T) {
 		t.Setenv("STEM_AUTH_USERNAME", "user")
 		t.Setenv("STEM_AUTH_PASSWORD", "")
 
-		_, err := NewServer(8444)
+		_, err := NewServer(ListenAddr{Port: 8444})
 		if err == nil {
 			t.Error("NewServer() should return error with username only")
 		}
@@ -690,7 +690,7 @@ func TestNewServer_PartialCredentials(t *testing.T) {
 		t.Setenv("STEM_AUTH_USERNAME", "")
 		t.Setenv("STEM_AUTH_PASSWORD", "pass123")
 
-		_, err := NewServer(8444)
+		_, err := NewServer(ListenAddr{Port: 8444})
 		if err == nil {
 			t.Error("NewServer() should return error with password only")
 		}

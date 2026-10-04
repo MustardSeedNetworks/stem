@@ -51,7 +51,7 @@ func realDaemonClient(t *testing.T, exec api.TestExecutor) (*daemonclient.Client
 		t.Skip("no network interface available")
 	}
 
-	s, err := api.NewServer(8444)
+	s, err := api.NewServer(api.ListenAddr{Port: 8444})
 	if err != nil {
 		t.Fatalf("NewServer: %v", err)
 	}

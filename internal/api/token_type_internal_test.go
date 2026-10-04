@@ -16,7 +16,7 @@ func TestRequireAuthRejectsARefreshToken(t *testing.T) {
 	t.Setenv("STEM_DATA_DIR", t.TempDir())
 	t.Setenv("STEM_AUTH_USERNAME", "tokentypetest")
 	t.Setenv("STEM_AUTH_PASSWORD", "tokentypepass123")
-	s, err := NewServer(8444)
+	s, err := NewServer(ListenAddr{Port: 8444})
 	if err != nil {
 		t.Fatalf("NewServer: %v", err)
 	}
