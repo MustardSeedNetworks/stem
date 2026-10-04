@@ -66,8 +66,11 @@ Checks: >
 # Treat warnings as errors for strict enforcement
 WarningsAsErrors: '*'
 
-# Only check project headers, not system headers
-HeaderFilterRegex: '.*/stem/(src|include|tests)/.*'
+# Only check project headers, not system headers. Anchored on the project
+# subdirectories, not the checkout's name: `-Iinclude` makes clang see
+# `include/x.h` relative, and a worktree is not called `stem` (#1246). System
+# headers under /usr/include stay out through SystemHeaders, which is off.
+HeaderFilterRegex: '(^|/)(src|include|tests)/'
 
 # C23-specific configuration
 CheckOptions:
