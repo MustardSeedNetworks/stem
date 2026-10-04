@@ -53,17 +53,17 @@ Start a local reflector:`,
 				Title: "Run Your First Test",
 				Content: `Now let's run a simple throughput test. Open a new terminal
 (keep the reflector running) and run:`,
-				Command:  "stem test -i eth1 -t throughput --target localhost",
+				Command:  "stem test -i eth1 --peer 192.0.2.10 -t rfc2544_throughput",
 				Expected: "Testing throughput...\nMax throughput: 985 Mbps (98.5%)",
-				Tip:      "Use --target with the IP of your remote reflector for real testing",
+				Tip:      "Set --peer to the address of the reflector: eth0 here, or your remote device",
 			},
 			{
 				Title: "View Results",
 				Content: `Results are displayed immediately. For a permanent record,
 save to a file:`,
-				Command:  "stem test -i eth1 -t throughput --output results.json",
+				Command:  "stem test -i eth1 --peer 192.0.2.10 -t rfc2544_throughput --json > results.json",
 				Expected: "Results saved to results.json",
-				Tip:      "Use .csv extension for spreadsheet-compatible output",
+				Tip:      "Use --csv instead of --json for spreadsheet-compatible output",
 			},
 			{
 				Title: "Explore More Tests",
@@ -227,7 +227,7 @@ func rfc2544TutorialTestSteps() []TutorialStep {
 	4. Use binary search to converge on exact maximum
 
 	Run a throughput test:`,
-			Command: "stem test -i eth0 -t throughput",
+			Command: "stem test -i eth0 --peer 192.0.2.10 -t rfc2544_throughput",
 			Expected: `Frame Size | Max Rate | Throughput
 64 bytes   | 98.5%    | 985 Mbps`,
 			Tip: "Small frames (64 bytes) test packet processing; large frames test raw bandwidth",
@@ -244,7 +244,7 @@ func rfc2544TutorialTestSteps() []TutorialStep {
 	• Jitter (std dev) - consistency
 
 	Run a latency test:`,
-			Command:  "stem test -i eth0 -t latency",
+			Command:  "stem test -i eth0 --peer 192.0.2.10 -t rfc2544_latency",
 			Expected: "Avg: 125µs, Min: 98µs, Max: 245µs, Jitter: 23µs",
 			Tip:      "Latency is measured at the throughput rate for realistic results",
 		},
@@ -259,7 +259,7 @@ func rfc2544TutorialTestSteps() []TutorialStep {
 	• Where is the "knee" of the curve?
 
 	Run frame loss test:`,
-			Command: "stem test -i eth0 -t frame_loss",
+			Command: "stem test -i eth0 --peer 192.0.2.10 -t rfc2544_frame_loss",
 			Expected: `Rate   | Loss
 100%   | 2.3%
 90%    | 0.1%
@@ -277,7 +277,7 @@ func rfc2544TutorialTestSteps() []TutorialStep {
 	• Risk of drops during peak traffic
 
 	Run back-to-back test:`,
-			Command:  "stem test -i eth0 -t back_to_back",
+			Command:  "stem test -i eth0 --peer 192.0.2.10 -t rfc2544_back_to_back",
 			Expected: "Max burst: 2048 frames at 64 bytes",
 			Tip:      "Results indicate effective buffer size - important for video/streaming",
 		},
@@ -289,10 +289,10 @@ func rfc2544TutorialSummarySteps() []TutorialStep {
 		{
 			Title:   "Combining Tests",
 			Content: `For comprehensive validation, run all RFC 2544 tests together:`,
-			Command: "stem test -i eth0 -t rfc2544_throughput,rfc2544_latency,rfc2544_frame_loss,rfc2544_back_to_back",
+			Command: "stem test -i eth0 --peer 192.0.2.10 -t rfc2544_throughput,rfc2544_latency,rfc2544_frame_loss,rfc2544_back_to_back",
 			Expected: `Running RFC 2544 test suite...
 [Complete results for all tests]`,
-			Tip: "Save results with --output report.json for documentation",
+			Tip: "Save results with --json > report.json for documentation",
 		},
 		{
 			Title: "Interpreting Results",
@@ -400,7 +400,7 @@ func y1564TutorialTestSteps() []TutorialStep {
 	All steps must pass (meet SLA thresholds).
 
 	Run Configuration Test:`,
-			Command: "stem test -i eth0 -t y1564_config --cir 100 --delay-threshold 10 --loss-threshold 0.001",
+			Command: "stem test -i eth0 --peer 192.0.2.10 -t y1564_config --cir 100 --fd-threshold 10 --flr-threshold 0.1",
 			Expected: `Step 25%: PASS (IR: 25.0 Mbps, FD: 2.1ms, FLR: 0.000%)
 Step 50%: PASS
 Step 75%: PASS
@@ -410,7 +410,7 @@ Step 100%: PASS`,
 		{
 			Title:   "Service Performance Test",
 			Content: `After Configuration passes, run Performance Test to verify sustained quality:`,
-			Command: "stem test -i eth0 -t y1564_performance --cir 100 --duration 15",
+			Command: "stem test -i eth0 --peer 192.0.2.10 -t y1564_perf --cir 100 --duration 900",
 			Expected: `15-minute performance test at 100 Mbps
 All metrics within SLA for entire duration`,
 			Tip: "Standard duration is 15 minutes; use longer for thorough validation",
@@ -418,7 +418,7 @@ All metrics within SLA for entire duration`,
 		{
 			Title:   "Full SAC Test",
 			Content: `For official service activation, run the complete SAC test:`,
-			Command: "stem test -i eth0 -t y1564_full --cir 100 --perf-duration 15",
+			Command: "stem test -i eth0 --peer 192.0.2.10 -t y1564 --cir 100",
 			Expected: `Configuration Test: PASS
 Performance Test: PASS
 
@@ -501,7 +501,7 @@ Possible causes:
 • Intermittent cable/connector problems
 
 Troubleshoot:`,
-				Command:  "stem test -i eth0 -t throughput --duration 120",
+				Command:  "stem test -i eth0 --peer 192.0.2.10 -t rfc2544_throughput --duration 120",
 				Expected: "Longer test reveals patterns in variability",
 				Tip:      "Test during maintenance window for most consistent results",
 			},
@@ -608,14 +608,14 @@ General guidelines:
 			{
 				Title:    "Saving and Comparing Results",
 				Content:  `Save results for documentation and comparison:`,
-				Command:  "stem test -i eth0 -t throughput --output baseline_2025-01.json",
+				Command:  "stem test -i eth0 --peer 192.0.2.10 -t rfc2544_throughput --json > baseline_2025-01.json",
 				Expected: "Results saved with timestamp",
 				Tip:      "Include date in filename for easy comparison over time",
 			},
 			{
 				Title:    "Creating Reports",
 				Content:  `Generate formatted reports:`,
-				Command:  "stem test -i eth0 -t throughput --output report.csv",
+				Command:  "stem test -i eth0 --peer 192.0.2.10 -t rfc2544_throughput --csv > report.csv",
 				Expected: "CSV file importable to Excel/Google Sheets",
 				Tip:      "CSV format works well for creating charts and analysis",
 			},

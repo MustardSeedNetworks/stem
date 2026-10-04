@@ -85,9 +85,9 @@ Important for environments with many active connections simultaneously.`,
 
 		Examples: []Example{
 			{
-				Desc:    "4-port switch test",
-				Command: "stem test -t forwarding --ports eth0,eth1,eth2,eth3",
-				Output:  "Aggregate: 5.95 Mpps across 4 ports",
+				Desc:    "Forwarding rate test",
+				Command: "stem test -i eth0 --peer 192.0.2.10 -t rfc2889_forwarding",
+				Output:  "Forwarding rate: 1.49 Mpps at 64 bytes",
 			},
 		},
 
@@ -174,7 +174,7 @@ Think of it like a phonebook:
 		Examples: []Example{
 			{
 				Desc:    "Test MAC table capacity",
-				Command: "stem test -i eth0 -t address_cache",
+				Command: "stem test -i eth0 --peer 192.0.2.10 -t rfc2889_caching",
 				Output:  "MAC table capacity: 16,384 addresses",
 			},
 		},
@@ -243,7 +243,7 @@ Faster learning = smoother experience for users joining the network.`,
 		Examples: []Example{
 			{
 				Desc:    "Test learning rate",
-				Command: "stem test -i eth0 -t learning_rate",
+				Command: "stem test -i eth0 --peer 192.0.2.10 -t rfc2889_learning",
 				Output:  "Learning rate: 5,000 addresses/second",
 			},
 		},
@@ -316,7 +316,7 @@ This test checks if your switch can handle normal broadcast levels without probl
 		Examples: []Example{
 			{
 				Desc:    "Broadcast handling test",
-				Command: "stem test -i eth0 -t broadcast",
+				Command: "stem test -i eth0 --peer 192.0.2.10 -t rfc2889_broadcast",
 				Output:  "Broadcast rate: 148,810 fps, Unicast impact: 2%",
 			},
 		},
@@ -394,7 +394,7 @@ This test reveals your switch's personality under stress.`,
 		Examples: []Example{
 			{
 				Desc:    "Congestion control test",
-				Command: "stem test -t congestion --ports eth0,eth1,eth2,eth3 --output eth3",
+				Command: "stem test -i eth0 --peer 192.0.2.10 -t rfc2889_congestion",
 				Output:  "HOL Blocking: 0%, Fairness: 0.98",
 			},
 		},

@@ -125,7 +125,7 @@ the sweet spot.`,
     examples: [
       {
         desc: 'Basic throughput test',
-        command: 'stem test -i eth0 -t throughput',
+        command: 'stem test -i eth0 --peer 192.0.2.10 -t rfc2544_throughput',
         output: 'Max Rate: 98.5% (985 Mbps)',
       },
     ],
@@ -188,7 +188,7 @@ point A to point B and back. Lower numbers are better:
     examples: [
       {
         desc: 'Basic latency test',
-        command: 'stem test -i eth0 -t latency',
+        command: 'stem test -i eth0 --peer 192.0.2.10 -t rfc2544_latency',
         output: 'Avg: 125µs, Jitter: 23µs',
       },
     ],
@@ -222,7 +222,7 @@ through the network?" It creates a stress curve showing when loss starts happeni
     examples: [
       {
         desc: 'Frame loss test',
-        command: 'stem test -i eth0 -t frame_loss',
+        command: 'stem test -i eth0 --peer 192.0.2.10 -t rfc2544_frame_loss',
         output: '100%: 2.3% loss, 80%: 0% loss',
       },
     ],
@@ -255,7 +255,7 @@ Higher numbers are better for handling waves of data like video streams.`,
     examples: [
       {
         desc: 'Back-to-back test',
-        command: 'stem test -i eth0 -t back_to_back',
+        command: 'stem test -i eth0 --peer 192.0.2.10 -t rfc2544_back_to_back',
         output: 'Max burst: 2048 frames',
       },
     ],
@@ -288,7 +288,7 @@ Fast recovery (under 1 second) is good.`,
     examples: [
       {
         desc: 'Recovery test',
-        command: 'stem test -i eth0 -t system_recovery',
+        command: 'stem test -i eth0 --peer 192.0.2.10 -t rfc2544_system_recovery',
         output: 'Recovery time: 245ms',
       },
     ],
@@ -321,7 +321,7 @@ Lower reset times mean less disruption during maintenance.`,
     examples: [
       {
         desc: 'Reset test',
-        command: 'stem test -i eth0 -t reset',
+        command: 'stem test -i eth0 --peer 192.0.2.10 -t rfc2544_reset',
         output: 'Reset time: 45 seconds',
       },
     ],

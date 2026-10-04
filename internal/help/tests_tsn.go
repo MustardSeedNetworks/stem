@@ -122,7 +122,7 @@ func tsnGateTimingExamples() []Example {
 	return []Example{
 		{
 			Desc:    "Gate timing validation",
-			Command: "stem test -i eth0 -t gate_timing --schedule schedule.json",
+			Command: "stem test -i eth0 --peer 192.0.2.10 -t tsn_timing",
 			Output:  "Gate accuracy: 250ns avg, 850ns max - PASS",
 		},
 	}
@@ -239,7 +239,7 @@ func tsnTrafficIsolationExamples() []Example {
 	return []Example{
 		{
 			Desc:    "Traffic isolation test",
-			Command: "stem test -i eth0 -t traffic_isolation --critical-class 7",
+			Command: "stem test -i eth0 --peer 192.0.2.10 -t tsn_isolation",
 			Output:  "Isolation: PASS, Critical latency: 15µs under full load",
 		},
 	}
@@ -351,7 +351,7 @@ func tsnScheduledLatencyExamples() []Example {
 	return []Example{
 		{
 			Desc:    "Scheduled latency test",
-			Command: "stem test -i eth0 -t scheduled_latency --target-latency 500 --window 50",
+			Command: "stem test -i eth0 --peer 192.0.2.10 -t tsn_latency",
 			Output:  "Latency: 485µs avg, 510µs max - PASS",
 		},
 	}
@@ -396,7 +396,7 @@ into production.`,
 		Examples: []Example{
 			{
 				Desc:    "Full TSN validation",
-				Command: "stem test -i eth0 -t tsn_full --schedule schedule.json",
+				Command: "stem test -i eth0 --peer 192.0.2.10 -t tsn",
 				Output:  "Gate Timing: PASS, Isolation: PASS, Latency: PASS",
 			},
 		},

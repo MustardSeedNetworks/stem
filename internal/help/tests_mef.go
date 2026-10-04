@@ -114,7 +114,7 @@ func mefConfigExamples() []Example {
 	return []Example{
 		{
 			Desc:    "MEF configuration test",
-			Command: "stem test -i eth0 -t mef_config --cir 100 --cos 5",
+			Command: "stem test -i eth0 --peer 192.0.2.10 -t mef_config",
 			Output:  "Bandwidth: PASS, CoS: PASS",
 		},
 	}
@@ -170,8 +170,8 @@ This catches problems that only show up after running for a while.`,
 		Examples: []Example{
 			{
 				Desc:    "MEF performance test",
-				Command: "stem test -i eth0 -t mef_performance --cir 100 --duration 15",
-				Output:  "15-minute performance: PASS",
+				Command: "stem test -i eth0 --peer 192.0.2.10 -t mef_perf",
+				Output:  "Performance: PASS",
 			},
 		},
 
@@ -219,7 +219,7 @@ Use this for official service acceptance when MEF compliance is required.`,
 		Examples: []Example{
 			{
 				Desc:    "Full MEF test",
-				Command: "stem test -i eth0 -t mef_full --cir 100",
+				Command: "stem test -i eth0 --peer 192.0.2.10 -t mef",
 				Output:  "MEF Config: PASS, MEF Performance: PASS - Service Accepted",
 			},
 		},

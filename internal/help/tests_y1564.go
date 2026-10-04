@@ -179,12 +179,12 @@ func y1564ConfigExamples() []Example {
 	return []Example{
 		{
 			Desc:    "Test 100 Mbps service",
-			Command: "stem test -i eth0 -t y1564_config --cir 100",
+			Command: "stem test -i eth0 --peer 192.0.2.10 -t y1564_config --cir 100",
 			Output:  "Step 25%: PASS, Step 50%: PASS, Step 75%: PASS, Step 100%: PASS",
 		},
 		{
 			Desc:    "Test with strict thresholds",
-			Command: "stem test -i eth0 -t y1564_config --cir 1000 --delay-threshold 2.0 --loss-threshold 0.0001",
+			Command: "stem test -i eth0 --peer 192.0.2.10 -t y1564_config --cir 1000 --fd-threshold 2.0 --flr-threshold 0.01",
 			Output:  "Testing 1 Gbps service with strict SLA",
 		},
 	}
@@ -299,12 +299,12 @@ thorough validation.`,
 		Examples: []Example{
 			{
 				Desc:    "15-minute performance test",
-				Command: "stem test -i eth0 -t y1564_performance --cir 100 --duration 15",
+				Command: "stem test -i eth0 --peer 192.0.2.10 -t y1564_perf --cir 100 --duration 900",
 				Output:  "Performance stable over 15 minutes",
 			},
 			{
 				Desc:    "Extended overnight test",
-				Command: "stem test -i eth0 -t y1564_performance --cir 1000 --duration 480",
+				Command: "stem test -i eth0 --peer 192.0.2.10 -t y1564_perf --cir 1000 --duration 28800",
 				Output:  "Running 8-hour endurance test",
 			},
 		},
@@ -383,7 +383,7 @@ Total test time is typically 30 minutes for a standard activation.`,
 		Examples: []Example{
 			{
 				Desc:    "Full service activation test",
-				Command: "stem test -i eth0 -t y1564_full --cir 100",
+				Command: "stem test -i eth0 --peer 192.0.2.10 -t y1564 --cir 100",
 				Output:  "Config Test: PASS, Performance Test: PASS - Service Accepted",
 			},
 		},

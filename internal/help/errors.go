@@ -53,7 +53,11 @@ To see available interfaces:
 Look for interfaces that are UP and have a carrier (connected).`,
 			Examples: []Example{
 				{Desc: "Reflector example", Command: "stem reflect -i eth0", Output: ""},
-				{Desc: "Test example", Command: "stem test -i enp3s0 -t throughput", Output: ""},
+				{
+					Desc:    "Test example",
+					Command: "stem test -i enp3s0 --peer 192.0.2.10 -t rfc2544_throughput",
+					Output:  "",
+				},
 			},
 			RelatedCmd: "stem help reflect",
 		},
@@ -191,7 +195,11 @@ Or get help on a specific test:
   stem help throughput`,
 			Examples: []Example{
 				{Desc: "List tests", Command: "stem help tests", Output: ""},
-				{Desc: "Throughput test", Command: "stem test -i eth0 -t throughput", Output: ""},
+				{
+					Desc:    "Throughput test",
+					Command: "stem test -i eth0 --peer 192.0.2.10 -t rfc2544_throughput",
+					Output:  "",
+				},
 			},
 			RelatedCmd: "stem help tests",
 		},
@@ -210,7 +218,7 @@ Or get help on a specific test:
    sudo iptables -L | grep 3842
 
 4. Correct target IP specified:
-   stem test -i eth0 -t throughput --target <correct-ip>`,
+   stem test -i eth0 -t rfc2544_throughput --peer <correct-ip>`,
 			Examples: []Example{
 				{Desc: "Start remote reflector", Command: "ssh user@target 'stem reflect -i eth0'", Output: ""},
 				{Desc: "Check connectivity", Command: "ping <target-ip>", Output: ""},
@@ -231,7 +239,11 @@ Try:
 - Run with shorter duration
 - Check for network issues`,
 			Examples: []Example{
-				{Desc: "Shorter test", Command: "stem test -i eth0 -t throughput -d 30", Output: ""},
+				{
+					Desc:    "Shorter test",
+					Command: "stem test -i eth0 --peer 192.0.2.10 -t rfc2544_throughput -d 30",
+					Output:  "",
+				},
 			},
 			RelatedCmd: "",
 		},
@@ -250,7 +262,11 @@ func getConfigErrors() map[string]ErrorHelp {
 
 Example: For a 100 Mbps service:`,
 			Examples: []Example{
-				{Desc: "100 Mbps service", Command: "stem test -i eth0 -t y1564_config --cir 100", Output: ""},
+				{
+					Desc:    "100 Mbps service",
+					Command: "stem test -i eth0 --peer 192.0.2.10 -t y1564_config --cir 100",
+					Output:  "",
+				},
 			},
 			RelatedCmd: "stem help y1564_config",
 		},
@@ -267,12 +283,12 @@ Standard RFC 2544 sizes: 64, 128, 256, 512, 1024, 1280, 1518`,
 			Examples: []Example{
 				{
 					Desc:    "Standard sizes",
-					Command: "stem test -i eth0 -t throughput --frame-sizes 64,128,256,512,1024,1280,1518",
+					Command: "stem test -i eth0 --peer 192.0.2.10 -t rfc2544_throughput --frame-sizes 64,128,256,512,1024,1280,1518",
 					Output:  "",
 				},
 				{
 					Desc:    "Custom sizes",
-					Command: "stem test -i eth0 -t throughput --frame-sizes 64,512,1518",
+					Command: "stem test -i eth0 --peer 192.0.2.10 -t rfc2544_throughput --frame-sizes 64,512,1518",
 					Output:  "",
 				},
 			},

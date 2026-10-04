@@ -41,14 +41,14 @@ export const tutorials: Record<string, Tutorial> = {
       {
         title: 'Run Your First Test',
         content: 'Now run a basic throughput test from the tester side.',
-        command: 'sudo stem test -i eth0 -t throughput',
+        command: 'sudo stem test -i eth0 --peer 192.0.2.10 -t rfc2544_throughput',
         expected: 'Test completes with throughput results',
       },
       {
         title: 'View Results',
         content:
           'The test will display results showing maximum throughput for each frame size. Congratulations - you have completed your first network test!',
-        tip: 'Use --output json for machine-readable results',
+        tip: 'Use --json for machine-readable results',
       },
     ],
   },
@@ -109,26 +109,27 @@ export const tutorials: Record<string, Tutorial> = {
       {
         title: 'Throughput Testing',
         content: 'Throughput finds the maximum rate with 0% packet loss using binary search.',
-        command: 'sudo stem test -i eth0 -t throughput',
+        command: 'sudo stem test -i eth0 --peer 192.0.2.10 -t rfc2544_throughput',
         expected: 'Throughput results for each frame size',
         tip: 'Standard frame sizes: 64, 128, 256, 512, 1024, 1280, 1518 bytes',
       },
       {
         title: 'Latency Testing',
         content: 'Latency measures round-trip time at a specified offered load.',
-        command: 'sudo stem test -i eth0 -t latency',
+        command: 'sudo stem test -i eth0 --peer 192.0.2.10 -t rfc2544_latency',
         expected: 'Min/avg/max latency per frame size',
       },
       {
         title: 'Frame Loss Testing',
         content: 'Frame loss measures packet loss at various load percentages.',
-        command: 'sudo stem test -i eth0 -t frame_loss',
+        command: 'sudo stem test -i eth0 --peer 192.0.2.10 -t rfc2544_frame_loss',
         expected: 'Loss percentage at each load level',
       },
       {
         title: 'Custom Frame Sizes',
         content: 'Specify custom frame sizes for your specific needs.',
-        command: 'sudo stem test -i eth0 -t throughput --frame-sizes 64,512,1518',
+        command:
+          'sudo stem test -i eth0 --peer 192.0.2.10 -t rfc2544_throughput --frame-sizes 64,512,1518',
         expected: 'Results for specified frame sizes only',
       },
       {
@@ -171,19 +172,19 @@ The test has two phases:
       {
         title: 'Run Configuration Test',
         content: 'The config test validates service at each CIR step.',
-        command: 'sudo stem test -i eth0 -t y1564_config --cir 100',
+        command: 'sudo stem test -i eth0 --peer 192.0.2.10 -t y1564_config --cir 100',
         expected: 'PASS at all four CIR levels',
       },
       {
         title: 'Run Performance Test',
         content: 'After config passes, run the extended performance test.',
-        command: 'sudo stem test -i eth0 -t y1564_performance --cir 100 --duration 15',
+        command: 'sudo stem test -i eth0 --peer 192.0.2.10 -t y1564_perf --cir 100 --duration 900',
         expected: 'Sustained performance for 15 minutes',
       },
       {
         title: 'Full SAC Test',
         content: 'Run both tests in sequence with a single command.',
-        command: 'sudo stem test -i eth0 -t y1564_full --cir 100',
+        command: 'sudo stem test -i eth0 --peer 192.0.2.10 -t y1564 --cir 100',
         expected: 'Service Activation Complete',
       },
     ],
@@ -273,7 +274,8 @@ High jitter (variation) matters more than latency for real-time applications.`,
       {
         title: 'Export and Compare',
         content: 'Export results for trending and comparison.',
-        command: 'sudo stem test -i eth0 -t throughput --output json > results.json',
+        command:
+          'sudo stem test -i eth0 --peer 192.0.2.10 -t rfc2544_throughput --json > results.json',
         expected: 'JSON file for processing',
         tip: 'Compare baseline vs. current to spot degradation',
       },

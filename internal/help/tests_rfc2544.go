@@ -153,19 +153,19 @@ func rfc2544ThroughputExamples() []Example {
 	return []Example{
 		{
 			Desc:    "Basic throughput test on eth0",
-			Command: "stem test -i eth0 -t throughput",
+			Command: "stem test -i eth0 --peer 192.0.2.10 -t rfc2544_throughput",
 			Output: `Frame Size  Max Rate    Throughput
 64 bytes    98.5%       985 Mbps
 1518 bytes  99.2%       992 Mbps`,
 		},
 		{
 			Desc:    "Quick test with fewer frame sizes",
-			Command: "stem test -i eth0 -t throughput --frame-sizes 64,1518 --duration 30",
+			Command: "stem test -i eth0 --peer 192.0.2.10 -t rfc2544_throughput --frame-sizes 64,1518 --duration 30",
 			Output:  "Completed in 2 minutes",
 		},
 		{
 			Desc:    "High-precision test",
-			Command: "stem test -i eth0 -t throughput --resolution 0.01 --duration 120",
+			Command: "stem test -i eth0 --peer 192.0.2.10 -t rfc2544_throughput --resolution 0.01 --duration 120",
 			Output:  "Results accurate to 0.01%",
 		},
 	}
@@ -356,13 +356,8 @@ func rfc2544LatencyExamples() []Example {
 	return []Example{
 		{
 			Desc:    "Basic latency test",
-			Command: "stem test -i eth0 -t latency",
+			Command: "stem test -i eth0 --peer 192.0.2.10 -t rfc2544_latency",
 			Output:  "Avg: 125µs, Min: 98µs, Max: 245µs, Jitter: 23µs",
-		},
-		{
-			Desc:    "Latency at specific rate",
-			Command: "stem test -i eth0 -t latency --rate 50",
-			Output:  "Latency measured at 50% line rate",
 		},
 	}
 }
@@ -529,13 +524,8 @@ func rfc2544FrameLossExamples() []Example {
 	return []Example{
 		{
 			Desc:    "Frame loss rate sweep",
-			Command: "stem test -i eth0 -t frame_loss",
+			Command: "stem test -i eth0 --peer 192.0.2.10 -t rfc2544_frame_loss",
 			Output:  "100%: 2.3% loss, 90%: 0.1% loss, 80%: 0% loss",
-		},
-		{
-			Desc:    "Fine-grained analysis",
-			Command: "stem test -i eth0 -t frame_loss --step 5 --start-rate 100",
-			Output:  "Detailed curve with 5% increments",
 		},
 	}
 }
@@ -674,7 +664,7 @@ func rfc2544BackToBackExamples() []Example {
 	return []Example{
 		{
 			Desc:    "Back-to-back test",
-			Command: "stem test -i eth0 -t back_to_back",
+			Command: "stem test -i eth0 --peer 192.0.2.10 -t rfc2544_back_to_back",
 			Output:  "Max burst: 2048 frames (3.1 MB buffer equivalent)",
 		},
 	}
@@ -768,7 +758,7 @@ traffic spikes.`,
 		Examples: []Example{
 			{
 				Desc:    "System recovery test",
-				Command: "stem test -i eth0 -t system_recovery",
+				Command: "stem test -i eth0 --peer 192.0.2.10 -t rfc2544_system_recovery",
 				Output:  "Recovery time: 245ms",
 			},
 		},
@@ -847,8 +837,8 @@ Lower reset times mean less disruption during maintenance or failures.`,
 
 		Examples: []Example{
 			{
-				Desc:    "Software reset test",
-				Command: "stem test -i eth0 -t reset --reset-type software",
+				Desc:    "Reset test",
+				Command: "stem test -i eth0 --peer 192.0.2.10 -t rfc2544_reset",
 				Output:  "Reset time: 45 seconds",
 			},
 		},
