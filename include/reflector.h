@@ -20,7 +20,8 @@
 #include <dispatch/dispatch.h>
 #endif
 
-/* Version information */
+/* Test master signatures and version information */
+#include "stem_signatures.h"
 #include "version_generated.h"
 
 /* Compiler hints for branch prediction */
@@ -73,12 +74,9 @@
 #define ITO_TOS_WIGGLE          0x01
 #define PACKET_BLOCK_TIMEOUT_MS 1
 
-/* Custom signatures (RFC2544/Y.1564 tester) */
-#define CUSTOM_SIG_RFC2544     "RFC254"
-#define CUSTOM_SIG_RFC2544_LEN 6
-#define CUSTOM_SIG_Y1564       "Y.1564 "
-#define CUSTOM_SIG_MSN         "MSNSEED"
-#define CUSTOM_SIG_LEN         7
+/* Mustard Seed Networks signature (sent by Seed) */
+#define CUSTOM_SIG_MSN "MSNSEED"
+#define CUSTOM_SIG_LEN 7
 
 /* Ethernet frame offsets */
 #define ETH_DST_OFFSET  0

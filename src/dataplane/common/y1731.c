@@ -26,7 +26,6 @@
 /* Y.1731 constants */
 #define Y1731_DEFAULT_DURATION_SEC 60
 #define Y1731_DEFAULT_WARMUP_SEC   2
-#define Y1731_SIGNATURE_LOCAL      "Y.1731 "
 
 /**
  * Initialize default MEP configuration
@@ -115,7 +114,7 @@ int y1731_delay_measurement(rfc2544_ctx_t *ctx, y1731_session_t *session, uint32
     /* Run delay measurement trial */
     trial_result_t trial;
     int ret = run_trial_custom(ctx, 128, rate_pct, duration_sec, Y1731_DEFAULT_WARMUP_SEC,
-                               Y1731_SIGNATURE_LOCAL, session->local_mep.mep_id, &trial);
+                               Y1731_SIGNATURE, session->local_mep.mep_id, &trial);
 
     if (ret < 0) {
         rfc2544_log(LOG_ERROR, "Delay measurement trial failed: %d", ret);
@@ -166,7 +165,7 @@ int y1731_loss_measurement(rfc2544_ctx_t *ctx, y1731_session_t *session, uint32_
     /* Run at moderate rate for loss measurement */
     trial_result_t trial;
     int            ret = run_trial_custom(ctx, 128, 50.0, /* 50% rate */
-                                          duration_sec, Y1731_DEFAULT_WARMUP_SEC, Y1731_SIGNATURE_LOCAL,
+                                          duration_sec, Y1731_DEFAULT_WARMUP_SEC, Y1731_SIGNATURE,
                                           session->local_mep.mep_id, &trial);
 
     if (ret < 0) {
@@ -243,7 +242,7 @@ int y1731_synthetic_loss(rfc2544_ctx_t *ctx, y1731_session_t *session, uint32_t 
     /* Run synthetic loss trial */
     trial_result_t trial;
     int ret = run_trial_custom(ctx, 128, rate_pct, duration_sec, Y1731_DEFAULT_WARMUP_SEC,
-                               Y1731_SIGNATURE_LOCAL, session->local_mep.mep_id, &trial);
+                               Y1731_SIGNATURE, session->local_mep.mep_id, &trial);
 
     if (ret < 0) {
         rfc2544_log(LOG_ERROR, "Synthetic loss trial failed: %d", ret);
@@ -314,8 +313,8 @@ int y1731_loopback(rfc2544_ctx_t *ctx, y1731_session_t *session, const uint8_t *
 
     /* Run loopback trial */
     trial_result_t trial;
-    int ret = run_trial_custom(ctx, 128, rate_pct, duration_sec, 1, Y1731_SIGNATURE_LOCAL,
-                               session->local_mep.mep_id, &trial);
+    int            ret = run_trial_custom(ctx, 128, rate_pct, duration_sec, 1, Y1731_SIGNATURE,
+                                          session->local_mep.mep_id, &trial);
 
     if (ret < 0) {
         rfc2544_log(LOG_ERROR, "Loopback trial failed: %d", ret);
