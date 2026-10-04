@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.26.3](https://github.com/MustardSeedNetworks/stem/compare/v0.26.2...v0.26.3) (2026-10-04)
+
+
+### Bug Fixes
+
+* **api:** answer a spent rate limit in the JSON error envelope ([#1589](https://github.com/MustardSeedNetworks/stem/issues/1589)) ([6f22475](https://github.com/MustardSeedNetworks/stem/commit/6f22475a02edc66d8a8f2a1ddb40e30a2136a47a)), closes [#1438](https://github.com/MustardSeedNetworks/stem/issues/1438)
+* **i18n:** move the copy the tightened gate finds into the locale files ([#1592](https://github.com/MustardSeedNetworks/stem/issues/1592)) ([259dde0](https://github.com/MustardSeedNetworks/stem/commit/259dde023bcfb0be5cd8294db5e57b547cc6cbc8))
+
+
+### Documentation
+
+* **adr:** link the fleet API styles decision from the ADR index ([#1585](https://github.com/MustardSeedNetworks/stem/issues/1585)) ([a7a017c](https://github.com/MustardSeedNetworks/stem/commit/a7a017c6af8473c96b421e7966c6df15053519da))
+
+
+### Miscellaneous
+
+* **reachability:** baseline internal/authstate until AUTH-STEM wires it ([#1586](https://github.com/MustardSeedNetworks/stem/issues/1586)) ([406228b](https://github.com/MustardSeedNetworks/stem/commit/406228bab557c7b58b654535cb6f6a75bfbbd0c6)), closes [#1417](https://github.com/MustardSeedNetworks/stem/issues/1417)
+
 ## [0.26.2](https://github.com/MustardSeedNetworks/stem/compare/v0.26.1...v0.26.2) (2026-10-04)
 
 
