@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.26.4](https://github.com/MustardSeedNetworks/stem/compare/v0.26.3...v0.26.4) (2026-10-04)
+
+
+### Bug Fixes
+
+* **build:** put the C dataplane ABI into the cgo packages' cache keys ([#1595](https://github.com/MustardSeedNetworks/stem/issues/1595)) ([14236f9](https://github.com/MustardSeedNetworks/stem/commit/14236f96fb7f1b10730b00b515fcc8ab2f29a856)), closes [#1429](https://github.com/MustardSeedNetworks/stem/issues/1429)
+* **lint:** anchor the clang-tidy header filter on project directories ([#1594](https://github.com/MustardSeedNetworks/stem/issues/1594)) ([105c0f1](https://github.com/MustardSeedNetworks/stem/commit/105c0f1d4bba5d223463e239a3ce40d8ea60419f)), closes [#1246](https://github.com/MustardSeedNetworks/stem/issues/1246)
+
 ## [0.26.3](https://github.com/MustardSeedNetworks/stem/compare/v0.26.2...v0.26.3) (2026-10-04)
 
 
