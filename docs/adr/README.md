@@ -19,3 +19,9 @@ survives the people and the diffs. Format mirrors the sibling repos (seed/niac).
 | [0011](0011-internal-api-sub-package-decomposition.md) | internal/api sub-package decomposition (ratelimit + sse leaves) | Accepted |
 
 Status values: Proposed · Accepted · Amended · Superseded.
+
+Fleet decisions recorded outside this repository: the API style. Seed, stem and
+niac serve REST/JSON over foundation's shared route registrar, and trellis
+serves Connect-RPC over its proto contract
+(`msn-docs-internal/05-Engineering/API_STYLES.md`, owner decision 10,
+2026-09-17; revisit at trellis v1).
