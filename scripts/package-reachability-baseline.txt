@@ -8,3 +8,7 @@ internal/services/orchestrator/config # unwired — nothing imports it
 # fails on packages NOT listed and a shrinking list is always fine.
 internal/i18n                        # dead Go; its locales/ move to ui/ in #798
 internal/metrics                     # unwired Prometheus instrumentation; deleted in #798
+
+# Built ahead of its consumer: AUTH-STEM wires the single-principal store into
+# the daemon and deletes this line in the same change (#1417).
+internal/authstate                   # unwired until AUTH-STEM lands
