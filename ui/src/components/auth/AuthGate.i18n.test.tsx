@@ -51,4 +51,27 @@ describe('AuthGate — real locale copy', () => {
     });
     expect(screen.queryByText('Sign in to continue')).not.toBeInTheDocument();
   });
+
+  it('labels the sign-in fields and button in Spanish', async () => {
+    await i18n.changeLanguage('es');
+    render(<AuthGate />);
+
+    // The field labels and the submit button were bare English text nodes and
+    // literals until .github#100 taught the shared gate to see them.
+    expect(await screen.findByLabelText('Usuario')).toBeInTheDocument();
+    expect(screen.getByLabelText('Contraseña')).toBeInTheDocument();
+    expect(screen.getByTestId('login-submit')).toHaveTextContent('Iniciar sesión');
+    for (const english of ['Username', 'Password', 'Sign In']) {
+      expect(screen.queryByText(english)).toBeNull();
+    }
+  });
+
+  it('labels the two-factor submit button in Spanish', async () => {
+    await i18n.changeLanguage('es');
+    useAuthStore.setState({ mfaPending: { mfaToken: 'tok', factor: 'totp' } });
+    render(<AuthGate />);
+
+    expect(await screen.findByRole('button', { name: 'Verificar' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Verify' })).toBeNull();
+  });
 });

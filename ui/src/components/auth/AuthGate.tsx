@@ -185,7 +185,7 @@ export function AuthGate(): ReactElement {
                   </p>
                 ) : null}
                 <Button type="submit" className="w-full" disabled={loginLoading}>
-                  {loginLoading ? 'Verifying...' : 'Verify'}
+                  {loginLoading ? t('security:login.verifying') : t('security:login.submitButton')}
                 </Button>
                 <button
                   type="button"
@@ -205,7 +205,7 @@ export function AuthGate(): ReactElement {
                     htmlFor="stem-login-username"
                     className="text-xs font-semibold text-text-muted"
                   >
-                    Username
+                    {t('security:login.username')}
                   </label>
                   <input
                     id="stem-login-username"
@@ -226,7 +226,7 @@ export function AuthGate(): ReactElement {
                     htmlFor="stem-login-password"
                     className="text-xs font-semibold text-text-muted"
                   >
-                    Password
+                    {t('security:login.password')}
                   </label>
                   <input
                     id="stem-login-password"
@@ -253,7 +253,7 @@ export function AuthGate(): ReactElement {
                   className="w-full"
                   disabled={loginLoading}
                 >
-                  {loginLoading ? 'Signing in...' : 'Sign In'}
+                  {loginLoading ? t('security:login.signingIn') : t('security:login.signInButton')}
                 </Button>
                 <Button
                   data-testid="passkey-login"

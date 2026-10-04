@@ -157,23 +157,21 @@ export function ModuleSelector({
         <div key={mod.name} className="border border-surface-border rounded-lg overflow-hidden">
           {/* Module Header */}
           <Tooltip
-            text={t(
+            text={
               expandedModule === mod.name
-                ? 'modules:card.expand.titleExpanded'
-                : 'modules:card.expand.titleCollapsed',
-              { name: mod.displayName },
-            )}
+                ? t('modules:card.expand.titleExpanded', { name: mod.displayName })
+                : t('modules:card.expand.titleCollapsed', { name: mod.displayName })
+            }
           >
             <button
               type="button"
               data-testid={`module-toggle-${mod.name}`}
               onClick={(): void => toggleModule(mod.name)}
-              aria-label={t(
+              aria-label={
                 expandedModule === mod.name
-                  ? 'modules:card.expand.titleExpanded'
-                  : 'modules:card.expand.titleCollapsed',
-                { name: mod.displayName },
-              )}
+                  ? t('modules:card.expand.titleExpanded', { name: mod.displayName })
+                  : t('modules:card.expand.titleCollapsed', { name: mod.displayName })
+              }
               aria-expanded={expandedModule === mod.name}
               className="w-full flex-between pad-sm hover:bg-surface-hover transition-colors"
               style={{ borderLeft: `4px solid ${mod.color}` }}

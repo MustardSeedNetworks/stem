@@ -99,7 +99,7 @@ function InterfaceDetails({ iface }: InterfaceDetailsProps): ReactElement {
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-comfortable text-sm">
         <div>
-          <div className="text-text-muted">Name</div>
+          <div className="text-text-muted">{t('labels.name')}</div>
           <div className="font-medium">{iface.name}</div>
         </div>
         <div>
@@ -107,25 +107,25 @@ function InterfaceDetails({ iface }: InterfaceDetailsProps): ReactElement {
           <div className="font-mono">{iface.mac}</div>
         </div>
         <div>
-          <div className="text-text-muted">Speed</div>
+          <div className="text-text-muted">{t('labels.speed')}</div>
           <div>
             {iface.speed} Mbps / {iface.duplex}
           </div>
         </div>
         <div>
-          <div className="text-text-muted">Driver</div>
+          <div className="text-text-muted">{t('labels.driver')}</div>
           <div>{iface.driver}</div>
         </div>
         <div>
-          <div className="text-text-muted">State</div>
+          <div className="text-text-muted">{t('labels.state')}</div>
           <div className={stateClassName}>{iface.state}</div>
         </div>
         <div>
-          <div className="text-text-muted">XDP Support</div>
-          <div>{iface.xdp ? 'Yes' : 'No'}</div>
+          <div className="text-text-muted">{t('labels.xdpSupport')}</div>
+          <div>{iface.xdp ? t('labels.yes') : t('labels.no')}</div>
         </div>
         <div>
-          <div className="text-text-muted">Score</div>
+          <div className="text-text-muted">{t('labels.score')}</div>
           <div>{iface.score}</div>
         </div>
       </div>

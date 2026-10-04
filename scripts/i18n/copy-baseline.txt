@@ -13,8 +13,6 @@
 # auth UI replaces these (UI-AUTH-STEM), so they clear when that adoption
 # deletes the private screens, not by translating them in place (#1498).
 ui/src/components/auth/AuthGate.tsx literal Password has been reset. Please sign in with your new password.
-ui/src/components/auth/AuthGate.tsx literal Sign In
-ui/src/components/auth/AuthGate.tsx literal Signing in...
 ui/src/components/setup/SetupWizard.tsx literal Hide password
 ui/src/components/setup/SetupWizard.tsx literal Show password
 ui/src/pages/account/security/SecurityPage.tsx literal Failed to begin TOTP setup

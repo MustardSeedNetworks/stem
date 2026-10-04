@@ -141,6 +141,18 @@ describe('ReflectorPage — real locale copy', () => {
     }
   });
 
+  it('labels the interface details in Spanish', async () => {
+    await i18n.changeLanguage('es');
+    renderPage();
+
+    for (const label of ['Nombre', 'Velocidad', 'Controlador', 'Soporte XDP', 'Puntuación', 'Sí']) {
+      expect(screen.getByText(label)).toBeInTheDocument();
+    }
+    for (const english of ['Name', 'Speed', 'Driver', 'State', 'XDP Support', 'Yes', 'Score']) {
+      expect(screen.queryByText(english)).toBeNull();
+    }
+  });
+
   it('translates the rollup state label, not just the headline under it', async () => {
     await i18n.changeLanguage('es');
     renderPage();

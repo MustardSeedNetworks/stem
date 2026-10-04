@@ -95,7 +95,9 @@ export function TestResults({ testStatus, result }: TestResultsProps): ReactElem
       <div className="flex-between mb-content pb-4 border-b border-surface-border">
         <div>
           <div className="heading-3 text-text-primary">{result.testType}</div>
-          <div className="text-sm text-text-muted">Module: {result.module}</div>
+          <div className="text-sm text-text-muted">
+            {t('results.moduleName', { module: result.module })}
+          </div>
         </div>
         <div className="text-right">
           <div className={`heading-3 ${statusColor}`}>{verdict}</div>
@@ -105,7 +107,7 @@ export function TestResults({ testStatus, result }: TestResultsProps): ReactElem
       {/* Error Message */}
       {result.error ? (
         <div className="mb-content pad-sm rounded-lg bg-status-error/10 border border-status-error/20">
-          <div className="text-sm font-medium text-status-error-strong">Error</div>
+          <div className="text-sm font-medium text-status-error-strong">{t('status.error')}</div>
           <div className="text-sm text-text-primary">{result.error}</div>
         </div>
       ) : null}

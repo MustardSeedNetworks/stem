@@ -44,6 +44,11 @@
     "passkeyButton": "Iniciar sesión con llave de acceso",
     "mfaContinue": "Introduzca el código de su aplicación de autenticación para continuar.",
     "useDifferentAccount": "Usar otra cuenta",
-    "forgotPassword": "¿Olvidó su contraseña?"
+    "forgotPassword": "¿Olvidó su contraseña?",
+    "username": "Usuario",
+    "password": "Contraseña",
+    "verifying": "Verificando...",
+    "signInButton": "Iniciar sesión",
+    "signingIn": "Iniciando sesión..."
   }
 }
