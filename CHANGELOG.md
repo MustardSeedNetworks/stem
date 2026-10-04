@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.25.9](https://github.com/MustardSeedNetworks/stem/compare/v0.25.8...v0.25.9) (2026-10-04)
+
+
+### Bug Fixes
+
+* **cli:** send only the config block each test type reads ([#1561](https://github.com/MustardSeedNetworks/stem/issues/1561)) ([a300207](https://github.com/MustardSeedNetworks/stem/commit/a300207beb618692e8f40b389c7e82b004bc44b0)), closes [#1412](https://github.com/MustardSeedNetworks/stem/issues/1412)
+* **reflector:** reflect every signature the test master sends ([#1564](https://github.com/MustardSeedNetworks/stem/issues/1564)) ([306b387](https://github.com/MustardSeedNetworks/stem/commit/306b38738e43465d9ba084e6ea889534767edc0d)), closes [#1531](https://github.com/MustardSeedNetworks/stem/issues/1531)
+
 ## [0.25.8](https://github.com/MustardSeedNetworks/stem/compare/v0.25.7...v0.25.8) (2026-10-03)
 
 
