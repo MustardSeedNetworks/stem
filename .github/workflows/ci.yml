@@ -1314,6 +1314,12 @@ jobs:
       - name: Verify token-discipline rules
         run: ./scripts/test-check-token-discipline.sh
 
+      # Build contract rule 5's deployment check could never pass a real
+      # install: it compared the tag name with the version a release reports
+      # (#1577). The self-test serves it a local /__version.
+      - name: Verify deploy-validate
+        run: ./scripts/test-deploy-validate.sh
+
       # A reverse dependency validate-touched fails to find is a test that
       # silently stops running in the inner loop, and a scripts/check-* gate
       # missing from its table never runs there at all.
