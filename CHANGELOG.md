@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.26.6](https://github.com/MustardSeedNetworks/stem/compare/v0.26.5...v0.26.6) (2026-10-04)
+
+
+### Code Refactoring
+
+* **ui:** type component props directly instead of FC&lt;&gt; ([#1603](https://github.com/MustardSeedNetworks/stem/issues/1603)) ([0080279](https://github.com/MustardSeedNetworks/stem/commit/008027928edbd66b8675e62a5134d088f0678aed))
+
+
+### Tests
+
+* **e2e:** split route help walk into one test per route ([#1600](https://github.com/MustardSeedNetworks/stem/issues/1600)) ([04a673c](https://github.com/MustardSeedNetworks/stem/commit/04a673c64ede839d57b89c0d7837cba84a5c541f)), closes [#1440](https://github.com/MustardSeedNetworks/stem/issues/1440)
+
 ## [0.26.5](https://github.com/MustardSeedNetworks/stem/compare/v0.26.4...v0.26.5) (2026-10-04)
 
 
