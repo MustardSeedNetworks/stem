@@ -6,8 +6,10 @@ package dataplane
 
 import (
 	"encoding/json"
+	"math/big"
 	"os"
 	"os/exec"
+	"runtime"
 	"strconv"
 	"testing"
 	"time"
@@ -153,16 +155,46 @@ func TestAFXDPTrialReceivesFromReflectingPeer(t *testing.T) {
 	}
 }
 
-// One AF_XDP socket reads one receive queue, so on a multi-queue interface it
-// would miss reflected frames hashed to the others and call them loss. The
-// test master must refuse AF_XDP there and measure over AF_PACKET.
-func TestAFXDPRefusesMultiQueueInterface(t *testing.T) {
-	requireRoot(t)
-	master := newReflectedLink(t, 2, false)
+// reflectInto makes an AF_PACKET reflector transmit every frame on one queue,
+// which a veth delivers to the same receive queue at the test master. A single
+// flow's RSS hash picks a queue that changes with the kernel's boot-time seed,
+// so without this a trial could land on queue 0 and prove nothing.
+func reflectInto(t *testing.T, queue, queues int) {
+	t.Helper()
+	all := new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), uint(runtime.NumCPU())), big.NewInt(1))
+	for q := range queues {
+		mask := "0"
+		if q == queue {
+			mask = all.Text(16)
+		}
+		path := "/sys/class/net/" + vethReflector + "/queues/tx-" + strconv.Itoa(q) + "/xps_cpus"
+		if err := os.WriteFile(path, []byte(mask), 0); err != nil {
+			t.Fatalf("steer reflector transmit: %v", err)
+		}
+	}
+}
 
-	trialReturnsWhatItSent(t, master, 1)
-	if xdpAttached(t, vethMaster) {
-		t.Error("XDP program attached to a two-queue interface: want the AF_PACKET fallback")
+// One AF_XDP socket reads one receive queue, so on a multi-queue interface the
+// test master needs one per queue, or it counts frames on the others as loss
+// (stem#1533). Before, it refused AF_XDP there and measured over AF_PACKET.
+func TestAFXDPReceivesOnEveryQueue(t *testing.T) {
+	requireRoot(t)
+	for _, queues := range []int{2, 4} {
+		t.Run(strconv.Itoa(queues)+"queues", func(t *testing.T) {
+			// An AF_PACKET reflector, so XPS picks its transmit queue.
+			master := newReflectedLink(t, queues, false)
+			reflectInto(t, queues-1, queues)
+			for _, rate := range []float64{1, 50} {
+				trialReturnsWhatItSent(t, master, rate)
+			}
+			if !xdpAttached(t, vethMaster) {
+				t.Error("no XDP program on the test master's interface: the trials did not run over AF_XDP")
+			}
+			master.Close()
+			if xdpAttached(t, vethMaster) {
+				t.Error("XDP program still attached after the test master closed")
+			}
+		})
 	}
 }
 
