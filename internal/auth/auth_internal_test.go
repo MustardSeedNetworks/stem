@@ -9,6 +9,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
 // Internal tests that can access unexported functions.
@@ -120,13 +122,16 @@ func TestGenerateTokenWithType_CustomDuration(t *testing.T) {
 		t.Fatalf("NewManager() error: %v", err)
 	}
 
-	// Generate token with very short duration.
-	token, err := mgr.generateTokenWithType("testuser", "access", 1*time.Second)
+	// The duration must outlive exp's whole-second truncation: a 1 s token
+	// minted late in a second is already expired when validated (#1505).
+	const duration = time.Minute
+	before := time.Now()
+	token, err := mgr.generateTokenWithType("testuser", "access", duration)
 	if err != nil {
 		t.Fatalf("generateTokenWithType() error: %v", err)
 	}
+	after := time.Now()
 
-	// Token should be valid immediately.
 	claims, err := mgr.ValidateToken(ctx, token)
 	if err != nil {
 		t.Fatalf("ValidateToken() error: %v", err)
@@ -136,10 +141,10 @@ func TestGenerateTokenWithType_CustomDuration(t *testing.T) {
 		t.Fatal("ExpiresAt should not be nil")
 	}
 
-	// Expiration should be approximately 1 second from now.
-	expectedExpiry := time.Now().Add(1 * time.Second)
-	if claims.ExpiresAt.After(expectedExpiry.Add(100 * time.Millisecond)) {
-		t.Error("Token expires too late")
+	earliest := before.Add(duration).Truncate(jwt.TimePrecision)
+	latest := after.Add(duration)
+	if exp := claims.ExpiresAt.Time; exp.Before(earliest) || exp.After(latest) {
+		t.Errorf("ExpiresAt = %v, want within [%v, %v]", exp, earliest, latest)
 	}
 }
 
