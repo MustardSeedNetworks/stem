@@ -72,6 +72,11 @@ curl -LO https://github.com/MustardSeedNetworks/stem/releases/download/v${VERSIO
 stem version
 ```
 
+To confirm the service answering on a host is that release, run
+`make deploy-validate HOST=<host> RELEASE=v${VERSION}` from a stem checkout
+with the tag fetched. It checks `/__version` for the release's version and
+commit and a non-empty `uiBuildHash`, and fails on any other build.
+
 ### Option 2: Build from Source
 
 ```bash

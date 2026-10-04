@@ -1,168 +1,88 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # =============================================================================
-# deploy-validate.sh - Validate stem deployment
+# deploy-validate.sh - Validate an installed stem release
 # =============================================================================
 #
-# Verifies that a deployed stem instance is running the expected version
-# with the correct UI build hash. Mirrors niac/go's deploy-validate.sh shape
-# so the three projects share a deployment validation contract.
+# Build contract rule 5: after an install, the service answering on the host
+# must be the artifact the release published. Asserts that /__version reports
+# the release's version and commit and a non-empty uiBuildHash.
 #
-# Usage: ./scripts/deploy-validate.sh <expected-version> <expected-commit> [host] [port]
+# Usage: scripts/deploy-validate.sh --host HOST --release vX.Y.Z [--port PORT]
 #
-# Examples:
-#   ./scripts/deploy-validate.sh v0.1.0 abc1234
-#   ./scripts/deploy-validate.sh v0.1.0 abc1234 niac-srv-ubuntu 8444
-#
+# Normally run as `make deploy-validate HOST=... RELEASE=...`. The commit is
+# read from the release tag, so the tag must exist locally (`git fetch --tags`).
+# Release builds embed the version without its `v` and the full commit SHA.
 # =============================================================================
 
 set -euo pipefail
 
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-CYAN='\033[0;36m'
-NC='\033[0m'
-
-EXPECTED_VERSION="${1:-}"
-EXPECTED_COMMIT="${2:-}"
-HOST="${3:-localhost}"
-PORT="${4:-8444}"
-SCHEME="${STEM_VALIDATE_SCHEME:-https}"
-ENDPOINT="${SCHEME}://${HOST}:${PORT}/__version"
+HOST=""
+RELEASE=""
+PORT=8444
 MAX_RETRIES=5
 RETRY_DELAY=3
-CURL_FLAGS=()
-if [ "$SCHEME" = "https" ]; then
-    CURL_FLAGS+=("-k")
-fi
-
-success() { echo -e "${GREEN}✓ $1${NC}"; }
-fail() { echo -e "${RED}✗ $1${NC}"; }
-warn() { echo -e "${YELLOW}⚠ $1${NC}"; }
-info() { echo -e "${CYAN}ℹ $1${NC}"; }
 
 usage() {
-    echo "Usage: $0 <expected-version> <expected-commit> [host] [port]"
-    echo ""
-    echo "Arguments:"
-    echo "  expected-version  The version string to expect (e.g., v0.1.0)"
-    echo "  expected-commit   The short commit hash to expect (e.g., abc1234)"
-    echo "  host              Target hostname (default: localhost)"
-    echo "  port              Target port (default: 8444)"
-    echo ""
-    echo "Environment:"
-    echo "  STEM_VALIDATE_SCHEME  http | https (default: https)"
-    exit 1
+    echo "Usage: $0 --host HOST --release vX.Y.Z [--port PORT]" >&2
+    exit 2
 }
 
-if [ -z "$EXPECTED_VERSION" ] || [ -z "$EXPECTED_COMMIT" ]; then
-    usage
-fi
+while [ $# -gt 0 ]; do
+    case "$1" in
+    --host) HOST="${2:-}"; shift 2 ;;
+    --release) RELEASE="${2:-}"; shift 2 ;;
+    --port) PORT="${2:-}"; shift 2 ;;
+    *) usage ;;
+    esac
+done
+[ -n "$HOST" ] && [ -n "$RELEASE" ] || usage
 
-echo "=== Stem Deployment Validation ==="
-echo ""
-info "Target:   $ENDPOINT"
-info "Expected: version=$EXPECTED_VERSION commit=$EXPECTED_COMMIT"
-echo ""
+command -v jq >/dev/null || { echo "jq is required" >&2; exit 2; }
 
-echo "Waiting for service to be available..."
-RETRY_COUNT=0
-while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-    if curl -sf "${CURL_FLAGS[@]}" -o /dev/null "$ENDPOINT" 2>/dev/null; then
-        success "Service is responding"
+EXPECTED_COMMIT=$(git rev-parse --verify --quiet "refs/tags/${RELEASE}^{commit}") || {
+    echo "✗ no local tag ${RELEASE} (git fetch --tags)" >&2
+    exit 2
+}
+EXPECTED_VERSION="${RELEASE#v}"
+ENDPOINT="https://${HOST}:${PORT}/__version"
+
+echo "Target:   $ENDPOINT"
+echo "Expected: version=$EXPECTED_VERSION commit=$EXPECTED_COMMIT"
+
+# The service may still be starting after an install restarted it.
+for attempt in $(seq 1 "$MAX_RETRIES"); do
+    if RESPONSE=$(curl -sfk --max-time 5 "$ENDPOINT"); then
         break
     fi
-    RETRY_COUNT=$((RETRY_COUNT + 1))
-    if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
-        echo "  Retry $RETRY_COUNT/$MAX_RETRIES in ${RETRY_DELAY}s..."
-        sleep $RETRY_DELAY
+    if [ "$attempt" -eq "$MAX_RETRIES" ]; then
+        echo "✗ $ENDPOINT not responding after $MAX_RETRIES attempts" >&2
+        exit 1
     fi
+    sleep "$RETRY_DELAY"
 done
 
-if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
-    fail "Service not responding after $MAX_RETRIES attempts"
-    echo ""
-    echo "Troubleshooting:"
-    echo "  1. Check if stem is running: systemctl status stem"
-    echo "  2. Check service logs: journalctl -u stem -f"
-    echo "  3. Check if port $PORT is listening: ss -tlnp | grep $PORT"
-    exit 1
-fi
+ACTUAL_VERSION=$(jq -r '.version // ""' <<<"$RESPONSE")
+ACTUAL_COMMIT=$(jq -r '.commit // ""' <<<"$RESPONSE")
+ACTUAL_UI_HASH=$(jq -r '.uiBuildHash // ""' <<<"$RESPONSE")
 
-echo ""
-echo "Fetching version information..."
-RESPONSE=$(curl -sf "${CURL_FLAGS[@]}" "$ENDPOINT" 2>&1) || {
-    fail "Failed to fetch /__version endpoint"
-    exit 1
+failed=0
+check() {
+    if [ "$2" = "$3" ]; then
+        echo "✓ $1: $3"
+    else
+        echo "✗ $1: expected=$2 actual=$3"
+        failed=1
+    fi
 }
+check version "$EXPECTED_VERSION" "$ACTUAL_VERSION"
+check commit "$EXPECTED_COMMIT" "$ACTUAL_COMMIT"
+case "$ACTUAL_UI_HASH" in
+"" | unknown) echo "✗ uiBuildHash missing: the UI was not embedded"; failed=1 ;;
+*) echo "✓ uiBuildHash: $ACTUAL_UI_HASH" ;;
+esac
 
-if ! command -v jq &> /dev/null; then
-    fail "jq is required but not installed"
-    echo "Install with: apt-get install jq (Ubuntu) or dnf install jq (Fedora)"
+if [ "$failed" -ne 0 ]; then
+    echo "DEPLOYMENT VALIDATION FAILED"
     exit 1
 fi
-
-ACTUAL_VERSION=$(echo "$RESPONSE" | jq -r '.version // empty')
-ACTUAL_COMMIT=$(echo "$RESPONSE" | jq -r '.commit // empty')
-ACTUAL_UI_HASH=$(echo "$RESPONSE" | jq -r '.uiBuildHash // empty')
-ACTUAL_BUILD_TIME=$(echo "$RESPONSE" | jq -r '.buildTime // empty')
-
-echo ""
-echo "Build Information:"
-echo "  Version:      $ACTUAL_VERSION"
-echo "  Commit:       $ACTUAL_COMMIT"
-echo "  Build Time:   $ACTUAL_BUILD_TIME"
-echo "  UI Hash:      $ACTUAL_UI_HASH"
-echo ""
-
-VALIDATION_FAILED=0
-
-echo "Running validation checks..."
-if [ "$ACTUAL_VERSION" = "$EXPECTED_VERSION" ]; then
-    success "Version matches: $ACTUAL_VERSION"
-else
-    fail "Version MISMATCH: expected=$EXPECTED_VERSION actual=$ACTUAL_VERSION"
-    VALIDATION_FAILED=1
-fi
-
-EXPECTED_COMMIT_SHORT="${EXPECTED_COMMIT:0:7}"
-ACTUAL_COMMIT_SHORT="${ACTUAL_COMMIT:0:7}"
-if [ "$ACTUAL_COMMIT_SHORT" = "$EXPECTED_COMMIT_SHORT" ]; then
-    success "Commit matches: $ACTUAL_COMMIT_SHORT"
-else
-    fail "Commit MISMATCH: expected=$EXPECTED_COMMIT_SHORT actual=$ACTUAL_COMMIT_SHORT"
-    VALIDATION_FAILED=1
-fi
-
-if [ -n "$ACTUAL_UI_HASH" ] && [ "$ACTUAL_UI_HASH" != "null" ] && [ "$ACTUAL_UI_HASH" != "unknown" ]; then
-    success "UI build hash present: $ACTUAL_UI_HASH"
-else
-    fail "UI build hash MISSING (frontend may not be embedded)"
-    VALIDATION_FAILED=1
-fi
-
-if [ -n "$ACTUAL_BUILD_TIME" ] && [ "$ACTUAL_BUILD_TIME" != "null" ]; then
-    success "Build time present: $ACTUAL_BUILD_TIME"
-else
-    warn "Build time missing (non-critical)"
-fi
-
-echo ""
-
-if [ $VALIDATION_FAILED -eq 0 ]; then
-    echo "======================================="
-    success "DEPLOYMENT VALIDATION PASSED"
-    echo "======================================="
-    exit 0
-else
-    echo "======================================="
-    fail "DEPLOYMENT VALIDATION FAILED"
-    echo "======================================="
-    echo ""
-    echo "The deployed version does not match the expected build."
-    echo "Remediation:"
-    echo "  1. Reinstall the package"
-    echo "  2. Restart the service: systemctl restart stem"
-    echo "  3. Check logs: journalctl -u stem -f"
-    exit 1
-fi
+echo "DEPLOYMENT VALIDATION PASSED"
