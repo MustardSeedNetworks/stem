@@ -12,7 +12,7 @@
  * dismiss control. Translation keys live under role.switchError.*.
  */
 import { Loader2, Repeat, Target, X } from 'lucide-react';
-import { type FC, useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { type StemRole, useRole } from '../contexts/RoleContext';
 import { ConfirmModal } from './ui/ConfirmModal';
@@ -47,7 +47,7 @@ const ROLE_OPTIONS: readonly RoleOption[] = [
   },
 ];
 
-export const RoleChip: FC<RoleChipProps> = ({ className = '', layout = 'inline' }) => {
+export function RoleChip({ className = '', layout = 'inline' }: RoleChipProps) {
   const { t } = useTranslation();
   const { role, setRole, isSwitchingRole, roleSwitchError, clearRoleSwitchError } = useRole();
   const [pendingRole, setPendingRole] = useState<StemRole | null>(null);
@@ -173,6 +173,6 @@ export const RoleChip: FC<RoleChipProps> = ({ className = '', layout = 'inline' 
       />
     </div>
   );
-};
+}
 
 export default RoleChip;

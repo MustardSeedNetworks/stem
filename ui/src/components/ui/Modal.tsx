@@ -5,7 +5,7 @@
  * Escape bubbles through onClose when closeOnEscape is true.
  */
 import { X } from 'lucide-react';
-import { type FC, type KeyboardEvent, type ReactNode, useEffect } from 'react';
+import { type KeyboardEvent, type ReactNode, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { iconSizes } from '../../constants/sizes';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
@@ -45,7 +45,7 @@ const sizeClasses: Record<ModalSize, string> = {
   full: 'max-w-4xl',
 };
 
-export const Modal: FC<ModalProps> = ({
+export function Modal({
   isOpen,
   onClose,
   title,
@@ -56,7 +56,7 @@ export const Modal: FC<ModalProps> = ({
   closeOnBackdropClick = true,
   closeOnEscape = true,
   className = '',
-}) => {
+}: ModalProps) {
   const { t } = useTranslation('common');
   const containerRef = useFocusTrap<HTMLDivElement>({
     isActive: isOpen,
@@ -126,25 +126,27 @@ export const Modal: FC<ModalProps> = ({
       </div>
     </div>
   );
-};
+}
 
-export const ModalHeader: FC<{ children: ReactNode; className?: string }> = ({
-  children,
-  className = '',
-}) => <div className={`mb-content ${className}`}>{children}</div>;
+interface ModalSectionProps {
+  children: ReactNode;
+  className?: string;
+}
 
-export const ModalBody: FC<{ children: ReactNode; className?: string }> = ({
-  children,
-  className = '',
-}) => <div className={`stack-lg ${className}`}>{children}</div>;
+export function ModalHeader({ children, className = '' }: ModalSectionProps) {
+  return <div className={`mb-content ${className}`}>{children}</div>;
+}
 
-export const ModalFooter: FC<{ children: ReactNode; className?: string }> = ({
-  children,
-  className = '',
-}) => (
-  <div
-    className={`flex justify-end gap-default pt-section mt-content border-t border-surface-border ${className}`}
-  >
-    {children}
-  </div>
-);
+export function ModalBody({ children, className = '' }: ModalSectionProps) {
+  return <div className={`stack-lg ${className}`}>{children}</div>;
+}
+
+export function ModalFooter({ children, className = '' }: ModalSectionProps) {
+  return (
+    <div
+      className={`flex justify-end gap-default pt-section mt-content border-t border-surface-border ${className}`}
+    >
+      {children}
+    </div>
+  );
+}

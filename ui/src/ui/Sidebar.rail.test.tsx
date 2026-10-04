@@ -11,7 +11,8 @@
  * socket, and the state has to reach a screen reader through a name because
  * colour alone is not a status.
  */
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
+import { Activity, Gauge } from 'lucide-react';
 import { MemoryRouter } from 'react-router';
 import { afterEach, describe, expect, it } from 'vitest';
 import i18n from '../i18n';
@@ -19,9 +20,9 @@ import { SidebarLayout } from './Sidebar';
 
 const noop = (): void => undefined;
 
-function renderRail(overrides: Partial<Parameters<typeof SidebarLayout>[0]> = {}) {
+function renderRail(overrides: Partial<Parameters<typeof SidebarLayout>[0]> = {}, path = '/') {
   return render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[path]}>
       <SidebarLayout
         groups={[]}
         status={{ state: 'connected', label: i18n.t('common:status.connected') }}
@@ -110,5 +111,38 @@ describe('the rail', () => {
     expect(screen.queryByTestId('rail-logout')).not.toBeInTheDocument();
     expect(screen.queryByTestId('rail-refresh')).not.toBeInTheDocument();
     expect(screen.getByTestId('rail-theme-toggle')).toBeInTheDocument();
+  });
+
+  it('moves the current-page mark to the route a rail item opens', () => {
+    renderRail(
+      {
+        groups: [
+          {
+            label: 'Tests',
+            items: [
+              { path: '/rfc2544', label: 'RFC 2544', icon: Gauge },
+              { path: '/y1564', label: 'Y.1564', icon: Activity, badge: 'Beta' },
+            ],
+          },
+        ],
+      },
+      '/rfc2544',
+    );
+    // The desktop and mobile rails both mount; the first is the desktop one.
+    const [rfc2544] = screen.getAllByRole('button', { name: 'RFC 2544' });
+    const [y1564] = screen.getAllByRole('button', { name: 'Y.1564' });
+    expect(rfc2544).toHaveAttribute('aria-current', 'page');
+    expect(y1564).not.toHaveAttribute('aria-current');
+    expect(within(y1564).getByText('Beta')).toBeInTheDocument();
+
+    fireEvent.click(y1564);
+
+    expect(screen.getAllByRole('button', { name: 'Y.1564' })[0]).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+    expect(screen.getAllByRole('button', { name: 'RFC 2544' })[0]).not.toHaveAttribute(
+      'aria-current',
+    );
   });
 });

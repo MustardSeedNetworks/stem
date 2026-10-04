@@ -19,7 +19,7 @@ import {
   Waves,
   Zap,
 } from 'lucide-react';
-import { type FC, lazy } from 'react';
+import { type ComponentType, lazy } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { HelpTab } from './components/HelpDrawer';
 // Eager — default landing.
@@ -63,7 +63,7 @@ export interface PageConfig {
   description: string;
   icon: LucideIcon;
   iconColorClass?: string;
-  component: FC;
+  component: ComponentType;
   /** Page runs a test, so it carries the run controls under its header. */
   runControls?: boolean;
 }
@@ -94,7 +94,7 @@ interface PageDef {
   i18nKey: PageI18nKey;
   icon: LucideIcon;
   iconColorClass?: string;
-  component: FC;
+  component: ComponentType;
   runControls?: boolean;
 }
 

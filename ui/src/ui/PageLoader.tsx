@@ -1,10 +1,9 @@
-import type { FC } from 'react';
 import { useTranslation } from 'react-i18next';
 
 /**
  * Suspense fallback for lazy-loaded routed pages.
  */
-export const PageLoader: FC = () => {
+export function PageLoader() {
   const { t } = useTranslation('common');
 
   return (
@@ -15,4 +14,4 @@ export const PageLoader: FC = () => {
       </div>
     </div>
   );
-};
+}

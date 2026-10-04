@@ -2,7 +2,7 @@
  * ConfirmModal primitive — ported from niac UI kit (Phase B).
  */
 import { AlertTriangle } from 'lucide-react';
-import type { FC, ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { iconSizes } from '../../constants/sizes';
 import { Button } from './Button';
 import { Modal } from './Modal';
@@ -26,7 +26,7 @@ const iconColorClass: Record<NonNullable<ConfirmModalProps['confirmTone']>, stri
   violet: 'text-brand-accent',
 };
 
-export const ConfirmModal: FC<ConfirmModalProps> = ({
+export function ConfirmModal({
   isOpen,
   onConfirm,
   onCancel,
@@ -36,31 +36,33 @@ export const ConfirmModal: FC<ConfirmModalProps> = ({
   cancelLabel = 'Cancel',
   confirmTone = 'red',
   icon,
-}) => (
-  <Modal
-    isOpen={isOpen}
-    onClose={onCancel}
-    size="sm"
-    showCloseButton={false}
-    // ariaLabel, not title: the heading below is drawn by this component
-    // alongside its icon, so Modal must not render a second one — but the
-    // dialog still needs a name, and had none (#931).
-    ariaLabel={title}
-  >
-    <div className="stack-lg">
-      <div className="flex items-center gap-default">
-        {icon ?? <AlertTriangle className={`${iconSizes.xl} ${iconColorClass[confirmTone]}`} />}
-        <h2 className="heading-3 text-text-primary">{title}</h2>
+}: ConfirmModalProps) {
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onCancel}
+      size="sm"
+      showCloseButton={false}
+      // ariaLabel, not title: the heading below is drawn by this component
+      // alongside its icon, so Modal must not render a second one — but the
+      // dialog still needs a name, and had none (#931).
+      ariaLabel={title}
+    >
+      <div className="stack-lg">
+        <div className="flex items-center gap-default">
+          {icon ?? <AlertTriangle className={`${iconSizes.xl} ${iconColorClass[confirmTone]}`} />}
+          <h2 className="heading-3 text-text-primary">{title}</h2>
+        </div>
+        <div className="text-text-secondary">{message}</div>
+        <div className="flex justify-end gap-default pt-2">
+          <Button variant="outline" onClick={onCancel} data-testid="confirm-modal-cancel">
+            {cancelLabel}
+          </Button>
+          <Button tone={confirmTone} onClick={onConfirm} data-testid="confirm-modal-confirm">
+            {confirmLabel}
+          </Button>
+        </div>
       </div>
-      <div className="text-text-secondary">{message}</div>
-      <div className="flex justify-end gap-default pt-2">
-        <Button variant="outline" onClick={onCancel} data-testid="confirm-modal-cancel">
-          {cancelLabel}
-        </Button>
-        <Button tone={confirmTone} onClick={onConfirm} data-testid="confirm-modal-confirm">
-          {confirmLabel}
-        </Button>
-      </div>
-    </div>
-  </Modal>
-);
+    </Modal>
+  );
+}

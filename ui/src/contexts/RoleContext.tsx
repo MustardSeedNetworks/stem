@@ -20,7 +20,6 @@
  */
 import {
   createContext,
-  type FC,
   type ReactNode,
   useCallback,
   useContext,
@@ -146,7 +145,7 @@ interface RoleProviderProps {
   children: ReactNode;
 }
 
-export const RoleProvider: FC<RoleProviderProps> = ({ children }) => {
+export function RoleProvider({ children }: RoleProviderProps) {
   const [role, setRoleState] = useState<StemRole>(() => readPersistedRole());
   const [isSwitchingRole, setIsSwitchingRole] = useState<boolean>(false);
   const [roleSwitchError, setRoleSwitchError] = useState<RoleSwitchError | null>(null);
@@ -213,7 +212,7 @@ export const RoleProvider: FC<RoleProviderProps> = ({ children }) => {
   );
 
   return <RoleContext.Provider value={value}>{children}</RoleContext.Provider>;
-};
+}
 
 export function useRole(): RoleContextValue {
   const ctx = useContext(RoleContext);
