@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.25.10](https://github.com/MustardSeedNetworks/stem/compare/v0.25.9...v0.25.10) (2026-10-04)
+
+
+### Bug Fixes
+
+* **cli:** bind stem web to --host and refuse a busy explicit --port ([#1568](https://github.com/MustardSeedNetworks/stem/issues/1568)) ([3d15d75](https://github.com/MustardSeedNetworks/stem/commit/3d15d75a99eb4228609365c1a74a58ffb4004521)), closes [#1437](https://github.com/MustardSeedNetworks/stem/issues/1437)
+* **deps:** update module github.com/mustardseednetworks/foundation to v0.7.0 ([#1566](https://github.com/MustardSeedNetworks/stem/issues/1566)) ([c114a5b](https://github.com/MustardSeedNetworks/stem/commit/c114a5b1499cf13e060f9104260f0a96f8d856f2))
+
 ## [0.25.9](https://github.com/MustardSeedNetworks/stem/compare/v0.25.8...v0.25.9) (2026-10-04)
 
 
