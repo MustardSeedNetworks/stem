@@ -92,6 +92,7 @@ DebugImages/
 go.work
 go.work.sum
 include/version_generated.h
+internal/**/c_abi_stamp.c
 logs/
 node_modules/
 npm-debug.log*
