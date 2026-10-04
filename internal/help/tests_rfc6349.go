@@ -131,7 +131,7 @@ func rfc6349TCPThroughputExamples() []Example {
 	return []Example{
 		{
 			Desc:    "TCP throughput to remote server",
-			Command: "stem test -t tcp_throughput --target 10.0.0.100",
+			Command: "stem test -i eth0 --peer 192.0.2.10 -t rfc6349_throughput",
 			Output:  "TCP Throughput: 890 Mbps, Efficiency: 97%, Buffer Delay: 45%",
 		},
 	}
@@ -212,7 +212,7 @@ Use this when downloads are slow and you want to know WHY, not just HOW slow.`,
 		Examples: []Example{
 			{
 				Desc:    "Analyze path to server",
-				Command: "stem test -t path_analysis --target 10.0.0.100",
+				Command: "stem test -i eth0 --peer 192.0.2.10 -t rfc6349_path",
 				Output:  "RTT: 25ms, Bottleneck: 1000 Mbps, Optimal Window: 3.1 MB",
 			},
 		},

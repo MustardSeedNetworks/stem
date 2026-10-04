@@ -170,7 +170,7 @@ you're getting what you paid for at different load levels.`,
     examples: [
       {
         desc: 'Test 100 Mbps service',
-        command: 'stem test -i eth0 -t y1564_config --cir 100',
+        command: 'stem test -i eth0 --peer 192.0.2.10 -t y1564_config --cir 100',
         output: 'All steps: PASS',
       },
     ],
@@ -214,7 +214,7 @@ maintain that performance for hours?`,
     examples: [
       {
         desc: '15-minute test',
-        command: 'stem test -i eth0 -t y1564_performance --cir 100',
+        command: 'stem test -i eth0 --peer 192.0.2.10 -t y1564_perf --cir 100 --duration 900',
         output: 'Performance stable',
       },
     ],
@@ -240,7 +240,7 @@ This is what carriers use to officially "turn up" a new service.`,
     examples: [
       {
         desc: 'Full SAC test',
-        command: 'stem test -i eth0 -t y1564_full --cir 100',
+        command: 'stem test -i eth0 --peer 192.0.2.10 -t y1564 --cir 100',
         output: 'Service Accepted',
       },
     ],

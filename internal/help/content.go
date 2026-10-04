@@ -64,7 +64,7 @@ type Metric struct {
 // Example shows a practical usage example.
 type Example struct {
 	Desc    string // "Basic throughput test"
-	Command string // "stem test -i eth0 -t throughput"
+	Command string // "stem test -i eth0 --peer 192.0.2.10 -t rfc2544_throughput"
 	Output  string // Expected output
 }
 

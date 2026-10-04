@@ -126,7 +126,7 @@ export const tsnTests: Record<string, TestHelp> = {
     examples: [
       {
         desc: 'Basic TSN gate timing test',
-        command: 'stem test -i eth0 -t gate_timing --max-latency-ns 500000',
+        command: 'stem test -i eth0 --peer 192.0.2.10 -t tsn_timing',
         output: 'Gate timing: PASS (max deviation: 823ns)',
       },
     ],

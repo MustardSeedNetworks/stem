@@ -165,14 +165,9 @@ Useful when standard tests don't cover your specific scenario.`,
     failMeaning: 'Unable to generate or receive traffic',
     examples: [
       {
-        desc: 'Generate 50% rate traffic with 512-byte frames',
-        command: 'stem test -i eth0 -t custom_stream --rate-pct 50 --frame-size 512',
+        desc: 'Custom stream with default settings (set rate, frame size, burst mode and VLAN in the test configuration form)',
+        command: 'stem test -i eth0 --peer 192.0.2.10 -t custom_stream',
         output: 'Tx Rate: 500 Mbps, Tx: 1.2M pps',
-      },
-      {
-        desc: 'Burst mode with VLAN tagging',
-        command: 'stem test -i eth0 -t custom_stream --burst-mode --vlan-id 100',
-        output: 'Burst Mode: 100 frames/burst, VLAN 100',
       },
     ],
     tips: [

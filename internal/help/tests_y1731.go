@@ -120,7 +120,7 @@ func y1731FrameDelayExamples() []Example {
 	return []Example{
 		{
 			Desc:    "Two-way delay measurement",
-			Command: "stem test -t frame_delay --mode two-way",
+			Command: "stem test -i eth0 --peer 192.0.2.10 -t y1731_delay",
 			Output:  "Delay: 1.234ms, Jitter: 0.089ms",
 		},
 	}
@@ -177,8 +177,8 @@ Benefits:
 		Examples: []Example{
 			{
 				Desc:    "Frame loss monitoring",
-				Command: "stem test -t y1731_frame_loss --duration 3600",
-				Output:  "Loss ratio: 0.0001% over 1 hour",
+				Command: "stem test -i eth0 --peer 192.0.2.10 -t y1731_loss",
+				Output:  "Loss ratio: 0.0001%",
 			},
 		},
 
@@ -235,7 +235,7 @@ Think of it like a "network heartbeat" - always checking, always monitoring.`,
 		Examples: []Example{
 			{
 				Desc:    "Synthetic loss monitoring",
-				Command: "stem test -t synthetic_loss --interval 1000",
+				Command: "stem test -i eth0 --peer 192.0.2.10 -t y1731_slm",
 				Output:  "Synthetic loss: 0%, Path status: OK",
 			},
 		},
@@ -302,7 +302,7 @@ Useful for:
 		Examples: []Example{
 			{
 				Desc:    "Loopback test",
-				Command: "stem test -t loopback --target-mep 100",
+				Command: "stem test -i eth0 --peer 192.0.2.10 -t y1731_loopback",
 				Output:  "Loopback response received in 1.2ms",
 			},
 		},
