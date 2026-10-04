@@ -388,7 +388,7 @@ int reflector_start(reflector_ctx_t *rctx)
     if (rctx->config.use_af_xdp) {
 #if HAVE_AF_XDP
         platform_ops = get_xdp_platform_ops();
-        reflector_log(LOG_INFO, "Platform: AF_XDP (high-performance zero-copy mode)");
+        reflector_log(LOG_INFO, "Platform: AF_XDP");
 #else
         platform_ops = get_packet_platform_ops();
         reflector_log(LOG_WARN, "AF_XDP was requested but is unavailable; using AF_PACKET");

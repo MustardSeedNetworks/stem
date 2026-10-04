@@ -36,8 +36,9 @@ func ip(t *testing.T, args ...string) []byte {
 // newReflectedLink links a test master to a running reflector over a veth
 // pair with the given number of queues at each end, and returns the test
 // master's context. Native XDP on veth refuses a peer with more transmit
-// queues than it has receive queues, so both ends match.
-func newReflectedLink(t *testing.T, queues int) *Context {
+// queues than it has receive queues, so both ends match. reflectorAFXDP
+// selects the reflector's platform.
+func newReflectedLink(t *testing.T, queues int, reflectorAFXDP bool) *Context {
 	t.Helper()
 	n := strconv.Itoa(queues)
 	ip(t, "link", "add", vethMaster, "numrxqueues", n, "numtxqueues", n,
@@ -52,6 +53,7 @@ func newReflectedLink(t *testing.T, queues int) *Context {
 		SignatureFilter: "all",
 		Filtering:       config.FilterConfig{Port: reflectorPort},
 		Reflection:      config.ReflectConfig{Mode: "all"},
+		Platform:        config.PlatformConfig{UseAFXDP: reflectorAFXDP},
 	})
 	if err != nil {
 		t.Fatalf("reflector: %v", err)
@@ -132,7 +134,7 @@ func requireRoot(t *testing.T) {
 // rebind the queue, which the kernel frees asynchronously.
 func TestAFXDPTrialReceivesFromReflectingPeer(t *testing.T) {
 	requireRoot(t)
-	master := newReflectedLink(t, 1)
+	master := newReflectedLink(t, 1, false)
 
 	for _, rate := range []float64{1, 50} {
 		t.Run(strconv.FormatFloat(rate, 'f', -1, 64)+"pct", func(t *testing.T) {
@@ -156,10 +158,23 @@ func TestAFXDPTrialReceivesFromReflectingPeer(t *testing.T) {
 // test master must refuse AF_XDP there and measure over AF_PACKET.
 func TestAFXDPRefusesMultiQueueInterface(t *testing.T) {
 	requireRoot(t)
-	master := newReflectedLink(t, 2)
+	master := newReflectedLink(t, 2, false)
 
 	trialReturnsWhatItSent(t, master, 1)
 	if xdpAttached(t, vethMaster) {
 		t.Error("XDP program attached to a two-queue interface: want the AF_PACKET fallback")
 	}
+}
+
+// veth has native XDP but no zero-copy, like every copy-mode driver. The
+// reflector demanded XDP_ZEROCOPY, so its bind failed EOPNOTSUPP and it
+// always fell back to AF_PACKET there (stem#1532).
+func TestReflectorAFXDPRunsInCopyMode(t *testing.T) {
+	requireRoot(t)
+	master := newReflectedLink(t, 1, true)
+
+	if !xdpAttached(t, vethReflector) {
+		t.Error("no XDP program on the reflector's interface: it fell back to AF_PACKET")
+	}
+	trialReturnsWhatItSent(t, master, 1)
 }

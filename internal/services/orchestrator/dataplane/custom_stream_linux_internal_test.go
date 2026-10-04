@@ -11,7 +11,7 @@ import "testing"
 // none of them and every run reported 100 % loss.
 func TestCustomStreamReflectedByPeer(t *testing.T) {
 	requireRoot(t)
-	master := newReflectedLink(t, 1)
+	master := newReflectedLink(t, 1, false)
 
 	cfg := PeerConfig(vethMaster, reflectorIP, reflectorPort)
 	if err := master.Configure(&cfg); err != nil {

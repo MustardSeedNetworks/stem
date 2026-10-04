@@ -244,11 +244,15 @@ static int init_xsk(worker_ctx_t *wctx)
     reflector_config_t  *cfg  = wctx->config;
     int                  ret;
 
+    /* Neither XDP_ZEROCOPY nor XDP_COPY: the kernel binds zero-copy where the
+     * driver supports it and copy mode where it does not. Demanding zero-copy
+     * failed the bind on every copy-mode driver, and retrying in copy mode
+     * would rebind a queue the kernel has not released yet (stem#1532). */
     struct xsk_socket_config xsk_cfg = {.rx_size      = NUM_FRAMES / 2,
                                         .tx_size      = NUM_FRAMES / 2,
                                         .libbpf_flags = 0,
                                         .xdp_flags    = XDP_FLAGS_UPDATE_IF_NOEXIST,
-                                        .bind_flags   = XDP_USE_NEED_WAKEUP | XDP_ZEROCOPY};
+                                        .bind_flags   = XDP_USE_NEED_WAKEUP};
 
     /* Create AF_XDP socket */
     ret = xsk_socket__create(&pctx->xsk_info.xsk, cfg->ifname, wctx->queue_id,
@@ -258,6 +262,14 @@ static int init_xsk(worker_ctx_t *wctx)
     if (ret) {
         reflector_log(LOG_ERROR, "Failed to create XSK socket: %s", stem_strerror(-ret));
         return ret;
+    }
+
+    struct xdp_options opts     = {0};
+    socklen_t          opts_len = sizeof(opts);
+    if (getsockopt(xsk_socket__fd(pctx->xsk_info.xsk), SOL_XDP, XDP_OPTIONS, &opts, &opts_len) ==
+        0) {
+        reflector_log(LOG_INFO, "AF_XDP queue %d bound in %s mode", wctx->queue_id,
+                      (opts.flags & XDP_OPTIONS_ZEROCOPY) ? "zero-copy" : "copy");
     }
 
     /* Add socket FD to XSK map for XDP redirect (only if eBPF program is loaded) */
