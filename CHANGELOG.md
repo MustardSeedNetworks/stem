@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.26.0](https://github.com/MustardSeedNetworks/stem/compare/v0.25.10...v0.26.0) (2026-10-04)
+
+
+### Features
+
+* **dataplane:** AF_XDP test master reads every receive queue ([#1571](https://github.com/MustardSeedNetworks/stem/issues/1571)) ([a4a73c2](https://github.com/MustardSeedNetworks/stem/commit/a4a73c28d365cc46b859809fef1904bfcb615d22)), closes [#1533](https://github.com/MustardSeedNetworks/stem/issues/1533)
+
+
+### Continuous Integration
+
+* **release:** declare the artifacts each release publishes ([#1574](https://github.com/MustardSeedNetworks/stem/issues/1574)) ([e65fd21](https://github.com/MustardSeedNetworks/stem/commit/e65fd21b42a45d7b989eabb06e7508742ee8dc1e)), closes [#1573](https://github.com/MustardSeedNetworks/stem/issues/1573)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1572](https://github.com/MustardSeedNetworks/stem/issues/1572)) ([bd7af82](https://github.com/MustardSeedNetworks/stem/commit/bd7af823399b32bc0668921e706ca0aeb244e1d6))
+
 ## [0.25.10](https://github.com/MustardSeedNetworks/stem/compare/v0.25.9...v0.25.10) (2026-10-04)
 
 
