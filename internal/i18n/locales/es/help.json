@@ -6,7 +6,8 @@
     "closeTooltip": "Cerrar el panel de ayuda y volver a la vista principal",
     "searchPlaceholder": "Buscar {{tab}}...",
     "pageHelp": "Abrir ayuda de {{page}}",
-    "buildInfo": "Commit {{commit}} · Compilado {{time}}"
+    "buildInfo": "Commit {{commit}} · Compilado {{time}}",
+    "version": "Stem v{{version}}"
   },
   "tabs": {
     "tests": "Pruebas",

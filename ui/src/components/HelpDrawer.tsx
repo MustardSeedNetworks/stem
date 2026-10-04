@@ -171,7 +171,7 @@ export function HelpDrawer({
                     className="caption text-text-muted"
                     data-testid="help-drawer-version"
                   >
-                    Stem v{buildVersion.version.replace(/^v/, '')}
+                    {t('drawer.version', { version: buildVersion.version.replace(/^v/, '') })}
                   </button>
                 </Tooltip>
               </div>

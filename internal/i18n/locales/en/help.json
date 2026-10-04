@@ -6,7 +6,8 @@
     "closeTooltip": "Close the help drawer and return to the main view",
     "searchPlaceholder": "Search {{tab}}...",
     "pageHelp": "Open help for {{page}}",
-    "buildInfo": "Commit {{commit}} · Built {{time}}"
+    "buildInfo": "Commit {{commit}} · Built {{time}}",
+    "version": "Stem v{{version}}"
   },
   "tabs": {
     "tests": "Tests",

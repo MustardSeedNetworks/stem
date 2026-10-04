@@ -74,7 +74,8 @@
       "stopped": "Stopped by the operator. No result was captured before it ended.",
       "error": "An error occurred during the test.",
       "unknown": "Waiting for the backend to report a status."
-    }
+    },
+    "moduleName": "Module: {{module}}"
   },
   "labels": {
     "interface": "Interface",
@@ -98,7 +99,15 @@
     "interfaceDetails": "Interface Details",
     "lightMode": "Light mode",
     "darkMode": "Dark mode",
-    "refresh": "Refresh"
+    "refresh": "Refresh",
+    "name": "Name",
+    "speed": "Speed",
+    "driver": "Driver",
+    "state": "State",
+    "score": "Score",
+    "xdpSupport": "XDP Support",
+    "yes": "Yes",
+    "no": "No"
   },
   "time": {
     "seconds": "{{count}}s",

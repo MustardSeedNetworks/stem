@@ -74,7 +74,8 @@
       "stopped": "Detenida por el operador. No se capturó ningún resultado antes de terminar.",
       "error": "Se produjo un error durante la prueba.",
       "unknown": "Esperando a que el backend informe de un estado."
-    }
+    },
+    "moduleName": "Módulo: {{module}}"
   },
   "labels": {
     "interface": "Interfaz",
@@ -98,7 +99,15 @@
     "interfaceDetails": "Detalles de la Interfaz",
     "lightMode": "Modo claro",
     "darkMode": "Modo oscuro",
-    "refresh": "Actualizar"
+    "refresh": "Actualizar",
+    "name": "Nombre",
+    "speed": "Velocidad",
+    "driver": "Controlador",
+    "state": "Estado",
+    "score": "Puntuación",
+    "xdpSupport": "Soporte XDP",
+    "yes": "Sí",
+    "no": "No"
   },
   "time": {
     "seconds": "{{count}}s",

@@ -44,6 +44,11 @@
     "passkeyButton": "Sign in with passkey",
     "mfaContinue": "Enter the code from your authenticator app to continue.",
     "useDifferentAccount": "Use different account",
-    "forgotPassword": "Forgot password?"
+    "forgotPassword": "Forgot password?",
+    "username": "Username",
+    "password": "Password",
+    "verifying": "Verifying...",
+    "signInButton": "Sign In",
+    "signingIn": "Signing in..."
   }
 }
