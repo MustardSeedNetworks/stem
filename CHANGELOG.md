@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.26.2](https://github.com/MustardSeedNetworks/stem/compare/v0.26.1...v0.26.2) (2026-10-04)
+
+
+### Bug Fixes
+
+* **help:** make every stem test example runnable as written ([#1580](https://github.com/MustardSeedNetworks/stem/issues/1580)) ([a1dd3f6](https://github.com/MustardSeedNetworks/stem/commit/a1dd3f614acc12754dc59e5945891f4ab0ea5a79)), closes [#1435](https://github.com/MustardSeedNetworks/stem/issues/1435)
+
+
+### Tests
+
+* **auth:** make the custom token duration test immune to exp truncation ([#1584](https://github.com/MustardSeedNetworks/stem/issues/1584)) ([73f9880](https://github.com/MustardSeedNetworks/stem/commit/73f98801950fe67157406dcc34b9da65aec5e4e4)), closes [#1505](https://github.com/MustardSeedNetworks/stem/issues/1505)
+
 ## [0.26.1](https://github.com/MustardSeedNetworks/stem/compare/v0.26.0...v0.26.1) (2026-10-04)
 
 
