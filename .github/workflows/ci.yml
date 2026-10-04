@@ -1213,6 +1213,41 @@ jobs:
           echo "✅ No unsafe logging patterns detected"
 
   # ============================================================================
+  # Release notes — a release PR must still describe the tree it will tag
+  # ============================================================================
+  # A release PR in the merge queue has its branch locked, so release-please
+  # cannot regenerate it when a commit lands on main meanwhile; the queue then
+  # builds the release on top of that commit and the tag ships it with no
+  # changelog entry, permanently (stem#1197). This runs the comparison on the
+  # merge-queue tree, so such a release PR is ejected instead, and
+  # release-please regenerates it on its next tick.
+  #
+  # Not path-gated and not gated on `changes`: a release PR touches only
+  # CHANGELOG.md and the version files, and this is the one job that has to
+  # judge exactly that PR.
+  release-notes:
+    name: Release Notes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          # The check compares against the previous tag, so it needs the tags
+          # and the commits between them.
+          fetch-depth: 0
+
+      - name: Gate self-test
+        run: python3 scripts/test-check-release-notes.py
+
+      # Only judge a release that can still be stopped. On a push to main the
+      # release commit is already history, so failing there would wedge the
+      # tag rather than prevent a bad one.
+      - name: An untagged release must list every commit it would ship
+        if: github.event_name == 'pull_request' || github.event_name == 'merge_group'
+        run: python3 scripts/check-release-notes.py --pending
+
+  # ============================================================================
   # Workflow Linting
   # ============================================================================
   # Static analysis of the workflows themselves. Kept out of `quality` so it
@@ -2065,6 +2100,7 @@ jobs:
       - dependency-review
       - ci-conformance
       - quality
+      - release-notes
       - workflow-lint
       - i18n
       - docs
