@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include "reflector.h"
+#include "stem_signatures.h"
 
 #if !defined(PACKET_BLOCK_TIMEOUT_MS)
 #error "PACKET_BLOCK_TIMEOUT_MS must be defined"
@@ -143,8 +144,8 @@ static void test_rfc2544_minimum_frame_signature(void)
     uint8_t frame[FRAME_LEN];
     build_probe(frame);
     memset(frame + UDP_OFFSET + UDP_HDR_LEN, 0, FRAME_LEN - UDP_OFFSET - UDP_HDR_LEN);
-    for (size_t i = 0; i < CUSTOM_SIG_RFC2544_LEN; i++) {
-        frame[UDP_OFFSET + UDP_HDR_LEN + i] = (uint8_t)CUSTOM_SIG_RFC2544[i];
+    for (size_t i = 0; i < RFC2544_SIG_LEN; i++) {
+        frame[UDP_OFFSET + UDP_HDR_LEN + i] = (uint8_t)RFC2544_SIGNATURE[i];
     }
 
     reflector_config_t config = {0};
@@ -156,6 +157,47 @@ static void test_rfc2544_minimum_frame_signature(void)
     }
 }
 
+/* A test stream whose signature the reflector does not know gets nothing back
+ * (#1531), so every signature the test master writes must be reflected. */
+static void test_reflects_every_test_master_signature(void)
+{
+    static const char *const signatures[] = {
+#define SIGNATURE_ENTRY(sig) sig,
+        STEM_TEST_SIGNATURES(SIGNATURE_ENTRY)
+#undef SIGNATURE_ENTRY
+    };
+    static const sig_filter_t filters[] = {SIG_FILTER_ALL, SIG_FILTER_CUSTOM};
+
+    for (size_t s = 0; s < sizeof(signatures) / sizeof(signatures[0]); s++) {
+        uint8_t frame[FRAME_LEN];
+        build_probe(frame);
+        uint8_t *payload = frame + UDP_OFFSET + UDP_HDR_LEN;
+        memset(payload, 0, FRAME_LEN - UDP_OFFSET - UDP_HDR_LEN);
+        /* The test master space-pads the 7-byte field (custom_create_packet_template). */
+        memset(payload, ' ', 7);
+        memcpy(payload, signatures[s], strlen(signatures[s]));
+
+        for (size_t f = 0; f < sizeof(filters) / sizeof(filters[0]); f++) {
+            reflector_config_t config = {0};
+            config.ito_port           = ITO_UDP_PORT;
+            config.sig_filter         = filters[f];
+            if (!is_ito_packet(frame, sizeof(frame), &config)) {
+                fprintf(stderr, "FAIL: filter %d rejected test master signature '%s'\n",
+                        (int)filters[f], signatures[s]);
+                failures++;
+            }
+
+            bool is_ipv6 = false;
+            bool is_vlan = false;
+            if (!is_ito_packet_extended(frame, sizeof(frame), &config, &is_ipv6, &is_vlan)) {
+                fprintf(stderr, "FAIL: extended path rejected test master signature '%s'\n",
+                        signatures[s]);
+                failures++;
+            }
+        }
+    }
+}
+
 int main(void)
 {
     test_netally_handshake_reflection();
@@ -164,6 +206,7 @@ int main(void)
     test_netally_rejects_truncated_ipv4_options();
     test_individual_ito_signature_filters();
     test_rfc2544_minimum_frame_signature();
+    test_reflects_every_test_master_signature();
     if (failures != 0) {
         return 1;
     }

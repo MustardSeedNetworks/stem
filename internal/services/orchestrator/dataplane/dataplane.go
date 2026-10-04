@@ -170,7 +170,7 @@ func (c *Context) RunCustomStreamTest(cfg *TrafficGenConfig) (*TrafficGenResult,
 
 	frameSize, ratePct, durationSec, warmupSec, streamID := customStreamParameters(cfg)
 
-	signature := C.CString("CUSTOM ")
+	signature := C.CString(C.TRAFFICGEN_SIGNATURE)
 	defer C.free(unsafe.Pointer(signature))
 
 	var cResult C.trial_result_t

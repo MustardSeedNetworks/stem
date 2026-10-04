@@ -64,6 +64,18 @@ static void detect_cpu_features(void)
 static int cpu_has_neon __attribute__((unused)) = 1;
 #endif /* __aarch64__ */
 
+/* Whether a payload starts with one of the signatures the Stem test master writes. */
+static inline bool is_test_master_signature(const uint8_t *sig)
+{
+#define MATCH_SIGNATURE(s)                    \
+    if (memcmp(sig, s, sizeof(s) - 1) == 0) { \
+        return true;                          \
+    }
+    STEM_TEST_SIGNATURES(MATCH_SIGNATURE)
+#undef MATCH_SIGNATURE
+    return false;
+}
+
 /*
  * Fast path packet validation for ITO packets
  *
@@ -217,19 +229,23 @@ ALWAYS_INLINE bool is_ito_packet(const uint8_t *data, uint32_t len,
         }
     }
 
-    /* Custom signatures (RFC2544/Y.1564 tester) - at offset 0 */
-    if (filter == SIG_FILTER_ALL || filter == SIG_FILTER_CUSTOM || filter == SIG_FILTER_RFC2544) {
-        if (memcmp(custom_sig, CUSTOM_SIG_RFC2544, CUSTOM_SIG_RFC2544_LEN) == 0) {
-            DEBUG_LOG("RFC2544 packet matched! len=%u", len);
+    /* Stem test master signatures - at offset 0 */
+    if (filter == SIG_FILTER_ALL || filter == SIG_FILTER_CUSTOM) {
+        if (is_test_master_signature(custom_sig)) {
+            DEBUG_LOG("Test master packet matched! len=%u", len);
             return true;
         }
     }
 
-    if (filter == SIG_FILTER_ALL || filter == SIG_FILTER_CUSTOM || filter == SIG_FILTER_Y1564) {
-        if (memcmp(custom_sig, CUSTOM_SIG_Y1564, CUSTOM_SIG_LEN) == 0) {
-            DEBUG_LOG("Y.1564 packet matched! len=%u", len);
-            return true;
-        }
+    if (filter == SIG_FILTER_RFC2544 &&
+        memcmp(custom_sig, RFC2544_SIGNATURE, RFC2544_SIG_LEN) == 0) {
+        DEBUG_LOG("RFC2544 packet matched! len=%u", len);
+        return true;
+    }
+
+    if (filter == SIG_FILTER_Y1564 && memcmp(custom_sig, Y1564_SIGNATURE, Y1564_SIG_LEN) == 0) {
+        DEBUG_LOG("Y.1564 packet matched! len=%u", len);
+        return true;
     }
 
     /* MSN signature (Mustard Seed Networks) - at offset 0 */
@@ -758,9 +774,9 @@ sig_type_t get_ito_signature_type(const uint8_t *data, uint32_t len)
     }
 
     /* Custom signatures (RFC2544/Y.1564/MSN tester) - at offset 0 */
-    if (memcmp(custom_sig, CUSTOM_SIG_RFC2544, CUSTOM_SIG_RFC2544_LEN) == 0) {
+    if (memcmp(custom_sig, RFC2544_SIGNATURE, RFC2544_SIG_LEN) == 0) {
         return SIG_TYPE_RFC2544;
-    } else if (memcmp(custom_sig, CUSTOM_SIG_Y1564, CUSTOM_SIG_LEN) == 0) {
+    } else if (memcmp(custom_sig, Y1564_SIGNATURE, Y1564_SIG_LEN) == 0) {
         return SIG_TYPE_Y1564;
     } else if (memcmp(custom_sig, CUSTOM_SIG_MSN, CUSTOM_SIG_LEN) == 0) {
         return SIG_TYPE_MSN;
@@ -1272,9 +1288,8 @@ bool is_ito_packet_extended(const uint8_t *data, uint32_t len, const reflector_c
         return true;
     }
 
-    /* Check for RFC2544/Y.1564/MSN custom signatures (at offset 0) */
-    if (memcmp(custom_sig, CUSTOM_SIG_RFC2544, CUSTOM_SIG_RFC2544_LEN) == 0 ||
-        memcmp(custom_sig, CUSTOM_SIG_Y1564, CUSTOM_SIG_LEN) == 0 ||
+    /* Check for test master and MSN signatures (at offset 0) */
+    if (is_test_master_signature(custom_sig) ||
         memcmp(custom_sig, CUSTOM_SIG_MSN, CUSTOM_SIG_LEN) == 0) {
         return true;
     }

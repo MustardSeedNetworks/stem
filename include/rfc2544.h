@@ -26,15 +26,13 @@ extern "C" {
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "stem_signatures.h"
+
 /* Version - NOLINT: C macros are correct for compile-time constants */
 // NOLINTBEGIN(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
 #define RFC2544_VERSION_MAJOR 1
 #define RFC2544_VERSION_MINOR 0
 #define RFC2544_VERSION_PATCH 0
-
-/* Signature for custom RFC2544 packets - 7 bytes like ITO */
-#define RFC2544_SIGNATURE "RFC254"
-#define RFC2544_SIG_LEN   6
 // NOLINTEND(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
 
 /* Standard RFC 2544 frame sizes (Section 9.1) */
@@ -223,10 +221,7 @@ typedef struct {
  * Supports up to 8 services tested simultaneously.
  */
 
-/* Y.1564 Signature - 7 bytes, space-padded */
 // NOLINTBEGIN(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
-#define Y1564_SIGNATURE    "Y.1564 "
-#define Y1564_SIG_LEN      7
 #define Y1564_MAX_SERVICES 8
 #define Y1564_CONFIG_STEPS 4
 // NOLINTEND(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
@@ -1142,9 +1137,6 @@ typedef struct {
  * - Synthetic Loss Measurement (SLM) - Proactive loss monitoring
  */
 
-#define Y1731_SIGNATURE "Y.1731 "
-#define Y1731_SIG_LEN   7
-
 /* Y.1731 OAM PDU types (OpCodes) */
 typedef enum {
     Y1731_CCM = 1,  /* Continuity Check Message */
@@ -1297,9 +1289,6 @@ typedef struct {
  * Defines Service OAM (SOAM) and SLA validation for CE 2.0 services.
  */
 
-#define MEF_SIGNATURE "MEF48 "
-#define MEF_SIG_LEN   7
-
 /* MEF service types */
 typedef enum {
     MEF_EPL      = 0, /* Ethernet Private Line (point-to-point) */
@@ -1446,8 +1435,6 @@ typedef struct {
  * - Integration with IEEE 802.1AS time synchronization
  */
 
-#define TSN_SIGNATURE       "802Qbv"
-#define TSN_SIG_LEN         7
 #define TSN_MAX_GATES       8
 #define TSN_MAX_GCL_ENTRIES 256
 
