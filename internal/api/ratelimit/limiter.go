@@ -306,27 +306,34 @@ func (rl *RateLimiter) Stop() {
 	})
 }
 
-// Middleware returns an HTTP middleware that applies rate limiting.
-// Responds with 429 Too Many Requests when the limit is exceeded.
-func (rl *RateLimiter) Middleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ip := logging.SecurityClientIP(r, rl.trustedProxies)
+// Reject writes the 429 for a request the limiter refused, after the limiter
+// has set Retry-After. The caller supplies it so the refusal is in the
+// product's error envelope while this package stays a leaf (#1438).
+type Reject func(w http.ResponseWriter, r *http.Request)
 
-		if !rl.Allow(ip) {
-			logging.Warn("Rate limit exceeded",
-				"ip", ip,
-				"path", r.URL.Path,
-				"method", r.Method,
-			)
+// Middleware returns an HTTP middleware that applies rate limiting, answering
+// through reject when the limit is exceeded.
+func (rl *RateLimiter) Middleware(reject Reject) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ip := logging.SecurityClientIP(r, rl.trustedProxies)
 
-			// Audit log the rate limit event.
-			logging.AuditRateLimited(r.Context(), r, "", r.URL.Path, "1m")
+			if !rl.Allow(ip) {
+				logging.Warn("Rate limit exceeded",
+					"ip", ip,
+					"path", r.URL.Path,
+					"method", r.Method,
+				)
 
-			w.Header().Set("Retry-After", "60")
-			http.Error(w, "Too Many Requests", http.StatusTooManyRequests)
-			return
-		}
+				// Audit log the rate limit event.
+				logging.AuditRateLimited(r.Context(), r, "", r.URL.Path, "1m")
 
-		next.ServeHTTP(w, r)
-	})
+				w.Header().Set("Retry-After", "60")
+				reject(w, r)
+				return
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	}
 }

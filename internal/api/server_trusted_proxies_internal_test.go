@@ -38,7 +38,7 @@ const proxyPeer = "10.0.0.5:44321"
 // arriving from proxyPeer and naming xff as the client, and reports the
 // status the limiter produced.
 func authLimitStatus(s *Server, xff string) int {
-	handler := s.authLimiter.Middleware(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+	handler := s.authLimiter.Middleware(rateLimited)(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	}))
 

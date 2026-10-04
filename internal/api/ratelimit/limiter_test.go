@@ -110,6 +110,11 @@ func TestRateLimiterAllowDifferentIPs(t *testing.T) {
 	}
 }
 
+// tooManyRequests stands in for the product's error writer.
+func tooManyRequests(w http.ResponseWriter, _ *http.Request) {
+	w.WriteHeader(http.StatusTooManyRequests)
+}
+
 func TestRateLimiterMiddleware(t *testing.T) {
 	// Create a rate limiter with burst of 2.
 	rl := ratelimit.NewRateLimiter(2, 2)
@@ -121,7 +126,7 @@ func TestRateLimiterMiddleware(t *testing.T) {
 	})
 
 	// Wrap with rate limiting middleware.
-	wrapped := rl.Middleware(handler)
+	wrapped := rl.Middleware(tooManyRequests)(handler)
 
 	// First two requests should succeed.
 	for i := range 2 {
@@ -163,7 +168,7 @@ func TestRateLimiterMiddlewareXForwardedFor(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	wrapped := rl.Middleware(handler)
+	wrapped := rl.Middleware(tooManyRequests)(handler)
 
 	// Request through the local proxy, which appended the address it saw.
 	req := httptest.NewRequest(http.MethodGet, "/test", nil)
@@ -201,7 +206,7 @@ func TestRateLimiterMiddlewareXRealIP(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	wrapped := rl.Middleware(handler)
+	wrapped := rl.Middleware(tooManyRequests)(handler)
 
 	// Request with X-Real-IP header.
 	req := httptest.NewRequest(http.MethodGet, "/test", nil)
@@ -321,7 +326,7 @@ func BenchmarkRateLimiterMiddleware(b *testing.B) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
-	wrapped := rl.Middleware(handler)
+	wrapped := rl.Middleware(tooManyRequests)(handler)
 
 	for b.Loop() {
 		req := httptest.NewRequest(http.MethodGet, "/test", nil)

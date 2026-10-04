@@ -42,10 +42,15 @@ func (s *Server) newRegistrar() *route.Registrar {
 		CSRF:         s.csrfManager,
 		SessionKey:   csrfSessionKey,
 		Limiters: map[string]route.Middleware{
-			limitAuth: s.authLimiter.Middleware,
-			limitAPI:  s.apiLimiter.Middleware,
+			limitAuth: s.authLimiter.Middleware(rateLimited),
+			limitAPI:  s.apiLimiter.Middleware(rateLimited),
 		},
 	})
+}
+
+// rateLimited renders a limiter's refusal in stem's JSON envelope.
+func rateLimited(w http.ResponseWriter, _ *http.Request) {
+	WriteError(w, ErrRateLimited)
 }
 
 // csrfSessionKey keys CSRF tokens by the session the auth layer reads — the

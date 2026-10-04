@@ -255,6 +255,27 @@ func TestStopSurfacesAPlainTextRefusal(t *testing.T) {
 	}
 }
 
+// A spent rate-limit budget is refused in the error envelope (#1438); the
+// operator sees the status and its sentence, not raw JSON.
+func TestStartSurfacesARateLimit(t *testing.T) {
+	dir, _ := newDaemon(t, func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Retry-After", "60")
+		api.WriteError(w, api.ErrRateLimited)
+	})
+
+	c, err := daemonclient.Open(dir)
+	if err != nil {
+		t.Fatalf("Open: %v", err)
+	}
+	_, startErr := c.Start(context.Background(), api.TestStartRequest{
+		Interface: "eth0",
+		Tests:     []api.TestStepRequest{{TestType: "rfc2544_throughput"}},
+	})
+	if startErr == nil || startErr.Error() != "daemon returned 429: "+api.ErrRateLimited.Message {
+		t.Errorf("err = %v, want the 429 and the daemon's reason", startErr)
+	}
+}
+
 func TestStatusReportsProgress(t *testing.T) {
 	dir, _ := newDaemon(t, func(w http.ResponseWriter, _ *http.Request) {
 		writeJSON(t, w, map[string]any{
