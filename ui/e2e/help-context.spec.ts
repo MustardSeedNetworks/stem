@@ -14,19 +14,22 @@ const routes = [
   { path: '/account/security', topic: 'Security', spanish: 'Seguridad' },
 ];
 
+// One test per route, as in shell-one-bar.spec.ts: eight routes in one test
+// ran past the 30 s budget on WebKit under load, and a failure did not say
+// which route broke (#1440).
 for (const language of ['en', 'es']) {
   for (const width of [390, 1440]) {
-    test(`route help and keyboard restoration ${language} at ${width}px`, async ({
-      page,
-    }, testInfo) => {
-      await page.setViewportSize({ width, height: 900 });
-      await skipSetupWizard(page);
-      await useRole(page, 'test_master');
-      await page.addInitScript((locale) => {
-        localStorage.setItem('stem-language', locale);
-        localStorage.setItem('stem-theme', 'dark');
-      }, language);
-      for (const route of routes) {
+    for (const route of routes) {
+      test(`route help and keyboard restoration ${language} at ${width}px on ${route.path}`, async ({
+        page,
+      }, testInfo) => {
+        await page.setViewportSize({ width, height: 900 });
+        await skipSetupWizard(page);
+        await useRole(page, 'test_master');
+        await page.addInitScript((locale) => {
+          localStorage.setItem('stem-language', locale);
+          localStorage.setItem('stem-theme', 'dark');
+        }, language);
         await page.goto(route.path);
         const opener = page.getByTestId('page-help-button');
         await opener.click();
@@ -62,8 +65,8 @@ for (const language of ['en', 'es']) {
           await page.getByTestId('help-search').press('Escape');
           await expect(footer).toBeFocused();
         }
-      }
-    });
+      });
+    }
   }
 }
 
