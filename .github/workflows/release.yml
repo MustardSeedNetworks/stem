@@ -373,3 +373,14 @@ jobs:
              stem-slsa-provenance.intoto.jsonl
           gh release upload "$TARGET_TAG" \
              stem-slsa-provenance.intoto.jsonl --clobber --repo "${GITHUB_REPOSITORY}"
+
+      # Last step on purpose: publishing makes the release immutable, so every
+      # asset, the attestation included, must already be on the draft.
+      - name: Publish the completed release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TARGET_TAG: ${{ github.ref_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release edit "$TARGET_TAG" --draft=false --repo "${GITHUB_REPOSITORY}"

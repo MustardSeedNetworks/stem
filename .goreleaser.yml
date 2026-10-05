@@ -291,7 +291,12 @@ release:
     owner: MustardSeedNetworks
     name: stem
   replace_existing_artifacts: true
-  draft: false
+  # Releases are immutable once published, so nothing can be uploaded to one
+  # afterwards (v0.26.7 shipped with no assets that way, #1611). release-please
+  # creates the release as a draft, goreleaser fills that draft, and the
+  # provenance job publishes it only after the attestation is attached.
+  use_existing_draft: true
+  draft: true
   prerelease: auto
   mode: replace
   header: |
