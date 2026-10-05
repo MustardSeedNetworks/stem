@@ -25,13 +25,9 @@ single_matching_line() {
   printf '%s' "$matches"
 }
 
-assert_rejected() {
-  local name="$1"
-  local old="$2"
-  local new="$3"
-  local fixture="$fixture_dir/$name.yml"
-
-  OLD="$old" NEW="$new" python3 - "$source_workflow" "$fixture" <<'PY'
+# mutate copies $1 to $2 with the one occurrence of $OLD replaced by $NEW.
+mutate() {
+  python3 - "$1" "$2" <<'PY'
 import os
 import pathlib
 import sys
@@ -43,13 +39,37 @@ if count != 1:
     raise SystemExit(f"mutation source occurs {count} times, want 1: {old!r}")
 pathlib.Path(sys.argv[2]).write_text(source.replace(old, os.environ["NEW"], 1))
 PY
+}
 
-  if RELEASE_WORKFLOW_PATH="$fixture" "$checker" >/dev/null 2>&1; then
+report() {
+  local name="$1"
+  shift
+  if env "$@" "$checker" >/dev/null 2>&1; then
     echo "FAIL: contract accepted mutation: $name" >&2
     failures=$((failures + 1))
   else
     echo "ok: rejected $name"
   fi
+}
+
+assert_rejected() {
+  local name="$1"
+  local fixture="$fixture_dir/$name.yml"
+
+  OLD="$2" NEW="$3" mutate "$source_workflow" "$fixture"
+  report "$name" RELEASE_WORKFLOW_PATH="$fixture"
+}
+
+# assert_config_rejected mutates a release config the workflow depends on,
+# handed to the checker through its path override ($2).
+assert_config_rejected() {
+  local name="$1"
+  local var="$2"
+  local source="$3"
+  local fixture="$fixture_dir/$name.${source##*.}"
+
+  OLD="$4" NEW="$5" mutate "$source" "$fixture"
+  report "$name" "$var=$fixture"
 }
 
 # The publish predicate loses its event check, so a workflow_dispatch could
@@ -121,6 +141,43 @@ assert_rejected "write-permissions-at-workflow-level" \
   contents: read" \
   "permissions:
   contents: write"
+
+# A step added after publishing would upload into an immutable release.
+assert_rejected "upload-after-publish" \
+  "          gh release edit \"\$TARGET_TAG\" --draft=false --repo \"\${GITHUB_REPOSITORY}\"" \
+  "          gh release edit \"\$TARGET_TAG\" --draft=false --repo \"\${GITHUB_REPOSITORY}\"
+
+      - name: Attach release notes
+        run: gh release upload \"\$TARGET_TAG\" NOTES.md"
+
+# The draft is never published.
+assert_rejected "draft-never-published" \
+  "          gh release edit \"\$TARGET_TAG\" --draft=false --repo \"\${GITHUB_REPOSITORY}\"" \
+  '          echo "release left as a draft"'
+
+# release-please publishes the release itself, the v0.26.7 failure.
+assert_config_rejected "release-please-publishes" RELEASE_PLEASE_CONFIG_PATH \
+  .github/release-please-config.json \
+  '      "draft": true,' \
+  '      "draft": false,'
+
+# Without a forced tag, a draft release creates no tag and release.yml never runs.
+assert_config_rejected "release-please-no-tag" RELEASE_PLEASE_CONFIG_PATH \
+  .github/release-please-config.json \
+  '      "force-tag-creation": true,' \
+  ''
+
+# goreleaser creates a second release instead of filling the draft.
+assert_config_rejected "goreleaser-ignores-draft" GORELEASER_CONFIG_PATH \
+  .goreleaser.yml \
+  '  use_existing_draft: true' \
+  '  use_existing_draft: false'
+
+# goreleaser publishes before provenance has run.
+assert_config_rejected "goreleaser-publishes" GORELEASER_CONFIG_PATH \
+  .goreleaser.yml \
+  '  draft: true' \
+  '  draft: false'
 
 # And the guard must still accept the real workflow — a checker that rejects
 # everything would pass every case above.

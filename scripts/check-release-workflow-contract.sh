@@ -16,6 +16,8 @@ workflow="${RELEASE_WORKFLOW_PATH:-.github/workflows/release.yml}"
 # root, not the workflow's directory. Overridable so the self-test can stage a
 # mutated composite without touching the tree.
 repo_root="${RELEASE_REPO_ROOT:-.}"
+goreleaser_config="${GORELEASER_CONFIG_PATH:-$repo_root/.goreleaser.yml}"
+release_please_config="${RELEASE_PLEASE_CONFIG_PATH:-$repo_root/.github/release-please-config.json}"
 
 require() {
   local pattern="$1"
@@ -158,6 +160,28 @@ require_pin 'SYFT_SHA256' '^ +SYFT_SHA256: "[0-9a-f]{64}"$'
 require_pin 'COSIGN_VERSION' '^ +COSIGN_VERSION: "v[0-9]+\.[0-9]+\.[0-9]+"$'
 require_pin 'COSIGN_SHA256' '^ +COSIGN_SHA256: "[0-9a-f]{64}"$'
 require "| sha256sum -c -"
+
+# Releases are immutable once published, and an immutable release refuses
+# every upload: v0.26.7 went out with zero assets because release-please
+# published it before goreleaser ran (#1611). The release must therefore stay a
+# draft from creation until the last asset is on it. Each of the three hand-offs
+# is pinned, because losing any one of them reproduces the empty release.
+if ! jq -e '.packages["."] | .draft == true and ."force-tag-creation" == true' \
+  "$release_please_config" >/dev/null; then
+  echo "release workflow contract: release-please must create a draft and force the tag ($release_please_config)" >&2
+  exit 1
+fi
+for setting in 'draft: true' 'use_existing_draft: true'; do
+  if ! grep -Eq "^  ${setting}\$" "$goreleaser_config"; then
+    echo "release workflow contract: goreleaser release block is missing '$setting' ($goreleaser_config)" >&2
+    exit 1
+  fi
+done
+require "gh release edit \"\$TARGET_TAG\" --draft=false"
+if [ "$(grep -E '^      - name:' "$workflow" | tail -n 1)" != "      - name: Publish the completed release" ]; then
+  echo "release workflow contract: publishing the draft must be the workflow's last step" >&2
+  exit 1
+fi
 
 validate_action_pins "$workflow"
 
