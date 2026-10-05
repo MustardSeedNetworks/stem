@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.26.7](https://github.com/MustardSeedNetworks/stem/compare/v0.26.6...v0.26.7) (2026-10-05)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @tanstack/react-query to v5.104.0 ([#1536](https://github.com/MustardSeedNetworks/stem/issues/1536)) ([0586d7b](https://github.com/MustardSeedNetworks/stem/commit/0586d7b532efb73ff907f51b631937b54ecfd570))
+* **deps:** update dependency react-hook-form to v7.89.0 ([#1539](https://github.com/MustardSeedNetworks/stem/issues/1539)) ([02bbc40](https://github.com/MustardSeedNetworks/stem/commit/02bbc4094662cfbb4489bbce37cdacc8171f1c78))
+
+
+### Continuous Integration
+
+* **release:** skip release-please while the release PR is queued ([#1607](https://github.com/MustardSeedNetworks/stem/issues/1607)) ([4261feb](https://github.com/MustardSeedNetworks/stem/commit/4261febe8a167b017bb1d267d5d81ac6e80c9867))
+
 ## [0.26.6](https://github.com/MustardSeedNetworks/stem/compare/v0.26.5...v0.26.6) (2026-10-04)
 
 
