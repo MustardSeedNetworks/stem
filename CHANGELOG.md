@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.26.10](https://github.com/MustardSeedNetworks/stem/compare/v0.26.9...v0.26.10) (2026-10-07)
+
+
+### Bug Fixes
+
+* **deps:** update dependency lucide-react to v1.49.0 ([#1621](https://github.com/MustardSeedNetworks/stem/issues/1621)) ([33ada77](https://github.com/MustardSeedNetworks/stem/commit/33ada77765634860dfdebc08a8066fd864bd20bb))
+* **deps:** update go dependencies ([#1619](https://github.com/MustardSeedNetworks/stem/issues/1619)) ([5464f5f](https://github.com/MustardSeedNetworks/stem/commit/5464f5f042d4a6e70fe780397dd4641719bcab9b))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1618](https://github.com/MustardSeedNetworks/stem/issues/1618)) ([72d6409](https://github.com/MustardSeedNetworks/stem/commit/72d6409263c15e3cdaa7d5f083c3d76e1849dd0f))
+* **deps:** migrate the UI test stack to vitest 5 ([#1623](https://github.com/MustardSeedNetworks/stem/issues/1623)) ([5ae65df](https://github.com/MustardSeedNetworks/stem/commit/5ae65df0e60f9ac74c0bae2723cb32ae06fdad77))
+* **deps:** update dependency @biomejs/biome to v2.5.15 ([#1624](https://github.com/MustardSeedNetworks/stem/issues/1624)) ([3b8e73c](https://github.com/MustardSeedNetworks/stem/commit/3b8e73cc91fef25b59552ba3110c1927cc3d331b))
+* **deps:** update npm to v12.2.0 ([#1625](https://github.com/MustardSeedNetworks/stem/issues/1625)) ([10e2321](https://github.com/MustardSeedNetworks/stem/commit/10e2321b6960074b9620f5af8bb50eebef8b593b))
+
 ## [0.26.9](https://github.com/MustardSeedNetworks/stem/compare/v0.26.8...v0.26.9) (2026-10-05)
 
 
