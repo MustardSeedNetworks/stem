@@ -3,7 +3,7 @@ module github.com/MustardSeedNetworks/stem
 go 1.27.1
 
 require (
-	github.com/MustardSeedNetworks/foundation v0.7.0
+	github.com/MustardSeedNetworks/foundation v0.7.1
 	github.com/go-playground/validator/v10 v10.30.5
 	github.com/go-webauthn/webauthn v0.18.2
 	github.com/golang-jwt/jwt/v5 v5.3.1
@@ -16,7 +16,7 @@ require (
 	golang.org/x/time v0.16.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gopkg.in/yaml.v3 v3.0.1
-	modernc.org/sqlite v1.60.0
+	modernc.org/sqlite v1.60.1
 )
 
 require (
