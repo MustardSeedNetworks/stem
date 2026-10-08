@@ -80,6 +80,9 @@ for (const scheme of ['light', 'dark'] as const) {
 
       const isDark = await page.evaluate(() => document.documentElement.classList.contains('dark'));
       expect(isDark).toBe(scheme === 'dark');
+      // Native controls (a <select>, scrollbars) take their face from
+      // color-scheme, not the theme tokens (UI-FLEET-9, stem#1631).
+      await expect(page.locator('html')).toHaveCSS('color-scheme', scheme);
     });
   });
 }
