@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.26.12](https://github.com/MustardSeedNetworks/stem/compare/v0.26.11...v0.26.12) (2026-10-08)
+
+
+### Bug Fixes
+
+* **theme:** paint native controls in the active theme's color scheme ([#1632](https://github.com/MustardSeedNetworks/stem/issues/1632)) ([cb312b0](https://github.com/MustardSeedNetworks/stem/commit/cb312b0a1444e2f90e0617c477e96a912f677dbf)), closes [#1631](https://github.com/MustardSeedNetworks/stem/issues/1631)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1635](https://github.com/MustardSeedNetworks/stem/issues/1635)) ([34289ee](https://github.com/MustardSeedNetworks/stem/commit/34289ee7621c127693a7fb99ea4db7822a94c1ad))
+* **deps:** update pre-commit hook pre-commit/mirrors-clang-format to v23.1.2 ([#1634](https://github.com/MustardSeedNetworks/stem/issues/1634)) ([399a0cc](https://github.com/MustardSeedNetworks/stem/commit/399a0cc002260aadf67754bd58b73febee96884c))
+
 ## [0.26.11](https://github.com/MustardSeedNetworks/stem/compare/v0.26.10...v0.26.11) (2026-10-08)
 
 
