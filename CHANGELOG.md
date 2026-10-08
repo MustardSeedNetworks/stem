@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.26.11](https://github.com/MustardSeedNetworks/stem/compare/v0.26.10...v0.26.11) (2026-10-08)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1629](https://github.com/MustardSeedNetworks/stem/issues/1629)) ([6ba5d86](https://github.com/MustardSeedNetworks/stem/commit/6ba5d861d21c7c703bf11f7b9e9b16d98235e204))
+* **deps:** update dependency @chromatic-com/storybook to v5.4.0 ([#1628](https://github.com/MustardSeedNetworks/stem/issues/1628)) ([9e229b7](https://github.com/MustardSeedNetworks/stem/commit/9e229b7fde470e13abd9f5e5cab95e605fe8c4b0))
+* **deps:** update dependency vite to v8.3.2 ([#1627](https://github.com/MustardSeedNetworks/stem/issues/1627)) ([a544f7f](https://github.com/MustardSeedNetworks/stem/commit/a544f7f1e0873b3c1799741f95301219fe50e86f))
+
 ## [0.26.10](https://github.com/MustardSeedNetworks/stem/compare/v0.26.9...v0.26.10) (2026-10-07)
 
 
