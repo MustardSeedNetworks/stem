@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.26.14](https://github.com/MustardSeedNetworks/stem/compare/v0.26.13...v0.26.14) (2026-10-10)
+
+
+### Bug Fixes
+
+* **deps:** update dependency lucide-react to v1.51.0 ([#1646](https://github.com/MustardSeedNetworks/stem/issues/1646)) ([496465f](https://github.com/MustardSeedNetworks/stem/commit/496465f506aff1045a08fd918e711662184cbe13))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1645](https://github.com/MustardSeedNetworks/stem/issues/1645)) ([e5ed5ba](https://github.com/MustardSeedNetworks/stem/commit/e5ed5bafb9a43e6e9d5355acf29cf5e4a86f7af5))
+
 ## [0.26.13](https://github.com/MustardSeedNetworks/stem/compare/v0.26.12...v0.26.13) (2026-10-10)
 
 
