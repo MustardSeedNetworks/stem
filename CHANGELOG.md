@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.26.13](https://github.com/MustardSeedNetworks/stem/compare/v0.26.12...v0.26.13) (2026-10-10)
+
+
+### Bug Fixes
+
+* **deps:** move to Go 1.27.2 for the net/http HTTP/2 CVEs ([#1643](https://github.com/MustardSeedNetworks/stem/issues/1643)) ([09bfdd4](https://github.com/MustardSeedNetworks/stem/commit/09bfdd4cde5b8ab8ce014090a138d91f8770934a)), closes [#1642](https://github.com/MustardSeedNetworks/stem/issues/1642)
+* **deps:** update dependency @tanstack/react-query to v5.104.1 ([#1638](https://github.com/MustardSeedNetworks/stem/issues/1638)) ([13000bc](https://github.com/MustardSeedNetworks/stem/commit/13000bc1750f7f4665d79d9f93e38f81f27b463e))
+* **deps:** update dependency immer to v11.1.21 ([#1641](https://github.com/MustardSeedNetworks/stem/issues/1641)) ([71b7a7a](https://github.com/MustardSeedNetworks/stem/commit/71b7a7a6fd4a7c2a87d960f531954a762fbebb59))
+* **deps:** update dependency lucide-react to v1.50.0 ([#1640](https://github.com/MustardSeedNetworks/stem/issues/1640)) ([8c503fb](https://github.com/MustardSeedNetworks/stem/commit/8c503fb7bb5eae00bf7dd85b2012fe8afbadb7f5))
+* **deps:** update module github.com/mustardseednetworks/foundation to v0.7.2 ([#1639](https://github.com/MustardSeedNetworks/stem/issues/1639)) ([7ee3366](https://github.com/MustardSeedNetworks/stem/commit/7ee3366439fe6f1448a142076321782944f20e27))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1637](https://github.com/MustardSeedNetworks/stem/issues/1637)) ([af89242](https://github.com/MustardSeedNetworks/stem/commit/af89242fdadce30f5ea173f49a7079f9366e641f))
+* **deps:** update dependency @types/node to v26.6.4 ([#1636](https://github.com/MustardSeedNetworks/stem/issues/1636)) ([13ae27a](https://github.com/MustardSeedNetworks/stem/commit/13ae27a973b4c0aba9db058180dff32eb9ecc99e))
+
 ## [0.26.12](https://github.com/MustardSeedNetworks/stem/compare/v0.26.11...v0.26.12) (2026-10-08)
 
 
