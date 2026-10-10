@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.26.15](https://github.com/MustardSeedNetworks/stem/compare/v0.26.14...v0.26.15) (2026-10-10)
+
+
+### Bug Fixes
+
+* **cli:** look for a macOS daemon in /usr/local/stem ([#1653](https://github.com/MustardSeedNetworks/stem/issues/1653)) ([feb0357](https://github.com/MustardSeedNetworks/stem/commit/feb035784fc576b48a83c5b8808a4f8beeead51f)), closes [#1649](https://github.com/MustardSeedNetworks/stem/issues/1649)
+
+
+### Documentation
+
+* **audit:** record the STM-23 macOS tarball upgrade leg ([#1651](https://github.com/MustardSeedNetworks/stem/issues/1651)) ([c935a7f](https://github.com/MustardSeedNetworks/stem/commit/c935a7f5317f472fa161153395a20c2ed5dde778))
+
 ## [0.26.14](https://github.com/MustardSeedNetworks/stem/compare/v0.26.13...v0.26.14) (2026-10-10)
 
 
