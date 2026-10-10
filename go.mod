@@ -1,6 +1,6 @@
 module github.com/MustardSeedNetworks/stem
 
-go 1.27.1
+go 1.27.2
 
 require (
 	github.com/MustardSeedNetworks/foundation v0.7.1
