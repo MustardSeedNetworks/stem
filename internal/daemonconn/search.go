@@ -26,19 +26,25 @@ func SearchDirs() []string {
 	if override := os.Getenv(dataDirEnv); override != "" {
 		dirs = append(dirs, override)
 	}
-	dirs = append(dirs, packagedDataDir(), ".")
+	dirs = append(dirs, packagedDataDir(runtime.GOOS), ".")
 	return dirs
 }
 
-// packagedDataDir is where the shipped service unit keeps daemon state.
-func packagedDataDir() string {
-	if runtime.GOOS == "windows" {
+// packagedDataDir is where the shipped service definition for goos keeps
+// daemon state: the systemd unit on Linux, the launchd plist on macOS, the
+// Windows service under ProgramData.
+func packagedDataDir(goos string) string {
+	switch goos {
+	case "windows":
 		if programData := os.Getenv("ProgramData"); programData != "" {
 			return filepath.Join(programData, "stem")
 		}
 		return `C:\ProgramData\stem`
+	case "darwin":
+		return "/usr/local/stem"
+	default:
+		return "/var/lib/stem"
 	}
-	return "/var/lib/stem"
 }
 
 // Discover returns the descriptor of the first daemon found on the search
