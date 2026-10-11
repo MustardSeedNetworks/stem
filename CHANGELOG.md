@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.26.18](https://github.com/MustardSeedNetworks/stem/compare/v0.26.17...v0.26.18) (2026-10-11)
+
+
+### Bug Fixes
+
+* **deps:** update dependency lucide-react to v1.52.0 ([#1663](https://github.com/MustardSeedNetworks/stem/issues/1663)) ([ec38086](https://github.com/MustardSeedNetworks/stem/commit/ec380860de9808920027933e89dcc663872aeafe))
+* **deps:** update module github.com/mustardseednetworks/foundation to v0.7.4 ([#1662](https://github.com/MustardSeedNetworks/stem/issues/1662)) ([05ff804](https://github.com/MustardSeedNetworks/stem/commit/05ff8048efc814e5d3fac5ca1ff47e50ad767d62))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1664](https://github.com/MustardSeedNetworks/stem/issues/1664)) ([040674d](https://github.com/MustardSeedNetworks/stem/commit/040674dcdef0a64b0314a154ebabced99c6f82d2))
+* **deps:** update dependency jsdom to v30.1.2 ([#1665](https://github.com/MustardSeedNetworks/stem/issues/1665)) ([a29a501](https://github.com/MustardSeedNetworks/stem/commit/a29a501de74c19e50652e858491bf6f30763da80))
+
 ## [0.26.17](https://github.com/MustardSeedNetworks/stem/compare/v0.26.16...v0.26.17) (2026-10-11)
 
 
