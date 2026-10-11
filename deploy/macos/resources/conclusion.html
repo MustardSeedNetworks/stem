@@ -16,8 +16,9 @@ reach port 8444 can set it, so do this now.</p>
 </pre>
 <p><strong>Service Management:</strong></p>
 <pre>
-sudo launchctl unload /Library/LaunchDaemons/com.stem.plist  # Stop
-sudo launchctl load /Library/LaunchDaemons/com.stem.plist    # Start
+sudo launchctl kickstart system/com.stem      # Start (-k to restart)
+sudo launchctl bootout system/com.stem        # Stop and unload
+sudo launchctl bootstrap system /Library/LaunchDaemons/com.stem.plist  # Load again
 </pre>
 <p><strong>Tip:</strong> Add <code>/usr/local/stem</code> to your PATH for convenience.</p>
 </body>
