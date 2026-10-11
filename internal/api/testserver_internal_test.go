@@ -31,5 +31,8 @@ func newTestServer(t testing.TB) *Server {
 		t.Fatalf("StartTrial() failed: %s", result.Message)
 	}
 	s.licenseManager = mgr
+	// So is the platform: the main CI job builds with CGO_ENABLED=0, and the
+	// dataplane gate has its own tests.
+	s.UseDataplaneAvailabilityForTest(func() (bool, string) { return true, "" })
 	return s
 }

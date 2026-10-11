@@ -173,14 +173,12 @@ type Server struct {
 	// real cgo dataplane.
 	executorResolver func(moduleName string) (executorFactory, bool)
 
-	// reflectorAvailability is the platform-capability probe used by
-	// the POST /api/v1/mode handler to reject role switches the binary
-	// cannot support (e.g. reflector on macOS / Windows pure-Go
-	// builds). If nil, [defaultReflectorAvailability] is used.
-	// Tests override via [Server.UseReflectorAvailabilityForTest] so
-	// they can exercise the 403 path without rebuilding with
-	// different cgo tags.
-	reflectorAvailability reflectorAvailabilityFn
+	// dataplaneAvailability reports whether this binary carries the
+	// packet dataplane. If nil, [defaultDataplaneAvailability] is used.
+	// Tests set it via [Server.UseDataplaneAvailabilityForTest]: the
+	// main CI job builds with CGO_ENABLED=0, so availability is a test
+	// input, not a property of the host running the tests.
+	dataplaneAvailability func() (available bool, reason string)
 }
 
 var (

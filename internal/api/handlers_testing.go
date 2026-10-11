@@ -56,6 +56,9 @@ func (s *Server) handleTestStart(w http.ResponseWriter, r *http.Request) {
 	if !s.validateInterfaceForTest(w, iface) {
 		return
 	}
+	if s.refuseWithoutDataplane(w, "test start") {
+		return
+	}
 
 	if len(plan.Steps) == 1 && plan.Steps[0].Module == moduleReflector {
 		s.startReflectorRequest(w, req, iface, plan.Steps[0])

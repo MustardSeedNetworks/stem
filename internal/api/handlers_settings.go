@@ -8,21 +8,7 @@ import (
 	"github.com/MustardSeedNetworks/stem/internal/api/sse"
 	"github.com/MustardSeedNetworks/stem/internal/logging"
 	"github.com/MustardSeedNetworks/stem/internal/netif"
-	reflectorDP "github.com/MustardSeedNetworks/stem/internal/reflector/dataplane"
 )
-
-// reflectorAvailabilityFn is a swappable platform-capability probe so
-// tests can simulate macOS / Windows builds without rebuilding with
-// different tags. Production code uses [reflectorDP.Available]; tests
-// override via [Server.UseReflectorAvailabilityForTest].
-type reflectorAvailabilityFn func() (available bool, reason string)
-
-func defaultReflectorAvailability() (bool, string) {
-	if reflectorDP.Available() {
-		return true, ""
-	}
-	return false, reflectorDP.UnsupportedReason()
-}
 
 // handleSettings handles settings get/update.
 func (s *Server) handleSettings(w http.ResponseWriter, r *http.Request) {
@@ -121,32 +107,10 @@ func (s *Server) handleModeUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Platform gate: reject modes the binary cannot actually run.
-	// Today this is reflector on non-CGO / non-Linux builds. The
-	// same probe powers /api/v1/capabilities so the UI gets a
-	// consistent answer no matter which endpoint it asks.
-	availability := s.reflectorAvailability
-	if availability == nil {
-		availability = defaultReflectorAvailability
-	}
-	if req.Mode == modeReflector {
-		available, reason := availability()
-		if !available {
-			if reason == "" {
-				reason = "Reflector mode is not supported on this platform"
-			}
-			logging.Warn("mode update rejected: reflector unavailable",
-				"mode", req.Mode,
-				"reason", reason,
-			)
-			WriteError(w, &Error{
-				HTTPStatus:  http.StatusForbidden,
-				Code:        ErrCodePermissionDenied,
-				Message:     reason,
-				InternalErr: nil,
-			})
-			return
-		}
+	// Only the reflector role needs the dataplane to be adopted; the daemon
+	// boots as test_master and must be able to return to it anywhere.
+	if req.Mode == modeReflector && s.refuseWithoutDataplane(w, "mode update") {
+		return
 	}
 	s.testRunMu.Lock()
 	defer s.testRunMu.Unlock()

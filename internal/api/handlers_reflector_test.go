@@ -25,6 +25,9 @@ func setupReflectorTestServer(t testing.TB) *api.Server {
 		t.Fatalf("NewServer() error: %v", err)
 	}
 	t.Cleanup(func() { _ = s.Shutdown() })
+	// The main CI job builds with CGO_ENABLED=0; platform availability is a
+	// test input here, as the dataplane gate has its own tests.
+	s.UseDataplaneAvailabilityForTest(func() (bool, string) { return true, "" })
 	return s
 }
 
