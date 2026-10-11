@@ -64,6 +64,7 @@ func realDaemonClient(t *testing.T, exec api.TestExecutor) (*daemonclient.Client
 		t.Fatalf("StartTrial: %s", result.Message)
 	}
 	s.UseLicenseForTest(mgr)
+	s.UseDataplaneAvailabilityForTest(func() (bool, string) { return true, "" })
 	s.UseTestExecutorResolver(func(string) (api.TestExecutorFactory, bool) {
 		return func(string) (api.TestExecutor, error) { return exec, nil }, true
 	})
