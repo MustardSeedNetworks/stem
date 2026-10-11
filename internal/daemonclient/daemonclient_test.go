@@ -255,6 +255,34 @@ func TestStopSurfacesAPlainTextRefusal(t *testing.T) {
 	}
 }
 
+// A host with no dataplane refuses a run with 403 and the platform's reason
+// (#1650). The credential is fine, and the operator must not be told it was
+// rejected (#1657).
+func TestStartReportsAPlatformRefusalAsARefusedRequest(t *testing.T) {
+	dir, _ := newDaemon(t, func(w http.ResponseWriter, _ *http.Request) {
+		api.WriteError(w, &api.Error{
+			HTTPStatus: http.StatusForbidden,
+			Code:       api.ErrCodePermissionDenied,
+			Message:    "CGO + Linux required",
+		})
+	})
+
+	c, err := daemonclient.Open(dir)
+	if err != nil {
+		t.Fatalf("Open: %v", err)
+	}
+	_, startErr := c.Start(context.Background(), api.TestStartRequest{
+		Interface: "eth0",
+		Tests:     []api.TestStepRequest{{TestType: "rfc2544_throughput"}},
+	})
+	if startErr == nil {
+		t.Fatal("Start succeeded, want the daemon's refusal")
+	}
+	if got := startErr.Error(); !strings.Contains(got, "CGO + Linux required") || strings.Contains(got, "credential") {
+		t.Errorf("err = %q, want the platform reason and no credential wording", got)
+	}
+}
+
 // A spent rate-limit budget is refused in the error envelope (#1438); the
 // operator sees the status and its sentence, not raw JSON.
 func TestStartSurfacesARateLimit(t *testing.T) {

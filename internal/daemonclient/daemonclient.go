@@ -392,7 +392,9 @@ func errorForStatus(status int, body []byte) error {
 	case http.StatusUnauthorized:
 		return fmt.Errorf("%w: the daemon rejected this credential (%d): %s", errUnauthorized, status, reason)
 	case http.StatusForbidden:
-		return fmt.Errorf("the daemon rejected this credential (%d): %s", status, reason)
+		// A 403 is a refusal of this request, not of the credential: a scope
+		// denial, a CSRF failure, or a platform with no dataplane (#1657).
+		return fmt.Errorf("the daemon refused this request (%d): %s", status, reason)
 	default:
 		if reason != "" {
 			return fmt.Errorf("daemon returned %d: %s", status, reason)
