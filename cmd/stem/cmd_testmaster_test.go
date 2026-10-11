@@ -351,3 +351,40 @@ func TestValidateDurationBounds(t *testing.T) {
 		})
 	}
 }
+
+// The hint must name the service the package for that platform installs: the
+// launchd Label in deploy/launchd/com.stem.plist and the systemd unit in
+// deploy/systemd/stem.service. Windows ships no service (#1658).
+func TestDaemonStartHintNamesTheShippedService(t *testing.T) {
+	plist, err := os.ReadFile(filepath.Join("..", "..", "deploy", "launchd", "com.stem.plist"))
+	if err != nil {
+		t.Fatalf("read plist: %v", err)
+	}
+	_, afterKey, found := strings.Cut(string(plist), "<key>Label</key>")
+	if !found {
+		t.Fatal("plist has no Label")
+	}
+	_, afterOpen, _ := strings.Cut(afterKey, "<string>")
+	label, _, _ := strings.Cut(afterOpen, "</string>")
+	if _, err = os.Stat(filepath.Join("..", "..", "deploy", "systemd", "stem.service")); err != nil {
+		t.Fatalf("systemd unit: %v", err)
+	}
+
+	tests := []struct {
+		goos    string
+		want    string
+		wantNot string
+	}{
+		{goos: "linux", want: "'sudo systemctl start stem'", wantNot: "launchctl"},
+		{goos: "darwin", want: "'sudo launchctl kickstart system/" + label + "'", wantNot: "systemctl"},
+		{goos: "windows", want: "'stem web'", wantNot: "systemctl"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.goos, func(t *testing.T) {
+			got := daemonStartHint(tt.goos)
+			if !strings.Contains(got, tt.want) || strings.Contains(got, tt.wantNot) {
+				t.Errorf("daemonStartHint(%q) = %q, want it to name %q and not %q", tt.goos, got, tt.want, tt.wantNot)
+			}
+		})
+	}
+}

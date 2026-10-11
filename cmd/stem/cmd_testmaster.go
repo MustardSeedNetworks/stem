@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"runtime"
 	"strconv"
 	"strings"
 	"syscall"
@@ -261,11 +262,25 @@ func reportNoDaemon(err error) error {
 				"Restore it with 'chmod 600' and restart the daemon to reissue the token.")
 	default:
 		_, _ = fmt.Fprintln(os.Stdout,
-			"Tests run in the Stem daemon. Start it with 'systemctl start stem' "+
-				"(or 'stem web') and try again.")
+			"Tests run in the Stem daemon. Start it with "+daemonStartHint(runtime.GOOS)+
+				" and try again.")
 		_, _ = fmt.Fprintf(os.Stdout, "Looked in: %s\n", strings.Join(daemonconn.SearchDirs(), ", "))
 	}
 	return err
+}
+
+// daemonStartHint names the command that starts the daemon under the service
+// definition shipped for goos: the systemd unit on Linux, the launchd plist on
+// macOS. Windows ships no service, so the daemon runs in the foreground there.
+func daemonStartHint(goos string) string {
+	switch goos {
+	case "darwin":
+		return "'sudo launchctl kickstart system/com.stem' (or 'stem web')"
+	case "windows":
+		return "'stem web'"
+	default:
+		return "'sudo systemctl start stem' (or 'stem web')"
+	}
 }
 
 func testCmd(args []string) error {

@@ -209,7 +209,8 @@ Access at: `https://localhost:8444` (self-signed cert; run
 ### Reflector Mode (CLI)
 
 The daemon runs the reflector; `stem reflect` asks it to start one, so the
-`stem` service must be running (`systemctl start stem`).
+`stem` service must be running (`sudo systemctl start stem`; on macOS see
+[launchd Service](#launchd-service-macos)).
 
 ```bash
 # Basic reflector
@@ -301,6 +302,22 @@ sudo systemctl enable stem
 sudo systemctl start stem
 sudo systemctl status stem
 ```
+
+### launchd Service (macOS)
+
+The macOS `.pkg` installs `/Library/LaunchDaemons/com.stem.plist`, which runs
+`/usr/local/stem/stem web` as root and starts it at boot. launchd restarts it
+after a crash, not after it exits with an error, so a daemon that refused to
+start stays stopped until it is started again.
+
+```bash
+sudo launchctl kickstart system/com.stem      # start (add -k to restart)
+sudo launchctl print system/com.stem          # state, last exit status
+sudo launchctl bootout system/com.stem        # stop and unload
+sudo launchctl bootstrap system /Library/LaunchDaemons/com.stem.plist  # load again after bootout
+```
+
+Logs are in `/usr/local/stem/logs/stem.log` and `stem.error.log`.
 
 ### Create Service User
 
