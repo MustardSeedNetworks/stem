@@ -2,11 +2,7 @@
 
 package api
 
-import (
-	"net/http"
-
-	reflectorDP "github.com/MustardSeedNetworks/stem/internal/reflector/dataplane"
-)
+import "net/http"
 
 // CapabilityInfo describes whether a single stem capability is
 // available on this binary. When Supported is false, Reason carries a
@@ -32,10 +28,8 @@ type CapabilitiesResponse struct {
 // surface platform-unsupported states (e.g. the macOS / Windows builds
 // of stem ship without the CGO + Linux reflector dataplane).
 //
-// Test Master mode is supported on every platform stem builds for
-// today, so its Supported flag is hard-coded true; if that changes the
-// flag should be wired to a real probe in the same way the reflector
-// flag delegates to [reflectorDP.Available].
+// Both roles drive the same dataplane, so they share one probe: a binary
+// built without it can neither reflect nor run a test.
 func (s *Server) handleCapabilities(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		w.Header().Set("Allow", http.MethodGet)
@@ -43,18 +37,10 @@ func (s *Server) handleCapabilities(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	reflectorAvailable := reflectorDP.Available()
-	resp := CapabilitiesResponse{
-		Reflector: CapabilityInfo{
-			Supported: reflectorAvailable,
-		},
-		TestMaster: CapabilityInfo{
-			Supported: true,
-		},
+	available, reason := s.dataplaneAvailable()
+	info := CapabilityInfo{Supported: available}
+	if !available {
+		info.Reason = reason
 	}
-	if !reflectorAvailable {
-		resp.Reflector.Reason = reflectorDP.UnsupportedReason()
-	}
-
-	writeJSON(w, resp)
+	writeJSON(w, CapabilitiesResponse{Reflector: info, TestMaster: info})
 }

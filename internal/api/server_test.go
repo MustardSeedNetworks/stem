@@ -46,6 +46,9 @@ func setupTestServer(t testing.TB) *api.Server {
 	// tests exercise handler behaviour rather than whatever activation
 	// state the developer's ~/.config/stem happens to hold.
 	s.UseLicenseForTest(proLicense(t))
+	// So is the platform: the main CI job builds with CGO_ENABLED=0, and
+	// the dataplane gate has its own tests.
+	s.UseDataplaneAvailabilityForTest(func() (bool, string) { return true, "" })
 	return s
 }
 
@@ -343,12 +346,6 @@ func TestHandleModeGet(t *testing.T) {
 
 func TestHandleModePost(t *testing.T) {
 	s := setupTestServer(t)
-	// Force the platform probe to "supported" so this test does not
-	// depend on the host's CGO / Linux availability. The
-	// unsupported-platform 403 path is covered in
-	// handlers_mode_test.go.
-	s.UseReflectorAvailabilityForTest(func() (bool, string) { return true, "" })
-	t.Cleanup(func() { s.UseReflectorAvailabilityForTest(nil) })
 
 	body := bytes.NewBufferString(`{"mode": "` + testModeReflector + `"}`)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/mode", body)

@@ -74,6 +74,9 @@ func setupTestingTestServer(t testing.TB) *api.Server {
 	// tests exercise handler behaviour rather than whatever activation
 	// state the developer's ~/.config/stem happens to hold.
 	s.UseLicenseForTest(proLicense(t))
+	// So is the platform: the main CI job builds with CGO_ENABLED=0, and
+	// these tests drive runs through fake executors, not the dataplane gate.
+	s.UseDataplaneAvailabilityForTest(func() (bool, string) { return true, "" })
 	return s
 }
 

@@ -66,6 +66,9 @@ func (s *Server) handleReflectorConfigUpdate(w http.ResponseWriter, r *http.Requ
 		WriteInvalidRequest(w, "Invalid configuration values")
 		return
 	}
+	if s.refuseWithoutDataplane(w, "reflector config update") {
+		return
+	}
 
 	err = s.applyReflectorDataplaneUpdate(dpUpdate, changes)
 	if err != nil {

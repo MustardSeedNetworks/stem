@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"runtime"
 	"testing"
 
 	"github.com/MustardSeedNetworks/stem/internal/api"
@@ -30,53 +29,46 @@ func setupCapabilitiesTestServer(t testing.TB) *api.Server {
 	return s
 }
 
-// TestHandleCapabilities_GetReturnsBothFlags verifies the endpoint
-// always returns reflector + testMaster blocks with a boolean
-// Supported field, regardless of platform. Exact reflector.supported
-// value is platform-dependent (linux+cgo = true, everything else =
-// false), so the test asserts a shape invariant plus a per-platform
-// expectation.
-func TestHandleCapabilities_GetReturnsBothFlags(t *testing.T) {
-	s := setupCapabilitiesTestServer(t)
-
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/capabilities", nil)
-	w := httptest.NewRecorder()
-
-	s.ServeHTTP(w, req)
-
-	if w.Code != http.StatusOK {
-		t.Fatalf("expected status 200, got %d body=%q", w.Code, w.Body.String())
+// TestHandleCapabilities_ReportsTheDataplaneForBothRoles pins stem#1650:
+// test-master support used to be hard-coded true, so a darwin daemon claimed
+// it while every test failed in the dataplane. Both roles now report the same
+// probe, with its reason when unsupported.
+func TestHandleCapabilities_ReportsTheDataplaneForBothRoles(t *testing.T) {
+	tests := []struct {
+		name      string
+		available bool
+		reason    string
+		want      api.CapabilityInfo
+	}{
+		{"dataplane present", true, "", api.CapabilityInfo{Supported: true}},
+		{
+			"dataplane absent", false, "CGO + Linux required",
+			api.CapabilityInfo{Supported: false, Reason: "CGO + Linux required"},
+		},
 	}
-	if got := w.Header().Get("Content-Type"); got != "application/json" {
-		t.Errorf("expected Content-Type application/json, got %q", got)
-	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := setupCapabilitiesTestServer(t)
+			s.UseDataplaneAvailabilityForTest(func() (bool, string) { return tt.available, tt.reason })
 
-	var resp api.CapabilitiesResponse
-	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
-		t.Fatalf("decode response: %v body=%q", err, w.Body.String())
-	}
+			req := httptest.NewRequest(http.MethodGet, "/api/v1/capabilities", nil)
+			w := httptest.NewRecorder()
+			s.ServeHTTP(w, req)
 
-	if !resp.TestMaster.Supported {
-		t.Errorf("expected testMaster.supported=true on all platforms, got false")
-	}
-	if resp.TestMaster.Reason != "" {
-		t.Errorf("expected empty testMaster.reason when supported, got %q", resp.TestMaster.Reason)
-	}
-
-	// Reflector dataplane requires CGO + Linux. On any other host the
-	// stub build is linked in, Supported is false, and Reason must be
-	// the operator-facing string the UI banner reads. We use runtime.GOOS
-	// here (not cgo build tag, which we can't read at runtime) — when
-	// running on Linux this test still passes whether cgo is on or off,
-	// because Available() returns matching values for both Supported
-	// and Reason.
-	if runtime.GOOS != "linux" {
-		if resp.Reflector.Supported {
-			t.Errorf("expected reflector.supported=false on %s, got true", runtime.GOOS)
-		}
-		if resp.Reflector.Reason == "" {
-			t.Errorf("expected reflector.reason populated when unsupported, got empty string")
-		}
+			if w.Code != http.StatusOK {
+				t.Fatalf("expected status 200, got %d body=%q", w.Code, w.Body.String())
+			}
+			if got := w.Header().Get("Content-Type"); got != "application/json" {
+				t.Errorf("expected Content-Type application/json, got %q", got)
+			}
+			var resp api.CapabilitiesResponse
+			if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+				t.Fatalf("decode response: %v body=%q", err, w.Body.String())
+			}
+			if resp.Reflector != tt.want || resp.TestMaster != tt.want {
+				t.Errorf("capabilities = %+v, want both roles %+v", resp, tt.want)
+			}
+		})
 	}
 }
 

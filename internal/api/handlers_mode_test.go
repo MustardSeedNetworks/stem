@@ -61,9 +61,9 @@ func postMode(t *testing.T, s *api.Server, body string) (*httptest.ResponseRecor
 // replaced.
 func TestHandleMode_PostUpdatesModeAndReturnsPrevious(t *testing.T) {
 	s := setupModeTestServer(t)
-	// Force the reflector probe to return supported so this test
+	// Force the dataplane probe to return supported so this test
 	// does not depend on the runtime OS / cgo state.
-	s.UseReflectorAvailabilityForTest(func() (bool, string) { return true, "" })
+	s.UseDataplaneAvailabilityForTest(func() (bool, string) { return true, "" })
 
 	w, resp := postMode(t, s, `{"mode":"reflector"}`)
 	if w.Code != http.StatusOK {
@@ -87,7 +87,7 @@ func TestHandleMode_PostUpdatesModeAndReturnsPrevious(t *testing.T) {
 // API contract, since teardown is best observed in the executor test.
 func TestHandleMode_PostSameModeNoOp(t *testing.T) {
 	s := setupModeTestServer(t)
-	s.UseReflectorAvailabilityForTest(func() (bool, string) { return true, "" })
+	s.UseDataplaneAvailabilityForTest(func() (bool, string) { return true, "" })
 
 	// Server boots in test_master mode. Asking for test_master again
 	// must be a no-op.
@@ -112,7 +112,7 @@ func TestHandleMode_PostSameModeNoOp(t *testing.T) {
 // pure-Go build behaviour without rebuilding.
 func TestHandleMode_PostUnsupportedPlatformReturns403(t *testing.T) {
 	s := setupModeTestServer(t)
-	s.UseReflectorAvailabilityForTest(func() (bool, string) {
+	s.UseDataplaneAvailabilityForTest(func() (bool, string) {
 		return false, "CGO + Linux required"
 	})
 
@@ -137,7 +137,7 @@ func TestHandleMode_PostUnsupportedPlatformReturns403(t *testing.T) {
 // reachable on every platform the binary builds for today.
 func TestHandleMode_PostUnsupportedDoesNotBlockTestMaster(t *testing.T) {
 	s := setupModeTestServer(t)
-	s.UseReflectorAvailabilityForTest(func() (bool, string) {
+	s.UseDataplaneAvailabilityForTest(func() (bool, string) {
 		return false, "CGO + Linux required"
 	})
 
