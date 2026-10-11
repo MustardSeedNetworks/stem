@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.26.17](https://github.com/MustardSeedNetworks/stem/compare/v0.26.16...v0.26.17) (2026-10-11)
+
+
+### Bug Fixes
+
+* **cli:** name the launchd start command in the macOS no-daemon hint ([#1661](https://github.com/MustardSeedNetworks/stem/issues/1661)) ([f08cb3a](https://github.com/MustardSeedNetworks/stem/commit/f08cb3af1e6197c6103dd64a5d73a9a606d26e4b)), closes [#1658](https://github.com/MustardSeedNetworks/stem/issues/1658)
+* **cli:** report a 403 as a refused request, not a rejected credential ([#1659](https://github.com/MustardSeedNetworks/stem/issues/1659)) ([a005b22](https://github.com/MustardSeedNetworks/stem/commit/a005b22dd3dd4db65c05d8452a6e2d1049eb03fd))
+
 ## [0.26.16](https://github.com/MustardSeedNetworks/stem/compare/v0.26.15...v0.26.16) (2026-10-11)
 
 
