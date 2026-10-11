@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.26.16](https://github.com/MustardSeedNetworks/stem/compare/v0.26.15...v0.26.16) (2026-10-11)
+
+
+### Bug Fixes
+
+* **api:** refuse reflector and test starts on a build without a dataplane ([#1654](https://github.com/MustardSeedNetworks/stem/issues/1654)) ([2bd0d97](https://github.com/MustardSeedNetworks/stem/commit/2bd0d971cfd94339b9ef945f25fc3b94649c56f7))
+
+
+### Miscellaneous
+
+* **deps:** update ubuntu:26.04 docker digest to f144425 ([#1656](https://github.com/MustardSeedNetworks/stem/issues/1656)) ([4876019](https://github.com/MustardSeedNetworks/stem/commit/4876019ba249e1fa6d845852767eb476b83310a5))
+
 ## [0.26.15](https://github.com/MustardSeedNetworks/stem/compare/v0.26.14...v0.26.15) (2026-10-10)
 
 
