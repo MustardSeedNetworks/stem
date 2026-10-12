@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.26.19](https://github.com/MustardSeedNetworks/stem/compare/v0.26.18...v0.26.19) (2026-10-12)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1667](https://github.com/MustardSeedNetworks/stem/issues/1667)) ([3e385cc](https://github.com/MustardSeedNetworks/stem/commit/3e385cc83dd46f5a981b5f756a8e9b2e7a0152cf))
+* **deps:** lock file maintenance ([#1671](https://github.com/MustardSeedNetworks/stem/issues/1671)) ([b6c38af](https://github.com/MustardSeedNetworks/stem/commit/b6c38af04e388af8b54b15e2744885b14b2348dd))
+* **deps:** lock file maintenance ([#1672](https://github.com/MustardSeedNetworks/stem/issues/1672)) ([9361c37](https://github.com/MustardSeedNetworks/stem/commit/9361c3793a2dcdb233719c4e0a74292edb8e5a54))
+* **deps:** update dependency @vitejs/plugin-react to v6.1.2 ([#1669](https://github.com/MustardSeedNetworks/stem/issues/1669)) ([3aaae56](https://github.com/MustardSeedNetworks/stem/commit/3aaae5670647dc89f8bd752a85086c81c1ce8a90))
+* **deps:** update dependency postcss to v8.5.29 ([#1670](https://github.com/MustardSeedNetworks/stem/issues/1670)) ([64bc6d7](https://github.com/MustardSeedNetworks/stem/commit/64bc6d73ae85779d63b458c16164552ba84301c7))
+
 ## [0.26.18](https://github.com/MustardSeedNetworks/stem/compare/v0.26.17...v0.26.18) (2026-10-11)
 
 
