@@ -180,7 +180,7 @@ func (c *Context) RunCustomStreamTest(cfg *TrafficGenConfig) (*TrafficGenResult,
 		return nil, fmt.Errorf("custom stream test failed: %d", ret)
 	}
 
-	return &TrafficGenResult{
+	result := &TrafficGenResult{
 		PacketsSent:  uint64(cResult.packets_sent),
 		PacketsRecv:  uint64(cResult.packets_recv),
 		BytesSent:    uint64(cResult.bytes_sent),
@@ -189,7 +189,11 @@ func (c *Context) RunCustomStreamTest(cfg *TrafficGenConfig) (*TrafficGenResult,
 		AchievedPPS:  float64(cResult.achieved_pps),
 		AchievedMbps: float64(cResult.achieved_mbps),
 		Latency:      newLatencyStats(cResult.latency),
-	}, nil
+	}
+	if err := customStreamVerdict(*result); err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 // RunSystemRecoveryTest runs RFC 2544 Section 26.5 System Recovery test.
