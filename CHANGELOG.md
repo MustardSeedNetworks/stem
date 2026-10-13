@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.26.21](https://github.com/MustardSeedNetworks/stem/compare/v0.26.20...v0.26.21) (2026-10-13)
+
+
+### Documentation
+
+* **audit:** record the stem vs EtherScope routed comparison (STM-11) ([#1684](https://github.com/MustardSeedNetworks/stem/issues/1684)) ([a1167ec](https://github.com/MustardSeedNetworks/stem/commit/a1167ec8f808b4e01df78a9f2b68eb327ba0868e))
+
+
+### Miscellaneous
+
+* **deps:** update dependency vite to v8.3.3 ([#1678](https://github.com/MustardSeedNetworks/stem/issues/1678)) ([142ae3f](https://github.com/MustardSeedNetworks/stem/commit/142ae3fe4995c9ae2a42cdb98ab862817091ab70))
+
 ## [0.26.20](https://github.com/MustardSeedNetworks/stem/compare/v0.26.19...v0.26.20) (2026-10-13)
 
 
