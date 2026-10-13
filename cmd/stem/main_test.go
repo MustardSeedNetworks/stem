@@ -30,13 +30,24 @@ func captureOutput(t *testing.T, fn func(w io.Writer)) string {
 // rather than taking an [io.Writer], so this is how their output is asserted.
 func captureStdout(t *testing.T, fn func()) string {
 	t.Helper()
+	return capturePipe(t, &os.Stdout, fn)
+}
+
+// captureStderr is captureStdout for [os.Stderr].
+func captureStderr(t *testing.T, fn func()) string {
+	t.Helper()
+	return capturePipe(t, &os.Stderr, fn)
+}
+
+func capturePipe(t *testing.T, target **os.File, fn func()) string {
+	t.Helper()
 
 	r, w, err := os.Pipe()
 	if err != nil {
 		t.Fatalf("pipe: %v", err)
 	}
-	saved := os.Stdout
-	os.Stdout = w
+	saved := *target
+	*target = w
 	done := make(chan string, 1)
 	go func() {
 		var buf bytes.Buffer
@@ -46,7 +57,7 @@ func captureStdout(t *testing.T, fn func()) string {
 
 	fn()
 
-	os.Stdout = saved
+	*target = saved
 	if closeErr := w.Close(); closeErr != nil {
 		t.Fatalf("close pipe: %v", closeErr)
 	}

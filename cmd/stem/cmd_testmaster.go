@@ -8,6 +8,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"os/signal"
 	"runtime"
@@ -57,21 +58,22 @@ func validateTestTypesList(tests []string) bool {
 
 // printTestConfiguration prints the test configuration.
 func printTestConfiguration(
+	w io.Writer,
 	iface, testTypes, frameSizes string,
 	duration int,
 	resolution, maxLoss float64,
 	warmup int,
 ) {
-	_, _ = fmt.Fprintf(os.Stdout, "%s %s - Network Testing\n", ProductName, version.GetVersion())
-	_, _ = fmt.Fprintln(os.Stdout, strings.Repeat("=", bannerWidth))
-	_, _ = fmt.Fprintf(os.Stdout, "Interface:    %s\n", iface)
-	_, _ = fmt.Fprintf(os.Stdout, "Tests:        %s\n", testTypes)
-	_, _ = fmt.Fprintf(os.Stdout, "Duration:     %d seconds\n", duration)
-	_, _ = fmt.Fprintf(os.Stdout, "Frame sizes:  %s\n", frameSizes)
-	_, _ = fmt.Fprintf(os.Stdout, "Resolution:   %.2f%%\n", resolution)
-	_, _ = fmt.Fprintf(os.Stdout, "Max loss:     %.2f%%\n", maxLoss)
-	_, _ = fmt.Fprintf(os.Stdout, "Warmup:       %d seconds\n", warmup)
-	_, _ = fmt.Fprintln(os.Stdout, strings.Repeat("=", bannerWidth))
+	_, _ = fmt.Fprintf(w, "%s %s - Network Testing\n", ProductName, version.GetVersion())
+	_, _ = fmt.Fprintln(w, strings.Repeat("=", bannerWidth))
+	_, _ = fmt.Fprintf(w, "Interface:    %s\n", iface)
+	_, _ = fmt.Fprintf(w, "Tests:        %s\n", testTypes)
+	_, _ = fmt.Fprintf(w, "Duration:     %d seconds\n", duration)
+	_, _ = fmt.Fprintf(w, "Frame sizes:  %s\n", frameSizes)
+	_, _ = fmt.Fprintf(w, "Resolution:   %.2f%%\n", resolution)
+	_, _ = fmt.Fprintf(w, "Max loss:     %.2f%%\n", maxLoss)
+	_, _ = fmt.Fprintf(w, "Warmup:       %d seconds\n", warmup)
+	_, _ = fmt.Fprintln(w, strings.Repeat("=", bannerWidth))
 }
 
 // parseTestFlags parses test command flags and returns the parsed values.
@@ -326,8 +328,15 @@ func testCmd(args []string) error {
 		return reportNoDaemon(err)
 	}
 
+	// With --json or --csv, stdout carries the document and nothing else, so
+	// it can be redirected straight into a parser; everything said to the
+	// operator goes to stderr.
+	info := io.Writer(os.Stdout)
+	if flags.jsonOutput || flags.csvOutput {
+		info = os.Stderr
+	}
 	printTestConfiguration(
-		flags.iface, flags.testTypes, flags.frameSizes,
+		info, flags.iface, flags.testTypes, flags.frameSizes,
 		flags.duration, flags.resolution, flags.maxLoss, flags.warmup,
 	)
 
@@ -336,21 +345,20 @@ func testCmd(args []string) error {
 
 	runID, startErr := client.Start(ctx, buildStartRequest(flags, tests, frameSizeList, seconds))
 	if startErr != nil {
-		_, _ = fmt.Fprintf(os.Stdout, "Error: %v\n", startErr)
+		_, _ = fmt.Fprintf(info, "Error: %v\n", startErr)
 		return startErr
 	}
-	_, _ = fmt.Fprintf(os.Stdout, "Run %s started\n", runID)
+	_, _ = fmt.Fprintf(info, "Run %s started\n", runID)
 
-	quiet := flags.jsonOutput || flags.csvOutput
-	status, watchErr := watchRun(ctx, client, runID, quiet)
+	status, watchErr := watchRun(ctx, client, runID, info)
 	if watchErr != nil {
-		_, _ = fmt.Fprintf(os.Stdout, "\nError: %v\n", watchErr)
+		_, _ = fmt.Fprintf(info, "\nError: %v\n", watchErr)
 		return watchErr
 	}
 
 	result, resultErr := client.Result(ctx)
 	if resultErr != nil {
-		_, _ = fmt.Fprintf(os.Stdout, "\nError: %v\n", resultErr)
+		_, _ = fmt.Fprintf(info, "\nError: %v\n", resultErr)
 		return resultErr
 	}
 	return reportRunOutcome(status, result, flags)
@@ -365,15 +373,15 @@ func reportRunOutcome(status api.Stats, result api.TestResultResponse, flags *te
 		if err != nil {
 			return fmt.Errorf("encode result: %w", err)
 		}
-		_, _ = fmt.Fprintf(os.Stdout, "\n%s\n", string(data))
+		_, _ = fmt.Fprintf(os.Stdout, "%s\n", string(data))
 	case flags.csvOutput:
-		renderCSV(result.Data)
+		renderCSV(stepRows(result.Steps))
 	default:
 		_, _ = fmt.Fprintf(os.Stdout, "\n\nRun %s %s\n", status.SuiteID, status.TestStatus)
 		if result.Message != "" {
 			_, _ = fmt.Fprintf(os.Stdout, "%s\n", result.Message)
 		}
-		renderResult(result.Data)
+		renderSteps(result.Steps)
 	}
 
 	if status.TestStatus != "completed" || !result.Success {

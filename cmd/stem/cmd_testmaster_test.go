@@ -5,6 +5,7 @@ package main
 import (
 	"errors"
 	"flag"
+	"io"
 	"os"
 	"path/filepath"
 	"slices"
@@ -181,8 +182,8 @@ func TestValidateTestTypesList(t *testing.T) {
 // TestPrintTestConfigurationEchoesWhatWillRun is the banner an operator
 // screenshots into a report, so every parameter has to appear.
 func TestPrintTestConfigurationEchoesWhatWillRun(t *testing.T) {
-	out := captureStdout(t, func() {
-		printTestConfiguration("eth0", "rfc2544_throughput", "64,1518", 30, 0.1, 0.5, 2)
+	out := captureOutput(t, func(w io.Writer) {
+		printTestConfiguration(w, "eth0", "rfc2544_throughput", "64,1518", 30, 0.1, 0.5, 2)
 	})
 
 	for _, want := range []string{
