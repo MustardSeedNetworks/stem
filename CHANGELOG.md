@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.26.20](https://github.com/MustardSeedNetworks/stem/compare/v0.26.19...v0.26.20) (2026-10-13)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1676](https://github.com/MustardSeedNetworks/stem/issues/1676)) ([0b489c4](https://github.com/MustardSeedNetworks/stem/commit/0b489c44461e0ec6ef833e7c31fcb7aecbdd674b))
+* **deps:** update dependency js-yaml to v5.4.3 ([#1673](https://github.com/MustardSeedNetworks/stem/issues/1673)) ([2d889bc](https://github.com/MustardSeedNetworks/stem/commit/2d889bcdaafd69738194d05cc51cf1f5de5150a3))
+* **deps:** update dependency nanoid to v6.0.2 ([#1674](https://github.com/MustardSeedNetworks/stem/issues/1674)) ([8b9ebe4](https://github.com/MustardSeedNetworks/stem/commit/8b9ebe403829bded5896aeb95e0a3478889e7416))
+
 ## [0.26.19](https://github.com/MustardSeedNetworks/stem/compare/v0.26.18...v0.26.19) (2026-10-12)
 
 
