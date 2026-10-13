@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
+
+	"github.com/MustardSeedNetworks/stem/internal/api"
 )
 
 func decodeData(t *testing.T, raw string) any {
@@ -101,5 +103,57 @@ func TestRenderCSVEmitsOneRowPerEntry(t *testing.T) {
 	}
 	if lines[1] != "64,98.5" || lines[2] != "1518,100" {
 		t.Errorf("rows = %q, %q", lines[1], lines[2])
+	}
+}
+
+// planSteps is a run plan as the daemon returns it: no top-level data, and
+// each step's per-frame-size measurements nested under result.data.
+func planSteps(t *testing.T) []api.RunPlanStep {
+	t.Helper()
+	return []api.RunPlanStep{
+		{
+			TestType: "rfc2544_throughput",
+			Status:   "passed",
+			Result: &api.TestResultResponse{Data: decodeData(t, `[
+				{"frameSize": 64, "success": true, "data": {"maxRateMbps": 985.25}},
+				{"frameSize": 1518, "success": true, "data": {"maxRateMbps": 999.5}}
+			]`)},
+		},
+		{TestType: "rfc2544_latency", Status: "failed", Error: "Test execution failed"},
+	}
+}
+
+// A passing run printed only "Run … completed": the measurements of a run
+// plan live in its steps, which the renderer never read (stem#1682).
+func TestRenderStepsShowsEachStepsMeasurements(t *testing.T) {
+	out := captureStdout(t, func() { renderSteps(planSteps(t)) })
+
+	for _, want := range []string{
+		"Step 1/2 rfc2544_throughput: passed",
+		"[0].data.maxRateMbps",
+		"985.25",
+		"999.5",
+		"Step 2/2 rfc2544_latency: failed",
+		"Test execution failed",
+	} {
+		if !strings.Contains(out, want) {
+			t.Errorf("rendered steps are missing %q:\n%s", want, out)
+		}
+	}
+}
+
+// --csv printed nothing for a run plan. Each measurement is one row named
+// by its step, with the nested rate flattened into a column.
+func TestStepRowsGiveOneCSVRowPerMeasurement(t *testing.T) {
+	out := captureStdout(t, func() { renderCSV(stepRows(planSteps(t))) })
+
+	lines := strings.Split(strings.TrimSpace(out), "\n")
+	want := []string{
+		"data.maxRateMbps,frameSize,success,testType",
+		"985.25,64,true,rfc2544_throughput",
+		"999.5,1518,true,rfc2544_throughput",
+	}
+	if strings.Join(lines, "\n") != strings.Join(want, "\n") {
+		t.Errorf("CSV =\n%s\nwant\n%s", out, strings.Join(want, "\n"))
 	}
 }

@@ -9,7 +9,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"os"
+	"io"
 	"time"
 
 	"github.com/MustardSeedNetworks/stem/internal/api"
@@ -28,7 +28,7 @@ func watchRun(
 	ctx context.Context,
 	client *daemonclient.Client,
 	runID string,
-	quiet bool,
+	progress io.Writer,
 ) (api.Stats, error) {
 	// Polling outlives the interrupt on purpose — the run is the daemon's,
 	// and abandoning it would leave the operator with no outcome at all.
@@ -51,9 +51,7 @@ func watchRun(
 		if daemonclient.Terminal(status.TestStatus) {
 			return status, nil
 		}
-		if !quiet {
-			reportProgress(status)
-		}
+		reportProgress(progress, status)
 
 		select {
 		case <-ticker.C:
@@ -61,7 +59,7 @@ func watchRun(
 			// Handled once; the channel stays closed, so drop it or the
 			// select would spin instead of waiting for the next tick.
 			interrupted = nil
-			_, _ = fmt.Fprintln(os.Stdout, "\nCancelling run...")
+			_, _ = fmt.Fprintln(progress, "\nCancelling run...")
 			if stopErr := client.Stop(poll); stopErr != nil {
 				return api.Stats{}, fmt.Errorf("ask the daemon to stop the run: %w", stopErr)
 			}
@@ -70,7 +68,7 @@ func watchRun(
 }
 
 // reportProgress prints one line per poll on a terminal.
-func reportProgress(status api.Stats) {
+func reportProgress(w io.Writer, status api.Stats) {
 	if status.StepsTotal == 0 {
 		return
 	}
@@ -82,5 +80,5 @@ func reportProgress(status api.Stats) {
 		}
 		line += ")"
 	}
-	_, _ = fmt.Fprint(os.Stdout, line)
+	_, _ = fmt.Fprint(w, line)
 }

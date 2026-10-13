@@ -11,6 +11,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -37,12 +38,14 @@ func (r *sizeRecorder) Execute(testType string, cfg *modtypes.TestConfig) (*modt
 
 // realDaemonClient serves a real api.Server — its handlers, its validation,
 // its auth and CSRF — over TLS, with only the dataplane replaced, and returns
-// a CLI client bound to it.
+// a CLI client bound to it. The daemon is published where daemonclient.Discover
+// looks, so `stem test` itself finds it too.
 func realDaemonClient(t *testing.T, exec api.TestExecutor) (*daemonclient.Client, string) {
 	t.Helper()
 	const username, password = "cli-test", "cli-test-password-1412"
 	t.Setenv("STEM_TEST_MODE", "1")
-	t.Setenv("STEM_DATA_DIR", t.TempDir())
+	dir := t.TempDir()
+	t.Setenv("STEM_DATA_DIR", dir)
 	t.Setenv("STEM_AUTH_USERNAME", username)
 	t.Setenv("STEM_AUTH_PASSWORD", password)
 
@@ -81,7 +84,6 @@ func realDaemonClient(t *testing.T, exec api.TestExecutor) (*daemonclient.Client
 
 	srv := httptest.NewTLSServer(s)
 	t.Cleanup(srv.Close)
-	dir := t.TempDir()
 	caFile := filepath.Join(dir, "server.crt")
 	encoded := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: srv.Certificate().Raw})
 	if writeErr := os.WriteFile(caFile, encoded, 0o600); writeErr != nil {
@@ -128,5 +130,54 @@ func TestDefaultThroughputRunPassesTheDaemonsValidation(t *testing.T) {
 		}
 	case <-ctx.Done():
 		t.Fatal("the run started but never reached the dataplane")
+	}
+}
+
+// measuringExecutor stands in for the dataplane and reports one fixed rate.
+type measuringExecutor struct{}
+
+func (measuringExecutor) Close() {}
+
+func (measuringExecutor) Execute(testType string, _ *modtypes.TestConfig) (*modtypes.Result, error) {
+	return &modtypes.Result{
+		TestType: testType,
+		Success:  true,
+		Data:     map[string]any{"maxRateMbps": 985.25},
+	}, nil
+}
+
+// `stem test … --json > out.json` produced a file no JSON parser accepts: the
+// banner and "Run … started" went to stdout ahead of the document
+// (stem#1682). Stdout must hold the document alone, carrying the step's
+// measurement, and the banner must still reach the operator on stderr.
+func TestJSONOutputIsTheDocumentAlone(t *testing.T) {
+	_, iface := realDaemonClient(t, measuringExecutor{})
+
+	var err error
+	var stdout string
+	stderr := captureStderr(t, func() {
+		stdout = captureStdout(t, func() {
+			err = testCmd([]string{
+				"-i", iface, "--peer", "192.0.2.1", "-t", "rfc2544_throughput",
+				"-d", "1", "--frame-sizes", "64", "--json",
+			})
+		})
+	})
+	if err != nil {
+		t.Fatalf("testCmd: %v\nstdout:\n%s\nstderr:\n%s", err, stdout, stderr)
+	}
+
+	var result api.TestResultResponse
+	if decodeErr := json.Unmarshal([]byte(stdout), &result); decodeErr != nil {
+		t.Fatalf("stdout is not one JSON document: %v\n%s", decodeErr, stdout)
+	}
+	if len(result.Steps) != 1 || result.Steps[0].Result == nil {
+		t.Fatalf("result has no step result: %+v", result)
+	}
+	if !strings.Contains(stdout, `"maxRateMbps": 985.25`) {
+		t.Errorf("the document is missing the step's measurement:\n%s", stdout)
+	}
+	if !strings.Contains(stderr, "Interface:    "+iface) || !strings.Contains(stderr, "started") {
+		t.Errorf("the banner and progress must go to stderr; got:\n%s", stderr)
 	}
 }

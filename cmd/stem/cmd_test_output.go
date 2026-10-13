@@ -14,7 +14,45 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/MustardSeedNetworks/stem/internal/api"
 )
+
+// renderSteps prints each step of a run plan with its own measurements. The
+// CLI always submits a run plan, whose result has no top-level data: each
+// step's measurements are under steps[].result.data (stem#1682).
+func renderSteps(steps []api.RunPlanStep) {
+	for i, step := range steps {
+		_, _ = fmt.Fprintf(os.Stdout, "\nStep %d/%d %s: %s\n", i+1, len(steps), step.TestType, step.Status)
+		if step.Error != "" {
+			_, _ = fmt.Fprintf(os.Stdout, "  %-28s %s\n", "error", step.Error)
+		}
+		if step.Result != nil {
+			renderResult(step.Result.Data)
+		}
+	}
+}
+
+// stepRows turns a run plan's results into CSV rows, one per measurement
+// (per frame size, where the step measured several), each named by its step.
+// A measurement's nested values are flattened into columns by path, so the
+// rates and delays under each row's data are not dropped as non-scalars.
+func stepRows(steps []api.RunPlanStep) []any {
+	var rows []any
+	for _, step := range steps {
+		if step.Result == nil {
+			continue
+		}
+		for _, measurement := range asRows(step.Result.Data) {
+			row := map[string]any{"testType": step.TestType}
+			for _, leaf := range flatten("", measurement) {
+				row[leaf.key] = leaf.value
+			}
+			rows = append(rows, row)
+		}
+	}
+	return rows
+}
 
 // renderResult prints the daemon's result as sorted key/value lines.
 func renderResult(data any) {
