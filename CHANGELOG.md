@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.26.22](https://github.com/MustardSeedNetworks/stem/compare/v0.26.21...v0.26.22) (2026-10-13)
+
+
+### Bug Fixes
+
+* **cli:** render run-plan step measurements and keep --json/--csv stdout clean ([#1686](https://github.com/MustardSeedNetworks/stem/issues/1686)) ([6c2b588](https://github.com/MustardSeedNetworks/stem/commit/6c2b588ca81f85ba1e7450a4c46dd4ac78ec49e4)), closes [#1682](https://github.com/MustardSeedNetworks/stem/issues/1682)
+* **deps:** update dependency react-i18next to v17.0.16 ([#1685](https://github.com/MustardSeedNetworks/stem/issues/1685)) ([ce8e239](https://github.com/MustardSeedNetworks/stem/commit/ce8e239bf0c448dae1dee8f13d48b793920ceba6))
+* **deps:** update module golang.org/x/sys to v0.49.0 ([#1687](https://github.com/MustardSeedNetworks/stem/issues/1687)) ([1e22351](https://github.com/MustardSeedNetworks/stem/commit/1e22351beb6cf5d86cc4917d538340973f4b4281))
+* **rfc2544:** count only responses to frames sent inside the measured window ([#1690](https://github.com/MustardSeedNetworks/stem/issues/1690)) ([248363d](https://github.com/MustardSeedNetworks/stem/commit/248363d806bf5b0e2accc3db263b9996aa60b3d0)), closes [#1551](https://github.com/MustardSeedNetworks/stem/issues/1551)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1688](https://github.com/MustardSeedNetworks/stem/issues/1688)) ([711bbfd](https://github.com/MustardSeedNetworks/stem/commit/711bbfd9310dcb0ebce36f7a055cbdbf22020691))
+* **deps:** lock file maintenance ([#1691](https://github.com/MustardSeedNetworks/stem/issues/1691)) ([2713645](https://github.com/MustardSeedNetworks/stem/commit/2713645382a71448e302a14c15e0245803192fef))
+
 ## [0.26.21](https://github.com/MustardSeedNetworks/stem/compare/v0.26.20...v0.26.21) (2026-10-13)
 
 
