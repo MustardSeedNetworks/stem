@@ -17,9 +17,10 @@
 #   recorded constant to remember to update, which is the step such schemes
 #   always skip.
 #
-# A run whose diff cannot reach the benchmark is skipped before anything is
-# built: identical code measured twice reports the runner, not the code, and
-# that is where every false failure has come from.
+# A run whose change cannot reach the benchmark is skipped once both sides are
+# built and the binaries compare identical: identical code measured twice
+# reports the runner, not the code, and that is where every false failure has
+# come from.
 #
 # The gate fails closed. A build that does not compile, a binary that does not
 # run, output that cannot be parsed, or a case present in one run and missing
@@ -197,28 +198,6 @@ echo "baseline: $BASELINE_REF"
 echo "current:  $(git rev-parse HEAD)"
 echo "allowed regression: ${MAX_REGRESSION}%"
 
-# Most runs have nothing to measure. `merge_group` forces every path filter in
-# ci.yml to `true`, so this gate runs on every queued PR whatever it touched,
-# and both sides are then the same code compiled twice. Measuring that can only
-# report the machine: run 34687252273 compared trees differing by ten lines of
-# package-lock.json and called reflect_mode_mac_ip_v4 -25.0% and
-# reflect_mode_mac_v4 -27.3%, which ejected a bot PR from the merge queue.
-# Best-of-N cannot fix this -- there is no signal to recover (#1198).
-#
-# Unchanged sources cannot regress, so say so and stop. This is not the gate
-# going quiet: the condition is proof, not a guess, and it is deliberately
-# wider than what is compiled -- any difference anywhere under bench/, src/ or
-# include/, tracked or in the working tree, falls through to the full
-# measurement even when it could not reach the binary.
-UNCHANGED_PATHS=(bench src include)
-if git diff --quiet "$BASELINE_REF" -- "${UNCHANGED_PATHS[@]}"; then
-  echo
-  echo "IDENTICAL: ${UNCHANGED_PATHS[*]} are unchanged against the baseline, so this"
-  echo "           change cannot have moved the reflect path and there is"
-  echo "           nothing to measure."
-  exit 0
-fi
-
 if ! git worktree add --detach --quiet "$BASELINE_TREE" "$BASELINE_REF"; then
   echo "FAIL: could not check out baseline revision $BASELINE_REF" >&2
   exit 1
@@ -246,6 +225,30 @@ fi
 
 build_bench "$BASELINE_TREE" baseline
 build_bench "$REPO_ROOT" current
+
+# Most runs have nothing to measure. `merge_group` forces every path filter in
+# ci.yml to `true`, so this gate runs on every queued PR whatever it touched,
+# and both sides are then the same code compiled twice. Measuring that can only
+# report the machine: run 34687252273 compared trees differing by ten lines of
+# package-lock.json and called reflect_mode_mac_ip_v4 -25.0% and
+# reflect_mode_mac_v4 -27.3%, which ejected a bot PR from the merge queue.
+# Best-of-N cannot fix this -- there is no signal to recover (#1198).
+#
+# Identical binaries cannot regress, so say so and stop. The condition is
+# proof, not a guess: both are built here, with the same compiler and flags,
+# from relative paths, so any change that reaches the measured code changes the
+# bytes. Comparing the binaries rather than a path list matters: a Y.1731 or
+# Y.1564 fix under src/ or include/ never reaches the benchmark, yet a path
+# check measured it and a fast baseline sample ejected it from the queue
+# (#1697).
+if cmp -s "$WORKDIR/bench_baseline" "$WORKDIR/bench_current"; then
+  echo
+  echo "IDENTICAL: the benchmark binaries built from both sides are identical,"
+  echo "           so this change cannot have moved the reflect path and there"
+  echo "           is nothing to measure."
+  exit 0
+fi
+
 measure_both
 
 echo
