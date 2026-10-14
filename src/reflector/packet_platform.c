@@ -433,15 +433,10 @@ int packet_platform_send_batch(worker_ctx_t *wctx, packet_t *pkts, int num_pkts)
         messages[i].msg_hdr.msg_iovlen = 1;
     }
 
+    /* sendmmsg copies what it sends, so every frame goes back to the ring. */
     int sent = sendmmsg(pctx->sock_fd, messages, (unsigned int)num_pkts, MSG_DONTWAIT);
-    if (sent < 0) {
-        packet_platform_release_batch(wctx, pkts, num_pkts);
-        return -1;
-    }
-    if (sent < num_pkts) {
-        packet_platform_release_batch(wctx, &pkts[sent], num_pkts - sent);
-    }
-    return sent;
+    packet_platform_release_batch(wctx, pkts, num_pkts);
+    return sent < 0 ? -1 : sent;
 }
 
 /*

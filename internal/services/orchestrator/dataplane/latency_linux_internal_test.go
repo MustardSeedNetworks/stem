@@ -17,7 +17,7 @@ import (
 // queue, so a line-rate load reads as that queue.
 func TestLatencyRunsAtMeasuredThroughput(t *testing.T) {
 	requireRoot(t)
-	master := newReflectedLink(t, 1, false)
+	master, _ := newReflectedLink(t, 1, false)
 	shapeIngress(t, vethReflector, "50mbit", "100ms")
 
 	cfg := PeerConfig(vethMaster, reflectorIP, reflectorPort)
@@ -50,7 +50,7 @@ func TestLatencyRunsAtMeasuredThroughput(t *testing.T) {
 // after a 10 ms sleep.
 func TestY1564FrameDelayIsThePathDelay(t *testing.T) {
 	requireRoot(t)
-	master := newReflectedLink(t, 1, false)
+	master, _ := newReflectedLink(t, 1, false)
 	cfg := PeerConfig(vethMaster, reflectorIP, reflectorPort)
 	if err := master.Configure(&cfg); err != nil {
 		t.Fatalf("configure test master: %v", err)
