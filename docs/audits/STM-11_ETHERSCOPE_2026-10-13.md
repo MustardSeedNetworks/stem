@@ -17,8 +17,8 @@ EtherScope measures 0.43–0.50 ms latency and 115–226 µs jitter. Stem measur
 a 0.35–0.40 ms minimum, a 1.3–1.4 ms mean and 21–26 ms FDV. Stem's RFC 2544
 latency step does not run at the throughput rate. Under a shared or saturated
 queue, stem gets fewer frames through than the EtherScope does. Four stem
-issues are filed: #1680, #1681, #1682 and #1683. The Link-Live analysis IDs
-are **not** recorded yet; see the last section.
+issues are filed: #1680, #1681, #1682 and #1683. The EtherScope results are
+in Link-Live; their IDs are in the last section.
 
 ## Paths and idle baselines
 
@@ -132,14 +132,29 @@ the product.
 STM-12 and STM-13 reuse this table. A row passes when its rerun meets every
 line.
 
-## Not recorded: the Link-Live analysis IDs
+## Link-Live results
 
-The EtherScope showed its Link-Live upload indicator green after each run.
-The Link-Live API was not reachable for this run. The token on the owner's
-Mac (`~/.linklive/token.env`) expired about 20 hours earlier, and
-`refresh.sh --force` returned
-`refresh failed HTTP 401: {"error":{"code":1003,"message":"Problem Authenticating"}}`.
-A new login needs the owner's TOTP. Once the token is renewed, take the
-analyses uploaded between 16:15 and 16:35 UTC on 2026-10-13 and add their IDs
-here. The pairs above are timestamped to the second so each one can be
-matched.
+The EtherScope uploaded each Performance run to Link-Live (organization
+Gotlabs.net, unit `Kris's EtherScope nXG - 536204`). The IDs were read on
+2026-10-14 through the Link-Live API (`/v1/admin/results`,
+`resultType: performance`). Each one is matched to a run above by its
+`testStartTime`, to the second. Every result's average latency, jitter and
+loss equals the value recorded above.
+
+| Run | Link-Live result ID | `testStartTime` (UTC) | File | Grade | Avg latency / jitter / loss | Max latency |
+| --- | --- | --- | --- | --- | --- | --- |
+| Pair 1 (excluded), 10 Mbps | `6ace5964429e02da5bf89013` | 16:15:33.807 | `20261013-161635.lrpt` | green | 401 µs / 231 µs / 0 | 9.4 ms |
+| Pair 2, 10 Mbps | `6ace5b10429e02da5bfaaca2` | 16:22:42.590 | `20261013-162343.lrpt` | green | 432 µs / 226 µs / 0 | 10.5 ms |
+| Solo, 100 Mbps | `6ace5c80429e02da5bfc6ff5` | 16:28:49.929 | `20261013-162950.lrpt` | red | 85.2 ms / 19 µs / 12.2 % | 160.4 ms |
+| Pair 4, 25 Mbps | `6ace5d9c429e02da5bfdb8e1` | 16:33:34.715 | `20261013-163435.lrpt` | green | 504 µs / 115 µs / 0 | 18.6 ms |
+
+Pair 3 (16:26:17, stopped by hand) has no Link-Live result: no performance
+result exists between 16:24 and 16:28.
+The EtherScope's Path run to CT307 is Link-Live path analysis
+`6ace5fe8429e02da5b008b43` (16:44:22 UTC, destination 10.44.40.23).
+
+The EtherScope's own maximum latency was 10.5 ms in pair 2 and 18.6 ms in
+pair 4. So the path itself has a tail of the order seen in stem's FD maximum
+(21.3 and 26.8 ms), although its mean stays at 0.43–0.50 ms. The FD-mean and
+FDV tolerances above compare means and variation, not maxima, so they are
+unchanged.
