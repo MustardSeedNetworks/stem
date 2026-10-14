@@ -120,6 +120,13 @@ func startPlanServer(t *testing.T, factory api.TestExecutorFactory) (*api.Server
 
 func runPlanUntilFailed(t *testing.T, s *api.Server, token, ifaceName, tests string) api.Stats {
 	t.Helper()
+	return runPlanUntil(t, s, token, ifaceName, tests, "error")
+}
+
+// runPlanUntil starts the plan over the API and polls /stats until the run
+// reaches status.
+func runPlanUntil(t *testing.T, s *api.Server, token, ifaceName, tests, status string) api.Stats {
+	t.Helper()
 	body := bytes.NewBufferString(`{"peer":"192.0.2.1","tests":[` + tests + `],"interface":"` + ifaceName + `"}`)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/test/start", body)
 	authorizeWithCSRF(t, s, req, token)
@@ -139,12 +146,12 @@ func runPlanUntilFailed(t *testing.T, s *api.Server, token, ifaceName, tests str
 		if decodeErr := json.Unmarshal(statsW.Body.Bytes(), &stats); decodeErr != nil {
 			t.Fatalf("decode stats: %v", decodeErr)
 		}
-		if stats.TestStatus == "error" {
+		if stats.TestStatus == status {
 			return stats
 		}
 		time.Sleep(time.Millisecond)
 	}
-	t.Fatal("run plan did not reach failed state")
+	t.Fatalf("run plan did not reach the %s state", status)
 	return api.Stats{}
 }
 

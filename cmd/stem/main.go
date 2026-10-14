@@ -216,7 +216,7 @@ TEST OPTIONS:
     --json             Output results in JSON format
     --csv              Output results in CSV format
 
-Y.1564 OPTIONS:
+Y.1564 AND MEF OPTIONS:
     --cir              Committed Information Rate in Mbps
     --eir              Excess Information Rate in Mbps
     --fd-threshold     Frame Delay threshold in ms (default: 10)

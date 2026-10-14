@@ -298,6 +298,8 @@ func TestBuildStartRequestSendsOnlyTheStepsOwnBlock(t *testing.T) {
 		{testType: "rfc2544_back_to_back", wantRFC2544: true},
 		{testType: "y1564", wantY1564: true},
 		{testType: "y1564_perf", wantY1564: true},
+		{testType: "mef_config", wantY1564: true},
+		{testType: "mef", wantY1564: true},
 		{testType: "tsn_isolation", wantNilConfig: true},
 	} {
 		t.Run(tc.testType, func(t *testing.T) {

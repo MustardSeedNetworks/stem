@@ -271,8 +271,8 @@ func stepResponse(step RunPlanStep, success bool, errText string, data any) *Tes
 
 // stepFrameSizes is the list of frame sizes a step measures, one call per
 // size, or nil when the step configures a single size. RFC 2544 runs each of
-// its tests at every selected size (RFC 2544 §26), and the Y.1564 form selects
-// several.
+// its tests at every selected size (RFC 2544 §26), and the Y.1564 form, which
+// configures MEF too, selects several.
 func stepFrameSizes(step RunPlanStep) []uint32 {
 	if step.Config == nil {
 		return nil
@@ -280,7 +280,7 @@ func stepFrameSizes(step RunPlanStep) []uint32 {
 	switch {
 	case IsRFC2544Test(step.TestType) && step.Config.RFC2544 != nil:
 		return step.Config.RFC2544.FrameSizes
-	case IsY1564Test(step.TestType) && step.Config.Y1564 != nil:
+	case IsServiceActivationTest(step.TestType) && step.Config.Y1564 != nil:
 		return step.Config.Y1564.FrameSizes
 	default:
 		return nil

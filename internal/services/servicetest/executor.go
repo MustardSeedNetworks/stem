@@ -22,8 +22,6 @@ const (
 	defaultFLRThresholdPct      = 0.01
 	defaultPerfDurationSec      = 900 // 15 minutes
 	defaultMEFConfigDurationSec = 60
-	defaultMEFPerfDurationMin   = 15
-	secondsPerMinute            = 60
 	defaultAvailabilityPct      = 99.99
 	microsecondsPerMillisecond  = 1000.0
 	maxUint32                   = 4294967295
@@ -296,6 +294,9 @@ func (e *Executor) buildY1564Service(cfg *modtypes.TestConfig) *dataplane.Y1564S
 	return service
 }
 
+// buildMEFConfig reads the same params as Y.1564: MEF 48/49 service
+// activation is configured by the API's Y.1564 block (stem#1556), so the
+// thresholds arrive in milliseconds and the performance duration in seconds.
 func (e *Executor) buildMEFConfig(cfg *modtypes.TestConfig) *dataplane.MEFConfig {
 	mefConfig := &dataplane.MEFConfig{
 		ServiceID: "",
@@ -303,15 +304,15 @@ func (e *Executor) buildMEFConfig(cfg *modtypes.TestConfig) *dataplane.MEFConfig
 		EIRMbps:   modtypes.GetFloat64Param(cfg.Params, "eir", defaultEIRMbps),
 		CBSBytes:  modtypes.GetUint32Param(cfg.Params, "cbs", 0),
 		EBSBytes:  modtypes.GetUint32Param(cfg.Params, "ebs", 0),
-		FDThresholdUs: modtypes.GetFloat64Param(
+		FDThresholdUs: microsecondsPerMillisecond * modtypes.GetFloat64Param(
 			cfg.Params,
-			"fd_threshold_us",
-			defaultFDThresholdMs*microsecondsPerMillisecond,
+			"fd_threshold_ms",
+			defaultFDThresholdMs,
 		),
-		FDVThresholdUs: modtypes.GetFloat64Param(
+		FDVThresholdUs: microsecondsPerMillisecond * modtypes.GetFloat64Param(
 			cfg.Params,
-			"fdv_threshold_us",
-			defaultFDVThresholdMs*microsecondsPerMillisecond,
+			"fdv_threshold_ms",
+			defaultFDVThresholdMs,
 		),
 		FLRThresholdPct: modtypes.GetFloat64Param(
 			cfg.Params,
@@ -328,23 +329,9 @@ func (e *Executor) buildMEFConfig(cfg *modtypes.TestConfig) *dataplane.MEFConfig
 			"config_duration_sec",
 			defaultMEFConfigDurationSec,
 		),
-		PerfDurationMin: modtypes.GetUint32Param(
-			cfg.Params,
-			"perf_duration_min",
-			defaultMEFPerfDurationMin,
-		),
-		CoS:        modtypes.GetUint32Param(cfg.Params, "cos", 0),
-		FrameSizes: nil,
-	}
-
-	if cfg.Duration > 0 {
-		converted := modtypes.SafeIntToUint32(cfg.Duration / secondsPerMinute)
-		if converted == 0 {
-			converted = modtypes.SafeIntToUint32(cfg.Duration)
-		}
-		if converted > 0 {
-			mefConfig.PerfDurationMin = converted
-		}
+		PerfDurationSec: e.safeDuration(cfg.Duration, defaultPerfDurationSec),
+		CoS:             modtypes.GetUint32Param(cfg.Params, "cos", 0),
+		FrameSizes:      nil,
 	}
 
 	if cfg.FrameSize > 0 {

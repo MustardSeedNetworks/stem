@@ -126,7 +126,7 @@ func TestUsageExamplesNameRegisteredTestTypes(t *testing.T) {
 	}
 }
 
-// TestUsageDocumentsEveryTestFlag ties the hand-written TEST and Y.1564
+// TestUsageDocumentsEveryTestFlag ties the hand-written TEST and Y.1564 AND MEF
 // OPTIONS blocks of `stem --help` to the flag registry the contract test
 // already holds to the runtime flag set. They drifted once: --peer, the one
 // flag a run cannot start without, was missing from both (#1235).
@@ -141,7 +141,7 @@ func TestUsageDocumentsEveryTestFlag(t *testing.T) {
 
 	for _, flag := range help.GetAllCommands()["test"].Flags {
 		if !regexp.MustCompile(regexp.QuoteMeta(flag.Long) + `[\s,]`).MatchString(documented) {
-			t.Errorf("stem --help does not document %s under TEST or Y.1564 OPTIONS", flag.Long)
+			t.Errorf("stem --help does not document %s under TEST or Y.1564 AND MEF OPTIONS", flag.Long)
 		}
 	}
 }

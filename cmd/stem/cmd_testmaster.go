@@ -215,7 +215,7 @@ func stepConfig(flags *testCmdFlags, testType string, frameSizes []uint32, secon
 			Warmup:     flags.warmup,
 			Trials:     defaultTrials,
 		}}
-	case api.IsY1564Test(testType):
+	case api.IsServiceActivationTest(testType):
 		return &api.TestConfig{Y1564: &api.Y1564TestConfig{
 			CIR:                flags.cir,
 			EIR:                flags.eir,

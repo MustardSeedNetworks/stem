@@ -195,8 +195,8 @@ func fillMEFConfig(cCfg *C.mef_config_t, cfg *MEFConfig) {
 	if cfg.ConfigDurationSec > 0 {
 		cCfg.config_test_duration_sec = C.uint32_t(cfg.ConfigDurationSec)
 	}
-	if cfg.PerfDurationMin > 0 {
-		cCfg.perf_test_duration_min = C.uint32_t(cfg.PerfDurationMin)
+	if cfg.PerfDurationSec > 0 {
+		cCfg.perf_test_duration_sec = C.uint32_t(cfg.PerfDurationSec)
 	}
 	fillMEFFrameSizes(cCfg, cfg.FrameSizes)
 }

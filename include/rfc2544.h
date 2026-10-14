@@ -1351,7 +1351,7 @@ typedef struct {
     mef_bandwidth_profile_t bw_profile;
     mef_sla_t               sla;
     uint32_t                config_test_duration_sec;
-    uint32_t                perf_test_duration_min;
+    uint32_t                perf_test_duration_sec;
     uint32_t                frame_sizes[7];
     uint32_t                num_frame_sizes;
 } mef_config_t;
