@@ -259,6 +259,8 @@ typedef struct {
     double   fd_min_ms;          /* Minimum Frame Delay (ms) */
     double   fd_max_ms;          /* Maximum Frame Delay (ms) */
     double   fdv_ms;             /* Frame Delay Variation (ms) */
+    double   host_stall_max_ms;  /* Longest test-host stall between receive polls (ms) */
+    bool     host_limited;       /* A host stall alone could exceed the FD or FDV threshold */
     bool     flr_pass;           /* FLR within threshold */
     bool     fd_pass;            /* FD within threshold */
     bool     fdv_pass;           /* FDV within threshold */
@@ -275,20 +277,22 @@ typedef struct {
 
 /* Y.1564 Service Performance Test Result */
 typedef struct {
-    uint32_t service_id;       /* Service ID */
-    char     service_name[32]; /* Service name */
-    uint32_t duration_sec;     /* Test duration (seconds) */
-    uint64_t frames_tx;        /* Frames transmitted */
-    uint64_t frames_rx;        /* Frames received */
-    double   flr_pct;          /* Frame Loss Ratio (%) */
-    double   fd_avg_ms;        /* Average Frame Delay (ms) */
-    double   fd_min_ms;        /* Minimum Frame Delay (ms) */
-    double   fd_max_ms;        /* Maximum Frame Delay (ms) */
-    double   fdv_ms;           /* Frame Delay Variation (ms) */
-    bool     flr_pass;         /* FLR within threshold */
-    bool     fd_pass;          /* FD within threshold */
-    bool     fdv_pass;         /* FDV within threshold */
-    bool     service_pass;     /* Overall service pass/fail */
+    uint32_t service_id;        /* Service ID */
+    char     service_name[32];  /* Service name */
+    uint32_t duration_sec;      /* Test duration (seconds) */
+    uint64_t frames_tx;         /* Frames transmitted */
+    uint64_t frames_rx;         /* Frames received */
+    double   flr_pct;           /* Frame Loss Ratio (%) */
+    double   fd_avg_ms;         /* Average Frame Delay (ms) */
+    double   fd_min_ms;         /* Minimum Frame Delay (ms) */
+    double   fd_max_ms;         /* Maximum Frame Delay (ms) */
+    double   fdv_ms;            /* Frame Delay Variation (ms) */
+    double   host_stall_max_ms; /* Longest test-host stall between receive polls (ms) */
+    bool     host_limited;      /* A host stall alone could exceed the FD or FDV threshold */
+    bool     flr_pass;          /* FLR within threshold */
+    bool     fd_pass;           /* FD within threshold */
+    bool     fdv_pass;          /* FDV within threshold */
+    bool     service_pass;      /* Overall service pass/fail */
 } y1564_perf_result_t;
 
 /* Y.1564 Test Configuration */

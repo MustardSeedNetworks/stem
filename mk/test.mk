@@ -149,6 +149,8 @@ ifeq ($(UNAME),Linux)
 		$(C_TEST_DATAPLANE_SRCS) $(C_LDFLAGS) -lxdp -lbpf
 	$(CC) $(CFLAGS) -o bin/test_y1564_fdv_outlier tests/c/test_y1564_fdv_outlier.c \
 		$(C_TEST_DATAPLANE_SRCS) $(C_LDFLAGS) -lxdp -lbpf
+	$(CC) $(CFLAGS) -o bin/test_y1564_host_stall tests/c/test_y1564_host_stall.c \
+		$(C_TEST_DATAPLANE_SRCS) $(C_LDFLAGS) -lxdp -lbpf
 	$(CC) $(CFLAGS) -o bin/test_rfc2544_warmup_stragglers tests/c/test_rfc2544_warmup_stragglers.c \
 		$(C_TEST_DATAPLANE_SRCS) $(C_LDFLAGS) -lxdp -lbpf
 	$(CC) $(CFLAGS) -o bin/test_back_to_back_returned tests/c/test_back_to_back_returned.c \
@@ -172,6 +174,7 @@ ifeq ($(UNAME),Linux)
 	./bin/test_y1564_nothing_sent
 	./bin/test_y1564_warmup_stragglers
 	./bin/test_y1564_fdv_outlier
+	./bin/test_y1564_host_stall
 	./bin/test_rfc2544_warmup_stragglers
 	./bin/test_back_to_back_returned
 	./bin/test_wire_frame_size
