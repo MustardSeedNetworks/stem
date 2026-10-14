@@ -338,7 +338,7 @@ typedef struct {
     /* Takes ownership of every buffer it is given, sent or not. */
     int (*send_batch)(worker_ctx_t *wctx, packet_t *pkts, int num_pkts);
     /* Returns received buffers that are not passed to send_batch. */
-    void (*release_batch)(worker_ctx_t *wctx, packet_t *pkts, int num_pkts);
+    void (*release_batch)(worker_ctx_t *wctx, const packet_t *pkts, int num_pkts);
 } platform_ops_t;
 
 /* Function declarations */

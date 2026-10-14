@@ -61,7 +61,7 @@ struct platform_ctx {
 };
 
 void packet_platform_cleanup(worker_ctx_t *wctx);
-void packet_platform_release_batch(worker_ctx_t *wctx, packet_t *pkts, int num_pkts);
+void packet_platform_release_batch(worker_ctx_t *wctx, const packet_t *pkts, int num_pkts);
 
 static int open_udp_guard(const char *ifname, uint16_t port)
 {
@@ -442,7 +442,7 @@ int packet_platform_send_batch(worker_ctx_t *wctx, packet_t *pkts, int num_pkts)
 /*
  * Release RX frames back to kernel
  */
-void packet_platform_release_batch(worker_ctx_t *wctx, packet_t *pkts, int num_pkts)
+void packet_platform_release_batch(worker_ctx_t *wctx, const packet_t *pkts, int num_pkts)
 {
     struct platform_ctx *pctx = wctx->pctx;
 

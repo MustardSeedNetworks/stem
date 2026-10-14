@@ -425,7 +425,7 @@ int xdp_platform_send_batch(worker_ctx_t *wctx, packet_t *pkts, int num_pkts)
 /*
  * Return received frames that were not transmitted to the fill queue.
  */
-void xdp_platform_release_batch(worker_ctx_t *wctx, packet_t *pkts, int num_pkts)
+void xdp_platform_release_batch(worker_ctx_t *wctx, const packet_t *pkts, int num_pkts)
 {
     struct platform_ctx *pctx = wctx->pctx;
 
