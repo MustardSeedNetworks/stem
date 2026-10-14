@@ -18,7 +18,7 @@ const (
 	defaultDuration    = 60           // Match WebUI: 60 seconds.
 	defaultIntervalMs  = 100          // Match WebUI: 100ms measurement cadence.
 	defaultCount       = 10           // 10 frames per interval.
-	defaultFrameSize   = 64           // Match WebUI: 64 bytes.
+	defaultFrameSize   = 128          // Match WebUI: 128 bytes (the payload needs 70).
 	defaultMEGID       = "MSN-MEG-01" // Match WebUI default MEG ID.
 )
 

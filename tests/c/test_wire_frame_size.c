@@ -1,12 +1,15 @@
 /*
  * test_wire_frame_size.c - every trial path puts the requested frame size on
- * the wire (#1265)
+ * the wire (#1265, #1555)
  *
  * A frame size is the Ethernet frame including its FCS, which the NIC appends.
  * The RFC 2544 path already handed the platform a buffer four bytes shorter;
  * the custom-signature path (TSN, TrafficGen, Y.1731, MEF) and Y.1564 handed it
  * the whole frame size, so each frame went out four bytes longer than asked.
+ * Y.1731 then ignored the configured size altogether and sent 128 bytes.
  */
+
+#include <errno.h>
 
 #include "fake_platform.h"
 
@@ -58,7 +61,7 @@ static int check_sent(const char *path, uint32_t frame_size)
         return 1;
     }
     if (sent_len_min != want || sent_len_max != want) {
-        fprintf(stderr, "FAIL: %s did not leave the FCS to the NIC\n", path);
+        fprintf(stderr, "FAIL: %s did not send the requested frame size less the FCS\n", path);
         return 1;
     }
     return 0;
@@ -116,13 +119,56 @@ static int y1564_path(uint32_t frame_size)
     return check_sent("y1564_perf_test", frame_size);
 }
 
+static int y1731_path(uint32_t frame_size)
+{
+    rfc2544_ctx_t *ctx = recording_context();
+    if (!ctx) {
+        return 1;
+    }
+    y1731_mep_config_t mep;
+    y1731_default_mep_config(&mep);
+    y1731_session_t session;
+    int             ret = y1731_session_init(ctx, &mep, frame_size, &session);
+    if (ret == 0) {
+        y1731_loss_result_t result;
+        ret = y1731_loss_measurement(ctx, &session, 1, &result);
+    }
+    rfc2544_cleanup(ctx);
+    if (ret < 0) {
+        fprintf(stderr, "FAIL: y1731_loss_measurement: %d\n", ret);
+        return 1;
+    }
+    return check_sent("y1731_loss_measurement", frame_size);
+}
+
+/* A frame the extended payload cannot fit is refused before anything is sent. */
+static int y1731_rejects_short_frame(void)
+{
+    rfc2544_ctx_t *ctx = recording_context();
+    if (!ctx) {
+        return 1;
+    }
+    y1731_mep_config_t mep;
+    y1731_default_mep_config(&mep);
+    y1731_session_t session;
+    int             ret = y1731_session_init(ctx, &mep, EXTENDED_MIN_FRAME_SIZE - 1, &session);
+    rfc2544_cleanup(ctx);
+    if (ret != -EINVAL) {
+        fprintf(stderr, "FAIL: y1731_session_init at %d bytes returned %d, want -EINVAL\n",
+                EXTENDED_MIN_FRAME_SIZE - 1, ret);
+        return 1;
+    }
+    return 0;
+}
+
 int main(void)
 {
     static const uint32_t sizes[] = {128, 1518};
     for (size_t i = 0; i < sizeof(sizes) / sizeof(sizes[0]); i++) {
-        if (rfc2544_path(sizes[i]) || custom_path(sizes[i]) || y1564_path(sizes[i])) {
+        if (rfc2544_path(sizes[i]) || custom_path(sizes[i]) || y1564_path(sizes[i]) ||
+            y1731_path(sizes[i])) {
             return 1;
         }
     }
-    return 0;
+    return y1731_rejects_short_frame();
 }

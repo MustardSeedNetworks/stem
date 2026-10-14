@@ -27,8 +27,8 @@ export const FRAME_SIZE_OPTIONS: FrameSizeOption[] = [
 ];
 
 /**
- * The smallest frame the extended payload formats (TSN, TrafficGen, Y.1564)
- * can carry. They use a 24-byte payload where the RFC 2544 measurement format
+ * The smallest frame the extended payload formats (TSN, TrafficGen, Y.1564,
+ * Y.1731) can carry. They use a 24-byte payload where the RFC 2544 measurement format
  * uses 18, so a 64-byte frame cannot hold one and the daemon rejects it with a
  * 400 (stem#1250). The value's single definition is EXTENDED_MIN_FRAME_SIZE in
  * include/rfc2544.h; Go mirrors it as api.MinExtendedFrameSize.

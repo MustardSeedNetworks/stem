@@ -734,8 +734,8 @@ func TestDefaultConstants(t *testing.T) {
 	if defaultCount != 10 {
 		t.Errorf("defaultCount = %d, want 10", defaultCount)
 	}
-	if defaultFrameSize != 64 {
-		t.Errorf("defaultFrameSize = %d, want 64", defaultFrameSize)
+	if defaultFrameSize != 128 {
+		t.Errorf("defaultFrameSize = %d, want 128", defaultFrameSize)
 	}
 	if defaultMEGID != "MSN-MEG-01" {
 		t.Errorf("defaultMEGID = %q, want MSN-MEG-01", defaultMEGID)

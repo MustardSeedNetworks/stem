@@ -15,7 +15,7 @@ import (
 	"github.com/MustardSeedNetworks/stem/internal/api"
 )
 
-// The extended payload formats (TSN, TrafficGen, Y.1564) carry a 24-byte
+// The extended payload formats (TSN, TrafficGen, Y.1564, Y.1731) carry a 24-byte
 // payload where the RFC 2544 measurement format carries 18, so their packet
 // buffer needs 66 bytes and the standard 64-byte Ethernet frame cannot hold
 // one (ADR 0008). The dataplane returns a bare -22 for a frame below that;
@@ -31,6 +31,7 @@ func TestExtendedFormatsRejectFramesBelowTheirMinimum(t *testing.T) {
 		{"tsn", "tsn_isolation", fmt.Sprintf(`{"tsn":{"frameSize":%d}}`, tooSmall)},
 		{"trafficGen", "custom_stream", fmt.Sprintf(`{"trafficGen":{"frameSize":%d}}`, tooSmall)},
 		{"y1564", "y1564", fmt.Sprintf(`{"y1564":{"frameSizes":[%d]}}`, tooSmall)},
+		{"y1731", "y1731_delay", fmt.Sprintf(`{"y1731":{"frameSize":%d}}`, tooSmall)},
 	}
 
 	for _, tc := range cases {

@@ -1238,17 +1238,6 @@ typedef struct {
     bool           enabled;      /* MEP enabled */
 } y1731_mep_config_t;
 
-/* Y.1731 test configuration */
-typedef struct {
-    y1731_mep_config_t mep;                     /* MEP configuration */
-    y1731_opcode_t     test_type;               /* OAM function to test */
-    uint32_t           duration_sec;            /* Test duration */
-    uint32_t           measurement_interval_ms; /* Measurement interval */
-    uint32_t           frame_size;              /* Test frame size */
-    bool               priority_tagged;         /* Use priority tag */
-    uint8_t            priority;                /* 802.1p priority (0-7) */
-} y1731_config_t;
-
 /* Y.1731 session state */
 typedef enum {
     Y1731_STATE_INIT    = 0,
@@ -1262,6 +1251,7 @@ typedef struct {
     y1731_mep_config_t local_mep;     /* Local MEP configuration */
     y1731_mep_config_t remote_mep;    /* Remote MEP configuration */
     y1731_state_t      state;         /* Session state */
+    uint32_t           frame_size;    /* Test frame size, FCS included */
     uint64_t           ccm_tx_count;  /* CCMs transmitted */
     uint64_t           ccm_rx_count;  /* CCMs received */
     bool               rdi_received;  /* RDI flag received */
@@ -1737,7 +1727,7 @@ void rfc6349_print_results(const rfc6349_result_t *result, stats_format_t format
 /**
  * Initialize Y.1731 session
  */
-int y1731_session_init(rfc2544_ctx_t *ctx, const y1731_mep_config_t *config,
+int y1731_session_init(rfc2544_ctx_t *ctx, const y1731_mep_config_t *config, uint32_t frame_size,
                        y1731_session_t *session);
 
 /**
