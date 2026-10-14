@@ -31,16 +31,6 @@
 #include "reflector.h"
 #include "stem_errno.h"
 
-/* Shared BPF resources across all workers (only worker 0 initializes) */
-/* Use atomic operations for thread-safe access between workers */
-static struct bpf_object *g_bpf_obj       = NULL;
-static int                g_xsks_map_fd   = -1;
-static int                g_mac_map_fd    = -1;
-static int                g_sig_map_fd    = -1;
-static int                g_stats_map_fd  = -1;
-static int                g_prog_fd       = -1;
-static volatile int       g_bpf_init_done = 0; /* Memory barrier for init synchronization */
-
 /* Platform-specific context for AF_XDP */
 struct platform_ctx {
     struct xsk_socket_info {
@@ -56,13 +46,6 @@ struct platform_ctx {
         struct xsk_socket *xsk;
         uint32_t           outstanding_tx;
     } xsk_info;
-
-    struct bpf_object *bpf_obj;
-    int                xsks_map_fd;
-    int                mac_map_fd;
-    int                sig_map_fd;
-    int                stats_map_fd;
-    int                prog_fd;
 
     uint32_t frame_size;
     uint32_t num_frames;
@@ -93,23 +76,6 @@ static int configure_umem(struct platform_ctx *pctx, void *buffer, uint64_t size
     return 0;
 }
 
-static void complete_bpf_init_without_filter(struct platform_ctx *pctx)
-{
-    pctx->bpf_obj      = NULL;
-    pctx->xsks_map_fd  = -1;
-    pctx->mac_map_fd   = -1;
-    pctx->sig_map_fd   = -1;
-    pctx->stats_map_fd = -1;
-    pctx->prog_fd      = -1;
-    g_bpf_obj          = NULL;
-    g_xsks_map_fd      = -1;
-    g_mac_map_fd       = -1;
-    g_sig_map_fd       = -1;
-    g_stats_map_fd     = -1;
-    g_prog_fd          = -1;
-    __atomic_store_n(&g_bpf_init_done, 1, __ATOMIC_RELEASE);
-}
-
 /*
  * Populate fill queue with buffers for kernel to use
  */
@@ -131,108 +97,27 @@ static void populate_fill_queue(struct platform_ctx *pctx, uint32_t num)
 }
 
 /*
- * Load and attach XDP program
+ * Name the mode the kernel attached the interface's XDP program in. libxdp
+ * attaches its default program with the first socket and picks the mode.
  */
-static int load_xdp_program(worker_ctx_t *wctx)
+static const char *xdp_attach_mode(int ifindex)
 {
-    struct platform_ctx      *pctx = wctx->pctx;
-    const reflector_config_t *cfg  = wctx->config;
-    int                       ret;
-
-    /* Check if BPF object file exists */
-    if (access("src/xdp/filter.bpf.o", F_OK) != 0) {
-        reflector_log(LOG_WARN, "eBPF filter not found, will use SKB mode without filter");
-        complete_bpf_init_without_filter(pctx);
-        return 0; /* Not an error - AF_XDP works without eBPF */
+    LIBBPF_OPTS(bpf_xdp_query_opts, opts);
+    if (bpf_xdp_query(ifindex, 0, &opts) != 0) {
+        return "unknown";
     }
-
-    /* Load BPF object file */
-    pctx->bpf_obj = bpf_object__open_file("src/xdp/filter.bpf.o", NULL);
-    if (libbpf_get_error(pctx->bpf_obj)) {
-        reflector_log(LOG_WARN, "Failed to load eBPF filter, will use SKB mode without filter");
-        complete_bpf_init_without_filter(pctx);
-        return 0; /* Not an error - AF_XDP works without eBPF */
+    switch (opts.attach_mode) {
+    case XDP_ATTACHED_DRV:
+        return "driver";
+    case XDP_ATTACHED_SKB:
+        return "SKB";
+    case XDP_ATTACHED_HW:
+        return "offload";
+    case XDP_ATTACHED_MULTI:
+        return "multiple";
+    default:
+        return "unknown";
     }
-
-    /* Load BPF program into kernel */
-    ret = bpf_object__load(pctx->bpf_obj);
-    if (ret) {
-        reflector_log(LOG_ERROR, "Failed to load BPF object: %s", stem_strerror(-ret));
-        bpf_object__close(pctx->bpf_obj);
-        return ret;
-    }
-
-    /* Get program FD */
-    struct bpf_program *prog = bpf_object__find_program_by_name(pctx->bpf_obj, "xdp_filter_ito");
-    if (!prog) {
-        reflector_log(LOG_ERROR, "Failed to find XDP program");
-        bpf_object__close(pctx->bpf_obj);
-        return -1;
-    }
-    pctx->prog_fd = bpf_program__fd(prog);
-
-    /* Get map FDs */
-    pctx->xsks_map_fd  = bpf_object__find_map_fd_by_name(pctx->bpf_obj, "xsks_map");
-    pctx->mac_map_fd   = bpf_object__find_map_fd_by_name(pctx->bpf_obj, "mac_map");
-    pctx->sig_map_fd   = bpf_object__find_map_fd_by_name(pctx->bpf_obj, "sig_map");
-    pctx->stats_map_fd = bpf_object__find_map_fd_by_name(pctx->bpf_obj, "stats_map");
-
-    if (pctx->xsks_map_fd < 0 || pctx->mac_map_fd < 0 || pctx->sig_map_fd < 0 ||
-        pctx->stats_map_fd < 0) {
-        reflector_log(LOG_ERROR, "Failed to find BPF maps");
-        bpf_object__close(pctx->bpf_obj);
-        return -1;
-    }
-
-    /* Store interface MAC in BPF map */
-    uint32_t key = 0;
-    ret          = bpf_map_update_elem(pctx->mac_map_fd, &key, cfg->mac, BPF_ANY);
-    if (ret) {
-        reflector_log(LOG_ERROR, "Failed to update MAC map: %s", stem_strerror(-ret));
-        bpf_object__close(pctx->bpf_obj);
-        return ret;
-    }
-
-    /* Populate signature hash map for O(1) lookup */
-    const char *signatures[] = {"PROBEOT", "DATA:OT", "LATENCY"};
-    uint32_t    sig_value    = 1; /* Value unused, presence in map indicates match */
-
-    for (int i = 0; i < 3; i++) {
-        ret = bpf_map_update_elem(pctx->sig_map_fd, signatures[i], &sig_value, BPF_ANY);
-        if (ret) {
-            reflector_log(LOG_ERROR, "Failed to update sig_map for %s: %s", signatures[i],
-                          stem_strerror(-ret));
-            bpf_object__close(pctx->bpf_obj);
-            return ret;
-        }
-    }
-    reflector_log(LOG_INFO, "Loaded %d ITO signatures into XDP hash map", 3);
-
-    /* Save to globals so other workers can use them */
-    g_bpf_obj      = pctx->bpf_obj;
-    g_xsks_map_fd  = pctx->xsks_map_fd;
-    g_mac_map_fd   = pctx->mac_map_fd;
-    g_sig_map_fd   = pctx->sig_map_fd;
-    g_stats_map_fd = pctx->stats_map_fd;
-    g_prog_fd      = pctx->prog_fd;
-
-    /* Memory barrier before signaling init done (release semantics) */
-    __atomic_store_n(&g_bpf_init_done, 1, __ATOMIC_RELEASE);
-
-    /* Attach XDP program to interface */
-    ret = bpf_xdp_attach(cfg->ifindex, pctx->prog_fd, XDP_FLAGS_DRV_MODE, NULL);
-    if (ret) {
-        reflector_log(LOG_WARN, "Failed to attach in driver mode, trying SKB mode");
-        ret = bpf_xdp_attach(cfg->ifindex, pctx->prog_fd, XDP_FLAGS_SKB_MODE, NULL);
-        if (ret) {
-            reflector_log(LOG_ERROR, "Failed to attach XDP program: %s", stem_strerror(-ret));
-            bpf_object__close(pctx->bpf_obj);
-            return ret;
-        }
-    }
-
-    reflector_log(LOG_INFO, "XDP program attached to %s (ifindex %d)", cfg->ifname, cfg->ifindex);
-    return 0;
 }
 
 /*
@@ -268,25 +153,9 @@ static int init_xsk(worker_ctx_t *wctx)
     socklen_t          opts_len = sizeof(opts);
     if (getsockopt(xsk_socket__fd(pctx->xsk_info.xsk), SOL_XDP, XDP_OPTIONS, &opts, &opts_len) ==
         0) {
-        reflector_log(LOG_INFO, "AF_XDP queue %d bound in %s mode", wctx->queue_id,
-                      (opts.flags & XDP_OPTIONS_ZEROCOPY) ? "zero-copy" : "copy");
-    }
-
-    /* Add socket FD to XSK map for XDP redirect (only if eBPF program is loaded) */
-    if (pctx->xsks_map_fd >= 0) {
-        int      xsk_fd   = xsk_socket__fd(pctx->xsk_info.xsk);
-        uint32_t queue_id = wctx->queue_id;
-        ret               = bpf_map_update_elem(pctx->xsks_map_fd, &queue_id, &xsk_fd, BPF_ANY);
-        if (ret) {
-            reflector_log(LOG_ERROR, "Failed to update XSK map: %s", stem_strerror(-ret));
-            xsk_socket__delete(pctx->xsk_info.xsk);
-            return ret;
-        }
-        reflector_log(LOG_INFO, "AF_XDP socket created on queue %d (with eBPF filter)",
-                      wctx->queue_id);
-    } else {
-        reflector_log(LOG_INFO, "AF_XDP socket created on queue %d (SKB mode, no eBPF filter)",
-                      wctx->queue_id);
+        reflector_log(LOG_INFO, "AF_XDP queue %d bound in %s mode, XDP program attached in %s mode",
+                      wctx->queue_id, (opts.flags & XDP_OPTIONS_ZEROCOPY) ? "zero-copy" : "copy",
+                      xdp_attach_mode(cfg->ifindex));
     }
 
     return 0;
@@ -308,12 +177,6 @@ int xdp_platform_init(reflector_ctx_t *rctx, worker_ctx_t *wctx)
     wctx->pctx       = pctx;
     pctx->frame_size = wctx->config->frame_size;
     pctx->num_frames = wctx->config->num_frames;
-
-    /* Initialize map FDs to -1 (will stay -1 if no eBPF program) */
-    pctx->xsks_map_fd  = -1;
-    pctx->mac_map_fd   = -1;
-    pctx->stats_map_fd = -1;
-    pctx->prog_fd      = -1;
 
     /* Allocate UMEM buffer */
     uint64_t umem_size = (uint64_t)pctx->num_frames * pctx->frame_size;
@@ -361,37 +224,9 @@ int xdp_platform_init(reflector_ctx_t *rctx, worker_ctx_t *wctx)
         return ret;
     }
 
-    /* Load and attach XDP program (only for first worker) */
-    if (wctx->worker_id == 0) {
-        ret = load_xdp_program(wctx);
-        if (ret) {
-            xsk_umem__delete(pctx->xsk_info.umem.umem);
-            munmap(umem_buffer, umem_size);
-            free(pctx);
-            wctx->pctx = NULL; /* Prevent use-after-free */
-            return ret;
-        }
-    } else {
-        /* Wait for worker 0 to complete BPF initialization (acquire semantics) */
-        while (!__atomic_load_n(&g_bpf_init_done, __ATOMIC_ACQUIRE)) {
-            usleep(1000); /* Wait 1ms between checks */
-        }
-        /* Other workers use the shared BPF resources from worker 0 */
-        pctx->bpf_obj      = g_bpf_obj;
-        pctx->xsks_map_fd  = g_xsks_map_fd;
-        pctx->mac_map_fd   = g_mac_map_fd;
-        pctx->sig_map_fd   = g_sig_map_fd;
-        pctx->stats_map_fd = g_stats_map_fd;
-        pctx->prog_fd      = g_prog_fd;
-    }
-
     /* Initialize AF_XDP socket */
     ret = init_xsk(wctx);
     if (ret) {
-        if (wctx->worker_id == 0) {
-            bpf_xdp_detach(wctx->config->ifindex, XDP_FLAGS_UPDATE_IF_NOEXIST, NULL);
-            bpf_object__close(pctx->bpf_obj);
-        }
         xsk_umem__delete(pctx->xsk_info.umem.umem);
         munmap(umem_buffer, umem_size);
         free(pctx);
@@ -421,12 +256,6 @@ void xdp_platform_cleanup(worker_ctx_t *wctx)
     /* Delete AF_XDP socket */
     if (pctx->xsk_info.xsk) {
         xsk_socket__delete(pctx->xsk_info.xsk);
-    }
-
-    /* Detach XDP program (only for first worker) */
-    if (wctx->worker_id == 0 && pctx->bpf_obj) {
-        bpf_xdp_detach(wctx->config->ifindex, XDP_FLAGS_UPDATE_IF_NOEXIST, NULL);
-        bpf_object__close(pctx->bpf_obj);
     }
 
     /* Delete UMEM */
