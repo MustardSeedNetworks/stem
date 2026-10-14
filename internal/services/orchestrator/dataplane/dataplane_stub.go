@@ -614,8 +614,11 @@ type ThroughputResultCLI struct {
 // LatencyResultCLI holds latency test results for CLI output.
 type LatencyResultCLI struct {
 	FrameSize uint32
-	LoadPct   float64
-	Latency   LatencyStats
+	// LoadPct is the load level as a percentage of the measured throughput.
+	LoadPct float64
+	// OfferedRatePct is the rate actually offered, as a percentage of line rate.
+	OfferedRatePct float64
+	Latency        LatencyStats
 }
 
 // FrameLossResultCLI holds frame loss test results for CLI output.

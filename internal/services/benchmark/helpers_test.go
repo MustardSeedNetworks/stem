@@ -4,6 +4,7 @@ package benchmark_test
 
 import (
 	"errors"
+	"slices"
 	"testing"
 
 	"github.com/MustardSeedNetworks/stem/internal/services/benchmark"
@@ -475,15 +476,9 @@ func TestDefaultConstants(t *testing.T) {
 		t.Error("DefaultOverloadSecForTest() should not be 0")
 	}
 
-	// Verify default load levels.
-	defaultLevels := benchmark.DefaultLoadLevelsForTest()
-	if len(defaultLevels) == 0 {
-		t.Error("defaultLoadLevels should not be empty")
-	}
-	for i, level := range defaultLevels {
-		if level <= 0 || level > 100 {
-			t.Errorf("defaultLoadLevels[%d] = %v, should be between 0 and 100", i, level)
-		}
+	// RFC 2544 §26.2 measures latency at the throughput rate (#1680).
+	if got := benchmark.DefaultLoadLevelsForTest(); !slices.Equal(got, []float64{100}) {
+		t.Errorf("defaultLoadLevels = %v, want [100] (%% of throughput)", got)
 	}
 }
 

@@ -4,6 +4,7 @@ package dataplane
 
 import (
 	"errors"
+	"math"
 	"testing"
 )
 
@@ -100,6 +101,72 @@ func TestLatencyVerdict(t *testing.T) {
 			t.Parallel()
 			if got := latencyVerdict(tt.results); !errors.Is(got, tt.want) {
 				t.Fatalf("latencyVerdict() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestLatencyOfferedRates(t *testing.T) {
+	t.Parallel()
+
+	// STM-11 (#1680): the routed path to CT307 passed 18,055 pps at 512 B,
+	// about 0.74 % of the 10 Gbps stem assumed for the virtio NIC.
+	measured := ThroughputResult{
+		FrameSize: 512, Iterations: 12, OfferedRatePct: 0.74, FramesTested: 1083300, FramesReceived: 1083300,
+	}
+	tests := []struct {
+		name       string
+		throughput ThroughputResult
+		levels     []float64
+		want       []float64
+		wantErr    error
+	}{
+		{
+			name:       "the default level offers the throughput rate",
+			throughput: measured,
+			levels:     []float64{100},
+			want:       []float64{0.74},
+		},
+		{
+			name:       "levels scale the throughput, not line rate",
+			throughput: measured,
+			levels:     []float64{10, 50, 100},
+			want:       []float64{0.074, 0.37, 0.74},
+		},
+		{
+			name:       "no throughput measured",
+			throughput: ThroughputResult{FrameSize: 512, Iterations: 10, FramesTested: 412074},
+			levels:     []float64{100},
+			wantErr:    ErrNoFramesReturned,
+		},
+		{
+			name:       "a level above the throughput",
+			throughput: measured,
+			levels:     []float64{100, 120},
+			wantErr:    ErrLatencyLoadLevel,
+		},
+		{
+			name:       "a zero level",
+			throughput: measured,
+			levels:     []float64{0},
+			wantErr:    ErrLatencyLoadLevel,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			got, err := latencyOfferedRates(tt.throughput, tt.levels)
+			if !errors.Is(err, tt.wantErr) {
+				t.Fatalf("latencyOfferedRates() error = %v, want %v", err, tt.wantErr)
+			}
+			if len(got) != len(tt.want) {
+				t.Fatalf("latencyOfferedRates() = %v, want %v", got, tt.want)
+			}
+			for i := range got {
+				if math.Abs(got[i]-tt.want[i]) > 1e-9 {
+					t.Fatalf("latencyOfferedRates() = %v, want %v", got, tt.want)
+				}
 			}
 		})
 	}
