@@ -41,7 +41,11 @@ func (c *Context) RunY1731DelayTest(cfg *Y1731Config) (*Y1731DelayResult, error)
 		return nil, fmt.Errorf("Y.1731 delay test failed: %d", ret)
 	}
 
-	return y1731DelayResult(&cResult), nil
+	result := y1731DelayResult(&cResult)
+	if err = y1731Verdict("delay", uint64(result.FramesSent), uint64(result.FramesReceived)); err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 func y1731DelayResult(result *C.y1731_delay_result_t) *Y1731DelayResult {
@@ -74,7 +78,11 @@ func (c *Context) RunY1731LossTest(cfg *Y1731Config) (*Y1731LossResult, error) {
 		return nil, fmt.Errorf("Y.1731 loss test failed: %d", ret)
 	}
 
-	return y1731LossResult(&cResult), nil
+	result := y1731LossResult(&cResult)
+	if err = y1731Verdict("loss", result.FramesTx, result.FramesRx); err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 // RunY1731SyntheticLossTest executes Y.1731 synthetic loss measurement.
@@ -95,7 +103,11 @@ func (c *Context) RunY1731SyntheticLossTest(cfg *Y1731Config) (*Y1731LossResult,
 		return nil, fmt.Errorf("Y.1731 synthetic loss test failed: %d", ret)
 	}
 
-	return y1731LossResult(&cResult), nil
+	result := y1731LossResult(&cResult)
+	if err = y1731Verdict("synthetic loss", result.FramesTx, result.FramesRx); err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 func y1731LossResult(result *C.y1731_loss_result_t) *Y1731LossResult {
@@ -128,13 +140,17 @@ func (c *Context) RunY1731LoopbackTest(cfg *Y1731Config) (*Y1731LoopbackResult, 
 		return nil, fmt.Errorf("Y.1731 loopback test failed: %d", ret)
 	}
 
-	return &Y1731LoopbackResult{
+	result := &Y1731LoopbackResult{
 		LBMSent:     uint64(cResult.lbm_sent),
 		LBRReceived: uint64(cResult.lbr_received),
 		RTTMinMs:    float64(cResult.rtt_min_ms),
 		RTTAvgMs:    float64(cResult.rtt_avg_ms),
 		RTTMaxMs:    float64(cResult.rtt_max_ms),
-	}, nil
+	}
+	if err = y1731Verdict("loopback", result.LBMSent, result.LBRReceived); err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 func (c *Context) newY1731Session(cfg *Y1731Config) (C.y1731_session_t, error) {
