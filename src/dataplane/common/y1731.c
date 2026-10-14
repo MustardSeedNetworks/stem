@@ -128,6 +128,8 @@ int y1731_delay_measurement(rfc2544_ctx_t *ctx, y1731_session_t *session, uint32
     /* Record results */
     result->frames_sent     = trial.packets_sent;
     result->frames_received = trial.packets_recv;
+    result->frames_lost =
+        (trial.packets_recv < trial.packets_sent) ? trial.packets_sent - trial.packets_recv : 0;
 
     /* Two-way delay = RTT */
     result->delay_avg_us = trial.latency.avg_ns / 1000.0;
@@ -190,6 +192,7 @@ int y1731_loss_measurement(rfc2544_ctx_t *ctx, y1731_session_t *session, uint32_
             result->near_end_loss       = 0;
             result->near_end_loss_ratio = 0.0;
         }
+        result->availability_pct = 100.0 * (1.0 - result->near_end_loss_ratio);
     }
 
     /* Far-end loss requires bidirectional counters from remote MEP */
@@ -267,6 +270,7 @@ int y1731_synthetic_loss(rfc2544_ctx_t *ctx, y1731_session_t *session, uint32_t 
             result->near_end_loss       = 0;
             result->near_end_loss_ratio = 0.0;
         }
+        result->availability_pct = 100.0 * (1.0 - result->near_end_loss_ratio);
     }
 
     /* For SLM, far-end is same as near-end in loopback mode */
@@ -327,7 +331,7 @@ int y1731_loopback(rfc2544_ctx_t *ctx, y1731_session_t *session, const uint8_t *
     }
 
     /* Record results */
-    result->lbm_sent     = (trial.packets_sent < count) ? (uint32_t)trial.packets_sent : count;
+    result->lbm_sent     = (uint32_t)trial.packets_sent;
     result->lbr_received = (uint32_t)trial.packets_recv;
 
     /* Response time from latency stats (convert ns to ms) */
