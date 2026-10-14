@@ -308,6 +308,15 @@ static bool y1564_host_limited(double host_stall_max_ms, const y1564_sla_t *sla)
     return host_stall_max_ms > fmin(sla->fd_threshold_ms, sla->fdv_threshold_ms);
 }
 
+/** Log verdict for a delay criterion, which has no sample when nothing came back. */
+static const char *y1564_delay_verdict(bool delay_measured, bool pass)
+{
+    if (!delay_measured) {
+        return "NOT MEASURED";
+    }
+    return pass ? "PASS" : "FAIL";
+}
+
 /**
  * Drain one receive batch, counting this service's frames sent inside the
  * measured window.
@@ -622,9 +631,11 @@ int y1564_config_test(rfc2544_ctx_t *ctx, const y1564_service_t *service,
             y1564_log(LOG_ERROR, "Step %d transmitted no frames (frame size %u)", step + 1,
                       service->frame_size);
         }
-        sr->flr_pass     = measured && (trial.flr_pct <= service->sla.flr_threshold_pct);
-        sr->fd_pass      = measured && (trial.fd_avg_ms <= service->sla.fd_threshold_ms);
-        sr->fdv_pass     = measured && (trial.fdv_ms <= service->sla.fdv_threshold_ms);
+        /* With no frame back, FD and FDV are zero for want of a sample (#1732). */
+        sr->delay_measured = trial.frames_rx > 0;
+        sr->flr_pass       = measured && (trial.flr_pct <= service->sla.flr_threshold_pct);
+        sr->fd_pass      = sr->delay_measured && (trial.fd_avg_ms <= service->sla.fd_threshold_ms);
+        sr->fdv_pass     = sr->delay_measured && (trial.fdv_ms <= service->sla.fdv_threshold_ms);
         sr->step_pass    = sr->flr_pass && sr->fd_pass && sr->fdv_pass;
         sr->host_limited = measured && y1564_host_limited(trial.host_stall_max_ms, &service->sla);
 
@@ -634,7 +645,8 @@ int y1564_config_test(rfc2544_ctx_t *ctx, const y1564_service_t *service,
 
         y1564_log(LOG_INFO, "    Result: FLR=%.4f%% (%s), FD=%.2fms (%s), FDV=%.2fms (%s) -> %s%s",
                   sr->flr_pct, sr->flr_pass ? "PASS" : "FAIL", sr->fd_avg_ms,
-                  sr->fd_pass ? "PASS" : "FAIL", sr->fdv_ms, sr->fdv_pass ? "PASS" : "FAIL",
+                  y1564_delay_verdict(sr->delay_measured, sr->fd_pass), sr->fdv_ms,
+                  y1564_delay_verdict(sr->delay_measured, sr->fdv_pass),
                   sr->step_pass ? "PASS" : "FAIL", sr->host_limited ? " [host limited]" : "");
     }
 
@@ -696,9 +708,10 @@ int y1564_perf_test(rfc2544_ctx_t *ctx, const y1564_service_t *service, uint32_t
         y1564_log(LOG_ERROR, "Performance test transmitted no frames (frame size %u)",
                   service->frame_size);
     }
-    result->flr_pass     = measured && (trial.flr_pct <= service->sla.flr_threshold_pct);
-    result->fd_pass      = measured && (trial.fd_avg_ms <= service->sla.fd_threshold_ms);
-    result->fdv_pass     = measured && (trial.fdv_ms <= service->sla.fdv_threshold_ms);
+    result->delay_measured = trial.frames_rx > 0;
+    result->flr_pass       = measured && (trial.flr_pct <= service->sla.flr_threshold_pct);
+    result->fd_pass  = result->delay_measured && (trial.fd_avg_ms <= service->sla.fd_threshold_ms);
+    result->fdv_pass = result->delay_measured && (trial.fdv_ms <= service->sla.fdv_threshold_ms);
     result->service_pass = result->flr_pass && result->fd_pass && result->fdv_pass;
     result->host_limited = measured && y1564_host_limited(trial.host_stall_max_ms, &service->sla);
 
@@ -707,7 +720,8 @@ int y1564_perf_test(rfc2544_ctx_t *ctx, const y1564_service_t *service, uint32_t
               "FDV=%.2fms (%s)%s",
               result->service_pass ? "PASSED" : "FAILED", result->flr_pct,
               result->flr_pass ? "PASS" : "FAIL", result->fd_avg_ms,
-              result->fd_pass ? "PASS" : "FAIL", result->fdv_ms, result->fdv_pass ? "PASS" : "FAIL",
+              y1564_delay_verdict(result->delay_measured, result->fd_pass), result->fdv_ms,
+              y1564_delay_verdict(result->delay_measured, result->fdv_pass),
               result->host_limited ? " [host limited]" : "");
 
     return 0;
@@ -823,12 +837,14 @@ void y1564_print_results(const y1564_config_result_t *config_results,
                            "\"frames_tx\":%" PRIu64 ",\"frames_rx\":%" PRIu64 ",\"flr_pct\":%.4f,"
                            "\"fd_avg_ms\":%.2f,\"fd_min_ms\":%.2f,\"fd_max_ms\":%.2f,"
                            "\"fdv_ms\":%.2f,\"host_stall_max_ms\":%.2f,\"host_limited\":%s,"
-                           "\"flr_pass\":%s,\"fd_pass\":%s,\"fdv_pass\":%s,\"step_pass\":%s}",
+                           "\"delay_measured\":%s,\"flr_pass\":%s,\"fd_pass\":%s,\"fdv_pass\":%s,"
+                           "\"step_pass\":%s}",
                            sr->step, sr->offered_rate_pct, sr->achieved_rate_mbps, sr->frames_tx,
                            sr->frames_rx, sr->flr_pct, sr->fd_avg_ms, sr->fd_min_ms, sr->fd_max_ms,
                            sr->fdv_ms, sr->host_stall_max_ms, sr->host_limited ? "true" : "false",
-                           sr->flr_pass ? "true" : "false", sr->fd_pass ? "true" : "false",
-                           sr->fdv_pass ? "true" : "false", sr->step_pass ? "true" : "false");
+                           sr->delay_measured ? "true" : "false", sr->flr_pass ? "true" : "false",
+                           sr->fd_pass ? "true" : "false", sr->fdv_pass ? "true" : "false",
+                           sr->step_pass ? "true" : "false");
                 }
                 printf("]}");
             }
@@ -843,13 +859,14 @@ void y1564_print_results(const y1564_config_result_t *config_results,
                 printf("{\"service_id\":%u,\"duration_sec\":%u,\"frames_tx\":%" PRIu64 ","
                        "\"frames_rx\":%" PRIu64 ",\"flr_pct\":%.4f,\"fd_avg_ms\":%.2f,"
                        "\"fd_min_ms\":%.2f,\"fd_max_ms\":%.2f,\"fdv_ms\":%.2f,"
-                       "\"host_stall_max_ms\":%.2f,\"host_limited\":%s,"
+                       "\"host_stall_max_ms\":%.2f,\"host_limited\":%s,\"delay_measured\":%s,"
                        "\"flr_pass\":%s,\"fd_pass\":%s,\"fdv_pass\":%s,\"service_pass\":%s}",
                        pr->service_id, pr->duration_sec, pr->frames_tx, pr->frames_rx, pr->flr_pct,
                        pr->fd_avg_ms, pr->fd_min_ms, pr->fd_max_ms, pr->fdv_ms,
                        pr->host_stall_max_ms, pr->host_limited ? "true" : "false",
-                       pr->flr_pass ? "true" : "false", pr->fd_pass ? "true" : "false",
-                       pr->fdv_pass ? "true" : "false", pr->service_pass ? "true" : "false");
+                       pr->delay_measured ? "true" : "false", pr->flr_pass ? "true" : "false",
+                       pr->fd_pass ? "true" : "false", pr->fdv_pass ? "true" : "false",
+                       pr->service_pass ? "true" : "false");
             }
         }
         printf("]}\n");
