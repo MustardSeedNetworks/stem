@@ -5,6 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.27.0](https://github.com/MustardSeedNetworks/stem/compare/v0.26.26...v0.27.0) (2026-10-14)
+
+
+### Features
+
+* **y1564:** report test-host stalls that can pass for path delay ([#1724](https://github.com/MustardSeedNetworks/stem/issues/1724)) ([8239a65](https://github.com/MustardSeedNetworks/stem/commit/8239a650d15d45690b7e1971e23b0e1d4d367651)), closes [#1717](https://github.com/MustardSeedNetworks/stem/issues/1717)
+
+
+### Bug Fixes
+
+* **dataplane:** time replies as they arrive, not when a timer next fires ([#1718](https://github.com/MustardSeedNetworks/stem/issues/1718)) ([e36f678](https://github.com/MustardSeedNetworks/stem/commit/e36f678e4f0ee8fb8a2e44049902fbbe48a1e4b8)), closes [#1681](https://github.com/MustardSeedNetworks/stem/issues/1681)
+* **mef:** configure MEF runs from the Y.1564 service block ([#1709](https://github.com/MustardSeedNetworks/stem/issues/1709)) ([f47e2e6](https://github.com/MustardSeedNetworks/stem/commit/f47e2e6b55f2cc03f2f75f43e1660f431e7cdad4)), closes [#1556](https://github.com/MustardSeedNetworks/stem/issues/1556)
+* **reflector:** delete the AF_XDP eBPF filter loader that never ran ([#1721](https://github.com/MustardSeedNetworks/stem/issues/1721)) ([7565c27](https://github.com/MustardSeedNetworks/stem/commit/7565c271d1bdc092fadc7fb246c98aa135a606cf)), closes [#1569](https://github.com/MustardSeedNetworks/stem/issues/1569)
+* **test:** give the AF_XDP test veth pair fixed MACs ([#1712](https://github.com/MustardSeedNetworks/stem/issues/1712)) ([4c1c0c4](https://github.com/MustardSeedNetworks/stem/commit/4c1c0c48779fb90f1af4fb67a7093dd8aaacbcdb)), closes [#1692](https://github.com/MustardSeedNetworks/stem/issues/1692)
+
+
+### Continuous Integration
+
+* **release:** judge pending release notes on merge_group only ([#1713](https://github.com/MustardSeedNetworks/stem/issues/1713)) ([e2ae1f6](https://github.com/MustardSeedNetworks/stem/commit/e2ae1f675e6f5f54079cbe8e0bf779c69ac7185b)), closes [#1582](https://github.com/MustardSeedNetworks/stem/issues/1582)
+
+
+### Miscellaneous
+
+* **dataplane:** delete platform_stub.h, which nothing includes ([#1722](https://github.com/MustardSeedNetworks/stem/issues/1722)) ([07d1520](https://github.com/MustardSeedNetworks/stem/commit/07d152014a73017a08ebfc43a370225a570d7af0)), closes [#1593](https://github.com/MustardSeedNetworks/stem/issues/1593)
+* **deps:** lock file maintenance ([#1714](https://github.com/MustardSeedNetworks/stem/issues/1714)) ([fd7b499](https://github.com/MustardSeedNetworks/stem/commit/fd7b49904622898fa17651be1ad7dc50640059e1))
+* **deps:** lock file maintenance ([#1715](https://github.com/MustardSeedNetworks/stem/issues/1715)) ([aeb579a](https://github.com/MustardSeedNetworks/stem/commit/aeb579a07e02f16b766a25344e3e8f39ac795c60))
+* **deps:** lock file maintenance ([#1716](https://github.com/MustardSeedNetworks/stem/issues/1716)) ([410a86a](https://github.com/MustardSeedNetworks/stem/commit/410a86ad3f63550cd1d021b13ac4d379ea127027))
+* **deps:** lock file maintenance ([#1723](https://github.com/MustardSeedNetworks/stem/issues/1723)) ([073c8ff](https://github.com/MustardSeedNetworks/stem/commit/073c8ff253bba7708925e4d23e3e48c480c6e14f))
+* **deps:** update dependency @babel/core to v8.0.7 ([#1719](https://github.com/MustardSeedNetworks/stem/issues/1719)) ([f596876](https://github.com/MustardSeedNetworks/stem/commit/f5968768a2e2dd74eea21dcbe069a0b168a0c844))
+* **deps:** update github actions ([#1720](https://github.com/MustardSeedNetworks/stem/issues/1720)) ([963c898](https://github.com/MustardSeedNetworks/stem/commit/963c89829bf941c94c5d32864af7a80083f85db1))
+
 ## [0.26.26](https://github.com/MustardSeedNetworks/stem/compare/v0.26.25...v0.26.26) (2026-10-14)
 
 
