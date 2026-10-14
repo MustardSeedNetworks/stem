@@ -42,13 +42,7 @@ func ip(t *testing.T, args ...string) []byte {
 // selects the reflector's platform.
 func newReflectedLink(t *testing.T, queues int, reflectorAFXDP bool) *Context {
 	t.Helper()
-	n := strconv.Itoa(queues)
-	ip(t, "link", "add", vethMaster, "numrxqueues", n, "numtxqueues", n,
-		"type", "veth", "peer", "name", vethReflector, "numrxqueues", n, "numtxqueues", n)
-	t.Cleanup(func() { _ = exec.Command("ip", "link", "del", vethMaster).Run() })
-	ip(t, "addr", "add", masterIP+"/24", "dev", vethMaster)
-	ip(t, "link", "set", vethMaster, "up")
-	ip(t, "link", "set", vethReflector, "up")
+	addVethPair(t, queues)
 
 	reflector, err := reflectordp.New(&config.Config{
 		Interface:       vethReflector,
@@ -66,13 +60,32 @@ func newReflectedLink(t *testing.T, queues int, reflectorAFXDP bool) *Context {
 	}
 	t.Cleanup(reflector.Stop)
 
-	// The reflector end carries no address because it reflects at layer 2,
-	// so pin the neighbour entry ARP would have made. After the reflector
-	// starts: its socket setup flushes the entry.
+	// After the reflector starts: its socket setup flushes the entry.
+	return newLinkMaster(t)
+}
+
+// addVethPair creates the test master's veth pair with the given number of
+// queues at each end and brings both ends up.
+func addVethPair(t *testing.T, queues int) {
+	t.Helper()
+	n := strconv.Itoa(queues)
+	ip(t, "link", "add", vethMaster, "numrxqueues", n, "numtxqueues", n,
+		"type", "veth", "peer", "name", vethReflector, "numrxqueues", n, "numtxqueues", n)
+	t.Cleanup(func() { _ = exec.Command("ip", "link", "del", vethMaster).Run() })
+	ip(t, "addr", "add", masterIP+"/24", "dev", vethMaster)
+	ip(t, "link", "set", vethMaster, "up")
+	ip(t, "link", "set", vethReflector, "up")
+}
+
+// newLinkMaster returns a test master context on the veth pair. The reflector
+// end carries no address because a reflector answers at layer 2, so this pins
+// the neighbour entry ARP would have made.
+func newLinkMaster(t *testing.T) *Context {
+	t.Helper()
 	var links []struct {
 		Address string `json:"address"`
 	}
-	if err = json.Unmarshal(ip(t, "-j", "link", "show", "dev", vethReflector), &links); err != nil || len(links) != 1 {
+	if err := json.Unmarshal(ip(t, "-j", "link", "show", "dev", vethReflector), &links); err != nil || len(links) != 1 {
 		t.Fatalf("read %s MAC: %v (%d links)", vethReflector, err, len(links))
 	}
 	ip(t, "neigh", "replace", reflectorIP, "lladdr", links[0].Address, "dev", vethMaster, "nud", "permanent")
