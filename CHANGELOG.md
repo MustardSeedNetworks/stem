@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.27.1](https://github.com/MustardSeedNetworks/stem/compare/v0.27.0...v0.27.1) (2026-10-14)
+
+
+### Documentation
+
+* **audit:** add the Link-Live result IDs to the STM-11 comparison ([#1727](https://github.com/MustardSeedNetworks/stem/issues/1727)) ([eae68ac](https://github.com/MustardSeedNetworks/stem/commit/eae68acc418cd329eed4cba1c4c22e18037391cb))
+* **audits:** record stem measured through a niac reflector (STM-12) ([#1733](https://github.com/MustardSeedNetworks/stem/issues/1733)) ([ff2e554](https://github.com/MustardSeedNetworks/stem/commit/ff2e554f30b882cf14b87380a584dbe4d113599f))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1729](https://github.com/MustardSeedNetworks/stem/issues/1729)) ([4eace40](https://github.com/MustardSeedNetworks/stem/commit/4eace40fdc8198220498ea268a5b8b6923eaa754))
+* **deps:** update pre-commit hook pre-commit/mirrors-clang-format to v23.1.3 ([#1728](https://github.com/MustardSeedNetworks/stem/issues/1728)) ([079afea](https://github.com/MustardSeedNetworks/stem/commit/079afea3c716611698a66018bccdd1e37813b493))
+
 ## [0.27.0](https://github.com/MustardSeedNetworks/stem/compare/v0.26.26...v0.27.0) (2026-10-14)
 
 
