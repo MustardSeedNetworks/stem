@@ -142,10 +142,15 @@ func (c *Context) newY1731Session(cfg *Y1731Config) (C.y1731_session_t, error) {
 	C.y1731_default_mep_config(&mep)
 	fillY1731MEPConfig(&mep, cfg)
 
+	var frameSize uint32
+	if cfg != nil {
+		frameSize = cfg.FrameSize
+	}
+
 	var session C.y1731_session_t
-	ret := C.y1731_session_init(c.ctx, &mep, &session)
+	ret := C.y1731_session_init(c.ctx, &mep, C.uint32_t(frameSize), &session)
 	if ret < 0 {
-		return session, fmt.Errorf("Y.1731 session init failed: %d", ret)
+		return session, fmt.Errorf("Y.1731 session init failed for %d-byte frames: %d", frameSize, ret)
 	}
 	return session, nil
 }

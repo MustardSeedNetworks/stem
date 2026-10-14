@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { defaultTrafficGenConfig } from '../components/TrafficGenConfigForm';
 import { defaultTSNConfig } from '../components/TSNConfigForm';
 import { defaultY1564Config } from '../components/Y1564ConfigForm';
+import { defaultY1731Config, Y1731_FRAME_SIZE_OPTIONS } from '../components/Y1731ConfigForm';
 import { EXTENDED_FRAME_SIZE_OPTIONS, MIN_EXTENDED_FRAME_SIZE } from './frameSizes';
 
 // The extended payload formats cannot carry a 64-byte frame: the daemon
@@ -21,6 +22,17 @@ describe('extended payload frame sizes', () => {
     expect(defaultY1564Config.frameSizes.length).toBeGreaterThan(0);
     for (const size of defaultY1564Config.frameSizes) {
       expect(size).toBeGreaterThanOrEqual(MIN_EXTENDED_FRAME_SIZE);
+    }
+  });
+
+  it('ships a legal Y.1731 default', () => {
+    expect(defaultY1731Config.frameSize).toBeGreaterThanOrEqual(MIN_EXTENDED_FRAME_SIZE);
+  });
+
+  it('offers no Y.1731 size the daemon would reject', () => {
+    expect(Y1731_FRAME_SIZE_OPTIONS.length).toBeGreaterThan(0);
+    for (const option of Y1731_FRAME_SIZE_OPTIONS) {
+      expect(option.value).toBeGreaterThanOrEqual(MIN_EXTENDED_FRAME_SIZE);
     }
   });
 

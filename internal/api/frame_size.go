@@ -5,7 +5,7 @@ package api
 import "fmt"
 
 // MinExtendedFrameSize is the smallest frame the extended payload formats
-// (TSN, TrafficGen and Y.1564) can carry. They use a 24-byte payload where the
+// (TSN, TrafficGen, Y.1564 and Y.1731) can carry. They use a 24-byte payload where the
 // RFC 2544 measurement format uses 18, so the payload runs to offset 66 and a
 // 70-byte frame is the first that holds one once the NIC's four-byte FCS is
 // counted (ADR 0008).
@@ -28,6 +28,11 @@ func validateFrameSizes(step RunPlanStep) error {
 	}
 	if gen := step.Config.TrafficGen; gen != nil {
 		if err := checkFrameSize("TrafficGen", gen.FrameSize); err != nil {
+			return err
+		}
+	}
+	if y1731 := step.Config.Y1731; y1731 != nil {
+		if err := checkFrameSize("Y.1731", y1731.FrameSize); err != nil {
 			return err
 		}
 	}

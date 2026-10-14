@@ -49,10 +49,10 @@ void y1731_default_mep_config(y1731_mep_config_t *config)
 /**
  * Initialize Y.1731 session
  */
-int y1731_session_init(rfc2544_ctx_t *ctx, const y1731_mep_config_t *config,
+int y1731_session_init(rfc2544_ctx_t *ctx, const y1731_mep_config_t *config, uint32_t frame_size,
                        y1731_session_t *session)
 {
-    if (!ctx || !config || !session) {
+    if (!ctx || !config || !session || frame_size < EXTENDED_MIN_FRAME_SIZE) {
         return -EINVAL;
     }
 
@@ -60,10 +60,12 @@ int y1731_session_init(rfc2544_ctx_t *ctx, const y1731_mep_config_t *config,
 
     memset(session, 0, sizeof(*session));
 
-    session->local_mep = *config;
-    session->state     = Y1731_STATE_INIT;
+    session->local_mep  = *config;
+    session->state      = Y1731_STATE_INIT;
+    session->frame_size = frame_size;
 
-    rfc2544_log(LOG_INFO, "Y.1731 session initialized: MEP %u", config->mep_id);
+    rfc2544_log(LOG_INFO, "Y.1731 session initialized: MEP %u, %u-byte frames", config->mep_id,
+                frame_size);
 
     return 0;
 }
@@ -102,7 +104,7 @@ int y1731_delay_measurement(rfc2544_ctx_t *ctx, y1731_session_t *session, uint32
     /* Calculate rate based on interval */
     /* interval_ms determines probe rate: 1000ms interval = 1 pps */
     double   probes_per_sec = 1000.0 / (double)interval_ms;
-    uint64_t max_pps        = calc_max_pps(ctx->line_rate, 128); /* DMM frames ~128 bytes */
+    uint64_t max_pps        = calc_max_pps(ctx->line_rate, session->frame_size);
     double   rate_pct       = (max_pps > 0) ? ((probes_per_sec * 100.0) / (double)max_pps) : 0.001;
     if (rate_pct > 100.0) {
         rate_pct = 100.0;
@@ -113,8 +115,9 @@ int y1731_delay_measurement(rfc2544_ctx_t *ctx, y1731_session_t *session, uint32
 
     /* Run delay measurement trial */
     trial_result_t trial;
-    int ret = run_trial_custom(ctx, 128, rate_pct, duration_sec, Y1731_DEFAULT_WARMUP_SEC,
-                               Y1731_SIGNATURE, session->local_mep.mep_id, &trial);
+    int            ret =
+        run_trial_custom(ctx, session->frame_size, rate_pct, duration_sec, Y1731_DEFAULT_WARMUP_SEC,
+                         Y1731_SIGNATURE, session->local_mep.mep_id, &trial);
 
     if (ret < 0) {
         rfc2544_log(LOG_ERROR, "Delay measurement trial failed: %d", ret);
@@ -164,7 +167,7 @@ int y1731_loss_measurement(rfc2544_ctx_t *ctx, y1731_session_t *session, uint32_
 
     /* Run at moderate rate for loss measurement */
     trial_result_t trial;
-    int            ret = run_trial_custom(ctx, 128, 50.0, /* 50% rate */
+    int            ret = run_trial_custom(ctx, session->frame_size, 50.0, /* 50% rate */
                                           duration_sec, Y1731_DEFAULT_WARMUP_SEC, Y1731_SIGNATURE,
                                           session->local_mep.mep_id, &trial);
 
@@ -233,7 +236,7 @@ int y1731_synthetic_loss(rfc2544_ctx_t *ctx, y1731_session_t *session, uint32_t 
 
     /* Calculate rate percentage */
     double   probes_per_sec = 1000.0 / (double)interval_ms;
-    uint64_t max_pps        = calc_max_pps(ctx->line_rate, 128);
+    uint64_t max_pps        = calc_max_pps(ctx->line_rate, session->frame_size);
     double   rate_pct       = (max_pps > 0) ? ((probes_per_sec * 100.0) / (double)max_pps) : 1.0;
     if (rate_pct > 100.0) {
         rate_pct = 100.0;
@@ -241,8 +244,9 @@ int y1731_synthetic_loss(rfc2544_ctx_t *ctx, y1731_session_t *session, uint32_t 
 
     /* Run synthetic loss trial */
     trial_result_t trial;
-    int ret = run_trial_custom(ctx, 128, rate_pct, duration_sec, Y1731_DEFAULT_WARMUP_SEC,
-                               Y1731_SIGNATURE, session->local_mep.mep_id, &trial);
+    int            ret =
+        run_trial_custom(ctx, session->frame_size, rate_pct, duration_sec, Y1731_DEFAULT_WARMUP_SEC,
+                         Y1731_SIGNATURE, session->local_mep.mep_id, &trial);
 
     if (ret < 0) {
         rfc2544_log(LOG_ERROR, "Synthetic loss trial failed: %d", ret);
@@ -305,7 +309,7 @@ int y1731_loopback(rfc2544_ctx_t *ctx, y1731_session_t *session, const uint8_t *
     uint32_t duration_sec = count + 5;
 
     /* Low rate - approximately 1 pps */
-    uint64_t max_pps  = calc_max_pps(ctx->line_rate, 128);
+    uint64_t max_pps  = calc_max_pps(ctx->line_rate, session->frame_size);
     double   rate_pct = (max_pps > 0) ? ((1.0 * 100.0) / (double)max_pps) : 0.001;
     if (rate_pct < 0.001) {
         rate_pct = 0.001;
@@ -313,8 +317,8 @@ int y1731_loopback(rfc2544_ctx_t *ctx, y1731_session_t *session, const uint8_t *
 
     /* Run loopback trial */
     trial_result_t trial;
-    int            ret = run_trial_custom(ctx, 128, rate_pct, duration_sec, 1, Y1731_SIGNATURE,
-                                          session->local_mep.mep_id, &trial);
+    int ret = run_trial_custom(ctx, session->frame_size, rate_pct, duration_sec, 1, Y1731_SIGNATURE,
+                               session->local_mep.mep_id, &trial);
 
     if (ret < 0) {
         rfc2544_log(LOG_ERROR, "Loopback trial failed: %d", ret);

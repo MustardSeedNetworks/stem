@@ -40,7 +40,7 @@ export const defaultY1731Config: Y1731Config = {
   duration: 60,
   intervalMs: 100,
   count: 10,
-  frameSize: 64,
+  frameSize: 128,
   priorityTagged: true,
 };
 
@@ -56,12 +56,12 @@ const CCM_INTERVAL_OPTIONS: Array<{ value: number; label: string }> = [
 
 /**
  * OAM measurement frames are deliberately a subset of the sweep sizes: no
- * 1280 and no jumbo. Kept local rather than filtered out of the shared list,
- * so the set is stated rather than inferred from an exclusion.
+ * 1280, no jumbo, and no 64 — the extended payload does not fit one
+ * (MIN_EXTENDED_FRAME_SIZE). Kept local rather than filtered out of the shared
+ * list, so the set is stated rather than inferred from an exclusion.
  */
-const FRAME_SIZE_OPTIONS: FrameSizeOption[] = [
-  { value: 64, qualifier: 'frameSizeMin' },
-  { value: 128, qualifier: 'frameSize' },
+export const Y1731_FRAME_SIZE_OPTIONS: FrameSizeOption[] = [
+  { value: 128, qualifier: 'frameSizeMin' },
   { value: 256, qualifier: 'frameSize' },
   { value: 512, qualifier: 'frameSize' },
   { value: 1024, qualifier: 'frameSize' },
@@ -238,7 +238,7 @@ export function Y1731ConfigForm({
                 {...register('frameSize', { valueAsNumber: true })}
                 className="mt-tight w-full"
               >
-                {FRAME_SIZE_OPTIONS.map((option) => (
+                {Y1731_FRAME_SIZE_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
                     {t(`testConfig.common.${option.qualifier}`, { size: option.value })}
                   </option>

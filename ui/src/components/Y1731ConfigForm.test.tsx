@@ -50,10 +50,12 @@ describe('Y1731ConfigForm — i18n', () => {
   it('offers only the OAM frame sizes, not the sweep list', () => {
     renderForm();
 
-    expect(screen.getByRole('option', { name: '64 B (min)' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: '128 B (min)' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: '1518 B (max)' })).toBeInTheDocument();
     /* Jumbo frames are not an OAM measurement size, and adopting the shared
        sweep list wholesale would have quietly offered them. */
     expect(screen.queryByRole('option', { name: /9000/ })).not.toBeInTheDocument();
+    /* The extended payload does not fit a 64-byte frame (stem#1555). */
+    expect(screen.queryByRole('option', { name: /^64 B/ })).not.toBeInTheDocument();
   });
 });
