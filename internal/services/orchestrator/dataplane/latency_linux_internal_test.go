@@ -42,6 +42,37 @@ func TestLatencyRunsAtMeasuredThroughput(t *testing.T) {
 	}
 }
 
+// Frame delay must be the path's delay (stem#1681). Over this veth the path
+// adds tens of microseconds, yet Y.1564 reported an average of 0.7-0.8 ms and
+// a 10 ms maximum: the reflector's TPACKET_V3 ring held each frame until its
+// block's 1 ms retire timer fired, the test master read replies only after
+// sleeping to its next send slot, and replies to the last frames were read
+// after a 10 ms sleep.
+func TestY1564FrameDelayIsThePathDelay(t *testing.T) {
+	requireRoot(t)
+	master := newReflectedLink(t, 1, false)
+	cfg := PeerConfig(vethMaster, reflectorIP, reflectorPort)
+	if err := master.Configure(&cfg); err != nil {
+		t.Fatalf("configure test master: %v", err)
+	}
+
+	res, err := master.RunY1564PerfTest(&Y1564Service{
+		ServiceID: 1, ServiceName: "delay", FrameSize: 512, Enabled: true,
+		SLA: Y1564SLA{CIRMbps: 25, FDThresholdMs: 10, FDVThresholdMs: 5, FLRThresholdPct: 1},
+	}, 5)
+	if err != nil {
+		t.Fatalf("Y.1564: %v", err)
+	}
+	t.Logf("FD avg/min/max = %.3f/%.3f/%.3f ms, FDV %.3f ms over %d frames",
+		res.FDAvgMs, res.FDMinMs, res.FDMaxMs, res.FDVMs, res.FramesRx)
+	if res.FDAvgMs > 0.2 {
+		t.Errorf("average frame delay %.3f ms over a veth, want under 0.2 ms", res.FDAvgMs)
+	}
+	if res.FDMaxMs > 5 {
+		t.Errorf("maximum frame delay %.3f ms over a veth, want under 5 ms", res.FDMaxMs)
+	}
+}
+
 // shapeIngress rate-limits what dev receives through a token bucket whose
 // queue holds latency worth of frames. Both ends send with
 // PACKET_QDISC_BYPASS, so an egress qdisc never sees the test traffic; the

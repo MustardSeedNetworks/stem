@@ -46,12 +46,16 @@ typedef enum {
     FAIL_NONE = 0,
     FAIL_PACKET_SOCKET,   /* socket(AF_PACKET, ...) */
     FAIL_IGNORE_OUTGOING, /* setsockopt(PACKET_IGNORE_OUTGOING) */
-    FAIL_TPACKET_RING,    /* setsockopt(PACKET_RX_RING) — fails V3 and the V2 retry */
+    FAIL_TPACKET_RING,    /* setsockopt(PACKET_RX_RING) */
     FAIL_PACKET_BIND,     /* bind() of the AF_PACKET socket */
     FAIL_UDP_GUARD,       /* the guard socket's SO_BINDTODEVICE */
 } fail_point_t;
 
 static fail_point_t g_fail = FAIL_NONE;
+
+/* Every TPACKET version the init path asked for, in order. */
+static int g_versions[4];
+static int g_version_count;
 
 int __real_socket(int domain, int type, int protocol);
 int __real_setsockopt(int fd, int level, int optname, const void *val, socklen_t len);
@@ -84,6 +88,9 @@ int __wrap_setsockopt(int fd, int level, int optname, const void *val, socklen_t
         if (optname == PACKET_RX_RING && g_fail == FAIL_TPACKET_RING) {
             errno = EINVAL;
             return -1;
+        }
+        if (optname == PACKET_VERSION && g_version_count < 4) {
+            g_versions[g_version_count++] = *(const int *)val;
         }
         return 0; /* PACKET_VERSION, QDISC_BYPASS, FANOUT: accepted */
     }
@@ -128,6 +135,7 @@ static void fixture_reset(void)
     memset(&g_config, 0, sizeof(g_config));
     memset(&g_rctx, 0, sizeof(g_rctx));
     memset(&g_wctx, 0, sizeof(g_wctx));
+    g_version_count = 0;
 
     snprintf(g_config.ifname, sizeof(g_config.ifname), "lo");
     g_config.ifindex    = 1;
@@ -183,7 +191,7 @@ TEST(init_failure_exits_leave_no_dangling_context)
 {
     assert_failure_exit_is_clean(FAIL_PACKET_SOCKET, "socket(AF_PACKET) refused");
     assert_failure_exit_is_clean(FAIL_IGNORE_OUTGOING, "PACKET_IGNORE_OUTGOING refused");
-    assert_failure_exit_is_clean(FAIL_TPACKET_RING, "neither TPACKET_V3 nor V2 ring available");
+    assert_failure_exit_is_clean(FAIL_TPACKET_RING, "no TPACKET_V2 ring available");
     assert_failure_exit_is_clean(FAIL_PACKET_BIND, "bind to the interface refused");
     assert_failure_exit_is_clean(FAIL_UDP_GUARD, "UDP guard port unavailable");
 }
@@ -213,8 +221,7 @@ TEST(init_failure_exits_report_the_syscall_errno)
     assert_failure_reports_errno(FAIL_PACKET_SOCKET, EPERM, "socket(AF_PACKET) refused");
     assert_failure_reports_errno(FAIL_IGNORE_OUTGOING, ENOPROTOOPT,
                                  "PACKET_IGNORE_OUTGOING refused");
-    assert_failure_reports_errno(FAIL_TPACKET_RING, EINVAL,
-                                 "neither TPACKET_V3 nor V2 ring available");
+    assert_failure_reports_errno(FAIL_TPACKET_RING, EINVAL, "no TPACKET_V2 ring available");
     assert_failure_reports_errno(FAIL_PACKET_BIND, ENODEV, "bind to the interface refused");
 }
 
@@ -254,6 +261,24 @@ TEST(successful_init_publishes_a_context_that_cleanup_releases)
     run_reflector_stop_cleanup_loop();
 }
 
+/*
+ * The RX ring is TPACKET_V2, which hands each frame over as it lands. A V3
+ * block waits for its retire timer at test rates, and every frame reflected
+ * through it carried that wait into the delay the test master measured
+ * (stem#1681).
+ */
+TEST(rx_ring_publishes_each_frame_as_it_lands)
+{
+    fixture_reset();
+
+    int rc = packet_platform_init(&g_rctx, &g_wctx);
+    packet_platform_cleanup(&g_wctx);
+
+    ASSERT_EQ(0, rc);
+    ASSERT_EQ(1, g_version_count);
+    ASSERT_EQ(TPACKET_V2, g_versions[0]);
+}
+
 int main(void)
 {
     TEST_SUITE("AF_PACKET worker init (stem#1228)");
@@ -261,6 +286,7 @@ int main(void)
     RUN_TEST(init_failure_exits_report_the_syscall_errno);
     RUN_TEST(missing_guard_port_is_a_clean_failure);
     RUN_TEST(successful_init_publishes_a_context_that_cleanup_releases);
+    RUN_TEST(rx_ring_publishes_each_frame_as_it_lands);
     TEST_SUMMARY();
     return TEST_EXIT_STATUS();
 }

@@ -7,12 +7,6 @@
 #include "reflector.h"
 #include "stem_signatures.h"
 
-#if !defined(PACKET_BLOCK_TIMEOUT_MS)
-#error "PACKET_BLOCK_TIMEOUT_MS must be defined"
-#endif
-
-static_assert(PACKET_BLOCK_TIMEOUT_MS == 1, "reflector RX blocks must retire promptly");
-
 #define FRAME_LEN          66
 #define RFC2544_PACKET_LEN 60
 #define IPV4_OFFSET        14
