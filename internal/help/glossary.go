@@ -125,8 +125,8 @@ func getLatencyTerms() map[string]GlossaryEntry {
 		"fdv": {
 			Term:      "FDV",
 			FullName:  "Frame Delay Variation",
-			TechDef:   "ITU-T term for jitter in carrier ethernet contexts",
-			LaymanDef: "Same as jitter - how much the timing varies between packets",
+			TechDef:   "ITU-T term for delay variation in carrier ethernet. Y.1564 reports the 99.9th-percentile frame delay minus the minimum (Y.1563 2-point FDV, MEF 10.3 Frame Delay Range), so one late frame does not set it",
+			LaymanDef: "How much the delay spreads out, ignoring the slowest 0.1% of frames",
 			Related:   []string{"jitter", "fd"},
 		},
 		"fd": {
