@@ -156,28 +156,31 @@ static int compare_latency(const void *a, const void *b)
     return 0;
 }
 
+/* FDV quantile, in thousandths: the 99.9th percentile. */
+#define FDV_QUANTILE_PERMILLE 999
+
 /**
  * Calculate latency statistics from samples
  */
 static void calc_latency_stats(const uint64_t *samples, uint32_t count, double *avg_ms,
-                               double *min_ms, double *max_ms, double *jitter_ms)
+                               double *min_ms, double *max_ms, double *fdv_ms)
 {
     /* Sanity check: limit to 10M samples (80MB allocation) */
     if (count == 0 || count > 10000000) {
-        *avg_ms    = 0.0;
-        *min_ms    = 0.0;
-        *max_ms    = 0.0;
-        *jitter_ms = 0.0;
+        *avg_ms = 0.0;
+        *min_ms = 0.0;
+        *max_ms = 0.0;
+        *fdv_ms = 0.0;
         return;
     }
 
     /* Make a copy for sorting */
     uint64_t *sorted = malloc(count * sizeof(uint64_t));
     if (!sorted) {
-        *avg_ms    = 0.0;
-        *min_ms    = 0.0;
-        *max_ms    = 0.0;
-        *jitter_ms = 0.0;
+        *avg_ms = 0.0;
+        *min_ms = 0.0;
+        *max_ms = 0.0;
+        *fdv_ms = 0.0;
         return;
     }
     memcpy(sorted, samples, count * sizeof(uint64_t));
@@ -193,8 +196,12 @@ static void calc_latency_stats(const uint64_t *samples, uint32_t count, double *
     *min_ms = sorted[0] / 1e6;
     *max_ms = sorted[count - 1] / 1e6;
 
-    /* FDV = max - min (simplified definition per Y.1564) */
-    *jitter_ms = (*max_ms - *min_ms);
+    /* FDV is an upper quantile of delay minus the minimum (Y.1541 / Y.1563
+     * 2-point FDV, MEF 10.3 Frame Delay Range), not max - min: one late frame
+     * must not set a service's verdict (#1681). Nearest-rank 99.9th
+     * percentile; below 1000 samples that is the maximum. */
+    uint32_t rank = (uint32_t)(((uint64_t)count * FDV_QUANTILE_PERMILLE + 999) / 1000);
+    *fdv_ms       = (sorted[rank - 1] - sorted[0]) / 1e6;
 
     free(sorted);
 }

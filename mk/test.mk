@@ -147,6 +147,8 @@ ifeq ($(UNAME),Linux)
 		$(C_TEST_DATAPLANE_SRCS) $(C_LDFLAGS) -lxdp -lbpf
 	$(CC) $(CFLAGS) -o bin/test_y1564_warmup_stragglers tests/c/test_y1564_warmup_stragglers.c \
 		$(C_TEST_DATAPLANE_SRCS) $(C_LDFLAGS) -lxdp -lbpf
+	$(CC) $(CFLAGS) -o bin/test_y1564_fdv_outlier tests/c/test_y1564_fdv_outlier.c \
+		$(C_TEST_DATAPLANE_SRCS) $(C_LDFLAGS) -lxdp -lbpf
 	$(CC) $(CFLAGS) -o bin/test_rfc2544_warmup_stragglers tests/c/test_rfc2544_warmup_stragglers.c \
 		$(C_TEST_DATAPLANE_SRCS) $(C_LDFLAGS) -lxdp -lbpf
 	$(CC) $(CFLAGS) -o bin/test_back_to_back_returned tests/c/test_back_to_back_returned.c \
@@ -169,6 +171,7 @@ ifeq ($(UNAME),Linux)
 	./bin/test_y1564_daemon_path
 	./bin/test_y1564_nothing_sent
 	./bin/test_y1564_warmup_stragglers
+	./bin/test_y1564_fdv_outlier
 	./bin/test_rfc2544_warmup_stragglers
 	./bin/test_back_to_back_returned
 	./bin/test_wire_frame_size
@@ -217,6 +220,8 @@ c-test-asan: ## Build + run the dataplane parser tests under AddressSanitizer/UB
 ifeq ($(UNAME),Linux)
 	$(CC) $(C_SAN_CFLAGS) -o bin/test_latency_lifecycle_asan \
 		tests/c/test_latency_lifecycle.c $(C_TEST_DATAPLANE_SRCS) -pthread -lm -lxdp -lbpf
+	$(CC) $(C_SAN_CFLAGS) -o bin/test_y1564_fdv_outlier_asan \
+		tests/c/test_y1564_fdv_outlier.c $(C_TEST_DATAPLANE_SRCS) -pthread -lm -lxdp -lbpf
 	$(CC) $(C_SAN_CFLAGS) -o bin/test_rfc2544_warmup_stragglers_asan \
 		tests/c/test_rfc2544_warmup_stragglers.c $(C_TEST_DATAPLANE_SRCS) -pthread -lm -lxdp -lbpf
 	$(CC) $(C_SAN_CFLAGS) -Itests/c -o bin/test_packet_platform_init_asan \
@@ -228,6 +233,7 @@ endif
 	ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=halt_on_error=1 ./bin/test_netally_reflector_asan
 ifeq ($(UNAME),Linux)
 	ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=halt_on_error=1 ./bin/test_latency_lifecycle_asan
+	ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=halt_on_error=1 ./bin/test_y1564_fdv_outlier_asan
 	ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=halt_on_error=1 ./bin/test_rfc2544_warmup_stragglers_asan
 	# Leak detection on: this test exists because a failure exit mishandled the
 	# context it allocated, and a leak is the other way to get that wrong.

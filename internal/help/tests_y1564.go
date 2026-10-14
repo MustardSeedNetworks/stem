@@ -162,7 +162,7 @@ func y1564ConfigMetrics() []Metric {
 		},
 		{
 			Name:       "FDV (Frame Delay Variation)",
-			Unit:       "milliseconds",
+			Unit:       "milliseconds, 99.9th-percentile delay minus the minimum",
 			GoodRange:  "Below threshold at all steps",
 			BadMeaning: "Jitter too high for voice/video",
 		},
