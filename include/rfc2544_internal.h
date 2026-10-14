@@ -15,6 +15,9 @@
 #include "platform_config.h"
 #include "rfc2544.h"
 
+/* How long a trial keeps collecting replies after it stops sending */
+#define STRAGGLER_WAIT_NS (100ULL * 1000000ULL)
+
 /* Forward declarations */
 typedef struct platform_ops platform_ops_t;
 

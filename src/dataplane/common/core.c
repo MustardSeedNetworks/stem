@@ -114,6 +114,7 @@ void          pacing_set_rate(pacing_ctx_t *ctx, double rate_pct);
 void          pacing_set_batch_size(pacing_ctx_t *ctx, uint32_t batch_size);
 void          pacing_set_busy_wait(pacing_ctx_t *ctx, bool enable);
 uint64_t      pacing_wait(pacing_ctx_t *ctx);
+bool          pacing_due(const pacing_ctx_t *ctx);
 uint64_t      pacing_wait_batch(pacing_ctx_t *ctx, uint32_t batch_size);
 void          pacing_record_tx(pacing_ctx_t *ctx, uint32_t packets, uint32_t bytes);
 void          pacing_get_rate(const pacing_ctx_t *ctx, double *pps, double *mbps);
@@ -923,6 +924,19 @@ static void trial_receive_measured(rfc2544_ctx_t *ctx, worker_ctx_t *wctx, packe
     }
 }
 
+/* Collects the replies still in flight when a trial stops sending, for up to
+ * STRAGGLER_WAIT_NS. It polls rather than sleeps, so a late reply is timed as
+ * it arrives and not at the end of a sleep (#1681). */
+static void drain_stragglers(rfc2544_ctx_t *ctx, worker_ctx_t *wctx, packet_t *rx_pkts,
+                             trial_rx_t *rx, uint64_t packets_sent)
+{
+    uint64_t deadline = get_timestamp_ns() + STRAGGLER_WAIT_NS;
+    while (rx->packets_recv < packets_sent && !ctx->cancel_requested &&
+           get_timestamp_ns() < deadline) {
+        trial_receive_measured(ctx, wctx, rx_pkts, rx);
+    }
+}
+
 /**
  * Run a single trial at the specified rate
  *
@@ -1060,14 +1074,14 @@ int run_trial(rfc2544_ctx_t *ctx, uint32_t frame_size, double rate_pct, uint32_t
             pacing_record_tx(pacer, 1, frame_size);
         }
 
-        trial_receive_measured(ctx, wctx, rx_pkts, &rx);
+        /* Receive until the next send slot comes, so a reply is timed as it
+         * arrives rather than when the pacer next wakes (#1681). */
+        do {
+            trial_receive_measured(ctx, wctx, rx_pkts, &rx);
+        } while (!pacing_due(pacer) && !ctx->cancel_requested);
     }
 
-    /* Wait a bit for straggler packets */
-    for (int i = 0; i < 10 && !ctx->cancel_requested; i++) {
-        usleep(10000); /* 10ms */
-        trial_receive_measured(ctx, wctx, rx_pkts, &rx);
-    }
+    drain_stragglers(ctx, wctx, rx_pkts, &rx, packets_sent);
 
     /* Calculate results */
     double elapsed       = trial_timer_elapsed(timer);
@@ -1248,14 +1262,14 @@ int run_trial_custom(rfc2544_ctx_t *ctx, uint32_t frame_size, double rate_pct,
             pacing_record_tx(pacer, 1, frame_size);
         }
 
-        trial_receive_measured(ctx, wctx, rx_pkts, &rx);
+        /* Receive until the next send slot comes, so a reply is timed as it
+         * arrives rather than when the pacer next wakes (#1681). */
+        do {
+            trial_receive_measured(ctx, wctx, rx_pkts, &rx);
+        } while (!pacing_due(pacer) && !ctx->cancel_requested);
     }
 
-    /* Wait for straggler packets */
-    for (int i = 0; i < 10 && !ctx->cancel_requested; i++) {
-        usleep(10000);
-        trial_receive_measured(ctx, wctx, rx_pkts, &rx);
-    }
+    drain_stragglers(ctx, wctx, rx_pkts, &rx, packets_sent);
 
     /* Calculate results */
     double elapsed       = trial_timer_elapsed(timer);

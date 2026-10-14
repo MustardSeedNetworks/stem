@@ -56,21 +56,6 @@ struct platform_ctx {
     unsigned int rx_frame_num;
     unsigned int rx_frame_idx;
 
-    /* TPACKET version in use (2 or 3) */
-    int tpacket_version;
-
-    /* Ring buffer configuration */
-    union {
-        struct tpacket_req  req2; /* TPACKET_V2 */
-        struct tpacket_req3 req3; /* TPACKET_V3 */
-    };
-
-    /* V3 block tracking */
-    unsigned int current_block_idx;
-    unsigned int current_block_offset;
-    uint32_t     current_frame_offset;
-    bool         block_release_pending;
-
     /* Frame size */
     uint32_t frame_size;
 };
@@ -135,62 +120,33 @@ int packet_platform_set_guard_port(worker_ctx_t *wctx, uint16_t port)
 }
 
 /*
- * Try to setup TPACKET_V3 (preferred for real hardware)
- * Returns 0 on success, -1 on failure
+ * Set up a TPACKET_V2 RX ring. Returns 0 on success, -1 on failure.
+ *
+ * V2 publishes each frame to userspace as it lands. TPACKET_V3 is not used:
+ * it publishes a block only when the block fills or its retire timer fires
+ * (at least 1 ms, one jiffy on a coarser kernel), so at test rates every
+ * reflected frame waited for that timer and the delay a test master measured
+ * through this reflector carried it (#1681).
  */
-static int try_tpacket_v3(struct platform_ctx *pctx)
-{
-    int version = TPACKET_V3;
-    if (setsockopt(pctx->sock_fd, SOL_PACKET, PACKET_VERSION, &version, sizeof(version)) < 0) {
-        return -1;
-    }
-
-    /* Configure RX ring buffer with TPACKET_V3 (block-level batching) */
-    memset(&pctx->req3, 0, sizeof(pctx->req3));
-    pctx->req3.tp_block_size       = PACKET_BLOCK_SIZE;
-    pctx->req3.tp_frame_size       = PACKET_FRAME_SIZE;
-    pctx->req3.tp_block_nr         = PACKET_BLOCK_NR;
-    pctx->req3.tp_frame_nr         = PACKET_RING_FRAMES;
-    pctx->req3.tp_retire_blk_tov   = PACKET_BLOCK_TIMEOUT_MS;
-    pctx->req3.tp_feature_req_word = 0;
-
-    if (setsockopt(pctx->sock_fd, SOL_PACKET, PACKET_RX_RING, &pctx->req3, sizeof(pctx->req3)) <
-        0) {
-        return -1;
-    }
-
-    pctx->tpacket_version = 3;
-    pctx->rx_ring_size    = pctx->req3.tp_block_size * pctx->req3.tp_block_nr;
-    pctx->rx_frame_num    = pctx->req3.tp_frame_nr;
-    return 0;
-}
-
-/*
- * Try to setup TPACKET_V2 (fallback for veth/testing)
- * Returns 0 on success, -1 on failure
- */
-static int try_tpacket_v2(struct platform_ctx *pctx)
+static int setup_rx_ring(struct platform_ctx *pctx)
 {
     int version = TPACKET_V2;
     if (setsockopt(pctx->sock_fd, SOL_PACKET, PACKET_VERSION, &version, sizeof(version)) < 0) {
         return -1;
     }
 
-    /* Configure RX ring buffer with TPACKET_V2 (frame-level) */
-    memset(&pctx->req2, 0, sizeof(pctx->req2));
-    pctx->req2.tp_block_size = PACKET_BLOCK_SIZE;
-    pctx->req2.tp_frame_size = PACKET_FRAME_SIZE;
-    pctx->req2.tp_block_nr   = PACKET_BLOCK_NR;
-    pctx->req2.tp_frame_nr   = PACKET_RING_FRAMES;
-
-    if (setsockopt(pctx->sock_fd, SOL_PACKET, PACKET_RX_RING, &pctx->req2, sizeof(pctx->req2)) <
-        0) {
+    struct tpacket_req req = {
+        .tp_block_size = PACKET_BLOCK_SIZE,
+        .tp_frame_size = PACKET_FRAME_SIZE,
+        .tp_block_nr   = PACKET_BLOCK_NR,
+        .tp_frame_nr   = PACKET_RING_FRAMES,
+    };
+    if (setsockopt(pctx->sock_fd, SOL_PACKET, PACKET_RX_RING, &req, sizeof(req)) < 0) {
         return -1;
     }
 
-    pctx->tpacket_version = 2;
-    pctx->rx_ring_size    = pctx->req2.tp_block_size * pctx->req2.tp_block_nr;
-    pctx->rx_frame_num    = pctx->req2.tp_frame_nr;
+    pctx->rx_ring_size = (size_t)req.tp_block_size * req.tp_block_nr;
+    pctx->rx_frame_num = req.tp_frame_nr;
     return 0;
 }
 
@@ -207,7 +163,6 @@ static int packet_platform_init_fail(worker_ctx_t *wctx, int err)
 
 /*
  * Initialize maximum performance AF_PACKET platform
- * Tries TPACKET_V3 first (best for real hardware), falls back to V2 (for veth/testing)
  */
 int packet_platform_init(reflector_ctx_t *rctx, worker_ctx_t *wctx)
 {
@@ -241,25 +196,13 @@ int packet_platform_init(reflector_ctx_t *rctx, worker_ctx_t *wctx)
         return packet_platform_init_fail(wctx, err);
     }
 
-    /* Try TPACKET_V3 first (better for real hardware) */
-    if (try_tpacket_v3(pctx) == 0) {
-        reflector_log(LOG_DEBUG, "Using TPACKET_V3 (block-level batching)");
-    } else {
-        /* Fall back to TPACKET_V2 (works on veth, older kernels) */
-        /* Need new socket since V3 attempt may have left socket in bad state */
-        close(pctx->sock_fd);
-        pctx->sock_fd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
-        if (pctx->sock_fd < 0 || ignore_outgoing_packets(pctx->sock_fd) < 0 ||
-            try_tpacket_v2(pctx) < 0) {
-            int err = errno;
-            reflector_log(LOG_ERROR, "Failed to setup TPACKET_V2: %s", stem_strerror(err));
-            return packet_platform_init_fail(wctx, err);
-        }
-        reflector_log(LOG_DEBUG, "Using TPACKET_V2 (frame-level, veth compatible)");
+    if (setup_rx_ring(pctx) < 0) {
+        int err = errno;
+        reflector_log(LOG_ERROR, "Failed to setup TPACKET_V2: %s", stem_strerror(err));
+        return packet_platform_init_fail(wctx, err);
     }
 
-    /* mmap() the RX ring. TX uses sendmmsg(): PACKET_TX_RING has inconsistent
-     * TPACKET_V3 behavior on veth devices, while batched direct sends retain
+    /* mmap() the RX ring. TX uses sendmmsg(): batched direct sends retain
      * qdisc bypass and avoid silently dropping reflected probes. */
     bool use_simple_mode = false;
     pctx->rx_ring        = mmap(NULL, pctx->rx_ring_size, PROT_READ | PROT_WRITE,
@@ -280,9 +223,7 @@ int packet_platform_init(reflector_ctx_t *rctx, worker_ctx_t *wctx)
     }
 
     if (!use_simple_mode) {
-        pctx->rx_frame_idx         = 0;
-        pctx->current_block_idx    = 0;
-        pctx->current_block_offset = 0;
+        pctx->rx_frame_idx = 0;
 
         reflector_log(LOG_INFO, "Allocated PACKET_MMAP RX ring: %zu MB; TX: batched direct send",
                       pctx->rx_ring_size / (1024 * 1024));
@@ -354,14 +295,9 @@ int packet_platform_init(reflector_ctx_t *rctx, worker_ctx_t *wctx)
 
     reflector_log(LOG_INFO, "Optimized AF_PACKET initialized on %s:", wctx->config->ifname);
     reflector_log(LOG_INFO, "  - PACKET_MMAP: zero-copy ring buffers");
-    reflector_log(LOG_INFO, "  - TPACKET_V%d: %s", pctx->tpacket_version,
-                  pctx->tpacket_version == 3 ? "block-level batching (optimal)"
-                                             : "frame-level (veth compatible)");
+    reflector_log(LOG_INFO, "  - TPACKET_V2: frame-level");
     reflector_log(LOG_INFO, "  - PACKET_QDISC_BYPASS: fast TX path");
     reflector_log(LOG_INFO, "  - SO_BUSY_POLL: reduced latency");
-    reflector_log(LOG_INFO, "Expected: %s",
-                  pctx->tpacket_version == 3 ? "200-400 Mbps (real hardware)"
-                                             : "100-200 Mbps (veth/virtual)");
 
     return 0;
 }
@@ -410,7 +346,6 @@ static void wait_for_packet(int fd)
 /*
  * Receive batch of packets from PACKET_MMAP ring (zero-copy)
  * Falls back to simple recv() if ring buffers not available.
- * Handles both TPACKET_V2 (frame-level) and TPACKET_V3 (block-level) iteration.
  */
 int packet_platform_recv_batch(worker_ctx_t *wctx, packet_t *pkts, int max_pkts)
 {
@@ -438,56 +373,6 @@ int packet_platform_recv_batch(worker_ctx_t *wctx, packet_t *pkts, int max_pkts)
         return num_pkts;
     }
 
-    /* TPACKET_V3: Block-level iteration (optimal for real hardware) */
-    if (pctx->tpacket_version == 3) {
-        struct tpacket_block_desc *block =
-            (struct tpacket_block_desc *)((uint8_t *)pctx->rx_ring +
-                                          (pctx->current_block_idx * PACKET_BLOCK_SIZE));
-
-        /* The previous call returned pointers into this block. Release it only now,
-         * after the worker has finished inspecting and transmitting that batch. */
-        if (pctx->block_release_pending) {
-            block->hdr.bh1.block_status = TP_STATUS_KERNEL;
-            pctx->current_block_idx     = (pctx->current_block_idx + 1) % PACKET_BLOCK_NR;
-            pctx->current_block_offset  = 0;
-            pctx->current_frame_offset  = 0;
-            pctx->block_release_pending = false;
-            block                       = (struct tpacket_block_desc *)((uint8_t *)pctx->rx_ring +
-                                                  (pctx->current_block_idx * PACKET_BLOCK_SIZE));
-        }
-
-        if ((block->hdr.bh1.block_status & TP_STATUS_USER) == 0) {
-            wait_for_packet(pctx->sock_fd);
-            return 0;
-        }
-
-        uint32_t num_frames = block->hdr.bh1.num_pkts;
-        if (pctx->current_frame_offset == 0) {
-            pctx->current_frame_offset = block->hdr.bh1.offset_to_first_pkt;
-        }
-
-        while (pctx->current_block_offset < num_frames && num_pkts < max_pkts) {
-            struct tpacket3_hdr *hdr =
-                (struct tpacket3_hdr *)((uint8_t *)block + pctx->current_frame_offset);
-
-            pkts[num_pkts].data      = (uint8_t *)hdr + hdr->tp_mac;
-            pkts[num_pkts].len       = hdr->tp_snaplen;
-            pkts[num_pkts].addr      = (pctx->current_block_idx << 16) | pctx->current_block_offset;
-            pkts[num_pkts].timestamp = wctx->config->measure_latency ? get_timestamp_ns() : 0;
-
-            num_pkts++;
-            pctx->current_block_offset++;
-            pctx->current_frame_offset += hdr->tp_next_offset;
-        }
-
-        if (pctx->current_block_offset >= num_frames) {
-            pctx->block_release_pending = true;
-        }
-
-        return num_pkts;
-    }
-
-    /* TPACKET_V2: Frame-level iteration (veth compatible) */
     for (int i = 0; i < max_pkts; i++) {
         /* Bounds check to prevent overflow */
         if (pctx->rx_frame_idx >= pctx->rx_frame_num) {
@@ -561,8 +446,6 @@ int packet_platform_send_batch(worker_ctx_t *wctx, packet_t *pkts, int num_pkts)
 
 /*
  * Release RX frames back to kernel
- * For TPACKET_V3: Release blocks that packets came from
- * For TPACKET_V2: Release individual frames
  */
 void packet_platform_release_batch(worker_ctx_t *wctx, packet_t *pkts, int num_pkts)
 {
@@ -578,14 +461,6 @@ void packet_platform_release_batch(worker_ctx_t *wctx, packet_t *pkts, int num_p
         return;
     }
 
-    /* TPACKET_V3: Release blocks that these packets came from */
-    if (pctx->tpacket_version == 3) {
-        /* V3 packets share block ownership. recv_batch releases a completed block
-         * on the next call, after every pointer returned from it is no longer used. */
-        return;
-    }
-
-    /* TPACKET_V2: Release individual frames */
     for (int i = 0; i < num_pkts; i++) {
         uint32_t             frame_idx = pkts[i].addr; /* We stored frame index in addr */
         struct tpacket2_hdr *hdr =

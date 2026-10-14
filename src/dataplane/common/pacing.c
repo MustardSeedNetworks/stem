@@ -195,6 +195,19 @@ void pacing_set_busy_wait(pacing_ctx_t *ctx, bool enable)
 }
 
 /**
+ * Report whether the next send slot has come. A trial polls for replies until
+ * it has, rather than sleeping in pacing_wait, so each reply is timestamped as
+ * it arrives instead of when the pacer next wakes (#1681).
+ *
+ * @param ctx Pacing context
+ * @return true when pacing_wait would return without waiting
+ */
+bool pacing_due(const pacing_ctx_t *ctx)
+{
+    return !ctx || !ctx->enabled || get_time_ns() >= ctx->next_tx_ns;
+}
+
+/**
  * Wait until it's time to send the next packet
  *
  * @param ctx Pacing context

@@ -23,7 +23,6 @@
 #include <arpa/inet.h>
 
 #include <pthread.h>
-#include <unistd.h>
 
 #include "platform_config.h"
 #include "rfc2544.h"
@@ -78,6 +77,7 @@ typedef struct seq_tracker seq_tracker_t;
 pacing_ctx_t *pacing_create(uint64_t line_rate_bps, uint32_t frame_size, double rate_pct);
 void          pacing_set_rate(pacing_ctx_t *ctx, double rate_pct);
 uint64_t      pacing_wait(pacing_ctx_t *ctx);
+bool          pacing_due(const pacing_ctx_t *ctx);
 void          pacing_record_tx(pacing_ctx_t *ctx, uint32_t packets, uint32_t bytes);
 void          pacing_reset(pacing_ctx_t *ctx);
 void          pacing_destroy(pacing_ctx_t *ctx);
@@ -109,7 +109,7 @@ extern void rfc2544_log_internal(int level, const char *fmt, ...);
  * Utility Functions
  * ============================================================================ */
 
-static uint64_t __attribute__((unused)) get_timestamp_ns(void)
+static uint64_t get_timestamp_ns(void)
 {
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
@@ -473,13 +473,19 @@ static int y1564_run_step(rfc2544_ctx_t *ctx, const y1564_service_t *service, do
             pacing_record_tx(pacer, 1, frame_size);
         }
 
-        y1564_receive_measured(platform, wctx, rx_pkts, service->service_id, warmup_last_tx_ns,
-                               &frames_rx, latency_samples, &latency_count, latency_capacity);
+        /* Receive until the next send slot comes, so a reply is timed as it
+         * arrives rather than when the pacer next wakes (#1681). */
+        do {
+            y1564_receive_measured(platform, wctx, rx_pkts, service->service_id, warmup_last_tx_ns,
+                                   &frames_rx, latency_samples, &latency_count, latency_capacity);
+        } while (!pacing_due(pacer) && !rfc2544_is_cancelled(ctx));
     }
 
-    /* Wait for straggler packets */
-    for (int i = 0; i < 10 && !rfc2544_is_cancelled(ctx); i++) {
-        usleep(10000);
+    /* Collect the replies still in flight, polling rather than sleeping so a
+     * late reply is timed as it arrives (#1681). */
+    uint64_t drain_until = get_timestamp_ns() + STRAGGLER_WAIT_NS;
+    while (frames_rx < frames_tx && !rfc2544_is_cancelled(ctx) &&
+           get_timestamp_ns() < drain_until) {
         y1564_receive_measured(platform, wctx, rx_pkts, service->service_id, warmup_last_tx_ns,
                                &frames_rx, latency_samples, &latency_count, latency_capacity);
     }

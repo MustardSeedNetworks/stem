@@ -67,12 +67,11 @@
 #define UMEM_SIZE           (NUM_FRAMES * FRAME_SIZE)
 
 /* ITO packet signatures (NetAlly/Fluke/NETSCOUT) */
-#define ITO_SIG_PROBEOT         "PROBEOT"
-#define ITO_SIG_DATAOT          "DATA:OT"
-#define ITO_SIG_LATENCY         "LATENCY"
-#define ITO_SIG_LEN             7
-#define ITO_TOS_WIGGLE          0x01
-#define PACKET_BLOCK_TIMEOUT_MS 1
+#define ITO_SIG_PROBEOT "PROBEOT"
+#define ITO_SIG_DATAOT  "DATA:OT"
+#define ITO_SIG_LATENCY "LATENCY"
+#define ITO_SIG_LEN     7
+#define ITO_TOS_WIGGLE  0x01
 
 /* Mustard Seed Networks signature (sent by Seed) */
 #define CUSTOM_SIG_MSN "MSNSEED"
