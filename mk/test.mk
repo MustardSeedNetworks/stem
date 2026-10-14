@@ -145,6 +145,8 @@ ifeq ($(UNAME),Linux)
 		$(C_TEST_DATAPLANE_SRCS) $(C_LDFLAGS) -lxdp -lbpf
 	$(CC) $(CFLAGS) -o bin/test_y1564_nothing_sent tests/c/test_y1564_nothing_sent.c \
 		$(C_TEST_DATAPLANE_SRCS) $(C_LDFLAGS) -lxdp -lbpf
+	$(CC) $(CFLAGS) -o bin/test_y1564_nothing_back tests/c/test_y1564_nothing_back.c \
+		$(C_TEST_DATAPLANE_SRCS) $(C_LDFLAGS) -lxdp -lbpf
 	$(CC) $(CFLAGS) -o bin/test_y1564_warmup_stragglers tests/c/test_y1564_warmup_stragglers.c \
 		$(C_TEST_DATAPLANE_SRCS) $(C_LDFLAGS) -lxdp -lbpf
 	$(CC) $(CFLAGS) -o bin/test_y1564_fdv_outlier tests/c/test_y1564_fdv_outlier.c \
@@ -172,6 +174,7 @@ ifeq ($(UNAME),Linux)
 	./bin/test_generator_limited_loss
 	./bin/test_y1564_daemon_path
 	./bin/test_y1564_nothing_sent
+	./bin/test_y1564_nothing_back
 	./bin/test_y1564_warmup_stragglers
 	./bin/test_y1564_fdv_outlier
 	./bin/test_y1564_host_stall

@@ -149,6 +149,7 @@ type Y1564StepResult struct {
 	FDVMs            float64
 	HostStallMaxMs   float64
 	HostLimited      bool
+	DelayMeasured    bool
 	FLRPass          bool
 	FDPass           bool
 	FDVPass          bool
@@ -175,6 +176,7 @@ type Y1564PerfResult struct {
 	FDVMs          float64
 	HostStallMaxMs float64
 	HostLimited    bool
+	DelayMeasured  bool
 	FLRPass        bool
 	FDPass         bool
 	FDVPass        bool

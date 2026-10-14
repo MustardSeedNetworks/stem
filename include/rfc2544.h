@@ -261,6 +261,7 @@ typedef struct {
     double   fdv_ms;             /* Frame Delay Variation (ms) */
     double   host_stall_max_ms;  /* Longest test-host stall between receive polls (ms) */
     bool     host_limited;       /* A host stall alone could exceed the FD or FDV threshold */
+    bool     delay_measured;     /* A frame came back, so FD and FDV hold a sample */
     bool     flr_pass;           /* FLR within threshold */
     bool     fd_pass;            /* FD within threshold */
     bool     fdv_pass;           /* FDV within threshold */
@@ -289,6 +290,7 @@ typedef struct {
     double   fdv_ms;            /* Frame Delay Variation (ms) */
     double   host_stall_max_ms; /* Longest test-host stall between receive polls (ms) */
     bool     host_limited;      /* A host stall alone could exceed the FD or FDV threshold */
+    bool     delay_measured;    /* A frame came back, so FD and FDV hold a sample */
     bool     flr_pass;          /* FLR within threshold */
     bool     fd_pass;           /* FD within threshold */
     bool     fdv_pass;          /* FDV within threshold */
