@@ -2029,7 +2029,9 @@ jobs:
       # compare a tree with itself and report pure runner noise — -25.0%
       # and -27.3% on a package-lock.json-only PR (run 34687252273), which
       # ejected it from the queue. The script now skips a diff that cannot reach the
-      # benchmark; #1198.
+      # benchmark; #1198. "Cannot reach" means the two benchmark binaries are
+      # byte-identical, not that src/ and include/ are untouched: a Y.1731 fix
+      # never reaches the reflect path and was still ejected twice (#1697).
       #
       # If it false-fails on a change that DOES touch the reflect path, the
       # answer is more rounds or a quieter runner — not `continue-on-error` and

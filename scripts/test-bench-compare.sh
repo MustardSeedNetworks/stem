@@ -10,8 +10,9 @@
 # thing such a run can measure is the runner (#1198).
 #
 # Both directions matter, so both are exercised here against the real script:
-# identical binaries must short-circuit without measuring, and a changed C
-# source must still be measured.
+# identical binaries must short-circuit without measuring, even when C outside
+# the benchmark changed (#1697), and a changed reflect source must still be
+# measured.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -69,7 +70,34 @@ if grep -q "measuring" "$work/out_identical"; then
 fi
 sed 's/^/  /' "$work/out_identical"
 
-# --- 2. a real change to the measured code -----------------------------------
+# --- 2. a change under src/ or include/ the benchmark does not compile -------
+# A Y.1731 fix touched include/rfc2544.h and src/dataplane/common/y1731.c,
+# neither of which reaches the benchmark, yet the gate measured it and a fast
+# baseline sample ejected it from the queue (#1697).
+echo
+echo "off-path C change:"
+printf '\n#define STEM_BENCH_GATE_OFF_PATH 1\n' >>"$repo/include/rfc2544.h"
+mkdir -p "$repo/src/dataplane/common"
+printf 'int stem_bench_gate_off_path(void) { return 1; }\n' \
+  >"$repo/src/dataplane/common/off_path.c"
+git -C "$repo" add -A
+git -C "$repo" commit --quiet -m "off the reflect path"
+
+if ! run_gate "$work/out_off_path"; then
+  echo "FAIL: the gate failed on a C change that does not reach the benchmark" >&2
+  sed 's/^/  /' "$work/out_off_path" >&2
+  exit 1
+fi
+if ! grep -q "IDENTICAL" "$work/out_off_path" ||
+  grep -q "measuring" "$work/out_off_path"; then
+  echo "FAIL: a C change outside the benchmark's sources was measured — that" >&2
+  echo "      samples the runner, not the code, and is what ejected #1694" >&2
+  sed 's/^/  /' "$work/out_off_path" >&2
+  exit 1
+fi
+sed 's/^/  /' "$work/out_off_path"
+
+# --- 3. a real change to the measured code -----------------------------------
 # The short-circuit must not swallow the case the gate exists for: a different
 # reflect path is still measured and reported.
 echo
