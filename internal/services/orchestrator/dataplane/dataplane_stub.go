@@ -147,6 +147,8 @@ type Y1564StepResult struct {
 	FDMinMs          float64
 	FDMaxMs          float64
 	FDVMs            float64
+	HostStallMaxMs   float64
+	HostLimited      bool
 	FLRPass          bool
 	FDPass           bool
 	FDVPass          bool
@@ -162,19 +164,21 @@ type Y1564ConfigResult struct {
 
 // Y1564PerfResult holds Y.1564 performance test results.
 type Y1564PerfResult struct {
-	ServiceID   uint32
-	DurationSec uint32
-	FramesTx    uint64
-	FramesRx    uint64
-	FLRPct      float64
-	FDAvgMs     float64
-	FDMinMs     float64
-	FDMaxMs     float64
-	FDVMs       float64
-	FLRPass     bool
-	FDPass      bool
-	FDVPass     bool
-	ServicePass bool
+	ServiceID      uint32
+	DurationSec    uint32
+	FramesTx       uint64
+	FramesRx       uint64
+	FLRPct         float64
+	FDAvgMs        float64
+	FDMinMs        float64
+	FDMaxMs        float64
+	FDVMs          float64
+	HostStallMaxMs float64
+	HostLimited    bool
+	FLRPass        bool
+	FDPass         bool
+	FDVPass        bool
+	ServicePass    bool
 }
 
 // RFC 2889 configuration and results

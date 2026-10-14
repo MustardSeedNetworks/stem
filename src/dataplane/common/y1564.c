@@ -280,7 +280,33 @@ typedef struct {
     double   fd_min_ms;
     double   fd_max_ms;
     double   fdv_ms;
+    double   host_stall_max_ms;
 } y1564_trial_t;
+
+/**
+ * Record a receive poll inside the measured window.
+ *
+ * A reply is timestamped when it is polled, so a frame that arrives while the
+ * test host is stalled gains the stall as delay the path never added (#1717).
+ * The longest gap between polls bounds what the host can have added.
+ */
+static void y1564_note_poll(uint64_t *last_poll_ns, uint64_t *stall_max_ns)
+{
+    uint64_t now = get_timestamp_ns();
+    if (*last_poll_ns != 0 && now - *last_poll_ns > *stall_max_ns) {
+        *stall_max_ns = now - *last_poll_ns;
+    }
+    *last_poll_ns = now;
+}
+
+/**
+ * Whether a host stall alone could push FD or FDV past its threshold, so a
+ * delay failure may be the test host's rather than the path's (#1717).
+ */
+static bool y1564_host_limited(double host_stall_max_ms, const y1564_sla_t *sla)
+{
+    return host_stall_max_ms > fmin(sla->fd_threshold_ms, sla->fdv_threshold_ms);
+}
 
 /**
  * Drain one receive batch, counting this service's frames sent inside the
@@ -438,6 +464,8 @@ static int y1564_run_step(rfc2544_ctx_t *ctx, const y1564_service_t *service, do
     uint64_t frames_tx         = 0;
     uint64_t frames_rx         = 0;
     uint64_t warmup_last_tx_ns = 0;
+    uint64_t last_poll_ns      = 0;
+    uint64_t stall_max_ns      = 0;
     bool     in_measurement    = false;
 
     trial_timer_start(timer);
@@ -454,6 +482,7 @@ static int y1564_run_step(rfc2544_ctx_t *ctx, const y1564_service_t *service, do
             frames_tx      = 0;
             frames_rx      = 0;
             latency_count  = 0;
+            last_poll_ns   = 0;
             pacing_reset(pacer);
         }
 
@@ -476,6 +505,9 @@ static int y1564_run_step(rfc2544_ctx_t *ctx, const y1564_service_t *service, do
         /* Receive until the next send slot comes, so a reply is timed as it
          * arrives rather than when the pacer next wakes (#1681). */
         do {
+            if (in_measurement) {
+                y1564_note_poll(&last_poll_ns, &stall_max_ns);
+            }
             y1564_receive_measured(platform, wctx, rx_pkts, service->service_id, warmup_last_tx_ns,
                                    &frames_rx, latency_samples, &latency_count, latency_capacity);
         } while (!pacing_due(pacer) && !rfc2544_is_cancelled(ctx));
@@ -486,16 +518,18 @@ static int y1564_run_step(rfc2544_ctx_t *ctx, const y1564_service_t *service, do
     uint64_t drain_until = get_timestamp_ns() + STRAGGLER_WAIT_NS;
     while (frames_rx < frames_tx && !rfc2544_is_cancelled(ctx) &&
            get_timestamp_ns() < drain_until) {
+        y1564_note_poll(&last_poll_ns, &stall_max_ns);
         y1564_receive_measured(platform, wctx, rx_pkts, service->service_id, warmup_last_tx_ns,
                                &frames_rx, latency_samples, &latency_count, latency_capacity);
     }
 
     /* Calculate results */
-    double elapsed        = trial_timer_elapsed(timer);
-    result->frames_tx     = frames_tx;
-    result->frames_rx     = frames_rx;
-    result->elapsed_sec   = elapsed;
-    result->achieved_mbps = calc_rate_mbps(frames_tx, frame_size, elapsed);
+    double elapsed            = trial_timer_elapsed(timer);
+    result->frames_tx         = frames_tx;
+    result->frames_rx         = frames_rx;
+    result->elapsed_sec       = elapsed;
+    result->achieved_mbps     = calc_rate_mbps(frames_tx, frame_size, elapsed);
+    result->host_stall_max_ms = (double)stall_max_ns / 1e6;
 
     if (frames_tx > 0) {
         /* Guard against underflow when rx > tx */
@@ -579,6 +613,7 @@ int y1564_config_test(rfc2544_ctx_t *ctx, const y1564_service_t *service,
         sr->fd_min_ms           = trial.fd_min_ms;
         sr->fd_max_ms           = trial.fd_max_ms;
         sr->fdv_ms              = trial.fdv_ms;
+        sr->host_stall_max_ms   = trial.host_stall_max_ms;
 
         /* A step that put nothing on the wire measured nothing: FLR, FD and FDV
          * keep their zero initial values, which every threshold accepts (#1482). */
@@ -587,19 +622,20 @@ int y1564_config_test(rfc2544_ctx_t *ctx, const y1564_service_t *service,
             y1564_log(LOG_ERROR, "Step %d transmitted no frames (frame size %u)", step + 1,
                       service->frame_size);
         }
-        sr->flr_pass  = measured && (trial.flr_pct <= service->sla.flr_threshold_pct);
-        sr->fd_pass   = measured && (trial.fd_avg_ms <= service->sla.fd_threshold_ms);
-        sr->fdv_pass  = measured && (trial.fdv_ms <= service->sla.fdv_threshold_ms);
-        sr->step_pass = sr->flr_pass && sr->fd_pass && sr->fdv_pass;
+        sr->flr_pass     = measured && (trial.flr_pct <= service->sla.flr_threshold_pct);
+        sr->fd_pass      = measured && (trial.fd_avg_ms <= service->sla.fd_threshold_ms);
+        sr->fdv_pass     = measured && (trial.fdv_ms <= service->sla.fdv_threshold_ms);
+        sr->step_pass    = sr->flr_pass && sr->fd_pass && sr->fdv_pass;
+        sr->host_limited = measured && y1564_host_limited(trial.host_stall_max_ms, &service->sla);
 
         if (!sr->step_pass) {
             all_steps_pass = false;
         }
 
-        y1564_log(LOG_INFO, "    Result: FLR=%.4f%% (%s), FD=%.2fms (%s), FDV=%.2fms (%s) -> %s",
+        y1564_log(LOG_INFO, "    Result: FLR=%.4f%% (%s), FD=%.2fms (%s), FDV=%.2fms (%s) -> %s%s",
                   sr->flr_pct, sr->flr_pass ? "PASS" : "FAIL", sr->fd_avg_ms,
                   sr->fd_pass ? "PASS" : "FAIL", sr->fdv_ms, sr->fdv_pass ? "PASS" : "FAIL",
-                  sr->step_pass ? "PASS" : "FAIL");
+                  sr->step_pass ? "PASS" : "FAIL", sr->host_limited ? " [host limited]" : "");
     }
 
     result->service_pass = all_steps_pass;
@@ -645,13 +681,14 @@ int y1564_perf_test(rfc2544_ctx_t *ctx, const y1564_service_t *service, uint32_t
     }
 
     /* Store results */
-    result->frames_tx = trial.frames_tx;
-    result->frames_rx = trial.frames_rx;
-    result->flr_pct   = trial.flr_pct;
-    result->fd_avg_ms = trial.fd_avg_ms;
-    result->fd_min_ms = trial.fd_min_ms;
-    result->fd_max_ms = trial.fd_max_ms;
-    result->fdv_ms    = trial.fdv_ms;
+    result->frames_tx         = trial.frames_tx;
+    result->frames_rx         = trial.frames_rx;
+    result->flr_pct           = trial.flr_pct;
+    result->fd_avg_ms         = trial.fd_avg_ms;
+    result->fd_min_ms         = trial.fd_min_ms;
+    result->fd_max_ms         = trial.fd_max_ms;
+    result->fdv_ms            = trial.fdv_ms;
+    result->host_stall_max_ms = trial.host_stall_max_ms;
 
     /* As in the configuration test, nothing sent is nothing measured (#1482). */
     bool measured = trial.frames_tx > 0;
@@ -663,14 +700,15 @@ int y1564_perf_test(rfc2544_ctx_t *ctx, const y1564_service_t *service, uint32_t
     result->fd_pass      = measured && (trial.fd_avg_ms <= service->sla.fd_threshold_ms);
     result->fdv_pass     = measured && (trial.fdv_ms <= service->sla.fdv_threshold_ms);
     result->service_pass = result->flr_pass && result->fd_pass && result->fdv_pass;
+    result->host_limited = measured && y1564_host_limited(trial.host_stall_max_ms, &service->sla);
 
     y1564_log(LOG_INFO,
               "Service Performance Test %s: FLR=%.4f%% (%s), FD=%.2fms (%s), "
-              "FDV=%.2fms (%s)",
+              "FDV=%.2fms (%s)%s",
               result->service_pass ? "PASSED" : "FAILED", result->flr_pct,
               result->flr_pass ? "PASS" : "FAIL", result->fd_avg_ms,
-              result->fd_pass ? "PASS" : "FAIL", result->fdv_ms,
-              result->fdv_pass ? "PASS" : "FAIL");
+              result->fd_pass ? "PASS" : "FAIL", result->fdv_ms, result->fdv_pass ? "PASS" : "FAIL",
+              result->host_limited ? " [host limited]" : "");
 
     return 0;
 }
@@ -784,13 +822,13 @@ void y1564_print_results(const y1564_config_result_t *config_results,
                     printf("{\"step\":%u,\"offered_rate_pct\":%.1f,\"achieved_rate_mbps\":%.2f,"
                            "\"frames_tx\":%" PRIu64 ",\"frames_rx\":%" PRIu64 ",\"flr_pct\":%.4f,"
                            "\"fd_avg_ms\":%.2f,\"fd_min_ms\":%.2f,\"fd_max_ms\":%.2f,"
-                           "\"fdv_ms\":%.2f,\"flr_pass\":%s,\"fd_pass\":%s,\"fdv_pass\":%s,"
-                           "\"step_pass\":%s}",
+                           "\"fdv_ms\":%.2f,\"host_stall_max_ms\":%.2f,\"host_limited\":%s,"
+                           "\"flr_pass\":%s,\"fd_pass\":%s,\"fdv_pass\":%s,\"step_pass\":%s}",
                            sr->step, sr->offered_rate_pct, sr->achieved_rate_mbps, sr->frames_tx,
                            sr->frames_rx, sr->flr_pct, sr->fd_avg_ms, sr->fd_min_ms, sr->fd_max_ms,
-                           sr->fdv_ms, sr->flr_pass ? "true" : "false",
-                           sr->fd_pass ? "true" : "false", sr->fdv_pass ? "true" : "false",
-                           sr->step_pass ? "true" : "false");
+                           sr->fdv_ms, sr->host_stall_max_ms, sr->host_limited ? "true" : "false",
+                           sr->flr_pass ? "true" : "false", sr->fd_pass ? "true" : "false",
+                           sr->fdv_pass ? "true" : "false", sr->step_pass ? "true" : "false");
                 }
                 printf("]}");
             }
@@ -805,9 +843,11 @@ void y1564_print_results(const y1564_config_result_t *config_results,
                 printf("{\"service_id\":%u,\"duration_sec\":%u,\"frames_tx\":%" PRIu64 ","
                        "\"frames_rx\":%" PRIu64 ",\"flr_pct\":%.4f,\"fd_avg_ms\":%.2f,"
                        "\"fd_min_ms\":%.2f,\"fd_max_ms\":%.2f,\"fdv_ms\":%.2f,"
+                       "\"host_stall_max_ms\":%.2f,\"host_limited\":%s,"
                        "\"flr_pass\":%s,\"fd_pass\":%s,\"fdv_pass\":%s,\"service_pass\":%s}",
                        pr->service_id, pr->duration_sec, pr->frames_tx, pr->frames_rx, pr->flr_pct,
                        pr->fd_avg_ms, pr->fd_min_ms, pr->fd_max_ms, pr->fdv_ms,
+                       pr->host_stall_max_ms, pr->host_limited ? "true" : "false",
                        pr->flr_pass ? "true" : "false", pr->fd_pass ? "true" : "false",
                        pr->fdv_pass ? "true" : "false", pr->service_pass ? "true" : "false");
             }
@@ -864,10 +904,11 @@ void y1564_print_results(const y1564_config_result_t *config_results,
 
             for (int i = 0; i < Y1564_CONFIG_STEPS; i++) {
                 const y1564_step_result_t *sr = &cr->steps[i];
-                printf("%-6u %7.0f%% %12.2f %15" PRIu64 " %11.4f%% %10.2f %10.2f %10s %8s\n",
+                printf("%-6u %7.0f%% %12.2f %15" PRIu64 " %11.4f%% %10.2f %10.2f %10s %8s%s\n",
                        sr->step, sr->offered_rate_pct, sr->achieved_rate_mbps, sr->frames_tx,
                        sr->flr_pct, sr->fd_avg_ms, sr->fdv_ms, sr->step_pass ? "PASS" : "FAIL",
-                       (sr->flr_pass && sr->fd_pass && sr->fdv_pass) ? "OK" : "FAIL");
+                       (sr->flr_pass && sr->fd_pass && sr->fdv_pass) ? "OK" : "FAIL",
+                       sr->host_limited ? "  HOST LIMITED" : "");
             }
         }
     }
@@ -882,9 +923,9 @@ void y1564_print_results(const y1564_config_result_t *config_results,
 
         for (uint32_t s = 0; s < service_count; s++) {
             const y1564_perf_result_t *pr = &perf_results[s];
-            printf("%-10u %10um %15" PRIu64 " %11.4f%% %10.2f %10.2f %8s\n", pr->service_id,
+            printf("%-10u %10um %15" PRIu64 " %11.4f%% %10.2f %10.2f %8s%s\n", pr->service_id,
                    pr->duration_sec / 60, pr->frames_tx, pr->flr_pct, pr->fd_avg_ms, pr->fdv_ms,
-                   pr->service_pass ? "PASS" : "FAIL");
+                   pr->service_pass ? "PASS" : "FAIL", pr->host_limited ? "  HOST LIMITED" : "");
         }
     }
 
