@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.26.23](https://github.com/MustardSeedNetworks/stem/compare/v0.26.22...v0.26.23) (2026-10-14)
+
+
+### Bug Fixes
+
+* **trafficgen:** fail a custom stream that gets no frames back ([#1693](https://github.com/MustardSeedNetworks/stem/issues/1693)) ([fd27077](https://github.com/MustardSeedNetworks/stem/commit/fd27077fbff4419c4f4778e046cee8bc2fad733c)), closes [#1563](https://github.com/MustardSeedNetworks/stem/issues/1563)
+
+
+### Miscellaneous
+
+* **deps:** update node.js to v26.11.1 ([#1695](https://github.com/MustardSeedNetworks/stem/issues/1695)) ([236a7b5](https://github.com/MustardSeedNetworks/stem/commit/236a7b5813ddecbc57089ecb7332d1588310f84a))
+
 ## [0.26.22](https://github.com/MustardSeedNetworks/stem/compare/v0.26.21...v0.26.22) (2026-10-13)
 
 
