@@ -21,6 +21,12 @@ import (
 const (
 	vethMaster    = "stmxdp0"
 	vethReflector = "stmxdp1"
+	// Fixed, locally administered MACs. A kernel-random MAC is one udev's
+	// MACAddressPolicy=persistent rewrites some time after the link appears,
+	// and a MAC change on the test master flushes its neighbour table,
+	// permanent entries included (stem#1692).
+	masterMAC     = "02:57:45:4d:00:01"
+	reflectorMAC  = "02:57:45:4d:00:02"
 	masterIP      = "10.251.32.1"
 	reflectorIP   = "10.251.32.2"
 	reflectorPort = 3842
@@ -60,7 +66,6 @@ func newReflectedLink(t *testing.T, queues int, reflectorAFXDP bool) *Context {
 	}
 	t.Cleanup(reflector.Stop)
 
-	// After the reflector starts: its socket setup flushes the entry.
 	return newLinkMaster(t)
 }
 
@@ -69,8 +74,9 @@ func newReflectedLink(t *testing.T, queues int, reflectorAFXDP bool) *Context {
 func addVethPair(t *testing.T, queues int) {
 	t.Helper()
 	n := strconv.Itoa(queues)
-	ip(t, "link", "add", vethMaster, "numrxqueues", n, "numtxqueues", n,
-		"type", "veth", "peer", "name", vethReflector, "numrxqueues", n, "numtxqueues", n)
+	ip(t, "link", "add", vethMaster, "address", masterMAC, "numrxqueues", n, "numtxqueues", n,
+		"type", "veth", "peer", "name", vethReflector, "address", reflectorMAC,
+		"numrxqueues", n, "numtxqueues", n)
 	t.Cleanup(func() { _ = exec.Command("ip", "link", "del", vethMaster).Run() })
 	ip(t, "addr", "add", masterIP+"/24", "dev", vethMaster)
 	ip(t, "link", "set", vethMaster, "up")
@@ -82,13 +88,7 @@ func addVethPair(t *testing.T, queues int) {
 // the neighbour entry ARP would have made.
 func newLinkMaster(t *testing.T) *Context {
 	t.Helper()
-	var links []struct {
-		Address string `json:"address"`
-	}
-	if err := json.Unmarshal(ip(t, "-j", "link", "show", "dev", vethReflector), &links); err != nil || len(links) != 1 {
-		t.Fatalf("read %s MAC: %v (%d links)", vethReflector, err, len(links))
-	}
-	ip(t, "neigh", "replace", reflectorIP, "lladdr", links[0].Address, "dev", vethMaster, "nud", "permanent")
+	ip(t, "neigh", "replace", reflectorIP, "lladdr", reflectorMAC, "dev", vethMaster, "nud", "permanent")
 
 	master, err := NewContext(vethMaster)
 	if err != nil {
