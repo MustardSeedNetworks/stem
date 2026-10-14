@@ -179,9 +179,9 @@ ifeq ($(UNAME),Linux)
 else ifeq ($(UNAME),Darwin)
 	@echo "Building C tests (common code only, macOS)..."
 	mkdir -p bin
-	$(CC) $(CFLAGS) -DSTUB_PLATFORM -o bin/test_pacing tests/c/test_pacing.c $(C_PACING_SRCS) $(C_LDFLAGS)
-	$(CC) $(CFLAGS) -DSTUB_PLATFORM -o bin/test_packet_parse tests/c/test_packet_parse.c src/dataplane/common/packet.c $(C_LDFLAGS)
-	$(CC) $(CFLAGS) -DSTUB_PLATFORM -o bin/test_netally_reflector tests/c/test_netally_reflector.c \
+	$(CC) $(CFLAGS) -o bin/test_pacing tests/c/test_pacing.c $(C_PACING_SRCS) $(C_LDFLAGS)
+	$(CC) $(CFLAGS) -o bin/test_packet_parse tests/c/test_packet_parse.c src/dataplane/common/packet.c $(C_LDFLAGS)
+	$(CC) $(CFLAGS) -o bin/test_netally_reflector tests/c/test_netally_reflector.c \
 		src/reflector/netally.c src/reflector/packet.c src/reflector/util.c $(C_LDFLAGS)
 	@echo "Running C tests..."
 	./bin/test_pacing

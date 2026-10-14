@@ -104,7 +104,7 @@ else ifeq ($(UNAME),Darwin)
 	mkdir -p build
 	$(eval C_MACOS_SRCS := $(filter-out src/dataplane/common/nic_detect.c src/dataplane/common/packet.c src/dataplane/common/core.c src/dataplane/common/main.c,$(C_COMMON_SRCS)))
 	@for src in $(C_MACOS_SRCS); do \
-		$(CC) $(CFLAGS) -DSTUB_PLATFORM -c $$src -o $${src%.c}.o; \
+		$(CC) $(CFLAGS) -c $$src -o $${src%.c}.o; \
 	done
 	ar rcs build/libstem-common.a $(C_MACOS_SRCS:.c=.o)
 	@rm -f src/dataplane/common/*.o
