@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.26.26](https://github.com/MustardSeedNetworks/stem/compare/v0.26.25...v0.26.26) (2026-10-14)
+
+
+### Bug Fixes
+
+* **ci:** skip the reflect bench gate when the benchmark binaries are identical ([#1705](https://github.com/MustardSeedNetworks/stem/issues/1705)) ([cb14814](https://github.com/MustardSeedNetworks/stem/commit/cb1481418046ab7f1ed653956c9f790922e25f9e)), closes [#1697](https://github.com/MustardSeedNetworks/stem/issues/1697)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1706](https://github.com/MustardSeedNetworks/stem/issues/1706)) ([5c1931a](https://github.com/MustardSeedNetworks/stem/commit/5c1931a928216e964c50872c6740dbe8d78cf2cf))
+
 ## [0.26.25](https://github.com/MustardSeedNetworks/stem/compare/v0.26.24...v0.26.25) (2026-10-14)
 
 
