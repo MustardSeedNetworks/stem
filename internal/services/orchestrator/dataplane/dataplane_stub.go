@@ -377,7 +377,7 @@ type MEFConfig struct {
 	FLRThresholdPct   float64
 	AvailabilityPct   float64
 	ConfigDurationSec uint32
-	PerfDurationMin   uint32
+	PerfDurationSec   uint32
 	FrameSizes        []uint32
 }
 

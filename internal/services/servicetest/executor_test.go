@@ -439,19 +439,18 @@ func TestBuildMEFConfig(t *testing.T) {
 		cfg := &modtypes.TestConfig{
 			Interface: "eth0",
 			FrameSize: 1518,
-			Duration:  0,
+			Duration:  1800,
 			Params: map[string]any{
 				"service_id":          "test-service-1",
 				"cir":                 500.0,
 				"eir":                 100.0,
 				"cbs":                 uint32(24000),
 				"ebs":                 uint32(12000),
-				"fd_threshold_us":     5000.0,
-				"fdv_threshold_us":    2500.0,
+				"fd_threshold_ms":     5.0,
+				"fdv_threshold_ms":    2.5,
 				"flr_threshold_pct":   0.001,
 				"availability_pct":    99.9,
 				"config_duration_sec": uint32(120),
-				"perf_duration_min":   uint32(30),
 				"cos":                 uint32(4),
 			},
 		}
@@ -470,7 +469,7 @@ func TestBuildMEFConfig(t *testing.T) {
 		assertMEFFrameSizes(t, mefCfg, []uint32{512})
 	})
 
-	t.Run("with duration in seconds (converts to minutes)", func(t *testing.T) {
+	t.Run("with duration in seconds", func(t *testing.T) {
 		cfg := &modtypes.TestConfig{
 			Interface: "eth0",
 			FrameSize: 0,
@@ -478,7 +477,7 @@ func TestBuildMEFConfig(t *testing.T) {
 			Params:    nil,
 		}
 		mefCfg := servicetest.BuildMEFConfigForTest(exec, cfg)
-		assertMEFPerfDuration(t, mefCfg, 30)
+		assertMEFPerfDuration(t, mefCfg, 1800)
 	})
 
 	t.Run("with duration less than a minute", func(t *testing.T) {
@@ -618,9 +617,9 @@ func assertMEFDefaults(t *testing.T, mefCfg *dataplane.MEFConfig) {
 	if mefCfg.ConfigDurationSec != defaultConfigDuration {
 		t.Errorf("ConfigDurationSec = %d, want %d", mefCfg.ConfigDurationSec, defaultConfigDuration)
 	}
-	defaultPerfDuration := servicetest.DefaultMEFPerfDurationMinForTest()
-	if mefCfg.PerfDurationMin != defaultPerfDuration {
-		t.Errorf("PerfDurationMin = %d, want %d", mefCfg.PerfDurationMin, defaultPerfDuration)
+	defaultPerfDuration := servicetest.DefaultPerfDurationSecForTest()
+	if mefCfg.PerfDurationSec != defaultPerfDuration {
+		t.Errorf("PerfDurationSec = %d, want %d", mefCfg.PerfDurationSec, defaultPerfDuration)
 	}
 	defaultAvailability := servicetest.DefaultAvailabilityPctForTest()
 	if mefCfg.AvailabilityPct != defaultAvailability {
@@ -661,8 +660,8 @@ func assertMEFCustomParams(t *testing.T, mefCfg *dataplane.MEFConfig) {
 	if mefCfg.ConfigDurationSec != 120 {
 		t.Errorf("ConfigDurationSec = %d, want 120", mefCfg.ConfigDurationSec)
 	}
-	if mefCfg.PerfDurationMin != 30 {
-		t.Errorf("PerfDurationMin = %d, want 30", mefCfg.PerfDurationMin)
+	if mefCfg.PerfDurationSec != 1800 {
+		t.Errorf("PerfDurationSec = %d, want 1800", mefCfg.PerfDurationSec)
 	}
 	if mefCfg.CoS != 4 {
 		t.Errorf("CoS = %d, want 4", mefCfg.CoS)
@@ -686,8 +685,8 @@ func assertMEFFrameSizes(t *testing.T, mefCfg *dataplane.MEFConfig, expected []u
 func assertMEFPerfDuration(t *testing.T, mefCfg *dataplane.MEFConfig, expected uint32) {
 	t.Helper()
 
-	if mefCfg.PerfDurationMin != expected {
-		t.Errorf("PerfDurationMin = %d, want %d", mefCfg.PerfDurationMin, expected)
+	if mefCfg.PerfDurationSec != expected {
+		t.Errorf("PerfDurationSec = %d, want %d", mefCfg.PerfDurationSec, expected)
 	}
 }
 
@@ -1128,9 +1127,9 @@ func TestBuildMEFConfigDurationEdgeCases(t *testing.T) {
 		mefCfg := servicetest.BuildMEFConfigForTest(exec, cfg)
 
 		// Negative duration should not override default.
-		defaultPerfDuration := servicetest.DefaultMEFPerfDurationMinForTest()
-		if mefCfg.PerfDurationMin != defaultPerfDuration {
-			t.Errorf("PerfDurationMin = %d, want %d (default)", mefCfg.PerfDurationMin, defaultPerfDuration)
+		defaultPerfDuration := servicetest.DefaultPerfDurationSecForTest()
+		if mefCfg.PerfDurationSec != defaultPerfDuration {
+			t.Errorf("PerfDurationSec = %d, want %d (default)", mefCfg.PerfDurationSec, defaultPerfDuration)
 		}
 	})
 
@@ -1142,9 +1141,9 @@ func TestBuildMEFConfigDurationEdgeCases(t *testing.T) {
 		}
 		mefCfg := servicetest.BuildMEFConfigForTest(exec, cfg)
 
-		defaultPerfDuration := servicetest.DefaultMEFPerfDurationMinForTest()
-		if mefCfg.PerfDurationMin != defaultPerfDuration {
-			t.Errorf("PerfDurationMin = %d, want %d (default)", mefCfg.PerfDurationMin, defaultPerfDuration)
+		defaultPerfDuration := servicetest.DefaultPerfDurationSecForTest()
+		if mefCfg.PerfDurationSec != defaultPerfDuration {
+			t.Errorf("PerfDurationSec = %d, want %d (default)", mefCfg.PerfDurationSec, defaultPerfDuration)
 		}
 	})
 
@@ -1156,9 +1155,8 @@ func TestBuildMEFConfigDurationEdgeCases(t *testing.T) {
 		}
 		mefCfg := servicetest.BuildMEFConfigForTest(exec, cfg)
 
-		// 60 / 60 = 1 minute.
-		if mefCfg.PerfDurationMin != 1 {
-			t.Errorf("PerfDurationMin = %d, want 1", mefCfg.PerfDurationMin)
+		if mefCfg.PerfDurationSec != 60 {
+			t.Errorf("PerfDurationSec = %d, want 60", mefCfg.PerfDurationSec)
 		}
 	})
 }
@@ -1728,8 +1726,10 @@ func TestBuildMEFConfigWithFrameSizes(t *testing.T) {
 	}
 }
 
-// TestBuildMEFConfigDurationConversion tests line 293-301 duration conversion paths.
-func TestBuildMEFConfigDurationConversion(t *testing.T) {
+// TestBuildMEFConfigPerfDurationIsSeconds pins the performance duration as
+// the seconds the operator asked for: it used to be divided into minutes, and
+// a sub-minute duration was taken as minutes, so 1 s ran for a minute.
+func TestBuildMEFConfigPerfDurationIsSeconds(t *testing.T) {
 	exec := servicetest.NewExecutorWithDataplane(nil)
 
 	t.Run("duration dividable by 60", func(t *testing.T) {
@@ -1740,9 +1740,8 @@ func TestBuildMEFConfigDurationConversion(t *testing.T) {
 		}
 		mefCfg := servicetest.BuildMEFConfigForTest(exec, cfg)
 
-		// 3600 / 60 = 60 minutes
-		if mefCfg.PerfDurationMin != 60 {
-			t.Errorf("PerfDurationMin = %d, want 60", mefCfg.PerfDurationMin)
+		if mefCfg.PerfDurationSec != 3600 {
+			t.Errorf("PerfDurationSec = %d, want 3600", mefCfg.PerfDurationSec)
 		}
 	})
 
@@ -1754,9 +1753,8 @@ func TestBuildMEFConfigDurationConversion(t *testing.T) {
 		}
 		mefCfg := servicetest.BuildMEFConfigForTest(exec, cfg)
 
-		// 1 / 60 = 0, so it should use 1 directly (line 296)
-		if mefCfg.PerfDurationMin != 1 {
-			t.Errorf("PerfDurationMin = %d, want 1", mefCfg.PerfDurationMin)
+		if mefCfg.PerfDurationSec != 1 {
+			t.Errorf("PerfDurationSec = %d, want 1", mefCfg.PerfDurationSec)
 		}
 	})
 }
@@ -1936,9 +1934,9 @@ func TestBuildMEFConfigAllDefaults(t *testing.T) {
 		t.Errorf("ConfigDurationSec = %d, want %d", mefCfg.ConfigDurationSec, defaultConfigDuration)
 	}
 
-	defaultPerfDuration := servicetest.DefaultMEFPerfDurationMinForTest()
-	if mefCfg.PerfDurationMin != defaultPerfDuration {
-		t.Errorf("PerfDurationMin = %d, want %d", mefCfg.PerfDurationMin, defaultPerfDuration)
+	defaultPerfDuration := servicetest.DefaultPerfDurationSecForTest()
+	if mefCfg.PerfDurationSec != defaultPerfDuration {
+		t.Errorf("PerfDurationSec = %d, want %d", mefCfg.PerfDurationSec, defaultPerfDuration)
 	}
 }
 

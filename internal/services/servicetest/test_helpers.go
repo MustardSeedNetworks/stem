@@ -72,11 +72,6 @@ func DefaultMEFConfigDurationSecForTest() uint32 {
 	return defaultMEFConfigDurationSec
 }
 
-// DefaultMEFPerfDurationMinForTest exposes default MEF perf duration.
-func DefaultMEFPerfDurationMinForTest() uint32 {
-	return defaultMEFPerfDurationMin
-}
-
 // DefaultAvailabilityPctForTest exposes default availability percentage.
 func DefaultAvailabilityPctForTest() float64 {
 	return defaultAvailabilityPct

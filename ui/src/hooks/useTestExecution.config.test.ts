@@ -48,6 +48,13 @@ describe('buildTestConfig', () => {
     );
   });
 
+  it.each(['mef_config', 'mef_perf', 'mef'])('sends %s under the y1564 block', (testType) => {
+    const built = buildTestConfig(testType, configs);
+
+    expect(Object.keys(built ?? {})).toEqual(['y1564']);
+    expect((built as Record<string, unknown>).y1564).toBe(configs.y1564);
+  });
+
   it('sends custom_stream under trafficGen rather than by prefix', () => {
     const built = buildTestConfig('custom_stream', configs);
 

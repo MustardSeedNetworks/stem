@@ -219,6 +219,8 @@ export function buildTestConfig(
     rfc2889: { rfc2889: configs.rfc2889 },
     rfc6349: { rfc6349: configs.rfc6349 },
     y1564: { y1564: configs.y1564 },
+    // MEF 48/49 service activation is configured by the Y.1564 form.
+    mef: { y1564: configs.y1564 },
     y1731: { y1731: configs.y1731 },
     tsn: { tsn: configs.tsn },
   };

@@ -150,6 +150,7 @@ TEST(mef_default_config_values)
     ASSERT_GT(config.bw_profile.cir_kbps, 0);
     ASSERT_GE(config.bw_profile.eir_kbps, 0);
     ASSERT_GT(config.bw_profile.cbs_bytes, 0);
+    ASSERT_EQ(15 * 60, config.perf_test_duration_sec);
 }
 
 TEST(mef_default_config_null)

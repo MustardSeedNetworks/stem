@@ -156,7 +156,7 @@ func convertToModuleConfig(iface, testType string, cfg *TestConfig) *modtypes.Te
 		populateRFC2889Params(modCfg, cfg.RFC2889)
 	case isRFC6349Test(testType) && cfg.RFC6349 != nil:
 		populateRFC6349Params(modCfg, cfg.RFC6349)
-	case IsY1564Test(testType) && cfg.Y1564 != nil:
+	case IsServiceActivationTest(testType) && cfg.Y1564 != nil:
 		populateY1564Params(modCfg, cfg.Y1564)
 	case isY1731Test(testType) && cfg.Y1731 != nil:
 		populateY1731Params(modCfg, cfg.Y1731)
@@ -186,9 +186,11 @@ func isRFC6349Test(testType string) bool {
 	return strings.HasPrefix(testType, "rfc6349")
 }
 
-// IsY1564Test reports whether testType reads TestConfig.Y1564.
-func IsY1564Test(testType string) bool {
-	return strings.HasPrefix(testType, "y1564")
+// IsServiceActivationTest reports whether testType reads TestConfig.Y1564:
+// Y.1564 and MEF 48/49 service activation share one service definition
+// (stem#1556).
+func IsServiceActivationTest(testType string) bool {
+	return strings.HasPrefix(testType, "y1564") || strings.HasPrefix(testType, "mef")
 }
 
 func isY1731Test(testType string) bool {

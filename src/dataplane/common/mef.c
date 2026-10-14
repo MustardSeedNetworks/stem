@@ -90,7 +90,7 @@ void mef_default_config(mef_config_t *config)
     config->num_frame_sizes = 3;
 
     config->config_test_duration_sec = 60;
-    config->perf_test_duration_min   = 15; /* 15 minutes per MEF */
+    config->perf_test_duration_sec   = 15 * 60; /* 15 minutes per MEF */
 }
 
 /* ============================================================================
@@ -204,13 +204,11 @@ int mef_perf_test(rfc2544_ctx_t *ctx, const mef_config_t *config, mef_perf_resul
     memset(result, 0, sizeof(*result));
     snprintf(result->service_id, sizeof(result->service_id), "%s", config->service_id);
 
-    /* Convert minutes to seconds */
-    uint32_t duration_sec = config->perf_test_duration_min * 60;
+    uint32_t duration_sec = config->perf_test_duration_sec;
     result->duration_sec  = duration_sec;
 
     rfc2544_log(LOG_INFO, "=== MEF 48 Service Performance Test ===");
-    rfc2544_log(LOG_INFO, "Service: %s, Duration: %u min (%u sec)", config->service_id,
-                config->perf_test_duration_min, duration_sec);
+    rfc2544_log(LOG_INFO, "Service: %s, Duration: %u sec", config->service_id, duration_sec);
 
     /* Validate line_rate to prevent division by zero */
     if (ctx->line_rate == 0) {
