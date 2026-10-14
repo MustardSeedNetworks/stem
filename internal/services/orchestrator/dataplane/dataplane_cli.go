@@ -56,26 +56,39 @@ func (c *Context) RunThroughputTest() (*ThroughputResultCLI, error) {
 	}, nil
 }
 
-// RunLatencyTest runs latency tests at multiple load levels.
+// RunLatencyTest determines the frame size's throughput, then measures latency
+// at each load level, a percentage of that throughput.
 func (c *Context) RunLatencyTest(loadLevels []float64) ([]LatencyResultCLI, error) {
-	var results []LatencyResultCLI
+	throughput, err := c.runThroughputTestInternal(c.frameSize)
+	if err != nil {
+		return nil, err
+	}
+	if len(throughput) == 0 {
+		return nil, errors.New("latency test needs a throughput rate: no throughput results")
+	}
+	rates, err := latencyOfferedRates(throughput[0], loadLevels)
+	if err != nil {
+		return nil, err
+	}
 
-	for _, load := range loadLevels {
-		result, err := c.runLatencyTestInternal(c.frameSize, load)
-		if err != nil {
+	var results []LatencyResultCLI
+	for i, load := range loadLevels {
+		result, trialErr := c.runLatencyTestInternal(c.frameSize, rates[i])
+		if trialErr != nil {
 			continue
 		}
 		results = append(results, LatencyResultCLI{
-			FrameSize: c.frameSize,
-			LoadPct:   load,
-			Latency:   result.Latency,
+			FrameSize:      c.frameSize,
+			LoadPct:        load,
+			OfferedRatePct: rates[i],
+			Latency:        result.Latency,
 		})
 	}
 
 	if len(results) == 0 {
 		return nil, errors.New("no latency results")
 	}
-	if err := latencyVerdict(results); err != nil {
+	if err = latencyVerdict(results); err != nil {
 		return nil, err
 	}
 

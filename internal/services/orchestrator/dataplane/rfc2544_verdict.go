@@ -19,6 +19,9 @@ var (
 	// more than the acceptable loss at every rate it tried (#1466).
 	ErrThroughputNoPassingRate = errors.New(
 		"throughput test found no rate within the acceptable loss")
+	// ErrLatencyLoadLevel reports a latency load level outside (0, 100] % of
+	// the measured throughput (#1680).
+	ErrLatencyLoadLevel = errors.New("latency load level must be above 0 and at most 100 % of throughput")
 )
 
 // throughputVerdict decides whether a completed search measured a throughput.
@@ -37,6 +40,29 @@ func throughputVerdict(r ThroughputResult) error {
 	default:
 		return ErrThroughputNoPassingRate
 	}
+}
+
+// fullThroughputPct is the latency load level that offers the measured
+// throughput itself.
+const fullThroughputPct = 100.0
+
+// latencyOfferedRates turns latency load levels, which are percentages of the
+// measured throughput, into the line-rate percentages the dataplane offers.
+// RFC 2544 §26.2 times frames at the throughput rate; a percentage of line
+// rate overruns any path slower than the interface and measures queueing
+// instead (#1680).
+func latencyOfferedRates(throughput ThroughputResult, levels []float64) ([]float64, error) {
+	if err := throughputVerdict(throughput); err != nil {
+		return nil, fmt.Errorf("latency test needs a throughput rate: %w", err)
+	}
+	rates := make([]float64, len(levels))
+	for i, level := range levels {
+		if level <= 0 || level > fullThroughputPct {
+			return nil, fmt.Errorf("%w: got %v", ErrLatencyLoadLevel, level)
+		}
+		rates[i] = throughput.OfferedRatePct * level / fullThroughputPct
+	}
+	return rates, nil
 }
 
 // latencyVerdict fails a latency test in which no load level timed a single

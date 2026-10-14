@@ -29,9 +29,10 @@ const (
 	defaultOverloadSec    = 60
 )
 
-// defaultLoadLevels returns default load levels for latency tests.
+// defaultLoadLevels returns the latency load levels, as percentages of the
+// measured throughput. RFC 2544 §26.2 measures latency at the throughput rate.
 func defaultLoadLevels() []float64 {
-	return []float64{10, 25, 50, 75, 90, 100}
+	return []float64{100}
 }
 
 // Executor wraps the Benchmark module with test execution capability.
