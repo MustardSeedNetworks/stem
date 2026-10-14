@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.26.24](https://github.com/MustardSeedNetworks/stem/compare/v0.26.23...v0.26.24) (2026-10-14)
+
+
+### Bug Fixes
+
+* **rfc2544:** time latency at the measured throughput, not at line rate ([#1699](https://github.com/MustardSeedNetworks/stem/issues/1699)) ([eed1189](https://github.com/MustardSeedNetworks/stem/commit/eed11894ca0eb55ee65d2ac1187708e6317af33d)), closes [#1680](https://github.com/MustardSeedNetworks/stem/issues/1680)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1698](https://github.com/MustardSeedNetworks/stem/issues/1698)) ([41272f6](https://github.com/MustardSeedNetworks/stem/commit/41272f6c846e7a47bf66e5e03c37ae166195a2ff))
+
 ## [0.26.23](https://github.com/MustardSeedNetworks/stem/compare/v0.26.22...v0.26.23) (2026-10-14)
 
 
