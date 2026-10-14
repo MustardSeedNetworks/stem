@@ -133,8 +133,8 @@ class PendingRelease(unittest.TestCase):
         self.addCleanup(self.repo.close)
 
     def test_untagged_release_missing_a_commit_beside_it_is_red(self) -> None:
-        """A pull_request run on the release PR: main moved on while the PR
-        sat open, and the merge ref joins the two."""
+        """A merge-group run on the release PR: main moved on while the PR
+        sat open, and the queue builds it on top of that commit."""
         self.repo.commit("fix: correct a real defect (#2)")
         self.repo.git("switch", "--quiet", "-c", "release-please--branches--main")
         self.repo.changelog(
