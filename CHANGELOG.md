@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.26.25](https://github.com/MustardSeedNetworks/stem/compare/v0.26.24...v0.26.25) (2026-10-14)
+
+
+### Bug Fixes
+
+* **ci:** let the release-notes guard pass commits merged after an untagged release ([#1704](https://github.com/MustardSeedNetworks/stem/issues/1704)) ([6dc699d](https://github.com/MustardSeedNetworks/stem/commit/6dc699d02cffd83e2716175f2b60603978791c84)), closes [#1702](https://github.com/MustardSeedNetworks/stem/issues/1702)
+* **y1564:** take FDV as the 99.9th-percentile delay minus the minimum ([#1701](https://github.com/MustardSeedNetworks/stem/issues/1701)) ([4fd80e6](https://github.com/MustardSeedNetworks/stem/commit/4fd80e60f81352b09df081eb87e02b14e03e1846))
+* **y1731:** send the configured frame size on every trial ([#1694](https://github.com/MustardSeedNetworks/stem/issues/1694)) ([99f2146](https://github.com/MustardSeedNetworks/stem/commit/99f2146c717dec6c56a6ea7cc86d9ec300957d7d)), closes [#1555](https://github.com/MustardSeedNetworks/stem/issues/1555)
+
 ## [0.26.24](https://github.com/MustardSeedNetworks/stem/compare/v0.26.23...v0.26.24) (2026-10-14)
 
 
