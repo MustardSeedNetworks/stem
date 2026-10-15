@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.27.7](https://github.com/MustardSeedNetworks/stem/compare/v0.27.6...v0.27.7) (2026-10-15)
+
+
+### Bug Fixes
+
+* **dataplane:** pass the test master host's own traffic to the stack under AF_XDP ([#1773](https://github.com/MustardSeedNetworks/stem/issues/1773)) ([bf13829](https://github.com/MustardSeedNetworks/stem/commit/bf1382972a23bbe66b2d9b2e492965f467cff755)), closes [#1767](https://github.com/MustardSeedNetworks/stem/issues/1767)
+* **license:** adopt the foundation v0.9.0 device fingerprint ([#1774](https://github.com/MustardSeedNetworks/stem/issues/1774)) ([127b8e1](https://github.com/MustardSeedNetworks/stem/commit/127b8e1fbacb0a931a4d9086a0d0592de1c11efb))
+* **reflector:** pass the host's own traffic to the stack under AF_XDP ([#1768](https://github.com/MustardSeedNetworks/stem/issues/1768)) ([3a5bd25](https://github.com/MustardSeedNetworks/stem/commit/3a5bd25266d9b75a898b2ac14030d54bdb56a55b))
+
+
+### Continuous Integration
+
+* **conformance:** pin ci-conformance to .github v1.14.0 ([#1772](https://github.com/MustardSeedNetworks/stem/issues/1772)) ([80fa716](https://github.com/MustardSeedNetworks/stem/commit/80fa716181361fdfca3d051d535f51e27c6aaa04)), closes [#1771](https://github.com/MustardSeedNetworks/stem/issues/1771)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1769](https://github.com/MustardSeedNetworks/stem/issues/1769)) ([6907fef](https://github.com/MustardSeedNetworks/stem/commit/6907fef122f01fbbe3868e38c53106004da996a9))
+
 ## [0.27.6](https://github.com/MustardSeedNetworks/stem/compare/v0.27.5...v0.27.6) (2026-10-15)
 
 
