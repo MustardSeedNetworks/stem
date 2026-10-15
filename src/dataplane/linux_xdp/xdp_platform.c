@@ -210,6 +210,15 @@ static int xdp_init(rfc2544_ctx_t *ctx, worker_ctx_t *wctx)
         return caps;
     }
 
+    /* The XDP program redirects only the replies to the test's source port;
+     * with any port it would take the host's ARP, SSH and DHCP for as long as
+     * the platform stays up (stem#1767). */
+    if (ctx->source_port == 0) {
+        fprintf(stderr, "[xdp] AF_XDP requires a source port to leave the host's own traffic "
+                        "alone\n");
+        return -EINVAL;
+    }
+
     /* RSS spreads the reflected stream over every receive queue, so a socket
      * on queue 0 alone would count the rest as loss (stem#1533). */
     int num_queues = rx_queue_count(ctx->config.interface);
@@ -293,8 +302,9 @@ static int xdp_init(rfc2544_ctx_t *ctx, worker_ctx_t *wctx)
 
     /* Without a program nothing reaches an RX ring (stem#1328). Ours is
      * attached before any socket binds, and each socket joins its map under
-     * its queue, so every queue's frames reach the socket bound to it. */
-    ret = stem_xsk_prog_attach(&pctx->xsk_prog, pctx->if_index, (uint32_t)num_queues, 0);
+     * its queue, so every queue's replies reach the socket bound to it. */
+    ret = stem_xsk_prog_attach(&pctx->xsk_prog, pctx->if_index, (uint32_t)num_queues,
+                               ctx->source_port);
     if (ret) {
         fprintf(stderr, "[xdp] Failed to attach the XDP program to %s: %s\n", ctx->config.interface,
                 stem_strerror(-ret));
