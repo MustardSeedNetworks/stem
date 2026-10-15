@@ -134,33 +134,10 @@ describe('TrafficGenConfigSchema', () => {
     duration: 60,
     warmup: 0,
     streamId: 0,
-    burstMode: false,
-    burstSize: 1,
-    interBurstGapUs: 0,
-    srcMac: '',
-    dstMac: '',
-    vlanId: 0,
-    vlanPriority: 0,
   };
 
   it('accepts a default-shaped config', () => {
     expect(v.safeParse(TrafficGenConfigSchema, valid).success).toBe(true);
-  });
-
-  it('accepts a valid MAC address', () => {
-    const r = v.safeParse(TrafficGenConfigSchema, {
-      ...valid,
-      srcMac: 'AA:BB:CC:DD:EE:FF',
-    });
-    expect(r.success).toBe(true);
-  });
-
-  it('rejects malformed MAC', () => {
-    const r = v.safeParse(TrafficGenConfigSchema, {
-      ...valid,
-      srcMac: 'not-a-mac',
-    });
-    expect(r.success).toBe(false);
   });
 
   it('rejects rate > 100%', () => {

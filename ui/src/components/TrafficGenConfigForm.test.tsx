@@ -34,13 +34,17 @@ describe('TrafficGenConfigForm — i18n', () => {
   it('renders its labels from the locale files', () => {
     renderForm();
     expect(screen.getByText('Traffic Parameters')).toBeInTheDocument();
-    expect(screen.getByText('MAC Addresses (Optional)')).toBeInTheDocument();
+    expect(screen.getByText('Stream Configuration')).toBeInTheDocument();
   });
 
-  it('offers the stream id with Custom Stream, and no burst settings the daemon drops', () => {
+  it('offers the stream id with Custom Stream, and nothing the generator does not apply', () => {
     renderForm();
-    expect(screen.getByText('Stream Configuration')).toBeInTheDocument();
+    expect(screen.getByRole('spinbutton', { name: /^Stream ID/ })).toBeInTheDocument();
     expect(screen.queryByText('Enable burst mode')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/VLAN ID/)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/VLAN Priority/)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/Source MAC/)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/Destination MAC/)).not.toBeInTheDocument();
   });
 
   it('follows the active language instead of staying English', async () => {
@@ -48,7 +52,7 @@ describe('TrafficGenConfigForm — i18n', () => {
     renderForm();
 
     expect(screen.getByText('Parámetros de tráfico')).toBeInTheDocument();
-    expect(screen.getByText('Direcciones MAC (opcional)')).toBeInTheDocument();
+    expect(screen.getByText('Configuración del flujo')).toBeInTheDocument();
     expect(screen.queryByText('Traffic Parameters')).not.toBeInTheDocument();
   });
 

@@ -109,26 +109,6 @@
     "streamId": {
       "name": "Stream ID",
       "description": "Unique identifier for traffic stream"
-    },
-    "burstMode": {
-      "name": "Burst Mode",
-      "description": "Enable burst traffic mode"
-    },
-    "burstSize": {
-      "name": "Burst Size",
-      "description": "Number of frames per burst"
-    },
-    "interBurstGapUs": {
-      "name": "Inter-Burst Gap",
-      "description": "Gap between bursts in microseconds"
-    },
-    "srcMac": {
-      "name": "Source MAC",
-      "description": "Source MAC address for generated frames"
-    },
-    "dstMac": {
-      "name": "Destination MAC",
-      "description": "Destination MAC address for generated frames"
     }
   }
 }

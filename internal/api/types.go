@@ -210,18 +210,11 @@ type TSNTestConfig struct {
 
 // TrafficGenTestConfig matches frontend TrafficGenConfig.
 type TrafficGenTestConfig struct {
-	FrameSize       uint32  `json:"frameSize"`
-	RatePct         float64 `json:"ratePct"`
-	Duration        uint32  `json:"duration"`
-	Warmup          uint32  `json:"warmup"`
-	StreamID        uint32  `json:"streamId"`
-	BurstMode       bool    `json:"burstMode"`
-	BurstSize       uint32  `json:"burstSize"`
-	InterBurstGapUs uint32  `json:"interBurstGapUs"`
-	SrcMac          string  `json:"srcMac"`
-	DstMac          string  `json:"dstMac"`
-	VlanID          uint16  `json:"vlanId"`
-	VlanPriority    uint8   `json:"vlanPriority"`
+	FrameSize uint32  `json:"frameSize"`
+	RatePct   float64 `json:"ratePct"`
+	Duration  uint32  `json:"duration"`
+	Warmup    uint32  `json:"warmup"`
+	StreamID  uint32  `json:"streamId"`
 }
 
 // TestStartResponse confirms that the server accepted a run plan.

@@ -385,22 +385,11 @@
         "title": "Configuración del flujo",
         "id": "ID del flujo"
       },
-      "vlan": {
-        "title": "Configuración de VLAN",
-        "id": "VLAN ID",
-        "priority": "Prioridad de VLAN"
-      },
-      "mac": {
-        "title": "Direcciones MAC (opcional)",
-        "src": "MAC de origen",
-        "dst": "MAC de destino"
-      },
       "tests": {
         "customStream": "Flujo personalizado"
       },
       "summary": {
         "frame": "Trama: {{size}} B @ {{rate}} % de la tasa de línea (~{{throughput}})",
-        "vlan": "VLAN: {{vlan}} (prioridad {{priority}})",
         "duration": "Duración: {{duration}} s + {{warmup}} s de calentamiento"
       }
     },

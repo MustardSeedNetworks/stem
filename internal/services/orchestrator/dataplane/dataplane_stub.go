@@ -520,21 +520,15 @@ type TSNFullResult struct {
 
 // Traffic generation configuration and results
 
-// TrafficGenConfig holds raw traffic-generation parameters (rate, burst
-// pattern, VLAN tagging) used independent of any specific RFC/ITU-T test.
+// TrafficGenConfig holds raw traffic-generation parameters (frame size, rate,
+// timing, stream id) used independent of any specific RFC/ITU-T test. The
+// generator has no burst pacing or VLAN tagging, so neither is offered.
 type TrafficGenConfig struct {
-	FrameSize       uint32
-	RatePct         float64
-	DurationSec     uint32
-	WarmupSec       uint32
-	StreamID        uint32
-	BurstMode       bool
-	BurstSize       uint32
-	InterBurstGapUs uint32
-	SrcMac          string
-	DstMac          string
-	VlanID          uint16
-	VlanPriority    uint8
+	FrameSize   uint32
+	RatePct     float64
+	DurationSec uint32
+	WarmupSec   uint32
+	StreamID    uint32
 }
 
 // TrafficGenResult is the outcome of a raw traffic-generation run: packets

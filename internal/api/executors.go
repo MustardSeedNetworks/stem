@@ -304,11 +304,4 @@ func populateTrafficGenParams(modCfg *modtypes.TestConfig, c *TrafficGenTestConf
 	modCfg.Params["duration_sec"] = c.Duration
 	modCfg.Params["warmup_sec"] = c.Warmup
 	modCfg.Params["stream_id"] = c.StreamID
-	modCfg.Params["burst_mode"] = c.BurstMode
-	modCfg.Params["burst_size"] = c.BurstSize
-	modCfg.Params["inter_burst_gap_us"] = c.InterBurstGapUs
-	modCfg.Params["src_mac"] = c.SrcMac
-	modCfg.Params["dst_mac"] = c.DstMac
-	modCfg.Params["vlan_id"] = c.VlanID
-	modCfg.Params["vlan_priority"] = c.VlanPriority
 }

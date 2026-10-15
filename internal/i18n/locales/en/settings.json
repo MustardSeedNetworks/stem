@@ -385,22 +385,11 @@
         "title": "Stream Configuration",
         "id": "Stream ID"
       },
-      "vlan": {
-        "title": "VLAN Configuration",
-        "id": "VLAN ID",
-        "priority": "VLAN Priority"
-      },
-      "mac": {
-        "title": "MAC Addresses (Optional)",
-        "src": "Source MAC",
-        "dst": "Destination MAC"
-      },
       "tests": {
         "customStream": "Custom Stream"
       },
       "summary": {
         "frame": "Frame: {{size}}B @ {{rate}}% line rate (~{{throughput}})",
-        "vlan": "VLAN: {{vlan}} (priority {{priority}})",
         "duration": "Duration: {{duration}}s + {{warmup}}s warmup"
       }
     },
