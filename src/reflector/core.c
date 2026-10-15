@@ -680,6 +680,15 @@ void reflector_cleanup(reflector_ctx_t *rctx)
 /* Atomic load helper for 64-bit values (thread-safe stats reading) */
 #define ATOMIC_LOAD64(x) __atomic_load_n(&(x), __ATOMIC_RELAXED)
 
+/* Caller holds the worker's stats_mutex. */
+static uint64_t take_kernel_drops(const worker_ctx_t *worker)
+{
+    if (!worker->pctx || !platform_ops || !platform_ops->take_kernel_drops) {
+        return 0;
+    }
+    return platform_ops->take_kernel_drops(worker);
+}
+
 /* Get aggregated statistics (thread-safe) */
 void reflector_get_stats(const reflector_ctx_t *rctx, reflector_stats_t *stats)
 {
@@ -696,6 +705,7 @@ void reflector_get_stats(const reflector_ctx_t *rctx, reflector_stats_t *stats)
         }
         const reflector_stats_t *ws = &worker->stats;
         pthread_mutex_lock(&worker->stats_mutex);
+        worker->stats.packets_dropped += take_kernel_drops(worker);
 
         /* Basic packet counters - use atomic loads for thread safety */
         stats->packets_received += ATOMIC_LOAD64(ws->packets_received);
@@ -771,6 +781,7 @@ void reflector_reset_stats(reflector_ctx_t *rctx)
                 continue;
             }
             pthread_mutex_lock(&rctx->workers[i].stats_mutex);
+            (void)take_kernel_drops(&rctx->workers[i]);
             memset(&rctx->workers[i].stats, 0, sizeof(reflector_stats_t));
             pthread_mutex_unlock(&rctx->workers[i].stats_mutex);
         }

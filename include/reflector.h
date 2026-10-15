@@ -339,6 +339,10 @@ typedef struct {
     int (*send_batch)(worker_ctx_t *wctx, packet_t *pkts, int num_pkts);
     /* Returns received buffers that are not passed to send_batch. */
     void (*release_batch)(worker_ctx_t *wctx, const packet_t *pkts, int num_pkts);
+    /* Frames the kernel dropped for this worker's socket since the previous
+     * call: ones it received but had no room to hand to the reflector. The
+     * caller holds the worker's stats_mutex. */
+    uint64_t (*take_kernel_drops)(const worker_ctx_t *wctx);
 } platform_ops_t;
 
 /* Function declarations */

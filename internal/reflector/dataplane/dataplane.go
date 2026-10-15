@@ -98,6 +98,7 @@ func UnsupportedReason() string {
 type Stats struct {
 	PacketsReceived  uint64
 	PacketsReflected uint64
+	PacketsDropped   uint64
 	BytesReceived    uint64
 	BytesReflected   uint64
 	TxErrors         uint64
@@ -301,6 +302,7 @@ func (dp *Dataplane) GetStats() Stats {
 	return Stats{
 		PacketsReceived:  uint64(cStats.packets_received),
 		PacketsReflected: uint64(cStats.packets_reflected),
+		PacketsDropped:   uint64(cStats.packets_dropped),
 		BytesReceived:    uint64(cStats.bytes_received),
 		BytesReflected:   uint64(cStats.bytes_reflected),
 		TxErrors:         uint64(cStats.tx_errors),
