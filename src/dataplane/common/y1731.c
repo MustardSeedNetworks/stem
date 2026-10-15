@@ -98,26 +98,9 @@ int y1731_delay_measurement(rfc2544_ctx_t *ctx, y1731_session_t *session, uint32
     /* Enable latency measurement */
     ctx->config.measure_latency = true;
 
-    /* Calculate duration based on count and interval */
-    uint32_t duration_sec = (count * interval_ms) / 1000 + 5;
-
-    /* Calculate rate based on interval */
-    /* interval_ms determines probe rate: 1000ms interval = 1 pps */
-    double   probes_per_sec = 1000.0 / (double)interval_ms;
-    uint64_t max_pps        = calc_max_pps(ctx->line_rate, session->frame_size);
-    double   rate_pct       = (max_pps > 0) ? ((probes_per_sec * 100.0) / (double)max_pps) : 0.001;
-    if (rate_pct > 100.0) {
-        rate_pct = 100.0;
-    }
-    if (rate_pct < 0.001) {
-        rate_pct = 0.001;
-    }
-
-    /* Run delay measurement trial */
     trial_result_t trial;
-    int            ret =
-        run_trial_custom(ctx, session->frame_size, rate_pct, duration_sec, Y1731_DEFAULT_WARMUP_SEC,
-                         Y1731_SIGNATURE, session->local_mep.mep_id, &trial);
+    int ret = run_probe_trial(ctx, session->frame_size, count, interval_ms, Y1731_SIGNATURE,
+                              session->local_mep.mep_id, &trial);
 
     if (ret < 0) {
         rfc2544_log(LOG_ERROR, "Delay measurement trial failed: %d", ret);
@@ -232,24 +215,12 @@ int y1731_synthetic_loss(rfc2544_ctx_t *ctx, y1731_session_t *session, uint32_t 
     memset(result, 0, sizeof(*result));
     session->state = Y1731_STATE_RUNNING;
 
-    uint32_t duration_sec = (count * interval_ms) / 1000 + 5;
-
     rfc2544_log(LOG_INFO, "=== Y.1731 Synthetic Loss Measurement ===");
     rfc2544_log(LOG_INFO, "Count: %u, Interval: %u ms", count, interval_ms);
 
-    /* Calculate rate percentage */
-    double   probes_per_sec = 1000.0 / (double)interval_ms;
-    uint64_t max_pps        = calc_max_pps(ctx->line_rate, session->frame_size);
-    double   rate_pct       = (max_pps > 0) ? ((probes_per_sec * 100.0) / (double)max_pps) : 1.0;
-    if (rate_pct > 100.0) {
-        rate_pct = 100.0;
-    }
-
-    /* Run synthetic loss trial */
     trial_result_t trial;
-    int            ret =
-        run_trial_custom(ctx, session->frame_size, rate_pct, duration_sec, Y1731_DEFAULT_WARMUP_SEC,
-                         Y1731_SIGNATURE, session->local_mep.mep_id, &trial);
+    int ret = run_probe_trial(ctx, session->frame_size, count, interval_ms, Y1731_SIGNATURE,
+                              session->local_mep.mep_id, &trial);
 
     if (ret < 0) {
         rfc2544_log(LOG_ERROR, "Synthetic loss trial failed: %d", ret);
@@ -292,9 +263,14 @@ int y1731_synthetic_loss(rfc2544_ctx_t *ctx, y1731_session_t *session, uint32_t 
  * ============================================================================ */
 
 int y1731_loopback(rfc2544_ctx_t *ctx, y1731_session_t *session, const uint8_t *target_mac,
-                   uint32_t count, y1731_loopback_result_t *result)
+                   uint32_t count, uint32_t interval_ms, y1731_loopback_result_t *result)
 {
     if (!ctx || !session || !result) {
+        return -EINVAL;
+    }
+
+    if (interval_ms == 0) {
+        rfc2544_log(LOG_ERROR, "Invalid interval_ms (0)");
         return -EINVAL;
     }
 
@@ -304,25 +280,14 @@ int y1731_loopback(rfc2544_ctx_t *ctx, y1731_session_t *session, const uint8_t *
     session->state = Y1731_STATE_RUNNING;
 
     rfc2544_log(LOG_INFO, "=== Y.1731 Loopback Test ===");
-    rfc2544_log(LOG_INFO, "Count: %u", count);
+    rfc2544_log(LOG_INFO, "Count: %u, Interval: %u ms", count, interval_ms);
 
     /* Enable latency measurement */
     ctx->config.measure_latency = true;
 
-    /* Calculate duration - 1 probe per second */
-    uint32_t duration_sec = count + 5;
-
-    /* Low rate - approximately 1 pps */
-    uint64_t max_pps  = calc_max_pps(ctx->line_rate, session->frame_size);
-    double   rate_pct = (max_pps > 0) ? ((1.0 * 100.0) / (double)max_pps) : 0.001;
-    if (rate_pct < 0.001) {
-        rate_pct = 0.001;
-    }
-
-    /* Run loopback trial */
     trial_result_t trial;
-    int ret = run_trial_custom(ctx, session->frame_size, rate_pct, duration_sec, 1, Y1731_SIGNATURE,
-                               session->local_mep.mep_id, &trial);
+    int ret = run_probe_trial(ctx, session->frame_size, count, interval_ms, Y1731_SIGNATURE,
+                              session->local_mep.mep_id, &trial);
 
     if (ret < 0) {
         rfc2544_log(LOG_ERROR, "Loopback trial failed: %d", ret);

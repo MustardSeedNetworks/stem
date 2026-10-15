@@ -7,6 +7,7 @@ package dataplane
 import (
 	"errors"
 	"testing"
+	"time"
 )
 
 // y1731Run runs one Y.1731 test type and reports its sent and received
@@ -84,6 +85,38 @@ func TestY1731ReflectedByPeer(t *testing.T) {
 		t.Logf("%s: sent=%d received=%d", name, sent, received)
 		if received < sent*99/100 || received > sent {
 			t.Errorf("%s: received %d of %d sent, want within 1%%", name, received, sent)
+		}
+	}
+}
+
+// The count-based tests send exactly Count frames, one every IntervalMs
+// (stem#1736): they ran a padded timed trial at a floored line-rate share,
+// so 10 frames at 100 ms sent 504 delay frames and 1,261 LBMs.
+func TestY1731SendsConfiguredCountAtInterval(t *testing.T) {
+	requireRoot(t)
+	master := newReflectedLink(t, 1, false)
+	cfg := PeerConfig(vethMaster, reflectorIP, reflectorPort)
+	if err := master.Configure(&cfg); err != nil {
+		t.Fatalf("configure test master: %v", err)
+	}
+
+	runs := y1731Runs()
+	for _, name := range []string{"delay", "slm", "loopback"} {
+		tc := y1731TestConfig()
+		start := time.Now()
+		sent, _, err := runs[name](master, tc)
+		elapsed := time.Since(start)
+		if err != nil {
+			t.Errorf("%s: %v", name, err)
+			continue
+		}
+		if sent != uint64(tc.Count) {
+			t.Errorf("%s: sent %d frames, want the configured %d", name, sent, tc.Count)
+		}
+		// Count frames, each followed by one interval for its reply.
+		want := time.Duration(tc.Count) * time.Duration(tc.IntervalMs) * time.Millisecond
+		if elapsed < want || elapsed > want+time.Second {
+			t.Errorf("%s: took %v, want %v at %d ms per frame", name, elapsed, want, tc.IntervalMs)
 		}
 	}
 }

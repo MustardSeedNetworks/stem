@@ -132,10 +132,10 @@ func (c *Context) RunY1731LoopbackTest(cfg *Y1731Config) (*Y1731LoopbackResult, 
 		return nil, err
 	}
 
-	count := y1731Count(cfg)
+	count, interval := y1731CountInterval(cfg)
 
 	var cResult C.y1731_loopback_result_t
-	ret := C.y1731_loopback(c.ctx, &session, nil, C.uint32_t(count), &cResult)
+	ret := C.y1731_loopback(c.ctx, &session, nil, C.uint32_t(count), C.uint32_t(interval), &cResult)
 	if ret < 0 {
 		return nil, fmt.Errorf("Y.1731 loopback test failed: %d", ret)
 	}
@@ -209,14 +209,6 @@ func y1731CountInterval(cfg *Y1731Config) (uint32, uint32) {
 		}
 	}
 	return count, interval
-}
-
-func y1731Count(cfg *Y1731Config) uint32 {
-	count := uint32(defaultY1731Count)
-	if cfg != nil && cfg.Count > 0 {
-		count = cfg.Count
-	}
-	return count
 }
 
 func y1731Duration(cfg *Y1731Config) uint32 {

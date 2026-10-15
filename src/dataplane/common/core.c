@@ -1310,6 +1310,135 @@ int run_trial_custom(rfc2544_ctx_t *ctx, uint32_t frame_size, double rate_pct,
     return 0;
 }
 
+/**
+ * Send exactly count frames, one every interval_ms, and collect their replies
+ * (Y.1731 DMM, SLM and LBM). A rate and duration cannot express this: a
+ * probe rate is far below any line-rate percentage the pacer resolves, and
+ * the frame count then follows the duration instead of the configuration
+ * (#1736). A reply is awaited until the next probe's slot, and the last one
+ * for one more interval.
+ *
+ * @param ctx Test context
+ * @param frame_size Frame size in bytes
+ * @param count Frames to send
+ * @param interval_ms Time between frames, in milliseconds
+ * @param signature Custom 7-byte signature
+ * @param stream_id Stream identifier
+ * @param result Output trial result
+ * @return 0 on success, negative on error
+ */
+int run_probe_trial(rfc2544_ctx_t *ctx, uint32_t frame_size, uint32_t count, uint32_t interval_ms,
+                    const char *signature, uint32_t stream_id, trial_result_t *result)
+{
+    if (!ctx || !result || !signature || count == 0 || interval_ms == 0) {
+        return -EINVAL;
+    }
+
+    memset(result, 0, sizeof(*result));
+
+    int prepare_ret = rfc2544_prepare_platform(ctx);
+    if (prepare_ret < 0) {
+        return prepare_ret;
+    }
+
+    worker_ctx_t *wctx = &ctx->workers[0];
+
+    const uint32_t packet_size = frame_size - RFC2544_FCS_SIZE;
+    uint8_t       *pkt_buffer  = malloc(packet_size);
+    if (!pkt_buffer) {
+        return -ENOMEM;
+    }
+
+    custom_payload_t *payload = custom_create_packet_template(
+        pkt_buffer, packet_size, ctx->local_mac, ctx->remote_mac, ctx->local_ip, ctx->remote_ip,
+        ctx->source_port, ctx->remote_port, stream_id, signature);
+    if (!payload) {
+        free(pkt_buffer);
+        return -EINVAL;
+    }
+
+    seq_tracker_t *tracker = rfc2544_seq_tracker_create(count);
+    if (!tracker) {
+        free(pkt_buffer);
+        return -ENOMEM;
+    }
+
+    uint64_t *latency_samples = NULL;
+    if (ctx->config.measure_latency) {
+        latency_samples = malloc(count * sizeof(uint64_t));
+    }
+
+    trial_rx_t rx = {
+        .signature        = signature,
+        .measured_from_ns = UINT64_MAX,
+        .tracker          = tracker,
+        .latency_samples  = latency_samples,
+        .latency_capacity = latency_samples ? count : 0,
+    };
+
+    packet_t tx_pkt = {.data = pkt_buffer, .len = packet_size};
+    packet_t rx_pkts[64];
+    memset(rx_pkts, 0, sizeof(rx_pkts));
+
+    const uint64_t interval_ns  = (uint64_t)interval_ms * 1000000ULL;
+    const uint64_t start_ns     = get_timestamp_ns();
+    uint64_t       packets_sent = 0;
+    int            ret          = 0;
+
+    while (packets_sent < count && !ctx->cancel_requested) {
+        uint64_t tx_ts = get_timestamp_ns();
+        custom_stamp_packet(payload, (uint32_t)packets_sent, tx_ts);
+        tx_pkt.timestamp = tx_ts;
+        tx_pkt.seq_num   = (uint32_t)packets_sent;
+
+        int sent = ctx->platform->send_batch(wctx, &tx_pkt, 1);
+        if (sent < 0) {
+            ret = sent;
+            break;
+        }
+        if (sent == 0) {
+            /* TX ring full: reap replies and try the same probe again. */
+            trial_receive_measured(ctx, wctx, rx_pkts, &rx);
+            continue;
+        }
+        if (packets_sent == 0) {
+            rx.measured_from_ns = tx_ts;
+        }
+        packets_sent++;
+
+        const uint64_t next_slot = start_ns + packets_sent * interval_ns;
+        while (get_timestamp_ns() < next_slot && !ctx->cancel_requested) {
+            trial_receive_measured(ctx, wctx, rx_pkts, &rx);
+        }
+    }
+
+    drain_stragglers(ctx, wctx, rx_pkts, &rx, packets_sent);
+
+    result->packets_sent = packets_sent;
+    result->packets_recv = rx.packets_recv;
+    result->bytes_sent   = packets_sent * frame_size;
+    result->elapsed_sec  = (double)(get_timestamp_ns() - start_ns) / NS_PER_SEC;
+    if (packets_sent > 0 && rx.packets_recv < packets_sent) {
+        result->loss_pct = 100.0 * (double)(packets_sent - rx.packets_recv) / packets_sent;
+    }
+    if (result->elapsed_sec > 0) {
+        result->achieved_pps  = packets_sent / result->elapsed_sec;
+        result->achieved_mbps = (result->bytes_sent * 8.0) / (result->elapsed_sec * 1e6);
+    }
+    if (latency_samples && rx.latency_count > 0) {
+        rfc2544_calc_latency_stats(latency_samples, rx.latency_count, &result->latency);
+    }
+
+    rfc2544_log(LOG_DEBUG, "Probe trial complete: sent=%lu, recv=%lu, loss=%.4f%%", packets_sent,
+                rx.packets_recv, result->loss_pct);
+
+    free(latency_samples);
+    rfc2544_seq_tracker_destroy(tracker);
+    free(pkt_buffer);
+
+    return ret;
+}
+
 /* ============================================================================
  * Throughput Test (Section 26.1)
  * ============================================================================ */

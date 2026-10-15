@@ -103,6 +103,19 @@ int run_trial_custom(rfc2544_ctx_t *ctx, void *custom_cfg, uint64_t *rx_count, u
     return 0;
 }
 
+int run_probe_trial(rfc2544_ctx_t *ctx, uint32_t frame_size, uint32_t count, uint32_t interval_ms,
+                    const char *signature, uint32_t stream_id, void *result)
+{
+    (void)ctx;
+    (void)frame_size;
+    (void)count;
+    (void)interval_ms;
+    (void)signature;
+    (void)stream_id;
+    (void)result;
+    return 0;
+}
+
 /* Y.1564 packet stubs */
 void *y1564_create_packet_template(void *cfg, uint32_t size)
 {
