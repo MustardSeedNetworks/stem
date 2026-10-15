@@ -83,23 +83,23 @@ func rfc6349TCPThroughputParameters() []Parameter {
 	return []Parameter{
 		{
 			Name:       LabelDuration,
-			Flag:       FlagDuration,
+			Setting:    "rfc6349.duration",
 			Type:       "integer (seconds)",
 			Default:    "30",
 			Required:   false,
 			TechDesc:   "Test duration",
 			LaymanDesc: "How long to run the transfer test",
-			Example:    ExampleDuration60,
+			Example:    ExampleDuration,
 		},
 		{
-			Name:       "Window Size",
-			Flag:       "--window",
-			Type:       "integer (KB) or 'auto'",
-			Default:    ValueAuto,
+			Name:       "Receive Window",
+			Setting:    "rfc6349.rwndSize",
+			Type:       "integer (bytes)",
+			Default:    "65535",
 			Required:   false,
 			TechDesc:   "TCP window size (or auto-calculate from BDP)",
 			LaymanDesc: "TCP buffer size - 'auto' calculates optimal value",
-			Example:    "--window auto",
+			Example:    "262144",
 		},
 	}
 }
@@ -172,18 +172,7 @@ Use this when downloads are slow and you want to know WHY, not just HOW slow.`,
 
 		WhenNotToUse: `• If you just need throughput numbers (use TCP Throughput test)`,
 
-		Parameters: []Parameter{
-			{
-				Name:       "Target",
-				Flag:       "--target",
-				Type:       "IP address",
-				Default:    "",
-				Required:   true,
-				TechDesc:   "Remote endpoint for path analysis",
-				LaymanDesc: "The server you want to analyze the path to",
-				Example:    "--target 192.168.1.100",
-			},
-		},
+		Parameters: nil,
 
 		Metrics: []Metric{
 			{

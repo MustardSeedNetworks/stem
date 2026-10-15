@@ -79,24 +79,24 @@ func tsnGateTimingDetails() testHelpDetails {
 func tsnGateTimingParameters() []Parameter {
 	return []Parameter{
 		{
-			Name:       "Schedule",
-			Flag:       "--schedule",
-			Type:       "JSON or file path",
-			Default:    "",
-			Required:   true,
-			TechDesc:   "Gate Control List schedule to validate",
-			LaymanDesc: "The timing schedule to test against",
-			Example:    "--schedule gate_schedule.json",
+			Name:       "Cycle Time",
+			Setting:    "tsn.cycleTimeNs",
+			Type:       "integer (nanoseconds)",
+			Default:    "1000000",
+			Required:   false,
+			TechDesc:   "Gate Control List cycle time to validate",
+			LaymanDesc: "How often the timing schedule repeats",
+			Example:    "500000",
 		},
 		{
-			Name:       "Tolerance",
-			Flag:       "--tolerance",
+			Name:       "Max Jitter",
+			Setting:    "tsn.maxJitterNs",
 			Type:       "integer (nanoseconds)",
-			Default:    "1000",
+			Default:    "100000",
 			Required:   false,
 			TechDesc:   "Acceptable timing deviation",
 			LaymanDesc: "How much timing error is acceptable",
-			Example:    "--tolerance 500",
+			Example:    "50000",
 		},
 	}
 }
@@ -196,24 +196,14 @@ func tsnTrafficIsolationDetails() testHelpDetails {
 func tsnTrafficIsolationParameters() []Parameter {
 	return []Parameter{
 		{
-			Name:       "Critical Class",
-			Flag:       "--critical-class",
+			Name:       "Traffic Class",
+			Setting:    "tsn.trafficClass",
 			Type:       "integer (priority)",
 			Default:    "7",
 			Required:   false,
 			TechDesc:   "Priority of critical traffic class",
 			LaymanDesc: "Priority level of the important traffic",
-			Example:    "--critical-class 7",
-		},
-		{
-			Name:       "Background Load",
-			Flag:       "--background-load",
-			Type:       "integer (Mbps)",
-			Default:    "line rate",
-			Required:   false,
-			TechDesc:   "Background traffic rate",
-			LaymanDesc: "How much competing traffic to generate",
-			Example:    "--background-load 800",
+			Example:    "6",
 		},
 	}
 }
@@ -308,24 +298,14 @@ func tsnScheduledLatencyDetails() testHelpDetails {
 func tsnScheduledLatencyParameters() []Parameter {
 	return []Parameter{
 		{
-			Name:       "Target Latency",
-			Flag:       "--target-latency",
-			Type:       "integer (microseconds)",
-			Default:    "1000",
+			Name:       "Max Latency",
+			Setting:    "tsn.maxLatencyNs",
+			Type:       "integer (nanoseconds)",
+			Default:    "1000000",
 			Required:   false,
 			TechDesc:   "Expected latency for scheduled traffic",
 			LaymanDesc: "The timing target in microseconds",
-			Example:    "--target-latency 500",
-		},
-		{
-			Name:       "Window",
-			Flag:       "--window",
-			Type:       "integer (microseconds)",
-			Default:    "100",
-			Required:   false,
-			TechDesc:   "Acceptable deviation from target",
-			LaymanDesc: "How much variation is acceptable",
-			Example:    "--window 50",
+			Example:    "500000",
 		},
 	}
 }

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"strings"
 	"testing"
@@ -177,6 +178,70 @@ func TestHelpExamplesRunAsWritten(t *testing.T) {
 
 	for _, example := range append(goExamples, uiExamples...) {
 		checkHelpExample(t, example)
+	}
+}
+
+// stepSetting returns the value `stem test -t testType args...` sends for
+// setting, a "block.field" path in the step's config, and whether the step
+// carries it at all.
+func stepSetting(testType, setting string, args ...string) (any, bool, error) {
+	flags, err := parseTestFlags(append([]string{"-i", "eth0", "--peer", "192.0.2.10", "-t", testType}, args...))
+	if err != nil {
+		return nil, false, err
+	}
+	seconds, err := validateDuration(flags.duration)
+	if err != nil {
+		return nil, false, err
+	}
+	data, err := json.Marshal(stepConfig(flags, testType, parseFrameSizes(flags.frameSizes), seconds))
+	if err != nil {
+		return nil, false, err
+	}
+	var blocks map[string]map[string]any
+	if err = json.Unmarshal(data, &blocks); err != nil {
+		return nil, false, err
+	}
+	block, field, _ := strings.Cut(setting, ".")
+	value, ok := blocks[block][field]
+	return value, ok, nil
+}
+
+// TestHelpParameterFlagsSetTheirSetting holds every Parameters row that names
+// a `stem test` flag to what the flag does: the CLI defines it, passes it to
+// the topic's test type, sets the row's setting with it, and sends the row's
+// default when the flag is not given (#1581).
+func TestHelpParameterFlagsSetTheirSetting(t *testing.T) {
+	checked := 0
+	for id, topic := range help.GetAllTests() {
+		for _, p := range topic.Parameters {
+			if p.Flag == "" {
+				continue
+			}
+			checked++
+			source := "help topic " + id + " " + p.Name
+			unset, _, err := stepSetting(id, p.Setting)
+			if err != nil {
+				t.Fatalf("%s: a run with no flags fails: %v", source, err)
+			}
+			set, ok, err := stepSetting(id, p.Setting, p.Flag, p.Example)
+			switch {
+			case err != nil:
+				t.Errorf("%s: %s %s does not parse: %v", source, p.Flag, p.Example, err)
+				continue
+			case !ok:
+				t.Errorf("%s: the CLI does not send %s to %s", source, p.Setting, id)
+				continue
+			case reflect.DeepEqual(set, unset):
+				t.Errorf("%s: %s %s leaves %s at %v", source, p.Flag, p.Example, p.Setting, unset)
+			}
+			def, _, err := stepSetting(id, p.Setting, p.Flag, p.Default)
+			if err != nil || !reflect.DeepEqual(def, unset) {
+				t.Errorf("%s: documented default %q, but the CLI sends %v", source, p.Default, unset)
+			}
+		}
+	}
+	if checked == 0 {
+		t.Fatal("no Parameters row names a flag; the extraction is broken, not the docs")
 	}
 }
 

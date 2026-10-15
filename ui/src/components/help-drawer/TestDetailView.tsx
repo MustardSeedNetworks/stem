@@ -90,10 +90,11 @@ export function TestDetailView({
           </h4>
           <div className="stack-sm">
             {test.parameters.map((param) => (
-              <div key={param.flag} className={cn('bg-surface-base', radius.lg, spacing.pad.sm)}>
+              <div key={param.setting} className={cn('bg-surface-base', radius.lg, spacing.pad.sm)}>
                 <div className={layout.inline.default}>
+                  <span className="body-small text-text-primary">{param.name}</span>
                   <code className={cn('code', 'bg-surface-raised px-1.5 py-0.5', radius.default)}>
-                    {param.flag}
+                    {param.setting}
                   </code>
                   {param.required ? (
                     <span className={cn('caption', status.text.warning)}>

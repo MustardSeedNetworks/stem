@@ -28,13 +28,13 @@ export interface TestHelp {
 
 export interface Parameter {
   name: string;
-  flag: string;
+  /** The run plan step config field the test form sets, e.g. `rfc2544.frameSizes`. */
+  setting: string;
   type: string;
   defaultValue: string;
   required: boolean;
   techDesc: string;
   laymanDesc: string;
-  example: string;
 }
 
 export interface Metric {

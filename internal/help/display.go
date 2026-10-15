@@ -93,20 +93,30 @@ func displayTestParameters(w io.Writer, test TestHelp, simple bool) {
 }
 
 func printParameter(w io.Writer, p Parameter, simple bool) {
-	_, _ = fmt.Fprintf(w, "\n  %s%s%s", colorBold, p.Flag, colorReset)
+	_, _ = fmt.Fprintf(w, "\n  %s%s%s", colorBold, p.Name, colorReset)
 	if p.Required {
 		_, _ = fmt.Fprintf(w, " %s(required)%s", colorYellow, colorReset)
 	}
 	_, _ = fmt.Fprintln(w)
+	if p.Flag != "" {
+		_, _ = fmt.Fprintf(w, "  Flag: %s, Setting: %s\n", p.Flag, p.Setting)
+	} else {
+		_, _ = fmt.Fprintf(w, "  Setting: %s (web UI and API only)\n", p.Setting)
+	}
 	_, _ = fmt.Fprintf(w, "  Type: %s, Default: %s\n", p.Type, p.Default)
 	if simple {
 		_, _ = fmt.Fprintf(w, "  %s\n", p.LaymanDesc)
 	} else {
 		_, _ = fmt.Fprintf(w, "  %s\n", p.TechDesc)
 	}
-	if p.Example != "" {
-		_, _ = fmt.Fprintf(w, "  Example: %s%s%s\n", colorGreen, p.Example, colorReset)
+	if p.Example == "" {
+		return
 	}
+	example := p.Example
+	if p.Flag != "" {
+		example = p.Flag + " " + p.Example
+	}
+	_, _ = fmt.Fprintf(w, "  Example: %s%s%s\n", colorGreen, example, colorReset)
 }
 
 func displayTestMetrics(w io.Writer, test TestHelp) {

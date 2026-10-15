@@ -43,14 +43,19 @@ type TestHelp struct {
 
 // Parameter describes a configurable test parameter.
 type Parameter struct {
-	Name       string // "Frame Sizes"
+	Name string // "Frame Sizes"
+	// Setting is the field of a run plan step's config that holds the
+	// parameter, the one the web UI form and the API set.
+	Setting string // "rfc2544.frameSizes"
+	// Flag is the `stem test` flag that sets Setting, or empty when only the
+	// web UI and the API can set it.
 	Flag       string // "--frame-sizes"
 	Type       string // "comma-separated integers"
 	Default    string // "64,128,256,512,1024,1280,1518"
 	Required   bool
 	TechDesc   string // Technical description
 	LaymanDesc string // Plain English description
-	Example    string // "--frame-sizes 64,512,1518"
+	Example    string // A value: "64,512,1518"
 }
 
 // Metric describes an output metric from a test.
