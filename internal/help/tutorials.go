@@ -70,7 +70,7 @@ save to a file:`,
 				Content: `You've completed your first test! Now explore other tests:
 
 • stem help tests     - List all available tests
-• stem help latency   - Learn about latency testing
+• stem help rfc2544_latency   - Learn about latency testing
 • stem tutorial rfc2544 - Deep dive into RFC 2544`,
 				Command:  "stem help tests",
 				Expected: "",

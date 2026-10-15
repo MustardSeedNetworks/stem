@@ -13,7 +13,7 @@ package help
 func y1731FrameDelay() TestHelp {
 	return buildTestHelp(
 		testHelpMeta{
-			ID:       "frame_delay",
+			ID:       "y1731_delay",
 			Name:     "Frame Delay Measurement",
 			Standard: StandardITUY1731,
 			Category: "Y.1731",
@@ -70,7 +70,7 @@ func y1731FrameDelayDetails() testHelpDetails {
 		Tips:               nil,
 		CommonIssues:       nil,
 		RFCSection:         "",
-		SeeAlso:            []string{TestTypeLatency, "y1731_frame_loss"},
+		SeeAlso:            []string{TestTypeLatency, "y1731_loss"},
 	}
 }
 
@@ -128,7 +128,7 @@ func y1731FrameDelayExamples() []Example {
 
 func y1731FrameLoss() TestHelp {
 	return TestHelp{
-		ID:       "y1731_frame_loss",
+		ID:       "y1731_loss",
 		Name:     "Frame Loss Measurement",
 		Standard: StandardITUY1731,
 		Category: "Y.1731",
@@ -186,13 +186,13 @@ Benefits:
 		CommonIssues: nil,
 
 		RFCSection: "",
-		SeeAlso:    []string{TestTypeFrameLoss, "frame_delay"},
+		SeeAlso:    []string{TestTypeFrameLoss, "y1731_delay"},
 	}
 }
 
 func y1731SyntheticLoss() TestHelp {
 	return TestHelp{
-		ID:       "synthetic_loss",
+		ID:       "y1731_slm",
 		Name:     "Synthetic Loss Measurement",
 		Standard: StandardITUY1731,
 		Category: "Y.1731",
@@ -244,13 +244,13 @@ Think of it like a "network heartbeat" - always checking, always monitoring.`,
 		CommonIssues: nil,
 
 		RFCSection: "",
-		SeeAlso:    []string{"y1731_frame_loss", "loopback"},
+		SeeAlso:    []string{"y1731_loss", "y1731_loopback"},
 	}
 }
 
 func y1731Loopback() TestHelp {
 	return TestHelp{
-		ID:       "loopback",
+		ID:       "y1731_loopback",
 		Name:     "Loopback Test",
 		Standard: StandardITUY1731,
 		Category: "Y.1731",
@@ -311,6 +311,6 @@ Useful for:
 		CommonIssues: nil,
 
 		RFCSection: "",
-		SeeAlso:    []string{"frame_delay", "synthetic_loss"},
+		SeeAlso:    []string{"y1731_delay", "y1731_slm"},
 	}
 }

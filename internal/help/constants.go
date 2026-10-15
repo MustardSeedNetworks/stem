@@ -51,9 +51,8 @@ const (
 	ModuleReflector = "reflector"
 )
 
-// Category / test-type wire identifiers used as lookup keys in the help
-// content tables (glossary cross-references, test-by-category dispatch,
-// tutorial routing). Lowercase to match the JSON/CLI representation.
+// Category and test-type identifiers used as lookup keys in the help content
+// tables. A test type is the module test type `stem test -t` accepts.
 const (
 	CatRFC2544 = "rfc2544"
 	CatRFC2889 = "rfc2889"
@@ -63,7 +62,14 @@ const (
 	CatMEF     = "mef"
 	CatTSN     = "tsn"
 
-	TestTypeThroughput = "throughput"
-	TestTypeLatency    = "latency"
-	TestTypeFrameLoss  = "frame_loss"
+	TestTypeThroughput = "rfc2544_throughput"
+	TestTypeLatency    = "rfc2544_latency"
+	TestTypeFrameLoss  = "rfc2544_frame_loss"
+)
+
+// Glossary terms that share a word with a test. A test is keyed by its
+// module test type, a glossary entry by the plain term.
+const (
+	TermThroughput = "throughput"
+	TermLatency    = "latency"
 )

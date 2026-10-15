@@ -109,7 +109,7 @@ const staticPages: PageDef[] = [
   },
   {
     path: '/tests/benchmark',
-    help: { initialTab: 'tests', initialTestId: 'throughput' },
+    help: { initialTab: 'tests', initialTestId: 'rfc2544_throughput' },
     i18nKey: 'benchmark',
     icon: BarChart3,
     iconColorClass: 'text-module-benchmark',
@@ -136,7 +136,7 @@ const staticPages: PageDef[] = [
   },
   {
     path: '/tests/measure',
-    help: { initialTab: 'tests', initialTestId: 'frame_delay' },
+    help: { initialTab: 'tests', initialTestId: 'y1731_delay' },
     i18nKey: 'measure',
     icon: Waves,
     iconColorClass: 'text-module-measure',
@@ -145,7 +145,7 @@ const staticPages: PageDef[] = [
   },
   {
     path: '/tests/certify',
-    help: { initialTab: 'tests', initialTestId: 'tsn_full' },
+    help: { initialTab: 'tests', initialTestId: 'tsn' },
     i18nKey: 'certify',
     icon: Award,
     iconColorClass: 'text-module-certify',

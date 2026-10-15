@@ -6,8 +6,8 @@
 import type { TestHelp } from '../types';
 
 export const rfc2544Tests: Record<string, TestHelp> = {
-  throughput: {
-    id: 'throughput',
+  rfc2544_throughput: {
+    id: 'rfc2544_throughput',
     name: 'Throughput Test',
     standard: 'RFC 2544 Section 26.1',
     category: 'RFC 2544',
@@ -135,14 +135,14 @@ the sweet spot.`,
     ],
     seeAlso: [
       'https://www.rfc-editor.org/rfc/rfc2544.html',
-      'latency',
-      'frame_loss',
+      'rfc2544_latency',
+      'rfc2544_frame_loss',
       'y1564_config',
     ],
   },
 
-  latency: {
-    id: 'latency',
+  rfc2544_latency: {
+    id: 'rfc2544_latency',
     name: 'Latency Test',
     standard: 'RFC 2544 Section 26.2',
     category: 'RFC 2544',
@@ -193,11 +193,11 @@ point A to point B and back. Lower numbers are better:
       },
     ],
     tips: ['Test at multiple rates to understand how latency changes with load'],
-    seeAlso: ['https://www.rfc-editor.org/rfc/rfc2544.html', 'throughput', 'frame_delay'],
+    seeAlso: ['https://www.rfc-editor.org/rfc/rfc2544.html', 'rfc2544_throughput', 'y1731_delay'],
   },
 
-  frame_loss: {
-    id: 'frame_loss',
+  rfc2544_frame_loss: {
+    id: 'rfc2544_frame_loss',
     name: 'Frame Loss Rate Test',
     standard: 'RFC 2544 Section 26.3',
     category: 'RFC 2544',
@@ -227,11 +227,11 @@ through the network?" It creates a stress curve showing when loss starts happeni
       },
     ],
     tips: ['Use results to set traffic engineering thresholds'],
-    seeAlso: ['https://www.rfc-editor.org/rfc/rfc2544.html', 'throughput'],
+    seeAlso: ['https://www.rfc-editor.org/rfc/rfc2544.html', 'rfc2544_throughput'],
   },
 
-  back_to_back: {
-    id: 'back_to_back',
+  rfc2544_back_to_back: {
+    id: 'rfc2544_back_to_back',
     name: 'Back-to-Back Frames Test',
     standard: 'RFC 2544 Section 26.4',
     category: 'RFC 2544',
@@ -260,11 +260,15 @@ Higher numbers are better for handling waves of data like video streams.`,
       },
     ],
     tips: ['Results indicate effective buffer size of the DUT'],
-    seeAlso: ['https://www.rfc-editor.org/rfc/rfc2544.html', 'throughput', 'congestion'],
+    seeAlso: [
+      'https://www.rfc-editor.org/rfc/rfc2544.html',
+      'rfc2544_throughput',
+      'rfc2889_congestion',
+    ],
   },
 
-  system_recovery: {
-    id: 'system_recovery',
+  rfc2544_system_recovery: {
+    id: 'rfc2544_system_recovery',
     name: 'System Recovery Test',
     standard: 'RFC 2544 Section 26.5',
     category: 'RFC 2544',
@@ -293,11 +297,11 @@ Fast recovery (under 1 second) is good.`,
       },
     ],
     tips: [],
-    seeAlso: ['https://www.rfc-editor.org/rfc/rfc2544.html', 'throughput', 'reset'],
+    seeAlso: ['https://www.rfc-editor.org/rfc/rfc2544.html', 'rfc2544_throughput', 'rfc2544_reset'],
   },
 
-  reset: {
-    id: 'reset',
+  rfc2544_reset: {
+    id: 'rfc2544_reset',
     name: 'Reset Test',
     standard: 'RFC 2544 Section 26.6',
     category: 'RFC 2544',
@@ -326,6 +330,6 @@ Lower reset times mean less disruption during maintenance.`,
       },
     ],
     tips: [],
-    seeAlso: ['https://www.rfc-editor.org/rfc/rfc2544.html', 'system_recovery'],
+    seeAlso: ['https://www.rfc-editor.org/rfc/rfc2544.html', 'rfc2544_system_recovery'],
   },
 };

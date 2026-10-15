@@ -68,8 +68,8 @@ func TestGetTest(t *testing.T) {
 		wantOK   bool
 		wantName string
 	}{
-		{"throughput", true, "Throughput Test"},
-		{"latency", true, "Latency Test"},
+		{"rfc2544_throughput", true, "Throughput Test"},
+		{"rfc2544_latency", true, "Latency Test"},
 		{"y1564_config", true, "Y.1564 Service Configuration Test"},
 		{"nonexistent", false, ""},
 	}
@@ -737,8 +737,8 @@ func TestShowHelp(t *testing.T) {
 		simple bool
 		want   bool
 	}{
-		{"throughput", false, true},
-		{"throughput", true, true},
+		{"rfc2544_throughput", false, true},
+		{"rfc2544_throughput", true, true},
 		{"reflect", false, true},
 		{"rfc2544", false, true},
 		{"tests", false, true},
@@ -913,7 +913,7 @@ func TestTestSeeAlsoReferencesExist(t *testing.T) {
 
 func TestDisplayTestOutputContainsName(t *testing.T) {
 	tests := help.GetAllTests()
-	test, ok := tests["throughput"]
+	test, ok := tests["rfc2544_throughput"]
 	if !ok {
 		t.Fatal("missing throughput test")
 	}

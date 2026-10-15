@@ -6,8 +6,8 @@
 import type { TestHelp } from '../types';
 
 export const rfc2889Tests: Record<string, TestHelp> = {
-  forwarding: {
-    id: 'forwarding',
+  rfc2889_forwarding: {
+    id: 'rfc2889_forwarding',
     name: 'Forwarding Rate Test',
     standard: 'RFC 2889 Section 5.2',
     category: 'RFC 2889',
@@ -21,11 +21,11 @@ export const rfc2889Tests: Record<string, TestHelp> = {
     failMeaning: 'Switch fabric bottleneck',
     examples: [],
     tips: [],
-    seeAlso: ['https://www.rfc-editor.org/rfc/rfc2889.html', 'throughput'],
+    seeAlso: ['https://www.rfc-editor.org/rfc/rfc2889.html', 'rfc2544_throughput'],
   },
 
-  address_cache: {
-    id: 'address_cache',
+  rfc2889_caching: {
+    id: 'rfc2889_caching',
     name: 'Address Caching Capacity Test',
     standard: 'RFC 2889 Section 5.5',
     category: 'RFC 2889',
@@ -39,11 +39,11 @@ export const rfc2889Tests: Record<string, TestHelp> = {
     failMeaning: 'May need larger MAC table',
     examples: [],
     tips: [],
-    seeAlso: ['https://www.rfc-editor.org/rfc/rfc2889.html', 'learning_rate'],
+    seeAlso: ['https://www.rfc-editor.org/rfc/rfc2889.html', 'rfc2889_learning'],
   },
 
-  learning_rate: {
-    id: 'learning_rate',
+  rfc2889_learning: {
+    id: 'rfc2889_learning',
     name: 'Address Learning Rate Test',
     standard: 'RFC 2889 Section 5.6',
     category: 'RFC 2889',
@@ -57,11 +57,11 @@ export const rfc2889Tests: Record<string, TestHelp> = {
     failMeaning: 'May cause delays for new devices',
     examples: [],
     tips: [],
-    seeAlso: ['https://www.rfc-editor.org/rfc/rfc2889.html', 'address_cache'],
+    seeAlso: ['https://www.rfc-editor.org/rfc/rfc2889.html', 'rfc2889_caching'],
   },
 
-  broadcast: {
-    id: 'broadcast',
+  rfc2889_broadcast: {
+    id: 'rfc2889_broadcast',
     name: 'Broadcast Frame Handling Test',
     standard: 'RFC 2889 Section 5.7',
     category: 'RFC 2889',
@@ -75,11 +75,11 @@ export const rfc2889Tests: Record<string, TestHelp> = {
     failMeaning: 'Broadcasts affecting normal traffic',
     examples: [],
     tips: [],
-    seeAlso: ['https://www.rfc-editor.org/rfc/rfc2889.html', 'forwarding'],
+    seeAlso: ['https://www.rfc-editor.org/rfc/rfc2889.html', 'rfc2889_forwarding'],
   },
 
-  congestion: {
-    id: 'congestion',
+  rfc2889_congestion: {
+    id: 'rfc2889_congestion',
     name: 'Congestion Control Test',
     standard: 'RFC 2889 Section 5.8',
     category: 'RFC 2889',
@@ -93,6 +93,6 @@ export const rfc2889Tests: Record<string, TestHelp> = {
     failMeaning: 'Unfair bandwidth allocation',
     examples: [],
     tips: [],
-    seeAlso: ['https://www.rfc-editor.org/rfc/rfc2889.html', 'forwarding'],
+    seeAlso: ['https://www.rfc-editor.org/rfc/rfc2889.html', 'rfc2889_forwarding'],
   },
 };

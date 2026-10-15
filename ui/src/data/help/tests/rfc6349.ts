@@ -6,8 +6,8 @@
 import type { TestHelp } from '../types';
 
 export const rfc6349Tests: Record<string, TestHelp> = {
-  tcp_throughput: {
-    id: 'tcp_throughput',
+  rfc6349_throughput: {
+    id: 'rfc6349_throughput',
     name: 'TCP Throughput Test',
     standard: 'RFC 6349',
     category: 'RFC 6349',
@@ -21,11 +21,11 @@ export const rfc6349Tests: Record<string, TestHelp> = {
     failMeaning: 'Network may need optimization',
     examples: [],
     tips: [],
-    seeAlso: ['https://www.rfc-editor.org/rfc/rfc6349.html', 'path_analysis', 'throughput'],
+    seeAlso: ['https://www.rfc-editor.org/rfc/rfc6349.html', 'rfc6349_path', 'rfc2544_throughput'],
   },
 
-  path_analysis: {
-    id: 'path_analysis',
+  rfc6349_path: {
+    id: 'rfc6349_path',
     name: 'Path Analysis Test',
     standard: 'RFC 6349',
     category: 'RFC 6349',
@@ -39,6 +39,6 @@ export const rfc6349Tests: Record<string, TestHelp> = {
     failMeaning: 'N/A - diagnostic test',
     examples: [],
     tips: [],
-    seeAlso: ['https://www.rfc-editor.org/rfc/rfc6349.html', 'tcp_throughput'],
+    seeAlso: ['https://www.rfc-editor.org/rfc/rfc6349.html', 'rfc6349_throughput'],
   },
 };

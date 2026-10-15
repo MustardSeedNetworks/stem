@@ -251,7 +251,7 @@ func DisplayCategoryTo(w io.Writer, cat Category) {
 	hs := NewSystem()
 	for _, testID := range cat.Tests {
 		if test, ok := hs.Tests[testID]; ok {
-			_, _ = fmt.Fprintf(w, "  %s%-20s%s %s\n", colorBold, testID, colorReset, test.Summary)
+			_, _ = fmt.Fprintf(w, "  %s%-24s%s %s\n", colorBold, testID, colorReset, test.Summary)
 		}
 	}
 
@@ -438,7 +438,7 @@ func DisplayTestListTo(w io.Writer) {
 
 		for _, testID := range cat.Tests {
 			if test, ok := hs.Tests[testID]; ok {
-				_, _ = fmt.Fprintf(w, "  %s%-20s%s %s\n", colorCyan, testID, colorReset, test.Summary)
+				_, _ = fmt.Fprintf(w, "  %s%-24s%s %s\n", colorCyan, testID, colorReset, test.Summary)
 			}
 		}
 		_, _ = fmt.Fprintln(w)
@@ -492,10 +492,10 @@ func DisplayTestListByModuleTo(w io.Writer) {
 
 		for _, testType := range testTypes {
 			if test, ok := hs.Tests[testType]; ok {
-				_, _ = fmt.Fprintf(w, "  %s%-20s%s %s\n", modColor, testType, colorReset, test.Summary)
+				_, _ = fmt.Fprintf(w, "  %s%-24s%s %s\n", modColor, testType, colorReset, test.Summary)
 			} else {
 				// Fallback if test not in help system
-				_, _ = fmt.Fprintf(w, "  %s%-20s%s\n", modColor, testType, colorReset)
+				_, _ = fmt.Fprintf(w, "  %s%-24s%s\n", modColor, testType, colorReset)
 			}
 		}
 		_, _ = fmt.Fprintln(w)

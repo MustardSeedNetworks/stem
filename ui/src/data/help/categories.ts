@@ -15,7 +15,14 @@ export const categories: Record<string, Category> = {
     description: `RFC 2544 defines benchmarking methodology for network devices.
 These tests measure fundamental performance characteristics: throughput, latency,
 frame loss, and burst handling. Use these tests for equipment validation and comparison.`,
-    tests: ['throughput', 'latency', 'frame_loss', 'back_to_back', 'system_recovery', 'reset'],
+    tests: [
+      'rfc2544_throughput',
+      'rfc2544_latency',
+      'rfc2544_frame_loss',
+      'rfc2544_back_to_back',
+      'rfc2544_system_recovery',
+      'rfc2544_reset',
+    ],
     whenToUse: 'Equipment benchmarking, performance validation, comparing vendors',
   },
   y1564: {
@@ -26,7 +33,7 @@ frame loss, and burst handling. Use these tests for equipment validation and com
     description: `ITU-T Y.1564 defines the methodology for activating and validating
 carrier ethernet services. These tests verify that a service meets its SLA parameters
 at progressive load levels and over extended duration.`,
-    tests: ['y1564_config', 'y1564_performance', 'y1564_full'],
+    tests: ['y1564_config', 'y1564_perf', 'y1564'],
     whenToUse: 'Carrier service activation, SLA validation, service acceptance',
   },
   rfc2889: {
@@ -37,7 +44,13 @@ at progressive load levels and over extended duration.`,
     description: `RFC 2889 extends RFC 2544 for testing LAN switches. These tests
 measure switch-specific characteristics like forwarding rate across multiple ports,
 MAC address table capacity, learning rate, and congestion handling.`,
-    tests: ['forwarding', 'address_cache', 'learning_rate', 'broadcast', 'congestion'],
+    tests: [
+      'rfc2889_forwarding',
+      'rfc2889_caching',
+      'rfc2889_learning',
+      'rfc2889_broadcast',
+      'rfc2889_congestion',
+    ],
     whenToUse: 'Switch validation, data center planning, MAC table capacity verification',
   },
   rfc6349: {
@@ -48,7 +61,7 @@ MAC address table capacity, learning rate, and congestion handling.`,
     description: `RFC 6349 provides methodology for testing TCP throughput, which
 represents actual application performance. These tests measure achievable TCP throughput
 and help identify network factors affecting TCP performance.`,
-    tests: ['tcp_throughput', 'path_analysis'],
+    tests: ['rfc6349_throughput', 'rfc6349_path'],
     whenToUse: 'Application performance testing, WAN optimization, TCP troubleshooting',
   },
   y1731: {
@@ -59,7 +72,7 @@ and help identify network factors affecting TCP performance.`,
     description: `ITU-T Y.1731 defines OAM functions for monitoring and maintaining
 ethernet services. These tools provide in-service monitoring capabilities including
 delay measurement, loss measurement, and connectivity verification.`,
-    tests: ['frame_delay', 'y1731_frame_loss', 'synthetic_loss', 'loopback'],
+    tests: ['y1731_delay', 'y1731_loss', 'y1731_slm', 'y1731_loopback'],
     whenToUse: 'Production monitoring, SLA verification, fault isolation',
   },
   mef: {
@@ -70,7 +83,7 @@ delay measurement, loss measurement, and connectivity verification.`,
     description: `MEF (Metro Ethernet Forum) defines service specifications and
 testing methodologies for carrier ethernet. These tests validate services against
 MEF specifications including bandwidth profiles and Class of Service.`,
-    tests: ['mef_config', 'mef_performance', 'mef_full'],
+    tests: ['mef_config', 'mef_perf', 'mef'],
     whenToUse: 'MEF-certified service validation, multi-CoS testing, carrier acceptance',
   },
   tsn: {
@@ -81,7 +94,7 @@ MEF specifications including bandwidth profiles and Class of Service.`,
     description: `IEEE 802.1 Time-Sensitive Networking tests validate networks
 requiring deterministic timing. These tests verify that time-aware shaping, traffic
 isolation, and scheduled latency meet industrial automation requirements.`,
-    tests: ['gate_timing', 'traffic_isolation', 'scheduled_latency', 'tsn_full'],
+    tests: ['tsn_timing', 'tsn_isolation', 'tsn_latency', 'tsn'],
     whenToUse: 'Industrial automation, automotive ethernet, deterministic networking',
   },
   trafficgen: {

@@ -274,7 +274,7 @@ func rfc2544LatencyDetails() testHelpDetails {
 		Tips:               rfc2544LatencyTips(),
 		CommonIssues:       rfc2544LatencyIssues(),
 		RFCSection:         "Section 26.2",
-		SeeAlso:            []string{TestTypeThroughput, "frame_delay", "y1564_performance"},
+		SeeAlso:            []string{TestTypeThroughput, "y1731_delay", "y1564_perf"},
 	}
 }
 
@@ -454,7 +454,7 @@ func rfc2544FrameLossDetails() testHelpDetails {
 		Tips:               rfc2544FrameLossTips(),
 		CommonIssues:       rfc2544FrameLossIssues(),
 		RFCSection:         "Section 26.3",
-		SeeAlso:            []string{TestTypeThroughput, "y1731_frame_loss"},
+		SeeAlso:            []string{TestTypeThroughput, "y1731_loss"},
 	}
 }
 
@@ -551,7 +551,7 @@ func rfc2544FrameLossIssues() []Issue {
 func rfc2544BackToBack() TestHelp {
 	return buildTestHelp(
 		testHelpMeta{
-			ID:       "back_to_back",
+			ID:       "rfc2544_back_to_back",
 			Name:     "Back-to-Back Frames Test",
 			Standard: "RFC 2544 Section 26.4",
 			Category: StandardRFC2544,
@@ -614,7 +614,7 @@ func rfc2544BackToBackDetails() testHelpDetails {
 		Tips:               rfc2544BackToBackTips(),
 		CommonIssues:       nil,
 		RFCSection:         "Section 26.4",
-		SeeAlso:            []string{TestTypeThroughput, "congestion"},
+		SeeAlso:            []string{TestTypeThroughput, "rfc2889_congestion"},
 	}
 }
 
@@ -680,7 +680,7 @@ func rfc2544BackToBackTips() []string {
 
 func rfc2544SystemRecovery() TestHelp {
 	return TestHelp{
-		ID:       "system_recovery",
+		ID:       "rfc2544_system_recovery",
 		Name:     "System Recovery Test",
 		Standard: "RFC 2544 Section 26.5",
 		Category: StandardRFC2544,
@@ -767,13 +767,13 @@ traffic spikes.`,
 		CommonIssues: nil,
 
 		RFCSection: "Section 26.5",
-		SeeAlso:    []string{TestTypeThroughput, "reset"},
+		SeeAlso:    []string{TestTypeThroughput, "rfc2544_reset"},
 	}
 }
 
 func rfc2544Reset() TestHelp {
 	return TestHelp{
-		ID:       "reset",
+		ID:       "rfc2544_reset",
 		Name:     "Reset Test",
 		Standard: "RFC 2544 Section 26.6",
 		Category: StandardRFC2544,
@@ -847,6 +847,6 @@ Lower reset times mean less disruption during maintenance or failures.`,
 		CommonIssues: nil,
 
 		RFCSection: "Section 26.6",
-		SeeAlso:    []string{"system_recovery"},
+		SeeAlso:    []string{"rfc2544_system_recovery"},
 	}
 }

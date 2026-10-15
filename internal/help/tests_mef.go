@@ -64,7 +64,7 @@ func mefConfigDetails() testHelpDetails {
 		Tips:               nil,
 		CommonIssues:       nil,
 		RFCSection:         "",
-		SeeAlso:            []string{"y1564_config", "mef_performance"},
+		SeeAlso:            []string{"y1564_config", "mef_perf"},
 	}
 }
 
@@ -122,7 +122,7 @@ func mefConfigExamples() []Example {
 
 func mefPerformance() TestHelp {
 	return TestHelp{
-		ID:       "mef_performance",
+		ID:       "mef_perf",
 		Name:     "MEF Performance Test",
 		Standard: "MEF 14/48",
 		Category: StandardMEF,
@@ -179,13 +179,13 @@ This catches problems that only show up after running for a while.`,
 		CommonIssues: nil,
 
 		RFCSection: "",
-		SeeAlso:    []string{"mef_config", "y1564_performance"},
+		SeeAlso:    []string{"mef_config", "y1564_perf"},
 	}
 }
 
 func mefFull() TestHelp {
 	return TestHelp{
-		ID:       "mef_full",
+		ID:       "mef",
 		Name:     "MEF Full Test Suite",
 		Standard: "MEF 14/48",
 		Category: StandardMEF,
@@ -228,6 +228,6 @@ Use this for official service acceptance when MEF compliance is required.`,
 		CommonIssues: nil,
 
 		RFCSection: "",
-		SeeAlso:    []string{"mef_config", "mef_performance", "y1564_full"},
+		SeeAlso:    []string{"mef_config", "mef_perf", "y1564"},
 	}
 }

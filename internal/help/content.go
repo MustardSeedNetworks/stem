@@ -9,7 +9,7 @@ package help
 
 // TestHelp contains comprehensive documentation for a single test type.
 type TestHelp struct {
-	ID       string // Unique identifier: "throughput", "latency", etc.
+	ID       string // Module test type: "rfc2544_throughput", "y1564", etc.
 	Name     string // Display name: "Throughput Test"
 	Standard string // Reference standard: "RFC 2544 Section 26.1"
 	Category string // Category: "RFC 2544", "Y.1564", etc.

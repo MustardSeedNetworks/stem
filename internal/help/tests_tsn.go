@@ -13,7 +13,7 @@ package help
 func tsnGateTiming() TestHelp {
 	return buildTestHelp(
 		testHelpMeta{
-			ID:       "gate_timing",
+			ID:       "tsn_timing",
 			Name:     "TSN Gate Timing Test",
 			Standard: "IEEE 802.1Qbv",
 			Category: StandardTSN,
@@ -72,7 +72,7 @@ func tsnGateTimingDetails() testHelpDetails {
 		Tips:               tsnGateTimingTips(),
 		CommonIssues:       nil,
 		RFCSection:         "",
-		SeeAlso:            []string{"traffic_isolation", "scheduled_latency"},
+		SeeAlso:            []string{"tsn_isolation", "tsn_latency"},
 	}
 }
 
@@ -139,7 +139,7 @@ func tsnGateTimingTips() []string {
 func tsnTrafficIsolation() TestHelp {
 	return buildTestHelp(
 		testHelpMeta{
-			ID:       "traffic_isolation",
+			ID:       "tsn_isolation",
 			Name:     "TSN Traffic Class Isolation Test",
 			Standard: "IEEE 802.1Qbv/Qbu",
 			Category: StandardTSN,
@@ -189,7 +189,7 @@ func tsnTrafficIsolationDetails() testHelpDetails {
 		Tips:               nil,
 		CommonIssues:       nil,
 		RFCSection:         "",
-		SeeAlso:            []string{"gate_timing", "scheduled_latency"},
+		SeeAlso:            []string{"tsn_timing", "tsn_latency"},
 	}
 }
 
@@ -248,7 +248,7 @@ func tsnTrafficIsolationExamples() []Example {
 func tsnScheduledLatency() TestHelp {
 	return buildTestHelp(
 		testHelpMeta{
-			ID:       "scheduled_latency",
+			ID:       "tsn_latency",
 			Name:     "TSN Scheduled Latency Test",
 			Standard: "IEEE 802.1Qbv",
 			Category: StandardTSN,
@@ -301,7 +301,7 @@ func tsnScheduledLatencyDetails() testHelpDetails {
 		Tips:               nil,
 		CommonIssues:       nil,
 		RFCSection:         "",
-		SeeAlso:            []string{"gate_timing", "traffic_isolation"},
+		SeeAlso:            []string{"tsn_timing", "tsn_isolation"},
 	}
 }
 
@@ -359,7 +359,7 @@ func tsnScheduledLatencyExamples() []Example {
 
 func tsnFull() TestHelp {
 	return TestHelp{
-		ID:       "tsn_full",
+		ID:       "tsn",
 		Name:     "TSN Full Validation Suite",
 		Standard: "IEEE 802.1Qbv/Qbu",
 		Category: StandardTSN,
@@ -405,7 +405,7 @@ into production.`,
 		CommonIssues: nil,
 
 		RFCSection: "",
-		SeeAlso:    []string{"gate_timing", "traffic_isolation", "scheduled_latency"},
+		SeeAlso:    []string{"tsn_timing", "tsn_isolation", "tsn_latency"},
 	}
 }
 
@@ -421,12 +421,8 @@ func GetAllCategories() map[string]Category {
 These tests measure fundamental performance characteristics: throughput, latency,
 frame loss, and burst handling. Use these tests for equipment validation and comparison.`,
 			Tests: []string{
-				TestTypeThroughput,
-				TestTypeLatency,
-				TestTypeFrameLoss,
-				"back_to_back",
-				"system_recovery",
-				"reset",
+				TestTypeThroughput, TestTypeLatency, TestTypeFrameLoss,
+				"rfc2544_back_to_back", "rfc2544_system_recovery", "rfc2544_reset",
 			},
 			WhenToUse: "Equipment benchmarking, performance validation, comparing vendors",
 			Standard:  StandardRFC2544,
@@ -440,7 +436,7 @@ frame loss, and burst handling. Use these tests for equipment validation and com
 			Description: `ITU-T Y.1564 defines the methodology for activating and validating
 carrier ethernet services. These tests verify that a service meets its SLA parameters
 at progressive load levels and over extended duration.`,
-			Tests:     []string{"y1564_config", "y1564_performance", "y1564_full"},
+			Tests:     []string{"y1564_config", "y1564_perf", "y1564"},
 			WhenToUse: "Carrier service activation, SLA validation, service acceptance",
 			Standard:  StandardITUY1564,
 			SeeAlso:   []string{CatMEF, CatRFC2544},
@@ -453,7 +449,10 @@ at progressive load levels and over extended duration.`,
 			Description: `RFC 2889 extends RFC 2544 for testing LAN switches. These tests
 measure switch-specific characteristics like forwarding rate across multiple ports,
 MAC address table capacity, learning rate, and congestion handling.`,
-			Tests:     []string{"forwarding", "address_cache", "learning_rate", "broadcast", "congestion"},
+			Tests: []string{
+				"rfc2889_forwarding", "rfc2889_caching", "rfc2889_learning",
+				"rfc2889_broadcast", "rfc2889_congestion",
+			},
 			WhenToUse: "Switch validation, data center planning, MAC table capacity verification",
 			Standard:  StandardRFC2889,
 			SeeAlso:   []string{CatRFC2544},
@@ -466,7 +465,7 @@ MAC address table capacity, learning rate, and congestion handling.`,
 			Description: `RFC 6349 provides methodology for testing TCP throughput, which
 represents actual application performance. These tests measure achievable TCP throughput
 and help identify network factors affecting TCP performance.`,
-			Tests:     []string{"tcp_throughput", "path_analysis"},
+			Tests:     []string{"rfc6349_throughput", "rfc6349_path"},
 			WhenToUse: "Application performance testing, WAN optimization, TCP troubleshooting",
 			Standard:  StandardRFC6349,
 			SeeAlso:   []string{CatRFC2544},
@@ -479,7 +478,7 @@ and help identify network factors affecting TCP performance.`,
 			Description: `ITU-T Y.1731 defines OAM functions for monitoring and maintaining
 ethernet services. These tools provide in-service monitoring capabilities including
 delay measurement, loss measurement, and connectivity verification.`,
-			Tests:     []string{"frame_delay", "y1731_frame_loss", "synthetic_loss", "loopback"},
+			Tests:     []string{"y1731_delay", "y1731_loss", "y1731_slm", "y1731_loopback"},
 			WhenToUse: "Production monitoring, SLA verification, fault isolation",
 			Standard:  StandardITUY1731,
 			SeeAlso:   []string{CatY1564, CatMEF},
@@ -492,7 +491,7 @@ delay measurement, loss measurement, and connectivity verification.`,
 			Description: `MEF (Metro Ethernet Forum) defines service specifications and
 testing methodologies for carrier ethernet. These tests validate services against
 MEF specifications including bandwidth profiles and Class of Service.`,
-			Tests:     []string{"mef_config", "mef_performance", "mef_full"},
+			Tests:     []string{"mef_config", "mef_perf", "mef"},
 			WhenToUse: "MEF-certified service validation, multi-CoS testing, carrier acceptance",
 			Standard:  "MEF 14/48",
 			SeeAlso:   []string{CatY1564, CatY1731},
@@ -505,7 +504,7 @@ MEF specifications including bandwidth profiles and Class of Service.`,
 			Description: `IEEE 802.1 Time-Sensitive Networking tests validate networks
 requiring deterministic timing. These tests verify that time-aware shaping, traffic
 isolation, and scheduled latency meet industrial automation requirements.`,
-			Tests:     []string{"gate_timing", "traffic_isolation", "scheduled_latency", "tsn_full"},
+			Tests:     []string{"tsn_timing", "tsn_isolation", "tsn_latency", "tsn"},
 			WhenToUse: "Industrial automation, automotive ethernet, deterministic networking",
 			Standard:  "IEEE 802.1Qbv/Qbu",
 			SeeAlso:   []string{CatRFC2544},

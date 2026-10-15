@@ -13,7 +13,7 @@ package help
 func rfc6349TCPThroughput() TestHelp {
 	return buildTestHelp(
 		testHelpMeta{
-			ID:       "tcp_throughput",
+			ID:       "rfc6349_throughput",
 			Name:     "TCP Throughput Test",
 			Standard: StandardRFC6349,
 			Category: StandardRFC6349,
@@ -75,7 +75,7 @@ func rfc6349TCPThroughputDetails() testHelpDetails {
 		Tips:               nil,
 		CommonIssues:       nil,
 		RFCSection:         "",
-		SeeAlso:            []string{"path_analysis", TestTypeThroughput},
+		SeeAlso:            []string{"rfc6349_path", TestTypeThroughput},
 	}
 }
 
@@ -139,7 +139,7 @@ func rfc6349TCPThroughputExamples() []Example {
 
 func rfc6349PathAnalysis() TestHelp {
 	return TestHelp{
-		ID:       "path_analysis",
+		ID:       "rfc6349_path",
 		Name:     "Path Analysis Test",
 		Standard: StandardRFC6349,
 		Category: StandardRFC6349,
@@ -221,6 +221,6 @@ Use this when downloads are slow and you want to know WHY, not just HOW slow.`,
 		CommonIssues: nil,
 
 		RFCSection: "",
-		SeeAlso:    []string{"tcp_throughput", TestTypeLatency},
+		SeeAlso:    []string{"rfc6349_throughput", TestTypeLatency},
 	}
 }

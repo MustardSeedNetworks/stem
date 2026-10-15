@@ -10,44 +10,44 @@ package help
 func GetAllTests() map[string]TestHelp {
 	return map[string]TestHelp{
 		// RFC 2544 Tests
-		TestTypeThroughput: rfc2544Throughput(),
-		TestTypeLatency:    rfc2544Latency(),
-		TestTypeFrameLoss:  rfc2544FrameLoss(),
-		"back_to_back":     rfc2544BackToBack(),
-		"system_recovery":  rfc2544SystemRecovery(),
-		"reset":            rfc2544Reset(),
+		TestTypeThroughput:        rfc2544Throughput(),
+		TestTypeLatency:           rfc2544Latency(),
+		TestTypeFrameLoss:         rfc2544FrameLoss(),
+		"rfc2544_back_to_back":    rfc2544BackToBack(),
+		"rfc2544_system_recovery": rfc2544SystemRecovery(),
+		"rfc2544_reset":           rfc2544Reset(),
 
 		// Y.1564 Tests
-		"y1564_config":      y1564Config(),
-		"y1564_performance": y1564Performance(),
-		"y1564_full":        y1564Full(),
+		"y1564_config": y1564Config(),
+		"y1564_perf":   y1564Performance(),
+		"y1564":        y1564Full(),
 
 		// RFC 2889 Tests
-		"forwarding":    rfc2889Forwarding(),
-		"address_cache": rfc2889AddressCache(),
-		"learning_rate": rfc2889LearningRate(),
-		"broadcast":     rfc2889Broadcast(),
-		"congestion":    rfc2889Congestion(),
+		"rfc2889_forwarding": rfc2889Forwarding(),
+		"rfc2889_caching":    rfc2889AddressCache(),
+		"rfc2889_learning":   rfc2889LearningRate(),
+		"rfc2889_broadcast":  rfc2889Broadcast(),
+		"rfc2889_congestion": rfc2889Congestion(),
 
 		// RFC 6349 Tests
-		"tcp_throughput": rfc6349TCPThroughput(),
-		"path_analysis":  rfc6349PathAnalysis(),
+		"rfc6349_throughput": rfc6349TCPThroughput(),
+		"rfc6349_path":       rfc6349PathAnalysis(),
 
 		// Y.1731 Tests
-		"frame_delay":      y1731FrameDelay(),
-		"y1731_frame_loss": y1731FrameLoss(),
-		"synthetic_loss":   y1731SyntheticLoss(),
-		"loopback":         y1731Loopback(),
+		"y1731_delay":    y1731FrameDelay(),
+		"y1731_loss":     y1731FrameLoss(),
+		"y1731_slm":      y1731SyntheticLoss(),
+		"y1731_loopback": y1731Loopback(),
 
 		// MEF Tests
-		"mef_config":      mefConfig(),
-		"mef_performance": mefPerformance(),
-		"mef_full":        mefFull(),
+		"mef_config": mefConfig(),
+		"mef_perf":   mefPerformance(),
+		"mef":        mefFull(),
 
 		// TSN Tests
-		"gate_timing":       tsnGateTiming(),
-		"traffic_isolation": tsnTrafficIsolation(),
-		"scheduled_latency": tsnScheduledLatency(),
-		"tsn_full":          tsnFull(),
+		"tsn_timing":    tsnGateTiming(),
+		"tsn_isolation": tsnTrafficIsolation(),
+		"tsn_latency":   tsnScheduledLatency(),
+		"tsn":           tsnFull(),
 	}
 }

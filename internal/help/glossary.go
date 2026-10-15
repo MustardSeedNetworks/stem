@@ -44,9 +44,9 @@ func getBandwidthTerms() map[string]GlossaryEntry {
 			FullName:  "Network Bandwidth",
 			TechDef:   "The maximum data transfer capacity of a network link, measured in bits per second (bps)",
 			LaymanDef: "How much data your network can carry - like the width of a highway. More bandwidth = more data can flow at once",
-			Related:   []string{TestTypeThroughput, "cir", "line_rate"},
+			Related:   []string{TermThroughput, "cir", "line_rate"},
 		},
-		TestTypeThroughput: {
+		TermThroughput: {
 			Term:      "Throughput",
 			FullName:  "Network Throughput",
 			TechDef:   "The actual rate of successful data transfer, accounting for protocol overhead and losses",
@@ -86,14 +86,14 @@ func getBandwidthTerms() map[string]GlossaryEntry {
 			FullName:  "Line Rate / Wire Speed",
 			TechDef:   "The maximum theoretical bit rate of a physical interface (e.g., 1 Gbps, 10 Gbps)",
 			LaymanDef: "The maximum speed the cable/port can physically handle - like the top speed of a car",
-			Related:   []string{"bandwidth", TestTypeThroughput},
+			Related:   []string{"bandwidth", TermThroughput},
 		},
 		"goodput": {
 			Term:      "Goodput",
 			FullName:  "Application Goodput",
 			TechDef:   "The rate of useful data transfer excluding protocol overhead, retransmissions, and headers",
 			LaymanDef: "The actual useful data speed your applications see - always less than throughput due to overhead",
-			Related:   []string{TestTypeThroughput},
+			Related:   []string{TermThroughput},
 		},
 	}
 }
@@ -101,7 +101,7 @@ func getBandwidthTerms() map[string]GlossaryEntry {
 // getLatencyTerms returns latency and timing terms.
 func getLatencyTerms() map[string]GlossaryEntry {
 	return map[string]GlossaryEntry{
-		TestTypeLatency: {
+		TermLatency: {
 			Term:      "Latency",
 			FullName:  "Network Latency",
 			TechDef:   "The time delay for a packet to travel from source to destination, usually measured in milliseconds or microseconds",
@@ -113,14 +113,14 @@ func getLatencyTerms() map[string]GlossaryEntry {
 			FullName:  "Round-Trip Time",
 			TechDef:   "Total time for a packet to travel to a destination and back, including processing delays",
 			LaymanDef: "Time for a message to go there and come back - what you see when you ping something",
-			Related:   []string{TestTypeLatency, "ping"},
+			Related:   []string{TermLatency, "ping"},
 		},
 		"jitter": {
 			Term:      "Jitter",
 			FullName:  "Packet Delay Variation",
 			TechDef:   "The variation in latency between packets in a flow. Low jitter means consistent timing",
 			LaymanDef: "How consistent the delay is. High jitter = choppy video/audio because packets arrive at uneven times",
-			Related:   []string{TestTypeLatency, "fdv"},
+			Related:   []string{TermLatency, "fdv"},
 		},
 		"fdv": {
 			Term:      "FDV",
@@ -134,7 +134,7 @@ func getLatencyTerms() map[string]GlossaryEntry {
 			FullName:  "Frame Delay",
 			TechDef:   "ITU-T term for the delay of individual frames in carrier ethernet",
 			LaymanDef: "How long it takes for a single data packet to arrive",
-			Related:   []string{TestTypeLatency, "fdv"},
+			Related:   []string{TermLatency, "fdv"},
 		},
 	}
 }
@@ -479,7 +479,7 @@ func getTestingTerms() map[string]GlossaryEntry {
 			FullName:  "Binary Search Algorithm",
 			TechDef:   "Algorithm used in RFC 2544 to efficiently find maximum throughput by halving the search range",
 			LaymanDef: "A smart way to find the right speed - instead of trying every speed, it narrows down quickly by halves",
-			Related:   []string{TestTypeThroughput},
+			Related:   []string{TermThroughput},
 		},
 		ValueBaseline: {
 			Term:      "Baseline",
@@ -520,7 +520,7 @@ func getCongestionTerms() map[string]GlossaryEntry {
 			FullName:  "Bufferbloat",
 			TechDef:   "Excessive buffering that causes high latency without improving throughput",
 			LaymanDef: "When buffers are so big that packets wait too long - causes lag even though nothing is lost",
-			Related:   []string{"buffer", TestTypeLatency},
+			Related:   []string{"buffer", TermLatency},
 		},
 		"queue": {
 			Term:      "Queue",
@@ -584,10 +584,10 @@ func getStandardsTerms() map[string]GlossaryEntry {
 func GetGlossaryTermsByCategory() map[string][]string {
 	return map[string][]string{
 		"Bandwidth & Rate": {
-			"bandwidth", TestTypeThroughput, "cir", "eir", "cbs", "ebs", "line_rate", "goodput",
+			"bandwidth", TermThroughput, "cir", "eir", "cbs", "ebs", "line_rate", "goodput",
 		},
 		"Latency & Timing": {
-			TestTypeLatency, "rtt", "jitter", "fdv", "fd",
+			TermLatency, "rtt", "jitter", "fdv", "fd",
 		},
 		"Loss": {
 			"packet_loss", "flr",

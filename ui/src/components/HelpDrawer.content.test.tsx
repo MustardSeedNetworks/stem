@@ -32,7 +32,7 @@ describe('help content coverage', () => {
 
   it('renders Spanish usage and lets related tests open their actual details', async () => {
     await i18n.changeLanguage('es');
-    render(<HelpDrawer isOpen onClose={() => {}} initialTestId="throughput" />);
+    render(<HelpDrawer isOpen onClose={() => {}} initialTestId="rfc2544_throughput" />);
     expect(screen.getByText(/Validar equipos antes de instalarlos/)).toBeVisible();
     expect(screen.getByTestId('help-search')).toHaveFocus();
     expect(screen.getByTestId('help-standard-link')).toHaveAttribute(
