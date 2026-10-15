@@ -241,15 +241,6 @@ static void *worker_thread(void *arg)
                     stats_batch.packets_reflected++;
                     stats_batch.bytes_reflected += pkts_tx[i].len;
                 }
-                /*
-                 * Release transmitted buffers back to platform
-                 * - AF_PACKET: Returns RX frames to kernel (packets were copied)
-                 * - AF_XDP: Triggers CQ polling to recycle UMEM buffers (zero-copy)
-                 * - macOS BPF: No-op (packets are copied, no buffer management)
-                 */
-                if (platform_ops->release_batch) {
-                    platform_ops->release_batch(wctx, pkts_tx, sent);
-                }
             }
         }
 

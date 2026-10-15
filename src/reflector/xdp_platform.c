@@ -276,6 +276,72 @@ void xdp_platform_cleanup(worker_ctx_t *wctx)
 }
 
 /*
+ * Return transmitted buffers from the completion queue to the fill queue.
+ * Every UMEM frame in circulation fits in the fill queue, so the reservation
+ * fails only if ownership was lost elsewhere; the completions then stay queued
+ * rather than leaking their frames.
+ */
+static void xdp_recycle_completed_tx(struct platform_ctx *pctx)
+{
+    uint32_t idx_cq;
+    uint32_t idx_fq;
+
+    uint32_t completed = xsk_ring_cons__peek(&pctx->xsk_info.umem.cq, BATCH_SIZE, &idx_cq);
+    if (completed == 0) {
+        return;
+    }
+    if (xsk_ring_prod__reserve(&pctx->xsk_info.umem.fq, completed, &idx_fq) != completed) {
+        xsk_ring_cons__cancel(&pctx->xsk_info.umem.cq, completed);
+        return;
+    }
+    for (uint32_t i = 0; i < completed; i++) {
+        *xsk_ring_prod__fill_addr(&pctx->xsk_info.umem.fq, idx_fq++) =
+            *xsk_ring_cons__comp_addr(&pctx->xsk_info.umem.cq, idx_cq++);
+    }
+    xsk_ring_prod__submit(&pctx->xsk_info.umem.fq, completed);
+    xsk_ring_cons__release(&pctx->xsk_info.umem.cq, completed);
+    pctx->xsk_info.outstanding_tx -= completed;
+}
+
+/* Return received frames that will not be transmitted to the fill queue. */
+static void xdp_return_to_fill(struct platform_ctx *pctx, const packet_t *pkts, int num_pkts)
+{
+    uint32_t idx_fq;
+
+    if (xsk_ring_prod__reserve(&pctx->xsk_info.umem.fq, (uint32_t)num_pkts, &idx_fq) !=
+        (uint32_t)num_pkts) {
+        reflector_log(LOG_ERROR, "Fill queue full: %d UMEM frames lost", num_pkts);
+        return;
+    }
+    for (int i = 0; i < num_pkts; i++) {
+        *xsk_ring_prod__fill_addr(&pctx->xsk_info.umem.fq, idx_fq++) = pkts[i].addr;
+    }
+    xsk_ring_prod__submit(&pctx->xsk_info.umem.fq, (uint32_t)num_pkts);
+}
+
+/* Ask the kernel to transmit what the TX ring holds. */
+static void xdp_kick_tx(struct platform_ctx *pctx)
+{
+    if (xsk_ring_prod__needs_wakeup(&pctx->xsk_info.tx)) {
+        sendto(xsk_socket__fd(pctx->xsk_info.xsk), NULL, 0, MSG_DONTWAIT, NULL, 0);
+    }
+}
+
+/*
+ * Copy mode transmits a bounded number of descriptors per kick, so frames
+ * queued behind them wait for the next one. Without this, the last frames of a
+ * burst stay in the TX ring until another frame arrives, which at the end of a
+ * trial is never.
+ */
+static void xdp_flush_tx(struct platform_ctx *pctx)
+{
+    xdp_recycle_completed_tx(pctx);
+    if (pctx->xsk_info.outstanding_tx > 0) {
+        xdp_kick_tx(pctx);
+    }
+}
+
+/*
  * Receive batch of packets (zero-copy)
  */
 int xdp_platform_recv_batch(worker_ctx_t *wctx, packet_t *pkts, int max_pkts)
@@ -292,6 +358,7 @@ int xdp_platform_recv_batch(worker_ctx_t *wctx, packet_t *pkts, int max_pkts)
     /* Receive packets from RX ring */
     rcvd = xsk_ring_cons__peek(&pctx->xsk_info.rx, max_pkts, &idx_rx);
     if (rcvd == 0) {
+        xdp_flush_tx(pctx);
         return 0;
     }
 
@@ -315,41 +382,9 @@ int xdp_platform_recv_batch(worker_ctx_t *wctx, packet_t *pkts, int max_pkts)
 }
 
 /*
- * Helper: Poll completion queue and recycle completed TX buffers to fill queue
- * This enables proper buffer recycling for zero-copy XDP operation.
- * Returns number of buffers recycled.
- */
-static int xdp_recycle_completed_tx(struct platform_ctx *pctx)
-{
-    uint32_t idx_cq;
-    uint32_t idx_fq;
-
-    /* Poll completion queue to see what TX completed */
-    int completed = xsk_ring_cons__peek(&pctx->xsk_info.umem.cq, BATCH_SIZE, &idx_cq);
-    if (completed <= 0) {
-        return 0;
-    }
-
-    /* Try to reserve space in fill queue for recycling */
-    int reserved = xsk_ring_prod__reserve(&pctx->xsk_info.umem.fq, completed, &idx_fq);
-    if (reserved > 0) {
-        /* Return completed buffers to fill queue */
-        for (int i = 0; i < reserved; i++) {
-            uint64_t addr = *xsk_ring_cons__comp_addr(&pctx->xsk_info.umem.cq, idx_cq++);
-            *xsk_ring_prod__fill_addr(&pctx->xsk_info.umem.fq, idx_fq++) = addr;
-        }
-        xsk_ring_prod__submit(&pctx->xsk_info.umem.fq, reserved);
-    }
-
-    /* Release from completion queue (even if couldn't reserve FQ space) */
-    xsk_ring_cons__release(&pctx->xsk_info.umem.cq, completed);
-    pctx->xsk_info.outstanding_tx -= completed;
-
-    return completed;
-}
-
-/*
- * Send batch of packets (zero-copy)
+ * Send batch of packets (zero-copy). Takes ownership of every buffer: a sent
+ * frame belongs to the kernel until its completion is recycled, and an unsent
+ * one goes straight back to the fill queue.
  */
 int xdp_platform_send_batch(worker_ctx_t *wctx, packet_t *pkts, int num_pkts)
 {
@@ -365,11 +400,10 @@ int xdp_platform_send_batch(worker_ctx_t *wctx, packet_t *pkts, int num_pkts)
     /* Eagerly recycle completed TX buffers to prevent UMEM exhaustion */
     xdp_recycle_completed_tx(pctx);
 
-    /* Reserve space in TX ring */
+    /* The reservation is all or nothing: a full TX ring drops the batch. */
     int reserved = xsk_ring_prod__reserve(&pctx->xsk_info.tx, num_pkts, &idx_tx);
     if (reserved == 0) {
-        /* TX ring full, recycle again and retry */
-        xdp_recycle_completed_tx(pctx);
+        xdp_return_to_fill(pctx, pkts, num_pkts);
         return 0;
     }
 
@@ -384,37 +418,16 @@ int xdp_platform_send_batch(worker_ctx_t *wctx, packet_t *pkts, int num_pkts)
     xsk_ring_prod__submit(&pctx->xsk_info.tx, reserved);
     pctx->xsk_info.outstanding_tx += reserved;
 
-    /* Kick TX if needed */
-    if (xsk_ring_prod__needs_wakeup(&pctx->xsk_info.tx)) {
-        sendto(xsk_socket__fd(pctx->xsk_info.xsk), NULL, 0, MSG_DONTWAIT, NULL, 0);
-    }
-
+    xdp_kick_tx(pctx);
     return reserved;
 }
 
 /*
- * Return buffers to fill queue
- *
- * For zero-copy XDP, this function handles two distinct use cases:
- *
- * 1. Immediate release of unwanted RX packets (num_pkts typically 1)
- *    - Non-ITO packets that were never sent to TX
- *    - Can safely return directly to FQ
- *
- * 2. Post-TX buffer recycling (num_pkts typically > 1)
- *    - Called after send_batch with packets just submitted to TX
- *    - Those packets are in-flight, so we poll CQ instead
- *    - Completed buffers are recycled via CQ polling
- *
- * Heuristic: Single packet release is immediate FQ return (case 1),
- * batch release is CQ polling (case 2). This works because core.c
- * calls release_batch(&pkt, 1) for non-ITO and release_batch(pkts, sent)
- * after send_batch where sent > 1 for batches.
+ * Return received frames that were not transmitted to the fill queue.
  */
-void xdp_platform_release_batch(worker_ctx_t *wctx, packet_t *pkts, int num_pkts)
+void xdp_platform_release_batch(worker_ctx_t *wctx, const packet_t *pkts, int num_pkts)
 {
     struct platform_ctx *pctx = wctx->pctx;
-    uint32_t             idx_fq;
 
     /* Validate num_pkts to prevent out-of-bounds access */
     if (unlikely(num_pkts < 0 || num_pkts > BATCH_SIZE)) {
@@ -422,29 +435,7 @@ void xdp_platform_release_batch(worker_ctx_t *wctx, packet_t *pkts, int num_pkts
         return;
     }
 
-    /*
-     * Always poll CQ to recycle completed TX buffers.
-     * This ensures continuous buffer flow in zero-copy mode.
-     */
-    xdp_recycle_completed_tx(pctx);
-
-    /*
-     * Handle immediate release for single non-ITO packets.
-     * These were never sent to TX, so safe to return directly to FQ.
-     *
-     * For batch releases (num_pkts > 1), assume post-TX and skip immediate
-     * release since those packets are in-flight. They'll be recycled when
-     * they appear in CQ.
-     */
-    if (num_pkts == 1) {
-        /* Single packet: likely non-ITO, release immediately */
-        int reserved = xsk_ring_prod__reserve(&pctx->xsk_info.umem.fq, 1, &idx_fq);
-        if (reserved > 0) {
-            *xsk_ring_prod__fill_addr(&pctx->xsk_info.umem.fq, idx_fq) = pkts[0].addr;
-            xsk_ring_prod__submit(&pctx->xsk_info.umem.fq, 1);
-        }
-    }
-    /* else: batch release after TX, buffers recycled via CQ polling above */
+    xdp_return_to_fill(pctx, pkts, num_pkts);
 }
 
 /* Platform operations structure */

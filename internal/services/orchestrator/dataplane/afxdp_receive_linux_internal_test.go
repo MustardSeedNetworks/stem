@@ -43,10 +43,10 @@ func ip(t *testing.T, args ...string) []byte {
 
 // newReflectedLink links a test master to a running reflector over a veth
 // pair with the given number of queues at each end, and returns the test
-// master's context. Native XDP on veth refuses a peer with more transmit
-// queues than it has receive queues, so both ends match. reflectorAFXDP
-// selects the reflector's platform.
-func newReflectedLink(t *testing.T, queues int, reflectorAFXDP bool) *Context {
+// master's context and the reflector. Native XDP on veth refuses a peer with
+// more transmit queues than it has receive queues, so both ends match.
+// reflectorAFXDP selects the reflector's platform.
+func newReflectedLink(t *testing.T, queues int, reflectorAFXDP bool) (*Context, *reflectordp.Dataplane) {
 	t.Helper()
 	addVethPair(t, queues)
 
@@ -66,7 +66,7 @@ func newReflectedLink(t *testing.T, queues int, reflectorAFXDP bool) *Context {
 	}
 	t.Cleanup(reflector.Stop)
 
-	return newLinkMaster(t)
+	return newLinkMaster(t), reflector
 }
 
 // addVethPair creates the test master's veth pair with the given number of
@@ -78,6 +78,13 @@ func addVethPair(t *testing.T, queues int) {
 		"type", "veth", "peer", "name", vethReflector, "address", reflectorMAC,
 		"numrxqueues", n, "numtxqueues", n)
 	t.Cleanup(func() { _ = exec.Command("ip", "link", "del", vethMaster).Run() })
+	// Without IPv6 the link carries only the test's own frames, so a reflector
+	// count can be compared with the test master's exactly.
+	for _, iface := range []string{vethMaster, vethReflector} {
+		if err := os.WriteFile("/proc/sys/net/ipv6/conf/"+iface+"/disable_ipv6", []byte("1"), 0); err != nil {
+			t.Fatalf("disable IPv6 on %s: %v", iface, err)
+		}
+	}
 	ip(t, "addr", "add", masterIP+"/24", "dev", vethMaster)
 	ip(t, "link", "set", vethMaster, "up")
 	ip(t, "link", "set", vethReflector, "up")
@@ -98,9 +105,9 @@ func newLinkMaster(t *testing.T) *Context {
 	return master
 }
 
-// trialReturnsWhatItSent runs one RFC 2544 trial at rate and requires the
-// reflected frames back within 1 %.
-func trialReturnsWhatItSent(t *testing.T, master *Context, rate float64) {
+// runTrial runs one RFC 2544 trial at rate and returns the frames it sent and
+// received back.
+func runTrial(t *testing.T, master *Context, rate float64) (uint64, uint64) {
 	t.Helper()
 	cfg := PeerConfig(vethMaster, reflectorIP, reflectorPort)
 	cfg.InitialRatePct = rate
@@ -118,9 +125,18 @@ func trialReturnsWhatItSent(t *testing.T, master *Context, rate float64) {
 	if sent == 0 {
 		t.Fatal("trial sent nothing")
 	}
+	return sent, recv
+}
+
+// trialReturnsWhatItSent runs one RFC 2544 trial at rate, requires the
+// reflected frames back within 1 % and returns how many came back.
+func trialReturnsWhatItSent(t *testing.T, master *Context, rate float64) uint64 {
+	t.Helper()
+	sent, recv := runTrial(t, master, rate)
 	if float64(sent)-float64(recv) > float64(sent)/100 {
 		t.Errorf("received %d of %d sent, want within 1%%", recv, sent)
 	}
+	return recv
 }
 
 // xdpAttached reports whether an XDP program is attached to the interface.
@@ -149,7 +165,7 @@ func requireRoot(t *testing.T) {
 // rebind the queue, which the kernel frees asynchronously.
 func TestAFXDPTrialReceivesFromReflectingPeer(t *testing.T) {
 	requireRoot(t)
-	master := newReflectedLink(t, 1, false)
+	master, _ := newReflectedLink(t, 1, false)
 
 	for _, rate := range []float64{1, 50} {
 		t.Run(strconv.FormatFloat(rate, 'f', -1, 64)+"pct", func(t *testing.T) {
@@ -195,7 +211,7 @@ func TestAFXDPReceivesOnEveryQueue(t *testing.T) {
 	for _, queues := range []int{2, 4} {
 		t.Run(strconv.Itoa(queues)+"queues", func(t *testing.T) {
 			// An AF_PACKET reflector, so XPS picks its transmit queue.
-			master := newReflectedLink(t, queues, false)
+			master, _ := newReflectedLink(t, queues, false)
 			reflectInto(t, queues-1, queues)
 			for _, rate := range []float64{1, 50} {
 				trialReturnsWhatItSent(t, master, rate)
@@ -216,10 +232,30 @@ func TestAFXDPReceivesOnEveryQueue(t *testing.T) {
 // always fell back to AF_PACKET there (stem#1532).
 func TestReflectorAFXDPRunsInCopyMode(t *testing.T) {
 	requireRoot(t)
-	master := newReflectedLink(t, 1, true)
+	master, reflector := newReflectedLink(t, 1, true)
 
 	if !xdpAttached(t, vethReflector) {
 		t.Error("no XDP program on the reflector's interface: it fell back to AF_PACKET")
 	}
-	trialReturnsWhatItSent(t, master, 1)
+	recv := trialReturnsWhatItSent(t, master, 1)
+
+	// A reflector starved of CPU loses frames in its kernel receive ring
+	// before it sees them, so on a busy host a loss tolerance fails at high
+	// rates whatever the reflector does. These checks hold under any load: a
+	// received frame it does not recognise was overwritten in a UMEM frame
+	// handed to the kernel twice, and a reflected frame that never arrives
+	// was left in its TX ring (stem#1711).
+	_, recv50 := runTrial(t, master, 50)
+	recv += recv50
+	reflector.Stop()
+	st := reflector.GetStats()
+	// Each trial primes the test master's neighbour entry with one UDP
+	// datagram, the only frame on the link that is not a test frame.
+	const trials = 2
+	if unrecognised := st.PacketsReceived - st.SigRFC2544; unrecognised != trials {
+		t.Errorf("reflector received %d frames that are not test frames, want %d", unrecognised, trials)
+	}
+	if st.PacketsReflected != recv {
+		t.Errorf("reflector reflected %d frames, the test master received %d", st.PacketsReflected, recv)
+	}
 }
