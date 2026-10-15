@@ -139,7 +139,8 @@ static int init_xsk(const reflector_ctx_t *rctx, worker_ctx_t *wctx)
 
     const stem_xsk_prog_t *prog = &pctx->xsk_prog;
     if (wctx->queue_id == 0) {
-        ret = stem_xsk_prog_attach(&pctx->xsk_prog, cfg->ifindex, (uint32_t)rctx->num_workers);
+        ret = stem_xsk_prog_attach(&pctx->xsk_prog, cfg->ifindex, (uint32_t)rctx->num_workers,
+                                   cfg->ito_port);
         if (ret) {
             reflector_log(LOG_ERROR, "Failed to attach the XDP program to %s: %s", cfg->ifname,
                           stem_strerror(-ret));
@@ -202,8 +203,16 @@ int xdp_platform_init(const reflector_ctx_t *rctx, worker_ctx_t *wctx)
         return caps;
     }
 
-    const reflector_config_t *cfg  = wctx->config;
-    struct platform_ctx      *pctx = calloc(1, sizeof(*pctx));
+    const reflector_config_t *cfg = wctx->config;
+    /* The XDP program redirects only frames to the reflector's port; with any
+     * port it would take the host's DNS and DHCP too (stem#1767). */
+    if (cfg->ito_port == 0) {
+        reflector_log(LOG_ERROR,
+                      "AF_XDP requires a UDP port to leave the host's own traffic alone");
+        return -EINVAL;
+    }
+
+    struct platform_ctx *pctx = calloc(1, sizeof(*pctx));
     if (!pctx) {
         reflector_log(LOG_ERROR, "Failed to allocate platform context");
         return -ENOMEM;

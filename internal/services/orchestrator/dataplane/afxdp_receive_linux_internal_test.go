@@ -342,6 +342,73 @@ func TestReflectorAFXDPReceivesOnEveryQueue(t *testing.T) {
 	}
 }
 
+// The reflector's XDP program redirected every frame on its interface to its
+// socket, and the reflector drops what is not a test frame, so the host's own
+// ARP, ICMP, SSH and DHCP never reached the stack. A reflector on a host's only
+// NIC cut the host off the network (stem#1767). The test master's end sits in
+// its own network namespace so its frames cross the veth instead of being
+// delivered locally. Named outside the packaged-capabilities pattern because
+// creating a namespace needs CAP_SYS_ADMIN.
+func TestHostTrafficPassesAFXDPReflector(t *testing.T) {
+	requireRoot(t)
+	const netns = "stmxdpns"
+	ip(t, "netns", "add", netns)
+	t.Cleanup(func() { _ = exec.Command("ip", "netns", "del", netns).Run() })
+	addVethPair(t, 1)
+	ip(t, "link", "set", vethMaster, "netns", netns)
+	inNetns := func(args ...string) *exec.Cmd {
+		return exec.Command("ip", append([]string{"netns", "exec", netns}, args...)...)
+	}
+	for _, args := range [][]string{
+		{"ip", "addr", "add", masterIP + "/24", "dev", vethMaster},
+		{"ip", "link", "set", vethMaster, "up"},
+	} {
+		if out, err := inNetns(args...).CombinedOutput(); err != nil {
+			t.Fatalf("%v: %v\n%s", args, err, out)
+		}
+	}
+	ip(t, "addr", "add", reflectorIP+"/24", "dev", vethReflector)
+
+	other, err := net.ListenPacket("udp4", net.JoinHostPort(reflectorIP, "0"))
+	if err != nil {
+		t.Fatalf("listen on the reflector host: %v", err)
+	}
+	defer other.Close()
+	otherPort := other.LocalAddr().(*net.UDPAddr).Port
+
+	reflector := startReflector(t, true)
+	if !xdpAttached(t, vethReflector) {
+		t.Fatal("no XDP program on the reflector's interface: it fell back to AF_PACKET")
+	}
+
+	// ARP and ICMP: the host must stay reachable.
+	if out, pingErr := inNetns("ping", "-c", "3", "-W", "1", reflectorIP).CombinedOutput(); pingErr != nil {
+		t.Errorf("the reflector host stopped answering ping: %v\n%s", pingErr, out)
+	}
+
+	// UDP to another port, as DNS and DHCP are, reaches its socket; a test
+	// frame to the reflector's port reaches the reflector.
+	send := func(port int) {
+		t.Helper()
+		script := `printf 'RFC2544%057d' 0 > /dev/udp/` + reflectorIP + "/" + strconv.Itoa(port)
+		if out, sendErr := inNetns("bash", "-c", script).CombinedOutput(); sendErr != nil {
+			t.Fatalf("send to port %d: %v\n%s", port, sendErr, out)
+		}
+	}
+	send(otherPort)
+	if err = other.SetReadDeadline(time.Now().Add(2 * time.Second)); err != nil {
+		t.Fatalf("set read deadline: %v", err)
+	}
+	if _, _, err = other.ReadFrom(make([]byte, 128)); err != nil {
+		t.Errorf("UDP to port %d never reached the host: %v", otherPort, err)
+	}
+	send(reflectorPort)
+	reflector.Stop()
+	if st := reflector.GetStats(); st.SigRFC2544 != 1 {
+		t.Errorf("reflector recognised %d test frames, want 1", st.SigRFC2544)
+	}
+}
+
 // The packaged service runs with CAP_BPF, CAP_NET_ADMIN and CAP_NET_RAW and
 // without CAP_SYS_ADMIN, which libxdp's own loader needed, so every packaged
 // run fell back to AF_PACKET (stem#1747). Run the AF_XDP tests again with

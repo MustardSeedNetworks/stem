@@ -8,10 +8,17 @@
  * lookup, so CAP_BPF, CAP_NET_ADMIN and CAP_NET_RAW are enough (stem#1747).
  *
  * The program is built from instructions rather than a compiled object, so
- * nothing has to be found on disk at run time. It has no pointer comparison,
- * which the verifier refuses without CAP_PERFMON. The attachment is a BPF link:
- * the kernel detaches the program when the link's descriptor closes, so a
- * crashed run never leaves it on the interface.
+ * nothing has to be found on disk at run time. Its only pointer comparison is
+ * the packet bounds check, the one kind the verifier allows without
+ * CAP_PERFMON. The attachment is a BPF link: the kernel detaches the program
+ * when the link's descriptor closes, so a crashed run never leaves it on the
+ * interface.
+ *
+ * A frame redirected to a socket never reaches the kernel stack. Given a UDP
+ * port, the program redirects only unfragmented IPv4 UDP to that port with a
+ * 20-byte IP header, the frames a reflector answers, and passes ARP, SSH, DHCP
+ * and the rest to the stack. Redirecting everything took a reflector host's
+ * own traffic and cut it off the network (stem#1767).
  */
 
 #ifndef STEM_XSK_PROG_H
@@ -20,6 +27,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include <arpa/inet.h>
 #include <linux/bpf.h>
 
 #include <bpf/bpf.h>
@@ -32,10 +40,18 @@ typedef struct {
 
 #define STEM_XSK_PROG_NONE ((stem_xsk_prog_t){.map_fd = -1, .link_fd = -1})
 
+#define STEM_XSK_LDX(size, dst, src, offset) \
+    {.code = BPF_LDX | BPF_MEM | (size), .dst_reg = (dst), .src_reg = (src), .off = (offset)}
+#define STEM_XSK_JNE(dst, value, to) \
+    {.code = BPF_JMP | BPF_JNE | BPF_K, .dst_reg = (dst), .off = (to), .imm = (value)}
+
 /* Load the redirect program for `queues` receive queues and attach it to
- * `ifindex`. On failure nothing stays attached and the negated errno is
- * returned (libbpf returns it). */
-static inline int stem_xsk_prog_attach(stem_xsk_prog_t *prog, int ifindex, uint32_t queues)
+ * `ifindex`. With `udp_port` it redirects only the test frames addressed to
+ * that port; 0 redirects every frame, which the test master still does for the
+ * length of a run (stem#1767). On failure nothing stays attached and the
+ * negated errno is returned (libbpf returns it). */
+static inline int stem_xsk_prog_attach(stem_xsk_prog_t *prog, int ifindex, uint32_t queues,
+                                       uint16_t udp_port)
 {
     *prog = STEM_XSK_PROG_NONE;
 
@@ -45,13 +61,30 @@ static inline int stem_xsk_prog_attach(stem_xsk_prog_t *prog, int ifindex, uint3
         return map_fd;
     }
 
-    /* return bpf_redirect_map(&xsks, ctx->rx_queue_index, XDP_PASS); a queue
-     * with no socket passes its frames to the stack. */
-    const struct bpf_insn insns[] = {
-        {.code    = BPF_LDX | BPF_MEM | BPF_W,
-         .dst_reg = BPF_REG_2,
-         .src_reg = BPF_REG_1,
-         .off     = offsetof(struct xdp_md, rx_queue_index)},
+    /* Loads read the packet's network-order bytes in host order, so each
+     * field is compared with its htons() value. Every jump lands on `pass`,
+     * the last two instructions, and counts from the instruction after it. */
+    const struct bpf_insn match[] = {
+        STEM_XSK_LDX(BPF_W, BPF_REG_7, BPF_REG_1, offsetof(struct xdp_md, data)),
+        STEM_XSK_LDX(BPF_W, BPF_REG_8, BPF_REG_1, offsetof(struct xdp_md, data_end)),
+        {.code = BPF_ALU64 | BPF_MOV | BPF_X, .dst_reg = BPF_REG_2, .src_reg = BPF_REG_7},
+        /* BPF_ADD and BPF_K are both 0, so the immediate form is just this. */
+        {.code = BPF_ALU64 | BPF_ADD, .dst_reg = BPF_REG_2, .imm = 14 + 20 + 8},
+        {.code = BPF_JMP | BPF_JGT | BPF_X, .dst_reg = BPF_REG_2, .src_reg = BPF_REG_8, .off = 17},
+        STEM_XSK_LDX(BPF_H, BPF_REG_2, BPF_REG_7, 12), /* EtherType */
+        STEM_XSK_JNE(BPF_REG_2, htons(0x0800), 15),
+        STEM_XSK_LDX(BPF_B, BPF_REG_2, BPF_REG_7, 14), /* version 4, 20-byte header */
+        STEM_XSK_JNE(BPF_REG_2, 0x45, 13),
+        STEM_XSK_LDX(BPF_B, BPF_REG_2, BPF_REG_7, 23), /* protocol */
+        STEM_XSK_JNE(BPF_REG_2, IPPROTO_UDP, 11),
+        STEM_XSK_LDX(BPF_H, BPF_REG_2, BPF_REG_7, 20), /* a later fragment has no UDP header */
+        {.code = BPF_ALU64 | BPF_AND | BPF_K, .dst_reg = BPF_REG_2, .imm = htons(0x1fff)},
+        STEM_XSK_JNE(BPF_REG_2, 0, 8),
+        STEM_XSK_LDX(BPF_H, BPF_REG_2, BPF_REG_7, 36), /* UDP destination port */
+        STEM_XSK_JNE(BPF_REG_2, htons(udp_port), 6),
+        /* return bpf_redirect_map(&xsks, ctx->rx_queue_index, XDP_PASS); a
+         * queue with no socket passes its frames to the stack. */
+        STEM_XSK_LDX(BPF_W, BPF_REG_2, BPF_REG_1, offsetof(struct xdp_md, rx_queue_index)),
         {.code    = BPF_LD | BPF_IMM | BPF_DW,
          .dst_reg = BPF_REG_1,
          .src_reg = BPF_PSEUDO_MAP_FD,
@@ -60,9 +93,18 @@ static inline int stem_xsk_prog_attach(stem_xsk_prog_t *prog, int ifindex, uint3
         {.code = BPF_ALU64 | BPF_MOV | BPF_K, .dst_reg = BPF_REG_3, .imm = XDP_PASS},
         {.code = BPF_JMP | BPF_CALL, .imm = BPF_FUNC_redirect_map},
         {.code = BPF_JMP | BPF_EXIT},
+        /* pass: */
+        {.code = BPF_ALU64 | BPF_MOV | BPF_K, .dst_reg = BPF_REG_0, .imm = XDP_PASS},
+        {.code = BPF_JMP | BPF_EXIT},
     };
-    int prog_fd = bpf_prog_load(BPF_PROG_TYPE_XDP, "stem_xsk", "Proprietary", insns,
-                                sizeof(insns) / sizeof(insns[0]), NULL);
+    /* Without a port the program is the redirect alone, instructions 16-21. */
+    const struct bpf_insn *insns = match;
+    size_t                 count = sizeof(match) / sizeof(match[0]);
+    if (udp_port == 0) {
+        insns = &match[16];
+        count = 6;
+    }
+    int prog_fd = bpf_prog_load(BPF_PROG_TYPE_XDP, "stem_xsk", "Proprietary", insns, count, NULL);
     if (prog_fd < 0) {
         close(map_fd);
         return prog_fd;
@@ -99,5 +141,8 @@ static inline void stem_xsk_prog_detach(stem_xsk_prog_t *prog)
     }
     *prog = STEM_XSK_PROG_NONE;
 }
+
+#undef STEM_XSK_LDX
+#undef STEM_XSK_JNE
 
 #endif /* STEM_XSK_PROG_H */
