@@ -310,27 +310,6 @@
         },
         "streamId": {
           "type": "integer"
-        },
-        "burstMode": {
-          "type": "boolean"
-        },
-        "burstSize": {
-          "type": "integer"
-        },
-        "interBurstGapUs": {
-          "type": "integer"
-        },
-        "srcMac": {
-          "type": "string"
-        },
-        "dstMac": {
-          "type": "string"
-        },
-        "vlanId": {
-          "type": "integer"
-        },
-        "vlanPriority": {
-          "type": "integer"
         }
       },
       "additionalProperties": false,
@@ -340,14 +319,7 @@
         "ratePct",
         "duration",
         "warmup",
-        "streamId",
-        "burstMode",
-        "burstSize",
-        "interBurstGapUs",
-        "srcMac",
-        "dstMac",
-        "vlanId",
-        "vlanPriority"
+        "streamId"
       ]
     },
     "Y1564TestConfig": {

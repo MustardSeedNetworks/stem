@@ -122,13 +122,6 @@ export interface TrafficGenTestConfig {
   duration: number;
   warmup: number;
   streamId: number;
-  burstMode: boolean;
-  burstSize: number;
-  interBurstGapUs: number;
-  srcMac: string;
-  dstMac: string;
-  vlanId: number;
-  vlanPriority: number;
 }
 export interface TestResultResponse {
   status: string;

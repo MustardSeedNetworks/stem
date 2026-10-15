@@ -489,10 +489,6 @@
         }
       },
       "trafficgen": {
-        "mac": {
-          "dstHelp": "Destination MAC address (leave empty for broadcast). Format: AA:BB:CC:DD:EE:FF.",
-          "srcHelp": "Source MAC address (leave empty for auto). Format: AA:BB:CC:DD:EE:FF."
-        },
         "stream": {
           "idHelp": "Unique identifier for this traffic stream."
         },
@@ -501,10 +497,6 @@
           "frameSizeHelp": "Ethernet frame size including FCS.",
           "rateHelp": "Traffic rate as percentage of interface line rate.",
           "warmupHelp": "Warmup period before measurement."
-        },
-        "vlan": {
-          "idHelp": "VLAN ID (0 = untagged).",
-          "priorityHelp": "802.1p priority (0-7)."
         }
       },
       "tsn": {

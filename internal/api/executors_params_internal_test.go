@@ -111,16 +111,11 @@ func TestConvertToModuleConfigUsesExecutorParameterNames(t *testing.T) {
 			testType: "custom_stream",
 			config: &TestConfig{TrafficGen: &TrafficGenTestConfig{
 				FrameSize: 1518, RatePct: 42.5, Duration: 17, Warmup: 4,
-				StreamID: 9, BurstMode: true, BurstSize: 500, InterBurstGapUs: 250,
-				SrcMac: "00:11:22:33:44:55", DstMac: "66:77:88:99:aa:bb",
-				VlanID: 100, VlanPriority: 7,
+				StreamID: 9,
 			}},
 			want: map[string]any{
 				"frame_size": uint32(1518), "rate_pct": 42.5, "duration_sec": uint32(17),
-				"warmup_sec": uint32(4), "stream_id": uint32(9), "burst_mode": true,
-				"burst_size": uint32(500), "inter_burst_gap_us": uint32(250),
-				"src_mac": "00:11:22:33:44:55", "dst_mac": "66:77:88:99:aa:bb",
-				"vlan_id": uint16(100), "vlan_priority": uint8(7),
+				"warmup_sec": uint32(4), "stream_id": uint32(9),
 			},
 		},
 	}

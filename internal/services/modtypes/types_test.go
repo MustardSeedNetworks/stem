@@ -72,77 +72,6 @@ func TestModtypesSafeIntToUint32(t *testing.T) {
 	}
 }
 
-// TestModtypesGetUint16Param tests the modtypes.GetUint16Param helper function.
-func TestModtypesGetUint16Param(t *testing.T) {
-	tests := []struct {
-		name       string
-		params     map[string]any
-		key        string
-		defaultVal uint16
-		expected   uint16
-	}{
-		{
-			name:       "zero value",
-			params:     map[string]any{"val": float64(0)},
-			key:        "val",
-			defaultVal: 100,
-			expected:   0,
-		},
-		{
-			name:       "small value",
-			params:     map[string]any{"val": float64(100)},
-			key:        "val",
-			defaultVal: 0,
-			expected:   100,
-		},
-		{
-			name:       "mid range value",
-			params:     map[string]any{"val": float64(32000)},
-			key:        "val",
-			defaultVal: 0,
-			expected:   32000,
-		},
-		{
-			name:       "max uint16 value",
-			params:     map[string]any{"val": float64(math.MaxUint16)},
-			key:        "val",
-			defaultVal: 0,
-			expected:   math.MaxUint16,
-		},
-		{
-			name:       "value just above max uint16 returns default",
-			params:     map[string]any{"val": float64(math.MaxUint16 + 1)},
-			key:        "val",
-			defaultVal: 42,
-			expected:   42,
-		},
-		{
-			name:       "large value returns default",
-			params:     map[string]any{"val": float64(math.MaxUint32)},
-			key:        "val",
-			defaultVal: 99,
-			expected:   99,
-		},
-		{
-			name:       "typical VLAN ID",
-			params:     map[string]any{"val": float64(4094)},
-			key:        "val",
-			defaultVal: 0,
-			expected:   4094,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := modtypes.GetUint16Param(tt.params, tt.key, tt.defaultVal)
-			if result != tt.expected {
-				t.Errorf("modtypes.GetUint16Param() = %d, want %d",
-					result, tt.expected)
-			}
-		})
-	}
-}
-
 // TestModtypesGetUint8Param tests the modtypes.GetUint8Param helper function.
 func TestModtypesGetUint8Param(t *testing.T) {
 	tests := []struct {
@@ -250,51 +179,6 @@ func TestModtypesSafeIntToUint32Boundary(t *testing.T) {
 			if result != tt.expected {
 				t.Errorf("modtypes.SafeIntToUint32(%d) = %d, want %d",
 					tt.value, result, tt.expected)
-			}
-		})
-	}
-}
-
-// TestModtypesGetUint16ParamBoundary tests boundary conditions for modtypes.GetUint16Param.
-func TestModtypesGetUint16ParamBoundary(t *testing.T) {
-	tests := []struct {
-		name       string
-		params     map[string]any
-		defaultVal uint16
-		expected   uint16
-	}{
-		{
-			name:       "value at MaxUint16 - 1",
-			params:     map[string]any{"val": float64(math.MaxUint16 - 1)},
-			defaultVal: 0,
-			expected:   math.MaxUint16 - 1,
-		},
-		{
-			name:       "value at MaxUint16",
-			params:     map[string]any{"val": float64(math.MaxUint16)},
-			defaultVal: 0,
-			expected:   math.MaxUint16,
-		},
-		{
-			name:       "value at MaxUint16 + 1 returns default",
-			params:     map[string]any{"val": float64(math.MaxUint16 + 1)},
-			defaultVal: 42,
-			expected:   42,
-		},
-		{
-			name:       "value at MaxUint16 + 2 returns default",
-			params:     map[string]any{"val": float64(math.MaxUint16 + 2)},
-			defaultVal: 99,
-			expected:   99,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := modtypes.GetUint16Param(tt.params, "val", tt.defaultVal)
-			if result != tt.expected {
-				t.Errorf("modtypes.GetUint16Param() = %d, want %d",
-					result, tt.expected)
 			}
 		})
 	}

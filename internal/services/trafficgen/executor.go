@@ -10,12 +10,10 @@ import (
 )
 
 const (
-	defaultRatePct         = 100.0 // Match WebUI: 100% line rate.
-	defaultWarmupSec       = 2     // Match WebUI: 2 seconds.
-	defaultDurationSec     = 60    // Match WebUI: 60 seconds.
-	defaultStreamID        = 1     // Match WebUI: stream 1.
-	defaultBurstSize       = 100
-	defaultInterBurstGapUs = 1000
+	defaultRatePct     = 100.0 // Match WebUI: 100% line rate.
+	defaultWarmupSec   = 2     // Match WebUI: 2 seconds.
+	defaultDurationSec = 60    // Match WebUI: 60 seconds.
+	defaultStreamID    = 1     // Match WebUI: stream 1.
 )
 
 // Executor wraps the TrafficGen module with test execution capability.
@@ -101,18 +99,11 @@ func (e *Executor) Execute(testType string, cfg *modtypes.TestConfig) (*modtypes
 // left unset. A zero Duration falls back to the "duration_sec" parameter.
 func buildTrafficGenConfig(cfg *modtypes.TestConfig) *dataplane.TrafficGenConfig {
 	config := &dataplane.TrafficGenConfig{
-		FrameSize:       cfg.FrameSize,
-		RatePct:         modtypes.GetFloat64Param(cfg.Params, "rate_pct", defaultRatePct),
-		DurationSec:     modtypes.SafeIntToUint32(cfg.Duration),
-		WarmupSec:       modtypes.GetUint32Param(cfg.Params, "warmup_sec", defaultWarmupSec),
-		StreamID:        modtypes.GetUint32Param(cfg.Params, "stream_id", defaultStreamID),
-		BurstMode:       modtypes.GetBoolParam(cfg.Params, "burst_mode", false),
-		BurstSize:       modtypes.GetUint32Param(cfg.Params, "burst_size", defaultBurstSize),
-		InterBurstGapUs: modtypes.GetUint32Param(cfg.Params, "inter_burst_gap_us", defaultInterBurstGapUs),
-		SrcMac:          modtypes.GetStringParam(cfg.Params, "src_mac", ""),
-		DstMac:          modtypes.GetStringParam(cfg.Params, "dst_mac", ""),
-		VlanID:          modtypes.GetUint16Param(cfg.Params, "vlan_id", 0),
-		VlanPriority:    modtypes.GetUint8Param(cfg.Params, "vlan_priority", 0),
+		FrameSize:   cfg.FrameSize,
+		RatePct:     modtypes.GetFloat64Param(cfg.Params, "rate_pct", defaultRatePct),
+		DurationSec: modtypes.SafeIntToUint32(cfg.Duration),
+		WarmupSec:   modtypes.GetUint32Param(cfg.Params, "warmup_sec", defaultWarmupSec),
+		StreamID:    modtypes.GetUint32Param(cfg.Params, "stream_id", defaultStreamID),
 	}
 
 	if config.DurationSec == 0 {

@@ -20,18 +20,11 @@ import (
 // against the package's own constants would pin nothing.
 func defaultConfig() dataplane.TrafficGenConfig {
 	return dataplane.TrafficGenConfig{
-		FrameSize:       1518,
-		RatePct:         100.0,
-		DurationSec:     10,
-		WarmupSec:       2,
-		StreamID:        1,
-		BurstMode:       false,
-		BurstSize:       100,
-		InterBurstGapUs: 1000,
-		SrcMac:          "",
-		DstMac:          "",
-		VlanID:          0,
-		VlanPriority:    0,
+		FrameSize:   1518,
+		RatePct:     100.0,
+		DurationSec: 10,
+		WarmupSec:   2,
+		StreamID:    1,
 	}
 }
 
@@ -76,22 +69,6 @@ func TestBuildTrafficGenConfigReadsEveryParameter(t *testing.T) {
 		{"rate_pct", "rate_pct", 42.5, func(c *dataplane.TrafficGenConfig) { c.RatePct = 42.5 }},
 		{"warmup_sec", "warmup_sec", float64(7), func(c *dataplane.TrafficGenConfig) { c.WarmupSec = 7 }},
 		{"stream_id", "stream_id", float64(9), func(c *dataplane.TrafficGenConfig) { c.StreamID = 9 }},
-		{"burst_mode", "burst_mode", true, func(c *dataplane.TrafficGenConfig) { c.BurstMode = true }},
-		{"burst_size", "burst_size", float64(500), func(c *dataplane.TrafficGenConfig) { c.BurstSize = 500 }},
-		{
-			"inter_burst_gap_us", "inter_burst_gap_us", float64(250),
-			func(c *dataplane.TrafficGenConfig) { c.InterBurstGapUs = 250 },
-		},
-		{
-			"src_mac", "src_mac", "00:11:22:33:44:55",
-			func(c *dataplane.TrafficGenConfig) { c.SrcMac = "00:11:22:33:44:55" },
-		},
-		{
-			"dst_mac", "dst_mac", "66:77:88:99:aa:bb",
-			func(c *dataplane.TrafficGenConfig) { c.DstMac = "66:77:88:99:aa:bb" },
-		},
-		{"vlan_id", "vlan_id", float64(4094), func(c *dataplane.TrafficGenConfig) { c.VlanID = 4094 }},
-		{"vlan_priority", "vlan_priority", float64(7), func(c *dataplane.TrafficGenConfig) { c.VlanPriority = 7 }},
 	}
 
 	for _, tt := range tests {
@@ -149,17 +126,6 @@ func TestBuildTrafficGenConfigDuration(t *testing.T) {
 				t.Errorf("DurationSec = %d, want %d", got.DurationSec, tt.want)
 			}
 		})
-	}
-}
-
-// TestBuildTrafficGenConfigClampsOversizedValues pins what the VLAN conversions
-// do with a value that does not fit the field, which the API's JSON decoding
-// does not prevent.
-func TestBuildTrafficGenConfigClampsOversizedValues(t *testing.T) {
-	want := defaultConfig()
-	got := *buildWith(map[string]any{"vlan_id": float64(100000), "vlan_priority": float64(300)})
-	if got != want {
-		t.Errorf("BuildTrafficGenConfig() = %+v, want %+v (out-of-range values fall back to defaults)", got, want)
 	}
 }
 

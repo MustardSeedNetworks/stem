@@ -489,10 +489,6 @@
         }
       },
       "trafficgen": {
-        "mac": {
-          "dstHelp": "Dirección MAC de destino (vacío = difusión). Formato: AA:BB:CC:DD:EE:FF.",
-          "srcHelp": "Dirección MAC de origen (vacío = automática). Formato: AA:BB:CC:DD:EE:FF."
-        },
         "stream": {
           "idHelp": "Identificador único de este flujo de tráfico."
         },
@@ -501,10 +497,6 @@
           "frameSizeHelp": "Tamaño de la trama Ethernet, FCS incluido.",
           "rateHelp": "Tasa de tráfico como porcentaje de la tasa de línea de la interfaz.",
           "warmupHelp": "Periodo de calentamiento antes de medir."
-        },
-        "vlan": {
-          "idHelp": "VLAN ID (0 = sin etiquetar).",
-          "priorityHelp": "Prioridad 802.1p (0-7)."
         }
       },
       "tsn": {

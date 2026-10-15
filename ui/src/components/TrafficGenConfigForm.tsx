@@ -1,7 +1,8 @@
 /**
  * @fileoverview Stem - Traffic Generator Configuration
- * @description Migrated to react-hook-form + valibot per #325. MAC fields
- *              now validate format (or accept empty string for "auto").
+ * @description Migrated to react-hook-form + valibot per #325. Offers only
+ *              what the generator applies: no burst, VLAN or MAC settings
+ *              (#1744).
  */
 
 import { Radio } from 'lucide-react';
@@ -24,13 +25,6 @@ export interface TrafficGenConfig {
   duration: number;
   warmup: number;
   streamId: number;
-  burstMode: boolean;
-  burstSize: number;
-  interBurstGapUs: number;
-  srcMac: string;
-  dstMac: string;
-  vlanId: number;
-  vlanPriority: number;
 }
 
 /** Default traffic generator configuration */
@@ -40,13 +34,6 @@ export const defaultTrafficGenConfig: TrafficGenConfig = {
   duration: 60,
   warmup: 2,
   streamId: 1,
-  burstMode: false,
-  burstSize: 100,
-  interBurstGapUs: 1000,
-  srcMac: '',
-  dstMac: '',
-  vlanId: 0,
-  vlanPriority: 0,
 };
 
 const RATE_PRESETS: Array<{ value: number; label: string }> = [
@@ -92,8 +79,6 @@ export function TrafficGenConfigForm({
   const ratePct = watch('ratePct') ?? 0;
   const duration = watch('duration') ?? 0;
   const warmup = watch('warmup') ?? 0;
-  const vlanId = watch('vlanId') ?? 0;
-  const vlanPriority = watch('vlanPriority') ?? 0;
 
   const calculateThroughput = (): string => {
     const lineRateMbps = 10000;
@@ -226,73 +211,6 @@ export function TrafficGenConfigForm({
           </div>
         </FormSection>
 
-        <FormSection title={t('testConfig.trafficgen.vlan.title')}>
-          <div className="grid grid-cols-2 gap-default">
-            <div>
-              <label htmlFor="tgen-vlanid" className="flex items-center gap-tight label">
-                {t('testConfig.trafficgen.vlan.id')}
-                <HelpIcon tooltip={t('help:tooltips.testConfig.trafficgen.vlan.idHelp')} />
-              </label>
-              <input
-                id="tgen-vlanid"
-                type="number"
-                step={1}
-                {...register('vlanId', { valueAsNumber: true })}
-                className="mt-tight w-full"
-              />
-              <FieldError message={errors.vlanId?.message} />
-            </div>
-            <div>
-              <label htmlFor="tgen-vlanpri" className="flex items-center gap-tight label">
-                {t('testConfig.trafficgen.vlan.priority')}
-                <HelpIcon tooltip={t('help:tooltips.testConfig.trafficgen.vlan.priorityHelp')} />
-              </label>
-              <input
-                id="tgen-vlanpri"
-                type="number"
-                step={1}
-                disabled={vlanId === 0}
-                {...register('vlanPriority', { valueAsNumber: true })}
-                className="mt-tight w-full"
-              />
-              <FieldError message={errors.vlanPriority?.message} />
-            </div>
-          </div>
-        </FormSection>
-
-        <FormSection title={t('testConfig.trafficgen.mac.title')}>
-          <div className="grid grid-cols-2 gap-default">
-            <div>
-              <label htmlFor="tgen-srcmac" className="flex items-center gap-tight label">
-                {t('testConfig.trafficgen.mac.src')}
-                <HelpIcon tooltip={t('help:tooltips.testConfig.trafficgen.mac.srcHelp')} />
-              </label>
-              <input
-                id="tgen-srcmac"
-                type="text"
-                placeholder="aa:bb:cc:dd:ee:ff"
-                {...register('srcMac')}
-                className="mt-tight w-full"
-              />
-              <FieldError message={errors.srcMac?.message} />
-            </div>
-            <div>
-              <label htmlFor="tgen-dstmac" className="flex items-center gap-tight label">
-                {t('testConfig.trafficgen.mac.dst')}
-                <HelpIcon tooltip={t('help:tooltips.testConfig.trafficgen.mac.dstHelp')} />
-              </label>
-              <input
-                id="tgen-dstmac"
-                type="text"
-                placeholder="aa:bb:cc:dd:ee:ff"
-                {...register('dstMac')}
-                className="mt-tight w-full"
-              />
-              <FieldError message={errors.dstMac?.message} />
-            </div>
-          </div>
-        </FormSection>
-
         <TestSummary>
           <div>
             {t('testConfig.common.selectedTests')}: {t('testConfig.trafficgen.tests.customStream')}
@@ -304,11 +222,6 @@ export function TrafficGenConfigForm({
               throughput: calculateThroughput(),
             })}
           </div>
-          {vlanId > 0 ? (
-            <div>
-              {t('testConfig.trafficgen.summary.vlan', { vlan: vlanId, priority: vlanPriority })}
-            </div>
-          ) : null}
           <div>{t('testConfig.trafficgen.summary.duration', { duration, warmup })}</div>
         </TestSummary>
       </div>

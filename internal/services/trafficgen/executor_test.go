@@ -218,16 +218,9 @@ func TestExecuteCustomStream(t *testing.T) {
 		FrameSize: 1518,
 		Duration:  10,
 		Params: map[string]any{
-			"rate_pct":           50.0,
-			"warmup_sec":         float64(2),
-			"stream_id":          float64(1),
-			"burst_mode":         false,
-			"burst_size":         float64(100),
-			"inter_burst_gap_us": float64(1000),
-			"src_mac":            "00:11:22:33:44:55",
-			"dst_mac":            "66:77:88:99:aa:bb",
-			"vlan_id":            float64(100),
-			"vlan_priority":      float64(5),
+			"rate_pct":   50.0,
+			"warmup_sec": float64(2),
+			"stream_id":  float64(1),
 		},
 	}
 

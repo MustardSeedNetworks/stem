@@ -166,18 +166,6 @@ export const RFC6349ConfigSchema = v.pipe(
 // TrafficGen — custom traffic generation
 // =============================================================================
 
-/** MAC address: 6 octets, colon or dash separated. Empty string allowed (optional). */
-const OptionalMacSchema = v.union([
-  v.literal(''),
-  v.pipe(
-    v.string(),
-    v.regex(
-      /^[0-9A-Fa-f]{2}([:-][0-9A-Fa-f]{2}){5}$/,
-      'MAC must be 6 octets like AA:BB:CC:DD:EE:FF',
-    ),
-  ),
-]);
-
 export const TrafficGenConfigSchema = v.object({
   frameSize: FrameSizeSchema,
   ratePct: v.pipe(
@@ -193,22 +181,6 @@ export const TrafficGenConfigSchema = v.object({
     v.minValue(0),
     v.maxValue(65535, 'Stream ID must fit in 16 bits'),
   ),
-  burstMode: v.boolean(),
-  burstSize: v.pipe(
-    v.number(),
-    v.integer(),
-    v.minValue(1),
-    v.maxValue(1000000, 'Burst size must be at most 1,000,000 frames'),
-  ),
-  interBurstGapUs: v.pipe(
-    v.number(),
-    v.minValue(0),
-    v.maxValue(1000000, 'IBG must be at most 1,000,000 µs (1 second)'),
-  ),
-  srcMac: OptionalMacSchema,
-  dstMac: OptionalMacSchema,
-  vlanId: VlanIdSchema,
-  vlanPriority: PCPSchema,
 });
 
 // =============================================================================
