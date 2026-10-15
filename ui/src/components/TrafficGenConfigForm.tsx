@@ -92,15 +92,8 @@ export function TrafficGenConfigForm({
   const ratePct = watch('ratePct') ?? 0;
   const duration = watch('duration') ?? 0;
   const warmup = watch('warmup') ?? 0;
-  const burstMode = watch('burstMode') ?? false;
-  const burstSize = watch('burstSize') ?? 0;
-  const interBurstGapUs = watch('interBurstGapUs') ?? 0;
   const vlanId = watch('vlanId') ?? 0;
   const vlanPriority = watch('vlanPriority') ?? 0;
-
-  const hasCustomStream = selectedTests.includes('custom_stream');
-  const hasBurst = selectedTests.includes('trafficgen_burst');
-  const hasMultiStream = selectedTests.includes('trafficgen_multistream');
 
   const calculateThroughput = (): string => {
     const lineRateMbps = 10000;
@@ -216,75 +209,22 @@ export function TrafficGenConfigForm({
           </div>
         </FormSection>
 
-        {hasMultiStream ? (
-          <FormSection title={t('testConfig.trafficgen.stream.title')}>
-            <div>
-              <label htmlFor="tgen-streamid" className="flex items-center gap-tight label">
-                {t('testConfig.trafficgen.stream.id')}
-                <HelpIcon tooltip={t('help:tooltips.testConfig.trafficgen.stream.idHelp')} />
-              </label>
-              <input
-                id="tgen-streamid"
-                type="number"
-                step={1}
-                {...register('streamId', { valueAsNumber: true })}
-                className="mt-tight w-full"
-              />
-              <FieldError message={errors.streamId?.message} />
-            </div>
-          </FormSection>
-        ) : null}
-
-        {hasBurst ? (
-          <FormSection title={t('testConfig.trafficgen.burst.title')}>
-            <div className="flex items-center gap-compact">
-              <input
-                id="tgen-burstmode"
-                type="checkbox"
-                {...register('burstMode')}
-                aria-label={t('testConfig.trafficgen.burst.enableAria')}
-                className="rounded border-surface-border"
-              />
-              <label htmlFor="tgen-burstmode" className="text-sm text-text-primary">
-                {t('testConfig.trafficgen.burst.enable')}
-                <HelpIcon tooltip={t('help:tooltips.testConfig.trafficgen.burst.enableTitle')} />
-              </label>
-            </div>
-
-            {burstMode ? (
-              <div className="grid grid-cols-2 gap-default">
-                <div>
-                  <label htmlFor="tgen-burstsize" className="flex items-center gap-tight label">
-                    {t('testConfig.trafficgen.burst.size')}
-                    <HelpIcon tooltip={t('help:tooltips.testConfig.trafficgen.burst.sizeHelp')} />
-                  </label>
-                  <input
-                    id="tgen-burstsize"
-                    type="number"
-                    step={1}
-                    {...register('burstSize', { valueAsNumber: true })}
-                    className="mt-tight w-full"
-                  />
-                  <FieldError message={errors.burstSize?.message} />
-                </div>
-                <div>
-                  <label htmlFor="tgen-ibg" className="flex items-center gap-tight label">
-                    {t('testConfig.trafficgen.burst.gap')}
-                    <HelpIcon tooltip={t('help:tooltips.testConfig.trafficgen.burst.gapHelp')} />
-                  </label>
-                  <input
-                    id="tgen-ibg"
-                    type="number"
-                    step={1}
-                    {...register('interBurstGapUs', { valueAsNumber: true })}
-                    className="mt-tight w-full"
-                  />
-                  <FieldError message={errors.interBurstGapUs?.message} />
-                </div>
-              </div>
-            ) : null}
-          </FormSection>
-        ) : null}
+        <FormSection title={t('testConfig.trafficgen.stream.title')}>
+          <div>
+            <label htmlFor="tgen-streamid" className="flex items-center gap-tight label">
+              {t('testConfig.trafficgen.stream.id')}
+              <HelpIcon tooltip={t('help:tooltips.testConfig.trafficgen.stream.idHelp')} />
+            </label>
+            <input
+              id="tgen-streamid"
+              type="number"
+              step={1}
+              {...register('streamId', { valueAsNumber: true })}
+              className="mt-tight w-full"
+            />
+            <FieldError message={errors.streamId?.message} />
+          </div>
+        </FormSection>
 
         <FormSection title={t('testConfig.trafficgen.vlan.title')}>
           <div className="grid grid-cols-2 gap-default">
@@ -355,14 +295,7 @@ export function TrafficGenConfigForm({
 
         <TestSummary>
           <div>
-            {t('testConfig.common.selectedTests')}:{' '}
-            {[
-              hasCustomStream && t('testConfig.trafficgen.tests.customStream'),
-              hasBurst && t('testConfig.trafficgen.tests.burstMode'),
-              hasMultiStream && t('testConfig.trafficgen.tests.multiStream'),
-            ]
-              .filter(Boolean)
-              .join(', ')}
+            {t('testConfig.common.selectedTests')}: {t('testConfig.trafficgen.tests.customStream')}
           </div>
           <div>
             {t('testConfig.trafficgen.summary.frame', {
@@ -374,14 +307,6 @@ export function TrafficGenConfigForm({
           {vlanId > 0 ? (
             <div>
               {t('testConfig.trafficgen.summary.vlan', { vlan: vlanId, priority: vlanPriority })}
-            </div>
-          ) : null}
-          {burstMode ? (
-            <div>
-              {t('testConfig.trafficgen.summary.burst', {
-                frames: burstSize,
-                gap: interBurstGapUs,
-              })}
             </div>
           ) : null}
           <div>{t('testConfig.trafficgen.summary.duration', { duration, warmup })}</div>

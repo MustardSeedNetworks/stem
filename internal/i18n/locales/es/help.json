@@ -489,11 +489,6 @@
         }
       },
       "trafficgen": {
-        "burst": {
-          "enableTitle": "Enviar tramas en ráfagas cortas separadas por huecos de inactividad en lugar de a tasa continua; útil para probar el comportamiento de los búferes",
-          "gapHelp": "Hueco entre ráfagas en microsegundos.",
-          "sizeHelp": "Número de tramas por ráfaga."
-        },
         "mac": {
           "dstHelp": "Dirección MAC de destino (vacío = difusión). Formato: AA:BB:CC:DD:EE:FF.",
           "srcHelp": "Dirección MAC de origen (vacío = automática). Formato: AA:BB:CC:DD:EE:FF."

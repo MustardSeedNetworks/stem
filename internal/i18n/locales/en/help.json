@@ -489,11 +489,6 @@
         }
       },
       "trafficgen": {
-        "burst": {
-          "enableTitle": "Send frames in short bursts separated by idle gaps rather than at a continuous rate; useful for testing buffer behavior",
-          "gapHelp": "Gap between bursts in microseconds.",
-          "sizeHelp": "Number of frames per burst."
-        },
         "mac": {
           "dstHelp": "Destination MAC address (leave empty for broadcast). Format: AA:BB:CC:DD:EE:FF.",
           "srcHelp": "Source MAC address (leave empty for auto). Format: AA:BB:CC:DD:EE:FF."

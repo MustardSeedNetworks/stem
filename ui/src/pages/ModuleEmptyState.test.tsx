@@ -92,7 +92,7 @@ afterEach(() => {
 
 const pages = [
   { name: 'Benchmark', Page: BenchmarkPage, selected: 'rfc2544_throughput' },
-  { name: 'ServiceTest', Page: ServiceTestPage, selected: 'y1564_full' },
+  { name: 'ServiceTest', Page: ServiceTestPage, selected: 'y1564' },
   { name: 'TrafficGen', Page: TrafficGenPage, selected: 'custom_stream' },
   { name: 'Measure', Page: MeasurePage, selected: 'y1731_delay' },
   { name: 'Certify', Page: CertifyPage, selected: 'rfc2889_forwarding' },

@@ -17,7 +17,7 @@ import type { TestDefinition, TestSectionProps } from '../types';
 const testKeyMap: Map<string, string> = new Map([
   ['mef_config', 'config'],
   ['mef_perf', 'performance'],
-  ['mef_full', 'full'],
+  ['mef', 'full'],
 ]);
 
 const testIds: string[] = [...testKeyMap.keys()];
@@ -46,6 +46,7 @@ export function MEFSection({ selectedTests, onToggleTest }: TestSectionProps): R
 
   return (
     <CollapsibleSection
+      testId="mef-test-section"
       title={
         <div className="flex items-center gap-compact">
           <Settings2 className="w-4 h-4" aria-hidden="true" />
