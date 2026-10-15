@@ -431,3 +431,59 @@ func TestPackagedCapabilitiesRunAFXDP(t *testing.T) {
 		t.Fatalf("AF_XDP tests with the packaged capabilities: %v\n%s", err, out)
 	}
 }
+
+// The test master's XDP program redirected every frame to its sockets from the
+// first trial until the context closed, and the test master keeps only the
+// replies it counts, so its host lost ARP, ICMP, SSH and DHCP for that long
+// (stem#1767). No reflector answers here: one trial brings the platform up,
+// and the far end of the link, in its own namespace, plays the rest of the
+// network.
+func TestHostTrafficPassesAFXDPTestMaster(t *testing.T) {
+	requireRoot(t)
+	const netns = "stmxdpns"
+	ip(t, "netns", "add", netns)
+	t.Cleanup(func() { _ = exec.Command("ip", "netns", "del", netns).Run() })
+	addVethPair(t, 1)
+	ip(t, "link", "set", vethReflector, "netns", netns)
+	inNetns := func(args ...string) *exec.Cmd {
+		return exec.Command("ip", append([]string{"netns", "exec", netns}, args...)...)
+	}
+	for _, args := range [][]string{
+		{"ip", "addr", "add", reflectorIP + "/24", "dev", vethReflector},
+		{"ip", "link", "set", vethReflector, "up"},
+	} {
+		if out, err := inNetns(args...).CombinedOutput(); err != nil {
+			t.Fatalf("%v: %v\n%s", args, err, out)
+		}
+	}
+
+	master := newLinkMaster(t)
+	runTrial(t, master, 1)
+	if !xdpAttached(t, vethMaster) {
+		t.Fatal("no XDP program on the test master's interface: it fell back to AF_PACKET")
+	}
+
+	other, err := net.ListenPacket("udp4", net.JoinHostPort(masterIP, "0"))
+	if err != nil {
+		t.Fatalf("listen on the test master host: %v", err)
+	}
+	defer other.Close()
+
+	// ARP and ICMP: the host must stay reachable.
+	if out, pingErr := inNetns("ping", "-c", "3", "-W", "1", masterIP).CombinedOutput(); pingErr != nil {
+		t.Errorf("the test master host stopped answering ping: %v\n%s", pingErr, out)
+	}
+
+	// UDP to another port, as DNS and DHCP are, reaches its socket.
+	otherPort := strconv.Itoa(other.LocalAddr().(*net.UDPAddr).Port)
+	script := `printf 'RFC2544%057d' 0 > /dev/udp/` + masterIP + "/" + otherPort
+	if out, sendErr := inNetns("bash", "-c", script).CombinedOutput(); sendErr != nil {
+		t.Fatalf("send to port %s: %v\n%s", otherPort, sendErr, out)
+	}
+	if err = other.SetReadDeadline(time.Now().Add(2 * time.Second)); err != nil {
+		t.Fatalf("set read deadline: %v", err)
+	}
+	if _, _, err = other.ReadFrom(make([]byte, 128)); err != nil {
+		t.Errorf("UDP to port %s never reached the host: %v", otherPort, err)
+	}
+}

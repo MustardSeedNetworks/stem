@@ -14,11 +14,11 @@
  * when the link's descriptor closes, so a crashed run never leaves it on the
  * interface.
  *
- * A frame redirected to a socket never reaches the kernel stack. Given a UDP
- * port, the program redirects only unfragmented IPv4 UDP to that port with a
- * 20-byte IP header, the frames a reflector answers, and passes ARP, SSH, DHCP
- * and the rest to the stack. Redirecting everything took a reflector host's
- * own traffic and cut it off the network (stem#1767).
+ * A frame redirected to a socket never reaches the kernel stack, so the
+ * program redirects only unfragmented IPv4 UDP with a 20-byte IP header to one
+ * port: the frames a reflector answers, or the replies a test master counts.
+ * ARP, SSH, DHCP and the rest go to the stack. Redirecting everything took the
+ * host's own traffic and cut it off the network (stem#1767).
  */
 
 #ifndef STEM_XSK_PROG_H
@@ -46,10 +46,9 @@ typedef struct {
     {.code = BPF_JMP | BPF_JNE | BPF_K, .dst_reg = (dst), .off = (to), .imm = (value)}
 
 /* Load the redirect program for `queues` receive queues and attach it to
- * `ifindex`. With `udp_port` it redirects only the test frames addressed to
- * that port; 0 redirects every frame, which the test master still does for the
- * length of a run (stem#1767). On failure nothing stays attached and the
- * negated errno is returned (libbpf returns it). */
+ * `ifindex`, redirecting the test frames addressed to `udp_port`, which must
+ * not be 0. On failure nothing stays attached and the negated errno is
+ * returned (libbpf returns it). */
 static inline int stem_xsk_prog_attach(stem_xsk_prog_t *prog, int ifindex, uint32_t queues,
                                        uint16_t udp_port)
 {
@@ -64,7 +63,7 @@ static inline int stem_xsk_prog_attach(stem_xsk_prog_t *prog, int ifindex, uint3
     /* Loads read the packet's network-order bytes in host order, so each
      * field is compared with its htons() value. Every jump lands on `pass`,
      * the last two instructions, and counts from the instruction after it. */
-    const struct bpf_insn match[] = {
+    const struct bpf_insn insns[] = {
         STEM_XSK_LDX(BPF_W, BPF_REG_7, BPF_REG_1, offsetof(struct xdp_md, data)),
         STEM_XSK_LDX(BPF_W, BPF_REG_8, BPF_REG_1, offsetof(struct xdp_md, data_end)),
         {.code = BPF_ALU64 | BPF_MOV | BPF_X, .dst_reg = BPF_REG_2, .src_reg = BPF_REG_7},
@@ -97,14 +96,8 @@ static inline int stem_xsk_prog_attach(stem_xsk_prog_t *prog, int ifindex, uint3
         {.code = BPF_ALU64 | BPF_MOV | BPF_K, .dst_reg = BPF_REG_0, .imm = XDP_PASS},
         {.code = BPF_JMP | BPF_EXIT},
     };
-    /* Without a port the program is the redirect alone, instructions 16-21. */
-    const struct bpf_insn *insns = match;
-    size_t                 count = sizeof(match) / sizeof(match[0]);
-    if (udp_port == 0) {
-        insns = &match[16];
-        count = 6;
-    }
-    int prog_fd = bpf_prog_load(BPF_PROG_TYPE_XDP, "stem_xsk", "Proprietary", insns, count, NULL);
+    int prog_fd = bpf_prog_load(BPF_PROG_TYPE_XDP, "stem_xsk", "Proprietary", insns,
+                                sizeof(insns) / sizeof(insns[0]), NULL);
     if (prog_fd < 0) {
         close(map_fd);
         return prog_fd;
