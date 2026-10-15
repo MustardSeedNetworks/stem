@@ -252,9 +252,6 @@ func populateY1564Params(modCfg *modtypes.TestConfig, c *Y1564TestConfig) {
 	modCfg.Params["ebs"] = c.EBS
 	modCfg.Params["config_duration_sec"] = c.ConfigStepDuration
 	modCfg.Params["perf_duration_sec"] = c.PerfTestDuration
-	modCfg.Params["vlan_id"] = c.VlanID
-	modCfg.Params["cos"] = c.PCP
-	modCfg.Params["color_aware"] = c.ColorAware
 	modCfg.Params["flr_threshold_pct"] = c.FLRThreshold
 	modCfg.Params["fd_threshold_ms"] = c.FDThreshold
 	modCfg.Params["fdv_threshold_ms"] = c.FDVThreshold

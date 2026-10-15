@@ -61,13 +61,12 @@ func TestConvertToModuleConfigUsesExecutorParameterNames(t *testing.T) {
 			testType: "y1564_config",
 			config: &TestConfig{Y1564: &Y1564TestConfig{
 				CIR: 100, EIR: 50, CBS: 32, EBS: 16, FrameSizes: []uint32{256},
-				ConfigStepDuration: 14, PerfTestDuration: 60, VlanID: 200, PCP: 5,
-				ColorAware: true, FLRThreshold: 0.01, FDThreshold: 5, FDVThreshold: 2,
+				ConfigStepDuration: 14, PerfTestDuration: 60,
+				FLRThreshold: 0.01, FDThreshold: 5, FDVThreshold: 2,
 			}},
 			want: map[string]any{
 				"cir": float64(100), "eir": float64(50), "cbs": uint32(32), "ebs": uint32(16),
 				"config_duration_sec": uint32(14), "perf_duration_sec": uint32(60),
-				"vlan_id": uint16(200), "cos": uint8(5), "color_aware": true,
 				"flr_threshold_pct": 0.01, "fd_threshold_ms": float64(5),
 				"fdv_threshold_ms": float64(2),
 			},

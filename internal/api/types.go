@@ -169,12 +169,9 @@ type Y1564TestConfig struct {
 	FrameSizes         []uint32 `json:"frameSizes"`
 	ConfigStepDuration uint32   `json:"configStepDuration"` // seconds
 	PerfTestDuration   uint32   `json:"perfTestDuration"`   // seconds
-	VlanID             uint16   `json:"vlanId"`
-	PCP                uint8    `json:"pcp"` // Priority Code Point
-	ColorAware         bool     `json:"colorAware"`
-	FLRThreshold       float64  `json:"flrThreshold"` // Frame Loss Ratio %
-	FDThreshold        float64  `json:"fdThreshold"`  // Frame Delay ms
-	FDVThreshold       float64  `json:"fdvThreshold"` // Frame Delay Variation ms
+	FLRThreshold       float64  `json:"flrThreshold"`       // Frame Loss Ratio %
+	FDThreshold        float64  `json:"fdThreshold"`        // Frame Delay ms
+	FDVThreshold       float64  `json:"fdvThreshold"`       // Frame Delay Variation ms
 }
 
 // Y1731TestConfig matches frontend Y1731Config.

@@ -76,9 +76,6 @@ export interface Y1564TestConfig {
   frameSizes: number[];
   configStepDuration: number;
   perfTestDuration: number;
-  vlanId: number;
-  pcp: number;
-  colorAware: boolean;
   flrThreshold: number;
   fdThreshold: number;
   fdvThreshold: number;

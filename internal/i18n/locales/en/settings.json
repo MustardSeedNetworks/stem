@@ -347,29 +347,10 @@
         "perf": "Performance Duration (s)",
         "perfMinutes": "= {{minutes}} minutes"
       },
-      "vlan": {
-        "title": "VLAN Settings",
-        "id": "VLAN ID",
-        "untagged": "Untagged traffic",
-        "pcp": "Priority (PCP)",
-        "pcp0": "0 - Best Effort (BE)",
-        "pcp1": "1 - Background (BK)",
-        "pcp2": "2 - Excellent Effort (EE)",
-        "pcp3": "3 - Critical (CA)",
-        "pcp4": "4 - Video (VI)",
-        "pcp5": "5 - Voice (VO)",
-        "pcp6": "6 - Internetwork Control (IC)",
-        "pcp7": "7 - Network Control (NC)",
-        "colorAware": "Color-Aware Mode",
-        "colorAwareHint": "Test green/yellow traffic separation",
-        "colorAwareTitle": "Send traffic as green (in-profile, conforms to CIR) and yellow (out-of-profile, conforms to EIR) and verify each color is treated correctly",
-        "colorAwareAria": "Enable color-aware Y.1564 testing"
-      },
       "summary": {
         "service": "Service: {{cir}} Mbps CIR",
         "serviceWithEir": "Service: {{cir}} Mbps CIR + {{eir}} Mbps EIR",
-        "sla": "SLA: FLR≤{{flr}}%, FD≤{{fd}}ms, FDV≤{{fdv}}ms",
-        "vlan": "VLAN {{vlan}} / PCP {{pcp}}"
+        "sla": "SLA: FLR≤{{flr}}%, FD≤{{fd}}ms, FDV≤{{fdv}}ms"
       }
     },
     "trafficgen": {
