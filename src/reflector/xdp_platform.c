@@ -30,6 +30,7 @@
 
 #include "reflector.h"
 #include "stem_errno.h"
+#include "stem_xdp_caps.h"
 
 /* Platform-specific context for AF_XDP */
 struct platform_ctx {
@@ -167,6 +168,12 @@ static int init_xsk(worker_ctx_t *wctx)
 int xdp_platform_init(reflector_ctx_t *rctx, worker_ctx_t *wctx)
 {
     (void)rctx; /* May be used for multi-worker coordination in future */
+    int caps = stem_xdp_caps_check();
+    if (caps < 0) {
+        reflector_log(LOG_ERROR, "%s: %s", STEM_XDP_CAPS_NEEDED, stem_strerror(-caps));
+        return caps;
+    }
+
     const reflector_config_t *cfg  = wctx->config;
     struct platform_ctx      *pctx = calloc(1, sizeof(*pctx));
     if (!pctx) {

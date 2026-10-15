@@ -24,6 +24,7 @@
 #include "platform_config.h"
 #include "rfc2544.h"
 #include "rfc2544_internal.h"
+#include "stem_errno.h"
 
 #if PLATFORM_LINUX
 #include <linux/ethtool.h>
@@ -206,7 +207,7 @@ static const platform_ops_t *select_platform(const rfc2544_ctx_t *ctx)
 #if PLATFORM_LINUX
     /* Force AF_PACKET for veth/testing compatibility */
     if (ctx->config.force_packet) {
-        rfc2544_log(LOG_INFO, "Platform: AF_PACKET (forced - for veth/testing)");
+        rfc2544_log(LOG_INFO, "AF_PACKET forced (for veth/testing)");
         return get_dataplane_packet_platform_ops();
     }
 #endif
@@ -216,11 +217,6 @@ static const platform_ops_t *select_platform(const rfc2544_ctx_t *ctx)
         rfc2544_log(LOG_ERROR, "No supported platform available");
         return NULL;
     }
-#if HAVE_AF_XDP
-    rfc2544_log(LOG_INFO, "Platform: AF_XDP (high performance)");
-#else
-    rfc2544_log(LOG_INFO, "Platform: AF_PACKET (fallback)");
-#endif
     return preferred;
 }
 
@@ -641,8 +637,10 @@ static int init_workers(rfc2544_ctx_t *ctx, const platform_ops_t *platform)
     for (int i = 0; i < ctx->num_workers; i++) {
         ctx->workers[i].worker_id = i;
         ctx->workers[i].queue_id  = i;
-        if (platform->init(ctx, &ctx->workers[i]) < 0) {
-            rfc2544_log(LOG_ERROR, "Failed to initialize platform");
+        int ret                   = platform->init(ctx, &ctx->workers[i]);
+        if (ret < 0) {
+            rfc2544_log(LOG_ERROR, "Failed to initialize %s: %s", platform->name,
+                        stem_strerror(-ret));
             for (int j = 0; j < i; j++) {
                 platform->cleanup(&ctx->workers[j]);
             }
@@ -650,7 +648,7 @@ static int init_workers(rfc2544_ctx_t *ctx, const platform_ops_t *platform)
             ctx->workers     = NULL;
             ctx->platform    = NULL;
             ctx->num_workers = 0;
-            return -EIO;
+            return ret;
         }
     }
 
@@ -677,9 +675,13 @@ int rfc2544_prepare_platform(rfc2544_ctx_t *ctx)
         if (!fallback) {
             return ret;
         }
-        rfc2544_log(LOG_WARN, "Platform initialization failed; continuing with AF_PACKET "
-                              "(reduced performance)");
+        rfc2544_log(LOG_WARN,
+                    "%s initialization failed (%s); continuing with %s (reduced performance)",
+                    platform->name, stem_strerror(-ret), fallback->name);
         ret = init_workers(ctx, fallback);
+    }
+    if (ret == 0) {
+        rfc2544_log(LOG_INFO, "Platform: %s", ctx->platform->name);
     }
 
     return ret;

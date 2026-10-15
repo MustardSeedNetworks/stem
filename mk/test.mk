@@ -162,6 +162,7 @@ ifeq ($(UNAME),Linux)
 	$(CC) $(CFLAGS) -Itests/c -o bin/test_packet_platform_init \
 		tests/c/test_packet_platform_init.c src/reflector/packet_platform.c \
 		src/reflector/util.c $(C_PLATFORM_INIT_WRAPS) $(C_LDFLAGS)
+	$(CC) $(CFLAGS) -o bin/test_xdp_caps tests/c/test_xdp_caps.c $(C_LDFLAGS)
 	@echo "Running C tests..."
 	./bin/test_pacing
 	./bin/test_protocols
@@ -182,6 +183,7 @@ ifeq ($(UNAME),Linux)
 	./bin/test_back_to_back_returned
 	./bin/test_wire_frame_size
 	./bin/test_packet_platform_init
+	./bin/test_xdp_caps
 else ifeq ($(UNAME),Darwin)
 	@echo "Building C tests (common code only, macOS)..."
 	mkdir -p bin
