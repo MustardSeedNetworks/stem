@@ -39,6 +39,7 @@
 #include <xdp/xsk.h>
 
 #include "stem_errno.h"
+#include "stem_xdp_caps.h"
 
 /* worker_ctx_t and rfc2544_ctx_t are defined in rfc2544_internal.h */
 
@@ -200,6 +201,12 @@ static int fill_queue(platform_ctx_t *pctx, queue_socket_t *qs, uint32_t frames)
 
 static int xdp_init(rfc2544_ctx_t *ctx, worker_ctx_t *wctx)
 {
+    int caps = stem_xdp_caps_check();
+    if (caps < 0) {
+        fprintf(stderr, "[xdp] %s: %s\n", STEM_XDP_CAPS_NEEDED, stem_strerror(-caps));
+        return caps;
+    }
+
     /* RSS spreads the reflected stream over every receive queue, so a socket
      * on queue 0 alone would count the rest as loss (stem#1533). */
     int num_queues = rx_queue_count(ctx->config.interface);

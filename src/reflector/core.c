@@ -17,6 +17,7 @@
 #endif
 #include "platform_config.h"
 #include "reflector.h"
+#include "stem_errno.h"
 
 /* Forward declarations */
 #if HAVE_AF_XDP
@@ -388,14 +389,12 @@ int reflector_start(reflector_ctx_t *rctx)
     if (rctx->config.use_af_xdp) {
 #if HAVE_AF_XDP
         platform_ops = get_xdp_platform_ops();
-        reflector_log(LOG_INFO, "Platform: AF_XDP");
 #else
         platform_ops = get_packet_platform_ops();
         reflector_log(LOG_WARN, "AF_XDP was requested but is unavailable; using AF_PACKET");
 #endif
     } else {
         platform_ops = get_packet_platform_ops();
-        reflector_log(LOG_INFO, "Platform: AF_PACKET (explicit selection)");
     }
 #endif
 
@@ -462,6 +461,8 @@ int reflector_start(reflector_ctx_t *rctx)
                 reflector_log(
                     LOG_ERROR,
                     "═══════════════════════════════════════════════════════════════════════");
+                reflector_log(LOG_ERROR, "AF_XDP on %s failed: %s", rctx->config.ifname,
+                              stem_strerror(-init_rc));
                 reflector_log(LOG_WARN, "");
                 reflector_log(
                     LOG_WARN,
@@ -504,7 +505,7 @@ int reflector_start(reflector_ctx_t *rctx)
                     "║   • Kernel too old (<5.4 required)                                 ║");
                 reflector_log(
                     LOG_WARN,
-                    "║   • Insufficient permissions (need CAP_NET_RAW + CAP_BPF)          ║");
+                    "║   • Insufficient permissions (need CAP_SYS_ADMIN + CAP_NET_ADMIN)  ║");
                 reflector_log(
                     LOG_WARN,
                     "║   • Network interface in use by other process                      ║");
@@ -558,6 +559,9 @@ int reflector_start(reflector_ctx_t *rctx)
 
         rctx->platform_contexts[i] = wctx->pctx;
     }
+#ifdef __linux__
+    reflector_log(LOG_INFO, "Platform: %s", platform_ops->name);
+#endif
 
     /* No privilege drop here: the reflector runs inside the long-lived daemon,
      * and a setuid() changes every thread's credentials, so the next reflector
