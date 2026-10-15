@@ -446,15 +446,6 @@
         "perfTestDuration": {
           "type": "integer"
         },
-        "vlanId": {
-          "type": "integer"
-        },
-        "pcp": {
-          "type": "integer"
-        },
-        "colorAware": {
-          "type": "boolean"
-        },
         "flrThreshold": {
           "type": "number"
         },
@@ -475,9 +466,6 @@
         "frameSizes",
         "configStepDuration",
         "perfTestDuration",
-        "vlanId",
-        "pcp",
-        "colorAware",
         "flrThreshold",
         "fdThreshold",
         "fdvThreshold"

@@ -540,11 +540,6 @@
           "fdHelp": "Maximum acceptable one-way Frame Delay (FD). Typical values: 5-50ms depending on service class.",
           "fdvHelp": "Maximum acceptable Frame Delay Variation (FDV/jitter). Typical values: 2-10ms.",
           "flrHelp": "Maximum acceptable Frame Loss Ratio (FLR). Typical SLA values: 0.01% to 0.1%."
-        },
-        "vlan": {
-          "colorAwareHelp": "Enable dual-rate testing with green (CIR) and yellow (EIR) traffic classes.",
-          "idHelp": "VLAN tag for test traffic. Set to 0 for untagged traffic.",
-          "pcpHelp": "Priority Code Point (802.1p). 0=Best Effort, 7=Highest Priority."
         }
       },
       "y1731": {

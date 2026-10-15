@@ -540,11 +540,6 @@
           "fdHelp": "Frame Delay (FD) unidireccional máximo aceptable. Valores típicos: 5-50 ms según la clase de servicio.",
           "fdvHelp": "Frame Delay Variation (FDV/jitter) máxima aceptable. Valores típicos: 2-10 ms.",
           "flrHelp": "Frame Loss Ratio (FLR) máximo aceptable. Valores típicos de SLA: 0,01 % a 0,1 %."
-        },
-        "vlan": {
-          "colorAwareHelp": "Activar la prueba de doble tasa con tráfico verde (CIR) y amarillo (EIR).",
-          "idHelp": "Etiqueta VLAN para el tráfico de prueba. Use 0 para tráfico sin etiquetar.",
-          "pcpHelp": "Priority Code Point (802.1p). 0 = Best Effort, 7 = prioridad máxima."
         }
       },
       "y1731": {

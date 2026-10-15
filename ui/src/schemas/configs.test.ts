@@ -24,9 +24,6 @@ describe('Y1564ConfigSchema', () => {
     frameSizes: [64, 128, 1518],
     configStepDuration: 15,
     perfTestDuration: 900,
-    vlanId: 0,
-    pcp: 0,
-    colorAware: false,
     flrThreshold: 0.01,
     fdThreshold: 10,
     fdvThreshold: 5,
@@ -57,16 +54,6 @@ describe('Y1564ConfigSchema', () => {
       const issues = r.issues.map((i) => i.message).join(' | ');
       expect(issues).toMatch(/Variation/i);
     }
-  });
-
-  it('rejects VLAN ID > 4094', () => {
-    const r = v.safeParse(Y1564ConfigSchema, { ...valid, vlanId: 5000 });
-    expect(r.success).toBe(false);
-  });
-
-  it('rejects PCP > 7', () => {
-    const r = v.safeParse(Y1564ConfigSchema, { ...valid, pcp: 8 });
-    expect(r.success).toBe(false);
   });
 });
 

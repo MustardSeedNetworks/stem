@@ -14,13 +14,9 @@ import i18n from 'i18next';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { defaultY1564Config, Y1564ConfigForm } from './Y1564ConfigForm';
 
-function renderForm(overrides: Partial<typeof defaultY1564Config> = {}) {
+function renderForm() {
   return render(
-    <Y1564ConfigForm
-      config={{ ...defaultY1564Config, ...overrides }}
-      setConfig={() => {}}
-      selectedTests={['y1564']}
-    />,
+    <Y1564ConfigForm config={defaultY1564Config} setConfig={() => {}} selectedTests={['y1564']} />,
   );
 }
 
@@ -51,15 +47,6 @@ describe('Y1564ConfigForm — i18n', () => {
     expect(screen.getByText('CIR (Mbps)')).toBeInTheDocument();
     expect(screen.getByText('EIR (Mbps)')).toBeInTheDocument();
     expect(screen.getByText('Configuración Y.1564 / MEF')).toBeInTheDocument();
-  });
-
-  it('translates the priority list without renumbering it', async () => {
-    await i18n.changeLanguage('es');
-    /* The priority list only exists on a tagged service. */
-    renderForm({ vlanId: 100 });
-
-    /* PCP values are 802.1p wire values; the names beside them are labels. */
-    expect(screen.getByRole('option', { name: '0 - Best Effort (BE)' })).toBeInTheDocument();
   });
 });
 

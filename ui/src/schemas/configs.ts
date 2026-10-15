@@ -14,22 +14,14 @@
  *
  * Range bounds were derived from the HTML5 min={} max={} attributes
  * already in the JSX. Where the JSX had no explicit bound, the schema
- * uses a domain-sensible cap (e.g., MEG level 0-7, VLAN 0-4094, PCP
- * 0-7 per IEEE 802.1Q).
+ * uses a domain-sensible cap (e.g., MEG level 0-7, PCP 0-7 per
+ * IEEE 802.1Q).
  */
 import * as v from 'valibot';
 
 // =============================================================================
 // Reusable field schemas
 // =============================================================================
-
-/** VLAN ID per IEEE 802.1Q: 0 = untagged, 1-4094 = tagged, 4095 reserved. */
-const VlanIdSchema = v.pipe(
-  v.number('VLAN ID must be a number'),
-  v.integer('VLAN ID must be an integer'),
-  v.minValue(0, 'VLAN ID must be 0-4094'),
-  v.maxValue(4094, 'VLAN ID must be 0-4094'),
-);
 
 /** Priority Code Point per IEEE 802.1p: 0-7. */
 const PCPSchema = v.pipe(
@@ -252,9 +244,6 @@ export const Y1564ConfigSchema = v.pipe(
       v.minValue(1, 'Performance test must be at least 1 second'),
       v.maxValue(86400, 'Performance test must be at most 86,400 seconds (24h)'),
     ),
-    vlanId: VlanIdSchema,
-    pcp: PCPSchema,
-    colorAware: v.boolean(),
     flrThreshold: v.pipe(v.number(), v.minValue(0), v.maxValue(100)),
     fdThreshold: v.pipe(v.number(), v.minValue(0)),
     fdvThreshold: v.pipe(v.number(), v.minValue(0)),

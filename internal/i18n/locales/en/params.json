@@ -50,18 +50,6 @@
       "name": "EBS",
       "description": "Excess Burst Size in KB"
     },
-    "vlanId": {
-      "name": "VLAN ID",
-      "description": "VLAN identifier for tagged traffic (0-4095)"
-    },
-    "pcp": {
-      "name": "PCP",
-      "description": "Priority Code Point for 802.1p CoS (0-7)"
-    },
-    "colorAware": {
-      "name": "Color Aware",
-      "description": "Enable color-aware traffic conditioning"
-    },
     "flrThreshold": {
       "name": "FLR Threshold",
       "description": "Frame Loss Ratio acceptance threshold"

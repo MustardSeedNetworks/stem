@@ -3,7 +3,7 @@ import { Tooltip } from './ui/Tooltip';
  * @fileoverview Stem - Y.1564 Service Activation Test Configuration
  * @description Advanced configuration form for ITU-T Y.1564 / MEF Service Activation Testing.
  *              Allows users to configure service parameters including CIR, EIR, CBS, EBS,
- *              frame sizes, test duration, and VLAN settings.
+ *              frame sizes, test duration, and SLA thresholds.
  *
  * Forms-stack pilot (#325): this form is the first to migrate to
  * react-hook-form + valibot. The schema lives at `src/schemas/configs.ts`
@@ -42,12 +42,6 @@ export interface Y1564Config {
   configStepDuration: number;
   /** Performance test duration in seconds */
   perfTestDuration: number;
-  /** VLAN ID (0 = untagged) */
-  vlanId: number;
-  /** Priority Code Point (0-7) */
-  pcp: number;
-  /** Color-aware mode enabled */
-  colorAware: boolean;
   /** Frame Loss Ratio threshold (percentage) */
   flrThreshold: number;
   /** Frame Delay threshold (ms) */
@@ -65,9 +59,6 @@ export const defaultY1564Config: Y1564Config = {
   frameSizes: [128, 256, 512, 1024, 1280, 1518],
   configStepDuration: 15,
   perfTestDuration: 900,
-  vlanId: 0,
-  pcp: 0,
-  colorAware: false,
   flrThreshold: 0.01,
   fdThreshold: 10,
   fdvThreshold: 5,
@@ -104,16 +95,14 @@ export function Y1564ConfigForm({
   }
 
   // Watched values for derived displays (frame-size checkboxes,
-  // summary panel, VLAN PCP conditional render). react-hook-form's
-  // watch keeps these in sync with the form's internal state.
+  // summary panel). react-hook-form's watch keeps these in sync with
+  // the form's internal state.
   const frameSizes = watch('frameSizes') ?? [];
-  const vlanId = watch('vlanId') ?? 0;
   const cir = watch('cir') ?? 0;
   const eir = watch('eir') ?? 0;
   const flrThreshold = watch('flrThreshold') ?? 0;
   const fdThreshold = watch('fdThreshold') ?? 0;
   const fdvThreshold = watch('fdvThreshold') ?? 0;
-  const pcp = watch('pcp') ?? 0;
   const configStepDuration = watch('configStepDuration') ?? 0;
   const perfTestDuration = watch('perfTestDuration') ?? 0;
 
@@ -356,68 +345,6 @@ export function Y1564ConfigForm({
           ) : null}
         </FormSection>
 
-        <FormSection title={t('testConfig.y1564.vlan.title')}>
-          <div>
-            <label htmlFor="y1564-vlan" className="flex items-center gap-tight label">
-              {t('testConfig.y1564.vlan.id')}
-              <HelpIcon tooltip={t('help:tooltips.testConfig.y1564.vlan.idHelp')} />
-            </label>
-            <input
-              id="y1564-vlan"
-              type="number"
-              step={1}
-              {...register('vlanId', { valueAsNumber: true })}
-              className="mt-tight w-full"
-            />
-            <FieldError message={errors.vlanId?.message} />
-            {vlanId === 0 && (
-              <div className="text-xs text-text-muted mt-tight">
-                {t('testConfig.y1564.vlan.untagged')}
-              </div>
-            )}
-          </div>
-
-          {vlanId > 0 && (
-            <div>
-              <label htmlFor="y1564-pcp" className="flex items-center gap-tight label">
-                {t('testConfig.y1564.vlan.pcp')}
-                <HelpIcon tooltip={t('help:tooltips.testConfig.y1564.vlan.pcpHelp')} />
-              </label>
-              <select
-                id="y1564-pcp"
-                {...register('pcp', { valueAsNumber: true })}
-                className="mt-tight w-full"
-              >
-                {[0, 1, 2, 3, 4, 5, 6, 7].map((priority) => (
-                  <option key={priority} value={priority}>
-                    {t(`testConfig.y1564.vlan.pcp${priority}` as never)}
-                  </option>
-                ))}
-              </select>
-              <FieldError message={errors.pcp?.message} />
-            </div>
-          )}
-
-          {/* Color-Aware Mode */}
-          <label className="flex items-center gap-default pad-xs rounded-lg cursor-pointer hover:bg-surface-hover">
-            <input
-              type="checkbox"
-              {...register('colorAware')}
-              aria-label={t('testConfig.y1564.vlan.colorAwareAria')}
-              className="w-4 h-4 accent-brand-primary"
-            />
-            <div>
-              <div className="font-medium text-sm flex items-center gap-tight">
-                {t('testConfig.y1564.vlan.colorAware')}
-                <HelpIcon tooltip={t('help:tooltips.testConfig.y1564.vlan.colorAwareHelp')} />
-              </div>
-              <div className="text-xs text-text-muted">
-                {t('testConfig.y1564.vlan.colorAwareHint')}
-              </div>
-            </div>
-          </label>
-        </FormSection>
-
         {/* Cross-field error footer */}
         {crossFieldError && (
           <div className="pad-xs rounded-lg bg-status-error/10 text-status-error-strong text-sm flex items-center gap-compact">
@@ -440,7 +367,6 @@ export function Y1564ConfigForm({
               fdv: fdvThreshold,
             })}
           </div>
-          {vlanId > 0 && <div>{t('testConfig.y1564.summary.vlan', { vlan: vlanId, pcp })}</div>}
         </TestSummary>
       </div>
     </CollapsibleSection>
