@@ -24,8 +24,8 @@ export const mefTests: Record<string, TestHelp> = {
     seeAlso: ['https://www.mef.net/resources/mef-48-service-activation-testing/', 'y1564_config'],
   },
 
-  mef_performance: {
-    id: 'mef_performance',
+  mef_perf: {
+    id: 'mef_perf',
     name: 'MEF Performance Test',
     standard: 'MEF 14/48',
     category: 'MEF',
@@ -42,8 +42,8 @@ export const mefTests: Record<string, TestHelp> = {
     seeAlso: ['https://www.mef.net/resources/mef-48-service-activation-testing/', 'mef_config'],
   },
 
-  mef_full: {
-    id: 'mef_full',
+  mef: {
+    id: 'mef',
     name: 'MEF Service Activation Test',
     standard: 'MEF 14/48',
     category: 'MEF',
@@ -60,7 +60,7 @@ export const mefTests: Record<string, TestHelp> = {
     seeAlso: [
       'https://www.mef.net/resources/mef-48-service-activation-testing/',
       'mef_config',
-      'mef_performance',
+      'mef_perf',
     ],
   },
 };

@@ -12,7 +12,7 @@ package help
 
 func rfc2889Forwarding() TestHelp {
 	return TestHelp{
-		ID:       "forwarding",
+		ID:       "rfc2889_forwarding",
 		Name:     "Forwarding Rate Test",
 		Standard: "RFC 2889 Section 5.2",
 		Category: StandardRFC2889,
@@ -95,13 +95,13 @@ Important for environments with many active connections simultaneously.`,
 		CommonIssues: nil,
 
 		RFCSection: "Section 5.2",
-		SeeAlso:    []string{"address_cache", TestTypeThroughput},
+		SeeAlso:    []string{"rfc2889_caching", TestTypeThroughput},
 	}
 }
 
 func rfc2889AddressCache() TestHelp {
 	return TestHelp{
-		ID:       "address_cache",
+		ID:       "rfc2889_caching",
 		Name:     "Address Caching Capacity Test",
 		Standard: "RFC 2889 Section 5.5",
 		Category: StandardRFC2889,
@@ -183,13 +183,13 @@ Think of it like a phonebook:
 		CommonIssues: nil,
 
 		RFCSection: "Section 5.5",
-		SeeAlso:    []string{"learning_rate", "forwarding"},
+		SeeAlso:    []string{"rfc2889_learning", "rfc2889_forwarding"},
 	}
 }
 
 func rfc2889LearningRate() TestHelp {
 	return TestHelp{
-		ID:       "learning_rate",
+		ID:       "rfc2889_learning",
 		Name:     "Address Learning Rate Test",
 		Standard: "RFC 2889 Section 5.6",
 		Category: StandardRFC2889,
@@ -252,13 +252,13 @@ Faster learning = smoother experience for users joining the network.`,
 		CommonIssues: nil,
 
 		RFCSection: "Section 5.6",
-		SeeAlso:    []string{"address_cache"},
+		SeeAlso:    []string{"rfc2889_caching"},
 	}
 }
 
 func rfc2889Broadcast() TestHelp {
 	return TestHelp{
-		ID:       "broadcast",
+		ID:       "rfc2889_broadcast",
 		Name:     "Broadcast Frame Handling Test",
 		Standard: "RFC 2889 Section 5.7",
 		Category: StandardRFC2889,
@@ -325,13 +325,13 @@ This test checks if your switch can handle normal broadcast levels without probl
 		CommonIssues: nil,
 
 		RFCSection: "Section 5.7",
-		SeeAlso:    []string{"forwarding", "congestion"},
+		SeeAlso:    []string{"rfc2889_forwarding", "rfc2889_congestion"},
 	}
 }
 
 func rfc2889Congestion() TestHelp {
 	return TestHelp{
-		ID:       "congestion",
+		ID:       "rfc2889_congestion",
 		Name:     "Congestion Control Test",
 		Standard: "RFC 2889 Section 5.8",
 		Category: StandardRFC2889,
@@ -403,6 +403,6 @@ This test reveals your switch's personality under stress.`,
 		CommonIssues: nil,
 
 		RFCSection: "Section 5.8",
-		SeeAlso:    []string{"forwarding", "back_to_back"},
+		SeeAlso:    []string{"rfc2889_forwarding", "rfc2544_back_to_back"},
 	}
 }

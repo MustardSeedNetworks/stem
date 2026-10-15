@@ -422,7 +422,7 @@ func helpCommand() CommandHelp {
 tests, and network testing concepts. You can get help on:
 
 • Commands: stem help reflect
-• Tests: stem help throughput
+• Tests: stem help rfc2544_throughput
 • Categories: stem help rfc2544
 • Concepts: Use the glossary command for definitions`,
 		Usage: "stem help [flags] [topic]",
@@ -444,7 +444,7 @@ tests, and network testing concepts. You can get help on:
 			},
 			{
 				Desc:    "Get help on a test",
-				Command: "stem help throughput",
+				Command: "stem help rfc2544_throughput",
 				Output:  "[Detailed throughput test documentation]",
 			},
 			{

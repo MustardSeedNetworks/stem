@@ -6,8 +6,8 @@
 import type { TestHelp } from '../types';
 
 export const tsnTests: Record<string, TestHelp> = {
-  gate_timing: {
-    id: 'gate_timing',
+  tsn_timing: {
+    id: 'tsn_timing',
     name: 'TSN Gate Timing Test',
     standard: 'IEEE 802.1Qbv',
     category: 'TSN',
@@ -134,11 +134,11 @@ export const tsnTests: Record<string, TestHelp> = {
       'Ensure PTP is configured and synchronized before testing',
       'Use IEEE 802.1AS-compliant hardware for best results',
     ],
-    seeAlso: ['https://1.ieee802.org/tsn/', 'traffic_isolation'],
+    seeAlso: ['https://1.ieee802.org/tsn/', 'tsn_isolation'],
   },
 
-  traffic_isolation: {
-    id: 'traffic_isolation',
+  tsn_isolation: {
+    id: 'tsn_isolation',
     name: 'TSN Traffic Class Isolation Test',
     standard: 'IEEE 802.1Qbv/Qbu',
     category: 'TSN',
@@ -152,11 +152,11 @@ export const tsnTests: Record<string, TestHelp> = {
     failMeaning: 'Critical traffic affected',
     examples: [],
     tips: [],
-    seeAlso: ['https://1.ieee802.org/tsn/', 'gate_timing'],
+    seeAlso: ['https://1.ieee802.org/tsn/', 'tsn_timing'],
   },
 
-  scheduled_latency: {
-    id: 'scheduled_latency',
+  tsn_latency: {
+    id: 'tsn_latency',
     name: 'TSN Scheduled Latency Test',
     standard: 'IEEE 802.1Qbv',
     category: 'TSN',
@@ -170,11 +170,11 @@ export const tsnTests: Record<string, TestHelp> = {
     failMeaning: 'Traffic not meeting timing',
     examples: [],
     tips: [],
-    seeAlso: ['https://1.ieee802.org/tsn/', 'gate_timing'],
+    seeAlso: ['https://1.ieee802.org/tsn/', 'tsn_timing'],
   },
 
-  tsn_full: {
-    id: 'tsn_full',
+  tsn: {
+    id: 'tsn',
     name: 'TSN Full Validation Suite',
     standard: 'IEEE 802.1Qbv/Qbu',
     category: 'TSN',
@@ -188,11 +188,6 @@ export const tsnTests: Record<string, TestHelp> = {
     failMeaning: 'Network not suitable for TSN',
     examples: [],
     tips: [],
-    seeAlso: [
-      'https://1.ieee802.org/tsn/',
-      'gate_timing',
-      'traffic_isolation',
-      'scheduled_latency',
-    ],
+    seeAlso: ['https://1.ieee802.org/tsn/', 'tsn_timing', 'tsn_isolation', 'tsn_latency'],
   },
 };

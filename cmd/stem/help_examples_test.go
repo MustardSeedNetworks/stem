@@ -3,6 +3,7 @@
 package main
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -176,5 +177,103 @@ func TestHelpExamplesRunAsWritten(t *testing.T) {
 
 	for _, example := range append(goExamples, uiExamples...) {
 		checkHelpExample(t, example)
+	}
+}
+
+// helpTopicIDs maps a help test id to where it appears.
+type helpTopicIDs map[string]string
+
+// addGo adds the CLI help's topic keys, IDs, See Also links and category
+// lists.
+func (ids helpTopicIDs) addGo() {
+	for key, topic := range help.GetAllTests() {
+		ids[key] = "help topic key"
+		ids[topic.ID] = "help topic " + key + " ID"
+		for _, related := range topic.SeeAlso {
+			ids[related] = "help topic " + key + " SeeAlso"
+		}
+	}
+	for catID, cat := range help.GetAllCategories() {
+		for _, id := range cat.Tests {
+			ids[id] = "help category " + catID
+		}
+	}
+}
+
+var (
+	uiTopicRe  = regexp.MustCompile(`(?m)^  (\w+): \{|\bid: '(\w+)'`)
+	uiListRe   = regexp.MustCompile(`(?:seeAlso|tests): \[([^\]]*)\]`)
+	uiQuotedRe = regexp.MustCompile(`'([^']*)'`)
+)
+
+// addUI adds the web UI help's topic keys, ids, See Also links and category
+// lists. URLs in See Also are links, not topics.
+func (ids helpTopicIDs) addUI(t *testing.T) {
+	t.Helper()
+
+	topicFiles, err := filepath.Glob(filepath.Join(uiHelpDir, "tests", "*.ts"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	categories := filepath.Join(uiHelpDir, "categories.ts")
+	for _, file := range append(topicFiles, categories) {
+		data, readErr := os.ReadFile(file)
+		if readErr != nil {
+			t.Fatal(readErr)
+		}
+		if file != categories {
+			for _, m := range uiTopicRe.FindAllStringSubmatch(string(data), -1) {
+				ids[m[1]+m[2]] = file
+			}
+		}
+		for _, list := range uiListRe.FindAllStringSubmatch(string(data), -1) {
+			for _, q := range uiQuotedRe.FindAllStringSubmatch(list[1], -1) {
+				if !strings.HasPrefix(q[1], "http") {
+					ids[q[1]] = file
+				}
+			}
+		}
+	}
+}
+
+// addLocales adds the help locales' per-test keys.
+func (ids helpTopicIDs) addLocales(t *testing.T) {
+	t.Helper()
+
+	for _, locale := range []string{"en", "es"} {
+		file := filepath.Join("../../internal/i18n/locales", locale, "help.json")
+		data, err := os.ReadFile(file)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var doc struct {
+			Tests map[string]json.RawMessage `json:"tests"`
+		}
+		if err = json.Unmarshal(data, &doc); err != nil {
+			t.Fatal(err)
+		}
+		for key := range doc.Tests {
+			if key != "intro" {
+				ids[key] = file
+			}
+		}
+	}
+}
+
+// TestHelpTopicsAreTestTypes holds every help topic id to the module
+// registry, so an operator who reads a topic id as a test name can pass it to
+// `stem test -t` (#1745).
+func TestHelpTopicsAreTestTypes(t *testing.T) {
+	ids := helpTopicIDs{}
+	ids.addGo()
+	ids.addUI(t)
+	ids.addLocales(t)
+	if len(ids) < len(help.GetAllTests()) {
+		t.Fatalf("found %d help topic ids; the extraction is broken, not the docs", len(ids))
+	}
+	for id, source := range ids {
+		if services.GetModuleForTest(id) == nil {
+			t.Errorf("%s: help topic %q is not a test type any module registers", source, id)
+		}
 	}
 }

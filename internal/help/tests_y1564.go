@@ -77,7 +77,7 @@ func y1564ConfigDetails() testHelpDetails {
 		Tips:               y1564ConfigTips(),
 		CommonIssues:       y1564ConfigIssues(),
 		RFCSection:         "",
-		SeeAlso:            []string{"y1564_performance", TestTypeThroughput, "mef_config"},
+		SeeAlso:            []string{"y1564_perf", TestTypeThroughput, "mef_config"},
 	}
 }
 
@@ -216,7 +216,7 @@ func y1564ConfigIssues() []Issue {
 
 func y1564Performance() TestHelp {
 	return TestHelp{
-		ID:       "y1564_performance",
+		ID:       "y1564_perf",
 		Name:     "Y.1564 Service Performance Test",
 		Standard: StandardITUY1564,
 		Category: StandardY1564,
@@ -313,13 +313,13 @@ thorough validation.`,
 		CommonIssues: nil,
 
 		RFCSection: "",
-		SeeAlso:    []string{"y1564_config", "y1564_full"},
+		SeeAlso:    []string{"y1564_config", "y1564"},
 	}
 }
 
 func y1564Full() TestHelp {
 	return TestHelp{
-		ID:       "y1564_full",
+		ID:       "y1564",
 		Name:     "Y.1564 Full SAC Test",
 		Standard: StandardITUY1564,
 		Category: StandardY1564,
@@ -392,6 +392,6 @@ Total test time is typically 30 minutes for a standard activation.`,
 		CommonIssues: nil,
 
 		RFCSection: "",
-		SeeAlso:    []string{"y1564_config", "y1564_performance", "mef_full"},
+		SeeAlso:    []string{"y1564_config", "y1564_perf", "mef"},
 	}
 }

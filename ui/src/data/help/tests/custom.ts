@@ -175,6 +175,10 @@ Useful when standard tests don't cover your specific scenario.`,
       'VLAN tagging requires 802.1Q-capable equipment',
       'Monitor receiver to verify packet delivery',
     ],
-    seeAlso: ['https://www.rfc-editor.org/rfc/rfc2544.html', 'throughput', 'back_to_back'],
+    seeAlso: [
+      'https://www.rfc-editor.org/rfc/rfc2544.html',
+      'rfc2544_throughput',
+      'rfc2544_back_to_back',
+    ],
   },
 };

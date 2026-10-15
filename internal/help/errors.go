@@ -192,7 +192,7 @@ func getTestErrors() map[string]ErrorHelp {
   stem help tests
 
 Or get help on a specific test:
-  stem help throughput`,
+  stem help rfc2544_throughput`,
 			Examples: []Example{
 				{Desc: "List tests", Command: "stem help tests", Output: ""},
 				{
@@ -292,7 +292,7 @@ Standard RFC 2544 sizes: 64, 128, 256, 512, 1024, 1280, 1518`,
 					Output:  "",
 				},
 			},
-			RelatedCmd: "stem help throughput",
+			RelatedCmd: "stem help rfc2544_throughput",
 		},
 	}
 }

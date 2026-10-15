@@ -6,8 +6,8 @@
 import type { TestHelp } from '../types';
 
 export const y1731Tests: Record<string, TestHelp> = {
-  frame_delay: {
-    id: 'frame_delay',
+  y1731_delay: {
+    id: 'y1731_delay',
     name: 'Frame Delay Measurement',
     standard: 'ITU-T Y.1731',
     category: 'Y.1731',
@@ -21,11 +21,11 @@ export const y1731Tests: Record<string, TestHelp> = {
     failMeaning: 'Exceeds SLA threshold',
     examples: [],
     tips: [],
-    seeAlso: ['https://www.itu.int/rec/T-REC-Y.1731', 'latency'],
+    seeAlso: ['https://www.itu.int/rec/T-REC-Y.1731', 'rfc2544_latency'],
   },
 
-  y1731_frame_loss: {
-    id: 'y1731_frame_loss',
+  y1731_loss: {
+    id: 'y1731_loss',
     name: 'Frame Loss Measurement',
     standard: 'ITU-T Y.1731',
     category: 'Y.1731',
@@ -39,11 +39,11 @@ export const y1731Tests: Record<string, TestHelp> = {
     failMeaning: 'SLA may be violated',
     examples: [],
     tips: [],
-    seeAlso: ['https://www.itu.int/rec/T-REC-Y.1731', 'frame_loss'],
+    seeAlso: ['https://www.itu.int/rec/T-REC-Y.1731', 'rfc2544_frame_loss'],
   },
 
-  synthetic_loss: {
-    id: 'synthetic_loss',
+  y1731_slm: {
+    id: 'y1731_slm',
     name: 'Synthetic Loss Measurement',
     standard: 'ITU-T Y.1731',
     category: 'Y.1731',
@@ -57,11 +57,11 @@ export const y1731Tests: Record<string, TestHelp> = {
     failMeaning: 'Network path has problems',
     examples: [],
     tips: [],
-    seeAlso: ['https://www.itu.int/rec/T-REC-Y.1731', 'y1731_frame_loss'],
+    seeAlso: ['https://www.itu.int/rec/T-REC-Y.1731', 'y1731_loss'],
   },
 
-  loopback: {
-    id: 'loopback',
+  y1731_loopback: {
+    id: 'y1731_loopback',
     name: 'Loopback Test',
     standard: 'ITU-T Y.1731',
     category: 'Y.1731',
@@ -75,6 +75,6 @@ export const y1731Tests: Record<string, TestHelp> = {
     failMeaning: 'Connectivity problem',
     examples: [],
     tips: [],
-    seeAlso: ['https://www.itu.int/rec/T-REC-Y.1731', 'frame_delay'],
+    seeAlso: ['https://www.itu.int/rec/T-REC-Y.1731', 'y1731_delay'],
   },
 };

@@ -30,85 +30,85 @@
     "mef_config": {
       "whenToUse": "MEF-certified service validation"
     },
-    "mef_performance": {
+    "mef_perf": {
       "whenToUse": "After MEF Config test passes"
     },
-    "mef_full": {
+    "mef": {
       "whenToUse": "Official MEF service acceptance"
     },
-    "tcp_throughput": {
+    "rfc6349_throughput": {
       "whenToUse": "Application performance troubleshooting"
     },
-    "path_analysis": {
+    "rfc6349_path": {
       "whenToUse": "TCP troubleshooting"
     },
     "y1564_config": {
       "whenToUse": "• New service activation\n• Service verification after maintenance\n• SLA dispute resolution"
     },
-    "y1564_performance": {
+    "y1564_perf": {
       "whenToUse": "• After passing Configuration Test\n• Extended burn-in testing"
     },
-    "y1564_full": {
+    "y1564": {
       "whenToUse": "• Official service activation\n• Complete service validation"
     },
-    "forwarding": {
+    "rfc2889_forwarding": {
       "whenToUse": "Switch aggregate capacity testing"
     },
-    "address_cache": {
+    "rfc2889_caching": {
       "whenToUse": "Large campus network planning"
     },
-    "learning_rate": {
+    "rfc2889_learning": {
       "whenToUse": "Highly dynamic environments"
     },
-    "broadcast": {
+    "rfc2889_broadcast": {
       "whenToUse": "Networks with broadcast-heavy protocols"
     },
-    "congestion": {
+    "rfc2889_congestion": {
       "whenToUse": "Server farm switch validation"
     },
-    "gate_timing": {
+    "tsn_timing": {
       "whenToUse": "Industrial automation networks"
     },
-    "traffic_isolation": {
+    "tsn_isolation": {
       "whenToUse": "Mixed traffic TSN networks"
     },
-    "scheduled_latency": {
+    "tsn_latency": {
       "whenToUse": "Deterministic latency validation"
     },
-    "tsn_full": {
+    "tsn": {
       "whenToUse": "Complete TSN validation"
     },
     "custom_stream": {
       "whenToUse": "• Custom stress testing scenarios\n• QoS and traffic shaping validation\n• Network diagnostics and debugging\n• Vendor-specific testing requirements"
     },
-    "frame_delay": {
+    "y1731_delay": {
       "whenToUse": "SLA monitoring in production"
     },
-    "y1731_frame_loss": {
+    "y1731_loss": {
       "whenToUse": "Continuous service monitoring"
     },
-    "synthetic_loss": {
+    "y1731_slm": {
       "whenToUse": "Links with variable traffic"
     },
-    "loopback": {
+    "y1731_loopback": {
       "whenToUse": "Quick connectivity verification"
     },
-    "throughput": {
+    "rfc2544_throughput": {
       "whenToUse": "• Validating new network equipment before deployment\n• Troubleshooting slow network performance\n• Verifying ISP is delivering promised bandwidth\n• Baseline testing after configuration changes"
     },
-    "latency": {
+    "rfc2544_latency": {
       "whenToUse": "• Validating low-latency network requirements\n• VoIP and video conferencing quality assurance\n• Real-time applications testing"
     },
-    "frame_loss": {
+    "rfc2544_frame_loss": {
       "whenToUse": "• Understanding network behavior under overload\n• Capacity planning and upgrade justification\n• Comparing equipment performance"
     },
-    "back_to_back": {
+    "rfc2544_back_to_back": {
       "whenToUse": "• Buffer sizing validation\n• Video streaming infrastructure\n• Burst traffic applications"
     },
-    "system_recovery": {
+    "rfc2544_system_recovery": {
       "whenToUse": "• Mission-critical network validation\n• Understanding DUT behavior after congestion"
     },
-    "reset": {
+    "rfc2544_reset": {
       "whenToUse": "• Maintenance window planning\n• High-availability architecture design"
     }
   },

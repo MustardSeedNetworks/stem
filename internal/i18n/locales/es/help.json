@@ -30,85 +30,85 @@
     "mef_config": {
       "whenToUse": "Validar la configuración de un servicio Ethernet MEF frente a sus criterios de aceptación."
     },
-    "mef_performance": {
+    "mef_perf": {
       "whenToUse": "En un servicio MEF, comprobar el rendimiento sostenido después de superar la configuración."
     },
-    "mef_full": {
+    "mef": {
       "whenToUse": "Ejecutar las fases de configuración y rendimiento de un servicio Ethernet MEF."
     },
-    "tcp_throughput": {
+    "rfc6349_throughput": {
       "whenToUse": "Investigar el rendimiento de aplicaciones TCP y la capacidad útil de la conexión."
     },
-    "path_analysis": {
+    "rfc6349_path": {
       "whenToUse": "Investigar el retardo, la pérdida y las limitaciones de una ruta TCP."
     },
     "y1564_config": {
       "whenToUse": "Activar un servicio nuevo y comprobar su perfil de ancho de banda y sus umbrales de aceptación."
     },
-    "y1564_performance": {
+    "y1564_perf": {
       "whenToUse": "Tras superar la configuración, comprobar que el servicio mantiene sus objetivos durante una prueba prolongada."
     },
-    "y1564_full": {
+    "y1564": {
       "whenToUse": "Ejecutar las fases de configuración y rendimiento para aceptar un servicio Ethernet."
     },
-    "forwarding": {
+    "rfc2889_forwarding": {
       "whenToUse": "Medir la capacidad agregada de reenvío de un conmutador."
     },
-    "address_cache": {
+    "rfc2889_caching": {
       "whenToUse": "Comprobar la capacidad de aprendizaje de direcciones MAC para redes grandes."
     },
-    "learning_rate": {
+    "rfc2889_learning": {
       "whenToUse": "Evaluar redes donde cambian muchas direcciones MAC en poco tiempo."
     },
-    "broadcast": {
+    "rfc2889_broadcast": {
       "whenToUse": "Comprobar cómo reenvía el conmutador el tráfico de difusión."
     },
-    "congestion": {
+    "rfc2889_congestion": {
       "whenToUse": "Validar el comportamiento del conmutador bajo congestión."
     },
-    "gate_timing": {
+    "tsn_timing": {
       "whenToUse": "Comprobar la temporización de las puertas de transmisión en redes industriales."
     },
-    "traffic_isolation": {
+    "tsn_isolation": {
       "whenToUse": "Validar la separación de clases en redes TSN con tráfico mixto."
     },
-    "scheduled_latency": {
+    "tsn_latency": {
       "whenToUse": "Comprobar el latencia (latency) del tráfico programado frente a los límites configurados."
     },
-    "tsn_full": {
+    "tsn": {
       "whenToUse": "Ejecutar las comprobaciones de temporización, aislamiento y retardo de TSN."
     },
     "custom_stream": {
       "whenToUse": "Generar cargas controladas, comprobar QoS o investigar un patrón de tráfico específico."
     },
-    "frame_delay": {
+    "y1731_delay": {
       "whenToUse": "Medir el retardo del servicio y compararlo con sus objetivos."
     },
-    "y1731_frame_loss": {
+    "y1731_loss": {
       "whenToUse": "Supervisar la pérdida de tramas durante el funcionamiento del servicio."
     },
-    "synthetic_loss": {
+    "y1731_slm": {
       "whenToUse": "Medir pérdida con tráfico de prueba cuando el tráfico real es variable."
     },
-    "loopback": {
+    "y1731_loopback": {
       "whenToUse": "Comprobar rápidamente la conectividad con el extremo remoto."
     },
-    "throughput": {
+    "rfc2544_throughput": {
       "whenToUse": "Validar equipos antes de instalarlos y comparar su capacidad de reenvío sin pérdida en un entorno de prueba aislado."
     },
-    "latency": {
+    "rfc2544_latency": {
       "whenToUse": "Comprobar requisitos de latencia (latency) para voz, vídeo o aplicaciones sensibles al tiempo."
     },
-    "frame_loss": {
+    "rfc2544_frame_loss": {
       "whenToUse": "Medir la pérdida de tramas a distintas cargas y detectar saturación."
     },
-    "back_to_back": {
+    "rfc2544_back_to_back": {
       "whenToUse": "Comprobar cuántas tramas de una ráfaga puede absorber el equipo antes de perder tráfico."
     },
-    "system_recovery": {
+    "rfc2544_system_recovery": {
       "whenToUse": "Medir cuánto tarda el equipo en recuperar el reenvío normal tras una sobrecarga."
     },
-    "reset": {
+    "rfc2544_reset": {
       "whenToUse": "Planificar ventanas de mantenimiento midiendo la recuperación tras reiniciar el equipo."
     }
   },

@@ -145,11 +145,11 @@ you're getting what you paid for at different load levels.`,
       },
     ],
     tips: ['CIR should match your contract exactly'],
-    seeAlso: ['https://www.itu.int/rec/T-REC-Y.1564', 'y1564_performance', 'mef_config'],
+    seeAlso: ['https://www.itu.int/rec/T-REC-Y.1564', 'y1564_perf', 'mef_config'],
   },
 
-  y1564_performance: {
-    id: 'y1564_performance',
+  y1564_perf: {
+    id: 'y1564_perf',
     name: 'Y.1564 Service Performance Test',
     standard: 'ITU-T Y.1564',
     category: 'Y.1564',
@@ -192,8 +192,8 @@ maintain that performance for hours?`,
     seeAlso: ['https://www.itu.int/rec/T-REC-Y.1564', 'y1564_config'],
   },
 
-  y1564_full: {
-    id: 'y1564_full',
+  y1564: {
+    id: 'y1564',
     name: 'Y.1564 Full SAC Test',
     standard: 'ITU-T Y.1564',
     category: 'Y.1564',
@@ -215,6 +215,6 @@ This is what carriers use to officially "turn up" a new service.`,
       },
     ],
     tips: [],
-    seeAlso: ['https://www.itu.int/rec/T-REC-Y.1564', 'y1564_config', 'y1564_performance'],
+    seeAlso: ['https://www.itu.int/rec/T-REC-Y.1564', 'y1564_config', 'y1564_perf'],
   },
 };
