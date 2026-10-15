@@ -35,7 +35,7 @@
 #include "reflector.h"
 #include "test_framework.h"
 
-int  packet_platform_init(reflector_ctx_t *rctx, worker_ctx_t *wctx);
+int  packet_platform_init(const reflector_ctx_t *rctx, worker_ctx_t *wctx);
 void packet_platform_cleanup(worker_ctx_t *wctx);
 
 /* ============================================================================

@@ -493,10 +493,10 @@ int reflector_start(reflector_ctx_t *rctx)
                     "║   • NIC driver doesn't support XDP (check ROADMAP.md)              ║");
                 reflector_log(
                     LOG_WARN,
-                    "║   • Kernel too old (<5.4 required)                                 ║");
+                    "║   • Kernel too old (<5.9 required)                                 ║");
                 reflector_log(
                     LOG_WARN,
-                    "║   • Insufficient permissions (need CAP_SYS_ADMIN + CAP_NET_ADMIN)  ║");
+                    "║   • Missing CAP_BPF, CAP_NET_ADMIN or CAP_NET_RAW                  ║");
                 reflector_log(
                     LOG_WARN,
                     "║   • Network interface in use by other process                      ║");
