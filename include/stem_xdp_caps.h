@@ -1,13 +1,11 @@
 /*
- * Privileges an AF_XDP socket needs, checked before libxdp runs.
+ * Privileges an AF_XDP socket needs, checked before anything is loaded.
  *
- * libxdp attaches its program with CAP_NET_ADMIN and then looks the attached
- * program up by id (BPF_PROG_GET_FD_BY_ID), which the kernel allows only with
- * CAP_SYS_ADMIN. CAP_BPF and CAP_PERFMON do not cover that lookup: with them
- * libxdp fails its dispatcher check, attaches its default program without a
- * dispatcher, leaves it attached, and xsk_socket__create() reports ENOENT,
- * which names nothing (stem#1747). Checking first gives the operator the real
- * cause and attaches nothing.
+ * Stem loads its own XDP program (stem_xsk_prog.h): creating the XSKMAP and
+ * loading the program need CAP_BPF and CAP_NET_ADMIN, the socket needs
+ * CAP_NET_RAW. CAP_SYS_ADMIN stands in for the first two, as in the kernel.
+ * Without the check the first refusal is a bare EPERM from the map create,
+ * which names nothing (stem#1747).
  */
 
 #ifndef STEM_XDP_CAPS_H
@@ -22,7 +20,7 @@
 
 #include <unistd.h>
 
-#define STEM_XDP_CAPS_NEEDED "AF_XDP needs CAP_SYS_ADMIN, CAP_NET_ADMIN and CAP_NET_RAW"
+#define STEM_XDP_CAPS_NEEDED "AF_XDP needs CAP_BPF, CAP_NET_ADMIN and CAP_NET_RAW"
 
 static inline bool stem_cap_effective(const struct __user_cap_data_struct *data, unsigned cap)
 {
@@ -39,10 +37,10 @@ static inline int stem_xdp_caps_check(void)
     if (syscall(SYS_capget, &hdr, data) != 0) {
         return -errno;
     }
-    return stem_cap_effective(data, CAP_SYS_ADMIN) && stem_cap_effective(data, CAP_NET_ADMIN) &&
-                   stem_cap_effective(data, CAP_NET_RAW)
-               ? 0
-               : -EPERM;
+    bool sys_admin = stem_cap_effective(data, CAP_SYS_ADMIN);
+    bool bpf       = sys_admin || stem_cap_effective(data, CAP_BPF);
+    bool net_admin = sys_admin || stem_cap_effective(data, CAP_NET_ADMIN);
+    return bpf && net_admin && stem_cap_effective(data, CAP_NET_RAW) ? 0 : -EPERM;
 }
 
 #endif /* STEM_XDP_CAPS_H */

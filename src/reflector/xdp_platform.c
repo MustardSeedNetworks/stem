@@ -31,6 +31,7 @@
 #include "reflector.h"
 #include "stem_errno.h"
 #include "stem_xdp_caps.h"
+#include "stem_xsk_prog.h"
 
 /* Platform-specific context for AF_XDP */
 struct platform_ctx {
@@ -47,6 +48,10 @@ struct platform_ctx {
         struct xsk_socket *xsk;
         uint32_t           outstanding_tx;
     } xsk_info;
+
+    /* Queue 0's worker attaches the program and owns it; the others add
+     * their sockets to its map. */
+    stem_xsk_prog_t xsk_prog;
 
     uint32_t frame_size;
     uint32_t num_frames;
@@ -98,8 +103,7 @@ static void populate_fill_queue(struct platform_ctx *pctx, uint32_t num)
 }
 
 /*
- * Name the mode the kernel attached the interface's XDP program in. libxdp
- * attaches its default program with the first socket and picks the mode.
+ * Name the mode the kernel attached the interface's XDP program in.
  */
 static const char *xdp_attach_mode(int ifindex)
 {
@@ -124,11 +128,23 @@ static const char *xdp_attach_mode(int ifindex)
 /*
  * Initialize AF_XDP socket
  */
-static int init_xsk(worker_ctx_t *wctx)
+static int init_xsk(const reflector_ctx_t *rctx, worker_ctx_t *wctx)
 {
     struct platform_ctx *pctx = wctx->pctx;
     reflector_config_t  *cfg  = wctx->config;
     int                  ret;
+
+    const stem_xsk_prog_t *prog = &pctx->xsk_prog;
+    if (wctx->queue_id == 0) {
+        ret = stem_xsk_prog_attach(&pctx->xsk_prog, cfg->ifindex, (uint32_t)rctx->num_workers);
+        if (ret) {
+            reflector_log(LOG_ERROR, "Failed to attach the XDP program to %s: %s", cfg->ifname,
+                          stem_strerror(-ret));
+            return ret;
+        }
+    } else {
+        prog = &rctx->platform_contexts[0]->xsk_prog;
+    }
 
     /* Neither XDP_ZEROCOPY nor XDP_COPY: the kernel binds zero-copy where the
      * driver supports it and copy mode where it does not. Demanding zero-copy
@@ -136,8 +152,7 @@ static int init_xsk(worker_ctx_t *wctx)
      * would rebind a queue the kernel has not released yet (stem#1532). */
     struct xsk_socket_config xsk_cfg = {.rx_size      = NUM_FRAMES / 2,
                                         .tx_size      = NUM_FRAMES / 2,
-                                        .libbpf_flags = 0,
-                                        .xdp_flags    = XDP_FLAGS_UPDATE_IF_NOEXIST,
+                                        .libxdp_flags = XSK_LIBXDP_FLAGS__INHIBIT_PROG_LOAD,
                                         .bind_flags   = XDP_USE_NEED_WAKEUP};
 
     /* Create AF_XDP socket */
@@ -147,6 +162,17 @@ static int init_xsk(worker_ctx_t *wctx)
 
     if (ret) {
         reflector_log(LOG_ERROR, "Failed to create XSK socket: %s", stem_strerror(-ret));
+        stem_xsk_prog_detach(&pctx->xsk_prog);
+        return ret;
+    }
+
+    ret = stem_xsk_prog_add(prog, (uint32_t)wctx->queue_id, xsk_socket__fd(pctx->xsk_info.xsk));
+    if (ret) {
+        reflector_log(LOG_ERROR, "Failed to add queue %d's socket to the XDP map: %s",
+                      wctx->queue_id, stem_strerror(-ret));
+        xsk_socket__delete(pctx->xsk_info.xsk);
+        pctx->xsk_info.xsk = NULL;
+        stem_xsk_prog_detach(&pctx->xsk_prog);
         return ret;
     }
 
@@ -167,7 +193,6 @@ static int init_xsk(worker_ctx_t *wctx)
  */
 int xdp_platform_init(reflector_ctx_t *rctx, worker_ctx_t *wctx)
 {
-    (void)rctx; /* May be used for multi-worker coordination in future */
     int caps = stem_xdp_caps_check();
     if (caps < 0) {
         reflector_log(LOG_ERROR, "%s: %s", STEM_XDP_CAPS_NEEDED, stem_strerror(-caps));
@@ -182,6 +207,7 @@ int xdp_platform_init(reflector_ctx_t *rctx, worker_ctx_t *wctx)
     }
 
     wctx->pctx       = pctx;
+    pctx->xsk_prog   = STEM_XSK_PROG_NONE;
     pctx->frame_size = wctx->config->frame_size;
     pctx->num_frames = wctx->config->num_frames;
 
@@ -232,7 +258,7 @@ int xdp_platform_init(reflector_ctx_t *rctx, worker_ctx_t *wctx)
     }
 
     /* Initialize AF_XDP socket */
-    ret = init_xsk(wctx);
+    ret = init_xsk(rctx, wctx);
     if (ret) {
         xsk_umem__delete(pctx->xsk_info.umem.umem);
         munmap(umem_buffer, umem_size);
@@ -259,6 +285,8 @@ void xdp_platform_cleanup(worker_ctx_t *wctx)
     if (!pctx) {
         return;
     }
+
+    stem_xsk_prog_detach(&pctx->xsk_prog);
 
     /* Delete AF_XDP socket */
     if (pctx->xsk_info.xsk) {

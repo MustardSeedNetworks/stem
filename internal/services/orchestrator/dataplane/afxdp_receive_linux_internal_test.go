@@ -7,12 +7,16 @@ package dataplane
 import (
 	"encoding/json"
 	"math/big"
+	"net"
 	"os"
 	"os/exec"
 	"runtime"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
+
+	"golang.org/x/sys/unix"
 
 	"github.com/MustardSeedNetworks/stem/internal/reflector/config"
 	reflectordp "github.com/MustardSeedNetworks/stem/internal/reflector/dataplane"
@@ -49,13 +53,19 @@ func ip(t *testing.T, args ...string) []byte {
 func newReflectedLink(t *testing.T, queues int, reflectorAFXDP bool) (*Context, *reflectordp.Dataplane) {
 	t.Helper()
 	addVethPair(t, queues)
+	reflector := startReflector(t, reflectorAFXDP)
+	return newLinkMaster(t), reflector
+}
 
+// startReflector runs a reflector on the veth pair's reflector end.
+func startReflector(t *testing.T, afxdp bool) *reflectordp.Dataplane {
+	t.Helper()
 	reflector, err := reflectordp.New(&config.Config{
 		Interface:       vethReflector,
 		SignatureFilter: "all",
 		Filtering:       config.FilterConfig{Port: reflectorPort},
 		Reflection:      config.ReflectConfig{Mode: "all"},
-		Platform:        config.PlatformConfig{UseAFXDP: reflectorAFXDP},
+		Platform:        config.PlatformConfig{UseAFXDP: afxdp},
 	})
 	if err != nil {
 		t.Fatalf("reflector: %v", err)
@@ -65,8 +75,7 @@ func newReflectedLink(t *testing.T, queues int, reflectorAFXDP bool) (*Context, 
 		t.Fatalf("start reflector: %v", err)
 	}
 	t.Cleanup(reflector.Stop)
-
-	return newLinkMaster(t), reflector
+	return reflector
 }
 
 // addVethPair creates the test master's veth pair with the given number of
@@ -190,15 +199,21 @@ func TestAFXDPTrialReceivesFromReflectingPeer(t *testing.T) {
 // so without this a trial could land on queue 0 and prove nothing.
 func reflectInto(t *testing.T, queue, queues int) {
 	t.Helper()
+	steerTransmit(t, vethReflector, queue, queues)
+}
+
+// steerTransmit makes every CPU transmit on one of iface's queues.
+func steerTransmit(t *testing.T, iface string, queue, queues int) {
+	t.Helper()
 	all := new(big.Int).Sub(new(big.Int).Lsh(big.NewInt(1), uint(runtime.NumCPU())), big.NewInt(1))
 	for q := range queues {
 		mask := "0"
 		if q == queue {
 			mask = all.Text(16)
 		}
-		path := "/sys/class/net/" + vethReflector + "/queues/tx-" + strconv.Itoa(q) + "/xps_cpus"
+		path := "/sys/class/net/" + iface + "/queues/tx-" + strconv.Itoa(q) + "/xps_cpus"
 		if err := os.WriteFile(path, []byte(mask), 0); err != nil {
-			t.Fatalf("steer reflector transmit: %v", err)
+			t.Fatalf("steer %s transmit: %v", iface, err)
 		}
 	}
 }
@@ -257,5 +272,92 @@ func TestReflectorAFXDPRunsInCopyMode(t *testing.T) {
 	}
 	if st.PacketsReflected != recv {
 		t.Errorf("reflector reflected %d frames, the test master received %d", st.PacketsReflected, recv)
+	}
+}
+
+// xdpRedirected returns how many frames iface's XDP program has redirected
+// into an AF_XDP socket on one receive queue.
+func xdpRedirected(t *testing.T, iface string, queue int) uint64 {
+	t.Helper()
+	out, err := exec.Command("ethtool", "-S", iface).CombinedOutput()
+	if err != nil {
+		t.Fatalf("ethtool -S %s: %v\n%s", iface, err, out)
+	}
+	name := "rx_queue_" + strconv.Itoa(queue) + "_xdp_redirect:"
+	for line := range strings.Lines(string(out)) {
+		if value, ok := strings.CutPrefix(strings.TrimSpace(line), name); ok {
+			n, parseErr := strconv.ParseUint(strings.TrimSpace(value), 10, 64)
+			if parseErr != nil {
+				t.Fatalf("parse %s %q: %v", name, value, parseErr)
+			}
+			return n
+		}
+	}
+	t.Fatalf("ethtool -S %s has no %s", iface, name)
+	return 0
+}
+
+// The reflector's first worker attaches the XDP program and every other
+// worker's socket joins its map under its own queue. The program passes a
+// queue's frames to the stack when its socket is missing from the map, so
+// every queue must redirect what arrives on it (stem#1747). Counted per queue
+// at the veth, which the reflector's own counters are not.
+func TestReflectorAFXDPReceivesOnEveryQueue(t *testing.T) {
+	requireRoot(t)
+	if _, err := exec.LookPath("ethtool"); err != nil {
+		t.Skip("needs ethtool to read the veth's per-queue XDP counters")
+	}
+	const queues = 4
+	addVethPair(t, queues)
+	startReflector(t, true)
+	ip(t, "neigh", "replace", reflectorIP, "lladdr", reflectorMAC, "dev", vethMaster, "nud", "permanent")
+	if !xdpAttached(t, vethReflector) {
+		t.Fatal("no XDP program on the reflector's interface: it fell back to AF_PACKET")
+	}
+
+	payload := make([]byte, 64)
+	copy(payload, "RFC254")
+	const frames = 100
+	for q := range queues {
+		// A new socket per queue: a connected socket keeps the queue its
+		// first send picked.
+		steerTransmit(t, vethMaster, q, queues)
+		conn, err := net.Dial("udp4", net.JoinHostPort(reflectorIP, strconv.Itoa(reflectorPort)))
+		if err != nil {
+			t.Fatalf("dial reflector: %v", err)
+		}
+		before := xdpRedirected(t, vethReflector, q)
+		for range frames {
+			if _, err = conn.Write(payload); err != nil {
+				t.Fatalf("send on queue %d: %v", q, err)
+			}
+		}
+		_ = conn.Close()
+		if got := xdpRedirected(t, vethReflector, q) - before; got < frames {
+			t.Errorf("queue %d redirected %d of %d frames to the reflector", q, got, frames)
+		}
+	}
+}
+
+// The packaged service runs with CAP_BPF, CAP_NET_ADMIN and CAP_NET_RAW and
+// without CAP_SYS_ADMIN, which libxdp's own loader needed, so every packaged
+// run fell back to AF_PACKET (stem#1747). Run the AF_XDP tests again with
+// exactly that set. systemd raises the memlock limit for the service
+// (LimitMEMLOCK), which the reduced set cannot do itself.
+func TestPackagedCapabilitiesRunAFXDP(t *testing.T) {
+	requireRoot(t)
+	setpriv, err := exec.LookPath("setpriv")
+	if err != nil {
+		t.Skip("needs setpriv to run with the packaged capabilities")
+	}
+	unlimited := unix.Rlimit{Cur: unix.RLIM_INFINITY, Max: unix.RLIM_INFINITY}
+	if err = unix.Setrlimit(unix.RLIMIT_MEMLOCK, &unlimited); err != nil {
+		t.Fatalf("raise memlock limit: %v", err)
+	}
+	out, err := exec.Command(setpriv, "--bounding-set", "-all,+bpf,+net_admin,+net_raw",
+		"--inh-caps", "-all", "--", os.Args[0],
+		"-test.run", "^Test(AFXDP|ReflectorAFXDP)", "-test.count=1", "-test.v").CombinedOutput()
+	if err != nil {
+		t.Fatalf("AF_XDP tests with the packaged capabilities: %v\n%s", err, out)
 	}
 }

@@ -1,10 +1,10 @@
 /*
- * test_xdp_caps.c - the AF_XDP capability check names what libxdp hides (#1747)
+ * test_xdp_caps.c - the AF_XDP capability check names what is missing (#1747)
  *
- * libxdp needs CAP_SYS_ADMIN; without it xsk_socket__create() failed ENOENT
- * after leaving a program attached, even with CAP_BPF and CAP_PERFMON.
- * stem_xdp_caps_check() must refuse those sets before libxdp runs. Root runs
- * (`sudo make c-test`) exercise each set by lowering the effective
+ * Stem loads its own XDP program, so CAP_BPF, CAP_NET_ADMIN and CAP_NET_RAW
+ * are enough, and CAP_SYS_ADMIN stands in for the first two as in the kernel.
+ * stem_xdp_caps_check() must accept exactly the sets the kernel accepts. Root
+ * runs (`sudo make c-test`) exercise each set by lowering the effective
  * capabilities; an unprivileged run checks the refusal only.
  */
 
@@ -54,23 +54,35 @@ static int check_with(const cap_data_t permitted, const unsigned *caps, int ncap
 
 static cap_data_t original;
 
-/* The set the packaged service ran with: the lookup libxdp needs is refused. */
-TEST(refuses_bpf_and_perfmon)
+/* The set the packaged service runs with. */
+TEST(accepts_bpf_without_sys_admin)
 {
-    const unsigned caps[] = {CAP_NET_RAW, CAP_NET_ADMIN, CAP_BPF, CAP_PERFMON};
-    ASSERT_EQ(-EPERM, check_with(original, caps, 4));
+    const unsigned caps[] = {CAP_NET_RAW, CAP_NET_ADMIN, CAP_BPF};
+    ASSERT_EQ(0, check_with(original, caps, 3));
 }
 
-TEST(accepts_sys_admin)
+TEST(accepts_sys_admin_for_bpf_and_net_admin)
 {
-    const unsigned caps[] = {CAP_NET_RAW, CAP_NET_ADMIN, CAP_SYS_ADMIN};
-    ASSERT_EQ(0, check_with(original, caps, 3));
+    const unsigned caps[] = {CAP_NET_RAW, CAP_SYS_ADMIN};
+    ASSERT_EQ(0, check_with(original, caps, 2));
+}
+
+TEST(refuses_missing_bpf)
+{
+    const unsigned caps[] = {CAP_NET_RAW, CAP_NET_ADMIN, CAP_PERFMON};
+    ASSERT_EQ(-EPERM, check_with(original, caps, 3));
 }
 
 TEST(refuses_missing_net_admin)
 {
-    const unsigned caps[] = {CAP_NET_RAW, CAP_SYS_ADMIN};
+    const unsigned caps[] = {CAP_NET_RAW, CAP_BPF};
     ASSERT_EQ(-EPERM, check_with(original, caps, 2));
+}
+
+TEST(refuses_missing_net_raw)
+{
+    const unsigned caps[] = {CAP_NET_ADMIN, CAP_BPF, CAP_SYS_ADMIN};
+    ASSERT_EQ(-EPERM, check_with(original, caps, 3));
 }
 
 TEST(refuses_unprivileged)
@@ -89,9 +101,11 @@ int main(void)
                       stem_cap_effective(original, CAP_BPF) &&
                       stem_cap_effective(original, CAP_PERFMON);
     if (privileged) {
-        RUN_TEST(refuses_bpf_and_perfmon);
-        RUN_TEST(accepts_sys_admin);
+        RUN_TEST(accepts_bpf_without_sys_admin);
+        RUN_TEST(accepts_sys_admin_for_bpf_and_net_admin);
+        RUN_TEST(refuses_missing_bpf);
         RUN_TEST(refuses_missing_net_admin);
+        RUN_TEST(refuses_missing_net_raw);
     } else {
         printf("not root: checking the unprivileged refusal only\n");
         RUN_TEST(refuses_unprivileged);

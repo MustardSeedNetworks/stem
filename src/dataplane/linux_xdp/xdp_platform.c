@@ -2,7 +2,7 @@
  * xdp_platform.c - AF_XDP platform implementation for RFC2544 Test Master
  *
  * High-performance packet I/O using AF_XDP (eXpress Data Path).
- * Requires Linux kernel 5.4+ for best performance.
+ * Requires Linux kernel 5.9+ (XDP BPF links).
  *
  * Performance target: 10-40 Gbps
  */
@@ -40,6 +40,7 @@
 
 #include "stem_errno.h"
 #include "stem_xdp_caps.h"
+#include "stem_xsk_prog.h"
 
 /* worker_ctx_t and rfc2544_ctx_t are defined in rfc2544_internal.h */
 
@@ -85,6 +86,8 @@ typedef struct {
     int                  num_queues;
     int                  next_rx_queue;
     struct xsk_ring_prod tx_ring;
+
+    stem_xsk_prog_t xsk_prog;
 
     /* Interface info */
     int     if_index;
@@ -166,8 +169,8 @@ static void xdp_cleanup(worker_ctx_t *wctx)
 
     platform_ctx_t *pctx = wctx->pctx;
 
-    /* libxdp detaches its program with the interface's last socket, and the
-     * UMEM can go only once no socket uses it. */
+    /* The UMEM can go only once no socket uses it. */
+    stem_xsk_prog_detach(&pctx->xsk_prog);
     for (int q = pctx->num_queues - 1; q >= 0; q--) {
         if (pctx->queues[q].xsk) {
             xsk_socket__delete(pctx->queues[q].xsk);
@@ -224,7 +227,8 @@ static int xdp_init(rfc2544_ctx_t *ctx, worker_ctx_t *wctx)
     if (!pctx) {
         return -ENOMEM;
     }
-    wctx->pctx = pctx;
+    wctx->pctx     = pctx;
+    pctx->xsk_prog = STEM_XSK_PROG_NONE;
 
     int ret;
 
@@ -287,17 +291,22 @@ static int xdp_init(rfc2544_ctx_t *ctx, worker_ctx_t *wctx)
         return ret;
     }
 
-    /* libxdp attaches its default program with the first socket and adds each
-     * socket to the program's map under its queue, so every queue's frames
-     * reach the socket bound to it. Without a program nothing reaches an RX
-     * ring (stem#1328). No mode flag: libxdp binds the socket before it
-     * attaches the program, so retrying in another mode after a failed attach
-     * rebinds a queue the kernel has not released yet and fails EBUSY. Unset,
-     * the attach itself picks native or generic. */
+    /* Without a program nothing reaches an RX ring (stem#1328). Ours is
+     * attached before any socket binds, and each socket joins its map under
+     * its queue, so every queue's frames reach the socket bound to it. */
+    ret = stem_xsk_prog_attach(&pctx->xsk_prog, pctx->if_index, (uint32_t)num_queues);
+    if (ret) {
+        fprintf(stderr, "[xdp] Failed to attach the XDP program to %s: %s\n", ctx->config.interface,
+                stem_strerror(-ret));
+        xdp_cleanup(wctx);
+        return ret;
+    }
+
     struct xsk_socket_config xsk_cfg = {
-        .rx_size    = NUM_FRAMES / 2,
-        .tx_size    = NUM_FRAMES / 2,
-        .bind_flags = XDP_USE_NEED_WAKEUP,
+        .rx_size      = NUM_FRAMES / 2,
+        .tx_size      = NUM_FRAMES / 2,
+        .libxdp_flags = XSK_LIBXDP_FLAGS__INHIBIT_PROG_LOAD,
+        .bind_flags   = XDP_USE_NEED_WAKEUP,
     };
 
     for (int q = 0; q < num_queues; q++) {
@@ -318,6 +327,14 @@ static int xdp_init(rfc2544_ctx_t *ctx, worker_ctx_t *wctx)
             return ret;
         }
         qs->fd = xsk_socket__fd(qs->xsk);
+
+        ret = stem_xsk_prog_add(&pctx->xsk_prog, (uint32_t)q, qs->fd);
+        if (ret) {
+            fprintf(stderr, "[xdp] Failed to add queue %d's socket to the XDP map: %s\n", q,
+                    stem_strerror(-ret));
+            xdp_cleanup(wctx);
+            return ret;
+        }
 
         ret = fill_queue(pctx, qs, NUM_FRAMES / 2);
         if (ret < 0) {
