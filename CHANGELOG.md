@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.27.4](https://github.com/MustardSeedNetworks/stem/compare/v0.27.3...v0.27.4) (2026-10-15)
+
+
+### Bug Fixes
+
+* **dataplane:** name the AF_XDP capability failure instead of stranding a program ([#1750](https://github.com/MustardSeedNetworks/stem/issues/1750)) ([a5355d8](https://github.com/MustardSeedNetworks/stem/commit/a5355d845ad991551b371de7bf18d837fd488ca3))
+* **deps:** update dependency lucide-react to v1.53.0 ([#1752](https://github.com/MustardSeedNetworks/stem/issues/1752)) ([5f02602](https://github.com/MustardSeedNetworks/stem/commit/5f0260285fb5a469f539828ed2738c8b6b123f1c))
+* **trafficgen:** refuse the burst, VLAN and MAC settings the generator never applies ([#1754](https://github.com/MustardSeedNetworks/stem/issues/1754)) ([adc7947](https://github.com/MustardSeedNetworks/stem/commit/adc794735d1aa6101c743765b691aeae0eba484e)), closes [#1744](https://github.com/MustardSeedNetworks/stem/issues/1744)
+* **y1564:** refuse the VLAN, PCP and colour-aware settings the generator never applies ([#1755](https://github.com/MustardSeedNetworks/stem/issues/1755)) ([15ecd77](https://github.com/MustardSeedNetworks/stem/commit/15ecd77728ff97ab1ffb529ad37f42a1cf1524d1)), closes [#1753](https://github.com/MustardSeedNetworks/stem/issues/1753)
+
 ## [0.27.3](https://github.com/MustardSeedNetworks/stem/compare/v0.27.2...v0.27.3) (2026-10-15)
 
 
