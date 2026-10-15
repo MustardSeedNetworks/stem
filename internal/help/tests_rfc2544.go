@@ -85,6 +85,7 @@ func rfc2544ThroughputParameters() []Parameter {
 	return []Parameter{
 		{
 			Name:       LabelFrameSizes,
+			Setting:    SettingRFC2544FrameSizes,
 			Flag:       FlagFrameSizes,
 			Type:       "comma-separated integers (bytes)",
 			Default:    DefaultFrameSizes,
@@ -95,33 +96,36 @@ func rfc2544ThroughputParameters() []Parameter {
 		},
 		{
 			Name:       "Trial Duration",
+			Setting:    SettingRFC2544Duration,
 			Flag:       FlagDuration,
 			Type:       "integer (seconds)",
 			Default:    "60",
 			Required:   false,
 			TechDesc:   "Duration of each trial iteration in the binary search",
 			LaymanDesc: "How long to run each speed test - longer is more accurate but takes more time",
-			Example:    "--duration 30",
+			Example:    "30",
 		},
 		{
 			Name:       "Resolution",
+			Setting:    "rfc2544.resolution",
 			Flag:       "--resolution",
 			Type:       "float (percentage)",
 			Default:    "0.1",
 			Required:   false,
 			TechDesc:   "Minimum step size for binary search convergence",
 			LaymanDesc: "How precisely to find the maximum rate - smaller is more precise",
-			Example:    "--resolution 0.5",
+			Example:    "0.5",
 		},
 		{
-			Name:       "Loss Tolerance",
-			Flag:       "--loss-tolerance",
+			Name:       "Max Loss",
+			Setting:    "rfc2544.maxLoss",
+			Flag:       "--max-loss",
 			Type:       "float (percentage)",
-			Default:    "0.0",
+			Default:    "0",
 			Required:   false,
 			TechDesc:   "Maximum acceptable frame loss rate (0.0 = zero loss required)",
 			LaymanDesc: "How much packet loss is acceptable - usually zero for this test",
-			Example:    "--loss-tolerance 0.001",
+			Example:    "0.001",
 		},
 	}
 }
@@ -282,6 +286,7 @@ func rfc2544LatencyParameters() []Parameter {
 	return []Parameter{
 		{
 			Name:       LabelFrameSizes,
+			Setting:    SettingRFC2544FrameSizes,
 			Flag:       FlagFrameSizes,
 			Type:       "comma-separated integers (bytes)",
 			Default:    DefaultFrameSizes,
@@ -291,34 +296,15 @@ func rfc2544LatencyParameters() []Parameter {
 			Example:    ExampleFrameSizes,
 		},
 		{
-			Name:       "Rate",
-			Flag:       "--rate",
-			Type:       "float (percentage) or 'auto'",
-			Default:    ValueAuto,
-			Required:   false,
-			TechDesc:   "Rate at which to measure latency (auto uses throughput test result)",
-			LaymanDesc: "Network speed during test - 'auto' uses maximum lossless rate",
-			Example:    "--rate 80",
-		},
-		{
 			Name:       LabelDuration,
+			Setting:    SettingRFC2544Duration,
 			Flag:       FlagDuration,
 			Type:       "integer (seconds)",
-			Default:    "120",
+			Default:    "60",
 			Required:   false,
 			TechDesc:   "Test duration for statistical accuracy",
 			LaymanDesc: "How long to collect measurements - longer is more accurate",
-			Example:    ExampleDuration60,
-		},
-		{
-			Name:       "Sample Count",
-			Flag:       "--samples",
-			Type:       "integer",
-			Default:    "20",
-			Required:   false,
-			TechDesc:   "Number of latency samples to collect",
-			LaymanDesc: "How many individual measurements to take",
-			Example:    "--samples 100",
+			Example:    ExampleDuration,
 		},
 	}
 }
@@ -462,6 +448,7 @@ func rfc2544FrameLossParameters() []Parameter {
 	return []Parameter{
 		{
 			Name:       LabelFrameSizes,
+			Setting:    SettingRFC2544FrameSizes,
 			Flag:       FlagFrameSizes,
 			Type:       "comma-separated integers (bytes)",
 			Default:    DefaultFrameSizes,
@@ -471,34 +458,15 @@ func rfc2544FrameLossParameters() []Parameter {
 			Example:    ExampleFrameSizes,
 		},
 		{
-			Name:       "Start Rate",
-			Flag:       "--start-rate",
-			Type:       "float (percentage)",
-			Default:    "100",
-			Required:   false,
-			TechDesc:   "Initial offered load as percentage of line rate",
-			LaymanDesc: "Starting speed - usually 100% (maximum)",
-			Example:    "--start-rate 100",
-		},
-		{
-			Name:       "Step Size",
-			Flag:       "--step",
-			Type:       "float (percentage)",
-			Default:    "10",
-			Required:   false,
-			TechDesc:   "Decrease step between iterations",
-			LaymanDesc: "How much to slow down between tests",
-			Example:    "--step 5",
-		},
-		{
 			Name:       LabelDuration,
+			Setting:    SettingRFC2544Duration,
 			Flag:       FlagDuration,
 			Type:       "integer (seconds)",
 			Default:    "60",
 			Required:   false,
 			TechDesc:   "Duration of each rate iteration",
 			LaymanDesc: "How long to test at each speed",
-			Example:    "--duration 30",
+			Example:    "30",
 		},
 	}
 }
@@ -622,23 +590,25 @@ func rfc2544BackToBackParameters() []Parameter {
 	return []Parameter{
 		{
 			Name:       LabelFrameSizes,
+			Setting:    SettingRFC2544FrameSizes,
 			Flag:       FlagFrameSizes,
 			Type:       "comma-separated integers (bytes)",
 			Default:    DefaultFrameSizes,
 			Required:   false,
 			TechDesc:   "Frame sizes at which to measure burst capacity",
 			LaymanDesc: "Packet sizes to test",
-			Example:    "--frame-sizes 64,1518",
+			Example:    "64,1518",
 		},
 		{
 			Name:       "Trials",
+			Setting:    "rfc2544.trials",
 			Flag:       "--trials",
 			Type:       "integer",
-			Default:    "50",
+			Default:    "3",
 			Required:   false,
 			TechDesc:   "Number of trials to average",
 			LaymanDesc: "How many times to repeat for accuracy",
-			Example:    "--trials 100",
+			Example:    "50",
 		},
 	}
 }
@@ -720,28 +690,7 @@ traffic spikes.`,
 		WhenNotToUse: `• For normal operating conditions (use Throughput test)
 • For sustained overload behavior (use Frame Loss test)`,
 
-		Parameters: []Parameter{
-			{
-				Name:       "Overload Rate",
-				Flag:       "--overload-rate",
-				Type:       "float (percentage)",
-				Default:    "110",
-				Required:   false,
-				TechDesc:   "Rate used to overload the DUT (% of max throughput)",
-				LaymanDesc: "How much to overload the network - 110% is standard",
-				Example:    "--overload-rate 120",
-			},
-			{
-				Name:       "Recovery Rate",
-				Flag:       "--recovery-rate",
-				Type:       "float (percentage)",
-				Default:    "50",
-				Required:   false,
-				TechDesc:   "Rate at which to measure recovery (% of max throughput)",
-				LaymanDesc: "Normal traffic level for recovery measurement",
-				Example:    "--recovery-rate 60",
-			},
-		},
+		Parameters: nil,
 
 		Metrics: []Metric{
 			{
@@ -810,18 +759,7 @@ Lower reset times mean less disruption during maintenance or failures.`,
 		WhenNotToUse: `• For normal performance testing (use Throughput test)
 • For failover testing in HA pairs (use specific HA test)`,
 
-		Parameters: []Parameter{
-			{
-				Name:       "Reset Type",
-				Flag:       "--reset-type",
-				Type:       "string",
-				Default:    "software",
-				Required:   false,
-				TechDesc:   "Type of reset: 'software', 'power', or 'failover'",
-				LaymanDesc: "How to restart: software reboot, power cycle, or switch to backup",
-				Example:    "--reset-type power",
-			},
-		},
+		Parameters: nil,
 
 		Metrics: []Metric{
 			{

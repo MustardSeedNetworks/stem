@@ -35,6 +35,7 @@ type testCmdFlags struct {
 	resolution   float64
 	maxLoss      float64
 	warmup       int
+	trials       int
 	cir          float64
 	eir          float64
 	fdThreshold  float64
@@ -103,7 +104,7 @@ func parseTestFlags(args []string) (*testCmdFlags, error) {
 	resolution := fs.Float64("resolution", defaultResolution, "Binary search resolution %")
 	maxLoss := fs.Float64("max-loss", defaultMaxLoss, "Maximum acceptable loss %")
 	warmup := fs.Int("warmup", defaultWarmup, "Warmup period in seconds")
-	_ = fs.Int("trials", defaultTrials, "Number of trials") // Used in config.
+	trials := fs.Int("trials", defaultTrials, "Number of trials")
 
 	// Y.1564 options.
 	cir := fs.Float64("cir", 0, "Committed Information Rate (Mbps)")
@@ -142,6 +143,7 @@ func parseTestFlags(args []string) (*testCmdFlags, error) {
 		resolution:   *resolution,
 		maxLoss:      *maxLoss,
 		warmup:       *warmup,
+		trials:       *trials,
 		cir:          *cir,
 		eir:          *eir,
 		fdThreshold:  *fdThreshold,
@@ -213,7 +215,7 @@ func stepConfig(flags *testCmdFlags, testType string, frameSizes []uint32, secon
 			Resolution: flags.resolution,
 			MaxLoss:    flags.maxLoss,
 			Warmup:     flags.warmup,
-			Trials:     defaultTrials,
+			Trials:     flags.trials,
 		}}
 	case api.IsServiceActivationTest(testType):
 		return &api.TestConfig{Y1564: &api.Y1564TestConfig{

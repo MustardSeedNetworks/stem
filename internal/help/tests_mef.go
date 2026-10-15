@@ -72,23 +72,14 @@ func mefConfigParameters() []Parameter {
 	return []Parameter{
 		{
 			Name:       TermCIR,
+			Setting:    SettingY1564CIR,
 			Flag:       FlagCIR,
-			Type:       "integer (Mbps)",
-			Default:    "1000",
+			Type:       "float (Mbps)",
+			Default:    "0",
 			Required:   true,
 			TechDesc:   TermCIRFull,
 			LaymanDesc: "Guaranteed bandwidth",
 			Example:    ExampleCIR100,
-		},
-		{
-			Name:       "CoS",
-			Flag:       "--cos",
-			Type:       "integer (0-7)",
-			Default:    "0",
-			Required:   false,
-			TechDesc:   "Class of Service to test",
-			LaymanDesc: "Priority level (0=lowest, 7=highest)",
-			Example:    "--cos 5",
 		},
 	}
 }
@@ -152,13 +143,14 @@ This catches problems that only show up after running for a while.`,
 		Parameters: []Parameter{
 			{
 				Name:       LabelDuration,
+				Setting:    SettingY1564PerfDuration,
 				Flag:       FlagDuration,
 				Type:       "integer (seconds)",
 				Default:    "60",
 				Required:   false,
 				TechDesc:   "Test duration",
 				LaymanDesc: "How long to run",
-				Example:    ExampleDuration60,
+				Example:    ExampleDuration,
 			},
 		},
 

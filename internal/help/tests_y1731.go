@@ -77,24 +77,14 @@ func y1731FrameDelayDetails() testHelpDetails {
 func y1731FrameDelayParameters() []Parameter {
 	return []Parameter{
 		{
-			Name:       "Mode",
-			Flag:       "--mode",
-			Type:       "string",
-			Default:    "two-way",
-			Required:   false,
-			TechDesc:   "Measurement mode: one-way or two-way",
-			LaymanDesc: "One-way needs synchronized clocks; two-way doesn't",
-			Example:    "--mode one-way",
-		},
-		{
 			Name:       "Interval",
-			Flag:       "--interval",
+			Setting:    "y1731.intervalMs",
 			Type:       "integer (milliseconds)",
 			Default:    "100",
 			Required:   false,
 			TechDesc:   "Interval between measurements",
 			LaymanDesc: "How often to take measurements",
-			Example:    "--interval 1000",
+			Example:    "1000",
 		},
 	}
 }

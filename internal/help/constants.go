@@ -19,17 +19,22 @@ const (
 	UnitMbps         = "Mbps"
 )
 
-// CLI flag strings repeated across help text and examples.
+// CLI flags, run plan settings and parameter values repeated across the help
+// topics' Parameters tables.
 const (
-	FlagDuration      = "--duration"
-	FlagFrameSizes    = "--frame-sizes"
-	FlagCIR           = "--cir"
-	ExampleDuration60 = "--duration 60"
-	ExampleCIR100     = "--cir 100"
-	ExampleFrameSizes = "--frame-sizes 64,512,1518"
-	DefaultFrameSizes = "64,128,256,512,1024,1280,1518"
-	LabelFrameSizes   = "Frame Sizes"
-	LabelDuration     = "Duration"
+	FlagDuration             = "--duration"
+	FlagFrameSizes           = "--frame-sizes"
+	FlagCIR                  = "--cir"
+	SettingRFC2544FrameSizes = "rfc2544.frameSizes"
+	SettingRFC2544Duration   = "rfc2544.duration"
+	SettingY1564CIR          = "y1564.cir"
+	SettingY1564PerfDuration = "y1564.perfTestDuration"
+	ExampleDuration          = "300"
+	ExampleCIR100            = "100"
+	ExampleFrameSizes        = "64,512,1518"
+	DefaultFrameSizes        = "64,128,256,512,1024,1280,1518"
+	LabelFrameSizes          = "Frame Sizes"
+	LabelDuration            = "Duration"
 )
 
 // Type/value strings repeated in help options (parameter types + boolean values).
