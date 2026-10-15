@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.27.6](https://github.com/MustardSeedNetworks/stem/compare/v0.27.5...v0.27.6) (2026-10-15)
+
+
+### Bug Fixes
+
+* **dataplane:** load our own XSK program so AF_XDP runs without CAP_SYS_ADMIN ([#1762](https://github.com/MustardSeedNetworks/stem/issues/1762)) ([0572067](https://github.com/MustardSeedNetworks/stem/commit/05720672eca65487dcb6101881476ff331b39e25))
+* **help:** name only the flags stem test defines in Parameters tables ([#1760](https://github.com/MustardSeedNetworks/stem/issues/1760)) ([8826891](https://github.com/MustardSeedNetworks/stem/commit/8826891d32cbedc1094cd66776531dcfb639d656)), closes [#1581](https://github.com/MustardSeedNetworks/stem/issues/1581)
+* **reflector:** report the frames the kernel drops before the reflector reads them ([#1766](https://github.com/MustardSeedNetworks/stem/issues/1766)) ([b5b71df](https://github.com/MustardSeedNetworks/stem/commit/b5b71df2cdae5b2ce8f54c75df923ecf4ca6ab6e)), closes [#1725](https://github.com/MustardSeedNetworks/stem/issues/1725)
+* **reflector:** stop double-booking AF_XDP frames and stranding the TX tail ([#1726](https://github.com/MustardSeedNetworks/stem/issues/1726)) ([4f5b1eb](https://github.com/MustardSeedNetworks/stem/commit/4f5b1eb838ad26e4ee4ffe9dfcc295a95844a1e8))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1764](https://github.com/MustardSeedNetworks/stem/issues/1764)) ([7775989](https://github.com/MustardSeedNetworks/stem/commit/7775989ac2e6be404a1020c230b77f169d62e2e8))
+* **deps:** update dependency vite to v8.3.4 ([#1737](https://github.com/MustardSeedNetworks/stem/issues/1737)) ([0b008c5](https://github.com/MustardSeedNetworks/stem/commit/0b008c5d0335c1a1042f78eb4599947ba5e6985b))
+* **deps:** update github/codeql-action action to v4.38.3 ([#1763](https://github.com/MustardSeedNetworks/stem/issues/1763)) ([a9cb2b9](https://github.com/MustardSeedNetworks/stem/commit/a9cb2b92445a807452a10c0de3abbb120856acb4))
+
 ## [0.27.5](https://github.com/MustardSeedNetworks/stem/compare/v0.27.4...v0.27.5) (2026-10-15)
 
 
