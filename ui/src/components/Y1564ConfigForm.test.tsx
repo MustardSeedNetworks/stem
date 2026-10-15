@@ -19,7 +19,7 @@ function renderForm(overrides: Partial<typeof defaultY1564Config> = {}) {
     <Y1564ConfigForm
       config={{ ...defaultY1564Config, ...overrides }}
       setConfig={() => {}}
-      selectedTests={['y1564_full']}
+      selectedTests={['y1564']}
     />,
   );
 }
@@ -71,7 +71,7 @@ describe('Y1564ConfigForm — store sync', () => {
       <Y1564ConfigForm
         config={defaultY1564Config}
         setConfig={setConfig}
-        selectedTests={['y1564_full']}
+        selectedTests={['y1564']}
       />,
     );
 

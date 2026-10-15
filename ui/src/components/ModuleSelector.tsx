@@ -22,15 +22,11 @@ interface Module {
 
 const testTranslationKeys = {
   custom_stream: 'tests.trafficgen.stream',
-  trafficgen_burst: 'tests.trafficgen.burst',
-  trafficgen_multistream: 'tests.trafficgen.multistream',
   tsn_timing: 'tests.tsn.timing',
   tsn_isolation: 'tests.tsn.isolation',
   tsn_latency: 'tests.tsn.latency',
-  tsn_full: 'tests.tsn.full',
   mef_config: 'tests.mef.config',
   mef_perf: 'tests.mef.performance',
-  mef_full: 'tests.mef.full',
   y1731_delay: 'tests.y1731.delay',
   y1731_loss: 'tests.y1731.loss',
   y1731_slm: 'tests.y1731.slm',
@@ -42,7 +38,6 @@ const testTranslationKeys = {
   rfc2889_congestion: 'tests.rfc2889.congestion',
   y1564_config: 'tests.y1564.config',
   y1564_perf: 'tests.y1564.performance',
-  y1564_full: 'tests.y1564.full',
   rfc6349_throughput: 'tests.rfc6349.capacity',
   rfc6349_path: 'tests.rfc6349.path',
   rfc2544_throughput: 'tests.rfc2544.throughput',

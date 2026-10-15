@@ -261,16 +261,6 @@
         "name": "Flujo Personalizado",
         "desc": "Trafico configurable",
         "tooltip": "Generar patrones de trafico personalizados con tamano de trama, tasa y duracion configurables."
-      },
-      "burst": {
-        "name": "Modo Rafaga",
-        "desc": "Generacion de trafico en rafaga",
-        "tooltip": "Generar trafico en rafaga con tamano de rafaga e intervalo configurables."
-      },
-      "multistream": {
-        "name": "Multi-Flujo",
-        "desc": "Multiples flujos de trafico",
-        "tooltip": "Generar multiples flujos de trafico concurrentes con diferentes parámetros."
       }
     }
   },
@@ -395,13 +385,6 @@
         "title": "Configuración del flujo",
         "id": "ID del flujo"
       },
-      "burst": {
-        "title": "Modo ráfaga",
-        "enable": "Activar el modo ráfaga",
-        "enableAria": "Activar la generación de tráfico en modo ráfaga",
-        "size": "Tamaño de ráfaga (tramas)",
-        "gap": "Hueco entre ráfagas (µs)"
-      },
       "vlan": {
         "title": "Configuración de VLAN",
         "id": "VLAN ID",
@@ -413,14 +396,11 @@
         "dst": "MAC de destino"
       },
       "tests": {
-        "customStream": "Flujo personalizado",
-        "burstMode": "Modo ráfaga",
-        "multiStream": "Multiflujo"
+        "customStream": "Flujo personalizado"
       },
       "summary": {
         "frame": "Trama: {{size}} B @ {{rate}} % de la tasa de línea (~{{throughput}})",
         "vlan": "VLAN: {{vlan}} (prioridad {{priority}})",
-        "burst": "Ráfaga: {{frames}} tramas, hueco de {{gap}} µs",
         "duration": "Duración: {{duration}} s + {{warmup}} s de calentamiento"
       }
     },

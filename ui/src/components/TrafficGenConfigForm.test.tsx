@@ -15,7 +15,7 @@ function renderForm(overrides: Partial<typeof defaultTrafficGenConfig> = {}) {
     <TrafficGenConfigForm
       config={{ ...defaultTrafficGenConfig, ...overrides }}
       setConfig={() => {}}
-      selectedTests={['trafficgen_burst', 'custom_stream']}
+      selectedTests={['custom_stream']}
     />,
   );
 }
@@ -35,6 +35,12 @@ describe('TrafficGenConfigForm — i18n', () => {
     renderForm();
     expect(screen.getByText('Traffic Parameters')).toBeInTheDocument();
     expect(screen.getByText('MAC Addresses (Optional)')).toBeInTheDocument();
+  });
+
+  it('offers the stream id with Custom Stream, and no burst settings the daemon drops', () => {
+    renderForm();
+    expect(screen.getByText('Stream Configuration')).toBeInTheDocument();
+    expect(screen.queryByText('Enable burst mode')).not.toBeInTheDocument();
   });
 
   it('follows the active language instead of staying English', async () => {
@@ -64,7 +70,7 @@ describe('TrafficGenConfigForm — store sync', () => {
       <TrafficGenConfigForm
         config={defaultTrafficGenConfig}
         setConfig={setConfig}
-        selectedTests={['trafficgen_burst', 'custom_stream']}
+        selectedTests={['custom_stream']}
       />,
     );
 

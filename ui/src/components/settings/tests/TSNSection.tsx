@@ -23,7 +23,7 @@ const testKeyMap: Map<string, string> = new Map([
   ['tsn_timing', 'timing'],
   ['tsn_isolation', 'isolation'],
   ['tsn_latency', 'latency'],
-  ['tsn_full', 'full'],
+  ['tsn', 'full'],
 ]);
 
 const testIds: string[] = [...testKeyMap.keys()];

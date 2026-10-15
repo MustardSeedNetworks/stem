@@ -22,7 +22,7 @@ interface Y1564SectionProps extends TestSectionProps {
 const testKeyMap: Map<string, string> = new Map([
   ['y1564_config', 'config'],
   ['y1564_perf', 'performance'],
-  ['y1564_full', 'full'],
+  ['y1564', 'full'],
 ]);
 
 const testIds: string[] = [...testKeyMap.keys()];

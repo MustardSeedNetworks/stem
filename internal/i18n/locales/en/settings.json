@@ -261,16 +261,6 @@
         "name": "Custom Stream",
         "desc": "Configurable traffic",
         "tooltip": "Generate custom traffic patterns with configurable frame size, rate, and duration."
-      },
-      "burst": {
-        "name": "Burst Mode",
-        "desc": "Burst traffic generation",
-        "tooltip": "Generate burst traffic with configurable burst size and gap."
-      },
-      "multistream": {
-        "name": "Multi-Stream",
-        "desc": "Multiple traffic streams",
-        "tooltip": "Generate multiple concurrent traffic streams with different parameters."
       }
     }
   },
@@ -395,13 +385,6 @@
         "title": "Stream Configuration",
         "id": "Stream ID"
       },
-      "burst": {
-        "title": "Burst Mode",
-        "enable": "Enable burst mode",
-        "enableAria": "Enable burst mode traffic generation",
-        "size": "Burst Size (frames)",
-        "gap": "Inter-Burst Gap (µs)"
-      },
       "vlan": {
         "title": "VLAN Configuration",
         "id": "VLAN ID",
@@ -413,14 +396,11 @@
         "dst": "Destination MAC"
       },
       "tests": {
-        "customStream": "Custom Stream",
-        "burstMode": "Burst Mode",
-        "multiStream": "Multi-Stream"
+        "customStream": "Custom Stream"
       },
       "summary": {
         "frame": "Frame: {{size}}B @ {{rate}}% line rate (~{{throughput}})",
         "vlan": "VLAN: {{vlan}} (priority {{priority}})",
-        "burst": "Burst: {{frames}} frames, {{gap}}µs gap",
         "duration": "Duration: {{duration}}s + {{warmup}}s warmup"
       }
     },

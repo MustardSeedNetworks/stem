@@ -1,8 +1,7 @@
 /**
  * TrafficGenSection Component
  *
- * Custom traffic generation tests.
- * Includes: Custom Stream, Burst Mode, Multi-Stream.
+ * Custom traffic generation: one Custom Stream test, configured below.
  */
 
 import { Radio } from 'lucide-react';
@@ -19,11 +18,7 @@ interface TrafficGenSectionProps extends TestSectionProps {
 }
 
 /** Test ID to translation key mapping - keys match backend test identifiers */
-const testKeyMap: Map<string, string> = new Map([
-  ['custom_stream', 'stream'],
-  ['trafficgen_burst', 'burst'],
-  ['trafficgen_multistream', 'multistream'],
-]);
+const testKeyMap: Map<string, string> = new Map([['custom_stream', 'stream']]);
 
 const testIds: string[] = [...testKeyMap.keys()];
 
@@ -49,13 +44,7 @@ export function TrafficGenSection({
     [t],
   );
 
-  const selectedCount = useMemo(
-    () =>
-      selectedTests.filter((test) => test.includes('stream') || test.includes('trafficgen')).length,
-    [selectedTests],
-  );
-
-  const hasSelectedTests = selectedCount > 0;
+  const hasSelectedTests = selectedTests.includes('custom_stream');
 
   return (
     <CollapsibleSection
