@@ -1758,7 +1758,7 @@ int y1731_synthetic_loss(rfc2544_ctx_t *ctx, y1731_session_t *session, uint32_t 
  * Run Y.1731 loopback test
  */
 int y1731_loopback(rfc2544_ctx_t *ctx, y1731_session_t *session, const uint8_t *target_mac,
-                   uint32_t count, y1731_loopback_result_t *result);
+                   uint32_t count, uint32_t interval_ms, y1731_loopback_result_t *result);
 
 /**
  * Start Y.1731 CCM transmission

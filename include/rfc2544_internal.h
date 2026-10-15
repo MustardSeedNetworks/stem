@@ -143,6 +143,22 @@ int run_trial_custom(rfc2544_ctx_t *ctx, uint32_t frame_size, double rate_pct,
                      uint32_t duration_sec, uint32_t warmup_sec, const char *signature,
                      uint32_t stream_id, trial_result_t *result);
 
+/**
+ * Send exactly count frames, one every interval_ms, and collect the replies
+ * (Y.1731 DMM, SLM and LBM).
+ *
+ * @param ctx Test context
+ * @param frame_size Frame size in bytes
+ * @param count Frames to send
+ * @param interval_ms Time between frames, in milliseconds
+ * @param signature 7-byte packet signature
+ * @param stream_id Stream identifier
+ * @param result Output trial result
+ * @return 0 on success, negative on error
+ */
+int run_probe_trial(rfc2544_ctx_t *ctx, uint32_t frame_size, uint32_t count, uint32_t interval_ms,
+                    const char *signature, uint32_t stream_id, trial_result_t *result);
+
 /* Calculate max PPS for given line rate and frame size */
 uint64_t calc_max_pps(uint64_t line_rate_bps, uint32_t frame_size);
 
