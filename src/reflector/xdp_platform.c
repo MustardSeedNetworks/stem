@@ -191,7 +191,7 @@ static int init_xsk(const reflector_ctx_t *rctx, worker_ctx_t *wctx)
 /*
  * Initialize platform (AF_XDP)
  */
-int xdp_platform_init(reflector_ctx_t *rctx, worker_ctx_t *wctx)
+int xdp_platform_init(const reflector_ctx_t *rctx, worker_ctx_t *wctx)
 {
     int caps = stem_xdp_caps_check();
     if (caps < 0) {

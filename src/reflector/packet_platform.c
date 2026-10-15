@@ -164,10 +164,8 @@ static int packet_platform_init_fail(worker_ctx_t *wctx, int err)
 /*
  * Initialize maximum performance AF_PACKET platform
  */
-int packet_platform_init(reflector_ctx_t *rctx, worker_ctx_t *wctx)
+int packet_platform_init(const reflector_ctx_t *rctx, worker_ctx_t *wctx)
 {
-    (void)rctx;
-
     struct platform_ctx *pctx = calloc(1, sizeof(*pctx));
     if (!pctx) {
         return -ENOMEM;

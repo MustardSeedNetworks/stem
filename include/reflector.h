@@ -332,7 +332,7 @@ typedef struct {
 /* Platform abstraction interface */
 typedef struct {
     const char *name;
-    int (*init)(reflector_ctx_t *rctx, worker_ctx_t *wctx);
+    int (*init)(const reflector_ctx_t *rctx, worker_ctx_t *wctx);
     void (*cleanup)(worker_ctx_t *wctx);
     int (*recv_batch)(worker_ctx_t *wctx, packet_t *pkts, int max_pkts);
     /* Takes ownership of every buffer it is given, sent or not. */
