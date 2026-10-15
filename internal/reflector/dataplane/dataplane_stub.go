@@ -16,6 +16,7 @@ import (
 type Stats struct {
 	PacketsReceived  uint64  // Number of packets received.
 	PacketsReflected uint64  // Number of packets reflected.
+	PacketsDropped   uint64  // Packets the kernel dropped before the reflector read them.
 	BytesReceived    uint64  // Number of bytes received.
 	BytesReflected   uint64  // Number of bytes reflected.
 	TxErrors         uint64  // Number of transmit errors.
@@ -94,6 +95,7 @@ func (dp *Dataplane) GetStats() Stats {
 	return Stats{
 		PacketsReceived:  0,
 		PacketsReflected: 0,
+		PacketsDropped:   0,
 		BytesReceived:    0,
 		BytesReflected:   0,
 		TxErrors:         0,

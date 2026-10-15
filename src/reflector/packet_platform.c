@@ -464,14 +464,26 @@ void packet_platform_release_batch(worker_ctx_t *wctx, const packet_t *pkts, int
     }
 }
 
+/* The kernel zeroes the socket's counters on every read. */
+static uint64_t packet_platform_take_kernel_drops(const worker_ctx_t *wctx)
+{
+    struct tpacket_stats st  = {0};
+    socklen_t            len = sizeof(st);
+    if (getsockopt(wctx->pctx->sock_fd, SOL_PACKET, PACKET_STATISTICS, &st, &len) < 0) {
+        return 0;
+    }
+    return st.tp_drops;
+}
+
 /* Platform operations structure */
 static const platform_ops_t packet_platform_ops = {
-    .name          = "Linux AF_PACKET (optimized)",
-    .init          = packet_platform_init,
-    .cleanup       = packet_platform_cleanup,
-    .recv_batch    = packet_platform_recv_batch,
-    .send_batch    = packet_platform_send_batch,
-    .release_batch = packet_platform_release_batch,
+    .name              = "Linux AF_PACKET (optimized)",
+    .init              = packet_platform_init,
+    .cleanup           = packet_platform_cleanup,
+    .recv_batch        = packet_platform_recv_batch,
+    .send_batch        = packet_platform_send_batch,
+    .release_batch     = packet_platform_release_batch,
+    .take_kernel_drops = packet_platform_take_kernel_drops,
 };
 
 const platform_ops_t *get_packet_platform_ops(void)

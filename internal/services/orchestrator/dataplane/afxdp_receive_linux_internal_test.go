@@ -137,15 +137,36 @@ func runTrial(t *testing.T, master *Context, rate float64) (uint64, uint64) {
 	return sent, recv
 }
 
-// trialReturnsWhatItSent runs one RFC 2544 trial at rate, requires the
-// reflected frames back within 1 % and returns how many came back.
-func trialReturnsWhatItSent(t *testing.T, master *Context, rate float64) uint64 {
+// trialsAccountForEveryFrame runs one RFC 2544 trial at each rate, stops the
+// reflector and returns its statistics. Every frame the test master sent must
+// have been recognised by the reflector or dropped by its kernel socket, and
+// every frame the reflector sent back must have arrived. A loss tolerance
+// fails on a busy host, where the reflector's receive ring overflows; the
+// reflector's drop count explains that loss exactly (stem#1725).
+func trialsAccountForEveryFrame(
+	t *testing.T, master *Context, reflector *reflectordp.Dataplane, rates ...float64,
+) reflectordp.Stats {
 	t.Helper()
-	sent, recv := runTrial(t, master, rate)
-	if float64(sent)-float64(recv) > float64(sent)/100 {
-		t.Errorf("received %d of %d sent, want within 1%%", recv, sent)
+	var sent, recv uint64
+	for _, rate := range rates {
+		trialSent, trialRecv := runTrial(t, master, rate)
+		sent += trialSent
+		recv += trialRecv
 	}
-	return recv
+	reflector.Stop()
+	st := reflector.GetStats()
+	t.Logf("reflector recognised=%d dropped=%d reflected=%d", st.SigRFC2544, st.PacketsDropped, st.PacketsReflected)
+	if recv == 0 {
+		t.Error("the test master received nothing back")
+	}
+	if st.SigRFC2544+st.PacketsDropped != sent {
+		t.Errorf("test master sent %d frames, reflector recognised %d and dropped %d",
+			sent, st.SigRFC2544, st.PacketsDropped)
+	}
+	if st.PacketsReflected != recv {
+		t.Errorf("reflector reflected %d frames, the test master received %d", st.PacketsReflected, recv)
+	}
+	return st
 }
 
 // xdpAttached reports whether an XDP program is attached to the interface.
@@ -174,13 +195,8 @@ func requireRoot(t *testing.T) {
 // rebind the queue, which the kernel frees asynchronously.
 func TestAFXDPTrialReceivesFromReflectingPeer(t *testing.T) {
 	requireRoot(t)
-	master, _ := newReflectedLink(t, 1, false)
-
-	for _, rate := range []float64{1, 50} {
-		t.Run(strconv.FormatFloat(rate, 'f', -1, 64)+"pct", func(t *testing.T) {
-			trialReturnsWhatItSent(t, master, rate)
-		})
-	}
+	master, reflector := newReflectedLink(t, 1, false)
+	trialsAccountForEveryFrame(t, master, reflector, 1, 50)
 
 	// The trials prove nothing about AF_XDP if the test master fell back to
 	// AF_PACKET; an attached program is what the AF_XDP path adds.
@@ -226,11 +242,9 @@ func TestAFXDPReceivesOnEveryQueue(t *testing.T) {
 	for _, queues := range []int{2, 4} {
 		t.Run(strconv.Itoa(queues)+"queues", func(t *testing.T) {
 			// An AF_PACKET reflector, so XPS picks its transmit queue.
-			master, _ := newReflectedLink(t, queues, false)
+			master, reflector := newReflectedLink(t, queues, false)
 			reflectInto(t, queues-1, queues)
-			for _, rate := range []float64{1, 50} {
-				trialReturnsWhatItSent(t, master, rate)
-			}
+			trialsAccountForEveryFrame(t, master, reflector, 1, 50)
 			if !xdpAttached(t, vethMaster) {
 				t.Error("no XDP program on the test master's interface: the trials did not run over AF_XDP")
 			}
@@ -252,26 +266,15 @@ func TestReflectorAFXDPRunsInCopyMode(t *testing.T) {
 	if !xdpAttached(t, vethReflector) {
 		t.Error("no XDP program on the reflector's interface: it fell back to AF_PACKET")
 	}
-	recv := trialReturnsWhatItSent(t, master, 1)
-
-	// A reflector starved of CPU loses frames in its kernel receive ring
-	// before it sees them, so on a busy host a loss tolerance fails at high
-	// rates whatever the reflector does. These checks hold under any load: a
-	// received frame it does not recognise was overwritten in a UMEM frame
-	// handed to the kernel twice, and a reflected frame that never arrives
-	// was left in its TX ring (stem#1711).
-	_, recv50 := runTrial(t, master, 50)
-	recv += recv50
-	reflector.Stop()
-	st := reflector.GetStats()
+	// A received frame the reflector does not recognise was overwritten in a
+	// UMEM frame handed to the kernel twice, and a reflected frame that never
+	// arrives was left in its TX ring (stem#1711).
+	st := trialsAccountForEveryFrame(t, master, reflector, 1, 50)
 	// Each trial primes the test master's neighbour entry with one UDP
 	// datagram, the only frame on the link that is not a test frame.
 	const trials = 2
 	if unrecognised := st.PacketsReceived - st.SigRFC2544; unrecognised != trials {
 		t.Errorf("reflector received %d frames that are not test frames, want %d", unrecognised, trials)
-	}
-	if st.PacketsReflected != recv {
-		t.Errorf("reflector reflected %d frames, the test master received %d", st.PacketsReflected, recv)
 	}
 }
 

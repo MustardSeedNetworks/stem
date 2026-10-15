@@ -55,6 +55,9 @@ struct platform_ctx {
 
     uint32_t frame_size;
     uint32_t num_frames;
+
+    /* Kernel drop total already reported; XDP_STATISTICS is cumulative. */
+    uint64_t drops_reported;
 };
 
 /*
@@ -466,14 +469,34 @@ void xdp_platform_release_batch(worker_ctx_t *wctx, const packet_t *pkts, int nu
     xdp_return_to_fill(pctx, pkts, num_pkts);
 }
 
+/*
+ * rx_dropped counts frames that found the fill queue empty, rx_ring_full ones
+ * that found the RX ring full. A kernel older than 5.9 returns only the first
+ * fields, so the rest stay zero.
+ */
+static uint64_t xdp_platform_take_kernel_drops(const worker_ctx_t *wctx)
+{
+    struct platform_ctx  *pctx = wctx->pctx;
+    struct xdp_statistics st   = {0};
+    socklen_t             len  = sizeof(st);
+    if (getsockopt(xsk_socket__fd(pctx->xsk_info.xsk), SOL_XDP, XDP_STATISTICS, &st, &len) < 0) {
+        return 0;
+    }
+    uint64_t total       = st.rx_dropped + st.rx_ring_full;
+    uint64_t delta       = total - pctx->drops_reported;
+    pctx->drops_reported = total;
+    return delta;
+}
+
 /* Platform operations structure */
 static const platform_ops_t xdp_platform_ops = {
-    .name          = "Linux AF_XDP",
-    .init          = xdp_platform_init,
-    .cleanup       = xdp_platform_cleanup,
-    .recv_batch    = xdp_platform_recv_batch,
-    .send_batch    = xdp_platform_send_batch,
-    .release_batch = xdp_platform_release_batch,
+    .name              = "Linux AF_XDP",
+    .init              = xdp_platform_init,
+    .cleanup           = xdp_platform_cleanup,
+    .recv_batch        = xdp_platform_recv_batch,
+    .send_batch        = xdp_platform_send_batch,
+    .release_batch     = xdp_platform_release_batch,
+    .take_kernel_drops = xdp_platform_take_kernel_drops,
 };
 
 const platform_ops_t *get_xdp_platform_ops(void)
