@@ -128,6 +128,12 @@ cannot be computed — is treated the same way: `hasFeature` grants the Free
 list, so the host is still a reflector and not a brick. The reason is logged
 once at startup under `event=license.unusable`, not per request.
 
+The machine identity in that fingerprint is `/etc/machine-id` on Linux and the
+hardware `IOPlatformUUID` on macOS. A probe that fails is that error, never a
+substitute value: a Linux host or container image with no valid
+`/etc/machine-id` runs Free. A licence activated by a Stem built before this
+identity existed reads back as `malformed`; activate the key again.
+
 The trial is still resettable by deleting the file: foundation keeps no record
 of a spent trial outside it. That is a foundation limitation, tracked
 separately.
