@@ -70,7 +70,7 @@ func y1731TestConfig() *Y1731Config {
 // 0 % availability or a zero delay as a measurement.
 func TestY1731ReflectedByPeer(t *testing.T) {
 	requireRoot(t)
-	master := newReflectedLink(t, 1, false)
+	master, _ := newReflectedLink(t, 1, false)
 	cfg := PeerConfig(vethMaster, reflectorIP, reflectorPort)
 	if err := master.Configure(&cfg); err != nil {
 		t.Fatalf("configure test master: %v", err)
@@ -94,7 +94,7 @@ func TestY1731ReflectedByPeer(t *testing.T) {
 // so 10 frames at 100 ms sent 504 delay frames and 1,261 LBMs.
 func TestY1731SendsConfiguredCountAtInterval(t *testing.T) {
 	requireRoot(t)
-	master := newReflectedLink(t, 1, false)
+	master, _ := newReflectedLink(t, 1, false)
 	cfg := PeerConfig(vethMaster, reflectorIP, reflectorPort)
 	if err := master.Configure(&cfg); err != nil {
 		t.Fatalf("configure test master: %v", err)

@@ -22,7 +22,7 @@ func y1564DelayJudged(t *testing.T, reflected bool) {
 	t.Helper()
 	var master *Context
 	if reflected {
-		master = newReflectedLink(t, 1, false)
+		master, _ = newReflectedLink(t, 1, false)
 	} else {
 		addVethPair(t, 1)
 		master = newLinkMaster(t)
