@@ -46,7 +46,9 @@ int main(void)
     }
     rfc2544_cleanup(ctx);
 
-    if (ret != 0 && ret != -EIO) {
+    /* Unprivileged runs cannot open the AF_PACKET socket; init reports the
+     * real errno rather than a flattened -EIO. */
+    if (ret != 0 && ret != -EPERM) {
         fprintf(stderr, "unexpected latency result: %d\n", ret);
         return 1;
     }
