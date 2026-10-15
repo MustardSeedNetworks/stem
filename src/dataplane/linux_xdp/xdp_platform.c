@@ -294,7 +294,7 @@ static int xdp_init(rfc2544_ctx_t *ctx, worker_ctx_t *wctx)
     /* Without a program nothing reaches an RX ring (stem#1328). Ours is
      * attached before any socket binds, and each socket joins its map under
      * its queue, so every queue's frames reach the socket bound to it. */
-    ret = stem_xsk_prog_attach(&pctx->xsk_prog, pctx->if_index, (uint32_t)num_queues);
+    ret = stem_xsk_prog_attach(&pctx->xsk_prog, pctx->if_index, (uint32_t)num_queues, 0);
     if (ret) {
         fprintf(stderr, "[xdp] Failed to attach the XDP program to %s: %s\n", ctx->config.interface,
                 stem_strerror(-ret));
