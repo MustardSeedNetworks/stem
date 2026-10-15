@@ -164,7 +164,7 @@ nfpms:
       The Stem - Network Performance Testing Tool by Mustard Seed Networks
       .
       The Stem is a high-performance network testing tool supporting RFC 2544,
-      ITU-T Y.1564, ITU-T Y.1731, packet reflection, and WebUI/TUI/CLI workflows.
+      ITU-T Y.1564, ITU-T Y.1731, packet reflection, and web UI and CLI workflows.
     license: Proprietary
     section: net
     priority: optional
