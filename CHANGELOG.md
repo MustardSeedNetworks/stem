@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.27.3](https://github.com/MustardSeedNetworks/stem/compare/v0.27.2...v0.27.3) (2026-10-15)
+
+
+### Bug Fixes
+
+* **ui:** send the test ids the daemon runs, so MEF Full Test starts ([#1746](https://github.com/MustardSeedNetworks/stem/issues/1746)) ([af05ca4](https://github.com/MustardSeedNetworks/stem/commit/af05ca4282f5cc91bd317210dc8d659732d0b042)), closes [#1708](https://github.com/MustardSeedNetworks/stem/issues/1708)
+* **y1564:** report FD and FDV as not measured when no frame comes back ([#1742](https://github.com/MustardSeedNetworks/stem/issues/1742)) ([e633d83](https://github.com/MustardSeedNetworks/stem/commit/e633d83a7d01f4712e62e14ea2f6cf12e90aa455)), closes [#1732](https://github.com/MustardSeedNetworks/stem/issues/1732)
+* **y1731:** fail a test that gets no frame back ([#1738](https://github.com/MustardSeedNetworks/stem/issues/1738)) ([0f67927](https://github.com/MustardSeedNetworks/stem/commit/0f6792707bbf8f249a875b8a9c283fdfac9f02dd)), closes [#1731](https://github.com/MustardSeedNetworks/stem/issues/1731)
+* **y1731:** send the configured count at the configured interval ([#1743](https://github.com/MustardSeedNetworks/stem/issues/1743)) ([56ad893](https://github.com/MustardSeedNetworks/stem/commit/56ad89381293790960e60870ae0866ca9f130d50)), closes [#1736](https://github.com/MustardSeedNetworks/stem/issues/1736)
+
+
+### Documentation
+
+* **audits:** record the v0.27.2 release-candidate run on Ubuntu and Fedora ([#1748](https://github.com/MustardSeedNetworks/stem/issues/1748)) ([1dbb265](https://github.com/MustardSeedNetworks/stem/commit/1dbb2655700b2aeaeda3b4795741d2e72e2606ae))
+
+
+### Continuous Integration
+
+* **e2e:** bump Playwright to 1.64.0 and run WebKit in its image again ([#1740](https://github.com/MustardSeedNetworks/stem/issues/1740)) ([b9973e8](https://github.com/MustardSeedNetworks/stem/commit/b9973e886f0e4c70c6d67d00ee78d57dc4dabd95)), closes [#1528](https://github.com/MustardSeedNetworks/stem/issues/1528)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1741](https://github.com/MustardSeedNetworks/stem/issues/1741)) ([2ebcc52](https://github.com/MustardSeedNetworks/stem/commit/2ebcc527015006b70f3dcaa8b22df38aa266b1c7))
+* **deps:** update actions/setup-node action to v7.1.0 ([#1749](https://github.com/MustardSeedNetworks/stem/issues/1749)) ([bce4ce2](https://github.com/MustardSeedNetworks/stem/commit/bce4ce2f3bbbbbb2999a7c623921368389ddd1ce))
+
 ## [0.27.2](https://github.com/MustardSeedNetworks/stem/compare/v0.27.1...v0.27.2) (2026-10-14)
 
 
