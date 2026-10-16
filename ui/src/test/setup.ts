@@ -65,11 +65,45 @@ global.IntersectionObserver = class {
   thresholds = [];
 } as unknown as typeof IntersectionObserver;
 
-// axe probes canvas support while auditing contrast. JSDOM reports every probe
-// as a noisy "Not implemented" diagnostic unless the browser API is stubbed.
-HTMLCanvasElement.prototype.getContext = vi.fn(
-  () => null,
-) as unknown as HTMLCanvasElement['getContext'];
+// axe-core 4.14 enables label-content-name-mismatch by default. The check asks
+// whether on-screen words are icon ligatures by measuring them on a 2d canvas,
+// then reads context.canvas. JSDOM's getContext returns null and logs
+// "Not implemented" unless it is stubbed; a null return throws, and axe records
+// the whole rule incomplete ("could not evaluate") instead of judging the
+// control. A context whose measureText width tracks the string keeps real words
+// as visible text, so a label that is missing from the accessible name still
+// fails. Returning null here would hide that violation. Color contrast still
+// cannot sample layout in jsdom — Storybook's chromium run evaluates pixels.
+function stubCanvas2d(canvas: HTMLCanvasElement) {
+  return {
+    canvas,
+    font: '',
+    fillStyle: '',
+    textAlign: 'left' as const,
+    textBaseline: 'top' as const,
+    measureText(text: string) {
+      return { width: Array.from(text).length * 10 };
+    },
+    fillText() {
+      return undefined;
+    },
+    clearRect() {
+      return undefined;
+    },
+    getImageData(_x: number, _y: number, w: number, h: number) {
+      const width = Math.max(1, w);
+      const height = Math.max(1, h);
+      const data = new Uint8ClampedArray(width * height * 4);
+      // Non-empty ink, so a real glyph is not classified as a ligature.
+      data[0] = 255;
+      return { data, width, height };
+    },
+  };
+}
+
+HTMLCanvasElement.prototype.getContext = vi.fn(function (this: HTMLCanvasElement) {
+  return stubCanvas2d(this);
+}) as unknown as HTMLCanvasElement['getContext'];
 
 // EventSource: required by useSse (#302) SSE subscription hook. JSDoM does not
 // implement EventSource. Without this polyfill, any component test that mounts

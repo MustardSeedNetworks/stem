@@ -293,7 +293,11 @@ export function HelpDrawer({
                     ? cn(status.bg.info, 'text-text-inverse')
                     : 'bg-surface-base text-text-secondary border border-surface-border hover:bg-surface-hover',
                 )}
-                aria-label={simpleMode ? t('mode.ariaToTechnical') : t('mode.ariaToSimple')}
+                aria-label={t(simpleMode ? 'mode.ariaToTechnical' : 'mode.ariaToSimple', {
+                  // The visible label ("Simple" / "Technical") has to be part of
+                  // the accessible name (WCAG 2.5.3).
+                  mode: t(simpleMode ? 'mode.simple' : 'mode.technical'),
+                })}
               >
                 {simpleMode ? t('mode.simple') : t('mode.technical')}
               </button>

@@ -8,7 +8,7 @@
  */
 import { render } from '@testing-library/react';
 import type React from 'react';
-import { describe, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { expectNoAxeViolations } from '../../test/a11y';
 import { Button, IconButton } from './Button';
 
@@ -46,6 +46,20 @@ describe('Button — a11y', () => {
   it('button with leading icon + label has no a11y violations', async () => {
     const { container } = render(<Button leftIcon={<Dot />}>Save</Button>);
     await expectNoAxeViolations(container);
+  });
+});
+
+describe('label in name', () => {
+  // axe-core 4.14 runs label-content-name-mismatch by default. A null canvas
+  // context makes that check throw, which axe reports as incomplete and this
+  // helper used to ignore — the violation below would then pass silently.
+  it('rejects a visible label that is not part of the accessible name', async () => {
+    const { container } = render(
+      <button type="button" aria-label="Switch to technical view">
+        Simple
+      </button>,
+    );
+    await expect(expectNoAxeViolations(container)).rejects.toThrow(/label-content-name-mismatch/);
   });
 });
 

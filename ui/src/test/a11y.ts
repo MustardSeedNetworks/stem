@@ -24,6 +24,15 @@ const DEFAULT_RULES: RunOptions = {
     // 'region' fires on isolated component renders that lack a landmark. Off
     // for component-scoped tests; re-enable in screen-level harness tests.
     region: { enabled: false },
+    // Kept on. axe-core 4.14 enables label-content-name-mismatch by default.
+    // In jsdom the check used to die inside isIconLigature because
+    // canvas.getContext returned null, so axe reported the rule incomplete
+    // ("could not evaluate") and never reached a verdict. The 2d stub in
+    // setup.ts lets the check run. Do not disable this rule to quiet a
+    // failure: a visible label that is missing from the accessible name is a
+    // real WCAG 2.5.3 violation. Icon-only glyphs that are not words come
+    // back incomplete ("needs review"); this helper still fails on violations.
+    'label-content-name-mismatch': { enabled: true },
   },
 };
 

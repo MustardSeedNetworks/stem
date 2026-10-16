@@ -30,6 +30,19 @@ describe('help content coverage', () => {
     for (const page of pages) expect(terms).toContain(page.label.toLowerCase());
   });
 
+  it.each([
+    ['en', 'Simple', /simple, switch to technical view/i],
+    ['es', 'Sencillo', /sencillo, cambiar a vista técnica/i],
+  ] as const)(
+    'puts the visible mode label inside the toggle name (%s)',
+    async (language, visible, name) => {
+      await i18n.changeLanguage(language);
+      render(<HelpDrawer isOpen onClose={() => {}} />);
+      const toggle = screen.getByRole('button', { name });
+      expect(toggle).toHaveTextContent(visible);
+    },
+  );
+
   it('renders Spanish usage and lets related tests open their actual details', async () => {
     await i18n.changeLanguage('es');
     render(<HelpDrawer isOpen onClose={() => {}} initialTestId="rfc2544_throughput" />);

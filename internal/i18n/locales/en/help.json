@@ -22,8 +22,8 @@
     "technical": "Technical",
     "toggleToTechnical": "Switch to technical explanations with RFC details, packet structures, and engineering parameters",
     "toggleToSimple": "Switch to plain-language explanations suitable for non-engineers",
-    "ariaToTechnical": "Switch to technical view",
-    "ariaToSimple": "Switch to simple view"
+    "ariaToTechnical": "{{mode}}, switch to technical view",
+    "ariaToSimple": "{{mode}}, switch to simple view"
   },
   "tests": {
     "intro": "Browse test references by standard or choose custom traffic generation.",

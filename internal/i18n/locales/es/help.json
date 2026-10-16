@@ -22,8 +22,8 @@
     "technical": "Técnico",
     "toggleToTechnical": "Cambiar a explicaciones técnicas con detalles de RFC, estructuras de paquetes y parámetros de ingeniería",
     "toggleToSimple": "Cambiar a explicaciones en lenguaje sencillo aptas para no ingenieros",
-    "ariaToTechnical": "Cambiar a vista técnica",
-    "ariaToSimple": "Cambiar a vista sencilla"
+    "ariaToTechnical": "{{mode}}, cambiar a vista técnica",
+    "ariaToSimple": "{{mode}}, cambiar a vista sencilla"
   },
   "tests": {
     "intro": "Explora las referencias por norma o elige la generación de tráfico personalizado.",
