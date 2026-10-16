@@ -41,6 +41,7 @@ without adding it to `ci-complete`'s `needs:` list makes that job advisory.
 | `label-sync.yml` | Sync label definitions |
 | `license-check.yml` | Verify dependency licenses |
 | `main-retry.yml` | Retry a failed main run once (see the file header) |
+| `merge-queue-ejection.yml` | Stop a PR the merge queue keeps ejecting |
 | `pr-hygiene.yml` | PR and issue title lint, the PR body template, auto-labels (one job per rule) |
 | `release-please.yml` | Automated version management and release PRs |
 | `release.yml` | goreleaser release builds, signing, provenance |
