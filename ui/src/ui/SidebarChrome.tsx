@@ -21,6 +21,7 @@ import { createElement, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Tooltip } from '../components/ui/Tooltip';
 import { iconSizes } from '../constants/sizes';
+import { accessibleNameIncluding } from '../lib/accessibleName';
 import { MsnMark } from './MsnMark';
 
 /**
@@ -77,7 +78,7 @@ export function FooterIconButton({
         className={`${collapsed ? 'w-full' : 'flex-1'} flex items-center ${
           collapsed || iconOnly ? 'justify-center' : 'gap-compact'
         } px-3 py-row rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors text-sm font-medium`}
-        aria-label={ariaLabel ?? title}
+        aria-label={accessibleNameIncluding(ariaLabel ?? title, collapsed || iconOnly ? '' : label)}
       >
         {createElement(icon, { className: `${iconSizes.md} flex-shrink-0` })}
         {!collapsed && !iconOnly ? <span>{label}</span> : null}
@@ -195,7 +196,7 @@ function FullWidthDrawerButton({
         }}
         data-testid={dataTestId}
         className="w-full mb-heading flex items-center gap-compact px-3 py-row rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors text-sm font-medium"
-        aria-label={title}
+        aria-label={accessibleNameIncluding(title, label)}
       >
         {createElement(icon, { className: `${iconSizes.md} flex-shrink-0` })}
         <span>{label}</span>

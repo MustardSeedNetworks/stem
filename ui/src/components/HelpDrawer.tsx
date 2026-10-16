@@ -32,6 +32,7 @@ import { searchTests, tests } from '../data/help/tests';
 import type { GlossaryId, TestHelp, TestHelpId, Tutorial } from '../data/help/types';
 import { useBuildVersion } from '../hooks/useBuildVersion';
 import { useFocusTrap } from '../hooks/useFocusTrap';
+import { accessibleNameIncluding } from '../lib/accessibleName';
 import { cn, icon as iconTokens, layout, modal, radius, spacing, status } from '../styles/theme';
 import { GlossaryTab } from './help-drawer/GlossaryTab';
 import { TestDetailView } from './help-drawer/TestDetailView';
@@ -293,7 +294,13 @@ export function HelpDrawer({
                     ? cn(status.bg.info, 'text-text-inverse')
                     : 'bg-surface-base text-text-secondary border border-surface-border hover:bg-surface-hover',
                 )}
-                aria-label={simpleMode ? t('mode.ariaToTechnical') : t('mode.ariaToSimple')}
+                aria-label={accessibleNameIncluding(
+                  // Each key stays a string-literal t() argument. The help
+                  // i18n check only counts those, so a ternary inside t()
+                  // leaves mode.ariaToTechnical and mode.ariaToSimple unused.
+                  simpleMode ? t('mode.ariaToTechnical') : t('mode.ariaToSimple'),
+                  simpleMode ? t('mode.simple') : t('mode.technical'),
+                )}
               >
                 {simpleMode ? t('mode.simple') : t('mode.technical')}
               </button>

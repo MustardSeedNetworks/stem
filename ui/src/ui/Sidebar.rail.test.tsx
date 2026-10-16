@@ -130,14 +130,14 @@ describe('the rail', () => {
     );
     // The desktop and mobile rails both mount; the first is the desktop one.
     const [rfc2544] = screen.getAllByRole('button', { name: 'RFC 2544' });
-    const [y1564] = screen.getAllByRole('button', { name: 'Y.1564' });
+    const [y1564] = screen.getAllByRole('button', { name: 'Y.1564 Beta' });
     expect(rfc2544).toHaveAttribute('aria-current', 'page');
     expect(y1564).not.toHaveAttribute('aria-current');
     expect(within(y1564).getByText('Beta')).toBeInTheDocument();
 
     fireEvent.click(y1564);
 
-    expect(screen.getAllByRole('button', { name: 'Y.1564' })[0]).toHaveAttribute(
+    expect(screen.getAllByRole('button', { name: 'Y.1564 Beta' })[0]).toHaveAttribute(
       'aria-current',
       'page',
     );

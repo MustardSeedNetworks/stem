@@ -24,6 +24,19 @@ const DEFAULT_RULES: RunOptions = {
     // 'region' fires on isolated component renders that lack a landmark. Off
     // for component-scoped tests; re-enable in screen-level harness tests.
     region: { enabled: false },
+    // label-content-name-mismatch cannot run here. axe-core 4.14 enables it
+    // by default (WCAG 2.5.3 Label in Name). The check compares visible words
+    // to the accessible name, and to ignore icon ligatures it paints text onto
+    // a canvas. jsdom's getContext() returns null, so the check throws and axe
+    // reports the rule as incomplete ("encountered an error") on every control
+    // that has visible text — including ones that really do mismatch. Allowing
+    // that incomplete would hide the violation, so the rule is disabled here
+    // rather than listed as an allowed incomplete.
+    //
+    // Storybook in Chromium, and an e2e axe run of the real page, still
+    // enforce it. Fix mismatches in the component; do not turn this back on
+    // under jsdom.
+    'label-content-name-mismatch': { enabled: false },
   },
 };
 
