@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.27.8](https://github.com/MustardSeedNetworks/stem/compare/v0.27.7...v0.27.8) (2026-10-16)
+
+
+### Bug Fixes
+
+* **ci:** enqueue the release PR at the front of the merge queue ([#1776](https://github.com/MustardSeedNetworks/stem/issues/1776)) ([befa7c9](https://github.com/MustardSeedNetworks/stem/commit/befa7c9f5818ddcf9d9864e41ada5a452f311b8c))
+
+
+### Continuous Integration
+
+* **license:** scan PRs only when a dependency manifest changes ([#1782](https://github.com/MustardSeedNetworks/stem/issues/1782)) ([ffe1212](https://github.com/MustardSeedNetworks/stem/commit/ffe1212b19b82422ce32dda0527013d4dddc74eb)), closes [#1781](https://github.com/MustardSeedNetworks/stem/issues/1781)
+* **workflows:** fold the three PR-hygiene workflows into one ([#1779](https://github.com/MustardSeedNetworks/stem/issues/1779)) ([c339dea](https://github.com/MustardSeedNetworks/stem/commit/c339dea2aba6ae59d86cf65d2d7e862367ec58e1)), closes [#1778](https://github.com/MustardSeedNetworks/stem/issues/1778)
+
 ## [0.27.7](https://github.com/MustardSeedNetworks/stem/compare/v0.27.6...v0.27.7) (2026-10-15)
 
 
