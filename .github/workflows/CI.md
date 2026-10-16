@@ -39,14 +39,12 @@ without adding it to `ci-complete`'s `needs:` list makes that job advisory.
 
 `changes`, `backend`, `race`, `frontend`, `storybook`, and `e2e` call the
 reusable workflows in `MustardSeedNetworks/.github`, pinned to commit
-`0bc6492eca8eee28f85af11187fd54b28bd85fe0`. Caller jobs grant the permissions
+`e092081a97245d29978e229be7425179cc1dcde1`. Caller jobs grant the permissions
 those workflows declare (`id-token: write` for path filters, `actions: read`
-to download the UI, `actions: write` for the Playwright reports).
-
-A reusable workflow resolves `uses: ./.github/actions/...` against this
-checkout. `apt-install` and `flake-budget` from that same pin are copied
-here so Storybook and the E2E flake budget can find them. Jobs that already
-call `apt-install` keep the remote `v1.13.0` ref.
+to download the UI, `actions: write` for the Playwright reports). That commit
+pins `apt-install` and `flake-budget` to the called repository, so this repo
+does not vendor them. Jobs that already call `apt-install` keep the remote
+`v1.13.0` ref.
 
 `ci-complete` stays in this file. The shared aggregator would publish the
 check as `ci-complete / CI Complete`, and branch protection plus `release.yml`

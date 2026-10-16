@@ -6,9 +6,9 @@
 # The merge group already tested that commit; ci-smoke.yml is the success
 # signal release-please waits for.
 # Shared callers (changes, backend, race, frontend, storybook, e2e) pin
-# MustardSeedNetworks/.github at 0bc6492eca8eee28f85af11187fd54b28bd85fe0.
-# Those workflows resolve `uses: ./.github/actions/...` against this checkout,
-# so apt-install and flake-budget from that pin are copied under .github/actions/.
+# MustardSeedNetworks/.github at e092081a97245d29978e229be7425179cc1dcde1.
+# That commit pins apt-install and flake-budget inside the called workflows,
+# so this repo does not vendor them.
 # Jobs: backend, frontend, c-lint, security, quality, build
 
 name: CI
@@ -74,7 +74,7 @@ jobs:
       contents: read
       pull-requests: read
       id-token: write
-    uses: MustardSeedNetworks/.github/.github/workflows/ci-changes.yml@0bc6492eca8eee28f85af11187fd54b28bd85fe0 # .github#162
+    uses: MustardSeedNetworks/.github/.github/workflows/ci-changes.yml@e092081a97245d29978e229be7425179cc1dcde1 # .github#163
     with:
       filters: |
         backend:
@@ -180,7 +180,7 @@ jobs:
     permissions:
       contents: read
       actions: read
-    uses: MustardSeedNetworks/.github/.github/workflows/ci-backend.yml@0bc6492eca8eee28f85af11187fd54b28bd85fe0 # .github#162
+    uses: MustardSeedNetworks/.github/.github/workflows/ci-backend.yml@e092081a97245d29978e229be7425179cc1dcde1 # .github#163
     with:
       install-libpcap: false
       setup-node: true
@@ -325,7 +325,7 @@ jobs:
     permissions:
       contents: read
       actions: read
-    uses: MustardSeedNetworks/.github/.github/workflows/ci-race.yml@0bc6492eca8eee28f85af11187fd54b28bd85fe0 # .github#162
+    uses: MustardSeedNetworks/.github/.github/workflows/ci-race.yml@e092081a97245d29978e229be7425179cc1dcde1 # .github#163
     with:
       install-libpcap: false
       ui-artifact: backend-ui-dist
@@ -370,7 +370,7 @@ jobs:
     if: needs.changes.outputs.frontend == 'true' || needs.changes.outputs.ci_infra == 'true'
     permissions:
       contents: read
-    uses: MustardSeedNetworks/.github/.github/workflows/ci-frontend.yml@0bc6492eca8eee28f85af11187fd54b28bd85fe0 # .github#162
+    uses: MustardSeedNetworks/.github/.github/workflows/ci-frontend.yml@e092081a97245d29978e229be7425179cc1dcde1 # .github#163
     with:
       timeout-minutes: 15
       extra-command: ../scripts/check-token-discipline.sh
@@ -670,15 +670,15 @@ jobs:
   # and accessibility tests. The contract re-runs the gate story with an
   # injected defect and requires red.
   #
-# The old frontend job also uploaded ui/storybook-static. Nothing downloaded
-# it, and this workflow has no upload input, so that artifact is gone.
-# Chromium's apt half calls ./.github/actions/apt-install in this repo.
+  # The old frontend job also uploaded ui/storybook-static. Nothing downloaded
+  # it, and this workflow has no upload input, so that artifact is gone.
+  # Chromium's apt half uses the called workflow's own apt-install pin.
   storybook:
     needs: changes
     if: needs.changes.outputs.frontend == 'true' || needs.changes.outputs.ci_infra == 'true'
     permissions:
       contents: read
-    uses: MustardSeedNetworks/.github/.github/workflows/ci-storybook.yml@0bc6492eca8eee28f85af11187fd54b28bd85fe0 # .github#162
+    uses: MustardSeedNetworks/.github/.github/workflows/ci-storybook.yml@e092081a97245d29978e229be7425179cc1dcde1 # .github#163
 
 
   # ============================================================================
@@ -1390,7 +1390,7 @@ jobs:
     permissions:
       contents: read
       actions: write
-    uses: MustardSeedNetworks/.github/.github/workflows/ci-e2e.yml@0bc6492eca8eee28f85af11187fd54b28bd85fe0 # .github#162
+    uses: MustardSeedNetworks/.github/.github/workflows/ci-e2e.yml@e092081a97245d29978e229be7425179cc1dcde1 # .github#163
     with:
       backend-result: ${{ needs.backend.result }}
       frontend-result: ${{ needs.frontend.result }}
