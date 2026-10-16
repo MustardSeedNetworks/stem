@@ -1,0 +1,88 @@
+name: 'Flake budget'
+description: 'Fail when a test run leaned on retries more than the budget allows'
+inputs:
+  report:
+    description: 'Playwright JSON report path (glob allowed; all matches are summed)'
+    required: false
+    default: 'ui/playwright-report/results.json'
+  budget:
+    description: 'Maximum number of tests allowed to pass only on retry'
+    required: false
+    default: '0'
+runs:
+  using: composite
+  steps:
+    # A test that fails and then passes on retry is reported as `flaky`, and the
+    # job exits 0. That is the whole problem: a retry-pass is indistinguishable
+    # from a pass in every signal anyone actually looks at, so real defects sit
+    # in main indefinitely. seed#1524 and seed#1593 were each closed against the
+    # same flaky spec, which then kept flaking, because nothing failed.
+    #
+    # This reads Playwright's own `stats.flaky` rather than parsing the human
+    # log, so it cannot drift with reporter formatting.
+    #
+    # Missing report is a FAILURE, not a pass: a run that produced no report
+    # either did not run or crashed, and "no evidence" must never read as "no
+    # flakes" -- the same failure mode as --passWithNoTests.
+    - name: Check flake budget
+      shell: bash
+      env:
+        REPORT_GLOB: ${{ inputs.report }}
+        BUDGET: ${{ inputs.budget }}
+      run: |
+        set -euo pipefail
+
+        # python3, not jq. jq ships on GitHub-hosted runners but NOT in the
+        # mcr.microsoft.com/playwright container images, and seed and stem both
+        # run E2E inside one -- so the first containerised caller failed with
+        # `jq: command not found` and exit 127. python3 is present in both.
+        python3 - "$BUDGET" $REPORT_GLOB <<'PYEOF'
+        import glob, json, sys
+
+        budget = int(sys.argv[1])
+        patterns = sys.argv[2:]
+
+        reports = []
+        for pattern in patterns:
+            reports.extend(sorted(glob.glob(pattern)))
+
+        # A missing report is a FAILURE, not a pass: a run that produced no
+        # report either did not run or crashed, and "no evidence" must never
+        # read as "no flakes" -- the same failure mode as --passWithNoTests.
+        if not reports:
+            print(f"::error::no Playwright JSON report matched {patterns!r}"
+                  " - cannot verify the flake budget")
+            sys.exit(1)
+
+        total = 0
+        flaky_specs = []
+        for path in reports:
+            with open(path) as fh:
+                data = json.load(fh)
+            n = data.get("stats", {}).get("flaky", 0)
+            print(f"  {path}: {n} flaky")
+            total += n
+
+            def walk(suites):
+                for suite in suites or []:
+                    for spec in suite.get("specs", []) or []:
+                        if any(t.get("status") == "flaky" for t in spec.get("tests", []) or []):
+                            flaky_specs.append(
+                                f"  flaky: {spec.get('file')}:{spec.get('line')} {spec.get('title')}"
+                            )
+                    walk(suite.get("suites"))
+
+            walk(data.get("suites"))
+
+        print(f"flaky total: {total} (budget {budget})")
+
+        if total > budget:
+            print(f"::error::{total} test(s) passed only on retry; budget is {budget}.")
+            print("A retry-pass is a defect that happens to be intermittent. Fix the test")
+            print("or the code; raising this budget hides the signal it exists to surface.")
+            for line in flaky_specs:
+                print(line)
+            sys.exit(1)
+
+        print("Within flake budget.")
+        PYEOF

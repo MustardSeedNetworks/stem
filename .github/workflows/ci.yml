@@ -7,6 +7,8 @@
 # signal release-please waits for.
 # Shared callers (changes, backend, race, frontend, storybook, e2e) pin
 # MustardSeedNetworks/.github at 0bc6492eca8eee28f85af11187fd54b28bd85fe0.
+# Those workflows resolve `uses: ./.github/actions/...` against this checkout,
+# so apt-install and flake-budget from that pin are copied under .github/actions/.
 # Jobs: backend, frontend, c-lint, security, quality, build
 
 name: CI
@@ -668,8 +670,9 @@ jobs:
   # and accessibility tests. The contract re-runs the gate story with an
   # injected defect and requires red.
   #
-  # The old frontend job also uploaded ui/storybook-static. Nothing downloaded
-  # it, and this workflow has no upload input, so that artifact is gone.
+# The old frontend job also uploaded ui/storybook-static. Nothing downloaded
+# it, and this workflow has no upload input, so that artifact is gone.
+# Chromium's apt half calls ./.github/actions/apt-install in this repo.
   storybook:
     needs: changes
     if: needs.changes.outputs.frontend == 'true' || needs.changes.outputs.ci_infra == 'true'

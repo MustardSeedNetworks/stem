@@ -43,6 +43,11 @@ reusable workflows in `MustardSeedNetworks/.github`, pinned to commit
 those workflows declare (`id-token: write` for path filters, `actions: read`
 to download the UI, `actions: write` for the Playwright reports).
 
+A reusable workflow resolves `uses: ./.github/actions/...` against this
+checkout. `apt-install` and `flake-budget` from that same pin are copied
+here so Storybook and the E2E flake budget can find them. Jobs that already
+call `apt-install` keep the remote `v1.13.0` ref.
+
 `ci-complete` stays in this file. The shared aggregator would publish the
 check as `ci-complete / CI Complete`, and branch protection plus `release.yml`
 require the plain name `CI Complete`. The local job still runs on
