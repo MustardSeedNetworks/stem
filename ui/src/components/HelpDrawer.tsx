@@ -295,8 +295,11 @@ export function HelpDrawer({
                     : 'bg-surface-base text-text-secondary border border-surface-border hover:bg-surface-hover',
                 )}
                 aria-label={accessibleNameIncluding(
-                  t(simpleMode ? 'mode.ariaToTechnical' : 'mode.ariaToSimple'),
-                  t(simpleMode ? 'mode.simple' : 'mode.technical'),
+                  // Each key stays a string-literal t() argument. The help
+                  // i18n check only counts those, so a ternary inside t()
+                  // leaves mode.ariaToTechnical and mode.ariaToSimple unused.
+                  simpleMode ? t('mode.ariaToTechnical') : t('mode.ariaToSimple'),
+                  simpleMode ? t('mode.simple') : t('mode.technical'),
                 )}
               >
                 {simpleMode ? t('mode.simple') : t('mode.technical')}
