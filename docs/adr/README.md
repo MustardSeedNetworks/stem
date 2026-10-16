@@ -17,6 +17,7 @@ survives the people and the diffs. Format mirrors the sibling repos (seed/niac).
 | [0009](0009-csrf-defense-in-depth-edges.md) | CSRF defense-in-depth at the edges | Amended |
 | [0010](0010-json-wire-casing-convention.md) | JSON wire-casing convention (camelCase API) | Accepted |
 | [0011](0011-internal-api-sub-package-decomposition.md) | internal/api sub-package decomposition (ratelimit + sse leaves) | Accepted |
+| [0012](0012-in-place-update.md) | In-place update: verification, install and rollback | Proposed |
 
 Status values: Proposed · Accepted · Amended · Superseded.
 
