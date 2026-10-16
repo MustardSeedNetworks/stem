@@ -32,6 +32,7 @@ import { searchTests, tests } from '../data/help/tests';
 import type { GlossaryId, TestHelp, TestHelpId, Tutorial } from '../data/help/types';
 import { useBuildVersion } from '../hooks/useBuildVersion';
 import { useFocusTrap } from '../hooks/useFocusTrap';
+import { accessibleNameIncluding } from '../lib/accessibleName';
 import { cn, icon as iconTokens, layout, modal, radius, spacing, status } from '../styles/theme';
 import { GlossaryTab } from './help-drawer/GlossaryTab';
 import { TestDetailView } from './help-drawer/TestDetailView';
@@ -293,11 +294,10 @@ export function HelpDrawer({
                     ? cn(status.bg.info, 'text-text-inverse')
                     : 'bg-surface-base text-text-secondary border border-surface-border hover:bg-surface-hover',
                 )}
-                aria-label={t(simpleMode ? 'mode.ariaToTechnical' : 'mode.ariaToSimple', {
-                  // The visible label ("Simple" / "Technical") has to be part of
-                  // the accessible name (WCAG 2.5.3).
-                  mode: t(simpleMode ? 'mode.simple' : 'mode.technical'),
-                })}
+                aria-label={accessibleNameIncluding(
+                  t(simpleMode ? 'mode.ariaToTechnical' : 'mode.ariaToSimple'),
+                  t(simpleMode ? 'mode.simple' : 'mode.technical'),
+                )}
               >
                 {simpleMode ? t('mode.simple') : t('mode.technical')}
               </button>

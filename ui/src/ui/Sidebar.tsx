@@ -16,6 +16,7 @@ import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router';
 import { Tooltip } from '../components/ui/Tooltip';
 import { iconSizes } from '../constants/sizes';
+import { accessibleNameIncluding } from '../lib/accessibleName';
 import { prefetchRoute } from '../utils/prefetch';
 import { safeGetItem, safeSetItem } from '../utils/storage';
 import { type RailStatus, SidebarFooter, SidebarHeader } from './SidebarChrome';
@@ -80,7 +81,10 @@ function NavItemButton({ item, active, collapsed, onNavigate }: NavItemButtonPro
         onClick={() => onNavigate(item.path)}
         onMouseEnter={() => prefetchRoute(item.path)}
         aria-current={active ? 'page' : undefined}
-        aria-label={item.label}
+        aria-label={accessibleNameIncluding(
+          item.label,
+          !collapsed && item.badge ? item.badge : item.label,
+        )}
         /* 44px minimum target, 11px radius, and a 3px left bar for the active
            route. The bar carries the state rather than a gradient fill: a filled
            row competes with status colour, and the rail is chrome. */
@@ -103,7 +107,9 @@ function NavItemButton({ item, active, collapsed, onNavigate }: NavItemButtonPro
         })}
         {!collapsed ? (
           <>
-            <span className="flex-1 text-left truncate">{item.label}</span>
+            <span className="flex-1 text-left truncate">
+              {item.badge ? `${item.label} ` : item.label}
+            </span>
             {item.badge ? (
               <span
                 className={`px-1.5 py-0.5 text-xs rounded font-medium ${badgeClass(item.badge)}`}
