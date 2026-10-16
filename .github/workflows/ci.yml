@@ -1,19 +1,26 @@
 # The Stem CI Pipeline
 # Mustard Seed Networks - Network Performance Testing
 #
-# Runs on: push to main, pull requests to main
+# Runs on: pull requests to main, the merge queue, manual dispatch, and a
+# weekly schedule for the C jobs. A push to main does not re-run this suite.
+# The merge group already tested that commit; ci-smoke.yml is the success
+# signal release-please waits for.
 # Jobs: backend, frontend, c-lint, security, quality, build
 
 name: CI
 
 on:
-  push:
-    branches: [main]
   pull_request:
     branches: [main]
   # Required for the merge queue: `CI Complete` is a required status check, so
   # it must report on merge_group events too. Without this the queue would
   # accept PRs and then wait forever for a check that never fires.
+  #
+  # No `push:` trigger. This merge_group run is the test of the commit that
+  # lands on main (the queue's head SHA is the main SHA). A second full suite
+  # on push was cancelled while still queued during a merge burst, and
+  # release-please — gated on a successful workflow_run for main — skipped
+  # the commit. ci-smoke.yml is that signal now.
   merge_group:
   workflow_dispatch:
   # Weekly, for the C jobs only — see their `if:` conditions.
@@ -30,18 +37,12 @@ on:
 concurrency:
   # Main gets a concurrency group per commit; PRs share one group per ref.
   #
-  # cancel-in-progress off on main protects a *running* main build. It does
-  # not protect a pending one: GitHub keeps at most one pending run per
-  # concurrency group and cancels the older pending run as soon as a newer one
-  # arrives. A merge-queue burst pushes several commits to main within
-  # minutes, so intermediate main runs were cancelled while still queued —
-  # zero jobs, no red check, nothing to retry. release-please is gated on
-  # `workflow_run.conclusion == 'success'`, so it was skipped for every one of
-  # those commits and they released nothing. That is how stem's v0.24.47 went
-  # missing while its three siblings released from the same batch.
-  #
-  # Keying main by SHA gives every commit its own group, so no main run is
-  # ever pending behind another and none can be cancelled.
+  # Push to main no longer runs this workflow (see ci-smoke.yml). The sha key
+  # stays: this file still runs on main via the weekly schedule and
+  # workflow_dispatch, and check-ci-conformance.py requires a main group that
+  # contains github.sha. The bug it prevents is the one that dropped
+  # v0.24.47 — GitHub keeps one pending run per group and cancels the older,
+  # and release-please treats a cancelled run as "not a success".
   #
   # Superseded PR runs are still waste and still get cancelled.
   group: ${{ github.workflow }}-${{ github.ref }}${{ github.ref == 'refs/heads/main' && format('-{0}', github.sha) || '' }}
@@ -72,7 +73,8 @@ jobs:
     outputs:
       # merge_group has no PR base to diff against, and the queue exists to test
       # the merged result — so every filter reports true there and the full
-      # suite runs. Path filtering stays in effect for pull_request/push.
+      # suite runs. Path filtering stays in effect for pull_request, dispatch
+      # and the weekly schedule.
       backend: ${{ github.event_name == 'merge_group' && 'true' || steps.filter.outputs.backend }}
       frontend: ${{ github.event_name == 'merge_group' && 'true' || steps.filter.outputs.frontend }}
       c: ${{ github.event_name == 'merge_group' && 'true' || steps.filter.outputs.c }}
@@ -205,10 +207,9 @@ jobs:
   # access and no signing identity.
   #
   # Not on `pull_request`: this ran on the PR AND again on the merge group for
-  # the same commit, and macOS runners carry a 10x minute multiplier. `push:`
-  # is already `branches: [main]`, so it still runs in the queue, on main and
-  # on dispatch -- and the `changes` job forces every filter true on
-  # merge_group, so nothing merges without it. The PR side is not blind:
+  # the same commit, and macOS runners carry a 10x minute multiplier. It still
+  # runs in the queue — `changes` forces every filter true on merge_group — and
+  # on dispatch. Push to main does not re-run CI. The PR side is not blind:
   # `Lint (GOOS=windows)` lints the whole Windows tree and
   # `Darwin compile check (arm64)` cross-compiles the binary, both on PRs.
   backend-darwin:
@@ -956,18 +957,19 @@ jobs:
           go install golang.org/x/vuln/cmd/govulncheck@v1.7.0
           govulncheck ./...
 
+      # Not a gate. High-signal gosec rules already fail the build inside
+      # golangci-lint. This step only publishes SARIF, including the advisory
+      # rules excluded from that gate (G204, G304, G702; see .golangci.yml).
+      # Those findings are expected, so continue-on-error stays: dropping it
+      # would turn the advisory rules into a second gate. The upload below is
+      # the opposite and fails loudly — a silent upload leaves the Security
+      # tab showing an older scan. Matches niac-go and trellis.
       - name: Run gosec
         uses: securego/gosec@deb54465fea23d19a77f037e11e6589021f8501d # v2.29.0
         continue-on-error: true
         with:
           args: "-fmt sarif -out gosec-results.sarif ./..."
 
-      # The SCAN above stays continue-on-error -- it is a visibility feed, not a
-      # second gate (gosec runs blocking inside golangci-lint). The UPLOAD is
-      # different: if it fails silently the Security tab keeps showing an older
-      # scan, so the dashboard says "clean" because nothing new arrived rather
-      # than because nothing was found. A stale security view is worse than an
-      # absent one, so this step fails loudly. Matches niac-go and trellis.
       - name: Upload gosec results
         uses: github/codeql-action/upload-sarif@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
         if: always() && hashFiles('gosec-results.sarif') != ''
@@ -1974,7 +1976,11 @@ jobs:
       - e2e
       - phone-width
       - codeql-alert-gate
-    if: always()
+    # !cancelled(), not always(). always() still runs after a cancellation
+    # and then fails, because the upstream results are "cancelled", so a
+    # cancelled workflow is recorded as a failure. Real failures still reach
+    # this job and still fail it.
+    if: ${{ !cancelled() }}
     steps:
       - name: Verify upstream results
         env:

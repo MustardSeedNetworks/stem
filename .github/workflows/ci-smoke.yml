@@ -1,0 +1,37 @@
+# Success signal for a commit that just landed on main.
+#
+# The merge queue already ran CI on this SHA (merge_group's head is the
+# commit that lands), including the "CI Complete" check release.yml's
+# verify-tag reads. Running the suite again on push duplicated every job,
+# and a burst of merges cancelled the pending main runs before they
+# started. release-please.yml listens for a workflow_run on main and
+# treats only `conclusion == success` as a release signal, so those
+# cancellations skipped the commit (stem v0.24.47).
+#
+# This workflow is that signal and nothing else. The per-commit
+# concurrency group is the same fix the full suite used to need: GitHub
+# keeps one pending run per group and cancels the older, and a cancelled
+# run is not a success. The three-hour schedule in release-please.yml
+# remains the backstop if this run fails twice (main-retry.yml retries
+# the first failure).
+
+name: CI Smoke
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-smoke-${{ github.sha }}
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  smoke:
+    name: CI Smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Main push observed
+        run: echo "merge_group already tested ${GITHUB_SHA}"

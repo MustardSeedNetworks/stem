@@ -52,7 +52,15 @@ export default defineConfig({
   //   75% of the box. Mirrors seed #1080 and the cross-repo perf push.
   retries: process.env.CI ? 1 : 0,
   workers: process.env.CI ? 2 : undefined,
-  timeout: 30000,
+  // Per test. 60s covers a cold navigation plus the spec's own waits; a test
+  // that needs longer is stuck, not slow. The e2e job allows 20 minutes
+  // (ci.yml, `timeout-minutes: 20`). globalTimeout fails the suite itself
+  // before GitHub cancels the job — a cancelled job reports `cancelled`
+  // rather than `failed`, and the report upload does not run. 15 minutes is
+  // under that budget (setup before this process is about two minutes) and
+  // above a healthy suite, which finishes in about seven.
+  timeout: 60_000,
+  globalTimeout: process.env.CI ? 15 * 60 * 1000 : 0,
   expect: {
     timeout: 10000,
   },
