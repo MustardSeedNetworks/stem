@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.27.13](https://github.com/MustardSeedNetworks/stem/compare/v0.27.12...v0.27.13) (2026-10-16)
+
+
+### Documentation
+
+* **adr:** record the in-place update design (ADR-0012) ([#1797](https://github.com/MustardSeedNetworks/stem/issues/1797)) ([a814795](https://github.com/MustardSeedNetworks/stem/commit/a814795f09fdcf46288f082fb23d2aa73f76f458))
+* **audit:** record the STM-23 macOS launchd restart leg ([#1794](https://github.com/MustardSeedNetworks/stem/issues/1794)) ([a9a9fb6](https://github.com/MustardSeedNetworks/stem/commit/a9a9fb665aa261855a9fd78f5d9a0441c5ae0a35)), closes [#1648](https://github.com/MustardSeedNetworks/stem/issues/1648)
+
 ## [0.27.12](https://github.com/MustardSeedNetworks/stem/compare/v0.27.11...v0.27.12) (2026-10-16)
 
 
