@@ -17,11 +17,13 @@ without adding it to `ci-complete`'s `needs:` list makes that job advisory.
 
 | Job | Description | Checks |
 | --- | --- | --- |
-| `changes` | Path filtering | Decides which downstream jobs run |
-| `build-ui` | Shared UI build | Builds `internal/api/ui/` once for `backend`/`race` to download |
-| `backend` | Go checks | lint, vet, staticcheck, fmt, tests, coverage floor |
-| `race` | Go race detector | `go test -race`, split from `backend` so it fails distinctly |
-| `frontend` | React/TS checks | tsc typecheck, Biome, Vite build, Vitest, Storybook build |
+| `changes` | Path filtering | Shared `ci-changes.yml`. Decides which downstream jobs run |
+| `build-ui` | Shared UI build | Builds `internal/api/ui/` once for `backend`/`race`/`e2e` to download |
+| `backend` | Go checks | Shared `ci-backend.yml`: Linux gates, plus macOS and Windows off pull requests |
+| `lint-windows` | Windows lint | Local. `only-new-issues` on pull requests; the shared job cannot express that |
+| `race` | Go race detector | Shared `ci-race.yml`. Still `-short` and `GOEXPERIMENT=nogreenteagc` |
+| `frontend` | React/TS checks | Shared `ci-frontend.yml`: tsc, Biome, Vitest, coverage ratchet, token discipline |
+| `storybook` | Storybook | Shared `ci-storybook.yml`: interactions, accessibility, injected-defect contract |
 | `c-lint` | C dataplane lint (C23) | clang-format, clang-tidy |
 | `dataplane-safety` | C memory safety | ASAN + fuzz targets |
 | `security` | Security scans | govulncheck (hard gate), gosec via golangci-lint (blocking gate; G103/G204/G304/G702 are SARIF-only via the standalone step), npm audit, gitleaks, Trivy |
@@ -32,8 +34,26 @@ without adding it to `ci-complete`'s `needs:` list makes that job advisory.
 | `docs` | Documentation | Markdown lint (blocking, scoped to changed files) |
 | `build` | Build verification | Multi-arch binaries with full ldflags |
 | `darwin-compile-check` | macOS cross-compile | arm64 compile only |
-| `e2e` | Browser tests | Playwright, chromium + webkit (browsers cached) |
-| `ci-complete` | Aggregate gate | The required status check |
+| `e2e` | Browser tests | Shared `ci-e2e.yml`: sharded chromium and webkit, plus `@smoke`, in the Playwright image |
+| `ci-complete` | Aggregate gate | Local job named `CI Complete`. The required status check |
+
+`changes`, `backend`, `race`, `frontend`, `storybook`, and `e2e` call the
+reusable workflows in `MustardSeedNetworks/.github`, pinned to commit
+`0bc6492eca8eee28f85af11187fd54b28bd85fe0`. Caller jobs grant the permissions
+those workflows declare (`id-token: write` for path filters, `actions: read`
+to download the UI, `actions: write` for the Playwright reports).
+
+`ci-complete` stays in this file. The shared aggregator would publish the
+check as `ci-complete / CI Complete`, and branch protection plus `release.yml`
+require the plain name `CI Complete`. The local job still runs on
+`if: ${{ !cancelled() }}` and fails unless every needed job succeeded or was
+skipped.
+
+These gates stay local because the shared workflows have no input for them:
+C lint, dataplane safety, the reflect-path benchmark, security scanning,
+quality, release notes, workflow lint, i18n, docs, the release-shaped builds,
+the darwin cross-compile, phone width, and the CodeQL alert gate. Windows lint
+stays local so it can keep `only-new-issues` on pull requests only.
 
 ### Other Workflows
 
