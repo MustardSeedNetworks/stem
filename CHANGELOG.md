@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.27.12](https://github.com/MustardSeedNetworks/stem/compare/v0.27.11...v0.27.12) (2026-10-16)
+
+
+### Continuous Integration
+
+* call shared product workflows for the common jobs ([#1792](https://github.com/MustardSeedNetworks/stem/issues/1792)) ([12a21a6](https://github.com/MustardSeedNetworks/stem/commit/12a21a613497623606be0a32bbb4a95029d96055))
+
 ## [0.27.11](https://github.com/MustardSeedNetworks/stem/compare/v0.27.10...v0.27.11) (2026-10-16)
 
 
