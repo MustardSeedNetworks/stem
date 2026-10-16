@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.27.11](https://github.com/MustardSeedNetworks/stem/compare/v0.27.10...v0.27.11) (2026-10-16)
+
+
+### Continuous Integration
+
+* replace the push-to-main suite with a smoke signal ([#1791](https://github.com/MustardSeedNetworks/stem/issues/1791)) ([fe08a62](https://github.com/MustardSeedNetworks/stem/commit/fe08a625b088b0379ce2e17d455e2fa524df9fae))
+
+
+### Miscellaneous
+
+* **deps:** update dependency axe-core to v4.14.0 ([#1675](https://github.com/MustardSeedNetworks/stem/issues/1675)) ([3b0fd34](https://github.com/MustardSeedNetworks/stem/commit/3b0fd34d4b6f16100c22dc1dbf3fb7cd35cdf9b1))
+
 ## [0.27.10](https://github.com/MustardSeedNetworks/stem/compare/v0.27.9...v0.27.10) (2026-10-16)
 
 
