@@ -30,6 +30,15 @@ func SearchDirs() []string {
 	return dirs
 }
 
+// ServiceDataDir is the data directory of the installed service: the
+// override when set, else the platform's packaged location.
+func ServiceDataDir() string {
+	if override := os.Getenv(dataDirEnv); override != "" {
+		return override
+	}
+	return packagedDataDir(runtime.GOOS)
+}
+
 // packagedDataDir is where the shipped service definition for goos keeps
 // daemon state: the systemd unit on Linux, the launchd plist on macOS, the
 // Windows service under ProgramData.

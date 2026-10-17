@@ -16,7 +16,7 @@ import (
 func TestCommandHelpFlagsMatchRuntimeFlagSets(t *testing.T) {
 	t.Parallel()
 
-	for _, command := range []string{"reflect", "test", "web", "license", "help", "glossary", "list-tests", "install-ca"} {
+	for _, command := range []string{"reflect", "test", "web", "license", "help", "glossary", "list-tests", "install-ca", updateCommandName} {
 		commandHelp := help.GetAllCommands()[command]
 		t.Run(command, func(t *testing.T) {
 			t.Parallel()

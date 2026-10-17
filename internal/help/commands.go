@@ -16,6 +16,7 @@ func GetAllCommands() map[string]CommandHelp {
 		"glossary":   GlossaryCommand(),
 		"list-tests": ListTestsCommand(),
 		"install-ca": InstallCACommand(),
+		"update":     UpdateCommand(),
 	}
 }
 
@@ -577,6 +578,51 @@ machine-parseable representation suitable for piping into other tools.`,
 			},
 		},
 		SeeAlso: []string{"test", "help"},
+	}
+}
+
+// UpdateCommand documents the update subcommand (ADR-0012).
+func UpdateCommand() CommandHelp {
+	return CommandHelp{
+		Name:    "update",
+		Summary: "Install the newest stem release in place, with automatic rollback",
+		Description: `The update command installs the newest stem release in place. Run it as
+root (Administrator on Windows). It refuses while a test or reflector run is
+active, and it only ever installs a newer version.
+
+Every release is verified offline against its signature, checksum and build
+provenance before anything is touched; there is no way to skip a check. The
+running version's release is verified too, so a failed update rolls back
+without the network: the state directory is copied before the install and
+restored with the previous version if the new one is not healthy within 60
+seconds.
+
+The install method follows how stem was installed (.deb, .rpm, the macOS
+package or the Windows zip). A binary run from a build tree is refused.`,
+		Usage: "stem update [--source SOURCE]",
+		Flags: []FlagHelp{
+			{
+				Short:      "",
+				Long:       "--source",
+				Type:       TypeString,
+				Default:    "github",
+				Required:   false,
+				TechDesc:   `Where releases come from: "github", an https:// mirror (<base>/vX.Y.Z/<asset>, newest tag in <base>/latest), or an absolute directory with the same layout`,
+				LaymanDesc: "Where to look for new releases; use a directory for an offline site",
+			},
+		},
+		Examples: []Example{
+			{
+				Desc:    "Update from the published releases",
+				Command: "sudo stem update",
+				Output:  "Updated to 0.29.0.",
+			},
+			{
+				Desc:    "Update an offline site from a copied release directory",
+				Command: "sudo stem update --source /srv/stem-releases",
+				Output:  "Already up to date: no newer release is available: the source's latest is v0.28.0 and this is 0.28.0",
+			},
+		},
 	}
 }
 

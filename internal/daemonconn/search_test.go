@@ -4,6 +4,7 @@ package daemonconn_test
 
 import (
 	"errors"
+	"path/filepath"
 	"testing"
 
 	"github.com/MustardSeedNetworks/stem/internal/daemonconn"
@@ -47,5 +48,18 @@ func TestSearchDirsHonoursTheOverrideFirst(t *testing.T) {
 	}
 	if len(dirs) < 2 {
 		t.Error("SearchDirs() offers no fallback beyond the override")
+	}
+}
+
+// The service's data directory is the override when set, else the packaged
+// location, never the working directory: `stem update` copies and restores it.
+func TestServiceDataDir(t *testing.T) {
+	t.Setenv("STEM_DATA_DIR", "/tmp/explicit-dir")
+	if got := daemonconn.ServiceDataDir(); got != "/tmp/explicit-dir" {
+		t.Fatalf("ServiceDataDir() with the override = %q", got)
+	}
+	t.Setenv("STEM_DATA_DIR", "")
+	if got := daemonconn.ServiceDataDir(); got == "." || !filepath.IsAbs(got) {
+		t.Fatalf("ServiceDataDir() = %q; want the packaged absolute path", got)
 	}
 }
