@@ -100,16 +100,17 @@ sudo cp bin/stem /usr/local/bin/
 
 ### First-Run Setup
 
-A fresh install needs no credentials. The service starts unclaimed: open
-`https://<host>:8444`, and the setup page asks for the password of the
-administrator account `admin`. Until it is set every login is refused. The
-password is stored as an Argon2id hash in `credentials.json` (mode 0600 on
-Linux and macOS) in the data directory, so it survives restarts and upgrades. A password reset
-through password recovery is stored the same way.
-
-The setup page is open to anyone who can reach the port until the password is
-set, so complete it right after installing, or install with the port
-firewalled.
+A fresh install needs no credentials. The service starts unclaimed and writes
+a one-time setup token to `.setup-token` in its data directory (mode 0600,
+readable only by the service user); the startup log names the file. Open
+`https://<host>:8444`: the setup page asks for that token, then for the
+password of the administrator account `admin`. Read the token on the host, for
+example `sudo cat /var/lib/stem/.setup-token`. Until setup completes every
+login is refused. The password is stored as an Argon2id hash in
+`credentials.json` (mode 0600 on Linux and macOS) in the data directory, so it
+survives restarts and upgrades, and the token file is deleted. A restart before
+setup completes issues a new token. A password reset through password recovery
+is stored the same way.
 
 | Platform | Data directory |
 | ---------- | ------------- |

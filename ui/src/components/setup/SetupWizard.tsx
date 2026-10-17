@@ -19,6 +19,7 @@ import { Button } from '../ui/Button';
 const MIN_PASSWORD_LENGTH = 12;
 
 interface SetupFormFields {
+  setupToken: string;
   password: string;
   confirmPassword: string;
 }
@@ -33,8 +34,8 @@ interface SetupWizardProps {
   suggestedPassword?: string;
   /** Username from setup status */
   username?: string;
-  /** One-time setup token required for security */
-  setupToken?: string;
+  /** Host file the daemon wrote the one-time setup token to */
+  setupTokenFile?: string;
 }
 
 /**
@@ -48,7 +49,7 @@ export function SetupWizard({
   onLogin,
   suggestedPassword,
   username = 'admin',
-  setupToken,
+  setupTokenFile,
 }: SetupWizardProps): ReactElement {
   const { t } = useTranslation(['setup', 'help']);
   const { role: currentRole, setRole } = useRole();
@@ -65,7 +66,7 @@ export function SetupWizard({
     formState: { errors, isSubmitting },
   } = useForm<SetupFormFields>({
     resolver: valibotResolver(SetupWizardSchema),
-    defaultValues: { password: '', confirmPassword: '' },
+    defaultValues: { setupToken: '', password: '', confirmPassword: '' },
     mode: 'onBlur',
   });
 
@@ -101,7 +102,7 @@ export function SetupWizard({
     }
   };
 
-  const onSubmit: SubmitHandler<SetupFormFields> = async ({ password }) => {
+  const onSubmit: SubmitHandler<SetupFormFields> = async ({ setupToken, password }) => {
     setSubmitError(null);
     // Declared outside the try so the catch can read it.
     const deadline = requestDeadline();
@@ -167,6 +168,30 @@ export function SetupWizard({
               {t('username.label')} <strong className="text-text-primary">{username}</strong>
             </p>
             <p className="text-xs text-text-muted mt-tight">{t('username.description')}</p>
+          </div>
+
+          {/* Setup token: copied from the host, never sent by the server */}
+          <div className="mb-section">
+            <label htmlFor="setup-token" className="text-xs font-semibold text-text-muted">
+              {t('setupToken.label')}
+            </label>
+            <input
+              id="setup-token"
+              data-testid="setup-token"
+              type="password"
+              autoComplete="off"
+              {...register('setupToken')}
+              className="mt-tight w-full rounded-xl border border-surface-border bg-surface-base px-3 py-row text-sm text-text-primary focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/30"
+              placeholder={t('setupToken.placeholder')}
+            />
+            {errors.setupToken ? (
+              <p className="text-xs text-status-error mt-tight">{errors.setupToken.message}</p>
+            ) : null}
+            {setupTokenFile ? (
+              <p className="text-xs text-text-muted mt-tight">
+                {t('setupToken.help', { path: setupTokenFile })}
+              </p>
+            ) : null}
           </div>
 
           {/* Role selection */}

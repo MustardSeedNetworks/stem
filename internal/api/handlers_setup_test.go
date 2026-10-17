@@ -307,7 +307,7 @@ func TestSetupStatusFollowsCredential(t *testing.T) {
 		if assertNeedsSetupBool(t, resp) {
 			t.Error("needsSetup = true for a daemon with a configured credential")
 		}
-		if _, leaked := resp["setupToken"]; leaked {
+		if _, leaked := resp["setupTokenFile"]; leaked {
 			t.Error("a claimed daemon issued a setup token")
 		}
 	})
@@ -318,8 +318,11 @@ func TestSetupStatusFollowsCredential(t *testing.T) {
 		if !assertNeedsSetupBool(t, resp) {
 			t.Error("needsSetup = false for a daemon with no credential")
 		}
-		if token, _ := resp["setupToken"].(string); token == "" {
-			t.Error("an unclaimed daemon issued no setup token")
+		if _, leaked := resp["setupToken"]; leaked {
+			t.Error("setup status returned the setup token")
+		}
+		if path, _ := resp["setupTokenFile"].(string); path == "" {
+			t.Error("an unclaimed daemon named no setup token file")
 		}
 	})
 }

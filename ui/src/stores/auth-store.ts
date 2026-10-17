@@ -40,7 +40,8 @@ export interface SetupStatus {
   needsSetup: boolean;
   username?: string;
   suggestedPassword?: string;
-  setupToken?: string;
+  /** Host file holding the setup token; the token itself is never served. */
+  setupTokenFile?: string;
 }
 
 /** Server response for GET /api/v1/recovery/status. */

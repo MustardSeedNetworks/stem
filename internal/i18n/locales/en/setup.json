@@ -7,6 +7,11 @@
     "label": "Username:",
     "description": "This is your admin username for Stem."
   },
+  "setupToken": {
+    "label": "Setup token",
+    "placeholder": "Paste the setup token",
+    "help": "Stem wrote a one-time setup token to {{path}} on the machine it runs on. Copy it from there (for example with sudo cat) to prove you control that machine."
+  },
   "password": {
     "chooseMethod": "Choose password method",
     "custom": {

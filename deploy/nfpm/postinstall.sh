@@ -118,7 +118,9 @@ EOF
 else
     echo "Web interface: https://localhost:8444 (self-signed certificate)"
     if [ "$fresh_install" = yes ]; then
-        echo '  First visit: set the administrator password (user "admin") in setup.'
+        echo '  First visit: paste the setup token from'
+        echo '    sudo cat /var/lib/stem/.setup-token'
+        echo '  then set the administrator password (user "admin").'
     fi
     echo "  Trust the cert: sudo stem install-ca"
     echo ""

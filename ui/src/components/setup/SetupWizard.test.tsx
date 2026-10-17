@@ -38,12 +38,22 @@ function renderWizard(props: Partial<Parameters<typeof SetupWizard>[0]> = {}) {
   };
 
   render(
-    <SetupWizard onComplete={onComplete} onLogin={onLogin} setupToken="token-abc" {...props} />,
+    <SetupWizard
+      onComplete={onComplete}
+      onLogin={onLogin}
+      setupTokenFile="/var/lib/stem/.setup-token"
+      {...props}
+    />,
   );
   return { onComplete, onLogin, setRole };
 }
 
+async function fillToken(token = 'token-abc') {
+  await userEvent.type(screen.getByTestId('setup-token'), token);
+}
+
 async function fillPassword(password = GOOD_PASSWORD) {
+  await fillToken();
   await userEvent.type(screen.getByLabelText(/^password$/i), password);
   await userEvent.type(screen.getByLabelText(/confirm password/i), password);
 }
@@ -70,7 +80,13 @@ describe('SetupWizard — completing setup', () => {
     cleanup();
   });
 
-  it('posts the password with the one-time setup token', async () => {
+  it('names the host file the setup token is in', () => {
+    renderWizard();
+
+    expect(screen.getByText(/\/var\/lib\/stem\/\.setup-token/)).toBeInTheDocument();
+  });
+
+  it('posts the password with the setup token the operator pasted', async () => {
     renderWizard();
     await fillPassword();
     await submit();
@@ -128,9 +144,23 @@ describe('SetupWizard — validation and errors', () => {
     cleanup();
   });
 
+  it('refuses to submit without the setup token', async () => {
+    vi.stubGlobal('fetch', vi.fn());
+    renderWizard();
+    await userEvent.type(screen.getByLabelText(/^password$/i), GOOD_PASSWORD);
+    await userEvent.type(screen.getByLabelText(/confirm password/i), GOOD_PASSWORD);
+    await submit();
+
+    await waitFor(() => {
+      expect(screen.getByText(/setup token is required/i)).toBeInTheDocument();
+    });
+    expect(vi.mocked(fetch)).not.toHaveBeenCalled();
+  });
+
   it('refuses mismatched passwords without calling the server', async () => {
     vi.stubGlobal('fetch', vi.fn());
     renderWizard();
+    await fillToken();
     await userEvent.type(screen.getByLabelText(/^password$/i), GOOD_PASSWORD);
     await userEvent.type(screen.getByLabelText(/confirm password/i), 'something-else-entirely');
     await submit();
@@ -243,6 +273,7 @@ describe('SetupWizard — generated password', () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({}) }));
     renderWizard({ suggestedPassword: 'generated-passphrase-1' });
 
+    await fillToken();
     await userEvent.click(radio('generated'));
     await submit();
 

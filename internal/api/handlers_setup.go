@@ -4,6 +4,7 @@ package api
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/MustardSeedNetworks/stem/internal/auth"
 	"github.com/MustardSeedNetworks/stem/internal/logging"
@@ -19,7 +20,9 @@ type SetupStatusResponse struct {
 	NeedsSetup        bool   `json:"needsSetup"`
 	Username          string `json:"username,omitempty"`
 	SuggestedPassword string `json:"suggestedPassword,omitempty"`
-	SetupToken        string `json:"setupToken,omitempty"`
+	// SetupTokenFile is where the operator reads the token setup/complete
+	// requires. The token itself is never returned here.
+	SetupTokenFile string `json:"setupTokenFile,omitempty"`
 }
 
 // SetupCompleteRequest is the request body for completing setup.
@@ -28,49 +31,46 @@ type SetupCompleteRequest struct {
 	SetupToken string `json:"setupToken"`
 }
 
-// handleSetupStatus checks if initial setup is required.
-// Returns setup token and suggested password if setup is needed.
+// handleSetupStatus reports whether initial setup is required and, while it
+// is, where the operator finds the setup token.
 func (s *Server) handleSetupStatus(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		WriteMethodNotAllowed(w)
 		return
 	}
 
-	needsSetup := s.needsInitialSetup()
-
 	resp := SetupStatusResponse{
-		NeedsSetup:        needsSetup,
+		NeedsSetup:        s.needsInitialSetup(),
 		Username:          s.authManager.GetUsername(),
 		SuggestedPassword: "",
-		SetupToken:        "",
+		SetupTokenFile:    "",
 	}
-
-	// If setup is needed, generate setup token and suggested password.
-	if needsSetup {
-		// Generate a suggested password.
-		suggestedPassword, err := auth.GenerateSecurePassword(suggestedPasswordLength)
-		if err == nil {
+	if resp.NeedsSetup {
+		if suggestedPassword, err := auth.GenerateSecurePassword(suggestedPasswordLength); err == nil {
 			resp.SuggestedPassword = suggestedPassword
 		}
-
-		// Generate one-time setup token.
-		if s.setupTokenManager != nil {
-			setupToken, tokenErr := s.setupTokenManager.GenerateToken()
-			if tokenErr != nil {
-				logging.Error("Failed to generate setup token", "error", tokenErr)
-				WriteError(w, ErrInternalError)
-				return
-			}
-			resp.SetupToken = setupToken
-			logging.Info("Setup token generated", "event", "auth.setup.token_generated")
-		}
+		resp.SetupTokenFile = s.setupTokenManager.FilePath()
 	}
 
 	writeJSON(w, resp)
 }
 
+// issueSetupToken writes the token for this setup window and logs where the
+// operator finds it. Without the file setup cannot complete, so a failure is
+// logged rather than ending startup: the rest of the daemon runs.
+func (s *Server) issueSetupToken() {
+	if err := s.setupTokenManager.Issue(); err != nil {
+		logging.Error("Failed to write the setup token; setup cannot complete",
+			"event", "auth.setup.token_failed", "path", s.setupTokenManager.FilePath(), "error", err)
+		return
+	}
+	logging.Info("Setup pending: enter the setup token from this file in the setup wizard",
+		"event", "auth.setup.token_issued", "path", s.setupTokenManager.FilePath())
+}
+
 // handleSetupComplete completes initial setup by setting admin password.
-// Requires valid setup token to prevent CSRF attacks.
+// The setup token proves the caller can read the host's data directory, so
+// neither a network peer nor a cross-site form can claim the daemon.
 func (s *Server) handleSetupComplete(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		WriteMethodNotAllowed(w)
@@ -94,9 +94,10 @@ func (s *Server) handleSetupComplete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Validate setup token.
-	if s.setupTokenManager == nil || !s.setupTokenManager.ValidateToken(req.SetupToken) {
+	if !s.setupTokenManager.Validate(strings.TrimSpace(req.SetupToken)) {
 		logging.Warn("Invalid setup token provided", "event", "auth.setup.invalid_token")
-		http.Error(w, "Invalid or expired setup token", http.StatusForbidden)
+		http.Error(w, "Invalid setup token. Copy it from "+s.setupTokenManager.FilePath()+" and try again.",
+			http.StatusForbidden)
 		return
 	}
 
@@ -126,9 +127,8 @@ func (s *Server) handleSetupComplete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Invalidate the setup token.
-	if s.setupTokenManager != nil {
-		s.setupTokenManager.Invalidate()
+	if consumeErr := s.setupTokenManager.Consume(); consumeErr != nil {
+		logging.Warn("Failed to remove the setup token file", "error", consumeErr)
 	}
 
 	// Log successful setup.

@@ -2,129 +2,105 @@
 
 package auth
 
+// The first-run setup token proves the caller can read the host's data
+// directory, the same possession proof password recovery uses. It is never
+// sent over HTTP: setup/status answers any network peer, so a token served
+// there would let whoever reached the port first claim admin. A cross-site
+// form cannot read the file either, so the CSRF protection the token was
+// first added for holds as before.
+
 import (
 	"crypto/rand"
 	"crypto/subtle"
 	"encoding/base64"
+	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"sync"
-	"time"
 )
 
-// Setup token configuration.
 const (
 	// setupTokenLength is the length of setup tokens in bytes before encoding.
 	setupTokenLength = 32
 
-	// SetupTokenExpiry is how long a setup token remains valid.
-	// Short expiry prevents token reuse after the setup wizard is closed.
-	SetupTokenExpiry = 15 * time.Minute
+	// setupTokenFile is the data-directory file the token is written to.
+	setupTokenFile = ".setup-token"
 )
 
-// SetupToken represents a one-time setup token with metadata.
-type SetupToken struct {
-	Token     string    // The actual token string (base64-encoded)
-	ExpiresAt time.Time // When the token expires
-	Used      bool      // Whether the token has been used
-}
-
-// SetupTokenManager manages setup token generation and validation.
-// Implements a single-use token pattern for setup completion security.
-// Prevents CSRF and unauthenticated password reset during first-time setup.
+// SetupTokenManager issues the first-run setup token to a 0600 file and
+// checks the token the operator copies from it. The token lives until setup
+// completes; a restart issues a new one.
 type SetupTokenManager struct {
-	mu    sync.RWMutex
-	token *SetupToken
+	mu      sync.Mutex
+	token   string
+	dataDir string
 }
 
-// NewSetupTokenManager creates a new setup token manager.
-func NewSetupTokenManager() *SetupTokenManager {
-	return &SetupTokenManager{
-		mu:    sync.RWMutex{},
-		token: nil,
+// NewSetupTokenManager creates a manager that writes its token under dataDir.
+// The path is made absolute because the operator is shown it, and the
+// default data directory is the service's working directory.
+func NewSetupTokenManager(dataDir string) *SetupTokenManager {
+	if abs, err := filepath.Abs(dataDir); err == nil {
+		dataDir = abs
 	}
+	return &SetupTokenManager{mu: sync.Mutex{}, token: "", dataDir: dataDir}
 }
 
-// GenerateToken creates a new cryptographically secure setup token.
-// Each call generates a new token, invalidating any previous token.
-// Returns the token string to be sent to the client.
-func (m *SetupTokenManager) GenerateToken() (string, error) {
-	// Generate cryptographically secure random bytes.
+// FilePath returns the path the token is written to.
+func (m *SetupTokenManager) FilePath() string {
+	return filepath.Join(m.dataDir, setupTokenFile)
+}
+
+// Issue generates a new token and writes it to FilePath, readable only by the
+// daemon's user, replacing any earlier token.
+func (m *SetupTokenManager) Issue() error {
 	tokenBytes := make([]byte, setupTokenLength)
-	_, err := rand.Read(tokenBytes)
-	if err != nil {
-		return "", fmt.Errorf("failed to generate setup token: %w", err)
+	if _, err := rand.Read(tokenBytes); err != nil {
+		return fmt.Errorf("generate setup token: %w", err)
 	}
-
 	token := base64.URLEncoding.EncodeToString(tokenBytes)
 
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	// Store the new token, replacing any existing one.
-	m.token = &SetupToken{
-		Token:     token,
-		ExpiresAt: time.Now().Add(SetupTokenExpiry),
-		Used:      false,
+	if err := os.MkdirAll(m.dataDir, 0o700); err != nil {
+		return fmt.Errorf("create data directory: %w", err)
 	}
-
-	return token, nil
+	// Remove first so the 0600 mode applies even when an earlier file was
+	// created with a looser one.
+	path := m.FilePath()
+	if err := os.Remove(path); err != nil && !errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("remove old setup token: %w", err)
+	}
+	if err := os.WriteFile(path, []byte(token+"\n"), 0o600); err != nil {
+		return fmt.Errorf("write setup token: %w", err)
+	}
+	m.token = token
+	return nil
 }
 
-// ValidateToken checks if the provided token is valid.
-// The token is invalidated after successful validation (single-use).
-// Uses constant-time comparison to prevent timing attacks.
-func (m *SetupTokenManager) ValidateToken(providedToken string) bool {
-	if providedToken == "" {
-		return false
-	}
-
+// Validate reports whether provided matches the issued token, in constant
+// time. It does not consume the token, so a password the policy rejects can
+// be retried without a restart.
+func (m *SetupTokenManager) Validate(provided string) bool {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	// Check if token exists.
-	if m.token == nil {
+	if m.token == "" || provided == "" {
 		return false
 	}
-
-	// Check if already used.
-	if m.token.Used {
-		return false
-	}
-
-	// Check expiry.
-	if time.Now().After(m.token.ExpiresAt) {
-		m.token = nil // Clean up expired token.
-		return false
-	}
-
-	// Constant-time comparison to prevent timing attacks.
-	if subtle.ConstantTimeCompare([]byte(providedToken), []byte(m.token.Token)) != 1 {
-		return false
-	}
-
-	// Mark as used (single-use).
-	m.token.Used = true
-
-	return true
+	return subtle.ConstantTimeCompare([]byte(provided), []byte(m.token)) == 1
 }
 
-// Invalidate removes any existing token.
-// Called after successful setup completion to ensure token cannot be reused.
-func (m *SetupTokenManager) Invalidate() {
+// Consume clears the token and deletes its file once setup has completed.
+func (m *SetupTokenManager) Consume() error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	m.token = nil
-}
 
-// HasValidToken returns true if there's a valid unexpired token.
-// Used for debugging/logging purposes only.
-func (m *SetupTokenManager) HasValidToken() bool {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-
-	if m.token == nil || m.token.Used {
-		return false
+	m.token = ""
+	if err := os.Remove(m.FilePath()); err != nil && !errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("remove setup token: %w", err)
 	}
-
-	return time.Now().Before(m.token.ExpiresAt)
+	return nil
 }
