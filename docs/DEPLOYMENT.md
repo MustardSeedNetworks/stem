@@ -331,13 +331,17 @@ installs a newer version. `--source` takes `github` (the default), an
 `https://` mirror or an absolute directory for an air-gapped site; both lay
 releases out as `<base>/vX.Y.Z/<asset>`.
 
-Automatic updates are **off** until an operator turns them on:
+Automatic updates are **off** until an operator turns them on, under
+**Settings → Updates** in the web UI or from the CLI:
 
 ```bash
 sudo stem update --automatic on                              # daily, from GitHub
 sudo stem update --automatic on --source /srv/stem-releases  # daily, from a directory
 sudo stem update --automatic off
 ```
+
+Settings shows the source but does not change it; set a mirror or directory
+with `--source` once, and the Settings switch keeps it.
 
 A daily check runs `stem update --scheduled` around 03:00 local time. While
 automatic updates are off it stops before any network call, so an install that

@@ -58,6 +58,15 @@
     "trialTooltip": "Enable all licensed features for {{days}} days without a license key; trial can only be started once per device",
     "type": "License Type"
   },
+  "update": {
+    "automatic": "Automatic updates",
+    "automaticDesc": "Every day around 03:00, install a newer release once its signature and provenance check out. Off until you turn it on.",
+    "loadFailed": "Could not read the automatic update setting.",
+    "loading": "Loading update settings...",
+    "saveFailed": "Could not save the automatic update setting.",
+    "sectionTitle": "Updates",
+    "source": "Source"
+  },
   "advanced": {
     "logLevel": "Log Level",
     "enableTelemetry": "Enable telemetry",

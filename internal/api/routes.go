@@ -65,6 +65,15 @@ func (s *Server) apiRoutes() []route.Route {
 			Limiter: limitAPI,
 		},
 		{Path: "/api/v1/mode", Handler: s.handleMode, Methods: getPost, Auth: true, CSRF: true, Limiter: limitAPI},
+		// Automatic update opt-in (ADR-0012): the Settings toggle.
+		{
+			Path:    "/api/v1/update/settings",
+			Handler: s.handleUpdateSettings,
+			Methods: getPost,
+			Auth:    true,
+			CSRF:    true,
+			Limiter: limitAPI,
+		},
 		// SSE stream — long-lived, unauthenticated (observational frames only).
 		// If privileged frames are ever published here, set Auth.
 		{Path: "/api/v1/events", Handler: s.handleSSEEvents, Methods: get},

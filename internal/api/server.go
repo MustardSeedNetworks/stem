@@ -33,6 +33,10 @@
 //   - GET  /api/v1/settings    - Get current settings (interface, mode)
 //   - POST /api/v1/settings    - Update settings (validates interface exists)
 //
+// Automatic Updates (ADR-0012):
+//   - GET  /api/v1/update/settings - Get the automatic update opt-in and its source
+//   - POST /api/v1/update/settings - Turn the automatic update on or off
+//
 // Reflector Mode:
 //   - GET  /api/v1/reflector/config - Get reflector configuration
 //   - POST /api/v1/reflector/config - Update reflector configuration
@@ -165,6 +169,7 @@ type Server struct {
 	dataDir              string                     // Application data directory for recovery files
 	instanceLock         *instance.Lock             // Single-instance lock on dataDir, held for the lifetime of Run (#1336)
 	runGuard             *update.RunGuard           // Run lock on dataDir, held while a run is active so `stem update` waits (ADR-0012)
+	updateSettingsMu     sync.Mutex                 // Serializes Settings writes of the automatic update opt-in, which share one temp file
 	publishedURL         atomic.Pointer[string]     // base URL this daemon published for the local CLI (#1166), nil when none
 	runInstanceID        string                     // per-daemon segment of every run ID (#1166)
 	tlsFingerprint       tlsutil.FingerprintCache   // Cached SHA-256 fingerprint of the active TLS cert (exposed via /__version)

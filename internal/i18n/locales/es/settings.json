@@ -58,6 +58,15 @@
     "trialTooltip": "Habilite todas las funciones con licencia durante {{days}} días sin clave de licencia; la prueba solo puede iniciarse una vez por dispositivo",
     "type": "Tipo de Licencia"
   },
+  "update": {
+    "automatic": "Actualizaciones automáticas",
+    "automaticDesc": "Cada día hacia las 03:00, instala una versión más reciente cuando su firma y su procedencia sean válidas. Desactivadas hasta que las active.",
+    "loadFailed": "No se pudo leer la configuración de actualización automática.",
+    "loading": "Cargando la configuración de actualizaciones...",
+    "saveFailed": "No se pudo guardar la configuración de actualización automática.",
+    "sectionTitle": "Actualizaciones",
+    "source": "Origen"
+  },
   "advanced": {
     "logLevel": "Nivel de Registro",
     "enableTelemetry": "Habilitar telemetria",
