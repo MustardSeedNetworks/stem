@@ -1,0 +1,10 @@
+Template: stem/automatic-updates
+Type: boolean
+Default: false
+Description: Install new Stem releases automatically?
+ Once a day, around 03:00, Stem checks for a newer release, verifies its
+ signature and provenance, and installs it. It never updates while a test
+ is running, and a failed update rolls back.
+ .
+ Leave this off on a network without internet access. You can change it
+ later in Settings or with "stem update --automatic on|off".
