@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.30.1](https://github.com/MustardSeedNetworks/stem/compare/v0.30.0...v0.30.1) (2026-10-17)
+
+
+### Bug Fixes
+
+* **deps:** update dependency i18next to v26.4.3 ([#1813](https://github.com/MustardSeedNetworks/stem/issues/1813)) ([d0f4152](https://github.com/MustardSeedNetworks/stem/commit/d0f4152bb766d6930102b9459f055a7bc5bbf986))
+* **hooks:** run Biome from ui/ without spawning cd ([#1814](https://github.com/MustardSeedNetworks/stem/issues/1814)) ([17d66d1](https://github.com/MustardSeedNetworks/stem/commit/17d66d1ccd25c9f6a69b0c8883983bb1331c0ef0))
+
 ## [0.30.0](https://github.com/MustardSeedNetworks/stem/compare/v0.29.0...v0.30.0) (2026-10-17)
 
 
