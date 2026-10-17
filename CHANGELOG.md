@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.30.0](https://github.com/MustardSeedNetworks/stem/compare/v0.29.0...v0.30.0) (2026-10-17)
+
+
+### Features
+
+* **update:** add the daily automatic update check, off by default ([#1810](https://github.com/MustardSeedNetworks/stem/issues/1810)) ([7777be7](https://github.com/MustardSeedNetworks/stem/commit/7777be7bbe5c8bbe6dc0159a50a2132b0d74d1b9))
+
+
+### Bug Fixes
+
+* **deps:** update dependency lucide-react to v1.55.0 ([#1812](https://github.com/MustardSeedNetworks/stem/issues/1812)) ([4cc046d](https://github.com/MustardSeedNetworks/stem/commit/4cc046de9c1024d14444b2ed530a3a8e302c3b66))
+
 ## [0.29.0](https://github.com/MustardSeedNetworks/stem/compare/v0.28.0...v0.29.0) (2026-10-17)
 
 
