@@ -713,8 +713,12 @@ jobs:
       # rules excluded from that gate (G204, G304, G702; see .golangci.yml).
       # Those findings are expected, so continue-on-error stays: dropping it
       # would turn the advisory rules into a second gate. The upload below is
-      # the opposite and fails loudly — a silent upload leaves the Security
-      # tab showing an older scan. Matches niac-go and trellis.
+      # the opposite and fails loudly on pull_request — a silent upload leaves
+      # the Security tab showing an older scan. merge_group is the exception:
+      # the queue deletes gh-readonly-queue/* as soon as the group merges or
+      # is ejected, and upload-sarif then fails with "ref not found" after the
+      # scan has already passed (seed, niac-go). The pull_request run already
+      # published this scan.
       - name: Run gosec
         uses: securego/gosec@deb54465fea23d19a77f037e11e6589021f8501d # v2.29.0
         continue-on-error: true
@@ -723,7 +727,7 @@ jobs:
 
       - name: Upload gosec results
         uses: github/codeql-action/upload-sarif@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
-        if: always() && hashFiles('gosec-results.sarif') != ''
+        if: always() && github.event_name != 'merge_group' && hashFiles('gosec-results.sarif') != ''
         with:
           sarif_file: gosec-results.sarif
 
@@ -817,17 +821,21 @@ jobs:
       # different: if it fails silently the Security tab keeps showing an older
       # scan, so the dashboard says "clean" because nothing new arrived rather
       # than because nothing was found. A stale security view is worse than an
-      # absent one, so this step fails loudly. Matches niac-go and trellis.
+      # absent one, so this step fails loudly on pull_request. merge_group is
+      # the exception: the queue deletes gh-readonly-queue/* before the upload
+      # runs, which fails the job with "ref not found" (seed, niac-go). The
+      # findings gate below still reads the local SARIF.
       - name: Upload Trivy results
         uses: github/codeql-action/upload-sarif@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
-        if: always() && hashFiles('trivy-results.sarif') != ''
+        if: always() && github.event_name != 'merge_group' && hashFiles('trivy-results.sarif') != ''
         with:
           sarif_file: trivy-results.sarif
 
       - name: Fail on CRITICAL/HIGH findings
         # Reads the SARIF Trivy just produced and fails CI if any CRITICAL or
-        # HIGH-severity result is present. We do this in a separate step so
-        # the SARIF is always uploaded for security tab visibility.
+        # HIGH-severity result is present. Separate from the upload so a
+        # pull_request still publishes to the security tab, and a merge_group
+        # run still gates on the findings when that upload is skipped.
         if: always() && hashFiles('trivy-results.sarif') != ''
         run: |
           if jq -e '.runs[].results[] | select(.level=="error" or .properties.security_severity == "high" or .properties.security_severity == "critical")' trivy-results.sarif >/dev/null; then
@@ -855,13 +863,17 @@ jobs:
   # isn't worth the added complexity.
   # Defined once in MustardSeedNetworks/.github (fleet-shared); ci-complete
   # still needs: [semgrep]. Edit the pinned version / config policy there.
+  # .github#174 skips the SARIF upload on merge_group; the scan and the
+  # ERROR gate still run. The queue deletes gh-readonly-queue/* before
+  # upload-sarif can post, and that "ref not found" failure was dropping
+  # groups in seed and niac-go.
   semgrep:
-    uses: MustardSeedNetworks/.github/.github/workflows/semgrep.yml@048d173dd72ca0f9e5fa832fb5b9fd2a6447e5e9 # v1.13.0
+    uses: MustardSeedNetworks/.github/.github/workflows/semgrep.yml@8f012be52b47d0be45104b0ed8d3eb72f20840f5 # .github#174
     permissions:
       contents: read
-      # v1.8.0 publishes the all-severity SARIF to code scanning. The
-      # upload is deliberately not continue-on-error, so this scope is
-      # required, not optional.
+      # The shared workflow publishes the all-severity SARIF to code scanning
+      # on pull_request and push. That upload is not continue-on-error, so
+      # this scope is required, not optional.
       security-events: write
 
   # Refuses a PR that INTRODUCES a Go dependency carrying a High advisory,
@@ -992,6 +1004,9 @@ jobs:
 
       - name: Gate self-test
         run: python3 scripts/test-check-release-notes.py
+
+      - name: Merge queue guard self-test
+        run: python3 scripts/test-merge-queue-guards.py
 
       # Only judge the tree that is about to land. On a push to main the
       # release commit is already history, so failing there would wedge the
