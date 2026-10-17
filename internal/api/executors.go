@@ -38,8 +38,18 @@ func (s *Server) testExecutorResolver() func(string) (executorFactory, bool) {
 	return s.executorResolver
 }
 
-// executeReflector starts the reflector mode.
-func (s *Server) executeReflector(iface, profile string) error {
+// executeReflector starts the reflector mode. It takes ownership of release,
+// the run's hold on the run lock: a reflector that started keeps it until it
+// is stopped, and one that did not start drops it here.
+func (s *Server) executeReflector(iface, profile string, release func()) error {
+	if err := s.startReflector(iface, profile, release); err != nil {
+		release()
+		return err
+	}
+	return nil
+}
+
+func (s *Server) startReflector(iface, profile string, release func()) error {
 	s.reflectorMu.Lock()
 	defer s.reflectorMu.Unlock()
 
@@ -89,6 +99,11 @@ func (s *Server) executeReflector(iface, profile string) error {
 	}
 
 	s.statsMu.Lock()
+	// A reflector that stopped by itself never went through a stop path, so
+	// its hold is still here. The new hold is already taken, so dropping the
+	// old one cannot let the lock go.
+	s.takeReflectorReleaseLocked()()
+	s.reflectorRelease = release
 	s.testStatus = statusRunning
 	s.currentTest = testTypeReflect
 	s.currentModule = ""
@@ -101,7 +116,7 @@ func (s *Server) executeReflector(iface, profile string) error {
 		Message:  "",
 		Data:     result.Data,
 	}
-	s.stampRunTimingLocked(s.testResult)
+	s.stampRunRecordLocked(s.testResult)
 	s.statsMu.Unlock()
 	logging.Info("Reflector started", "success", result.Success)
 
@@ -301,4 +316,18 @@ func populateTrafficGenParams(modCfg *modtypes.TestConfig, c *TrafficGenTestConf
 	modCfg.Params["duration_sec"] = c.Duration
 	modCfg.Params["warmup_sec"] = c.Warmup
 	modCfg.Params["stream_id"] = c.StreamID
+}
+
+// takeReflectorReleaseLocked detaches the running reflector's run-lock hold so
+// the caller can release it once the reflector has actually stopped. It
+// returns a no-op when no reflector holds the lock.
+//
+// Callers must hold s.statsMu.
+func (s *Server) takeReflectorReleaseLocked() func() {
+	release := s.reflectorRelease
+	s.reflectorRelease = nil
+	if release == nil {
+		return func() {}
+	}
+	return release
 }

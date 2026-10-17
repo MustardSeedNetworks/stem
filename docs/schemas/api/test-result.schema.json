@@ -286,6 +286,12 @@
         },
         "duration": {
           "type": "integer"
+        },
+        "stemVersion": {
+          "type": "string"
+        },
+        "stemCommit": {
+          "type": "string"
         }
       },
       "additionalProperties": false,

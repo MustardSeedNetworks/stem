@@ -190,6 +190,7 @@ func (s *Server) teardownForModeSwitch() {
 	if exec != nil {
 		s.reflectorExec = nil
 	}
+	releaseReflector := s.takeReflectorReleaseLocked()
 	s.statsMu.Unlock()
 
 	if cancellable, ok := testExec.(interface{ Cancel() }); ok {
@@ -199,6 +200,7 @@ func (s *Server) teardownForModeSwitch() {
 		logging.Info("stopping reflector for mode switch")
 		exec.Stop()
 	}
+	releaseReflector()
 	if wasRunning {
 		logging.Info("test cancelled for mode switch")
 	}

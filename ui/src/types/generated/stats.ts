@@ -133,4 +133,6 @@ export interface TestResultResponse {
   startedAt?: string;
   completedAt?: string;
   duration?: number;
+  stemVersion?: string;
+  stemCommit?: string;
 }

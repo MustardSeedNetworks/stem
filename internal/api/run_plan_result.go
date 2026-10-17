@@ -12,7 +12,7 @@ func (s *Server) planResult(success bool, message string) *TestResultResponse {
 		SuiteID:  s.runPlan.ID,
 		Steps:    append([]RunPlanStep(nil), s.runPlan.Steps...),
 	}
-	s.stampRunTimingLocked(result)
+	s.stampRunRecordLocked(result)
 	return result
 }
 

@@ -2137,7 +2137,7 @@ func TestExecuteReflectorCoverage(t *testing.T) {
 	// Note: Actually executing reflector requires a valid interface
 	// and may have platform-specific behavior. Test the error path.
 	t.Run("execute with nonexistent interface", func(t *testing.T) {
-		execErr := s.executeReflector("nonexistent_iface_xyz123", "")
+		execErr := s.executeReflector("nonexistent_iface_xyz123", "", func() {})
 		if execErr == nil {
 			t.Error("Expected error for nonexistent interface")
 		}
@@ -3296,7 +3296,7 @@ func TestExecuteReflectorVariations(t *testing.T) {
 	t.Run("execute with nonexistent interface", func(t *testing.T) {
 		s := newTestServer(t)
 
-		execErr := s.executeReflector("nonexistent_iface_xyz", "")
+		execErr := s.executeReflector("nonexistent_iface_xyz", "", func() {})
 		if execErr == nil {
 			t.Error("Expected error for nonexistent interface")
 		}
@@ -3311,7 +3311,7 @@ func TestExecuteReflectorVariations(t *testing.T) {
 			t.Skip("No network interfaces available")
 		}
 
-		execErr := s.executeReflector(ifaces[0].Name, "")
+		execErr := s.executeReflector(ifaces[0].Name, "", func() {})
 		// May succeed or fail depending on permissions.
 		t.Logf("executeReflector error: %v", execErr)
 	})

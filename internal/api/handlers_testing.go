@@ -11,6 +11,7 @@ import (
 	"github.com/MustardSeedNetworks/stem/internal/logging"
 	"github.com/MustardSeedNetworks/stem/internal/netif"
 	"github.com/MustardSeedNetworks/stem/internal/services"
+	"github.com/MustardSeedNetworks/stem/internal/update"
 )
 
 var errTestAlreadyRunning = errors.New("test already running")
@@ -69,8 +70,13 @@ func (s *Server) handleTestStart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	release, ok := s.acquireRunLock(w)
+	if !ok {
+		return
+	}
 	runID, beginErr := s.beginRunPlan(plan)
 	if beginErr != nil {
+		release()
 		if errors.Is(beginErr, errTestAlreadyRunning) {
 			WriteConflict(w, "A test is already running")
 			return
@@ -84,7 +90,7 @@ func (s *Server) handleTestStart(w http.ResponseWriter, r *http.Request) {
 		"steps", len(plan.Steps),
 		"interface", iface,
 	)
-	s.startRunPlan(runID, iface, plan.ID)
+	s.startRunPlan(runID, iface, plan.ID, release)
 
 	writeJSON(w, TestStartResponse{
 		Status:  "started",
@@ -99,8 +105,13 @@ func (s *Server) startReflectorRequest(
 	iface string,
 	step RunPlanStep,
 ) {
+	release, ok := s.acquireRunLock(w)
+	if !ok {
+		return
+	}
 	runID, err := s.beginTestRun(step.TestType, step.Module)
 	if err != nil {
+		release()
 		if errors.Is(err, errTestAlreadyRunning) {
 			WriteConflict(w, "A test is already running")
 			return
@@ -110,11 +121,27 @@ func (s *Server) startReflectorRequest(
 	}
 	// The only module that reaches this path is the reflector: a plan of one
 	// step whose module is the reflector, checked by the caller.
-	if execErr := s.executeReflector(iface, req.Profile); execErr != nil {
+	if execErr := s.executeReflector(iface, req.Profile, release); execErr != nil {
 		s.respondTestExecutionError(w, execErr, step.Module, step.TestType)
 		return
 	}
 	writeJSON(w, TestStartResponse{Status: "started", SuiteID: runID})
+}
+
+// acquireRunLock takes a hold on the run lock for a run about to start. The
+// only other holder is `stem update`, so a refusal means an update is
+// installing and the run would measure a binary that is being replaced.
+func (s *Server) acquireRunLock(w http.ResponseWriter) (func(), bool) {
+	release, err := s.runGuard.Acquire()
+	switch {
+	case errors.Is(err, update.ErrRunLockHeld):
+		WriteConflict(w, "An update is being installed")
+		return nil, false
+	case err != nil:
+		WriteInternalError(w, err)
+		return nil, false
+	}
+	return release, true
 }
 
 // handleTestStop stops the current test or reflector.
@@ -138,6 +165,7 @@ func (s *Server) handleTestStop(w http.ResponseWriter, r *http.Request) {
 		exec.Stop()
 		s.statsMu.Lock()
 		s.markStoppedLocked()
+		s.takeReflectorReleaseLocked()()
 		s.statsMu.Unlock()
 		logging.Info("Reflector stopped via API")
 		writeJSON(w, StatusResponse{Status: statusStopped})
@@ -189,7 +217,7 @@ func (s *Server) markStoppedLocked() {
 	if s.testResult != nil {
 		stopped := *s.testResult
 		stopped.Status = statusStopped
-		s.stampRunTimingLocked(&stopped)
+		s.stampRunRecordLocked(&stopped)
 		s.testResult = &stopped
 	}
 }
@@ -324,7 +352,7 @@ func (s *Server) respondTestExecutionError(
 		Message:  "",
 		Data:     nil,
 	}
-	s.stampRunTimingLocked(s.testResult)
+	s.stampRunRecordLocked(s.testResult)
 	s.statsMu.Unlock()
 
 	// Use the centralized error mapping for test errors.

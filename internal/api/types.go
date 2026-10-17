@@ -257,6 +257,9 @@ type TestResultResponse struct {
 	StartedAt   *time.Time `json:"startedAt,omitempty"`
 	CompletedAt *time.Time `json:"completedAt,omitempty"`
 	DurationMs  *int64     `json:"duration,omitempty"`
+	// StemVersion and StemCommit name the build that produced the result.
+	StemVersion string `json:"stemVersion,omitempty"`
+	StemCommit  string `json:"stemCommit,omitempty"`
 }
 
 // ModeRequest for mode POST requests. Valid values are mirrored from

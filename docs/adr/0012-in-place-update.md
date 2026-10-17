@@ -88,9 +88,12 @@ The `--source` flag sets where releases come from. It is persisted for the
 scheduled layer in slice 2.
 
 - `github` (the default) uses the GitHub releases API for this repository.
-- An `https://` base URL is a mirror. A directory path is an air-gapped drop.
-  Both use one layout: `<base>/vX.Y.Z/<asset>`, with the assets kept under their
-  release names. "Latest" means the highest semver directory.
+- An `https://` base URL is a mirror. An absolute directory path is an
+  air-gapped drop. Both use one layout: `<base>/vX.Y.Z/<asset>`, with the assets
+  kept under their release names. For a directory, "latest" is the highest
+  semver subdirectory. HTTPS has no portable directory listing, so a mirror
+  names its newest tag in a `<base>/latest` file instead (amended 2026-10-17,
+  as built in `foundation/pkg/release` v0.10.0).
 
 Verification does not depend on the source. A mirror can withhold a release,
 but it cannot alter one.
@@ -150,7 +153,10 @@ While any test, session or reflector run is active, the daemon holds an
 advisory lock on `<state dir>/run.lock`: `flock` on Unix, `LockFileEx` on
 Windows. `stem update` takes the lock non-blocking and refuses while the daemon
 holds it. It keeps holding the lock through the install, so no run can start
-against a binary that is being replaced. Slice 1 also records stem's version
+against a binary that is being replaced. A daemon that the update restarts
+therefore finds the lock held at boot: a reflector set to start at boot waits
+for the lock in the background while the API serves, because the health check
+reads the API (amended 2026-10-17). Slice 1 also records stem's version
 and commit with every stored result. That is what makes results from either
 side of an update distinguishable.
 

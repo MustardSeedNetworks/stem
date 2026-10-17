@@ -21,6 +21,8 @@ export interface TestResultResponse {
   startedAt?: string;
   completedAt?: string;
   duration?: number;
+  stemVersion?: string;
+  stemCommit?: string;
 }
 export interface RunPlanStep {
   testType: string;
@@ -127,4 +129,6 @@ export interface TestResultResponse1 {
   startedAt?: string;
   completedAt?: string;
   duration?: number;
+  stemVersion?: string;
+  stemCommit?: string;
 }

@@ -383,6 +383,9 @@ func reportRunOutcome(status api.Stats, result api.TestResultResponse, flags *te
 		if result.Message != "" {
 			_, _ = fmt.Fprintf(os.Stdout, "%s\n", result.Message)
 		}
+		if result.StemVersion != "" {
+			_, _ = fmt.Fprintf(os.Stdout, "Measured by stem %s (%s)\n", result.StemVersion, result.StemCommit)
+		}
 		renderSteps(result.Steps)
 	}
 
