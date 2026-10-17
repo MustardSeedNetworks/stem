@@ -119,7 +119,7 @@ func TestAutostartReflectorRecordsTheCause(t *testing.T) {
 		Autostart: true,
 	}
 
-	s.autostartReflector()
+	s.autostartReflector(t.Context())
 
 	s.statsMu.RLock()
 	defer s.statsMu.RUnlock()

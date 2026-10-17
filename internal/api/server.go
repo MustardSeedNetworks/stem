@@ -97,6 +97,7 @@ import (
 	"github.com/MustardSeedNetworks/stem/internal/logging"
 	"github.com/MustardSeedNetworks/stem/internal/netif"
 	"github.com/MustardSeedNetworks/stem/internal/services/reflector"
+	"github.com/MustardSeedNetworks/stem/internal/update"
 	"github.com/MustardSeedNetworks/stem/internal/version"
 )
 
@@ -146,6 +147,7 @@ type Server struct {
 	mode                 string // "reflector" or "test_master"
 	reflectorConfig      ReflectorConfig
 	reflectorExec        *reflector.Executor // Active reflector executor (nil when not in reflector mode)
+	reflectorRelease     func()              // Releases the running reflector's run-lock hold; nil when none is held
 	licenseManager       *license.Manager
 	authManager          *auth.Manager
 	currentModule        string
@@ -162,6 +164,7 @@ type Server struct {
 	recoveryTokenManager *auth.RecoveryTokenManager // Recovery token manager for password recovery
 	dataDir              string                     // Application data directory for recovery files
 	instanceLock         *instance.Lock             // Single-instance lock on dataDir, held for the lifetime of Run (#1336)
+	runGuard             *update.RunGuard           // Run lock on dataDir, held while a run is active so `stem update` waits (ADR-0012)
 	publishedURL         atomic.Pointer[string]     // base URL this daemon published for the local CLI (#1166), nil when none
 	runInstanceID        string                     // per-daemon segment of every run ID (#1166)
 	tlsFingerprint       tlsutil.FingerprintCache   // Cached SHA-256 fingerprint of the active TLS cert (exposed via /__version)
@@ -326,6 +329,7 @@ func NewServer(listen ListenAddr) (*Server, error) {
 	s.corsAllowPrivate = corsAllowPrivateEnabled()
 	s.csrfManager = csrf.NewManager()
 	s.dataDir = getDataDir()
+	s.runGuard = update.NewRunGuard(s.dataDir)
 	s.setupTokenManager = auth.NewSetupTokenManager(s.dataDir)
 	s.recoveryTokenManager = auth.NewRecoveryTokenManager(s.dataDir)
 
@@ -594,7 +598,7 @@ func (s *Server) Run() error {
 	s.background = newBackgroundComponents(s)
 	s.background.Start(ctx)
 
-	s.autostartReflector()
+	s.autostartReflector(ctx)
 
 	s.httpServer = &http.Server{
 		Addr:              addr,
@@ -682,6 +686,9 @@ func (s *Server) Shutdown() error {
 		logging.Info("Stopping reflector...")
 		s.reflectorExec.Stop()
 	}
+	s.statsMu.Lock()
+	s.takeReflectorReleaseLocked()()
+	s.statsMu.Unlock()
 
 	// Stop any running test by updating status.
 	s.statsMu.Lock()

@@ -13,13 +13,16 @@ package api
 // would buy a migration path and a new failure mode for nothing.
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/MustardSeedNetworks/stem/internal/logging"
+	"github.com/MustardSeedNetworks/stem/internal/update"
 )
 
 const (
@@ -105,7 +108,12 @@ func (s *Server) loadReflectorState() error {
 // autostartReflector brings the reflector up at boot when an operator asked
 // for it. A failure is logged, not fatal: the daemon's API and UI must come
 // up so the operator can see why the reflector did not.
-func (s *Server) autostartReflector() {
+//
+// `stem update` holds the run lock through the restart it causes, so the
+// daemon it just started can find the lock held. The reflector then comes up
+// once the update lets go, and the API serves meanwhile: the update's health
+// check reads it.
+func (s *Server) autostartReflector(ctx context.Context) {
 	s.statsMu.RLock()
 	cfg := s.reflectorConfig
 	s.statsMu.RUnlock()
@@ -114,13 +122,56 @@ func (s *Server) autostartReflector() {
 		return
 	}
 
+	release, err := s.runGuard.Acquire()
+	switch {
+	case errors.Is(err, update.ErrRunLockHeld):
+		logging.Info("reflector autostart waits for the update being installed",
+			"event", "reflector.autostart.waiting")
+		go s.autostartAfterUpdate(ctx, cfg)
+	case err != nil:
+		logging.Error("reflector autostart could not take the run lock",
+			"event", "reflector.autostart.failed", "error", err)
+	default:
+		s.startAutostartReflector(cfg, release)
+	}
+}
+
+// runLockRetry is how often a waiting autostart asks for the run lock again.
+// An update holds it for tens of seconds, so a second's delay is noise.
+const runLockRetry = time.Second
+
+func (s *Server) autostartAfterUpdate(ctx context.Context, cfg ReflectorConfig) {
+	ticker := time.NewTicker(runLockRetry)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+		}
+		release, err := s.runGuard.Acquire()
+		if errors.Is(err, update.ErrRunLockHeld) {
+			continue
+		}
+		if err != nil {
+			logging.Error("reflector autostart could not take the run lock",
+				"event", "reflector.autostart.failed", "error", err)
+			return
+		}
+		s.startAutostartReflector(cfg, release)
+		return
+	}
+}
+
+func (s *Server) startAutostartReflector(cfg ReflectorConfig, release func()) {
 	runID, err := s.beginTestRun(testTypeReflect, "reflector")
 	if err != nil {
+		release()
 		logging.Error("reflector autostart could not reserve a run",
 			"event", "reflector.autostart.failed", "error", err)
 		return
 	}
-	if execErr := s.executeReflector(cfg.Interface, cfg.Profile); execErr != nil {
+	if execErr := s.executeReflector(cfg.Interface, cfg.Profile, release); execErr != nil {
 		s.statsMu.Lock()
 		s.testStatus = statusError
 		s.testError = classifyRunCause(execErr.Error())

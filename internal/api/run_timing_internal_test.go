@@ -32,7 +32,7 @@ func TestCompletedRunCarriesItsTimingOnTheWire(t *testing.T) {
 		t.Fatalf("beginRunPlan: %v", err)
 	}
 	before := time.Now()
-	s.startRunPlan(runID, "lo0", plan.ID)
+	s.startRunPlan(runID, "lo0", plan.ID, func() {})
 	waitForTestStatus(t, s, statusCompleted)
 
 	recorder := httptest.NewRecorder()
@@ -131,7 +131,7 @@ func runPlanToCompletion(t *testing.T, s *Server, want string) {
 	if err != nil {
 		t.Fatalf("beginRunPlan: %v", err)
 	}
-	s.startRunPlan(runID, "lo0", plan.ID)
+	s.startRunPlan(runID, "lo0", plan.ID, func() {})
 	waitForTestStatus(t, s, want)
 }
 
@@ -150,7 +150,7 @@ func driveStoppedReflector(t *testing.T, s *Server) {
 		TestType: testTypeReflect,
 		Module:   moduleReflector,
 	}
-	s.stampRunTimingLocked(s.testResult)
+	s.stampRunRecordLocked(s.testResult)
 	s.markStoppedLocked()
 }
 
@@ -176,7 +176,7 @@ func TestRunningReflectorHasNoCompletion(t *testing.T) {
 	}
 	s.statsMu.Lock()
 	result := &TestResultResponse{Status: statusRunning, TestType: testTypeReflect}
-	s.stampRunTimingLocked(result)
+	s.stampRunRecordLocked(result)
 	s.statsMu.Unlock()
 
 	if result.StartedAt == nil {

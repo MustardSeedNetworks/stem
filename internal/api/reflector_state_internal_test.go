@@ -147,7 +147,7 @@ func TestAutostartReflectorDoesNothingWhenNotAskedFor(t *testing.T) {
 	before := s.testRunID
 	s.statsMu.RUnlock()
 
-	s.autostartReflector()
+	s.autostartReflector(t.Context())
 
 	// The run counter is the precise signal: only beginTestRun advances it,
 	// so this distinguishes "never attempted" from "attempted and failed" —
@@ -173,7 +173,7 @@ func TestAutostartReflectorFailureLeavesNoRunning(t *testing.T) {
 		Autostart: true,
 	}
 
-	s.autostartReflector()
+	s.autostartReflector(t.Context())
 
 	s.statsMu.RLock()
 	defer s.statsMu.RUnlock()

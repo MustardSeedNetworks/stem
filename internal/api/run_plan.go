@@ -74,7 +74,11 @@ func newRunPlan(id string, request TestStartRequest) (*runPlan, error) {
 // The group holds one worker with [supervise.Fatal] because a run is not
 // restartable: repeating a measurement the operator did not ask for twice
 // would be worse than reporting the failure. runPlanFailed records it.
-func (s *Server) startRunPlan(runID uint64, iface string, suiteID string) {
+//
+// release drops the plan's run-lock hold once the worker has returned, not
+// when the run's status turns terminal: a cancelled step keeps driving the
+// dataplane until its executor notices, and an update must not start under it.
+func (s *Server) startRunPlan(runID uint64, iface string, suiteID string, release func()) {
 	// The suite id rides on the supervisor's own logger so the single line it
 	// writes when the worker faults already identifies the run; a second line
 	// from runPlanFailed adding it would report one fault twice.
@@ -87,6 +91,7 @@ func (s *Server) startRunPlan(runID uint64, iface string, suiteID string) {
 	group.Start(context.Background())
 
 	go func() {
+		defer release()
 		if group.Wait() != nil {
 			s.runPlanFailed(runID)
 		}

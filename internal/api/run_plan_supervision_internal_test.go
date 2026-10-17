@@ -42,7 +42,7 @@ func TestDataplanePanicFailsTheRunAndLeavesTheDaemonUp(t *testing.T) {
 	if beginErr != nil {
 		t.Fatalf("beginRunPlan: %v", beginErr)
 	}
-	s.startRunPlan(runID, "lo0", plan.ID)
+	s.startRunPlan(runID, "lo0", plan.ID, func() {})
 
 	// The daemon is still the process running this assertion: a panic that
 	// escaped would have taken the test binary with it.
@@ -122,7 +122,7 @@ func TestDataplanePanicReleasesTheRunSlot(t *testing.T) {
 	if beginErr != nil {
 		t.Fatalf("beginRunPlan: %v", beginErr)
 	}
-	s.startRunPlan(runID, "lo0", plan.ID)
+	s.startRunPlan(runID, "lo0", plan.ID, func() {})
 	waitForTestStatus(t, s, statusError)
 
 	next, planErr := newRunPlan("", request)

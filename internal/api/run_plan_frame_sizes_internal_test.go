@@ -148,7 +148,7 @@ func runFrameSizePlan(
 	if beginErr != nil {
 		t.Fatalf("beginRunPlan: %v", beginErr)
 	}
-	s.startRunPlan(runID, "lo", plan.ID)
+	s.startRunPlan(runID, "lo", plan.ID, func() {})
 	waitForTestStatus(t, s, wantStatus)
 	s.statsMu.RLock()
 	defer s.statsMu.RUnlock()
