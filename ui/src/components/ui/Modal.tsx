@@ -1,11 +1,11 @@
 /**
  * Modal primitive — ported from niac UI kit (Phase B).
  *
- * Focus is trapped via useFocusTrap so Tab/Shift+Tab cycle within the dialog.
- * Escape bubbles through onClose when closeOnEscape is true.
+ * Focus is trapped via useFocusTrap so Tab/Shift+Tab cycle within the dialog,
+ * and the trap calls onClose on Escape when closeOnEscape is true.
  */
 import { X } from 'lucide-react';
-import { type KeyboardEvent, type ReactNode, useEffect } from 'react';
+import { type ReactNode, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { iconSizes } from '../../constants/sizes';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
@@ -76,12 +76,6 @@ export function Modal({
     return null;
   }
 
-  const handleContentKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === 'Escape') {
-      e.stopPropagation();
-    }
-  };
-
   return (
     <div className="fixed inset-0 z-50 flex-center">
       {closeOnBackdropClick ? (
@@ -101,7 +95,6 @@ export function Modal({
         aria-modal="true"
         aria-labelledby={title ? 'modal-title' : undefined}
         aria-label={title ? undefined : ariaLabel}
-        onKeyDown={handleContentKeyDown}
       >
         {title || showCloseButton ? (
           <div className="flex-between px-6 py-4 border-b border-surface-border">

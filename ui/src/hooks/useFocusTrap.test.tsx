@@ -11,7 +11,8 @@
  */
 import { fireEvent } from '@testing-library/dom';
 import { render, screen } from '@testing-library/react';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { useState } from 'react';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { useFocusTrap } from './useFocusTrap';
 
 /**
@@ -67,6 +68,45 @@ function AutoFocused() {
   );
 }
 
+/** A drawer whose owner re-renders on demand, with a dialog that opens over it. */
+function DialogOverDrawer({
+  onDrawerEscape,
+  onDialogEscape,
+}: {
+  onDrawerEscape: () => void;
+  onDialogEscape: () => void;
+}) {
+  const [renders, setRenders] = useState(0);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const drawerRef = useFocusTrap<HTMLDivElement>({
+    isActive: true,
+    autoFocus: false,
+    onEscape: () => onDrawerEscape(),
+  });
+  const dialogRef = useFocusTrap<HTMLDivElement>({
+    isActive: dialogOpen,
+    autoFocus: false,
+    onEscape: () => onDialogEscape(),
+  });
+  return (
+    <>
+      <div ref={drawerRef}>
+        <button type="button" onClick={() => setDialogOpen(true)}>
+          open dialog
+        </button>
+        <button type="button" onClick={() => setRenders(renders + 1)}>
+          re-render {renders}
+        </button>
+      </div>
+      {dialogOpen ? (
+        <div ref={dialogRef}>
+          <button type="button">in dialog</button>
+        </div>
+      ) : null}
+    </>
+  );
+}
+
 const nextFrame = (): Promise<void> =>
   new Promise((resolve) => {
     requestAnimationFrame(() => resolve());
@@ -118,6 +158,31 @@ describe('useFocusTrap', () => {
 
     /* The browser moves focus itself; the trap only intervenes at the ends. */
     expect(document.activeElement).toBe(middle);
+  });
+
+  it('lets only the newest trap act on Escape', () => {
+    const onDrawerEscape = vi.fn();
+    const onDialogEscape = vi.fn();
+    render(<DialogOverDrawer onDrawerEscape={onDrawerEscape} onDialogEscape={onDialogEscape} />);
+    fireEvent.click(screen.getByRole('button', { name: 'open dialog' }));
+
+    fireEvent.keyDown(screen.getByRole('button', { name: 'in dialog' }), { key: 'Escape' });
+
+    expect(onDialogEscape).toHaveBeenCalledTimes(1);
+    expect(onDrawerEscape).not.toHaveBeenCalled();
+  });
+
+  it('keeps the dialog newest when the drawer under it re-renders', () => {
+    const onDrawerEscape = vi.fn();
+    const onDialogEscape = vi.fn();
+    render(<DialogOverDrawer onDrawerEscape={onDrawerEscape} onDialogEscape={onDialogEscape} />);
+    fireEvent.click(screen.getByRole('button', { name: 'open dialog' }));
+    fireEvent.click(screen.getByRole('button', { name: /^re-render/ }));
+
+    fireEvent.keyDown(screen.getByRole('button', { name: 'in dialog' }), { key: 'Escape' });
+
+    expect(onDialogEscape).toHaveBeenCalledTimes(1);
+    expect(onDrawerEscape).not.toHaveBeenCalled();
   });
 
   it('does nothing at all when the container has nothing focusable', () => {
