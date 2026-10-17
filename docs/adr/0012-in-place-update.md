@@ -109,6 +109,25 @@ scheduled task. It exits before any network call unless the persisted opt-in is
 on. The Settings toggle changes that persisted setting, and the daemon stays
 unprivileged.
 
+The scheduled layer, amended 2026-10-17 as built:
+
+- The opt-in is `<state dir>/update.json`, `{"automatic": false}` when the
+  file is missing. It is given the data directory's owner, so the Settings
+  toggle writes it without root, and `stem update --automatic on|off
+  [--source …]` writes it from the CLI. The timer reads it inside the data
+  directory only (a symlink out of it is refused), as strict JSON of at most
+  4 KiB, because it runs as root over a file the service account can write.
+  That account can therefore turn updates on or name a source. It gains
+  nothing by it: only a newer release that passes every check is installed.
+- `stem update --scheduled` loads the opt-in before anything else and exits
+  0 while it is off. It takes no `--source`; the saved one applies. A held run
+  lock is a skip, not a failure: the next day's check tries again.
+- The timers fire daily around 03:00 local time: `stem-update.timer`
+  (`RandomizedDelaySec=1h`, `Persistent=true`), enabled by the `.deb` and
+  `.rpm`; the `com.stem.update` LaunchDaemon, loaded by the macOS `.pkg`; and
+  on Windows, where the zip has no installer, a scheduled task the operator
+  registers once (`docs/DEPLOYMENT.md`).
+
 The install method follows how the running binary was installed. The
 operator never chooses it.
 

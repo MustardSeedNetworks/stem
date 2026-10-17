@@ -96,6 +96,7 @@ fi
 # Copy launchd plist
 log_step "3/6 Copying launchd configuration..."
 cp "$REPO_ROOT/deploy/launchd/com.stem.plist" "$BUILD_DIR/payload$INSTALL_LOCATION/launchd/"
+cp "$REPO_ROOT/deploy/launchd/com.stem.update.plist" "$BUILD_DIR/payload$INSTALL_LOCATION/launchd/"
 
 # Copy scripts
 log_step "4/6 Preparing installation scripts..."

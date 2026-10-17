@@ -1,0 +1,14 @@
+[Unit]
+Description=The Stem - daily automatic update check
+Documentation=https://github.com/MustardSeedNetworks/stem/blob/main/docs/DEPLOYMENT.md#updating
+
+# Off-hours, spread over an hour. A check missed while the host was down runs
+# at the next boot. A test or reflector run holds the run lock, and the check
+# then waits for the next day.
+[Timer]
+OnCalendar=*-*-* 03:00:00
+RandomizedDelaySec=1h
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -320,6 +320,45 @@ sudo launchctl bootstrap system /Library/LaunchDaemons/com.stem.plist  # load ag
 
 Logs are in `/usr/local/stem/logs/stem.log` and `stem.error.log`.
 
+### Updating
+
+`sudo stem update` installs the newest release in place (Administrator on
+Windows). It verifies the release's signature, checksum and build provenance
+offline before touching anything, copies the state directory, and restores
+both the state and the previous version if the new one is not healthy within
+60 seconds. It refuses while a test or reflector run is active and only ever
+installs a newer version. `--source` takes `github` (the default), an
+`https://` mirror or an absolute directory for an air-gapped site; both lay
+releases out as `<base>/vX.Y.Z/<asset>`.
+
+Automatic updates are **off** until an operator turns them on:
+
+```bash
+sudo stem update --automatic on                              # daily, from GitHub
+sudo stem update --automatic on --source /srv/stem-releases  # daily, from a directory
+sudo stem update --automatic off
+```
+
+A daily check runs `stem update --scheduled` around 03:00 local time. While
+automatic updates are off it stops before any network call, so an install that
+never turns them on never calls out. A check that finds a run active waits for
+the next day.
+
+| Install | Daily check | Its log |
+| ------- | ----------- | ------- |
+| `.deb` / `.rpm` | `stem-update.timer`, enabled by the package | `journalctl -u stem-update` |
+| macOS `.pkg` | `/Library/LaunchDaemons/com.stem.update.plist` | `/usr/local/stem/logs/update.log` |
+| macOS tarball | copy `launchd/com.stem.update.plist` to `/Library/LaunchDaemons` and `sudo launchctl bootstrap system` it | `/usr/local/stem/logs/update.log` |
+| Windows zip | register it once (below) | the task's history |
+
+On Windows, register the task once from an elevated prompt, with the path
+where `stem.exe` was unpacked:
+
+```powershell
+schtasks /Create /TN "Stem update" /SC DAILY /ST 03:00 /RU SYSTEM `
+  /TR "\"C:\Program Files\stem\stem.exe\" update --scheduled"
+```
+
 ### Create Service User
 
 ```bash

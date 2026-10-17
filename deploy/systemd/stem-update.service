@@ -1,0 +1,12 @@
+[Unit]
+Description=The Stem - automatic update check
+Documentation=https://github.com/MustardSeedNetworks/stem/blob/main/docs/DEPLOYMENT.md#updating
+After=network-online.target
+Wants=network-online.target
+
+# Runs as root because it replaces the installed package; the service itself
+# stays unprivileged. It exits before any network call unless an operator
+# turned automatic updates on (`stem update --automatic on`, or Settings).
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/stem update --scheduled

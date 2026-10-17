@@ -36,6 +36,10 @@ const healthPoll = time.Second
 // source could otherwise roll a site back.
 var ErrNotNewer = errors.New("no newer release is available")
 
+// ErrRunActive reports that a test or reflector run holds the run lock. An
+// instrument never updates mid-run.
+var ErrRunActive = errors.New("a test or reflector run is active; update after it finishes")
+
 // Fetcher downloads a release asset and every file that proves it, and
 // returns its path only once it verified. *release.Verifier is the real one.
 type Fetcher interface {
@@ -66,7 +70,7 @@ type Updater struct {
 func (u *Updater) Run(ctx context.Context) (string, error) {
 	unlock, err := NewRunGuard(u.DataDir).Acquire()
 	if errors.Is(err, ErrRunLockHeld) {
-		return "", errors.New("a test or reflector run is active; update after it finishes")
+		return "", ErrRunActive
 	}
 	if err != nil {
 		return "", err

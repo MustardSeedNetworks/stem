@@ -18,6 +18,7 @@ log "Starting pre-install for The Stem..."
 if launchctl list 2>/dev/null | grep -q "com.stem"; then
     log "Stopping existing service..."
     launchctl unload /Library/LaunchDaemons/com.stem.plist 2>/dev/null || true
+    launchctl unload /Library/LaunchDaemons/com.stem.update.plist 2>/dev/null || true
     sleep 2
 fi
 
