@@ -31,6 +31,28 @@ describe('Modal', () => {
     expect(screen.queryByRole('heading')).not.toBeInTheDocument();
   });
 
+  it('closes on Escape pressed on a control inside the dialog (#1604)', () => {
+    const onClose = vi.fn();
+    render(
+      <Modal isOpen onClose={onClose} title="Delete profile">
+        <button type="button">inside</button>
+      </Modal>,
+    );
+    fireEvent.keyDown(screen.getByRole('button', { name: 'inside' }), { key: 'Escape' });
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('stays open on Escape when closeOnEscape is false', () => {
+    const onClose = vi.fn();
+    render(
+      <Modal isOpen onClose={onClose} title="Delete profile" closeOnEscape={false}>
+        <button type="button">inside</button>
+      </Modal>,
+    );
+    fireEvent.keyDown(screen.getByRole('button', { name: 'inside' }), { key: 'Escape' });
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
   it('closes from the backdrop only when closeOnBackdropClick allows it', () => {
     const onClose = vi.fn();
     const { rerender } = render(
