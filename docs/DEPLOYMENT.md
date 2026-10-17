@@ -376,6 +376,32 @@ A choice already saved from Settings or the CLI wins over the answer when the
 package is upgraded, and `dpkg --purge` forgets it. The `.rpm` cannot prompt,
 so it prints the command that turns automatic updates on instead.
 
+The macOS `.pkg` offers the same choice as **Automatic updates** in Installer's
+choices pane, unselected. `sudo installer -pkg …` from a script takes that
+default. Select it for an unattended install with a choice-changes file:
+
+```bash
+cat > stem-choices.xml <<'XML'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<array>
+    <dict>
+        <key>choiceIdentifier</key>
+        <string>com.stem.autoupdate</string>
+        <key>choiceAttribute</key>
+        <string>selected</string>
+        <key>attributeSetting</key>
+        <integer>1</integer>
+    </dict>
+</array>
+</plist>
+XML
+sudo installer -pkg stem-<version>-arm64.pkg -target / -applyChoiceChangesXML stem-choices.xml
+```
+
+As with the `.deb`, a choice already saved from Settings or the CLI wins.
+
 ### Create Service User
 
 ```bash
