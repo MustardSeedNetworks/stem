@@ -77,6 +77,20 @@ type SettingsUpdate struct {
 	Theme     string `json:"theme,omitempty"`
 }
 
+// UpdateSettings is the automatic update opt-in (ADR-0012) as Settings
+// shows it. Source is where the daily check updates from; Settings shows it
+// but only `stem update --automatic on --source ...` changes it.
+type UpdateSettings struct {
+	Automatic bool   `json:"automatic"`
+	Source    string `json:"source"`
+}
+
+// UpdateSettingsRequest turns the automatic update on or off. Automatic is a
+// pointer so a body without it is refused rather than read as off.
+type UpdateSettingsRequest struct {
+	Automatic *bool `json:"automatic" validate:"required"`
+}
+
 // HealthResponse for health checks.
 type HealthResponse struct {
 	Status  string `json:"status"`

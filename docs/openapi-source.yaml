@@ -116,6 +116,16 @@ operations:
   POST /api/v1/mode:
     summary: Switch the operating mode
     tags: [System]
+  GET /api/v1/update/settings:
+    summary: Read the automatic update opt-in
+    description: >
+      Whether the daily automatic update is on (off until an operator turns
+      it on) and the source it updates from. Only `stem update --automatic on
+      --source ...` changes the source.
+    tags: [System]
+  POST /api/v1/update/settings:
+    summary: Turn the automatic update on or off
+    tags: [System]
   GET /api/v1/events:
     summary: Server-sent event stream
     tags: [System]

@@ -31,3 +31,4 @@ export type {
   TestDefinition,
   TestSectionProps,
 } from './types';
+export { UpdateSection } from './UpdateSection';

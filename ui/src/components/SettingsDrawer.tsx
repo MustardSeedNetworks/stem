@@ -6,6 +6,7 @@ import { Tooltip } from './ui/Tooltip';
  *
  * After the #66 redesign the drawer holds only app-global concerns:
  *   - License management
+ *   - Automatic updates (ADR-0012)
  *   - Test-suite configuration (RFC 2544, Y.1564, etc.)
  *
  * Role selection moved to the header RoleChip. Interface selection
@@ -32,6 +33,7 @@ import {
   RFC6349Section,
   TrafficGenSection,
   TSNSection,
+  UpdateSection,
   Y1564Section,
   Y1731Section,
 } from './settings';
@@ -155,6 +157,8 @@ export function SettingsDrawer({
         <div className={cn(spacing.pad.default, 'stack-lg')}>
           {/* License Section */}
           <LicenseSection />
+
+          <UpdateSection />
 
           {/* Test-Master test selection — only relevant when this stem
               is configured as a Test Master. Reflector role gets its

@@ -95,6 +95,12 @@ func schemaTargets() []schemaTarget {
 			title:    "LicenseStatus",
 		},
 		{
+			// The Settings toggle of the automatic update (ADR-0012).
+			value:    &api.UpdateSettings{},
+			filename: "update-settings.schema.json",
+			title:    "UpdateSettings",
+		},
+		{
 			value:    &api.TestResultResponse{},
 			filename: "test-result.schema.json",
 			title:    "TestResultResponse",

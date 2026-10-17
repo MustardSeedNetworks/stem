@@ -601,7 +601,7 @@ The install method follows how stem was installed (.deb, .rpm, the macOS
 package or the Windows zip). A binary run from a build tree is refused.
 
 Automatic updates are off until an operator turns them on with --automatic
-on. A timer runs "stem update --scheduled" daily; while automatic updates are
+on or under Settings in the web UI. A timer runs "stem update --scheduled" daily; while automatic updates are
 off it stops before any network call, and a timer that finds a run active
 waits for the next day.`,
 		Usage: "stem update [--source SOURCE] | --automatic on|off [--source SOURCE] | --scheduled",
