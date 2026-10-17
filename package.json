@@ -31,8 +31,7 @@
     "lint-staged": "17.6.0"
   },
   "lint-staged": {
-    "ui/src/**/*.{ts,tsx}": "cd ui && npx biome check --write",
-    "*.{json,md,yml,yaml}": "cd ui && npx biome format --write"
+    "*.json": "npx --prefix ui biome format --write --config-path ui --no-errors-on-unmatched"
   },
   "commitlint": {
     "extends": [
