@@ -293,17 +293,78 @@ jobs:
           fi
           # Pending or failed checks wait: the release PR's own CI completing
           # runs this workflow again (see the workflow_run trigger).
+          #
+          # `gh pr checks --required` is not enough. It exits 0 when every
+          # required check that has *reported* passed, and a required check
+          # that has not been created yet is absent from that list. Enqueue
+          # is then rejected with `Required status check "CI Complete" is
+          # expected`, the jump=false fallback hits the same rejection, and
+          # the step exits 1 (runs 38833076525, 38852564712, 39007745647,
+          # 39027198485). Require the named check, and if GitHub's
+          # mergeability view is a step behind the check run, retry. A check
+          # that still has not reported is the next tick, not a failed
+          # release. The wait is bounded because this job holds the
+          # release-please concurrency group; the CI workflow_run is what
+          # retries once the check exists.
           if ! gh pr checks --repo "${GITHUB_REPOSITORY}" "${pr}" --required; then
             echo "Release PR #${pr}'s required checks have not all passed; not enqueuing yet."
             exit 0
           fi
+          sha="$(gh pr view --repo "${GITHUB_REPOSITORY}" "${pr}" --json headRefOid --jq .headRefOid)"
+          attempts=6
+          delay=5
+          attempt=1
+          ci_jq='[.check_runs[] | select(.name == "CI Complete")] | sort_by(.id) | last | .conclusion // "pending"'
+          while [ "${attempt}" -le "${attempts}" ]; do
+            conclusion="$(gh api "repos/${GITHUB_REPOSITORY}/commits/${sha}/check-runs" \
+              -f check_name="CI Complete" \
+              -F per_page=20 \
+              --jq "${ci_jq}")"
+            if [ "${conclusion}" = "success" ]; then
+              break
+            fi
+            case "${conclusion}" in
+              failure|cancelled|timed_out|action_required|stale|startup_failure)
+                echo "CI Complete concluded ${conclusion}; not enqueuing."
+                exit 0
+                ;;
+            esac
+            if [ "${attempt}" -eq "${attempts}" ]; then
+              echo "CI Complete has not passed (${conclusion}); not enqueuing yet."
+              exit 0
+            fi
+            echo "CI Complete is ${conclusion} (attempt ${attempt}); waiting ${delay}s."
+            sleep "${delay}"
+            delay=$((delay * 2))
+            attempt=$((attempt + 1))
+          done
           echo "Enqueuing #${pr} at the front of the merge queue"
           id="$(gh pr view --repo "${GITHUB_REPOSITORY}" "${pr}" --json id --jq .id)"
           position='"queued at position \(.data.enqueuePullRequest.mergeQueueEntry.position)"'
-          if gh api graphql -f id="${id}" -F jump=true -f query="${ENQUEUE}" --jq "${position}" >/tmp/enqueue.log 2>&1; then
-            cat /tmp/enqueue.log
-            exit 0
-          fi
+          delay=5
+          attempt=1
+          while [ "${attempt}" -le "${attempts}" ]; do
+            if gh api graphql -f id="${id}" -F jump=true -f query="${ENQUEUE}" --jq "${position}" >/tmp/enqueue.log 2>&1; then
+              cat /tmp/enqueue.log
+              exit 0
+            fi
+            # The check run can be green while the mergeability gate still
+            # says the required check is expected. Retry, then leave the run
+            # green: failing here is what reddened the ticks above.
+            if grep -q 'is expected' /tmp/enqueue.log; then
+              if [ "${attempt}" -eq "${attempts}" ]; then
+                echo "Required status checks have not all reported; not failing this run."
+                echo "::notice::enqueue waiting on a required check: $(cat /tmp/enqueue.log)"
+                exit 0
+              fi
+              echo "Enqueue refused because a required check has not reported (attempt ${attempt}); retrying in ${delay}s."
+              sleep "${delay}"
+              delay=$((delay * 2))
+              attempt=$((attempt + 1))
+              continue
+            fi
+            break
+          done
           # Probe, to be settled by its first run (#1775): whether the msn-ci-bot
           # App may jump the queue is unverified. If it may not, the owner grants
           # it; until then a refusal must not stall releases, and an empty
@@ -315,7 +376,17 @@ jobs:
             echo "::notice::${depth} PR(s) queued; enqueuing #${pr} behind them would eject it. Waiting."
             exit 0
           fi
-          gh api graphql -f id="${id}" -F jump=false -f query="${ENQUEUE}" --jq "${position}"
+          if gh api graphql -f id="${id}" -F jump=false -f query="${ENQUEUE}" --jq "${position}" >/tmp/enqueue.log 2>&1; then
+            cat /tmp/enqueue.log
+            exit 0
+          fi
+          if grep -q 'is expected' /tmp/enqueue.log; then
+            echo "Required status checks have not all reported; not failing this run."
+            echo "::notice::enqueue waiting on a required check: $(cat /tmp/enqueue.log)"
+            exit 0
+          fi
+          cat /tmp/enqueue.log
+          exit 1
 
       - name: Output release info
         if: steps.release.outputs.release_created
