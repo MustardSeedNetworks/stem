@@ -13,7 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { authFetch } from '../../stores/auth-store';
 import type { UpdateSettings } from '../../types/generated/update-settings';
 import { CollapsibleSection } from '../CollapsibleSection';
-import { Toggle } from '../ui';
+import { Toggle } from '../ui/Input';
 
 export const UPDATE_SETTINGS_ENDPOINT = '/api/v1/update/settings';
 
