@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.32.0](https://github.com/MustardSeedNetworks/stem/compare/v0.31.0...v0.32.0) (2026-10-17)
+
+
+### Features
+
+* **packaging:** offer automatic updates in the macOS .pkg ([#1824](https://github.com/MustardSeedNetworks/stem/issues/1824)) ([809ba6f](https://github.com/MustardSeedNetworks/stem/commit/809ba6fb08d89ec2bd8c1b8e7fbeb7014dcc3b84))
+
+
+### Bug Fixes
+
+* **ci:** don't fail release enqueue before CI Complete exists ([#1826](https://github.com/MustardSeedNetworks/stem/issues/1826)) ([3354d4c](https://github.com/MustardSeedNetworks/stem/commit/3354d4c3016152635fbbe7f556caa44e462eb394))
+
 ## [0.31.0](https://github.com/MustardSeedNetworks/stem/compare/v0.30.2...v0.31.0) (2026-10-17)
 
 
