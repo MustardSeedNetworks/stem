@@ -270,7 +270,6 @@ func TestUpdateRefusesBeforeTouchingAnything(t *testing.T) {
 		latest  string
 		prepare func(*testing.T, *fixture)
 		wantIs  error
-		wantErr string
 	}{
 		{name: "same version", running: "0.28.0", latest: "v0.28.0", wantIs: update.ErrNotNewer},
 		{name: "older version", running: "0.28.0", latest: "v0.27.15", wantIs: update.ErrNotNewer},
@@ -299,7 +298,7 @@ func TestUpdateRefusesBeforeTouchingAnything(t *testing.T) {
 				}
 				t.Cleanup(unlock)
 			},
-			wantErr: "a test or reflector run is active",
+			wantIs: update.ErrRunActive,
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -309,11 +308,8 @@ func TestUpdateRefusesBeforeTouchingAnything(t *testing.T) {
 			}
 
 			_, err := f.updater.Run(t.Context())
-			if tc.wantIs != nil && !errors.Is(err, tc.wantIs) {
+			if !errors.Is(err, tc.wantIs) {
 				t.Fatalf("Run = %v; want %v", err, tc.wantIs)
-			}
-			if tc.wantErr != "" && (err == nil || !strings.Contains(err.Error(), tc.wantErr)) {
-				t.Fatalf("Run = %v; want %q", err, tc.wantErr)
 			}
 			f.assertUntouched(t)
 		})

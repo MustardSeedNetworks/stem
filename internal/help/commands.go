@@ -598,8 +598,13 @@ restored with the previous version if the new one is not healthy within 60
 seconds.
 
 The install method follows how stem was installed (.deb, .rpm, the macOS
-package or the Windows zip). A binary run from a build tree is refused.`,
-		Usage: "stem update [--source SOURCE]",
+package or the Windows zip). A binary run from a build tree is refused.
+
+Automatic updates are off until an operator turns them on with --automatic
+on. A timer runs "stem update --scheduled" daily; while automatic updates are
+off it stops before any network call, and a timer that finds a run active
+waits for the next day.`,
+		Usage: "stem update [--source SOURCE] | --automatic on|off [--source SOURCE] | --scheduled",
 		Flags: []FlagHelp{
 			{
 				Short:      "",
@@ -609,6 +614,24 @@ package or the Windows zip). A binary run from a build tree is refused.`,
 				Required:   false,
 				TechDesc:   `Where releases come from: "github", an https:// mirror (<base>/vX.Y.Z/<asset>, newest tag in <base>/latest), or an absolute directory with the same layout`,
 				LaymanDesc: "Where to look for new releases; use a directory for an offline site",
+			},
+			{
+				Short:      "",
+				Long:       "--automatic",
+				Type:       TypeString,
+				Default:    "",
+				Required:   false,
+				TechDesc:   `Save the daily automatic update opt-in, "on" or "off", with --source as where it updates from; nothing is installed now`,
+				LaymanDesc: "Turn daily automatic updates on or off",
+			},
+			{
+				Short:      "",
+				Long:       "--scheduled",
+				Type:       TypeBoolean,
+				Default:    ValueFalse,
+				Required:   false,
+				TechDesc:   "Run as the update timer does: exit before any network call unless automatic updates are on, then update from the saved source; a held run lock is skipped, not an error",
+				LaymanDesc: "What the daily timer runs; you do not need it by hand",
 			},
 		},
 		Examples: []Example{
@@ -621,6 +644,11 @@ package or the Windows zip). A binary run from a build tree is refused.`,
 				Desc:    "Update an offline site from a copied release directory",
 				Command: "sudo stem update --source /srv/stem-releases",
 				Output:  "Already up to date: no newer release is available: the source's latest is v0.28.0 and this is 0.28.0",
+			},
+			{
+				Desc:    "Turn on daily automatic updates from the published releases",
+				Command: "sudo stem update --automatic on",
+				Output:  "Automatic updates are on, daily from github.",
 			},
 		},
 	}

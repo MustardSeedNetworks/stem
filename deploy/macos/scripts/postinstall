@@ -12,6 +12,8 @@ BINARY_NAME="stem"
 PLIST_NAME="com.stem.plist"
 PLIST_DEST="/Library/LaunchDaemons/$PLIST_NAME"
 PLIST_SOURCE="$INSTALL_DIR/launchd/$PLIST_NAME"
+UPDATE_PLIST_NAME="com.stem.update.plist"
+UPDATE_PLIST_DEST="/Library/LaunchDaemons/$UPDATE_PLIST_NAME"
 
 log() {
     /usr/bin/logger -t "stem-installer" "$1"
@@ -47,6 +49,13 @@ chown root:wheel "$PLIST_DEST"
 # Load and start service
 log "Loading launchd service..."
 launchctl load "$PLIST_DEST"
+
+# The daily update check exits before any network call until an operator
+# turns automatic updates on.
+cp "$INSTALL_DIR/launchd/$UPDATE_PLIST_NAME" "$UPDATE_PLIST_DEST"
+chmod 644 "$UPDATE_PLIST_DEST"
+chown root:wheel "$UPDATE_PLIST_DEST"
+launchctl load "$UPDATE_PLIST_DEST"
 
 # Wait for startup
 sleep 3

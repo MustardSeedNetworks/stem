@@ -64,6 +64,10 @@ running=no
 if command -v systemctl >/dev/null 2>&1; then
     systemctl daemon-reload || true
     systemctl enable stem.service >/dev/null 2>&1 || true
+    # The daily update check exits before any network call until an operator
+    # turns automatic updates on, so it is always enabled: the Settings toggle
+    # then needs no root.
+    systemctl enable --now stem-update.timer >/dev/null 2>&1 || true
     if systemctl is-active --quiet stem.service 2>/dev/null; then
         systemctl restart stem.service || true
     else
@@ -124,6 +128,11 @@ else
     fi
     echo "  Trust the cert: sudo stem install-ca"
     echo ""
+    if [ "$fresh_install" = yes ]; then
+        echo "Automatic updates are off. To install new releases daily:"
+        echo "  sudo stem update --automatic on"
+        echo ""
+    fi
 fi
 
 cat <<'EOF'

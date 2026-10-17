@@ -129,6 +129,10 @@ archives:
         dst: stem.yaml
       - src: deploy/systemd/stem.service
         dst: systemd/stem.service
+      - src: deploy/systemd/stem-update.service
+        dst: systemd/stem-update.service
+      - src: deploy/systemd/stem-update.timer
+        dst: systemd/stem-update.timer
 
   - id: darwin-archive
     ids: [stem-darwin]
@@ -202,6 +206,14 @@ nfpms:
     contents:
       - src: ./deploy/systemd/stem.service
         dst: /usr/lib/systemd/system/stem.service
+        file_info:
+          mode: 0o644
+      - src: ./deploy/systemd/stem-update.service
+        dst: /usr/lib/systemd/system/stem-update.service
+        file_info:
+          mode: 0o644
+      - src: ./deploy/systemd/stem-update.timer
+        dst: /usr/lib/systemd/system/stem-update.timer
         file_info:
           mode: 0o644
       - src: ./deploy/config/stem.yaml
