@@ -3,17 +3,22 @@
     <title>The Stem - Network Performance Testing</title>
     <organization>com.stem</organization>
     <domains enable_localSystem="true"/>
-    <options customize="never" require-scripts="true" rootVolumeOnly="true"/>
+    <!-- "always" shows the choices pane, so the automatic update offer is
+         seen. An unattended `installer -pkg` takes the defaults: off. -->
+    <options customize="always" require-scripts="true" rootVolumeOnly="true"/>
     <welcome file="welcome.html"/>
     <conclusion file="conclusion.html"/>
     <choices-outline>
-        <line choice="default">
-            <line choice="com.stem.pkg"/>
-        </line>
+        <line choice="com.stem.pkg"/>
+        <line choice="com.stem.autoupdate"/>
     </choices-outline>
-    <choice id="default"/>
-    <choice id="com.stem.pkg" visible="false">
+    <choice id="com.stem.pkg" title="The Stem" enabled="false">
         <pkg-ref id="com.stem.pkg"/>
     </choice>
+    <choice id="com.stem.autoupdate" title="Automatic updates" start_selected="false"
+            description="Once a day, around 03:00, Stem checks for a newer release, verifies its signature and provenance, and installs it. It never updates while a test is running, and a failed update rolls back. Leave this off on a network without internet access. You can change it later in Settings or with &quot;stem update --automatic on|off&quot;.">
+        <pkg-ref id="com.stem.autoupdate.pkg"/>
+    </choice>
     <pkg-ref id="com.stem.pkg" version="__VERSION__" onConclusion="none">stem-component.pkg</pkg-ref>
+    <pkg-ref id="com.stem.autoupdate.pkg" version="__VERSION__" onConclusion="none">stem-autoupdate.pkg</pkg-ref>
 </installer-gui-script>

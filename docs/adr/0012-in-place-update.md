@@ -134,7 +134,11 @@ The scheduled layer, amended 2026-10-17 as built:
   `true` instead. A yes writes the opt-in only when `update.json` does not
   exist yet, so a choice saved from Settings or the CLI outlives every upgrade.
   The `.rpm` cannot prompt (rpm scriptlets have no terminal) and prints the
-  command that turns it on.
+  command that turns it on. The macOS `.pkg` offers it as an "Automatic
+  updates" choice that starts unselected: a payload-less component whose
+  postinstall turns the opt-in on, again only when `update.json` does not
+  exist. `installer -pkg` from a script takes the default, and
+  `-applyChoiceChangesXML` selects it, the `.pkg`'s preseed.
 
 The install method follows how the running binary was installed. The
 operator never chooses it.

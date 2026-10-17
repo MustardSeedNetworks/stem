@@ -119,6 +119,16 @@ pkgbuild \
     --install-location "/" \
     "$BUILD_DIR/stem-component.pkg"
 
+# The "Automatic updates" choice: no payload, only the script that turns the
+# opt-in on. It sits after the component in distribution.xml, so the binary is
+# in place when it runs.
+pkgbuild \
+    --nopayload \
+    --identifier "$PKG_ID.autoupdate.pkg" \
+    --version "$VERSION" \
+    --scripts "$SCRIPT_DIR/autoupdate-scripts" \
+    "$BUILD_DIR/stem-autoupdate.pkg"
+
 # Create distribution.xml with version substituted
 sed "s/__VERSION__/$VERSION/g" "$SCRIPT_DIR/distribution.xml" > "$BUILD_DIR/distribution.xml"
 

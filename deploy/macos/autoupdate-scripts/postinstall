@@ -1,0 +1,25 @@
+#!/bin/bash
+#
+# Post-install script for the "Automatic updates" choice of The Stem macOS .pkg
+#
+# Runs only when that choice is selected; it starts unselected (ADR-0012). A
+# choice already saved from Settings or the CLI wins over it on an upgrade.
+#
+
+set -e
+
+INSTALL_DIR="/usr/local/stem"
+
+log() {
+    /usr/bin/logger -t "stem-installer" "$1"
+    echo "$1"
+}
+
+if [[ -e "$INSTALL_DIR/update.json" ]]; then
+    log "Keeping the automatic update setting already saved"
+elif "$INSTALL_DIR/stem" update --automatic on >/dev/null; then
+    log "Automatic updates turned on"
+else
+    log "Warning: could not turn automatic updates on; run: sudo stem update --automatic on"
+fi
+exit 0
