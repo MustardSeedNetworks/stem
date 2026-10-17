@@ -75,12 +75,13 @@ export const RecoveryEnterSchema = v.object({
 
 /**
  * Setup wizard: initial-admin creation. The wizard fixes the username
- * (from setup status), so the schema only validates the password the
- * user actually types. Password confirmation is a cross-field check;
+ * (from setup status), so the schema validates the setup token the operator
+ * copies from the host and the password they type. Password confirmation is a cross-field check;
  * the resolver surfaces it under formState.errors.root.
  */
 export const SetupWizardSchema = v.pipe(
   v.object({
+    setupToken: v.pipe(v.string(), v.trim(), v.minLength(1, 'Setup token is required')),
     password: v.pipe(
       v.string('Password is required'),
       v.minLength(12, 'Password must be at least 12 characters'),

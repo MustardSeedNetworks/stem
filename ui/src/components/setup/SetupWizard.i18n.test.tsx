@@ -18,7 +18,7 @@ function renderWizard() {
         onComplete={() => {}}
         onLogin={async () => true}
         suggestedPassword="Correct-Horse-Battery-9"
-        setupToken="token"
+        setupTokenFile="/var/lib/stem/.setup-token"
       />
     </RoleProvider>,
   );

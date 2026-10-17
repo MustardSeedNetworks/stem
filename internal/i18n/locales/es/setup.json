@@ -7,6 +7,11 @@
     "label": "Usuario:",
     "description": "Este es su nombre de usuario de administrador para Stem."
   },
+  "setupToken": {
+    "label": "Token de configuración",
+    "placeholder": "Pegue el token de configuración",
+    "help": "Stem escribió un token de configuración de un solo uso en {{path}} en el equipo donde se ejecuta. Cópielo desde allí (por ejemplo con sudo cat) para demostrar que controla ese equipo."
+  },
   "password": {
     "chooseMethod": "Elija el método de contraseña",
     "custom": {

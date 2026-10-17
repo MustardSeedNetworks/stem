@@ -117,7 +117,7 @@ export function AuthGate(): ReactElement {
           onLogin={handleSetupLogin}
           suggestedPassword={setupStatus.suggestedPassword}
           username={setupStatus.username}
-          setupToken={setupStatus.setupToken}
+          setupTokenFile={setupStatus.setupTokenFile}
         />
       ) : null}
 

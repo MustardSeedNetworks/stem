@@ -68,10 +68,24 @@ func setupStatus(t *testing.T, s *api.Server) api.SetupStatusResponse {
 	return resp
 }
 
-func completeSetup(t *testing.T, s *api.Server, password string) {
+// readSetupToken reads the token the way an operator does: from the file
+// setup/status names.
+func readSetupToken(t *testing.T, s *api.Server) string {
 	t.Helper()
-	status := setupStatus(t, s)
-	body, err := json.Marshal(api.SetupCompleteRequest{Password: password, SetupToken: status.SetupToken})
+	path := setupStatus(t, s).SetupTokenFile
+	if path == "" {
+		t.Fatal("setup status names no setup token file")
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read setup token: %v", err)
+	}
+	return strings.TrimSpace(string(data))
+}
+
+func completeSetup(t *testing.T, s *api.Server) {
+	t.Helper()
+	body, err := json.Marshal(api.SetupCompleteRequest{Password: firstRunPassword, SetupToken: readSetupToken(t, s)})
 	if err != nil {
 		t.Fatalf("encode setup request: %v", err)
 	}
@@ -100,7 +114,7 @@ func TestFirstRunSetupSurvivesRestart(t *testing.T) {
 		t.Fatalf("login before setup = %d, want 401: an unclaimed daemon has no usable credential", code)
 	}
 
-	completeSetup(t, first, firstRunPassword)
+	completeSetup(t, first)
 
 	info, err := os.Stat(filepath.Join(dataDir, "credentials.json"))
 	if err != nil {
@@ -111,6 +125,9 @@ func TestFirstRunSetupSurvivesRestart(t *testing.T) {
 	}
 	if code := loginStatus(first, auth.FirstRunUsername, firstRunPassword); code != http.StatusOK {
 		t.Fatalf("login after setup = %d, want 200", code)
+	}
+	if _, statErr := os.Stat(filepath.Join(dataDir, ".setup-token")); !os.IsNotExist(statErr) {
+		t.Errorf("setup token file after setup: stat err = %v, want not-exist", statErr)
 	}
 	_ = first.Shutdown()
 
@@ -134,13 +151,71 @@ func TestFirstRunSetupSurvivesRestart(t *testing.T) {
 	}
 }
 
+// TestSetupTokenNeverServed: setup/status answers any network peer, so it
+// names the token file and never carries the token. Only a caller that can
+// read the file completes setup.
+func TestSetupTokenNeverServed(t *testing.T) {
+	dataDir := unconfiguredEnv(t)
+	s := newFirstRunServer(t)
+
+	tokenFile := filepath.Join(dataDir, ".setup-token")
+	info, err := os.Stat(tokenFile)
+	if err != nil {
+		t.Fatalf("a fresh install wrote no setup token file: %v", err)
+	}
+	if mode := info.Mode().Perm(); mode != 0o600 {
+		t.Errorf("setup token file mode = %o, want 600", mode)
+	}
+	token := readSetupToken(t, s)
+
+	for range 2 {
+		w := serve(s, http.MethodGet, "/api/v1/setup/status", "")
+		if strings.Contains(w.Body.String(), token) {
+			t.Fatalf("setup status leaks the setup token: %s", w.Body.String())
+		}
+		var fields map[string]any
+		if decodeErr := json.Unmarshal(w.Body.Bytes(), &fields); decodeErr != nil {
+			t.Fatalf("decode setup status: %v", decodeErr)
+		}
+		if _, ok := fields["setupToken"]; ok {
+			t.Fatalf("setup status has a setupToken field: %s", w.Body.String())
+		}
+		if fields["setupTokenFile"] != tokenFile {
+			t.Errorf("setupTokenFile = %v, want %s", fields["setupTokenFile"], tokenFile)
+		}
+	}
+
+	for _, guess := range []string{"", "not-the-token"} {
+		guessBody, encodeErr := json.Marshal(api.SetupCompleteRequest{Password: firstRunPassword, SetupToken: guess})
+		if encodeErr != nil {
+			t.Fatal(encodeErr)
+		}
+		if w := serve(s, http.MethodPost, "/api/v1/setup/complete", string(guessBody)); w.Code != http.StatusForbidden {
+			t.Fatalf("setup with token %q = %d, want 403", guess, w.Code)
+		}
+	}
+	if !setupStatus(t, s).NeedsSetup {
+		t.Fatal("a refused setup claimed the daemon")
+	}
+
+	// A password the policy rejects does not burn the token.
+	body, err := json.Marshal(api.SetupCompleteRequest{Password: "short", SetupToken: token})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if w := serve(s, http.MethodPost, "/api/v1/setup/complete", string(body)); w.Code == http.StatusOK {
+		t.Fatal("setup accepted a password the policy rejects")
+	}
+	completeSetup(t, s)
+}
+
 // TestRecoveredPasswordSurvivesRestart: a password reset through the
 // recovery flow is written to the same store, so a restart does not revert
 // to the forgotten one.
 func TestRecoveredPasswordSurvivesRestart(t *testing.T) {
 	dataDir := unconfiguredEnv(t)
 	first := newFirstRunServer(t)
-	completeSetup(t, first, firstRunPassword)
+	completeSetup(t, first)
 
 	if err := os.WriteFile(filepath.Join(dataDir, ".recovery"), nil, 0o600); err != nil {
 		t.Fatalf("create recovery trigger: %v", err)
@@ -211,7 +286,7 @@ func TestCredentialSourceRefusals(t *testing.T) {
 func TestStoredCredentialWinsOverEnvironment(t *testing.T) {
 	unconfiguredEnv(t)
 	first := newFirstRunServer(t)
-	completeSetup(t, first, firstRunPassword)
+	completeSetup(t, first)
 	_ = first.Shutdown()
 
 	t.Setenv("STEM_AUTH_USERNAME", "envuser")

@@ -75,7 +75,7 @@ describe('AuthGate — which surface is shown', () => {
         needsSetup: true,
         username: 'admin',
         suggestedPassword: 'generated',
-        setupToken: 'tok',
+        setupTokenFile: '/var/lib/stem/.setup-token',
       },
     });
     render(<AuthGate />);

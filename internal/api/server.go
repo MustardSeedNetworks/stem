@@ -325,12 +325,15 @@ func NewServer(listen ListenAddr) (*Server, error) {
 	s.cookieConfig = auth.DefaultCookieConfig()
 	s.corsAllowPrivate = corsAllowPrivateEnabled()
 	s.csrfManager = csrf.NewManager()
-	s.setupTokenManager = auth.NewSetupTokenManager()
-	s.recoveryTokenManager = auth.NewRecoveryTokenManager(getDataDir())
 	s.dataDir = getDataDir()
+	s.setupTokenManager = auth.NewSetupTokenManager(s.dataDir)
+	s.recoveryTokenManager = auth.NewRecoveryTokenManager(s.dataDir)
 
 	if stateErr := s.initStateFromDataDir(); stateErr != nil {
 		return nil, stateErr
+	}
+	if s.needsInitialSetup() {
+		s.issueSetupToken()
 	}
 	s.setupRoutes()
 	return s, nil

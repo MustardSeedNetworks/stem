@@ -37,9 +37,9 @@ const meta: Meta<typeof SetupWizard> = {
       control: 'text',
       description: 'Pre-generated password suggestion',
     },
-    setupToken: {
+    setupTokenFile: {
       control: 'text',
-      description: 'One-time setup token for CSRF protection',
+      description: 'Host file the daemon wrote the setup token to',
     },
   },
 };
@@ -64,7 +64,7 @@ export const CustomPasswordMode: Story = {
       return true;
     },
     username: 'admin',
-    setupToken: 'test-token-12345',
+    setupTokenFile: '/var/lib/stem/.setup-token',
   },
 };
 
@@ -81,7 +81,7 @@ export const WithSuggestedPassword: Story = {
     },
     username: 'admin',
     suggestedPassword: 'Xk9mP#2vL@q7Tn4w',
-    setupToken: 'test-token-12345',
+    setupTokenFile: '/var/lib/stem/.setup-token',
   },
 };
 
@@ -99,7 +99,7 @@ export const SubmittingSetup: Story = {
       });
     },
     username: 'admin',
-    setupToken: 'test-token-12345',
+    setupTokenFile: '/var/lib/stem/.setup-token',
   },
   parameters: {
     docs: {
@@ -119,7 +119,7 @@ export const NetworkError: Story = {
     onComplete: noop,
     onLogin: (): Promise<never> => Promise.reject(new Error('Network error')),
     username: 'admin',
-    setupToken: 'test-token-12345',
+    setupTokenFile: '/var/lib/stem/.setup-token',
   },
   parameters: {
     docs: {
@@ -139,7 +139,7 @@ export const SetupCompleteLoginFailed: Story = {
     onComplete: noop,
     onLogin: async () => false,
     username: 'admin',
-    setupToken: 'test-token-12345',
+    setupTokenFile: '/var/lib/stem/.setup-token',
   },
   parameters: {
     docs: {
@@ -160,7 +160,7 @@ export const MobileViewport: Story = {
     onLogin: async () => true,
     username: 'admin',
     suggestedPassword: 'Xk9mP#2vL@q7Tn4w',
-    setupToken: 'test-token-12345',
+    setupTokenFile: '/var/lib/stem/.setup-token',
   },
   parameters: {
     viewport: {
@@ -179,7 +179,7 @@ export const TabletViewport: Story = {
     onLogin: async () => true,
     username: 'admin',
     suggestedPassword: 'Xk9mP#2vL@q7Tn4w',
-    setupToken: 'test-token-12345',
+    setupTokenFile: '/var/lib/stem/.setup-token',
   },
   parameters: {
     viewport: {
@@ -235,7 +235,7 @@ export const InteractiveSetupFlow: Story = {
         }}
         username="admin"
         suggestedPassword="Xk9mP#2vL@q7Tn4w"
-        setupToken="test-token-12345"
+        setupTokenFile="/var/lib/stem/.setup-token"
       />
     );
   },

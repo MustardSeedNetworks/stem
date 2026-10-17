@@ -3,229 +3,146 @@
 package auth_test
 
 import (
+	"os"
+	"path/filepath"
+	"strings"
 	"sync"
 	"testing"
-	"time"
 
 	"github.com/MustardSeedNetworks/stem/internal/auth"
 )
 
-func TestNewSetupTokenManager(t *testing.T) {
-	t.Parallel()
-
-	manager := auth.NewSetupTokenManager()
-	if manager == nil {
-		t.Fatal("NewSetupTokenManager returned nil")
-	}
-
-	if manager.HasValidToken() {
-		t.Error("new manager should not have a valid token")
-	}
-}
-
-func TestSetupTokenManager_GenerateToken(t *testing.T) {
-	t.Parallel()
-
-	manager := auth.NewSetupTokenManager()
-
-	token, err := manager.GenerateToken()
+func readSetupToken(t *testing.T, m *auth.SetupTokenManager) string {
+	t.Helper()
+	data, err := os.ReadFile(m.FilePath())
 	if err != nil {
-		t.Fatalf("GenerateToken failed: %v", err)
+		t.Fatalf("read setup token file: %v", err)
+	}
+	return strings.TrimSpace(string(data))
+}
+
+func TestSetupTokenIssueWritesOwnerOnlyFile(t *testing.T) {
+	t.Parallel()
+	dir := filepath.Join(t.TempDir(), "data")
+	m := auth.NewSetupTokenManager(dir)
+
+	if m.FilePath() != filepath.Join(dir, ".setup-token") {
+		t.Fatalf("FilePath() = %q, want .setup-token in the data directory", m.FilePath())
+	}
+	// A pre-existing world-readable file must not keep its mode.
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(m.FilePath(), []byte("stale\n"), 0o644); err != nil {
+		t.Fatal(err)
 	}
 
-	if token == "" {
-		t.Error("GenerateToken returned empty token")
+	if err := m.Issue(); err != nil {
+		t.Fatalf("Issue() = %v", err)
 	}
-
-	// Token should be base64-encoded 32 bytes = 43-44 chars.
-	if len(token) < 40 {
-		t.Errorf("GenerateToken token too short: %d chars", len(token))
+	info, err := os.Stat(m.FilePath())
+	if err != nil {
+		t.Fatal(err)
 	}
-
-	if !manager.HasValidToken() {
-		t.Error("manager should have valid token after generation")
+	if mode := info.Mode().Perm(); mode != 0o600 {
+		t.Errorf("token file mode = %o, want 600", mode)
+	}
+	token := readSetupToken(t, m)
+	if token == "stale" || len(token) < 40 {
+		t.Errorf("token = %q, want a fresh 32-byte token", token)
 	}
 }
 
-func TestSetupTokenManager_GenerateToken_Unique(t *testing.T) {
+func TestSetupTokenFilePathIsAbsolute(t *testing.T) {
+	t.Chdir(t.TempDir())
+	m := auth.NewSetupTokenManager(".")
+	if !filepath.IsAbs(m.FilePath()) {
+		t.Errorf("FilePath() = %q for data directory \".\", want an absolute path", m.FilePath())
+	}
+}
+
+func TestSetupTokenValidate(t *testing.T) {
 	t.Parallel()
+	m := auth.NewSetupTokenManager(t.TempDir())
 
-	manager := auth.NewSetupTokenManager()
-	tokens := make(map[string]bool)
+	if m.Validate("anything") {
+		t.Error("Validate() accepted a token before one was issued")
+	}
+	if err := m.Issue(); err != nil {
+		t.Fatal(err)
+	}
+	token := readSetupToken(t, m)
 
-	for range 100 {
-		token, err := manager.GenerateToken()
-		if err != nil {
-			t.Fatalf("GenerateToken failed: %v", err)
+	tests := []struct {
+		name     string
+		provided string
+		want     bool
+	}{
+		{"empty", "", false},
+		{"wrong", "wrong-token", false},
+		{"prefix", token[:len(token)-1], false},
+		{"issued", token, true},
+		{"issued again: a rejected password can be retried", token, true},
+	}
+	for _, tt := range tests {
+		if got := m.Validate(tt.provided); got != tt.want {
+			t.Errorf("%s: Validate() = %v, want %v", tt.name, got, tt.want)
 		}
-		if tokens[token] {
-			t.Error("GenerateToken produced duplicate token")
-		}
-		tokens[token] = true
 	}
 }
 
-func TestSetupTokenManager_ValidateToken(t *testing.T) {
+func TestSetupTokenReissueReplacesOldToken(t *testing.T) {
 	t.Parallel()
-
-	manager := auth.NewSetupTokenManager()
-
-	token, err := manager.GenerateToken()
-	if err != nil {
-		t.Fatalf("GenerateToken failed: %v", err)
+	m := auth.NewSetupTokenManager(t.TempDir())
+	if err := m.Issue(); err != nil {
+		t.Fatal(err)
 	}
-
-	// Valid token should succeed.
-	if !manager.ValidateToken(token) {
-		t.Error("ValidateToken should succeed for valid token")
+	first := readSetupToken(t, m)
+	if err := m.Issue(); err != nil {
+		t.Fatal(err)
 	}
+	second := readSetupToken(t, m)
 
-	// Token should be single-use.
-	if manager.ValidateToken(token) {
-		t.Error("ValidateToken should fail for already-used token")
+	if first == second {
+		t.Fatal("two issues produced the same token")
+	}
+	if m.Validate(first) {
+		t.Error("the replaced token is still accepted")
+	}
+	if !m.Validate(second) {
+		t.Error("the current token is refused")
 	}
 }
 
-func TestSetupTokenManager_ValidateToken_Empty(t *testing.T) {
+func TestSetupTokenConsume(t *testing.T) {
 	t.Parallel()
+	m := auth.NewSetupTokenManager(t.TempDir())
+	if err := m.Issue(); err != nil {
+		t.Fatal(err)
+	}
+	token := readSetupToken(t, m)
 
-	manager := auth.NewSetupTokenManager()
-
-	if manager.ValidateToken("") {
-		t.Error("ValidateToken should fail for empty token")
+	if err := m.Consume(); err != nil {
+		t.Fatalf("Consume() = %v", err)
+	}
+	if m.Validate(token) {
+		t.Error("a consumed token is still accepted")
+	}
+	if _, err := os.Stat(m.FilePath()); !os.IsNotExist(err) {
+		t.Errorf("token file after Consume: stat err = %v, want not-exist", err)
+	}
+	if err := m.Consume(); err != nil {
+		t.Errorf("second Consume() = %v, want nil", err)
 	}
 }
 
-func TestSetupTokenManager_ValidateToken_NoToken(t *testing.T) {
+func TestSetupTokenConcurrentAccess(t *testing.T) {
 	t.Parallel()
-
-	manager := auth.NewSetupTokenManager()
-
-	if manager.ValidateToken("sometoken") {
-		t.Error("ValidateToken should fail when no token exists")
-	}
-}
-
-func TestSetupTokenManager_ValidateToken_WrongToken(t *testing.T) {
-	t.Parallel()
-
-	manager := auth.NewSetupTokenManager()
-
-	_, err := manager.GenerateToken()
-	if err != nil {
-		t.Fatalf("GenerateToken failed: %v", err)
-	}
-
-	if manager.ValidateToken("wrongtoken") {
-		t.Error("ValidateToken should fail for wrong token")
-	}
-}
-
-func TestSetupTokenManager_ValidateToken_NewTokenInvalidatesOld(t *testing.T) {
-	t.Parallel()
-
-	manager := auth.NewSetupTokenManager()
-
-	token1, err := manager.GenerateToken()
-	if err != nil {
-		t.Fatalf("GenerateToken failed: %v", err)
-	}
-
-	token2, err := manager.GenerateToken()
-	if err != nil {
-		t.Fatalf("GenerateToken failed: %v", err)
-	}
-
-	// Old token should be invalid.
-	if manager.ValidateToken(token1) {
-		t.Error("old token should be invalid after new token generated")
-	}
-
-	// New token should be valid.
-	if !manager.ValidateToken(token2) {
-		t.Error("new token should be valid")
-	}
-}
-
-func TestSetupTokenManager_Invalidate(t *testing.T) {
-	t.Parallel()
-
-	manager := auth.NewSetupTokenManager()
-
-	token, err := manager.GenerateToken()
-	if err != nil {
-		t.Fatalf("GenerateToken failed: %v", err)
-	}
-
-	if !manager.HasValidToken() {
-		t.Error("should have valid token before invalidate")
-	}
-
-	manager.Invalidate()
-
-	if manager.HasValidToken() {
-		t.Error("should not have valid token after invalidate")
-	}
-
-	if manager.ValidateToken(token) {
-		t.Error("token should be invalid after Invalidate")
-	}
-}
-
-func TestSetupTokenManager_HasValidToken_UsedToken(t *testing.T) {
-	t.Parallel()
-
-	manager := auth.NewSetupTokenManager()
-
-	token, err := manager.GenerateToken()
-	if err != nil {
-		t.Fatalf("GenerateToken failed: %v", err)
-	}
-
-	if !manager.HasValidToken() {
-		t.Error("should have valid token")
-	}
-
-	manager.ValidateToken(token)
-
-	if manager.HasValidToken() {
-		t.Error("should not have valid token after use")
-	}
-}
-
-func TestSetupTokenManager_Concurrent(t *testing.T) {
-	t.Parallel()
-
-	manager := auth.NewSetupTokenManager()
+	m := auth.NewSetupTokenManager(t.TempDir())
 	var wg sync.WaitGroup
-
-	// Generate tokens concurrently.
 	for range 10 {
-		wg.Go(func() {
-			_, _ = manager.GenerateToken()
-		})
+		wg.Go(func() { _ = m.Issue() })
+		wg.Go(func() { _ = m.Validate("sometoken") })
 	}
-
-	// Validate tokens concurrently.
-	for range 10 {
-		wg.Go(func() {
-			_ = manager.ValidateToken("sometoken")
-		})
-	}
-
-	// Check HasValidToken concurrently.
-	for range 10 {
-		wg.Go(func() {
-			_ = manager.HasValidToken()
-		})
-	}
-
 	wg.Wait()
-}
-
-func TestSetupTokenExpiry(t *testing.T) {
-	// Verify the expiry constant is reasonable.
-	if auth.SetupTokenExpiry != 15*time.Minute {
-		t.Errorf("SetupTokenExpiry = %v, want 15 minutes", auth.SetupTokenExpiry)
-	}
 }
