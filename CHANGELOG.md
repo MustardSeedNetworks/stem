@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.29.0](https://github.com/MustardSeedNetworks/stem/compare/v0.28.0...v0.29.0) (2026-10-17)
+
+
+### Features
+
+* **update:** install a verified release in place with rollback ([#1808](https://github.com/MustardSeedNetworks/stem/issues/1808)) ([3c9fa48](https://github.com/MustardSeedNetworks/stem/commit/3c9fa48db0827b36f41ef996d239ea2828a13d37))
+
+
+### Bug Fixes
+
+* **ui:** close a modal on Escape pressed inside it ([#1807](https://github.com/MustardSeedNetworks/stem/issues/1807)) ([179130f](https://github.com/MustardSeedNetworks/stem/commit/179130fed6bc254faa10d063c0697a274d75e139)), closes [#1604](https://github.com/MustardSeedNetworks/stem/issues/1604)
+
 ## [0.28.0](https://github.com/MustardSeedNetworks/stem/compare/v0.27.14...v0.28.0) (2026-10-17)
 
 
