@@ -54,6 +54,7 @@ const (
 	pathLicenseTrial    = "/api/v1/license/trial"
 	pathReflectorStats  = "/api/v1/reflector/stats"
 	pathReflectorConfig = "/api/v1/reflector/config"
+	pathBuildVersion    = "/__version"
 )
 
 // ErrRunInProgress reports that the daemon is already running something.
@@ -216,6 +217,16 @@ func (c *Client) ReflectorStats(ctx context.Context) (api.ReflectorStats, error)
 		return api.ReflectorStats{}, err
 	}
 	return stats, nil
+}
+
+// Build returns the daemon's /__version fields: version, commit, buildTime,
+// uiBuildHash.
+func (c *Client) Build(ctx context.Context) (map[string]string, error) {
+	var build map[string]string
+	if err := c.do(ctx, http.MethodGet, pathBuildVersion, nil, &build); err != nil {
+		return nil, err
+	}
+	return build, nil
 }
 
 // Status reports the daemon's current run state.

@@ -37,6 +37,7 @@ ui/**/*.test.tsx | developer test fixtures
 ui/e2e/** | developer end-to-end test fixtures
 package-lock.json | generated dependency lockfile
 ui/package-lock.json | generated dependency lockfile
+go.sum | generated module checksums; hits are third-party module paths and base64 hash substrings
 .golangci.yml | developer linter rule identifiers
 .clang-tidy | developer linter rule identifiers
 mk/test.mk | developer test package filters

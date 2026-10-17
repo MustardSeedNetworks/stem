@@ -116,11 +116,22 @@ operator never chooses it.
 | ------- | ----------- | ----- | ------- |
 | `.deb` | `dpkg -S` owns the binary | `dpkg -i` | `systemctl restart stem` |
 | `.rpm` | `rpm -qf` owns the binary | `rpm -U` | `systemctl restart stem` |
-| macOS tarball | `/usr/local/stem` prefix | swap the extracted tree | `launchctl kickstart -k` |
+| macOS tarball | `/usr/local/stem` prefix | replace the binary from the tarball | `launchctl kickstart -k` |
 | Windows zip | anything else on windows | rename the running `.exe` aside, place the new one | none: Windows ships no service |
 
 An install that matches none of these, such as a binary run from a build tree,
 is refused with a message that names the reason.
+
+Two refinements, amended 2026-10-17 as built in `internal/update`:
+
+- On macOS `/usr/local/stem` is also the daemon's data directory, so only the
+  binary is replaced (written beside it and renamed into place). The state
+  copy covers the rest of the tree.
+- On Linux the unit allows three starts a minute, so a refused start cannot
+  respin forever. An update that rolls back starts the service four times:
+  the package's postinst and the updater's own restart, twice. The updater
+  therefore runs `systemctl reset-failed stem` before each deliberate restart.
+  A crash loop is still caught by the restart-count check.
 
 ### Sequence and rollback
 

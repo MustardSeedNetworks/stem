@@ -162,6 +162,10 @@ func dispatchSubcommand(cmd string, args []string) bool {
 		if cmdErr := installCACmd(args); cmdErr != nil {
 			os.Exit(1)
 		}
+	case updateCommandName:
+		if cmdErr := updateCmd(args); cmdErr != nil {
+			os.Exit(1)
+		}
 	default:
 		return false
 	}
@@ -194,6 +198,7 @@ COMMANDS:
     glossary     Network terminology definitions
     list-tests   Show all available test types (grouped by module)
     install-ca   Install stem's self-signed root certificate into the OS trust store
+    update       Install the newest release in place, with automatic rollback
     version      Show version information
 
 REFLECT OPTIONS:
