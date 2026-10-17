@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.31.0](https://github.com/MustardSeedNetworks/stem/compare/v0.30.2...v0.31.0) (2026-10-17)
+
+
+### Features
+
+* **packaging:** offer automatic updates when the .deb is installed ([#1821](https://github.com/MustardSeedNetworks/stem/issues/1821)) ([4a340c7](https://github.com/MustardSeedNetworks/stem/commit/4a340c780300fa94f80a2f668ba4e2160d261faa))
+* **update:** add the Settings toggle for automatic updates ([#1819](https://github.com/MustardSeedNetworks/stem/issues/1819)) ([4979e1f](https://github.com/MustardSeedNetworks/stem/commit/4979e1f854354cd2c00fa4326ec74b549b90dc6f))
+
+
+### Miscellaneous
+
+* **deps:** update dependency fast-uri to v4.2.2 ([#1823](https://github.com/MustardSeedNetworks/stem/issues/1823)) ([d650e75](https://github.com/MustardSeedNetworks/stem/commit/d650e75e629fd55c64bd03ab504ea06dfff279b1))
+
 ## [0.30.2](https://github.com/MustardSeedNetworks/stem/compare/v0.30.1...v0.30.2) (2026-10-17)
 
 
