@@ -251,6 +251,10 @@ nfpms:
       postinstall: ./deploy/nfpm/postinstall.sh
       preremove: ./deploy/nfpm/preremove.sh
       postremove: ./deploy/nfpm/postremove.sh
+    deb:
+      scripts:
+        templates: ./deploy/nfpm/debconf-templates
+        config: ./deploy/nfpm/debconf-config.sh
     bindir: /usr/bin
 
   - <<: *linux-package

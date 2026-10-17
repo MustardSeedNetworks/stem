@@ -127,6 +127,14 @@ The scheduled layer, amended 2026-10-17 as built:
   `.rpm`; the `com.stem.update` LaunchDaemon, loaded by the macOS `.pkg`; and
   on Windows, where the zip has no installer, a scheduled task the operator
   registers once (`docs/DEPLOYMENT.md`).
+- The `.deb` offers the opt-in at install with a debconf question,
+  `stem/automatic-updates`, at priority high and default false. Debconf falls
+  back to its noninteractive frontend without a terminal, so an unattended
+  install takes the default and never waits for an answer; it can preseed
+  `true` instead. A yes writes the opt-in only when `update.json` does not
+  exist yet, so a choice saved from Settings or the CLI outlives every upgrade.
+  The `.rpm` cannot prompt (rpm scriptlets have no terminal) and prints the
+  command that turns it on.
 
 The install method follows how the running binary was installed. The
 operator never chooses it.

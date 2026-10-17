@@ -18,6 +18,12 @@ if [ "$is_final_remove" -eq 1 ]; then
     rmdir /etc/systemd/system/stem.service.d 2>/dev/null || true
 fi
 
+if [ "$1" = purge ] && [ -e /usr/share/debconf/confmodule ]; then
+    . /usr/share/debconf/confmodule
+    db_purge
+    db_stop
+fi
+
 if [ "$is_purge" -eq 1 ]; then
     if command -v ufw >/dev/null 2>&1; then
         ufw delete allow 8444/tcp >/dev/null 2>&1 || true

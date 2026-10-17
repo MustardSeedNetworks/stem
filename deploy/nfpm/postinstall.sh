@@ -14,6 +14,27 @@ case "${1:-}" in
     configure) [ -z "${2:-}" ] && fresh_install=yes ;;
 esac
 
+# A .deb asks at install whether to turn automatic updates on
+# (debconf-config.sh). A choice already saved from Settings or the CLI wins.
+# Load the confmodule before anything is echoed: until db_stop, stdout is the
+# debconf protocol.
+automatic_updates=off
+if [ "${1:-}" = configure ] && [ -e /usr/share/debconf/confmodule ]; then
+    . /usr/share/debconf/confmodule
+    answer=false
+    if db_get stem/automatic-updates; then
+        answer="$RET"
+    fi
+    db_stop
+    if [ "$answer" = true ] && [ ! -e /var/lib/stem/update.json ]; then
+        if "$BINARY" update --automatic on >/dev/null; then
+            automatic_updates=on
+        else
+            echo "warning: could not turn automatic updates on; run: sudo stem update --automatic on"
+        fi
+    fi
+fi
+
 if [ ! -f "$CONFIG_DIR/config.yaml" ] && [ -f /usr/share/stem/config.yaml ]; then
     cp /usr/share/stem/config.yaml "$CONFIG_DIR/config.yaml"
     chown root:stem "$CONFIG_DIR/config.yaml"
@@ -128,7 +149,11 @@ else
     fi
     echo "  Trust the cert: sudo stem install-ca"
     echo ""
-    if [ "$fresh_install" = yes ]; then
+    if [ "$automatic_updates" = on ]; then
+        echo "Automatic updates are on: new releases install daily."
+        echo "  Turn them off in Settings or with: sudo stem update --automatic off"
+        echo ""
+    elif [ "$fresh_install" = yes ]; then
         echo "Automatic updates are off. To install new releases daily:"
         echo "  sudo stem update --automatic on"
         echo ""

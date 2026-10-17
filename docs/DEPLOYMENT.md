@@ -359,6 +359,19 @@ schtasks /Create /TN "Stem update" /SC DAILY /ST 03:00 /RU SYSTEM `
   /TR "\"C:\Program Files\stem\stem.exe\" update --scheduled"
 ```
 
+The `.deb` asks once at install whether to turn automatic updates on, and the
+answer defaults to no. A noninteractive install (`DEBIAN_FRONTEND=noninteractive`,
+or no terminal) takes that default without prompting. Preseed the answer for an
+unattended install:
+
+```bash
+echo "stem stem/automatic-updates boolean true" | sudo debconf-set-selections
+```
+
+A choice already saved from Settings or the CLI wins over the answer when the
+package is upgraded, and `dpkg --purge` forgets it. The `.rpm` cannot prompt,
+so it prints the command that turns automatic updates on instead.
+
 ### Create Service User
 
 ```bash
