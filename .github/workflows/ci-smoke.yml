@@ -11,7 +11,7 @@
 # This workflow is that signal and nothing else. The per-commit
 # concurrency group is the same fix the full suite used to need: GitHub
 # keeps one pending run per group and cancels the older, and a cancelled
-# run is not a success. The three-hour schedule in release-please.yml
+# run is not a success. The daily schedule in release-please.yml
 # remains the backstop if this run fails twice (main-retry.yml retries
 # the first failure).
 
