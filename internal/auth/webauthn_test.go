@@ -3,147 +3,83 @@
 package auth_test
 
 import (
+	"bytes"
 	"errors"
-	"strings"
 	"testing"
-	"time"
+
+	"github.com/go-webauthn/webauthn/webauthn"
 
 	"github.com/MustardSeedNetworks/stem/internal/auth"
 )
 
-// TestNewWebAuthn_DefaultConfig accepts a missing env config and
-// falls back to the localhost defaults so the dev build works out of
-// the box.
-func TestNewWebAuthn_DefaultConfig(t *testing.T) {
-	// NOT t.Parallel — modifies process env.
-	t.Setenv(auth.WebAuthnRPIDEnv, "")
-	t.Setenv(auth.WebAuthnOriginsEnv, "")
-	t.Setenv(auth.WebAuthnRPNameEnv, "")
-
-	wa, err := auth.NewWebAuthn()
-	if err != nil {
-		t.Fatalf("NewWebAuthn() error: %v", err)
+func TestPasskeyAccount_OpaqueHandle(t *testing.T) {
+	mgr := mustNewManagerForTOTPTest(t)
+	account := mgr.PasskeyAccount()
+	handle := account.WebAuthnID()
+	if len(handle) != 32 {
+		t.Fatalf("user handle is %d bytes, want 32", len(handle))
 	}
-	if wa == nil {
-		t.Fatal("expected non-nil webauthn instance")
+	if bytes.Contains(handle, []byte(account.WebAuthnName())) {
+		t.Error("user handle must not carry the username")
 	}
-	if wa.Config.RPID != "localhost" {
-		t.Errorf("RPID = %q, want localhost", wa.Config.RPID)
+	if !bytes.Equal(mgr.PasskeyAccount().WebAuthnID(), handle) {
+		t.Error("user handle must be stable for the manager's lifetime")
 	}
-	if got := strings.Join(wa.Config.RPOrigins, ","); got != "https://localhost:8444" {
-		t.Errorf("RPOrigins = %q, want Stem's canonical HTTPS origin", got)
+	if bytes.Equal(mustNewManagerForTOTPTest(t).PasskeyAccount().WebAuthnID(), handle) {
+		t.Error("each manager must draw its own random handle")
 	}
 }
 
-// TestNewWebAuthn_CustomConfig respects environment overrides.
-func TestNewWebAuthn_CustomConfig(t *testing.T) {
-	t.Setenv(auth.WebAuthnRPIDEnv, "stem.example.com")
-	t.Setenv(auth.WebAuthnOriginsEnv, "https://stem.example.com:8443")
-	t.Setenv(auth.WebAuthnRPNameEnv, "Stem-Prod")
-
-	wa, err := auth.NewWebAuthn()
-	if err != nil {
-		t.Fatalf("NewWebAuthn() error: %v", err)
-	}
-	if wa == nil {
-		t.Fatal("expected non-nil webauthn instance")
-	}
-}
-
-// TestNewWebAuthn_EmptyOrigins rejects an empty origin list.
-func TestNewWebAuthn_EmptyOrigins(t *testing.T) {
-	t.Setenv(auth.WebAuthnOriginsEnv, " , , ")
-	t.Setenv(auth.WebAuthnRPIDEnv, "stem.example.com")
-
-	_, err := auth.NewWebAuthn()
-	if !errors.Is(err, auth.ErrWebAuthnNotConfigured) {
-		t.Errorf("expected ErrWebAuthnNotConfigured, got %v", err)
-	}
-}
-
-// TestManagerWebAuthn_NoCredentialsYet asserts the manager returns the
-// expected zero-state on a fresh instance and ErrWebAuthnNoCredentials
-// when a login ceremony is started without prior registration.
-func TestManagerWebAuthn_NoCredentialsYet(t *testing.T) {
+func TestSavePasskey_ReplacesByID(t *testing.T) {
 	mgr := mustNewManagerForTOTPTest(t)
 	if mgr.HasWebAuthnCredentials() {
-		t.Error("expected no credentials on fresh manager")
+		t.Fatal("expected no credentials on a fresh manager")
 	}
-	if got := mgr.WebAuthnCredentialCount(); got != 0 {
-		t.Errorf("expected 0 credentials, got %d", got)
+	mgr.SavePasskey(webauthn.Credential{ID: []byte{1}, PublicKey: []byte{9}})
+	mgr.SavePasskey(webauthn.Credential{ID: []byte{2}, PublicKey: []byte{9}})
+	mgr.SavePasskey(webauthn.Credential{
+		ID: []byte{1}, PublicKey: []byte{9}, Authenticator: webauthn.Authenticator{SignCount: 7},
+	})
+	if got := mgr.WebAuthnCredentialCount(); got != 2 {
+		t.Fatalf("WebAuthnCredentialCount() = %d, want 2", got)
 	}
-
-	t.Setenv(auth.WebAuthnRPIDEnv, "localhost")
-	t.Setenv(auth.WebAuthnOriginsEnv, "http://localhost:8080")
-	wa, err := auth.NewWebAuthn()
-	if err != nil {
-		t.Fatalf("NewWebAuthn() error: %v", err)
-	}
-	_, err = mgr.BeginWebAuthnLogin(wa, "admin")
-	if !errors.Is(err, auth.ErrWebAuthnNoCredentials) {
-		t.Errorf("expected ErrWebAuthnNoCredentials, got %v", err)
+	stored := mgr.PasskeyAccount().WebAuthnCredentials()
+	if stored[0].Authenticator.SignCount != 7 {
+		t.Errorf("sign count = %d, want the replaced record's 7", stored[0].Authenticator.SignCount)
 	}
 }
 
-// TestManagerWebAuthn_BeginRegistrationStoresChallenge verifies that
-// BeginWebAuthnRegistration stashes session state. We cannot finish
-// the ceremony in a unit test (the browser-side cryptography is
-// required), but we can verify the session is staged and consumed.
-func TestManagerWebAuthn_BeginRegistrationStoresChallenge(t *testing.T) {
-	t.Setenv(auth.WebAuthnRPIDEnv, "localhost")
-	t.Setenv(auth.WebAuthnOriginsEnv, "http://localhost:8080")
-
+func TestResolvePasskey(t *testing.T) {
 	mgr := mustNewManagerForTOTPTest(t)
-	wa, err := auth.NewWebAuthn()
-	if err != nil {
-		t.Fatalf("NewWebAuthn() error: %v", err)
-	}
+	mgr.SavePasskey(webauthn.Credential{ID: []byte{1}, PublicKey: []byte{9}})
+	handle := mgr.PasskeyAccount().WebAuthnID()
 
-	options, err := mgr.BeginWebAuthnRegistration(wa, "admin")
-	if err != nil {
-		t.Fatalf("BeginWebAuthnRegistration() error: %v", err)
+	tests := []struct {
+		name   string
+		rawID  []byte
+		handle []byte
+		ok     bool
+	}{
+		{"own credential and handle", []byte{1}, handle, true},
+		{"unknown credential", []byte{2}, handle, false},
+		{"foreign handle", []byte{1}, bytes.Repeat([]byte{7}, len(handle)), false},
+		{"no handle", []byte{1}, nil, false},
 	}
-	if options == nil {
-		t.Fatal("expected non-nil credential creation options")
-	}
-	if len(options.Response.Challenge) == 0 {
-		t.Error("expected a non-empty challenge in the options")
-	}
-}
-
-// TestEncodeWebAuthnID round-trips a credential ID through base64url.
-func TestEncodeWebAuthnID(t *testing.T) {
-	t.Parallel()
-	encoded := auth.EncodeWebAuthnID([]byte{0x01, 0x02, 0x03, 0xff})
-	if encoded == "" {
-		t.Fatal("expected non-empty encoded ID")
-	}
-	if strings.ContainsAny(encoded, "+/=") {
-		t.Errorf("expected URL-safe encoding (no +/=), got %q", encoded)
-	}
-}
-
-// TestManagerWebAuthn_SessionExpiry confirms the in-memory session
-// store expires entries after webauthnSessionTTL. We cannot inject
-// a clock without exposing test seams; instead we drive the begin
-// path twice in close succession and verify the second begin
-// overwrites the first.
-func TestManagerWebAuthn_SessionOverwriteOnRepeatBegin(t *testing.T) {
-	t.Setenv(auth.WebAuthnRPIDEnv, "localhost")
-	t.Setenv(auth.WebAuthnOriginsEnv, "http://localhost:8080")
-
-	mgr := mustNewManagerForTOTPTest(t)
-	wa, err := auth.NewWebAuthn()
-	if err != nil {
-		t.Fatalf("NewWebAuthn() error: %v", err)
-	}
-	if _, firstErr := mgr.BeginWebAuthnRegistration(wa, "admin"); firstErr != nil {
-		t.Fatalf("first BeginWebAuthnRegistration error: %v", firstErr)
-	}
-	// Sleep a tiny amount so CreatedAt differs (not used by assert,
-	// just defensive).
-	time.Sleep(time.Millisecond)
-	if _, secondErr := mgr.BeginWebAuthnRegistration(wa, "admin"); secondErr != nil {
-		t.Fatalf("second BeginWebAuthnRegistration error: %v", secondErr)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			user, err := mgr.ResolvePasskey(tt.rawID, tt.handle)
+			if !tt.ok {
+				if !errors.Is(err, auth.ErrPasskeyUnknown) {
+					t.Fatalf("ResolvePasskey() error = %v, want ErrPasskeyUnknown", err)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("ResolvePasskey() error = %v", err)
+			}
+			if !bytes.Equal(user.WebAuthnID(), handle) || len(user.WebAuthnCredentials()) != 1 {
+				t.Errorf("resolved %x with %d credentials", user.WebAuthnID(), len(user.WebAuthnCredentials()))
+			}
+		})
 	}
 }

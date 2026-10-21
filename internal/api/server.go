@@ -91,6 +91,7 @@ import (
 	"github.com/MustardSeedNetworks/foundation/pkg/csrf"
 	"github.com/MustardSeedNetworks/foundation/pkg/httpserver"
 	"github.com/MustardSeedNetworks/foundation/pkg/instance"
+	"github.com/MustardSeedNetworks/foundation/pkg/passkey"
 
 	"github.com/MustardSeedNetworks/stem/internal/api/cors"
 	"github.com/MustardSeedNetworks/stem/internal/api/ratelimit"
@@ -163,6 +164,8 @@ type Server struct {
 	corsAllowPrivate     bool                       // STEM_CORS_ALLOW_PRIVATE: reflect RFC1918 cross-origins (default off)
 	trustedProxies       []netip.Prefix             // STEM_TRUSTED_PROXIES: hops whose X-Forwarded-For may key security counters (default none)
 	csrfManager          *csrf.Manager              // per-session CSRF tokens, enforced per route by the Registrar
+	passkeys             *passkey.Service           // nil when the WebAuthn origin is not a valid relying party
+	passkeyCeremonies    *passkey.Store             // pending passkey ceremonies, each bound to its browser
 	setupTokenManager    *auth.SetupTokenManager    // Setup token manager for first-time setup security
 	setupMu              sync.Mutex                 // Serializes first-run setup so only one claim wins
 	recoveryTokenManager *auth.RecoveryTokenManager // Recovery token manager for password recovery
@@ -333,6 +336,7 @@ func NewServer(listen ListenAddr) (*Server, error) {
 	s.cookieConfig = auth.DefaultCookieConfig()
 	s.corsAllowPrivate = corsAllowPrivateEnabled()
 	s.csrfManager = csrf.NewManager()
+	s.initPasskeys(listen.Port)
 	s.dataDir = getDataDir()
 	s.runGuard = update.NewRunGuard(s.dataDir)
 	s.setupTokenManager = auth.NewSetupTokenManager(s.dataDir)
@@ -571,6 +575,9 @@ func (s *Server) Run() error {
 		urlHost = tcpAddr.IP.String()
 	}
 	baseURL := "https://" + net.JoinHostPort(urlHost, strconv.Itoa(actualPort))
+	// Fallback may have bound a neighbour of the requested port, and a
+	// passkey is scoped to the exact origin the browser shows.
+	s.initPasskeys(actualPort)
 
 	// Record the port in the lock so the next `stem web` can name where the
 	// holder actually ended up rather than where it was asked to go.

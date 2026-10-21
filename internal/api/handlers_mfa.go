@@ -28,8 +28,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-webauthn/webauthn/protocol"
-
 	"github.com/MustardSeedNetworks/stem/internal/auth"
 	"github.com/MustardSeedNetworks/stem/internal/logging"
 )
@@ -290,9 +288,7 @@ func (s *Server) writeMFAError(w http.ResponseWriter, err error) {
 	case errors.Is(err, auth.ErrMFATokenInvalid),
 		errors.Is(err, auth.ErrMFATokenExpired):
 		WriteAuthError(w, err)
-	case errors.Is(err, auth.ErrWebAuthnNoSession),
-		errors.Is(err, auth.ErrWebAuthnSessionExpired),
-		errors.Is(err, auth.ErrWebAuthnNoCredentials):
+	case errors.Is(err, auth.ErrWebAuthnNoCredentials):
 		WriteInvalidRequest(w, "WebAuthn ceremony invalid")
 	case errors.Is(err, auth.ErrWebAuthnNotConfigured):
 		WriteError(w, &Error{
@@ -304,154 +300,6 @@ func (s *Server) writeMFAError(w http.ResponseWriter, err error) {
 		logging.Error("MFA error", "error", err)
 		WriteError(w, ErrInternalError)
 	}
-}
-
-// webAuthnBeginRegistrationResponse + ...Finish are minimal pass-
-// throughs of the library types. We marshal them with json.Marshal to
-// match the wire format the @simplewebauthn/browser client expects.
-
-// handleWebAuthnRegisterBegin issues a creation challenge.
-func (s *Server) handleWebAuthnRegisterBegin(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		WriteMethodNotAllowed(w)
-		return
-	}
-	wa, err := auth.NewWebAuthn()
-	if err != nil {
-		s.writeMFAError(w, err)
-		return
-	}
-	username := s.authManager.GetUsername()
-	options, err := s.authManager.BeginWebAuthnRegistration(wa, username)
-	if err != nil {
-		logging.AuditWebAuthnRegister(r.Context(), r, username,
-			logging.MFAResultFailure, err.Error())
-		s.writeMFAError(w, err)
-		return
-	}
-	writeJSON(w, options)
-}
-
-// handleWebAuthnRegisterFinish validates the attestation and stores
-// the credential on success.
-func (s *Server) handleWebAuthnRegisterFinish(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		WriteMethodNotAllowed(w)
-		return
-	}
-	wa, err := auth.NewWebAuthn()
-	if err != nil {
-		s.writeMFAError(w, err)
-		return
-	}
-	username := s.authManager.GetUsername()
-
-	parsed, err := protocol.ParseCredentialCreationResponseBody(
-		http.MaxBytesReader(w, r.Body, maxRequestBodySize),
-	)
-	if err != nil {
-		logging.AuditWebAuthnRegister(r.Context(), r, username,
-			logging.MFAResultFailure, "parse: "+err.Error())
-		WriteInvalidRequest(w, "Invalid WebAuthn registration response")
-		return
-	}
-
-	stored, err := s.authManager.FinishWebAuthnRegistration(wa, username, parsed)
-	if err != nil {
-		logging.AuditWebAuthnRegister(r.Context(), r, username,
-			logging.MFAResultFailure, err.Error())
-		s.writeMFAError(w, err)
-		return
-	}
-	logging.AuditWebAuthnRegister(r.Context(), r, username,
-		logging.MFAResultSuccess, "registered")
-	writeJSON(w, map[string]any{
-		jsonFieldSuccess: true,
-		"credentialId":   auth.EncodeWebAuthnID(stored.ID),
-	})
-}
-
-// handleWebAuthnLoginBegin issues an assertion challenge for the
-// configured account.
-func (s *Server) handleWebAuthnLoginBegin(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		WriteMethodNotAllowed(w)
-		return
-	}
-	wa, err := auth.NewWebAuthn()
-	if err != nil {
-		s.writeMFAError(w, err)
-		return
-	}
-	username := s.authManager.GetUsername()
-	options, err := s.authManager.BeginWebAuthnLogin(wa, username)
-	if err != nil {
-		logging.AuditWebAuthnLogin(r.Context(), r, username,
-			logging.MFAResultFailure, err.Error())
-		s.writeMFAError(w, err)
-		return
-	}
-	writeJSON(w, options)
-}
-
-// handleWebAuthnLoginFinish validates an assertion. On success, the
-// browser has proven possession of a registered passkey; the user
-// receives a full access + refresh token pair just like the password
-// path.
-func (s *Server) handleWebAuthnLoginFinish(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		WriteMethodNotAllowed(w)
-		return
-	}
-	wa, err := auth.NewWebAuthn()
-	if err != nil {
-		s.writeMFAError(w, err)
-		return
-	}
-	username := s.authManager.GetUsername()
-
-	parsed, err := protocol.ParseCredentialRequestResponseBody(
-		http.MaxBytesReader(w, r.Body, maxRequestBodySize),
-	)
-	if err != nil {
-		logging.AuditWebAuthnLogin(r.Context(), r, username,
-			logging.MFAResultFailure, "parse: "+err.Error())
-		WriteInvalidRequest(w, "Invalid WebAuthn login response")
-		return
-	}
-
-	if finishErr := s.authManager.FinishWebAuthnLogin(wa, username, parsed); finishErr != nil {
-		logging.AuditWebAuthnLogin(r.Context(), r, username,
-			logging.MFAResultFailure, finishErr.Error())
-		s.writeMFAError(w, finishErr)
-		return
-	}
-
-	accessToken, err := s.authManager.IssueAccessToken(username)
-	if err != nil {
-		WriteError(w, ErrInternalError)
-		return
-	}
-	refreshToken, err := s.authManager.GenerateRefreshToken(username)
-	if err != nil {
-		WriteError(w, ErrInternalError)
-		return
-	}
-	sessionDuration := s.authManager.SessionDuration()
-	auth.SetAccessTokenCookie(w, accessToken, sessionDuration, s.cookieConfig)
-	auth.SetRefreshTokenCookie(w, refreshToken, sessionDuration*refreshMultiplier, s.cookieConfig)
-	if newSessionID := sessionIDFromJWT(accessToken); newSessionID != "" {
-		s.csrfManager.Revoke(newSessionID)
-	}
-
-	logging.AuditWebAuthnLogin(r.Context(), r, username, logging.MFAResultSuccess, "login completed")
-	s.auditor.LoginSuccess(r.Context(), r, username, username)
-
-	writeJSON(w, AuthLoginResponse{
-		Token:        accessToken,
-		RefreshToken: refreshToken,
-		ExpiresAt:    time.Now().Add(sessionDuration).Unix(),
-	})
 }
 
 // loginWithMFAGate is the MFA-aware shim called from setupRoutes for

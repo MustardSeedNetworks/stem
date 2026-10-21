@@ -147,6 +147,8 @@ func (s *Server) handleRecoveryComplete(w http.ResponseWriter, r *http.Request) 
 
 	// Cleanup recovery files.
 	s.recoveryTokenManager.Cleanup()
+	// A ceremony begun before the reset must not complete after it.
+	s.passkeyCeremonies.Clear()
 
 	// Security audit log.
 	logging.Info("Password recovery completed successfully",

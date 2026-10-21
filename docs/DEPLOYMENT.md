@@ -131,6 +131,7 @@ return to setup: delete it deliberately to reclaim the daemon.
 | `STEM_LOG_FORMAT` | Log format (json, text) | `json` |
 | `STEM_DATA_DIR` | Data directory path | the working directory |
 | `STEM_TRUSTED_PROXIES` | Comma-separated CIDRs whose `X-Forwarded-For` may key rate limits and failed-login counters | unset (loopback only) |
+| `STEM_WEBAUTHN_ORIGIN` | The HTTPS origin operators browse to, such as `https://stem.example.com:8444`; passkeys work only from it, and its host must be a DNS name, not an IP address | `https://localhost:<bound port>` |
 
 ### Reverse Proxies
 
