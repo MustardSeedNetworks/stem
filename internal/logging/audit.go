@@ -122,13 +122,12 @@ type SecurityEvent struct {
 	Result string `json:"result,omitempty"`
 
 	// RejectReason is a machine-tag for why a password change was rejected
-	// (e.g. "weak_score", "breached", "too_short"). Distinct from Reason
+	// (e.g. "weak_score", "breached", "too_short", "too_long"). Distinct from Reason
 	// which is a free-form human-readable explanation.
 	RejectReason string `json:"reject_reason,omitempty"`
 
 	// PreviousAlgorithm identifies the algorithm of the prior password
-	// hash (e.g. "argon2id", "bcrypt"). Used by AuditPasswordChange to
-	// help operators track the bcrypt -> argon2id migration.
+	// hash ("argon2id", or "none" when no credential was stored yet).
 	PreviousAlgorithm string `json:"previous_algorithm,omitempty"`
 }
 
@@ -301,7 +300,7 @@ func LogSecurityEvent(ctx context.Context, event *SecurityEvent) {
 // `result` should be one of [PasswordChangeSuccess] / [PasswordChangeRejected].
 // `rejectReason` is a short machine-friendly tag (e.g. "weak_score",
 // "breached") that is empty on success. `previousAlgorithm` is the
-// algorithm of the prior hash (e.g. "bcrypt", "argon2id", "none").
+// algorithm of the prior hash ("argon2id" or "none").
 func AuditPasswordChange(
 	ctx context.Context,
 	r *http.Request,

@@ -43,7 +43,6 @@ func (r *sizeRecorder) Execute(testType string, cfg *modtypes.TestConfig) (*modt
 func realDaemonClient(t *testing.T, exec api.TestExecutor) (*daemonclient.Client, string) {
 	t.Helper()
 	const username, password = "cli-test", "cli-test-password-1412"
-	t.Setenv("STEM_TEST_MODE", "1")
 	dir := t.TempDir()
 	t.Setenv("STEM_DATA_DIR", dir)
 	t.Setenv("STEM_AUTH_USERNAME", username)

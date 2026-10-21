@@ -9,7 +9,6 @@ import (
 
 func newRunIDTestServer(t *testing.T) *Server {
 	t.Helper()
-	t.Setenv("STEM_TEST_MODE", "1")
 	t.Setenv("STEM_DATA_DIR", t.TempDir())
 	t.Setenv("STEM_AUTH_USERNAME", "runidtest")
 	t.Setenv("STEM_AUTH_PASSWORD", "runidpass123")

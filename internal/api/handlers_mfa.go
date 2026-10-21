@@ -9,18 +9,12 @@ package api
 // s.handleAuthRateLimited (which is itself behind the CSRF middleware
 // installed in Run()).
 //
-// Interaction with Wave 1 (CSRF) and Wave 2 (Argon2id):
-//   - CSRF: setup/verify/disable/login POSTs require a CSRF token in
-//     X-Csrf-Token. The login-finisher (POST /api/v1/auth/login/totp)
-//     is exempt because it carries the mfa_token, which acts as the
-//     pre-session credential proof of intent — the same role
-//     /api/v1/auth/login already plays. Its route therefore declares no
-//     CSRF (routes.go) for this reason.
-//   - Argon2id: the regular login handler performs the bcrypt → Argon2id
-//     migration unconditionally on successful password verification.
-//     The MFA gate happens AFTER the hash upgrade so a user whose
-//     password verified is upgraded even if their MFA attempt is
-//     subsequently rejected. See handleAuthLoginMFAAware below.
+// CSRF: setup/verify/disable/login POSTs require a CSRF token in
+// X-Csrf-Token. The login-finisher (POST /api/v1/auth/login/totp) is
+// exempt because it carries the mfa_token, which acts as the
+// pre-session credential proof of intent — the same role
+// /api/v1/auth/login already plays. Its route therefore declares no
+// CSRF (routes.go) for this reason.
 
 import (
 	"encoding/base64"
@@ -151,9 +145,7 @@ func (s *Server) handleTOTPVerify(w http.ResponseWriter, r *http.Request) {
 
 // handleTOTPDisable tears down MFA. Step-up: the caller must present
 // both the current password AND a valid TOTP code. The password
-// verification reuses the existing Authenticate flow (which also
-// performs the Wave-2 hash upgrade — disabling MFA still benefits
-// from the bcrypt → Argon2id migration).
+// verification reuses the existing Authenticate flow.
 func (s *Server) handleTOTPDisable(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		WriteMethodNotAllowed(w)
@@ -167,10 +159,8 @@ func (s *Server) handleTOTPDisable(w http.ResponseWriter, r *http.Request) {
 
 	username := s.authManager.GetUsername()
 
-	// Step-up #1: password (also performs Argon2id migration).
-	if _, passwordErr := s.authManager.Authenticate(
-		r.Context(), username, req.Password,
-	); passwordErr != nil {
+	// Step-up #1: password.
+	if _, passwordErr := s.authManager.Authenticate(username, req.Password); passwordErr != nil {
 		logging.AuditMFAAttempt(r.Context(), r, username, logging.MFAFactorTOTP,
 			logging.MFAResultFailure, "password rejected")
 		s.writeAuthError(w, passwordErr)
@@ -304,16 +294,9 @@ func (s *Server) writeMFAError(w http.ResponseWriter, err error) {
 
 // loginWithMFAGate is the MFA-aware shim called from setupRoutes for
 // the regular /api/v1/auth/login endpoint. It runs the existing
-// password verification (which includes the bcrypt → Argon2id
-// migration) and, if MFA is enrolled for the account, intercepts the
+// password verification and, if MFA is enrolled for the account, intercepts the
 // happy path to return a 200 with `mfa_required=true` instead of
 // minting the full token pair.
-//
-// ORDERING NOTE (Wave 1 + Wave 2 interaction): password verify (which
-// triggers the hash upgrade) runs FIRST. The MFA gate is the SECOND
-// check. This means a successful password but a failed MFA still
-// upgrades the hash — the operator's password storage moves forward
-// even if MFA is misconfigured. Documented in the Wave 3 PR body.
 func (s *Server) loginWithMFAGate(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		WriteMethodNotAllowed(w)
@@ -333,10 +316,8 @@ func (s *Server) loginWithMFAGate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Step 1: verify the password. This is the same call the original
-	// handler made and will rehash bcrypt → Argon2id on success.
-	accessToken, refreshToken, err := s.authManager.AuthenticateWithRefresh(
-		r.Context(), req.Username, req.Password)
+	// Step 1: verify the password.
+	accessToken, refreshToken, err := s.authManager.AuthenticateWithRefresh(req.Username, req.Password)
 	if err != nil {
 		s.auditor.LoginFailure(r.Context(), r, req.Username, err.Error())
 		s.writeAuthError(w, err)
