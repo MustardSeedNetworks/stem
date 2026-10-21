@@ -5,6 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.32.0](https://github.com/MustardSeedNetworks/stem/compare/v0.31.0...v0.32.0) (2026-10-21)
+
+
+### Features
+
+* **packaging:** offer automatic updates in the macOS .pkg ([#1824](https://github.com/MustardSeedNetworks/stem/issues/1824)) ([809ba6f](https://github.com/MustardSeedNetworks/stem/commit/809ba6fb08d89ec2bd8c1b8e7fbeb7014dcc3b84))
+
+
+### Bug Fixes
+
+* **ci:** don't fail release enqueue before CI Complete exists ([#1826](https://github.com/MustardSeedNetworks/stem/issues/1826)) ([3354d4c](https://github.com/MustardSeedNetworks/stem/commit/3354d4c3016152635fbbe7f556caa44e462eb394))
+* **ci:** poll CI Complete with GET so the release enqueue stops 404ing ([#1849](https://github.com/MustardSeedNetworks/stem/issues/1849)) ([b15d379](https://github.com/MustardSeedNetworks/stem/commit/b15d379e053dd6fcb6982116aa43ef8a55f078c0)), closes [#1848](https://github.com/MustardSeedNetworks/stem/issues/1848)
+* **deps:** build with Go 1.27.3 for GO-2026-6809 ([#1851](https://github.com/MustardSeedNetworks/stem/issues/1851)) ([d9247b8](https://github.com/MustardSeedNetworks/stem/commit/d9247b89bdd86315ee2c2dcf7f54c3365d3f67db)), closes [#1850](https://github.com/MustardSeedNetworks/stem/issues/1850)
+* **deps:** update dependency @tanstack/react-query to v5.104.2 ([#1832](https://github.com/MustardSeedNetworks/stem/issues/1832)) ([98c72a2](https://github.com/MustardSeedNetworks/stem/commit/98c72a2002b39b192696ec27c0ba905ab7f3a23a))
+* **deps:** update dependency i18next to v26.4.4 ([#1834](https://github.com/MustardSeedNetworks/stem/issues/1834)) ([e96f16a](https://github.com/MustardSeedNetworks/stem/commit/e96f16a659459aae577b6319e219a3237daabb02))
+* **deps:** update dependency lucide-react to v1.56.0 ([#1844](https://github.com/MustardSeedNetworks/stem/issues/1844)) ([d4609da](https://github.com/MustardSeedNetworks/stem/commit/d4609da0601b7b1d040c644f5acefd6e65eb8680))
+* **deps:** update dependency react-hook-form to v7.90.0 ([#1831](https://github.com/MustardSeedNetworks/stem/issues/1831)) ([f504d47](https://github.com/MustardSeedNetworks/stem/commit/f504d47921ff6d9459656ece2208ba199318e552))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1829](https://github.com/MustardSeedNetworks/stem/issues/1829)) ([6a763a8](https://github.com/MustardSeedNetworks/stem/commit/6a763a832d4d33da167328fbeae368f3cb57f3aa))
+* **deps:** lock file maintenance ([#1830](https://github.com/MustardSeedNetworks/stem/issues/1830)) ([27ed9f2](https://github.com/MustardSeedNetworks/stem/commit/27ed9f26ef31fd8dc22ab2e5c30d2ef7277afa09))
+* **deps:** lock file maintenance ([#1833](https://github.com/MustardSeedNetworks/stem/issues/1833)) ([5aa1cb1](https://github.com/MustardSeedNetworks/stem/commit/5aa1cb1d95a6dffa979fbeb7f182f1fa36b37cba))
+* **deps:** lock file maintenance ([#1842](https://github.com/MustardSeedNetworks/stem/issues/1842)) ([cdf3b97](https://github.com/MustardSeedNetworks/stem/commit/cdf3b97ddb1596dec9766835e86c1bdb11af78b2))
+* **deps:** update actions/create-github-app-token action to v3.3.0 ([#1840](https://github.com/MustardSeedNetworks/stem/issues/1840)) ([ee2f0fa](https://github.com/MustardSeedNetworks/stem/commit/ee2f0faa2bfa58d5293194d84b593b324f0647ee))
+* **deps:** update dependency @chromatic-com/storybook to v5.5.1 ([#1841](https://github.com/MustardSeedNetworks/stem/issues/1841)) ([fb79ed6](https://github.com/MustardSeedNetworks/stem/commit/fb79ed6db79e402b2cee1b4e05ce485d7946416a))
+* **deps:** update dependency postcss to v8.5.30 ([#1836](https://github.com/MustardSeedNetworks/stem/issues/1836)) ([601e30b](https://github.com/MustardSeedNetworks/stem/commit/601e30b6337630d1eb3f3972489c09b0f9fe029f))
+* **deps:** update frontend toolchain to v5.0.4 ([#1837](https://github.com/MustardSeedNetworks/stem/issues/1837)) ([970c026](https://github.com/MustardSeedNetworks/stem/commit/970c0264996640aca6d7c19a386c639b5321351f))
+* **deps:** update module honnef.co/go/tools/cmd/staticcheck to v0.8.2 ([#1838](https://github.com/MustardSeedNetworks/stem/issues/1838)) ([880c339](https://github.com/MustardSeedNetworks/stem/commit/880c3391a3f32779c806201fe31fe3cc308729fe))
+* **deps:** update node.js to v26.12.0 ([#1843](https://github.com/MustardSeedNetworks/stem/issues/1843)) ([546c478](https://github.com/MustardSeedNetworks/stem/commit/546c4785bc2d0c8da684ce23f6a93fba27c67349))
+* **deps:** update ossf/scorecard-action action to v2.5.0 ([#1835](https://github.com/MustardSeedNetworks/stem/issues/1835)) ([09813c5](https://github.com/MustardSeedNetworks/stem/commit/09813c505c07ecaf11deacd7b8103faae729d9e0))
+* **deps:** update storybook monorepo to v10.6.2 ([#1839](https://github.com/MustardSeedNetworks/stem/issues/1839)) ([f659667](https://github.com/MustardSeedNetworks/stem/commit/f659667554bad4d3dd69e7b792cf83847f0c517f))
+
 ## [0.31.0](https://github.com/MustardSeedNetworks/stem/compare/v0.30.2...v0.31.0) (2026-10-17)
 
 
