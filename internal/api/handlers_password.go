@@ -3,6 +3,7 @@
 package api
 
 import (
+	"errors"
 	"net/http"
 	"strings"
 
@@ -15,22 +16,16 @@ import (
 // (`previous_algorithm`). The function never errors — anything we
 // don't recognise (including empty) is reported as "none".
 func detectHashAlgorithm(hash string) string {
-	switch {
-	case strings.HasPrefix(hash, "$argon2id$"):
+	if strings.HasPrefix(hash, "$argon2id$") {
 		return "argon2id"
-	case strings.HasPrefix(hash, "$2a$"),
-		strings.HasPrefix(hash, "$2b$"),
-		strings.HasPrefix(hash, "$2y$"):
-		return "bcrypt"
-	default:
-		return "none"
 	}
+	return "none"
 }
 
 // validatePasswordOrReject runs the layered password-policy check used
 // by both the initial-setup and recovery endpoints:
 //
-//  1. Length floor ([auth.ValidatePasswordStrength])
+//  1. Length bounds ([auth.ValidatePasswordStrength])
 //  2. zxcvbn score floor ([auth.EvaluatePasswordStrength], min score 3)
 //  3. HIBP breach corpus ([auth.CheckPasswordBreached])
 //
@@ -47,8 +42,12 @@ func validatePasswordOrReject(
 ) bool {
 	// Layer 1: length / cheap validation.
 	if err := auth.ValidatePasswordStrength(password); err != nil {
+		rejectReason := "too_short"
+		if errors.Is(err, auth.ErrPasswordTooLong) {
+			rejectReason = "too_long"
+		}
 		logging.AuditPasswordChange(r.Context(), r, username,
-			logging.PasswordChangeRejected, "too_short", prevAlgorithm, err.Error())
+			logging.PasswordChangeRejected, rejectReason, prevAlgorithm, err.Error())
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return false
 	}

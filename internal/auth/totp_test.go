@@ -252,7 +252,7 @@ func TestTOTPDigitsSanity(t *testing.T) {
 }
 
 // mustNewManagerForTOTPTest builds an auth.Manager with deterministic
-// test credentials. STEM_TEST_MODE is already set by main_test.go.
+// test credentials.
 func mustNewManagerForTOTPTest(t *testing.T) *auth.Manager {
 	t.Helper()
 	mgr, err := auth.NewManager("", time.Hour, "admin", "TestPassw0rd!123")
