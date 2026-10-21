@@ -74,6 +74,7 @@
       "stopped": "Detenida por el operador. No se capturó ningún resultado antes de terminar.",
       "error": "Se produjo un error durante la prueba."
     },
+    "hostLimited": "El equipo de prueba se detuvo hasta {{ms}} ms, suficiente por sí solo para superar los límites de retardo. Repita la prueba en un equipo sin carga para medir la ruta.",
     "moduleName": "Módulo: {{module}}"
   },
   "labels": {
