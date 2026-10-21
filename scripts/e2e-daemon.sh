@@ -19,15 +19,6 @@ run_dir=$1
 port=$2
 repo_dir=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 
-# Port fallback (#69) walks +1..+9 when PORT is taken, so every origin the
-# daemon can land on is a WebAuthn origin.
-webauthn_origins=
-offset=0
-while [ "$offset" -le 9 ]; do
-  webauthn_origins="${webauthn_origins:+$webauthn_origins,}https://localhost:$((port + offset))"
-  offset=$((offset + 1))
-done
-
 mkdir -p "$run_dir"
 cd "$run_dir"
 # Credentials match e2e/helpers/auth.ts TEST_CREDENTIALS; global-setup logs in
@@ -45,7 +36,5 @@ STEM_AUTH_USERNAME=admin \
 STEM_AUTH_PASSWORD=admin \
 STEM_API_RATE_LIMIT=5000 \
 STEM_AUTH_RATE_LIMIT=200 \
-STEM_WEBAUTHN_RPID=localhost \
-STEM_WEBAUTHN_ORIGINS="$webauthn_origins" \
 HOME="$run_dir" \
   exec "$repo_dir/bin/stem" web -p "$port"

@@ -316,8 +316,6 @@ func TestWebAuthn_RegisterBegin_CSRFRequired(t *testing.T) {
 // TestWebAuthn_RegisterBegin_Success returns a creation options blob
 // with a non-empty challenge.
 func TestWebAuthn_RegisterBegin_Success(t *testing.T) {
-	t.Setenv("STEM_WEBAUTHN_RPID", "localhost")
-	t.Setenv("STEM_WEBAUTHN_ORIGINS", "http://localhost:8080")
 	s := setupAuthTestServer(t)
 	token, _ := getAuthToken(t, s)
 

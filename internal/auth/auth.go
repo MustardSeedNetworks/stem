@@ -14,6 +14,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -95,16 +96,11 @@ type Manager struct {
 	// The secret is in-memory only — operators who restart the binary
 	// must re-enrol via /api/v1/auth/totp/setup.
 	totp totpState
-	// webauthnCredentials holds zero or more registered WebAuthn
-	// credentials (passkeys). Each entry is one device. Wave 3 (#85)
-	// stores these in-memory alongside totp; persistence is deferred to
-	// a future wave that introduces a secret-management layer.
-	webauthnCredentials []WebAuthnStoredCredential
-	// webauthnSessions holds pending registration/login ceremonies
-	// keyed by username. WebAuthn ceremonies are two-step: begin
-	// returns a challenge, finish consumes it. The challenge MUST be
-	// remembered server-side between the two calls.
-	webauthnSessions map[string]*WebAuthnSessionState
+	// passkeyHandle is the account's opaque WebAuthn user handle, and
+	// passkeys its complete credential records. Like totp, they are
+	// in-memory only: a restart drops every enrolled passkey.
+	passkeyHandle []byte
+	passkeys      []webauthn.Credential
 }
 
 // NewManager creates an auth manager for a credential given in plain text,
@@ -146,17 +142,16 @@ func NewManagerFromHash(
 	}
 
 	return &Manager{
-		mu:                  sync.RWMutex{},
-		jwtSecret:           []byte(secret),
-		sessionTimeout:      sessionTimeout,
-		username:            username,
-		passwordHash:        []byte(passwordHash),
-		issuer:              defaultIssuer,
-		blacklist:           NewTokenBlacklist(),
-		randReader:          rand.Reader,
-		totp:                totpState{secret: "", enabled: false},
-		webauthnCredentials: nil,
-		webauthnSessions:    make(map[string]*WebAuthnSessionState),
+		mu:             sync.RWMutex{},
+		jwtSecret:      []byte(secret),
+		sessionTimeout: sessionTimeout,
+		username:       username,
+		passwordHash:   []byte(passwordHash),
+		issuer:         defaultIssuer,
+		blacklist:      NewTokenBlacklist(),
+		randReader:     rand.Reader,
+		totp:           totpState{secret: "", enabled: false},
+		passkeyHandle:  newPasskeyHandle(),
 	}, nil
 }
 

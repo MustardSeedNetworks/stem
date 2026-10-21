@@ -5,6 +5,7 @@ package api
 import (
 	"github.com/MustardSeedNetworks/foundation/pkg/csrf"
 
+	"github.com/MustardSeedNetworks/stem/internal/auth"
 	"github.com/MustardSeedNetworks/stem/internal/license"
 )
 
@@ -75,6 +76,12 @@ func (s *Server) ResetTestStateForTest() {
 // login, expiry handling).
 func (s *Server) CSRFManagerForTest() *csrf.Manager {
 	return s.csrfManager
+}
+
+// AuthManagerForTest exposes the server's auth manager for tests that
+// assert on state no endpoint reports, such as stored passkey records.
+func (s *Server) AuthManagerForTest() *auth.Manager {
+	return s.authManager
 }
 
 // SessionIDFromJWTForTest is the test-side wrapper around the package-
