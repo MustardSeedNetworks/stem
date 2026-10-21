@@ -315,8 +315,11 @@ jobs:
           delay=5
           attempt=1
           ci_jq='[.check_runs[] | select(.name == "CI Complete")] | sort_by(.id) | last | .conclusion // "pending"'
+          # `gh api` POSTs whenever -f/-F fields are given, and POST
+          # .../check-runs is a 404 that failed every tick (stem#1848):
+          # --method GET sends the fields as the query string.
           while [ "${attempt}" -le "${attempts}" ]; do
-            conclusion="$(gh api "repos/${GITHUB_REPOSITORY}/commits/${sha}/check-runs" \
+            conclusion="$(gh api --method GET "repos/${GITHUB_REPOSITORY}/commits/${sha}/check-runs" \
               -f check_name="CI Complete" \
               -F per_page=20 \
               --jq "${ci_jq}")"
