@@ -400,7 +400,7 @@ jobs:
         # preinstalled on ubuntu-24.04 (actions/runner-images
         # Ubuntu2404-Readme.md) — only cppcheck and bear are installed here.
         timeout-minutes: 10
-        uses: MustardSeedNetworks/.github/.github/actions/apt-install@048d173dd72ca0f9e5fa832fb5b9fd2a6447e5e9 # v1.13.0
+        uses: MustardSeedNetworks/.github/.github/actions/apt-install@76eb579ee0cbdef0a2aef9d9df1ae9ca38cad6bd # v1.14.0
         with:
           # gcc-14 is required for -std=c23: gcc-13 only knows -std=c2x,
           # and rejecting that flag is what made the compile database
@@ -601,7 +601,7 @@ jobs:
         # clang-18 ships preinstalled on ubuntu-24.04 (actions/runner-images
         # Ubuntu2404-Readme.md) — install only the packages not on the image.
         timeout-minutes: 10
-        uses: MustardSeedNetworks/.github/.github/actions/apt-install@048d173dd72ca0f9e5fa832fb5b9fd2a6447e5e9 # v1.13.0
+        uses: MustardSeedNetworks/.github/.github/actions/apt-install@76eb579ee0cbdef0a2aef9d9df1ae9ca38cad6bd # v1.14.0
         with:
           packages: cppcheck libbpf-dev libxdp-dev
 
@@ -897,7 +897,7 @@ jobs:
   # ci-complete still needs: [dependency-review].
   dependency-review:
     if: github.event_name == 'pull_request'
-    uses: MustardSeedNetworks/.github/.github/workflows/dependency-review.yml@048d173dd72ca0f9e5fa832fb5b9fd2a6447e5e9 # v1.13.0
+    uses: MustardSeedNetworks/.github/.github/workflows/dependency-review.yml@76eb579ee0cbdef0a2aef9d9df1ae9ca38cad6bd # v1.14.0
     permissions:
       contents: read
       # Only to post the findings comment when it fails.
@@ -1518,7 +1518,7 @@ jobs:
         # rejects the -std=c23 the Makefile and this benchmark use. Same reason
         # c-lint installs it.
         timeout-minutes: 10
-        uses: MustardSeedNetworks/.github/.github/actions/apt-install@048d173dd72ca0f9e5fa832fb5b9fd2a6447e5e9 # v1.13.0
+        uses: MustardSeedNetworks/.github/.github/actions/apt-install@76eb579ee0cbdef0a2aef9d9df1ae9ca38cad6bd # v1.14.0
         with:
           packages: gcc-14
 
@@ -1579,7 +1579,7 @@ jobs:
   # severity, several of which encode deliberate decisions.
   codeql-alert-gate:
     name: CodeQL Alert Gate
-    uses: MustardSeedNetworks/.github/.github/workflows/codeql-alert-gate.yml@048d173dd72ca0f9e5fa832fb5b9fd2a6447e5e9 # v1.13.0
+    uses: MustardSeedNetworks/.github/.github/workflows/codeql-alert-gate.yml@76eb579ee0cbdef0a2aef9d9df1ae9ca38cad6bd # v1.14.0
     permissions:
       security-events: read
 
