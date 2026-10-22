@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.32.4](https://github.com/MustardSeedNetworks/stem/compare/v0.32.3...v0.32.4) (2026-10-22)
+
+
+### Miscellaneous
+
+* **deps:** update dependency jsdom to v30.1.3 ([#1861](https://github.com/MustardSeedNetworks/stem/issues/1861)) ([9e040de](https://github.com/MustardSeedNetworks/stem/commit/9e040def47e7673201214544817cf0061d31cf5c))
+* **deps:** update dependency undici to v8.12.1 ([#1846](https://github.com/MustardSeedNetworks/stem/issues/1846)) ([077fdd3](https://github.com/MustardSeedNetworks/stem/commit/077fdd3e99f69acbb97c9bfcf38027c2fd23764d))
+* **deps:** update github/codeql-action action to v4.39.0 ([#1863](https://github.com/MustardSeedNetworks/stem/issues/1863)) ([5f508a3](https://github.com/MustardSeedNetworks/stem/commit/5f508a31e63628d4aca83d059c04e512311496bc))
+* **deps:** update npm to v12.2.1 ([#1867](https://github.com/MustardSeedNetworks/stem/issues/1867)) ([565d01b](https://github.com/MustardSeedNetworks/stem/commit/565d01b4ceb21d50c362aa31a3fa8cd55355633e))
+
 ## [0.32.3](https://github.com/MustardSeedNetworks/stem/compare/v0.32.2...v0.32.3) (2026-10-22)
 
 
