@@ -75,6 +75,7 @@
       "error": "Se produjo un error durante la prueba.",
       "unknown": "Esperando a que el backend informe de un estado."
     },
+    "hostLimited": "El equipo de prueba se detuvo hasta {{ms}} ms, suficiente por sí solo para superar los límites de retardo. Repita la prueba en un equipo sin carga para medir la ruta.",
     "moduleName": "Módulo: {{module}}"
   },
   "labels": {

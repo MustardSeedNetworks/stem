@@ -75,6 +75,7 @@
       "error": "An error occurred during the test.",
       "unknown": "Waiting for the backend to report a status."
     },
+    "hostLimited": "The test host stalled for up to {{ms}} ms, enough on its own to fail the delay limits. Rerun on an idle host to measure the path.",
     "moduleName": "Module: {{module}}"
   },
   "labels": {
