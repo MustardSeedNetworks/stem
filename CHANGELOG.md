@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.32.3](https://github.com/MustardSeedNetworks/stem/compare/v0.32.2...v0.32.3) (2026-10-22)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @tanstack/react-query to v5.104.3 ([#1862](https://github.com/MustardSeedNetworks/stem/issues/1862)) ([32748ac](https://github.com/MustardSeedNetworks/stem/commit/32748ac2f19bc58ca36d844d5a4c4f3ee117ffb5))
+* **deps:** update dependency lucide-react to v1.57.0 ([#1847](https://github.com/MustardSeedNetworks/stem/issues/1847)) ([e18e9ad](https://github.com/MustardSeedNetworks/stem/commit/e18e9ad7f13fc27dbc57822e0bd8c1df57cafd12))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1845](https://github.com/MustardSeedNetworks/stem/issues/1845)) ([6164c13](https://github.com/MustardSeedNetworks/stem/commit/6164c13b75ea8e37c0903c943b708f8d75fd3262))
+
 ## [0.32.2](https://github.com/MustardSeedNetworks/stem/compare/v0.32.1...v0.32.2) (2026-10-22)
 
 
