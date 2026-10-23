@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.32.7](https://github.com/MustardSeedNetworks/stem/compare/v0.32.6...v0.32.7) (2026-10-23)
+
+
+### Bug Fixes
+
+* **deps:** update dependency i18next to v26.4.7 ([#1876](https://github.com/MustardSeedNetworks/stem/issues/1876)) ([91b21e5](https://github.com/MustardSeedNetworks/stem/commit/91b21e5aeca47380675d44f26de90ad02bc2f0d9))
+* **deps:** update dependency lucide-react to v1.58.0 ([#1878](https://github.com/MustardSeedNetworks/stem/issues/1878)) ([4c29a25](https://github.com/MustardSeedNetworks/stem/commit/4c29a254da34eb0198ced5a4a8800063ae2f8b5b))
+* **deps:** update dependency react-i18next to v17.0.19 ([#1877](https://github.com/MustardSeedNetworks/stem/issues/1877)) ([76e862f](https://github.com/MustardSeedNetworks/stem/commit/76e862f36af5b94571b11b000aa8add479aaa0ec))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1879](https://github.com/MustardSeedNetworks/stem/issues/1879)) ([61c9248](https://github.com/MustardSeedNetworks/stem/commit/61c9248251a29066acfc3745a9f819d1d21d49ec))
+
 ## [0.32.6](https://github.com/MustardSeedNetworks/stem/compare/v0.32.5...v0.32.6) (2026-10-23)
 
 
