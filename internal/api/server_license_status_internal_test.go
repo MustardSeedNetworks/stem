@@ -24,7 +24,6 @@ import (
 // this case's own, so the licence file under test is the one the daemon reads.
 func licenseStartupEnv(t *testing.T) {
 	t.Helper()
-	t.Setenv("STEM_TEST_MODE", "1")
 	t.Setenv("STEM_DATA_DIR", t.TempDir())
 	t.Setenv("STEM_AUTH_USERNAME", "licensetest")
 	t.Setenv("STEM_AUTH_PASSWORD", "licensepass123")
