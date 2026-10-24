@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.32.13](https://github.com/MustardSeedNetworks/stem/compare/v0.32.12...v0.32.13) (2026-10-24)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @tanstack/react-query to v5.104.4 ([#1901](https://github.com/MustardSeedNetworks/stem/issues/1901)) ([433be48](https://github.com/MustardSeedNetworks/stem/commit/433be4893422247006e29a7c984def4161dadc8c))
+* **deps:** update dependency i18next to v26.5.0 ([#1902](https://github.com/MustardSeedNetworks/stem/issues/1902)) ([6906981](https://github.com/MustardSeedNetworks/stem/commit/6906981cc9c51b1d493071a2b8ee572a5ffa486f))
+* **deps:** update dependency react-i18next to v17.1.0 ([#1903](https://github.com/MustardSeedNetworks/stem/issues/1903)) ([d346752](https://github.com/MustardSeedNetworks/stem/commit/d3467521c184578aa3d197c8c25f3dfb25e90a6d))
+* **deps:** update module github.com/mustardseednetworks/foundation to v0.13.5 ([#1899](https://github.com/MustardSeedNetworks/stem/issues/1899)) ([ee24c5b](https://github.com/MustardSeedNetworks/stem/commit/ee24c5b10d53c795e4e2ae66791b0edb660d4bb7))
+
 ## [0.32.12](https://github.com/MustardSeedNetworks/stem/compare/v0.32.11...v0.32.12) (2026-10-24)
 
 
