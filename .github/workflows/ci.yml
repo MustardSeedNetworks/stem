@@ -301,7 +301,7 @@ jobs:
         env:
           GOOS: windows
         with:
-          version: v2.14.0
+          version: v2.15.0
           only-new-issues: true
           skip-cache: true
 
