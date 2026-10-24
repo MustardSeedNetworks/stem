@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.32.9](https://github.com/MustardSeedNetworks/stem/compare/v0.32.8...v0.32.9) (2026-10-24)
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1888](https://github.com/MustardSeedNetworks/stem/issues/1888)) ([924d8e5](https://github.com/MustardSeedNetworks/stem/commit/924d8e5f117a7fd0739d3831208ce60539a6b0d6))
+* **deps:** update dependency fast-uri to v4.2.3 [security] ([#1887](https://github.com/MustardSeedNetworks/stem/issues/1887)) ([60b2c07](https://github.com/MustardSeedNetworks/stem/commit/60b2c07cc945e2a7b638c6307acfbcf92c10e06a))
+* **deps:** update module github.com/golangci/golangci-lint/v2/cmd/golangci-lint to v2.15.0 ([#1883](https://github.com/MustardSeedNetworks/stem/issues/1883)) ([dafc0e7](https://github.com/MustardSeedNetworks/stem/commit/dafc0e702e1540387153751c4699438db8e2d8e8))
+
 ## [0.32.8](https://github.com/MustardSeedNetworks/stem/compare/v0.32.7...v0.32.8) (2026-10-24)
 
 
