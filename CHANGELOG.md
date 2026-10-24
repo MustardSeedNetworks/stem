@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.32.12](https://github.com/MustardSeedNetworks/stem/compare/v0.32.11...v0.32.12) (2026-10-24)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @hookform/resolvers to v5.9.2 ([#1894](https://github.com/MustardSeedNetworks/stem/issues/1894)) ([ce07e81](https://github.com/MustardSeedNetworks/stem/commit/ce07e81ada4f6a2551a89991cf74847d92361548))
+* **deps:** update dependency react-i18next to v17.0.21 ([#1895](https://github.com/MustardSeedNetworks/stem/issues/1895)) ([616e9e8](https://github.com/MustardSeedNetworks/stem/commit/616e9e82f8ba7ba4730a93be63f7575552368b33))
+* **deps:** update module github.com/mustardseednetworks/foundation to v0.13.4 ([#1896](https://github.com/MustardSeedNetworks/stem/issues/1896)) ([1f3e6d7](https://github.com/MustardSeedNetworks/stem/commit/1f3e6d795304db44cc51e769ed8a3d70bb4dea1e))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1897](https://github.com/MustardSeedNetworks/stem/issues/1897)) ([2bbbdde](https://github.com/MustardSeedNetworks/stem/commit/2bbbddefa407c023d04e4b1bf4905fe079972225))
+
 ## [0.32.11](https://github.com/MustardSeedNetworks/stem/compare/v0.32.10...v0.32.11) (2026-10-24)
 
 
