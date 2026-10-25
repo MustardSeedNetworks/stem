@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.32.15](https://github.com/MustardSeedNetworks/stem/compare/v0.32.14...v0.32.15) (2026-10-25)
+
+
+### Miscellaneous
+
+* **deps:** update commitlint monorepo to v21.2.4 ([#1906](https://github.com/MustardSeedNetworks/stem/issues/1906)) ([6a5b6e9](https://github.com/MustardSeedNetworks/stem/commit/6a5b6e9ec13ca6a9f1a73b5bc447e1b5e6df0705))
+* **deps:** update dependency postcss to v8.5.31 ([#1908](https://github.com/MustardSeedNetworks/stem/issues/1908)) ([2ea1725](https://github.com/MustardSeedNetworks/stem/commit/2ea1725139701d462351af32f8bfa323a637546f))
+
 ## [0.32.14](https://github.com/MustardSeedNetworks/stem/compare/v0.32.13...v0.32.14) (2026-10-25)
 
 
