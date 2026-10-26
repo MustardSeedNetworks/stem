@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.32.17](https://github.com/MustardSeedNetworks/stem/compare/v0.32.16...v0.32.17) (2026-10-26)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @tanstack/react-query to v5.104.5 ([#1914](https://github.com/MustardSeedNetworks/stem/issues/1914)) ([fa57b7f](https://github.com/MustardSeedNetworks/stem/commit/fa57b7ff11bc2624defa5ce048d4d7a4d1d48e7c))
+
+
+### Miscellaneous
+
+* **deps:** update dependency undici to v8.12.3 ([#1913](https://github.com/MustardSeedNetworks/stem/issues/1913)) ([6ce3937](https://github.com/MustardSeedNetworks/stem/commit/6ce3937b7fc496a24c898c387ed68e3b5dd3b0a4))
+
 ## [0.32.16](https://github.com/MustardSeedNetworks/stem/compare/v0.32.15...v0.32.16) (2026-10-26)
 
 
