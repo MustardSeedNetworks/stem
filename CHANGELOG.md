@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.32.16](https://github.com/MustardSeedNetworks/stem/compare/v0.32.15...v0.32.16) (2026-10-26)
+
+
+### Bug Fixes
+
+* **deps:** update module github.com/mustardseednetworks/foundation to v0.13.6 ([#1910](https://github.com/MustardSeedNetworks/stem/issues/1910)) ([177a1a4](https://github.com/MustardSeedNetworks/stem/commit/177a1a4e37dbdf8b2f4df054f0cb2d1800f4071c))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1911](https://github.com/MustardSeedNetworks/stem/issues/1911)) ([988cd58](https://github.com/MustardSeedNetworks/stem/commit/988cd58880882b90aaf69a0e1a246f7eea48cf79))
+
 ## [0.32.15](https://github.com/MustardSeedNetworks/stem/compare/v0.32.14...v0.32.15) (2026-10-25)
 
 
