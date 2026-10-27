@@ -25,7 +25,6 @@ const firstRunPassword = "kettle-orbit-granite-velvet-42"
 func unconfiguredEnv(t *testing.T) string {
 	t.Helper()
 	dataDir := t.TempDir()
-	t.Setenv("STEM_TEST_MODE", "1")
 	t.Setenv("STEM_DISABLE_HIBP", "1")
 	t.Setenv("STEM_DATA_DIR", dataDir)
 	t.Setenv("STEM_AUTH_USERNAME", "")

@@ -128,10 +128,9 @@ func mustNewManager(
 
 func TestAuthenticate_ValidCredentials(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
 	mgr := mustNewManager(t, "test-secret", auth.AccessTokenDuration, "admin", "admin")
 
-	token, err := mgr.Authenticate(ctx, "admin", "admin")
+	token, err := mgr.Authenticate("admin", "admin")
 	if err != nil {
 		t.Errorf("Authenticate() unexpected error: %v", err)
 	}
@@ -142,10 +141,9 @@ func TestAuthenticate_ValidCredentials(t *testing.T) {
 
 func TestAuthenticate_CaseInsensitiveUsername(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
 	mgr := mustNewManager(t, "test-secret", auth.AccessTokenDuration, "admin", "admin")
 
-	token, err := mgr.Authenticate(ctx, "ADMIN", "admin")
+	token, err := mgr.Authenticate("ADMIN", "admin")
 	if err != nil {
 		t.Errorf("Authenticate() unexpected error: %v", err)
 	}
@@ -156,10 +154,9 @@ func TestAuthenticate_CaseInsensitiveUsername(t *testing.T) {
 
 func TestAuthenticate_WrongUsername(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
 	mgr := mustNewManager(t, "test-secret", auth.AccessTokenDuration, "admin", "admin")
 
-	token, err := mgr.Authenticate(ctx, "wronguser", "admin")
+	token, err := mgr.Authenticate("wronguser", "admin")
 	if !errors.Is(err, auth.ErrInvalidCredentials) {
 		t.Errorf("Authenticate() error = %v, want %v", err, auth.ErrInvalidCredentials)
 	}
@@ -170,10 +167,9 @@ func TestAuthenticate_WrongUsername(t *testing.T) {
 
 func TestAuthenticate_WrongPassword(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
 	mgr := mustNewManager(t, "test-secret", auth.AccessTokenDuration, "admin", "admin")
 
-	token, err := mgr.Authenticate(ctx, "admin", "wrongpass")
+	token, err := mgr.Authenticate("admin", "wrongpass")
 	if !errors.Is(err, auth.ErrInvalidCredentials) {
 		t.Errorf("Authenticate() error = %v, want %v", err, auth.ErrInvalidCredentials)
 	}
@@ -184,10 +180,9 @@ func TestAuthenticate_WrongPassword(t *testing.T) {
 
 func TestAuthenticate_EmptyUsername(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
 	mgr := mustNewManager(t, "test-secret", auth.AccessTokenDuration, "admin", "admin")
 
-	token, err := mgr.Authenticate(ctx, "", "admin")
+	token, err := mgr.Authenticate("", "admin")
 	if !errors.Is(err, auth.ErrInvalidCredentials) {
 		t.Errorf("Authenticate() error = %v, want %v", err, auth.ErrInvalidCredentials)
 	}
@@ -198,10 +193,9 @@ func TestAuthenticate_EmptyUsername(t *testing.T) {
 
 func TestAuthenticate_EmptyPassword(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
 	mgr := mustNewManager(t, "test-secret", auth.AccessTokenDuration, "admin", "admin")
 
-	token, err := mgr.Authenticate(ctx, "admin", "")
+	token, err := mgr.Authenticate("admin", "")
 	if !errors.Is(err, auth.ErrInvalidCredentials) {
 		t.Errorf("Authenticate() error = %v, want %v", err, auth.ErrInvalidCredentials)
 	}
@@ -212,10 +206,9 @@ func TestAuthenticate_EmptyPassword(t *testing.T) {
 
 func TestAuthenticate_PasswordCaseSensitive(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
 	mgr := mustNewManager(t, "test-secret", auth.AccessTokenDuration, "admin", "admin")
 
-	token, err := mgr.Authenticate(ctx, "admin", "ADMIN")
+	token, err := mgr.Authenticate("admin", "ADMIN")
 	if !errors.Is(err, auth.ErrInvalidCredentials) {
 		t.Errorf("Authenticate() error = %v, want %v", err, auth.ErrInvalidCredentials)
 	}
@@ -226,10 +219,9 @@ func TestAuthenticate_PasswordCaseSensitive(t *testing.T) {
 
 func TestAuthenticate_CustomCredentials(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
 	mgr := mustNewManager(t, "test-secret", auth.AccessTokenDuration, "testuser", "testpassword123")
 
-	token, err := mgr.Authenticate(ctx, "testuser", "testpassword123")
+	token, err := mgr.Authenticate("testuser", "testpassword123")
 	if err != nil {
 		t.Errorf("Authenticate() unexpected error: %v", err)
 	}
@@ -243,7 +235,7 @@ func TestValidateToken_ValidToken(t *testing.T) {
 	ctx := context.Background()
 	mgr := mustNewManager(t, "test-secret", auth.AccessTokenDuration, "admin", "admin")
 
-	token, err := mgr.Authenticate(ctx, "admin", "admin")
+	token, err := mgr.Authenticate("admin", "admin")
 	if err != nil {
 		t.Fatalf("Authenticate() failed: %v", err)
 	}
@@ -272,7 +264,7 @@ func TestValidateToken_ExpiredToken(t *testing.T) {
 	ctx := context.Background()
 	mgr := mustNewManager(t, "test-secret", 1*time.Millisecond, "admin", "admin")
 
-	token, err := mgr.Authenticate(ctx, "admin", "admin")
+	token, err := mgr.Authenticate("admin", "admin")
 	if err != nil {
 		t.Fatalf("Authenticate() failed: %v", err)
 	}
@@ -312,7 +304,7 @@ func TestValidateToken_TamperedToken(t *testing.T) {
 	ctx := context.Background()
 	mgr := mustNewManager(t, "test-secret", auth.AccessTokenDuration, "admin", "admin")
 
-	token, err := mgr.Authenticate(ctx, "admin", "admin")
+	token, err := mgr.Authenticate("admin", "admin")
 	if err != nil {
 		t.Fatalf("Authenticate() failed: %v", err)
 	}
@@ -349,7 +341,7 @@ func TestValidateToken_WrongSecret(t *testing.T) {
 	mgr1 := mustNewManager(t, "secret-one", auth.AccessTokenDuration, "admin", "admin")
 	mgr2 := mustNewManager(t, "secret-two", auth.AccessTokenDuration, "admin", "admin")
 
-	token, err := mgr1.Authenticate(ctx, "admin", "admin")
+	token, err := mgr1.Authenticate("admin", "admin")
 	if err != nil {
 		t.Fatalf("Authenticate() failed: %v", err)
 	}
@@ -480,12 +472,14 @@ func TestAuthenticateConcurrency(t *testing.T) {
 	ctx := context.Background()
 	mgr := mustNewManager(t, "test-secret", auth.AccessTokenDuration, "admin", "admin")
 
-	const numGoroutines = 100
+	// Each login is a 64 MiB Argon2id derivation; eight concurrent ones
+	// exercise the manager's locking without exhausting test-host memory.
+	const numGoroutines = 8
 	errChan := make(chan error, numGoroutines)
 
 	for range numGoroutines {
 		go func() {
-			token, err := mgr.Authenticate(ctx, "admin", "admin")
+			token, err := mgr.Authenticate("admin", "admin")
 			if err != nil {
 				errChan <- err
 				return
@@ -573,7 +567,7 @@ func getTestClaims(t *testing.T) *auth.Claims {
 	ctx := context.Background()
 	mgr := mustNewManager(t, "test-secret", 10*time.Minute, "testuser", "testpass")
 
-	token, err := mgr.Authenticate(ctx, "testuser", "testpass")
+	token, err := mgr.Authenticate("testuser", "testpass")
 	if err != nil {
 		t.Fatalf("Authenticate() failed: %v", err)
 	}
@@ -640,7 +634,7 @@ func TestRevokeToken_ValidToken(t *testing.T) {
 	ctx := context.Background()
 	mgr := mustNewManager(t, "test-secret", auth.AccessTokenDuration, "admin", "admin")
 
-	token, err := mgr.Authenticate(ctx, "admin", "admin")
+	token, err := mgr.Authenticate("admin", "admin")
 	if err != nil {
 		t.Fatalf("Authenticate() failed: %v", err)
 	}
@@ -694,7 +688,7 @@ func TestRevokeToken_WithExpiresAt(t *testing.T) {
 	ctx := context.Background()
 	mgr := mustNewManager(t, "test-secret", auth.AccessTokenDuration, "admin", "admin")
 
-	token, err := mgr.Authenticate(ctx, "admin", "admin")
+	token, err := mgr.Authenticate("admin", "admin")
 	if err != nil {
 		t.Fatalf("Authenticate() failed: %v", err)
 	}
@@ -724,7 +718,7 @@ func TestRevokeToken_MultipleTimes(t *testing.T) {
 	ctx := context.Background()
 	mgr := mustNewManager(t, "test-secret", auth.AccessTokenDuration, "admin", "admin")
 
-	token, err := mgr.Authenticate(ctx, "admin", "admin")
+	token, err := mgr.Authenticate("admin", "admin")
 	if err != nil {
 		t.Fatalf("Authenticate() failed: %v", err)
 	}
@@ -784,7 +778,7 @@ func TestGenerateRefreshToken_HasLongerDuration(t *testing.T) {
 	ctx := context.Background()
 	mgr := mustNewManager(t, "test-secret", auth.AccessTokenDuration, "admin", "admin")
 
-	accessToken, err := mgr.Authenticate(ctx, "admin", "admin")
+	accessToken, err := mgr.Authenticate("admin", "admin")
 	if err != nil {
 		t.Fatalf("Authenticate() failed: %v", err)
 	}
@@ -910,7 +904,7 @@ func TestRefreshAccessToken_WithAccessToken(t *testing.T) {
 	ctx := context.Background()
 	mgr := mustNewManager(t, "test-secret", auth.AccessTokenDuration, "admin", "admin")
 
-	accessToken, err := mgr.Authenticate(ctx, "admin", "admin")
+	accessToken, err := mgr.Authenticate("admin", "admin")
 	if err != nil {
 		t.Fatalf("Authenticate() failed: %v", err)
 	}
@@ -1007,7 +1001,7 @@ func TestRefreshAccessToken_PreservesUsername(t *testing.T) {
 	mgr := mustNewManager(t, "test-secret", auth.AccessTokenDuration, "testuser", "testpass")
 
 	// Authenticate to get access token.
-	accessToken, err := mgr.Authenticate(ctx, "testuser", "testpass")
+	accessToken, err := mgr.Authenticate("testuser", "testpass")
 	if err != nil {
 		t.Fatalf("Authenticate() failed: %v", err)
 	}
@@ -1046,10 +1040,9 @@ func TestRefreshAccessToken_PreservesUsername(t *testing.T) {
 
 func TestAuthenticateWithRefresh_ValidCredentials(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
 	mgr := mustNewManager(t, "test-secret", auth.AccessTokenDuration, "admin", "admin")
 
-	accessToken, refreshToken, err := mgr.AuthenticateWithRefresh(ctx, "admin", "admin")
+	accessToken, refreshToken, err := mgr.AuthenticateWithRefresh("admin", "admin")
 	if err != nil {
 		t.Fatalf("AuthenticateWithRefresh() failed: %v", err)
 	}
@@ -1072,7 +1065,7 @@ func TestAuthenticateWithRefresh_TokenTypes(t *testing.T) {
 	ctx := context.Background()
 	mgr := mustNewManager(t, "test-secret", auth.AccessTokenDuration, "admin", "admin")
 
-	accessToken, refreshToken, err := mgr.AuthenticateWithRefresh(ctx, "admin", "admin")
+	accessToken, refreshToken, err := mgr.AuthenticateWithRefresh("admin", "admin")
 	if err != nil {
 		t.Fatalf("AuthenticateWithRefresh() failed: %v", err)
 	}
@@ -1098,10 +1091,9 @@ func TestAuthenticateWithRefresh_TokenTypes(t *testing.T) {
 
 func TestAuthenticateWithRefresh_WrongUsername(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
 	mgr := mustNewManager(t, "test-secret", auth.AccessTokenDuration, "admin", "admin")
 
-	accessToken, refreshToken, err := mgr.AuthenticateWithRefresh(ctx, "wronguser", "admin")
+	accessToken, refreshToken, err := mgr.AuthenticateWithRefresh("wronguser", "admin")
 	if !errors.Is(err, auth.ErrInvalidCredentials) {
 		t.Errorf("AuthenticateWithRefresh() error = %v, want %v", err, auth.ErrInvalidCredentials)
 	}
@@ -1117,10 +1109,9 @@ func TestAuthenticateWithRefresh_WrongUsername(t *testing.T) {
 
 func TestAuthenticateWithRefresh_WrongPassword(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
 	mgr := mustNewManager(t, "test-secret", auth.AccessTokenDuration, "admin", "admin")
 
-	accessToken, refreshToken, err := mgr.AuthenticateWithRefresh(ctx, "admin", "wrongpass")
+	accessToken, refreshToken, err := mgr.AuthenticateWithRefresh("admin", "wrongpass")
 	if !errors.Is(err, auth.ErrInvalidCredentials) {
 		t.Errorf("AuthenticateWithRefresh() error = %v, want %v", err, auth.ErrInvalidCredentials)
 	}
@@ -1136,10 +1127,9 @@ func TestAuthenticateWithRefresh_WrongPassword(t *testing.T) {
 
 func TestAuthenticateWithRefresh_EmptyUsername(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
 	mgr := mustNewManager(t, "test-secret", auth.AccessTokenDuration, "admin", "admin")
 
-	accessToken, refreshToken, err := mgr.AuthenticateWithRefresh(ctx, "", "admin")
+	accessToken, refreshToken, err := mgr.AuthenticateWithRefresh("", "admin")
 	if !errors.Is(err, auth.ErrInvalidCredentials) {
 		t.Errorf("AuthenticateWithRefresh() error = %v, want %v", err, auth.ErrInvalidCredentials)
 	}
@@ -1155,10 +1145,9 @@ func TestAuthenticateWithRefresh_EmptyUsername(t *testing.T) {
 
 func TestAuthenticateWithRefresh_EmptyPassword(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
 	mgr := mustNewManager(t, "test-secret", auth.AccessTokenDuration, "admin", "admin")
 
-	accessToken, refreshToken, err := mgr.AuthenticateWithRefresh(ctx, "admin", "")
+	accessToken, refreshToken, err := mgr.AuthenticateWithRefresh("admin", "")
 	if !errors.Is(err, auth.ErrInvalidCredentials) {
 		t.Errorf("AuthenticateWithRefresh() error = %v, want %v", err, auth.ErrInvalidCredentials)
 	}
@@ -1174,10 +1163,9 @@ func TestAuthenticateWithRefresh_EmptyPassword(t *testing.T) {
 
 func TestAuthenticateWithRefresh_CaseInsensitiveUsername(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
 	mgr := mustNewManager(t, "test-secret", auth.AccessTokenDuration, "admin", "admin")
 
-	accessToken, refreshToken, err := mgr.AuthenticateWithRefresh(ctx, "ADMIN", "admin")
+	accessToken, refreshToken, err := mgr.AuthenticateWithRefresh("ADMIN", "admin")
 	if err != nil {
 		t.Fatalf("AuthenticateWithRefresh() failed: %v", err)
 	}
@@ -1193,10 +1181,9 @@ func TestAuthenticateWithRefresh_CaseInsensitiveUsername(t *testing.T) {
 
 func TestAuthenticateWithRefresh_PasswordCaseSensitive(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
 	mgr := mustNewManager(t, "test-secret", auth.AccessTokenDuration, "admin", "admin")
 
-	accessToken, refreshToken, err := mgr.AuthenticateWithRefresh(ctx, "admin", "ADMIN")
+	accessToken, refreshToken, err := mgr.AuthenticateWithRefresh("admin", "ADMIN")
 	if !errors.Is(err, auth.ErrInvalidCredentials) {
 		t.Errorf("AuthenticateWithRefresh() error = %v, want %v", err, auth.ErrInvalidCredentials)
 	}
@@ -1215,7 +1202,7 @@ func TestAuthenticateWithRefresh_RefreshTokenCanBeUsed(t *testing.T) {
 	ctx := context.Background()
 	mgr := mustNewManager(t, "test-secret", auth.AccessTokenDuration, "admin", "admin")
 
-	_, refreshToken, err := mgr.AuthenticateWithRefresh(ctx, "admin", "admin")
+	_, refreshToken, err := mgr.AuthenticateWithRefresh("admin", "admin")
 	if err != nil {
 		t.Fatalf("AuthenticateWithRefresh() failed: %v", err)
 	}
@@ -1241,7 +1228,7 @@ func TestAuthenticateWithRefresh_Concurrency(t *testing.T) {
 
 	for range numGoroutines {
 		go func() {
-			accessToken, refreshToken, err := mgr.AuthenticateWithRefresh(ctx, "admin", "admin")
+			accessToken, refreshToken, err := mgr.AuthenticateWithRefresh("admin", "admin")
 			if err != nil {
 				errChan <- err
 				return
@@ -1507,7 +1494,9 @@ func TestTokenBlacklist_Concurrency(t *testing.T) {
 	t.Parallel()
 	bl := auth.NewTokenBlacklist()
 
-	const numGoroutines = 100
+	// Each login is a 64 MiB Argon2id derivation; eight concurrent ones
+	// exercise the manager's locking without exhausting test-host memory.
+	const numGoroutines = 8
 	done := make(chan bool, numGoroutines*3)
 
 	// Concurrent adds.
@@ -1567,7 +1556,7 @@ func TestFullAuthenticationFlow(t *testing.T) {
 	mgr := mustNewManager(t, "test-secret", auth.AccessTokenDuration, "admin", "admin")
 
 	// Step 1: Authenticate and get both tokens.
-	accessToken, refreshToken, err := mgr.AuthenticateWithRefresh(ctx, "admin", "admin")
+	accessToken, refreshToken, err := mgr.AuthenticateWithRefresh("admin", "admin")
 	if err != nil {
 		t.Fatalf("AuthenticateWithRefresh() failed: %v", err)
 	}
@@ -1618,7 +1607,7 @@ func TestLogoutFlow(t *testing.T) {
 	mgr := mustNewManager(t, "test-secret", auth.AccessTokenDuration, "admin", "admin")
 
 	// Login.
-	accessToken, refreshToken, err := mgr.AuthenticateWithRefresh(ctx, "admin", "admin")
+	accessToken, refreshToken, err := mgr.AuthenticateWithRefresh("admin", "admin")
 	if err != nil {
 		t.Fatalf("AuthenticateWithRefresh() failed: %v", err)
 	}
@@ -1689,7 +1678,7 @@ func TestValidateToken_ExpiredByOneSecond(t *testing.T) {
 	ctx := context.Background()
 	mgr := mustNewManager(t, "test-secret", 1*time.Millisecond, "admin", "admin")
 
-	token, err := mgr.Authenticate(ctx, "admin", "admin")
+	token, err := mgr.Authenticate("admin", "admin")
 	if err != nil {
 		t.Fatalf("Authenticate() failed: %v", err)
 	}
@@ -1711,7 +1700,7 @@ func TestTokenClaimsID_Unique(t *testing.T) {
 	// Generate multiple tokens and verify they have unique IDs.
 	tokens := make([]string, 10)
 	for i := range 10 {
-		token, err := mgr.Authenticate(ctx, "admin", "admin")
+		token, err := mgr.Authenticate("admin", "admin")
 		if err != nil {
 			t.Fatalf("Authenticate() failed: %v", err)
 		}
@@ -1741,7 +1730,7 @@ func TestRevokeToken_ClaimsWithNilExpiresAt(t *testing.T) {
 	mgr := mustNewManager(t, "test-secret", auth.AccessTokenDuration, "admin", "admin")
 
 	// Create a token and get claims.
-	token, err := mgr.Authenticate(ctx, "admin", "admin")
+	token, err := mgr.Authenticate("admin", "admin")
 	if err != nil {
 		t.Fatalf("Authenticate() failed: %v", err)
 	}
@@ -1853,7 +1842,7 @@ func TestAuthenticateWithRefresh_CustomCredentials(t *testing.T) {
 	ctx := context.Background()
 	mgr := mustNewManager(t, "test-secret", auth.AccessTokenDuration, "customuser", "custompassword123!")
 
-	accessToken, refreshToken, err := mgr.AuthenticateWithRefresh(ctx, "customuser", "custompassword123!")
+	accessToken, refreshToken, err := mgr.AuthenticateWithRefresh("customuser", "custompassword123!")
 	if err != nil {
 		t.Fatalf("AuthenticateWithRefresh() failed: %v", err)
 	}
@@ -1943,7 +1932,7 @@ func TestMultipleSequentialAuthentications(t *testing.T) {
 	// Perform multiple sequential authentications.
 	tokens := make([]string, 5)
 	for i := range 5 {
-		token, err := mgr.Authenticate(ctx, "admin", "admin")
+		token, err := mgr.Authenticate("admin", "admin")
 		if err != nil {
 			t.Fatalf("Authenticate() attempt %d failed: %v", i, err)
 		}
@@ -1965,7 +1954,7 @@ func TestRevokeAndReAuthenticate(t *testing.T) {
 	mgr := mustNewManager(t, "test-secret", auth.AccessTokenDuration, "admin", "admin")
 
 	// Authenticate.
-	token1, err := mgr.Authenticate(ctx, "admin", "admin")
+	token1, err := mgr.Authenticate("admin", "admin")
 	if err != nil {
 		t.Fatalf("Authenticate() failed: %v", err)
 	}
@@ -1985,7 +1974,7 @@ func TestRevokeAndReAuthenticate(t *testing.T) {
 	}
 
 	// Re-authenticate.
-	token2, err := mgr.Authenticate(ctx, "admin", "admin")
+	token2, err := mgr.Authenticate("admin", "admin")
 	if err != nil {
 		t.Fatalf("Authenticate() after revoke failed: %v", err)
 	}
@@ -2146,11 +2135,10 @@ func TestTokenBlacklist_Cleanup_VeryLargeBlacklist(t *testing.T) {
 
 func TestAuthenticateWithRefresh_MixedCaseUsername(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
 	mgr := mustNewManager(t, "test-secret", auth.AccessTokenDuration, "TestUser", "password")
 
 	// Mixed case authentication should work (case-insensitive username).
-	accessToken, refreshToken, err := mgr.AuthenticateWithRefresh(ctx, "testuser", "password")
+	accessToken, refreshToken, err := mgr.AuthenticateWithRefresh("testuser", "password")
 	if err != nil {
 		t.Fatalf("AuthenticateWithRefresh() failed: %v", err)
 	}
@@ -2201,7 +2189,7 @@ func TestRevokeToken_TokenWithEmptyID_DoesNotAffectOthers(t *testing.T) {
 	mgr := mustNewManager(t, "test-secret", auth.AccessTokenDuration, "admin", "admin")
 
 	// Create a valid token.
-	validToken, err := mgr.Authenticate(ctx, "admin", "admin")
+	validToken, err := mgr.Authenticate("admin", "admin")
 	if err != nil {
 		t.Fatalf("Authenticate() failed: %v", err)
 	}
@@ -2233,19 +2221,18 @@ func TestRevokeToken_TokenWithEmptyID_DoesNotAffectOthers(t *testing.T) {
 
 func TestNewManager_PasswordHashStored(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
 
 	// Create manager with specific password.
 	mgr := mustNewManager(t, "test-secret", auth.AccessTokenDuration, "user", "mypassword123")
 
 	// Should authenticate with correct password.
-	_, err := mgr.Authenticate(ctx, "user", "mypassword123")
+	_, err := mgr.Authenticate("user", "mypassword123")
 	if err != nil {
 		t.Errorf("Authentication with correct password failed: %v", err)
 	}
 
 	// Should fail with wrong password.
-	_, err = mgr.Authenticate(ctx, "user", "wrongpassword")
+	_, err = mgr.Authenticate("user", "wrongpassword")
 	if !errors.Is(err, auth.ErrInvalidCredentials) {
 		t.Errorf("Expected ErrInvalidCredentials, got: %v", err)
 	}

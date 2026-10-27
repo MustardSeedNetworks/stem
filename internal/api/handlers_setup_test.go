@@ -22,7 +22,6 @@ const (
 // setupSetupTestServer creates a server for setup handler tests.
 func setupSetupTestServer(t testing.TB) *api.Server {
 	t.Helper()
-	t.Setenv("STEM_TEST_MODE", "1")
 	t.Setenv("STEM_DATA_DIR", t.TempDir())
 	t.Setenv("STEM_AUTH_USERNAME", setupTestUsername)
 	t.Setenv("STEM_AUTH_PASSWORD", setupTestPassword)
@@ -39,7 +38,6 @@ func setupSetupTestServer(t testing.TB) *api.Server {
 // the environment or the store) or claimed from the environment.
 func setupServerClaimed(t testing.TB, claimed bool) *api.Server {
 	t.Helper()
-	t.Setenv("STEM_TEST_MODE", "1")
 	t.Setenv("STEM_DATA_DIR", t.TempDir())
 	if claimed {
 		t.Setenv("STEM_AUTH_USERNAME", setupTestUsername)

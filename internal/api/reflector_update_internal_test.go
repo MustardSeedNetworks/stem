@@ -12,7 +12,6 @@ import (
 
 func newReflectorUpdateServer(t *testing.T) *Server {
 	t.Helper()
-	t.Setenv("STEM_TEST_MODE", "1")
 	t.Setenv("STEM_DATA_DIR", t.TempDir())
 	t.Setenv("STEM_AUTH_USERNAME", "reflectorupdate")
 	t.Setenv("STEM_AUTH_PASSWORD", "reflectorupdate123")
@@ -105,7 +104,6 @@ func TestPublishedCertificatePathKeepsAnAbsoluteSetting(t *testing.T) {
 // `stem reflect` working from an operator's shell on CT307.
 func TestPublishedDescriptorCarriesAnAbsoluteCertificatePath(t *testing.T) {
 	dir := t.TempDir()
-	t.Setenv("STEM_TEST_MODE", "1")
 	t.Setenv("STEM_DATA_DIR", dir)
 	t.Setenv("STEM_AUTH_USERNAME", "descriptorpath")
 	t.Setenv("STEM_AUTH_PASSWORD", "descriptorpath123")
