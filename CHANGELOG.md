@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.32.18](https://github.com/MustardSeedNetworks/stem/compare/v0.32.17...v0.32.18) (2026-10-27)
+
+
+### Bug Fixes
+
+* **deps:** update dependency react-router to v8.5.0 ([#1916](https://github.com/MustardSeedNetworks/stem/issues/1916)) ([d669437](https://github.com/MustardSeedNetworks/stem/commit/d669437eff993b7f2325e5a2b256ca11fdbf9242))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1917](https://github.com/MustardSeedNetworks/stem/issues/1917)) ([c617040](https://github.com/MustardSeedNetworks/stem/commit/c6170406a5f6ca20755ab94e53e4a40ec4b03903))
+
 ## [0.32.17](https://github.com/MustardSeedNetworks/stem/compare/v0.32.16...v0.32.17) (2026-10-26)
 
 
