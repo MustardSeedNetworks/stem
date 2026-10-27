@@ -186,7 +186,7 @@ jobs:
       setup-node: true
       ui-artifact: backend-ui-dist
       ui-install: true
-      golangci-lint-version: v2.14.0
+      golangci-lint-version: v2.15.0
       golangci-lint-args: --timeout=5m
       lint-windows: false
       fetch-depth: 0
@@ -301,7 +301,7 @@ jobs:
         env:
           GOOS: windows
         with:
-          version: v2.14.0
+          version: v2.15.0
           only-new-issues: true
           skip-cache: true
 
