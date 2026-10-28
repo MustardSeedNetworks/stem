@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.32.26](https://github.com/MustardSeedNetworks/stem/compare/v0.32.25...v0.32.26) (2026-10-28)
+
+
+### Miscellaneous
+
+* **deps:** update dependency @biomejs/biome to v2.6.2 ([#1941](https://github.com/MustardSeedNetworks/stem/issues/1941)) ([f709db0](https://github.com/MustardSeedNetworks/stem/commit/f709db0f3edcfdf385730e615b638dc29c0b57db))
+* **deps:** update github/codeql-action action to v4.39.1 ([#1944](https://github.com/MustardSeedNetworks/stem/issues/1944)) ([5554eaa](https://github.com/MustardSeedNetworks/stem/commit/5554eaab17630ad88647df8d535294938dfb8391))
+
 ## [0.32.25](https://github.com/MustardSeedNetworks/stem/compare/v0.32.24...v0.32.25) (2026-10-28)
 
 
