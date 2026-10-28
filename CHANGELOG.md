@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.32.22](https://github.com/MustardSeedNetworks/stem/compare/v0.32.21...v0.32.22) (2026-10-28)
+
+
+### Bug Fixes
+
+* **deps:** update dependency immer to v11.2.3 ([#1932](https://github.com/MustardSeedNetworks/stem/issues/1932)) ([e7302c2](https://github.com/MustardSeedNetworks/stem/commit/e7302c26df5c34ace8038bac3088ed577be6b1b3))
+* **deps:** update module github.com/mustardseednetworks/foundation to v0.13.8 ([#1930](https://github.com/MustardSeedNetworks/stem/issues/1930)) ([bff1344](https://github.com/MustardSeedNetworks/stem/commit/bff1344939b726afdc2ed86f0e292d2b725720f4))
+
+
+### Miscellaneous
+
+* **deps:** update dependency @chromatic-com/storybook to v5.6.0 ([#1931](https://github.com/MustardSeedNetworks/stem/issues/1931)) ([e297f08](https://github.com/MustardSeedNetworks/stem/commit/e297f0827508d2d711d7d93fe3350cc553d8990f))
+* **deps:** update storybook monorepo to v10.6.3 ([#1929](https://github.com/MustardSeedNetworks/stem/issues/1929)) ([6894474](https://github.com/MustardSeedNetworks/stem/commit/6894474e8fdf82378a2b91afdf406a5b73dc0d4e))
+
 ## [0.32.21](https://github.com/MustardSeedNetworks/stem/compare/v0.32.20...v0.32.21) (2026-10-28)
 
 
