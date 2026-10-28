@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.32.23](https://github.com/MustardSeedNetworks/stem/compare/v0.32.22...v0.32.23) (2026-10-28)
+
+
+### Bug Fixes
+
+* **deps:** update dependency i18next to v26.5.4 ([#1915](https://github.com/MustardSeedNetworks/stem/issues/1915)) ([bedf251](https://github.com/MustardSeedNetworks/stem/commit/bedf251e5e04d8892f8cc30175f0eccfc72e6665))
+* **deps:** update dependency lucide-react to v1.61.0 ([#1939](https://github.com/MustardSeedNetworks/stem/issues/1939)) ([abf0eb6](https://github.com/MustardSeedNetworks/stem/commit/abf0eb6ffe100aa75fd672ee6ed600ea5b1807e0))
+* **deps:** update module github.com/mustardseednetworks/foundation to v0.13.9 ([#1934](https://github.com/MustardSeedNetworks/stem/issues/1934)) ([281b099](https://github.com/MustardSeedNetworks/stem/commit/281b0993a771ebfc5e20f5fb39d5ea223c231625))
+
+
+### Miscellaneous
+
+* **deps:** update dependency vite to v8.3.5 ([#1936](https://github.com/MustardSeedNetworks/stem/issues/1936)) ([d87c8bf](https://github.com/MustardSeedNetworks/stem/commit/d87c8bfc8a2754cbcf4d740f4a69e1973d37c95a))
+* **deps:** update markdownlint to v0.24.0 ([#1938](https://github.com/MustardSeedNetworks/stem/issues/1938)) ([0623242](https://github.com/MustardSeedNetworks/stem/commit/0623242be9c1a16b9e0ff178c4c4e49cd647c53b))
+
 ## [0.32.22](https://github.com/MustardSeedNetworks/stem/compare/v0.32.21...v0.32.22) (2026-10-28)
 
 
