@@ -20,7 +20,6 @@ Component   index.css @layer components (.card, .badge, .alert,  ← consume sem
 ```
 
 **Two invariants (enforced by `scripts/check-token-discipline.sh`):**
-
 1. **Values flow one direction** — defined once in `index.css`, everything else
    references them. Never hand-copy a hex sideways into a `.ts`/`.tsx` file.
 2. **App code names only semantic / component tokens** — never a primitive

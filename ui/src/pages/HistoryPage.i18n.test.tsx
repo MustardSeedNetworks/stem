@@ -10,7 +10,7 @@
  * drifts from `HISTORY_MAX_ITEMS`, or that is missing from `es`, fails here
  * rather than shipping.
  */
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render, renderHook, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import i18n from '../i18n';
 import { usePages } from '../pageRegistry';
@@ -30,13 +30,8 @@ const oneRun = [
 
 /** The page heading comes from the route table, not from HistoryPage. */
 function historyPageTitle(): string {
-  let title = '';
-  function Probe(): null {
-    title = usePages().find((p) => p.path === '/history')?.title ?? '';
-    return null;
-  }
-  render(<Probe />);
-  return title;
+  const { result } = renderHook(() => usePages());
+  return result.current.find((p) => p.path === '/history')?.title ?? '';
 }
 
 beforeEach(() => {
