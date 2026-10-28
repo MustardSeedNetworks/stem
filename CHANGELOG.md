@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.32.27](https://github.com/MustardSeedNetworks/stem/compare/v0.32.26...v0.32.27) (2026-10-28)
+
+
+### Bug Fixes
+
+* **deps:** update dependency immer to v11.2.7 ([#1945](https://github.com/MustardSeedNetworks/stem/issues/1945)) ([2f2af6d](https://github.com/MustardSeedNetworks/stem/commit/2f2af6dd7286dc62c73395cac81cf3555a0c80e6))
+* **deps:** update go dependencies ([#1946](https://github.com/MustardSeedNetworks/stem/issues/1946)) ([ea7d2b0](https://github.com/MustardSeedNetworks/stem/commit/ea7d2b0ddff32861a64d7c693bf6f16911b83865))
+
 ## [0.32.26](https://github.com/MustardSeedNetworks/stem/compare/v0.32.25...v0.32.26) (2026-10-28)
 
 
