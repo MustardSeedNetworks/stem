@@ -5,6 +5,69 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.32.24](https://github.com/MustardSeedNetworks/stem/compare/v0.32.23...v0.32.24) (2026-10-28)
+
+
+### Bug Fixes
+
+* **deps:** update dependency immer to v11.2.6 ([#1937](https://github.com/MustardSeedNetworks/stem/issues/1937)) ([289b35b](https://github.com/MustardSeedNetworks/stem/commit/289b35b8d644b5e82c09a1f9ea50db714f9b56f1))
+
+## [0.32.23](https://github.com/MustardSeedNetworks/stem/compare/v0.32.22...v0.32.23) (2026-10-28)
+
+
+### Bug Fixes
+
+* **deps:** update dependency i18next to v26.5.4 ([#1915](https://github.com/MustardSeedNetworks/stem/issues/1915)) ([bedf251](https://github.com/MustardSeedNetworks/stem/commit/bedf251e5e04d8892f8cc30175f0eccfc72e6665))
+* **deps:** update dependency lucide-react to v1.61.0 ([#1939](https://github.com/MustardSeedNetworks/stem/issues/1939)) ([abf0eb6](https://github.com/MustardSeedNetworks/stem/commit/abf0eb6ffe100aa75fd672ee6ed600ea5b1807e0))
+* **deps:** update module github.com/mustardseednetworks/foundation to v0.13.9 ([#1934](https://github.com/MustardSeedNetworks/stem/issues/1934)) ([281b099](https://github.com/MustardSeedNetworks/stem/commit/281b0993a771ebfc5e20f5fb39d5ea223c231625))
+
+
+### Miscellaneous
+
+* **deps:** update dependency vite to v8.3.5 ([#1936](https://github.com/MustardSeedNetworks/stem/issues/1936)) ([d87c8bf](https://github.com/MustardSeedNetworks/stem/commit/d87c8bfc8a2754cbcf4d740f4a69e1973d37c95a))
+* **deps:** update markdownlint to v0.24.0 ([#1938](https://github.com/MustardSeedNetworks/stem/issues/1938)) ([0623242](https://github.com/MustardSeedNetworks/stem/commit/0623242be9c1a16b9e0ff178c4c4e49cd647c53b))
+
+## [0.32.22](https://github.com/MustardSeedNetworks/stem/compare/v0.32.21...v0.32.22) (2026-10-28)
+
+
+### Bug Fixes
+
+* **deps:** update dependency immer to v11.2.3 ([#1932](https://github.com/MustardSeedNetworks/stem/issues/1932)) ([e7302c2](https://github.com/MustardSeedNetworks/stem/commit/e7302c26df5c34ace8038bac3088ed577be6b1b3))
+* **deps:** update module github.com/mustardseednetworks/foundation to v0.13.8 ([#1930](https://github.com/MustardSeedNetworks/stem/issues/1930)) ([bff1344](https://github.com/MustardSeedNetworks/stem/commit/bff1344939b726afdc2ed86f0e292d2b725720f4))
+
+
+### Miscellaneous
+
+* **deps:** update dependency @chromatic-com/storybook to v5.6.0 ([#1931](https://github.com/MustardSeedNetworks/stem/issues/1931)) ([e297f08](https://github.com/MustardSeedNetworks/stem/commit/e297f0827508d2d711d7d93fe3350cc553d8990f))
+* **deps:** update storybook monorepo to v10.6.3 ([#1929](https://github.com/MustardSeedNetworks/stem/issues/1929)) ([6894474](https://github.com/MustardSeedNetworks/stem/commit/6894474e8fdf82378a2b91afdf406a5b73dc0d4e))
+
+## [0.32.21](https://github.com/MustardSeedNetworks/stem/compare/v0.32.20...v0.32.21) (2026-10-28)
+
+
+### Miscellaneous
+
+* **deps:** bump golangci-lint to v2.15.0 ([#1926](https://github.com/MustardSeedNetworks/stem/issues/1926)) ([a4c8d2b](https://github.com/MustardSeedNetworks/stem/commit/a4c8d2b09b730ec7c706482d4a6b3ef10e14fa51)), closes [#1925](https://github.com/MustardSeedNetworks/stem/issues/1925)
+* **deps:** update node.js to v26.12.1 ([#1928](https://github.com/MustardSeedNetworks/stem/issues/1928)) ([7f88706](https://github.com/MustardSeedNetworks/stem/commit/7f8870675cebcb3ddac9d9bba711b1dc5673921f))
+
+## [0.32.20](https://github.com/MustardSeedNetworks/stem/compare/v0.32.19...v0.32.20) (2026-10-27)
+
+
+### Bug Fixes
+
+* **deps:** update frontend toolchain ([#1859](https://github.com/MustardSeedNetworks/stem/issues/1859)) ([81ce6f3](https://github.com/MustardSeedNetworks/stem/commit/81ce6f3897b3ed87ecd404bceb05e10ce8235ee2))
+
+
+### Continuous Integration
+
+* drop push-time scans and reconcile releases daily ([#1828](https://github.com/MustardSeedNetworks/stem/issues/1828)) ([d537d31](https://github.com/MustardSeedNetworks/stem/commit/d537d31f30ad584d243ed0bc5920cc8c136ab224))
+
+## [0.32.19](https://github.com/MustardSeedNetworks/stem/compare/v0.32.18...v0.32.19) (2026-10-27)
+
+
+### Bug Fixes
+
+* **deps:** update dependency lucide-react to v1.60.0 ([#1920](https://github.com/MustardSeedNetworks/stem/issues/1920)) ([1805b55](https://github.com/MustardSeedNetworks/stem/commit/1805b55523a7c4ced6fcb773cab0bb264a4eb5bd))
+
 ## [0.32.18](https://github.com/MustardSeedNetworks/stem/compare/v0.32.17...v0.32.18) (2026-10-27)
 
 

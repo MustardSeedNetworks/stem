@@ -186,7 +186,7 @@ jobs:
       setup-node: true
       ui-artifact: backend-ui-dist
       ui-install: true
-      golangci-lint-version: v2.14.0
+      golangci-lint-version: v2.15.0
       golangci-lint-args: --timeout=5m
       lint-windows: false
       fetch-depth: 0
@@ -301,7 +301,7 @@ jobs:
         env:
           GOOS: windows
         with:
-          version: v2.14.0
+          version: v2.15.0
           only-new-issues: true
           skip-cache: true
 
@@ -1409,7 +1409,7 @@ jobs:
     with:
       backend-result: ${{ needs.backend.result }}
       frontend-result: ${{ needs.frontend.result }}
-      playwright-image: mcr.microsoft.com/playwright:v1.64.0-noble@sha256:06a9939e57531807f8d5fd76ce44b53165ffb7d7501d87ab10e285c20b1e971f
+      playwright-image: mcr.microsoft.com/playwright:v1.64.1-noble@sha256:47b510dd9230bf0b9bfc9b20102241e577ea7a99334ab4c3ca19f19770e9b8ea
       ui-artifact: backend-ui-dist
       fetch-depth: 0
       build-daemon: true
