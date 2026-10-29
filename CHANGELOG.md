@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.32.28](https://github.com/MustardSeedNetworks/stem/compare/v0.32.27...v0.32.28) (2026-10-29)
+
+
+### Bug Fixes
+
+* **deps:** update dependency i18next to v26.5.5 ([#1951](https://github.com/MustardSeedNetworks/stem/issues/1951)) ([563db7f](https://github.com/MustardSeedNetworks/stem/commit/563db7fb7557265ea1ccf7ad27c6742a5095cc2e))
+* **deps:** update dependency react-i18next to v17.1.1 ([#1952](https://github.com/MustardSeedNetworks/stem/issues/1952)) ([da1f04a](https://github.com/MustardSeedNetworks/stem/commit/da1f04a7efc6f910d45bcea427e825ef5d410235))
+* **deps:** update dependency zustand to v5.0.16 ([#1950](https://github.com/MustardSeedNetworks/stem/issues/1950)) ([9009ea8](https://github.com/MustardSeedNetworks/stem/commit/9009ea8a23539a05bded6588ffa85041f18f1cb4))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1947](https://github.com/MustardSeedNetworks/stem/issues/1947)) ([e8dc68a](https://github.com/MustardSeedNetworks/stem/commit/e8dc68a132c9290a0809718c6a0dda9c84838fa6))
+* **deps:** lock file maintenance ([#1953](https://github.com/MustardSeedNetworks/stem/issues/1953)) ([1eb7103](https://github.com/MustardSeedNetworks/stem/commit/1eb7103b181cfa0f5e151c37811ab608d58ed362))
+
 ## [0.32.27](https://github.com/MustardSeedNetworks/stem/compare/v0.32.26...v0.32.27) (2026-10-28)
 
 
