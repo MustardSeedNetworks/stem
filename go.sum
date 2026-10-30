@@ -30,8 +30,8 @@ github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/internal v1.2.0 h1:nCYfg
 github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/internal v1.2.0/go.mod h1:ucUjca2JtSZboY8IoUqyQyuuXvwbMBVwFOm0vdQPNhA=
 github.com/AzureAD/microsoft-authentication-library-for-go v1.7.0 h1:4iB+IesclUXdP0ICgAabvq2FYLXrJWKx1fJQ+GxSo3Y=
 github.com/AzureAD/microsoft-authentication-library-for-go v1.7.0/go.mod h1:HKpQxkWaGLJ+D/5H8QRpyQXA1eKjxkFlOMwck5+33Jk=
-github.com/MustardSeedNetworks/foundation v0.13.11 h1:I3YTWsLObKpz3jI36LZOIJse3iRR2f7UGkhPgio8Exw=
-github.com/MustardSeedNetworks/foundation v0.13.11/go.mod h1:AgFjJku5XnbrIiISwWMe6hbgJLN91YKHwMJYleDC6tk=
+github.com/MustardSeedNetworks/foundation v0.13.15 h1:Crvx8dGP00+8qVzulDm5WfAy8BhOxIMD85DQt2LjluA=
+github.com/MustardSeedNetworks/foundation v0.13.15/go.mod h1:AgFjJku5XnbrIiISwWMe6hbgJLN91YKHwMJYleDC6tk=
 github.com/alessio/shellescape v1.4.1 h1:V7yhSDDn8LP4lc4jS8pFkt0zCnzVJlG5JXy9BVKJUX0=
 github.com/alessio/shellescape v1.4.1/go.mod h1:PZAiSCk0LJaZkiCSkPv8qIobYglO3FPpyFjDCtHLS30=
 github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 h1:DklsrG3dyBCFEj5IhUbnKptjxatkF07cF2ak3yi77so=
