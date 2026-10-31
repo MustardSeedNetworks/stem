@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.32.36](https://github.com/MustardSeedNetworks/stem/compare/v0.32.35...v0.32.36) (2026-10-31)
+
+
+### Bug Fixes
+
+* **deps:** update dependency react-i18next to v17.1.8 ([#1982](https://github.com/MustardSeedNetworks/stem/issues/1982)) ([eb46cb4](https://github.com/MustardSeedNetworks/stem/commit/eb46cb4bfe945c142a09513fff71b09a9e1ab8d6))
+
+
+### Miscellaneous
+
+* **deps:** update dependency @biomejs/biome to v2.6.3 ([#1984](https://github.com/MustardSeedNetworks/stem/issues/1984)) ([8f14e99](https://github.com/MustardSeedNetworks/stem/commit/8f14e995643d9e954d51d9eb038d1f8c769721b1))
+
 ## [0.32.35](https://github.com/MustardSeedNetworks/stem/compare/v0.32.34...v0.32.35) (2026-10-31)
 
 
