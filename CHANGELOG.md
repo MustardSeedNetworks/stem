@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.32.32](https://github.com/MustardSeedNetworks/stem/compare/v0.32.31...v0.32.32) (2026-10-31)
+
+
+### Bug Fixes
+
+* **deps:** update dependency i18next-browser-languagedetector to v8.2.2 ([#1963](https://github.com/MustardSeedNetworks/stem/issues/1963)) ([c77cc38](https://github.com/MustardSeedNetworks/stem/commit/c77cc38b52645607d02b6731a6eaf32450bfbf92))
+* **deps:** update dependency react-hook-form to v7.91.0 ([#1967](https://github.com/MustardSeedNetworks/stem/issues/1967)) ([815898b](https://github.com/MustardSeedNetworks/stem/commit/815898be3e036140928a9550fc7656a3d85ac513))
+* **deps:** update dependency react-i18next to v17.1.5 ([#1964](https://github.com/MustardSeedNetworks/stem/issues/1964)) ([eede24e](https://github.com/MustardSeedNetworks/stem/commit/eede24ea712470950ee076fd375c8d4181f9738d))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#1968](https://github.com/MustardSeedNetworks/stem/issues/1968)) ([d8cb1be](https://github.com/MustardSeedNetworks/stem/commit/d8cb1be487092f77b9aa2c18c2e65e890b42eec9))
+* **deps:** update module github.com/securego/gosec/v2/cmd/gosec to v2.30.0 ([#1965](https://github.com/MustardSeedNetworks/stem/issues/1965)) ([1d76227](https://github.com/MustardSeedNetworks/stem/commit/1d76227750dfe8bcdddb9af959c2b6870b4535cf))
+* **deps:** update securego/gosec action to v2.30.0 ([#1966](https://github.com/MustardSeedNetworks/stem/issues/1966)) ([2cb02e6](https://github.com/MustardSeedNetworks/stem/commit/2cb02e68c70d912dbafc3f345dd3e7a101dd8fa1))
+
 ## [0.32.31](https://github.com/MustardSeedNetworks/stem/compare/v0.32.30...v0.32.31) (2026-10-30)
 
 
