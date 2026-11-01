@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.32.39](https://github.com/MustardSeedNetworks/stem/compare/v0.32.38...v0.32.39) (2026-11-01)
+
+
+### Bug Fixes
+
+* **deps:** update dependency i18next-browser-languagedetector to v8.2.3 ([#1991](https://github.com/MustardSeedNetworks/stem/issues/1991)) ([70ede3d](https://github.com/MustardSeedNetworks/stem/commit/70ede3d0f6248c8fb0815896b152dd92989135ea))
+
 ## [0.32.38](https://github.com/MustardSeedNetworks/stem/compare/v0.32.37...v0.32.38) (2026-11-01)
 
 
