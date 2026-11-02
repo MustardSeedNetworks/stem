@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.32.40](https://github.com/MustardSeedNetworks/stem/compare/v0.32.39...v0.32.40) (2026-11-02)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @tanstack/react-query to v5.105.0 ([#1997](https://github.com/MustardSeedNetworks/stem/issues/1997)) ([2b98dde](https://github.com/MustardSeedNetworks/stem/commit/2b98dde5e08b6b6e7eb669bd5bcfc106224916cf))
+
+
+### Miscellaneous
+
+* **deps:** update storybook monorepo to v10.6.4 ([#1998](https://github.com/MustardSeedNetworks/stem/issues/1998)) ([eaf3150](https://github.com/MustardSeedNetworks/stem/commit/eaf31509200de99df0c866d8ec07ff3d59efe010))
+
 ## [0.32.39](https://github.com/MustardSeedNetworks/stem/compare/v0.32.38...v0.32.39) (2026-11-02)
 
 
