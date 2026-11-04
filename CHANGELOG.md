@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.32.44](https://github.com/MustardSeedNetworks/stem/compare/v0.32.43...v0.32.44) (2026-11-04)
+
+
+### Bug Fixes
+
+* **deps:** update dependency react-router to v8.5.1 ([#2009](https://github.com/MustardSeedNetworks/stem/issues/2009)) ([5622b10](https://github.com/MustardSeedNetworks/stem/commit/5622b10030057cd8e48042f496608f06c5638682))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#2012](https://github.com/MustardSeedNetworks/stem/issues/2012)) ([877277f](https://github.com/MustardSeedNetworks/stem/commit/877277f1df4bb8278b5bb03d3840b6bbb704c5f9))
+* **deps:** update storybook monorepo to v10.6.5 ([#2008](https://github.com/MustardSeedNetworks/stem/issues/2008)) ([f1a07fb](https://github.com/MustardSeedNetworks/stem/commit/f1a07fbd02dd2976d7d819560dd2c0119aa1c28c))
+
 ## [0.32.43](https://github.com/MustardSeedNetworks/stem/compare/v0.32.42...v0.32.43) (2026-11-04)
 
 
