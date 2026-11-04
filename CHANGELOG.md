@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.32.43](https://github.com/MustardSeedNetworks/stem/compare/v0.32.42...v0.32.43) (2026-11-04)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @hookform/resolvers to v6.0.1 ([#2005](https://github.com/MustardSeedNetworks/stem/issues/2005)) ([5354e24](https://github.com/MustardSeedNetworks/stem/commit/5354e24721c70699552fa13cb81e958d65f898e6))
+* **deps:** update module github.com/mustardseednetworks/foundation to v0.14.0 ([#2011](https://github.com/MustardSeedNetworks/stem/issues/2011)) ([c3a4703](https://github.com/MustardSeedNetworks/stem/commit/c3a470396e3812dce490e9cb754f938c839d9b9d))
+
+
+### Miscellaneous
+
+* **deps:** update node.js to v26.13.0 ([#2010](https://github.com/MustardSeedNetworks/stem/issues/2010)) ([944a281](https://github.com/MustardSeedNetworks/stem/commit/944a281559247f2aaecd7ae8abfe5aa8f14bc49a))
+
 ## [0.32.42](https://github.com/MustardSeedNetworks/stem/compare/v0.32.41...v0.32.42) (2026-11-03)
 
 
