@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.32.47](https://github.com/MustardSeedNetworks/stem/compare/v0.32.46...v0.32.47) (2026-11-05)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @hookform/resolvers to v6.0.2 ([#2016](https://github.com/MustardSeedNetworks/stem/issues/2016)) ([d82415a](https://github.com/MustardSeedNetworks/stem/commit/d82415a63185f779466fa4e0aab5f6cadbe4035f))
+* **deps:** update dependency lucide-react to v1.64.0 ([#2022](https://github.com/MustardSeedNetworks/stem/issues/2022)) ([d4e22c2](https://github.com/MustardSeedNetworks/stem/commit/d4e22c27e076ff7d191c9c978bac30a975fd02b5))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#2020](https://github.com/MustardSeedNetworks/stem/issues/2020)) ([17b2dd5](https://github.com/MustardSeedNetworks/stem/commit/17b2dd5e501f25675389a37e03d9e74a8a3992b8))
+
 ## [0.32.46](https://github.com/MustardSeedNetworks/stem/compare/v0.32.45...v0.32.46) (2026-11-05)
 
 
