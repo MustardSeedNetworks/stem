@@ -19,7 +19,6 @@ func setupLicenseTestServer(t testing.TB) *api.Server {
 	// these cases start trials and deactivate licences in the licence file of
 	// whoever runs them.
 	licenseHome(t)
-	t.Setenv("STEM_TEST_MODE", "1")
 	t.Setenv("STEM_DATA_DIR", t.TempDir())
 	t.Setenv("STEM_AUTH_USERNAME", "licensetest")
 	t.Setenv("STEM_AUTH_PASSWORD", "licensepass123")

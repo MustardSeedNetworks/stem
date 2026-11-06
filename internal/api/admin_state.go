@@ -73,7 +73,7 @@ func loadCredential(dataDir string) (storedCredential, bool, error) {
 	if unmarshalErr := json.Unmarshal(data, &stored); unmarshalErr != nil {
 		return stored, false, fmt.Errorf("decode credential store: %w", unmarshalErr)
 	}
-	if stored.Username == "" || auth.IsDefaultPasswordHash(stored.PasswordHash) {
+	if stored.Username == "" || stored.PasswordHash == "" {
 		return stored, false, fmt.Errorf("credential store %s holds no usable credential",
 			filepath.Join(dataDir, credentialStateFile))
 	}

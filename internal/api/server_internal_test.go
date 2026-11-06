@@ -4,7 +4,6 @@ package api
 
 import (
 	"bytes"
-	"context"
 	"crypto/tls"
 	"errors"
 	"net/http"
@@ -66,9 +65,7 @@ func setupClaimsTestServer(t *testing.T) *Server {
 // TestExtractClaims_ValidToken tests extractClaims with a valid token.
 func TestExtractClaims_ValidToken(t *testing.T) {
 	s := setupClaimsTestServer(t)
-	token, _, authErr := s.authManager.AuthenticateWithRefresh(
-		context.TODO(),
-		"claimstest",
+	token, _, authErr := s.authManager.AuthenticateWithRefresh("claimstest",
 		"claimspass123",
 	)
 	if authErr != nil {
@@ -125,9 +122,7 @@ func TestExtractClaims_InvalidHeaders(t *testing.T) {
 // Note: The cookie-first auth no longer handles extra spaces around "Bearer".
 func TestExtractClaims_StandardBearerFormat(t *testing.T) {
 	s := setupClaimsTestServer(t)
-	token, _, authErr := s.authManager.AuthenticateWithRefresh(
-		context.TODO(),
-		"claimstest",
+	token, _, authErr := s.authManager.AuthenticateWithRefresh("claimstest",
 		"claimspass123",
 	)
 	if authErr != nil {
@@ -2058,9 +2053,7 @@ func TestHandleAuthCSRFCoverageFull(t *testing.T) {
 
 	t.Run("get csrf token with auth", func(t *testing.T) {
 		// Get a valid auth token first.
-		token, _, authErr := s.authManager.AuthenticateWithRefresh(
-			context.TODO(),
-			"csrffulluser",
+		token, _, authErr := s.authManager.AuthenticateWithRefresh("csrffulluser",
 			"csrffullpass123",
 		)
 		if authErr != nil {
@@ -2581,9 +2574,7 @@ func TestHandleAuthRefreshWithCookie(t *testing.T) {
 	s := newTestServer(t)
 
 	// Get a valid refresh token.
-	_, refreshToken, authErr := s.authManager.AuthenticateWithRefresh(
-		context.TODO(),
-		"refreshcookieuser",
+	_, refreshToken, authErr := s.authManager.AuthenticateWithRefresh("refreshcookieuser",
 		"refreshcookiepass123",
 	)
 	if authErr != nil {
@@ -2854,9 +2845,7 @@ func TestHandleAuthCSRFWithValidSession(t *testing.T) {
 	s := newTestServer(t)
 
 	// Get a valid token first.
-	token, _, authErr := s.authManager.AuthenticateWithRefresh(
-		context.TODO(),
-		"csrfsessionuser",
+	token, _, authErr := s.authManager.AuthenticateWithRefresh("csrfsessionuser",
 		"csrfsessionpass123",
 	)
 	if authErr != nil {

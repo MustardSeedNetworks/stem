@@ -4,66 +4,14 @@ package auth_test
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"testing"
 
-	"golang.org/x/crypto/bcrypt"
+	"github.com/MustardSeedNetworks/foundation/pkg/password"
 
 	"github.com/MustardSeedNetworks/stem/internal/auth"
 )
-
-// bcryptCost10Fixture is a deterministic fixture used to assert that
-// VerifyPassword flags legacy bcrypt hashes for re-hash. Generated with
-// bcrypt.DefaultCost (10) so callers can assert the rehash-on-login
-// migration path without running bcrypt at production cost.
-//
-// Plaintext for fixture: "legacyPassw0rd!123".
-const (
-	legacyBcryptPassword = "legacyPassw0rd!123"
-	// Generated once via bcrypt.GenerateFromPassword at cost 10.
-	legacyBcryptFixture = "$2a$10$.PLBMCDzHzrJWtvjJOq2tOztcj.oZVrB/gclaUFL1Qrgj2n6k4i32"
-)
-
-func TestIsDefaultPasswordHash(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name     string
-		hash     string
-		expected bool
-	}{
-		{
-			name:     "empty hash",
-			hash:     "",
-			expected: true,
-		},
-		{
-			name:     "default prefix hash",
-			hash:     "$2a$10$defaultSomeRandomStuff",
-			expected: true,
-		},
-		{
-			name:     "valid bcrypt hash",
-			hash:     "$2a$10$N9qo8uLOickgx2ZMRZoMy.MN4fJR7M/Cq5sRmz8R0KfRqDzzXcC9a",
-			expected: false,
-		},
-		{
-			name:     "short hash",
-			hash:     "$2a$10",
-			expected: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			result := auth.IsDefaultPasswordHash(tt.hash)
-			if result != tt.expected {
-				t.Errorf("IsDefaultPasswordHash(%q) = %v, want %v", tt.hash, result, tt.expected)
-			}
-		})
-	}
-}
 
 func TestGenerateSecurePassword(t *testing.T) {
 	t.Parallel()
@@ -148,6 +96,16 @@ func TestValidatePasswordStrength(t *testing.T) {
 			password: "",
 			wantErr:  true,
 		},
+		{
+			name:     "at the foundation input bound",
+			password: strings.Repeat("a", password.MaxBytes),
+			wantErr:  false,
+		},
+		{
+			name:     "over the foundation input bound",
+			password: strings.Repeat("a", password.MaxBytes+1),
+			wantErr:  true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -161,144 +119,62 @@ func TestValidatePasswordStrength(t *testing.T) {
 	}
 }
 
-// TestHashPassword_ProducesArgon2id verifies HashPassword now emits a
-// PHC-formatted Argon2id hash (task #84, Wave 2 migration off bcrypt).
-func TestHashPassword_ProducesArgon2id(t *testing.T) {
+// TestAuthenticate_FoundationPassword pins login to the foundation
+// Argon2id record: the right password authenticates, and a wrong,
+// oversize or non-Argon2id credential is refused the same way.
+func TestAuthenticate_FoundationPassword(t *testing.T) {
 	t.Parallel()
 
-	password := "testPassword123!"
-	hash, err := auth.HashPassword(password)
+	const plaintext = "Correct-Horse-Battery-9"
+	record, err := password.Hash(plaintext)
 	if err != nil {
-		t.Fatalf("HashPassword failed: %v", err)
+		t.Fatalf("password.Hash: %v", err)
+	}
+	if !strings.HasPrefix(record, "$argon2id$v=19$m=65536,t=3,p=4$") {
+		t.Fatalf("record %q does not carry the foundation parameters", record)
 	}
 
-	if !strings.HasPrefix(hash, "$argon2id$") {
-		t.Errorf("HashPassword should produce $argon2id$-prefixed hash, got %q", hash)
+	tests := []struct {
+		name    string
+		hash    string
+		guess   string
+		wantErr error
+	}{
+		{name: "right password", hash: record, guess: plaintext},
+		{name: "wrong password", hash: record, guess: "Wrong-Horse-Battery-9", wantErr: auth.ErrInvalidCredentials},
+		{
+			name:    "oversize password",
+			hash:    record,
+			guess:   strings.Repeat("a", password.MaxBytes+1),
+			wantErr: auth.ErrInvalidCredentials,
+		},
+		{
+			name:    "bcrypt record",
+			hash:    "$2a$10$N9qo8uLOickgx2ZMRZoMy.MN4fJR7M/Cq5sRmz8R0KfRqDzzXcC9a",
+			guess:   plaintext,
+			wantErr: auth.ErrInvalidCredentials,
+		},
+		{
+			name:    "weaker argon2id parameters",
+			hash:    strings.Replace(record, "m=65536,t=3,p=4", "m=64,t=1,p=1", 1),
+			guess:   plaintext,
+			wantErr: auth.ErrInvalidCredentials,
+		},
 	}
-	if !strings.Contains(hash, "$v=19$") {
-		t.Errorf("HashPassword should embed v=19, got %q", hash)
-	}
-}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			mgr, mgrErr := auth.NewManagerFromHash("test-secret-key-minimum-32chars!", 0, "operator", tt.hash)
+			if mgrErr != nil {
+				t.Fatalf("NewManagerFromHash: %v", mgrErr)
+			}
+			t.Cleanup(mgr.Stop)
 
-// TestHashPassword_Unique ensures distinct salts are used per hash.
-func TestHashPassword_Unique(t *testing.T) {
-	t.Parallel()
-
-	password := "samePassword123!"
-	hash1, err := auth.HashPassword(password)
-	if err != nil {
-		t.Fatalf("HashPassword failed: %v", err)
-	}
-
-	hash2, err := auth.HashPassword(password)
-	if err != nil {
-		t.Fatalf("HashPassword failed: %v", err)
-	}
-
-	// Different salts should produce different hashes.
-	if hash1 == hash2 {
-		t.Error("HashPassword should produce different hashes for same password (different salts)")
-	}
-}
-
-// TestVerifyPassword_Argon2id_Match verifies the happy path for
-// Argon2id verification — matched=true, no rehash needed.
-func TestVerifyPassword_Argon2id_Match(t *testing.T) {
-	t.Parallel()
-
-	password := "argon2VerifyMatch!"
-	hash, err := auth.HashPassword(password)
-	if err != nil {
-		t.Fatalf("HashPassword failed: %v", err)
-	}
-
-	matched, needsRehash, vErr := auth.VerifyPassword(hash, password)
-	if vErr != nil {
-		t.Fatalf("VerifyPassword returned error: %v", vErr)
-	}
-	if !matched {
-		t.Error("VerifyPassword should match correct password")
-	}
-	if needsRehash {
-		t.Error("Argon2id hash should not trigger rehash")
-	}
-}
-
-// TestVerifyPassword_Argon2id_NoMatch verifies wrong-password rejection.
-func TestVerifyPassword_Argon2id_NoMatch(t *testing.T) {
-	t.Parallel()
-
-	hash, err := auth.HashPassword("right-password")
-	if err != nil {
-		t.Fatalf("HashPassword failed: %v", err)
-	}
-
-	matched, needsRehash, vErr := auth.VerifyPassword(hash, "wrong-password")
-	if vErr != nil {
-		t.Fatalf("VerifyPassword returned error: %v", vErr)
-	}
-	if matched {
-		t.Error("VerifyPassword should reject wrong password")
-	}
-	if needsRehash {
-		t.Error("Failed verify should not flag for rehash")
-	}
-}
-
-// TestVerifyPassword_Bcrypt_FlagsRehash is the centerpiece migration
-// test: a legacy bcrypt hash must verify successfully AND set
-// needsRehash=true so the caller upgrades the storage to Argon2id on
-// the next login.
-func TestVerifyPassword_Bcrypt_FlagsRehash(t *testing.T) {
-	t.Parallel()
-
-	// Sanity-check the fixture before the actual assertion so a
-	// fixture typo doesn't masquerade as a regression.
-	if err := bcrypt.CompareHashAndPassword(
-		[]byte(legacyBcryptFixture), []byte(legacyBcryptPassword),
-	); err != nil {
-		t.Fatalf("fixture bcrypt hash does not verify against fixture password: %v", err)
-	}
-
-	matched, needsRehash, vErr := auth.VerifyPassword(legacyBcryptFixture, legacyBcryptPassword)
-	if vErr != nil {
-		t.Fatalf("VerifyPassword returned error: %v", vErr)
-	}
-	if !matched {
-		t.Error("VerifyPassword should match legacy bcrypt hash")
-	}
-	if !needsRehash {
-		t.Error("VerifyPassword must flag bcrypt hash for rehash (migration path)")
-	}
-}
-
-// TestVerifyPassword_Bcrypt_WrongPassword verifies that a bcrypt-format
-// hash with the wrong password reports no match and no rehash.
-func TestVerifyPassword_Bcrypt_WrongPassword(t *testing.T) {
-	t.Parallel()
-
-	matched, needsRehash, vErr := auth.VerifyPassword(legacyBcryptFixture, "nope-not-it")
-	if vErr != nil {
-		t.Fatalf("VerifyPassword returned error: %v", vErr)
-	}
-	if matched {
-		t.Error("VerifyPassword should not match wrong password")
-	}
-	if needsRehash {
-		t.Error("Failed bcrypt verify must not request rehash")
-	}
-}
-
-// TestVerifyPassword_UnsupportedHash verifies the unknown-prefix path.
-func TestVerifyPassword_UnsupportedHash(t *testing.T) {
-	t.Parallel()
-
-	matched, needsRehash, vErr := auth.VerifyPassword("$pbkdf2$something", "whatever")
-	if matched || needsRehash {
-		t.Error("Unknown hash format must not match or trigger rehash")
-	}
-	if vErr == nil {
-		t.Error("Unknown hash format must return an error")
+			_, authErr := mgr.Authenticate("operator", tt.guess)
+			if !errors.Is(authErr, tt.wantErr) {
+				t.Fatalf("Authenticate() error = %v, want %v", authErr, tt.wantErr)
+			}
+		})
 	}
 }
 
@@ -342,27 +218,22 @@ func TestGetUsername(t *testing.T) {
 	}
 }
 
-// TestFirstRun_PlaceholderHashRejectsAllPasswords locks the cross-repo
-// first-run invariant (#356): the shipped placeholder password hash is
-// NOT a usable default — no password authenticates against it, so a
-// fresh install forces the operator through setup. Mirrors the same
-// guarantee seed/niac make in their first-run flows.
-func TestFirstRun_PlaceholderHashRejectsAllPasswords(t *testing.T) {
-	// The placeholder marker baked into a fresh install. Kept as a
-	// literal here (the prefix const is unexported) — if this value
-	// ever changes, IsDefaultPasswordHash must change in lockstep, and
-	// this test will fail loudly if the two drift.
-	const placeholder = "$2a$10$default"
+// TestFirstRun_UnclaimedDaemonRejectsAllPasswords locks the cross-repo
+// first-run invariant (#356): an unclaimed daemon has no stored hash, and
+// no password authenticates against it, so a fresh install forces the
+// operator through setup. Mirrors the same guarantee seed/niac make.
+func TestFirstRun_UnclaimedDaemonRejectsAllPasswords(t *testing.T) {
+	t.Parallel()
 
-	if !auth.IsDefaultPasswordHash(placeholder) {
-		t.Fatal("placeholder hash must be flagged as default → setup required")
+	mgr, err := auth.NewManagerFromHash("test-secret-key-minimum-32chars!", 0, "admin", "")
+	if err != nil {
+		t.Fatalf("NewManagerFromHash: %v", err)
 	}
+	t.Cleanup(mgr.Stop)
 
 	for _, guess := range []string{"", "admin", "password", "changeme", "default", "stem"} {
-		ok, valid, _ := auth.VerifyPassword(placeholder, guess)
-		if ok || valid {
-			t.Errorf("placeholder hash authenticated password %q (ok=%v valid=%v) — usable default leaked",
-				guess, ok, valid)
+		if _, authErr := mgr.Authenticate("admin", guess); !errors.Is(authErr, auth.ErrInvalidCredentials) {
+			t.Errorf("unclaimed daemon authenticated password %q (err=%v): usable default leaked", guess, authErr)
 		}
 	}
 }

@@ -45,7 +45,7 @@ func TestValidateTokenAcceptsAPICredentials(t *testing.T) {
 
 	mgr := tokenTypeManager(t)
 
-	access, err := mgr.Authenticate(context.Background(), "operator", "Correct-Horse-Battery-9")
+	access, err := mgr.Authenticate("operator", "Correct-Horse-Battery-9")
 	if err != nil {
 		t.Fatalf("Authenticate: %v", err)
 	}
@@ -75,7 +75,7 @@ func TestValidateRefreshTokenAcceptsOnlyRefresh(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GenerateRefreshToken: %v", err)
 	}
-	access, err := mgr.Authenticate(context.Background(), "operator", "Correct-Horse-Battery-9")
+	access, err := mgr.Authenticate("operator", "Correct-Horse-Battery-9")
 	if err != nil {
 		t.Fatalf("Authenticate: %v", err)
 	}

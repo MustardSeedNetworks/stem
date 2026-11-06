@@ -60,7 +60,6 @@ const (
 // setupTestingTestServer creates a server for testing handler tests.
 func setupTestingTestServer(t testing.TB) *api.Server {
 	t.Helper()
-	t.Setenv("STEM_TEST_MODE", "1")
 	t.Setenv("STEM_DATA_DIR", t.TempDir())
 	t.Setenv("STEM_AUTH_USERNAME", testingTestUsername)
 	t.Setenv("STEM_AUTH_PASSWORD", testingTestPassword)

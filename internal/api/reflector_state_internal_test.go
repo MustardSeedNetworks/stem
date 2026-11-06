@@ -12,7 +12,6 @@ func newReflectorStateServer(t *testing.T) (*Server, string) {
 	t.Helper()
 	dir := t.TempDir()
 	t.Setenv("STEM_DATA_DIR", dir)
-	t.Setenv("STEM_TEST_MODE", "1")
 	t.Setenv("STEM_DATA_DIR", t.TempDir())
 	t.Setenv("STEM_AUTH_USERNAME", "reflectorstate")
 	t.Setenv("STEM_AUTH_PASSWORD", "reflectorstate123")
