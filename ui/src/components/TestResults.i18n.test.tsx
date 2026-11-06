@@ -32,4 +32,24 @@ describe('TestResults — real locale copy', () => {
     expect(screen.getByText('Módulo: benchmark')).toBeInTheDocument();
     expect(screen.queryByText(/Module:/)).toBeNull();
   });
+
+  it('warns about a test-host stall in Spanish under es', async () => {
+    await i18n.changeLanguage('es');
+    render(
+      <TestResults
+        testStatus="completed"
+        result={{
+          testType: 'y1564_perf',
+          module: 'certify',
+          status: 'completed',
+          success: false,
+          data: { HostStallMaxMs: 31, HostLimited: true },
+        }}
+      />,
+    );
+
+    expect(screen.getByTestId('host-limited-warning')).toHaveTextContent(
+      'El equipo de prueba se detuvo hasta 31.0 ms',
+    );
+  });
 });

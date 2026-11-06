@@ -12,6 +12,47 @@ import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Stats, TestResult } from '../types/api';
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+/**
+ * The longest test-host stall in a Y.1564 result that could alone fail FD or
+ * FDV, or null when no step and no performance half is host-limited (#1717).
+ * The daemon returns a config result (`Steps`), a performance result, or both
+ * under `config` and `performance`; the dataplane structs carry no JSON tags,
+ * so the keys are the Go field names.
+ */
+export function hostLimitedStallMs(data: unknown): number | null {
+  if (!isRecord(data)) return null;
+  const halves =
+    'config' in data || 'performance' in data ? [data.config, data.performance] : [data];
+  const measurements = halves.flatMap((half) =>
+    isRecord(half) && Array.isArray(half.Steps) ? half.Steps : [half],
+  );
+  let longest: number | null = null;
+  for (const m of measurements) {
+    if (isRecord(m) && m.HostLimited === true && typeof m.HostStallMaxMs === 'number') {
+      longest = Math.max(longest ?? 0, m.HostStallMaxMs);
+    }
+  }
+  return longest;
+}
+
+function HostLimitedWarning({ data }: { data: unknown }): ReactElement | null {
+  const { t } = useTranslation('common');
+  const stallMs = hostLimitedStallMs(data);
+  if (stallMs === null) return null;
+  return (
+    <div
+      data-testid="host-limited-warning"
+      className="mb-content pad-sm rounded-lg bg-status-warning/10 border border-status-warning/20 text-sm text-status-warning-strong"
+    >
+      {t('results.hostLimited', { ms: stallMs.toFixed(1) })}
+    </div>
+  );
+}
+
 export interface TestResultsProps {
   testStatus: Stats['testStatus'];
   result: TestResult | null;
@@ -81,6 +122,7 @@ export function TestResults({ testStatus, result }: TestResultsProps): ReactElem
                 <span>{step.status.toUpperCase()}</span>
               </div>
               {step.error ? <div className="text-status-error">{step.error}</div> : null}
+              <HostLimitedWarning data={step.result?.data} />
               {step.result?.data ? (
                 <pre className="mt-inline overflow-auto text-xs text-text-muted">
                   {JSON.stringify(step.result.data, null, 2)}
@@ -103,6 +145,8 @@ export function TestResults({ testStatus, result }: TestResultsProps): ReactElem
           <div className={`heading-3 ${statusColor}`}>{verdict}</div>
         </div>
       </div>
+
+      <HostLimitedWarning data={result.data} />
 
       {/* Error Message */}
       {result.error ? (

@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import type { TestResult } from '../types/api';
-import { TestResults } from './TestResults';
+import { hostLimitedStallMs, TestResults } from './TestResults';
 
 /**
  * TestResults — the panel that has to say why a run produced nothing (#1081).
@@ -119,5 +119,104 @@ describe('TestResults', () => {
     render(<TestResults testStatus={status} result={null} />);
 
     expect(screen.getByText(expected)).toBeInTheDocument();
+  });
+
+  // A Y.1564 reply is timestamped when it is polled, so a stalled test host
+  // adds delay the path never did (#1717). The daemon flags it; the card has
+  // to say so, or FAILED over a busy host reads as a bad circuit.
+  describe('test-host stall', () => {
+    const step = (hostLimited: boolean, stallMs: number) => ({
+      Step: 1,
+      FDAvgMs: 4.1,
+      HostStallMaxMs: stallMs,
+      HostLimited: hostLimited,
+    });
+
+    it.each([
+      [
+        'a config result',
+        { ServiceID: 1, Steps: [step(false, 0.4), step(true, 17.25), step(true, 9)] },
+        17.25,
+      ],
+      ['a performance result', { ServiceID: 1, HostStallMaxMs: 31, HostLimited: true }, 31],
+      [
+        'a combined result',
+        {
+          config: { Steps: [step(true, 12)] },
+          performance: { HostStallMaxMs: 20.5, HostLimited: true },
+        },
+        20.5,
+      ],
+      [
+        'a clean result',
+        {
+          config: { Steps: [step(false, 2)] },
+          performance: { HostStallMaxMs: 3, HostLimited: false },
+        },
+        null,
+      ],
+      ['a result without the fields', { throughputMbps: 940 }, null],
+      ['no data', undefined, null],
+    ] as const)('finds the longest host-limited stall in %s', (_name, data, expected) => {
+      expect(hostLimitedStallMs(data)).toBe(expected);
+    });
+
+    it('warns on a host-limited result and leaves the verdict alone', () => {
+      render(
+        <TestResults
+          testStatus="completed"
+          result={result({
+            testType: 'y1564_perf',
+            module: 'certify',
+            success: false,
+            data: { HostStallMaxMs: 31, HostLimited: true },
+          })}
+        />,
+      );
+
+      expect(screen.getByTestId('host-limited-warning')).toHaveTextContent(
+        'The test host stalled for up to 31.0 ms',
+      );
+      expect(screen.getByText('FAILED')).toBeInTheDocument();
+    });
+
+    it('warns inside the run-plan step that was host-limited', () => {
+      render(
+        <TestResults
+          testStatus="completed"
+          result={result({
+            testType: 'run_plan',
+            module: 'orchestrator',
+            steps: [
+              { testType: 'rfc2544_throughput', module: 'benchmark', status: 'passed' },
+              {
+                testType: 'y1564_config',
+                module: 'certify',
+                status: 'failed',
+                result: { status: 'completed', data: { Steps: [step(true, 8)] } },
+              },
+            ],
+          })}
+        />,
+      );
+
+      const warnings = screen.getAllByTestId('host-limited-warning');
+      expect(warnings).toHaveLength(1);
+      expect(screen.getByTestId('run-plan-result-1')).toContainElement(warnings[0] ?? null);
+    });
+
+    it('says nothing when the host kept up', () => {
+      render(
+        <TestResults
+          testStatus="completed"
+          result={result({
+            testType: 'y1564_perf',
+            data: { HostStallMaxMs: 3, HostLimited: false },
+          })}
+        />,
+      );
+
+      expect(screen.queryByTestId('host-limited-warning')).toBeNull();
+    });
   });
 });
