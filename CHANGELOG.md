@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.32.49](https://github.com/MustardSeedNetworks/stem/compare/v0.32.48...v0.32.49) (2026-11-20)
+
+
+### Bug Fixes
+
+* **deps:** move to go 1.27.4 and x/net v0.62.0, install clang-18 for 26.04 runners ([#2039](https://github.com/MustardSeedNetworks/stem/issues/2039)) ([83e31d1](https://github.com/MustardSeedNetworks/stem/commit/83e31d1817c07678c5dc3698a93a6df400955a99)), closes [#2044](https://github.com/MustardSeedNetworks/stem/issues/2044)
+* **deps:** update module golang.org/x/crypto to v0.59.0 [security] ([#2041](https://github.com/MustardSeedNetworks/stem/issues/2041)) ([40555fe](https://github.com/MustardSeedNetworks/stem/commit/40555fe9216f47f0fa72d84fa8844fcf0bfe3316))
+
 ## [0.32.48](https://github.com/MustardSeedNetworks/stem/compare/v0.32.47...v0.32.48) (2026-11-06)
 
 
