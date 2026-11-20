@@ -202,7 +202,8 @@ jobs:
         go mod verify
         # Bounded apt. The shared workflow's apt-install step only accepts
         # libpcap; pre-command is a shell string, so the same timeouts live
-        # here. clang-18, gcc-13, and make are already on ubuntu-24.04.
+        # here. clang-18 is installed explicitly: ubuntu-latest moved to
+        # 26.04, which no longer preinstalls it (still packaged there).
         printf '%s\n' \
           'Acquire::http::Timeout "20";' \
           'Acquire::https::Timeout "20";' \
@@ -212,7 +213,7 @@ jobs:
         attempt=1
         while [ "$attempt" -le 2 ]; do
           if sudo timeout -k 15 270 apt-get update \
-            && sudo timeout -k 15 270 apt-get install -y libbpf-dev libelf-dev libxdp-dev zlib1g-dev; then
+            && sudo timeout -k 15 270 apt-get install -y clang-18 libbpf-dev libelf-dev libxdp-dev zlib1g-dev; then
             break
           fi
           echo "apt install attempt $attempt/2 failed"
@@ -332,7 +333,7 @@ jobs:
       skip-network-tests: false
       timeout-minutes: 20
       pre-command: |
-        # Same bounded apt as the backend caller. clang-18 and make are on the image.
+        # Same bounded apt as the backend caller, clang-18 installed explicitly.
         printf '%s\n' \
           'Acquire::http::Timeout "20";' \
           'Acquire::https::Timeout "20";' \
@@ -342,7 +343,7 @@ jobs:
         attempt=1
         while [ "$attempt" -le 2 ]; do
           if sudo timeout -k 15 270 apt-get update \
-            && sudo timeout -k 15 270 apt-get install -y libbpf-dev libelf-dev libxdp-dev zlib1g-dev; then
+            && sudo timeout -k 15 270 apt-get install -y clang-18 libbpf-dev libelf-dev libxdp-dev zlib1g-dev; then
             break
           fi
           echo "apt install attempt $attempt/2 failed"
@@ -396,9 +397,9 @@ jobs:
           persist-credentials: false
 
       - name: Install C23 tools (clang-tidy, cppcheck, bear)
-        # clang-18, clang-tidy-18, clang-format-18 and gcc-13 ship
-        # preinstalled on ubuntu-24.04 (actions/runner-images
-        # Ubuntu2404-Readme.md) — only cppcheck and bear are installed here.
+        # clang-18, clang-tidy-18 and clang-format-18 are installed
+        # explicitly: ubuntu-latest is 26.04, which packages them but no
+        # longer preinstalls them.
         timeout-minutes: 10
         uses: MustardSeedNetworks/.github/.github/actions/apt-install@76eb579ee0cbdef0a2aef9d9df1ae9ca38cad6bd # v1.14.0
         with:
@@ -409,7 +410,7 @@ jobs:
           # src/reflector/xdp_platform.c includes. Without them the build
           # stops at a missing header, and clang-tidy previously reported
           # that as a finding on every file pulling it in.
-          packages: cppcheck bear gcc-14 libbpf-dev libxdp-dev
+          packages: cppcheck bear gcc-14 libbpf-dev libxdp-dev clang-18 clang-tidy-18 clang-format-18
 
       - name: Set clang-18 as default and verify versions
         run: |
@@ -598,12 +599,12 @@ jobs:
           persist-credentials: false
 
       - name: Install C safety dependencies
-        # clang-18 ships preinstalled on ubuntu-24.04 (actions/runner-images
-        # Ubuntu2404-Readme.md) — install only the packages not on the image.
+        # clang-18 is installed explicitly: ubuntu-latest is 26.04, which
+        # packages it but no longer preinstalls it.
         timeout-minutes: 10
         uses: MustardSeedNetworks/.github/.github/actions/apt-install@76eb579ee0cbdef0a2aef9d9df1ae9ca38cad6bd # v1.14.0
         with:
-          packages: cppcheck libbpf-dev libxdp-dev
+          packages: cppcheck libbpf-dev libxdp-dev clang-18
 
       - name: Install libFuzzer runtime (best-effort) and verify clang
         timeout-minutes: 8
