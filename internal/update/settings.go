@@ -98,7 +98,7 @@ func SaveSettings(dataDir string, settings Settings) error {
 	_, err = file.Write(append(data, '\n'))
 	err = errors.Join(err, file.Close())
 	if err == nil {
-		err = shareWithDataDir(filepath.Join(dataDir, tmp), dataDir)
+		err = ShareWithDataDir(filepath.Join(dataDir, tmp), dataDir)
 	}
 	if err == nil {
 		err = root.Rename(tmp, SettingsName)

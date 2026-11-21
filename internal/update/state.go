@@ -8,20 +8,23 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+
+	"github.com/MustardSeedNetworks/foundation/pkg/instance"
 )
 
 // The state copy makes a database migration by the new version undoable
 // along with the binary (niac-go#2092). It is taken with the service stopped
 // and lives beside the data directory, so restoring it is a rename on the
-// same filesystem. The run lock is left out both ways: the update holds it
+// same filesystem. The instance lock is left out of the copy, because a daemon
+// holds it (a held lock cannot be read on Windows). The run lock is left out both ways: the update holds it
 // on the open file, and swapping the file underneath would let the restarted
 // daemon lock a different inode. Every path is resolved through an os.Root,
 // so a symlink in the data directory is copied as a link and never followed
 // out of it.
 
-// copyState copies the data directory src to dst, which must not exist,
+// CopyState copies the data directory src to dst, which must not exist,
 // keeping modes, ownership and symlinks.
-func copyState(src, dst string) error {
+func CopyState(src, dst string) error {
 	srcRoot, err := os.OpenRoot(src)
 	if err != nil {
 		return err
@@ -43,7 +46,7 @@ func copyState(src, dst string) error {
 		if walkErr != nil {
 			return walkErr
 		}
-		if name == RunLockName {
+		if name == RunLockName || name == instance.LockFileName {
 			return nil
 		}
 		entry, infoErr := d.Info()
@@ -88,7 +91,7 @@ func copyFile(src, dst *os.Root, name string, perm fs.FileMode) error {
 	return out.Close()
 }
 
-// restoreState puts the copy taken by copyState back in dataDir and removes
+// restoreState puts the copy taken by CopyState back in dataDir and removes
 // it. The copy must sit under dataDir's parent.
 func restoreState(dataDir, copied string) error {
 	parent, err := os.OpenRoot(filepath.Dir(dataDir))

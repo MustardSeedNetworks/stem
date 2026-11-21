@@ -21,14 +21,20 @@
         <key>Crashed</key>
         <true/>
     </dict>
+    <!-- stem writes and rotates logs/stem.log itself (STEM_LOG_FILE below);
+         capturing stdout into the same file would duplicate every line and
+         fight the rotation. Stderr still lands in stem.error.log, which is
+         where a crash trace goes. -->
     <key>StandardOutPath</key>
-    <string>/usr/local/stem/logs/stem.log</string>
+    <string>/dev/null</string>
     <key>StandardErrorPath</key>
     <string>/usr/local/stem/logs/stem.error.log</string>
     <key>EnvironmentVariables</key>
     <dict>
         <key>HOME</key>
         <string>/usr/local/stem</string>
+        <key>STEM_LOG_FILE</key>
+        <string>/usr/local/stem/logs/stem.log</string>
     </dict>
     <key>ThrottleInterval</key>
     <integer>5</integer>

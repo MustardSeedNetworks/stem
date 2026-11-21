@@ -78,7 +78,7 @@ func (u *Updater) Run(ctx context.Context) (string, error) {
 	defer unlock()
 	// The update runs as root and may have just created the lock; the daemon
 	// opens it as its own account.
-	if err = shareWithDataDir(filepath.Join(u.DataDir, RunLockName), u.DataDir); err != nil {
+	if err = ShareWithDataDir(filepath.Join(u.DataDir, RunLockName), u.DataDir); err != nil {
 		return "", err
 	}
 
@@ -121,7 +121,7 @@ func (u *Updater) Run(ctx context.Context) (string, error) {
 		return "", errors.Join(fmt.Errorf("stop the service: %w", err), os.RemoveAll(work))
 	}
 	state := filepath.Join(work, "state")
-	if err = copyState(u.DataDir, state); err != nil {
+	if err = CopyState(u.DataDir, state); err != nil {
 		return "", errors.Join(
 			fmt.Errorf("copy the state directory: %w", err), os.RemoveAll(work), u.Method.Start(ctx))
 	}

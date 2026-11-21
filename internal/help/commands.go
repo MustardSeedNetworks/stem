@@ -17,6 +17,12 @@ func GetAllCommands() map[string]CommandHelp {
 		"list-tests": ListTestsCommand(),
 		"install-ca": InstallCACommand(),
 		"update":     UpdateCommand(),
+
+		"status":         StatusCommand(),
+		"logs":           LogsCommand(),
+		"support-bundle": SupportBundleCommand(),
+		"backup":         BackupCommand(),
+		"restore":        RestoreCommand(),
 	}
 }
 
@@ -399,15 +405,32 @@ func VersionCommand() CommandHelp {
 	return CommandHelp{
 		Name:    "version",
 		Summary: "Display version information",
-		Description: `Shows the current version of Stem along with build
-information, license status, and available features.`,
-		Usage: "stem version",
-		Flags: []FlagHelp{},
+		Description: `Shows the version, commit and build time of this binary. --json prints the
+same document the daemon serves at /__version (version, commit, buildTime,
+releaseTrain, uiBuildHash), so a deployment check reads the binary on disk and
+the running daemon the same way.`,
+		Usage: "stem version [--json]",
+		Flags: []FlagHelp{
+			{
+				Short:      "",
+				Long:       "--json",
+				Type:       TypeBoolean,
+				Default:    ValueFalse,
+				Required:   false,
+				TechDesc:   "Print the build metadata as a JSON object",
+				LaymanDesc: "Print the result for a script instead of a person",
+			},
+		},
 		Examples: []Example{
 			{
 				Desc:    "Show version",
 				Command: "stem version",
-				Output:  "Stem v0.23.0\nBuild: 2026-05-29\nLicense: Professional tier",
+				Output:  "The Stem v0.32.58\nCommit: 64e328e\nBuilt:  2026-11-21T09:00:00Z",
+			},
+			{
+				Desc:    "Machine-readable build metadata",
+				Command: "stem version --json",
+				Output:  "{ \"version\": \"v0.32.58\", \"commit\": \"64e328e\", ... }",
 			},
 		},
 		SeeAlso: []string{"license"},

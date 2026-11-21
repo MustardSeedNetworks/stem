@@ -14,6 +14,9 @@
 package main
 
 import (
+	"encoding/json"
+	"errors"
+	"flag"
 	"fmt"
 	"io"
 	"os"
@@ -100,15 +103,16 @@ func main() {
 	if logFormat == "" {
 		logFormat = "text" // Use text for CLI, json for production.
 	}
+	defaults := logging.DefaultConfig()
 	err := logging.Init(&logging.Config{
 		Level:      logLevel,
 		Format:     logFormat,
 		AddSource:  false,
-		File:       "",
-		MaxSize:    0,
-		MaxBackups: 0,
-		MaxAge:     0,
-		Compress:   false,
+		File:       logFile(os.Args[1:]),
+		MaxSize:    defaults.MaxSize,
+		MaxBackups: defaults.MaxBackups,
+		MaxAge:     defaults.MaxAge,
+		Compress:   defaults.Compress,
 		Component:  "stem",
 	})
 	if err != nil {
@@ -118,14 +122,26 @@ func main() {
 
 	if len(os.Args) < minArgsCount {
 		printUsage(os.Stdout)
-		os.Exit(1)
+		os.Exit(exitError)
 	}
 
 	if !dispatchSubcommand(os.Args[1], os.Args[2:]) {
 		_, _ = fmt.Fprintf(os.Stdout, "Unknown command: %s\n", os.Args[1])
 		printUsage(os.Stdout)
-		os.Exit(1)
+		os.Exit(exitError)
 	}
+}
+
+// logFile is the file the daemon logs to, from STEM_LOG_FILE. Only `stem web`
+// is the daemon: any other verb run from a shell that happens to export the
+// variable would otherwise write into the service's log. Unset means stdout
+// alone, which systemd sends to the journal; the launchd plist sets it, so the
+// macOS log is written, rotated and capped by stem itself.
+func logFile(args []string) string {
+	if len(args) == 0 || args[0] != "web" {
+		return ""
+	}
+	return os.Getenv("STEM_LOG_FILE")
 }
 
 // dispatchSubcommand routes the CLI verb to its handler. Returns false
@@ -135,19 +151,13 @@ func main() {
 func dispatchSubcommand(cmd string, args []string) bool {
 	switch cmd {
 	case subReflect:
-		if cmdErr := reflectCmd(args); cmdErr != nil {
-			os.Exit(1)
-		}
+		exitOnError(reflectCmd(args))
 	case subTest:
-		if cmdErr := testCmd(args); cmdErr != nil {
-			os.Exit(1)
-		}
+		exitOnError(testCmd(args))
 	case "web":
 		webCmd(args)
 	case "license":
-		if cmdErr := licenseCmd(args); cmdErr != nil {
-			os.Exit(1)
-		}
+		exitOnError(licenseCmd(args))
 	case "list-tests":
 		listTestsCmd(args)
 	case "help", "--help", "-h":
@@ -157,19 +167,68 @@ func dispatchSubcommand(cmd string, args []string) bool {
 	case "glossary":
 		glossaryCmd(args)
 	case "version", "--version", "-v":
-		printVersion(os.Stdout)
+		exitOnError(versionCmd(args, os.Stdout, os.Stderr))
 	case "install-ca":
-		if cmdErr := installCACmd(args); cmdErr != nil {
-			os.Exit(1)
-		}
+		exitOnError(installCACmd(args))
 	case updateCommandName:
-		if cmdErr := updateCmd(args); cmdErr != nil {
-			os.Exit(1)
-		}
+		exitOnError(updateCmd(args))
+	default:
+		return dispatchOperations(cmd, args)
+	}
+	return true
+}
+
+// dispatchOperations routes the verbs an operator uses to run the service
+// rather than to test with it. They write to the streams they are given so
+// tests can read them, and share one exit-status contract (exitcode.go).
+func dispatchOperations(cmd string, args []string) bool {
+	switch cmd {
+	case statusCommandName:
+		exitOnError(statusCmd(args, os.Stdout, os.Stderr))
+	case logsCommandName:
+		exitOnError(logsCmd(args, os.Stdout, os.Stderr))
+	case supportBundleCommandName:
+		exitOnError(supportBundleCmd(args, os.Stdout, os.Stderr))
+	case backupCommandName:
+		exitOnError(backupCmd(args, os.Stdout, os.Stderr))
+	case restoreCommandName:
+		exitOnError(restoreCmd(args, os.Stdout, os.Stderr))
 	default:
 		return false
 	}
 	return true
+}
+
+// versionCmd prints the build this binary was made from. The plain output's
+// first line is what update's health check parses, so it does not change;
+// --json is the /__version document, so a deployment check reads the binary
+// on disk and the running daemon the same way.
+func versionCmd(args []string, stdout, stderr io.Writer) error {
+	fs := flag.NewFlagSet("version", flag.ContinueOnError)
+	fs.SetOutput(stderr)
+	asJSON := fs.Bool("json", false, "Print the build metadata as JSON")
+	fs.Usage = func() {
+		_, _ = fmt.Fprintln(stderr, "Usage: stem version [--json]\n\nFlags:")
+		fs.PrintDefaults()
+	}
+	if err := fs.Parse(args); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			return nil
+		}
+		return err
+	}
+	if fs.NArg() > 0 {
+		err := fmt.Errorf("unexpected argument %q", fs.Arg(0))
+		_, _ = fmt.Fprintf(stderr, "stem version: %v\n", err)
+		return err
+	}
+	if !*asJSON {
+		printVersion(stdout)
+		return nil
+	}
+	encoder := json.NewEncoder(stdout)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(version.Info())
 }
 
 func printVersion(w io.Writer) {
@@ -199,7 +258,12 @@ COMMANDS:
     list-tests   Show all available test types (grouped by module)
     install-ca   Install stem's self-signed root certificate into the OS trust store
     update       Install the newest release in place, with automatic rollback
-    version      Show version information
+    status       Report whether the daemon is running and ready
+    logs         Show the service log
+    support-bundle  Collect redacted diagnostics for support
+    backup       Archive the daemon's state
+    restore      Restore the daemon's state from a backup
+    version      Show version information (--json for scripts)
 
 REFLECT OPTIONS:
     -i, --interface    Network interface to use (required)
@@ -237,6 +301,18 @@ LICENSE OPTIONS:
     --trial            Start 14-day trial
     --status           Show license status
     --deactivate       Remove license
+
+OPERATIONS OPTIONS:
+    status          [--json] [--api URL] [--cacert FILE]
+    logs            [-f] [-n N] [--file FILE]
+    support-bundle  [-o FILE] [--log FILE] [--lines N]
+    backup          [-o FILE]
+    restore         <archive>
+
+EXIT STATUS:
+    0  success (for status: the daemon is running and ready)
+    1  the command failed (for status: not running, or up but not ready)
+    2  status only: the check could not be made
 
 EXAMPLES:
     # Reflector mode
