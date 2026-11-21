@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.32.53](https://github.com/MustardSeedNetworks/stem/compare/v0.32.52...v0.32.53) (2026-11-21)
+
+
+### Miscellaneous
+
+* **deps:** update node toolchain ([#2055](https://github.com/MustardSeedNetworks/stem/issues/2055)) ([e2189ab](https://github.com/MustardSeedNetworks/stem/commit/e2189abe29e71d579ec5200f1e570b3d30411b49))
+* **deps:** update pre-commit hook pre-commit/mirrors-clang-format to v23.1.5 ([#2057](https://github.com/MustardSeedNetworks/stem/issues/2057)) ([4608bf8](https://github.com/MustardSeedNetworks/stem/commit/4608bf83d6b72734224fe288b42fae445a2dcd9d))
+
 ## [0.32.52](https://github.com/MustardSeedNetworks/stem/compare/v0.32.51...v0.32.52) (2026-11-21)
 
 
