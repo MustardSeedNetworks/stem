@@ -23,6 +23,7 @@ import { Tooltip } from '../components/ui/Tooltip';
 import { iconSizes } from '../constants/sizes';
 import { accessibleNameIncluding } from '../lib/accessibleName';
 import { MsnMark } from './MsnMark';
+import { ProductMark } from './ProductMark';
 
 /**
  * The connection state the rail's product mark reports. The dot used to be a
@@ -109,9 +110,7 @@ export function SidebarHeader({
     >
       <div className={`flex items-center gap-compact ${collapsed ? 'justify-center' : ''}`}>
         <div className="relative flex-shrink-0">
-          <div className="h-9 w-9 rounded-[11px] bg-brand-primary flex-center">
-            <span className="figure text-sm font-extrabold tracking-tight text-on-brand">ST</span>
-          </div>
+          <ProductMark />
           {/* The dot is the status readout, so it is named rather than hidden:
               colour alone is not a status, and the name is what a screen
               reader and `toHaveAccessibleName` both read. `role="status"` also

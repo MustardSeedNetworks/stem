@@ -105,6 +105,14 @@ describe('AuthGate — which surface is shown', () => {
     expect(screen.queryByTestId('login-title')).toBeNull();
   });
 
+  it('names the product above the sign-in prompt', () => {
+    render(<AuthGate />);
+
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Stem');
+    expect(screen.getByTestId('product-mark')).toBeInTheDocument();
+    expect(screen.getByTestId('login-title')).toBeInTheDocument();
+  });
+
   it('shows the MFA challenge instead of the credentials form', () => {
     setState({ mfaPending: { mfaToken: 'tok', factor: 'totp' } });
     render(<AuthGate />);
