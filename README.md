@@ -44,10 +44,29 @@ the same install.
   plaintext request on that port gets a 308 to `https://` and nothing else)
 - **REST + SSE** — `/api/v1/events` streams live test results
 
+## Install
+
+Releases publish `.deb` and `.rpm` packages, Linux and macOS tarballs and
+Windows zips at <https://github.com/MustardSeedNetworks/stem/releases>.
+
+On macOS (Apple Silicon), unpack the `darwin-arm64` tarball (it has no
+top-level directory) and run its installer; it puts Stem in `/usr/local/stem` and starts it as the `com.stem`
+launchd daemon:
+
+```bash
+mkdir stem && tar xzf stem-<version>-darwin-arm64.tar.gz -C stem && cd stem
+sudo ./install.sh
+```
+
+`upgrade.sh` replaces the binary from a newer archive and keeps `stem.yaml`,
+`credentials.json`, `certs/` and the data directory; `uninstall.sh` removes the
+service (add `--purge` to delete the data too). See
+[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+
 ## Quick Start
 
 ```bash
-# Install (Linux/macOS, requires Go 1.27+)
+# Build from source (Linux/macOS, requires Go 1.27+)
 git clone https://github.com/MustardSeedNetworks/stem
 cd stem
 make build
@@ -167,10 +186,12 @@ here is in force immediately and needs no restart.
 
 Packaging has no `make` target: `.deb`, `.rpm`, the Linux/macOS tarballs and
 the Windows `.zip` are produced only by GoReleaser in
-`.github/workflows/release.yml`. The macOS `.pkg` is built by
-`deploy/macos/build-pkg.sh` as a local convenience and is not published.
+`.github/workflows/release.yml`. The macOS release artifact is the
+`darwin-arm64` tarball (Apple Silicon); no `.pkg` is published.
+`deploy/macos/build-pkg.sh` builds one locally for testing.
 
-Verified versions: **Go 1.27.4**, Node.js 26.10.0, golangci-lint v2.14.0.
+Verified versions: **Go 1.27.4**, Node.js 26.13.1 (`.nvmrc`), npm 12.2.2,
+golangci-lint v2.15.0.
 
 ## REST API (selected)
 
@@ -217,6 +238,12 @@ provenance + Syft SBOM.
 
 [Business Source License 1.1](LICENSE). The Stem converts to Apache-2.0 on
 the change date stated in the LICENSE file.
+
+## License
+
+The Stem is source-available under the Business Source License 1.1; see
+[LICENSE](LICENSE) for the licensor, the change date and the additional use
+grant.
 
 ## Security
 

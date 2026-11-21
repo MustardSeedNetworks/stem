@@ -10,8 +10,8 @@ Be respectful, inclusive, and professional in all interactions.
 
 ### Prerequisites
 
-- Go 1.25+
-- Node.js 25+
+- Go 1.27.4 (see `go.mod`)
+- Node.js 26.13.1 and npm 12.2.2 (see `.nvmrc` and `package.json` `engines`)
 - GCC 7.3.0+ (for C dataplane)
 - Git
 
@@ -26,7 +26,7 @@ cd stem
 go mod download
 
 # Install frontend dependencies
-cd ui && npm install && cd ..
+cd ui && npm ci && cd ..
 
 # Build everything
 make build

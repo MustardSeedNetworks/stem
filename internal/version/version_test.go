@@ -167,7 +167,7 @@ func TestInfoMatchesGetters(t *testing.T) {
 // ============================================================================
 
 func TestInfoReflectsModifiedVersion(t *testing.T) {
-	restore := version.SetForTesting("v1.2.3", "abc123def456", "2025-01-10T12:00:00Z")
+	restore := version.SetForTesting("v1.2.3", "abc123def456", "2025-01-10T12:00:00Z", version.UIBuildHash)
 	defer restore()
 
 	info := version.Info()
@@ -212,7 +212,7 @@ func TestInfoWithSemanticVersion(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			restore := version.SetForTesting(tc.version, "unknown", "unknown")
+			restore := version.SetForTesting(tc.version, "unknown", "unknown", version.UIBuildHash)
 			defer restore()
 
 			info := version.Info()
@@ -238,7 +238,7 @@ func TestInfoWithGitCommitFormats(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			restore := version.SetForTesting("dev", tc.commit, "unknown")
+			restore := version.SetForTesting("dev", tc.commit, "unknown", version.UIBuildHash)
 			defer restore()
 
 			info := version.Info()
@@ -266,7 +266,7 @@ func TestInfoWithBuildTimeFormats(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			restore := version.SetForTesting("dev", "unknown", tc.buildTime)
+			restore := version.SetForTesting("dev", "unknown", tc.buildTime, version.UIBuildHash)
 			defer restore()
 
 			info := version.Info()
@@ -309,7 +309,7 @@ func TestInfoMapIsNotShared(t *testing.T) {
 // ============================================================================
 
 func TestInfoWithEmptyValues(t *testing.T) {
-	restore := version.SetForTesting("", "", "")
+	restore := version.SetForTesting("", "", "", version.UIBuildHash)
 	defer restore()
 
 	info := version.Info()
@@ -336,7 +336,7 @@ func TestInfoWithSpecialCharacters(t *testing.T) {
 	testCommit := "abc123/feature-branch"
 	testBuildTime := "2025-01-10T12:00:00+00:00"
 
-	restore := version.SetForTesting(testVersion, testCommit, testBuildTime)
+	restore := version.SetForTesting(testVersion, testCommit, testBuildTime, version.UIBuildHash)
 	defer restore()
 
 	info := version.Info()
@@ -354,7 +354,7 @@ func TestInfoWithSpecialCharacters(t *testing.T) {
 
 func TestInfoWithUnicodeCharacters(t *testing.T) {
 	testVersion := "v1.0.0-测试"
-	restore := version.SetForTesting(testVersion, "unknown", "unknown")
+	restore := version.SetForTesting(testVersion, "unknown", "unknown", version.UIBuildHash)
 	defer restore()
 
 	info := version.Info()
@@ -368,7 +368,7 @@ func TestInfoWithLongValues(t *testing.T) {
 	longVersion := "v1.0.0-alpha.beta.gamma.delta.epsilon.zeta.eta.theta.iota.kappa"
 	longCommit := "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"
 
-	restore := version.SetForTesting(longVersion, longCommit, "unknown")
+	restore := version.SetForTesting(longVersion, longCommit, "unknown", version.UIBuildHash)
 	defer restore()
 
 	info := version.Info()

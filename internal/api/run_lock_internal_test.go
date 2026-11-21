@@ -185,7 +185,7 @@ func TestAutostartWaitsForTheUpdateToFinish(t *testing.T) {
 // Every result names the build that produced it: results from either side of
 // an update must be distinguishable.
 func TestResultNamesTheBuildThatProducedIt(t *testing.T) {
-	t.Cleanup(version.SetForTesting("v0.27.15", "1cae4f9", "2026-10-17T00:00:00Z"))
+	t.Cleanup(version.SetForTesting("v0.27.15", "1cae4f9", "2026-10-17T00:00:00Z", version.UIBuildHash))
 	s, _ := newRunLockServer(t)
 
 	s.statsMu.Lock()

@@ -466,6 +466,7 @@ func (s *Server) writeAuthError(w http.ResponseWriter, err error) {
 
 // auditAuthFailure logs authentication failures with appropriate event types.
 func (s *Server) auditAuthFailure(r *http.Request, err error) {
+	logging.AuditAuthForbidden(r.Context(), r, logging.AuthReasonCredentials, "")
 	switch {
 	case errors.Is(err, auth.ErrTokenExpired):
 		logging.AuditTokenExpired(r.Context(), r, "")
