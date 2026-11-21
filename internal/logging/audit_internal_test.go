@@ -708,3 +708,46 @@ func TestAuditorStopIsIdempotent(t *testing.T) {
 	auditor.Stop()
 	auditor.Stop()
 }
+
+func TestAuditAuthForbidden(t *testing.T) {
+	tests := []struct {
+		name     string
+		reason   string
+		username string
+		wantUser bool
+	}{
+		{name: "credentials without a username", reason: AuthReasonCredentials},
+		{name: "credentials with a username", reason: AuthReasonCredentials, username: "operator", wantUser: true},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			handler := setupTestLogger()
+			defer handler.Reset()
+
+			req := createTestRequest(http.MethodPost, "/api/v1/mode")
+			AuditAuthForbidden(context.Background(), req, tc.reason, tc.username)
+
+			var entry map[string]any
+			if err := json.Unmarshal(handler.buf.Bytes(), &entry); err != nil {
+				t.Fatalf("log line is not JSON: %v: %q", err, handler.String())
+			}
+			want := map[string]string{
+				"event":     "auth.forbidden",
+				"reason":    tc.reason,
+				"client_ip": GetClientIP(req),
+				"path":      "/api/v1/mode",
+				"method":    http.MethodPost,
+			}
+			for key, value := range want {
+				if got, _ := entry[key].(string); got != value {
+					t.Errorf("%s = %q, want %q", key, got, value)
+				}
+			}
+			_, hasUser := entry["username"]
+			if hasUser != tc.wantUser {
+				t.Errorf("username present = %v, want %v", hasUser, tc.wantUser)
+			}
+		})
+	}
+}

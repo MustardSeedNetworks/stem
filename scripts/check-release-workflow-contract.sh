@@ -36,11 +36,18 @@ require() {
 # The gate's purpose survives intact: it exists so nobody silently UN-pins the
 # release toolchain, and "pinned to an exact version and a full digest" is a
 # shape a bump satisfies and an un-pinning does not.
+#
+# The optional third argument is how many lines must match. Syft and Cosign are
+# installed twice, once in the Linux goreleaser container and once on the macOS
+# runner that builds the .pkg, and each copy needs its own pin.
 require_pin() {
   local what="$1"
   local pattern="$2"
-  if ! grep -Eq -- "$pattern" "$workflow"; then
-    echo "release workflow contract: $what is missing or no longer pinned (want /$pattern/)" >&2
+  local want="${3:-1}"
+  local found
+  found=$(grep -Ec -- "$pattern" "$workflow" || true)
+  if [ "$found" -lt "$want" ]; then
+    echo "release workflow contract: $what is missing or no longer pinned in $want place(s), found $found (want /$pattern/)" >&2
     exit 1
   fi
 }
@@ -124,7 +131,23 @@ require_step_condition "Upload dry-run artifact bundle for inspection" \
 require_step_condition "Refuse a manual dispatch that asks to publish" \
   "if: \${{ github.event_name == 'workflow_dispatch' && !inputs.dry_run }}"
 require_job_condition "provenance" \
-  "if: \${{ !cancelled() && github.event_name == 'push' && !inputs.dry_run && needs.goreleaser.result == 'success' }}"
+  "if: \${{ !cancelled() && github.event_name == 'push' && !inputs.dry_run && needs.goreleaser.result == 'success' && needs.macos-pkg.result == 'success' }}"
+
+# The macOS .pkg is a required release artifact, so provenance waits for it and
+# attests the subjects it hands over. Publishing it carries the same predicate
+# as goreleaser's, and a snapshot only uploads the .pkg for inspection.
+require "needs: [goreleaser, macos-pkg]"
+require "needs.macos-pkg.outputs.hashes"
+require "deploy/macos/build-pkg.sh"
+require "stem-*-darwin-arm64.tar.gz"
+require_step_condition "Install Syft and Cosign" \
+  "if: \${{ github.event_name == 'push' && !inputs.dry_run }}"
+require_step_condition "SBOM, sign, and publish the .pkg" \
+  "if: \${{ github.event_name == 'push' && !inputs.dry_run }}"
+require_step_condition "Capture provenance subjects including the .pkg" \
+  "if: \${{ github.event_name == 'push' && !inputs.dry_run }}"
+require_step_condition "Upload dry-run .pkg for inspection" \
+  "if: \${{ github.event_name != 'push' || inputs.dry_run }}"
 
 # goreleaser runs with validation on when publishing. --skip=validate on this
 # path is how a release stops checking it is building a clean tree at the
@@ -152,14 +175,15 @@ fi
 require "- name: Assert the workspace is clean before goreleaser"
 
 # Pinned toolchain and checksum-verified downloads on the signing path.
-# Renovate owns these five values; the gate owns their shape. See require_pin.
+# Renovate owns these values; the gate owns their shape. See require_pin.
 require_pin 'the goreleaser-cross image' \
   '^ +image: goreleaser/goreleaser-cross:v[0-9]+\.[0-9]+\.[0-9]+(-[0-9]+)?(-v[0-9.]+)?@sha256:[0-9a-f]{64}$'
-require_pin 'SYFT_VERSION' '^ +SYFT_VERSION: "[0-9]+\.[0-9]+\.[0-9]+"$'
-require_pin 'SYFT_SHA256' '^ +SYFT_SHA256: "[0-9a-f]{64}"$'
-require_pin 'COSIGN_VERSION' '^ +COSIGN_VERSION: "v[0-9]+\.[0-9]+\.[0-9]+"$'
-require_pin 'COSIGN_SHA256' '^ +COSIGN_SHA256: "[0-9a-f]{64}"$'
+require_pin 'SYFT_VERSION' '^ +SYFT_VERSION: "[0-9]+\.[0-9]+\.[0-9]+"$' 2
+require_pin 'SYFT_SHA256' '^ +SYFT_SHA256: "[0-9a-f]{64}"$' 2
+require_pin 'COSIGN_VERSION' '^ +COSIGN_VERSION: "v[0-9]+\.[0-9]+\.[0-9]+"$' 2
+require_pin 'COSIGN_SHA256' '^ +COSIGN_SHA256: "[0-9a-f]{64}"$' 2
 require "| sha256sum -c -"
+require "| shasum -a 256 -c -"
 
 # Releases are immutable once published, and an immutable release refuses
 # every upload: v0.26.7 went out with zero assets because release-please

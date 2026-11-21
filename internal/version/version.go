@@ -147,16 +147,12 @@ func Info() map[string]string {
 
 // SetForTesting overrides version info for the duration of a test. The
 // returned function restores the previous values; defer it immediately.
-// uiBuildHash is variadic for backwards compatibility with three-arg
-// callers; pass at most one value.
-func SetForTesting(ver, cmt, bt string, uih ...string) func() {
+func SetForTesting(ver, cmt, bt, uih string) func() {
 	origV, origC, origB, origU := Version, Commit, BuildTime, UIBuildHash
 	Version = ver
 	Commit = cmt
 	BuildTime = bt
-	if len(uih) > 0 {
-		UIBuildHash = uih[0]
-	}
+	UIBuildHash = uih
 	return func() {
 		Version, Commit, BuildTime, UIBuildHash = origV, origC, origB, origU
 	}
