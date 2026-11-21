@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.32.51](https://github.com/MustardSeedNetworks/stem/compare/v0.32.50...v0.32.51) (2026-11-21)
+
+
+### Miscellaneous
+
+* **deps:** update dependency rollup-plugin-visualizer to v7.1.3 ([#2049](https://github.com/MustardSeedNetworks/stem/issues/2049)) ([6e48c56](https://github.com/MustardSeedNetworks/stem/commit/6e48c56a33939fc8b449611ede6a8d7cd5f33e1c))
+* **deps:** update dependency undici to v8.12.4 ([#2051](https://github.com/MustardSeedNetworks/stem/issues/2051)) ([9d5cb98](https://github.com/MustardSeedNetworks/stem/commit/9d5cb986e11456edab0a492fdfc625df2da5d66e))
+
 ## [0.32.50](https://github.com/MustardSeedNetworks/stem/compare/v0.32.49...v0.32.50) (2026-11-21)
 
 
