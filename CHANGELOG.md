@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.32.54](https://github.com/MustardSeedNetworks/stem/compare/v0.32.53...v0.32.54) (2026-11-21)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @tailwindcss/postcss to v4.3.5 ([#2060](https://github.com/MustardSeedNetworks/stem/issues/2060)) ([65f831e](https://github.com/MustardSeedNetworks/stem/commit/65f831ea2cb02bac799a9c164d596b207dbb9768))
+
+
+### Miscellaneous
+
+* **deps:** update storybook monorepo to v10.6.7 ([#2058](https://github.com/MustardSeedNetworks/stem/issues/2058)) ([0ae90c8](https://github.com/MustardSeedNetworks/stem/commit/0ae90c8e68e6839b4eb64252f33722b655904874))
+
 ## [0.32.53](https://github.com/MustardSeedNetworks/stem/compare/v0.32.52...v0.32.53) (2026-11-21)
 
 
