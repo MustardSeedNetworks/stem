@@ -165,7 +165,8 @@
     "home": "Home",
     "runPlanProgress": "Run plan progress",
     "runPlanSteps": "Run plan steps",
-    "runPlanResults": "Run plan results"
+    "runPlanResults": "Run plan results",
+    "notifications": "Notifications"
   },
   "sections": {
     "modules": "Test Modules",
@@ -336,5 +337,16 @@
     "error": "Status: error",
     "unknown": "Status: unknown",
     "loading": "Status: loading"
+  },
+  "connection": {
+    "unreachable": "Can't reach Stem daemon, retrying"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "body": "{{product}} has no page at this address.",
+    "home": "Back to {{product}} home"
+  },
+  "language": {
+    "title": "Language"
   }
 }

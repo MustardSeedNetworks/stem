@@ -165,7 +165,8 @@
     "home": "Inicio",
     "runPlanProgress": "Progreso del plan de ejecución",
     "runPlanSteps": "Pasos del plan de ejecución",
-    "runPlanResults": "Resultados del plan de ejecución"
+    "runPlanResults": "Resultados del plan de ejecución",
+    "notifications": "Notificaciones"
   },
   "sections": {
     "modules": "Módulos de Prueba",
@@ -336,5 +337,16 @@
     "error": "Estado: error",
     "unknown": "Estado: desconocido",
     "loading": "Estado: cargando"
+  },
+  "connection": {
+    "unreachable": "No se puede conectar con el daemon de Stem, reintentando"
+  },
+  "notFound": {
+    "title": "Página no encontrada",
+    "body": "{{product}} no tiene ninguna página en esta dirección.",
+    "home": "Volver al inicio de {{product}}"
+  },
+  "language": {
+    "title": "Idioma"
   }
 }

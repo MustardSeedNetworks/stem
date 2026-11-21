@@ -23,6 +23,7 @@ import { useTranslation } from 'react-i18next';
 import { matchPath, Navigate, Route, Routes, useLocation } from 'react-router';
 import { TestResults } from './components/TestResults';
 import { TestRunControls } from './components/TestRunControls';
+import { useConnectionStatus } from './hooks/useConnectionStatus';
 import { useNavGroups } from './navGroups';
 import { type PageConfig, usePages } from './pageRegistry';
 import { useRecordTestResult } from './stores/history-store';
@@ -30,6 +31,8 @@ import { useShellStore } from './stores/shell-store';
 import { useTestStore } from './stores/test-store';
 import type { Stats, TestResult } from './types/api';
 import { Breadcrumbs } from './ui/Breadcrumbs';
+import { DaemonUnreachableBanner } from './ui/DaemonUnreachableBanner';
+import { NotFoundPanel } from './ui/NotFoundPanel';
 import { PageHeader } from './ui/PageHeader';
 import { PageLoader } from './ui/PageLoader';
 import { type RailStatus, SidebarLayout } from './ui/Sidebar';
@@ -70,6 +73,7 @@ export function AppShell({
   // A run is recorded because it ended, not because a view is open.
   useRecordTestResult(testResult, testStatus);
   const navGroups = useNavGroups();
+  const connection = useConnectionStatus();
   const pages = usePages();
   const location = useLocation();
   const routePath = pages.find((page) => matchPath(page.path, location.pathname))?.path;
@@ -150,6 +154,7 @@ export function AppShell({
         onLogout={onLogout}
         roleControl={roleControl}
       >
+        <DaemonUnreachableBanner status={connection} />
         <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/" element={<Navigate to="/reflector" replace={true} />} />
@@ -164,7 +169,7 @@ export function AppShell({
                 }
               />
             ))}
-            <Route path="*" element={<Navigate to="/reflector" replace={true} />} />
+            <Route path="*" element={<NotFoundPanel />} />
           </Routes>
         </Suspense>
 
