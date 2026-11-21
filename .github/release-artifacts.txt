@@ -6,6 +6,7 @@
 # PR that changes what .goreleaser.yml publishes.
 
 stem-{version}-darwin-arm64.tar.gz
+stem-{version}-darwin-arm64.pkg
 stem-{version}-linux-amd64.tar.gz
 stem-{version}-linux-arm64.tar.gz
 stem-{version}-windows-amd64.zip

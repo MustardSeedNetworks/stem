@@ -2,7 +2,9 @@
 #
 # Pre-install script for The Stem macOS .pkg
 #
-# Stops existing service before installation.
+# Stops a running service before the binary is replaced. Nothing else is
+# touched: stem.yaml, credentials.json, certs/, data/ and .daemon.json stay
+# where they are.
 #
 
 set -e
@@ -14,13 +16,15 @@ log() {
 
 log "Starting pre-install for The Stem..."
 
-# Stop existing service if running
-if launchctl list 2>/dev/null | grep -q "com.stem"; then
-    log "Stopping existing service..."
-    launchctl unload /Library/LaunchDaemons/com.stem.plist 2>/dev/null || true
-    launchctl unload /Library/LaunchDaemons/com.stem.update.plist 2>/dev/null || true
-    sleep 2
-fi
+for label in com.stem com.stem.update; do
+    launchctl bootout "system/$label" 2>/dev/null || true
+done
+
+# bootout returns before the daemon has exited.
+for _ in 1 2 3 4 5; do
+    pgrep -f "/usr/local/stem/stem web" >/dev/null || break
+    sleep 1
+done
 
 log "Pre-install complete"
 exit 0

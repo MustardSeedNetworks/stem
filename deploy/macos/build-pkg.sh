@@ -8,12 +8,18 @@
 # Examples:
 #   ./build-pkg.sh ./stem-darwin-arm64 0.3.0
 #
+# Writes dist/stem-<version>-darwin-arm64.pkg. Apple silicon only.
+#
 # Requirements:
 #   - Xcode command line tools (pkgbuild, productbuild)
-#   - The Stem binary built for macOS
+#   - The Stem binary built for macOS arm64
 #
 
 set -e
+
+# cp and pkgbuild otherwise carry extended attributes into the payload as
+# AppleDouble ._ files, which the install then drops into /usr/local/stem.
+export COPYFILE_DISABLE=1
 
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -55,9 +61,13 @@ if [[ -z "$VERSION" ]]; then
     VERSION="${VERSION#v}"
 fi
 
-# Architecture
-ARCH=$(uname -m)
-[[ "$ARCH" == "x86_64" ]] && ARCH="amd64"
+# Architecture of the binary, not of the build host: the release builds the
+# arm64 package from the darwin archive on whatever runner it gets.
+ARCH=$(lipo -archs "$BINARY_PATH")
+if [[ "$ARCH" != "arm64" ]]; then
+    log_error "Stem ships for Apple silicon only; the binary is: $ARCH"
+    exit 1
+fi
 
 log_info "Building macOS .pkg installer"
 echo "  Binary:       $BINARY_PATH"
@@ -71,8 +81,6 @@ rm -rf "$BUILD_DIR"
 mkdir -p "$BUILD_DIR/payload$INSTALL_LOCATION"
 mkdir -p "$BUILD_DIR/payload$INSTALL_LOCATION/launchd"
 mkdir -p "$BUILD_DIR/payload$INSTALL_LOCATION/configs"
-mkdir -p "$BUILD_DIR/payload$INSTALL_LOCATION/logs"
-mkdir -p "$BUILD_DIR/payload$INSTALL_LOCATION/data"
 mkdir -p "$BUILD_DIR/scripts"
 mkdir -p "$BUILD_DIR/resources"
 
@@ -81,17 +89,9 @@ log_step "2/6 Copying binary..."
 cp "$BINARY_PATH" "$BUILD_DIR/payload$INSTALL_LOCATION/$PKG_NAME"
 chmod 755 "$BUILD_DIR/payload$INSTALL_LOCATION/$PKG_NAME"
 
-# Copy bundled iperf3 if available
-if [[ -f "$REPO_ROOT/bin/iperf3" ]]; then
-    cp "$REPO_ROOT/bin/iperf3" "$BUILD_DIR/payload$INSTALL_LOCATION/stem-iperf3"
-    chmod 755 "$BUILD_DIR/payload$INSTALL_LOCATION/stem-iperf3"
-    log_info "  Bundled: stem-iperf3"
-fi
-
-# Copy config
-if [[ -f "$REPO_ROOT/deploy/config/stem.yaml" ]]; then
-    cp "$REPO_ROOT/deploy/config/stem.yaml" "$BUILD_DIR/payload$INSTALL_LOCATION/configs/"
-fi
+# The default config is a template; postinstall copies it to stem.yaml only
+# when the operator has none, so an upgrade never replaces their file.
+cp "$REPO_ROOT/deploy/config/stem.yaml" "$BUILD_DIR/payload$INSTALL_LOCATION/configs/"
 
 # Copy launchd plist
 log_step "3/6 Copying launchd configuration..."
@@ -134,7 +134,7 @@ sed "s/__VERSION__/$VERSION/g" "$SCRIPT_DIR/distribution.xml" > "$BUILD_DIR/dist
 
 # Build final product package
 log_step "6/6 Building final package..."
-PKG_OUTPUT="$REPO_ROOT/dist/stem-${VERSION}-${ARCH}.pkg"
+PKG_OUTPUT="$REPO_ROOT/dist/stem-${VERSION}-darwin-${ARCH}.pkg"
 mkdir -p "$(dirname "$PKG_OUTPUT")"
 
 productbuild \
@@ -145,6 +145,11 @@ productbuild \
 
 # Clean up intermediate files
 rm -rf "$BUILD_DIR"
+
+if pkgutil --payload-files "$PKG_OUTPUT" | grep '/\._'; then
+    log_error "Payload contains AppleDouble ._ files (listed above)"
+    exit 1
+fi
 
 echo
 log_info "Package built successfully: $PKG_OUTPUT"
