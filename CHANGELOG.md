@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.32.50](https://github.com/MustardSeedNetworks/stem/compare/v0.32.49...v0.32.50) (2026-11-21)
+
+
+### Bug Fixes
+
+* **cli:** make STEM_DATA_DIR the only place discovery looks ([#2043](https://github.com/MustardSeedNetworks/stem/issues/2043)) ([95a826b](https://github.com/MustardSeedNetworks/stem/commit/95a826bfbd14ab5f5e823504c6ac719fb99d1cfd)), closes [#2042](https://github.com/MustardSeedNetworks/stem/issues/2042)
+* **deps:** update go dependencies ([#2031](https://github.com/MustardSeedNetworks/stem/issues/2031)) ([276d128](https://github.com/MustardSeedNetworks/stem/commit/276d1280fa191c8f1a5f6a0ac67cb11bd8b7a327))
+
+
+### Miscellaneous
+
+* **deps:** update dependency postcss to v8.5.33 ([#2048](https://github.com/MustardSeedNetworks/stem/issues/2048)) ([5ce5936](https://github.com/MustardSeedNetworks/stem/commit/5ce593687e38c0f4f2b78b06636a5f6ac269e9cc))
+
 ## [0.32.49](https://github.com/MustardSeedNetworks/stem/compare/v0.32.48...v0.32.49) (2026-11-20)
 
 
