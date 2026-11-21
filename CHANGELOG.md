@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.32.59](https://github.com/MustardSeedNetworks/stem/compare/v0.32.58...v0.32.59) (2026-11-21)
+
+
+### Bug Fixes
+
+* ship macos install scripts and emit auth.forbidden on denial ([#2077](https://github.com/MustardSeedNetworks/stem/issues/2077)) ([4f74702](https://github.com/MustardSeedNetworks/stem/commit/4f7470289cc704435db7e8c0c711b66e95b15d6a))
+
 ## [0.32.58](https://github.com/MustardSeedNetworks/stem/compare/v0.32.57...v0.32.58) (2026-11-21)
 
 
