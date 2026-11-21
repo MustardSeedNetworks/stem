@@ -361,6 +361,8 @@ func (a *Auditor) LoginSuccess(ctx context.Context, r *http.Request, userID, use
 // LoginFailure logs a failed login attempt.
 // Returns true if the failure triggered a suspicious activity alert.
 func (a *Auditor) LoginFailure(ctx context.Context, r *http.Request, username, reason string) bool {
+	AuditAuthForbidden(ctx, r, AuthReasonCredentials, username)
+
 	// Two different addresses on purpose. The logged one is what the client
 	// claimed, which is useful behind a proxy and must never be trusted; the
 	// tracker key is the immediate peer, because an attacker who can choose
@@ -388,6 +390,31 @@ func (a *Auditor) LoginFailure(ctx context.Context, r *http.Request, username, r
 
 	// Track this failed attempt and check for suspicious activity.
 	return a.tracker.RecordFailedAttempt(ctx, r, trackerKey, username)
+}
+
+// AuthReasonCredentials is the auth.forbidden reason for a request refused
+// because it carried no valid credentials: a failed login or a missing,
+// malformed, expired or revoked token. seed uses reason=role and niac
+// reason=scope on the same event for authorization shortfalls; stem has a
+// single administrator, so credentials are the only thing it can refuse.
+const AuthReasonCredentials = "credentials"
+
+// AuditAuthForbidden emits the fleet-wide event=auth.forbidden record that
+// seed, niac and trellis share, so one SIEM rule matches a denial in any
+// product. The keys mirror seed's: client_ip, path and method, plus username
+// when the caller named one.
+func AuditAuthForbidden(ctx context.Context, r *http.Request, reason, username string) {
+	attrs := []any{
+		"event", "auth.forbidden",
+		"reason", reason,
+		"client_ip", GetClientIP(r),
+		"path", r.URL.Path,
+		"method", r.Method,
+	}
+	if username != "" {
+		attrs = append(attrs, "username", username)
+	}
+	FromContext(ctx).WarnContext(ctx, "Forbidden: request denied", attrs...)
 }
 
 // AuditTokenInvalid logs a token validation failure.

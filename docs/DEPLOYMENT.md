@@ -33,9 +33,9 @@
 | Software | Version | Notes |
 | ---------- | --------- | ------- |
 | Linux | Kernel 5.4+ | Required for AF_XDP |
-| macOS | 12+ | Development/testing only |
-| Go | 1.25+ | For building from source |
-| Node.js | 25+ | For building WebUI |
+| macOS | 12+ (Apple Silicon) | Runs as a launchd daemon; no dataplane |
+| Go | 1.27.4 | For building from source |
+| Node.js | 26.13.1 | For building WebUI |
 
 ### Network Requirements
 
@@ -67,6 +67,12 @@ sudo rpm -i stem-${VERSION}-1.x86_64.rpm
 
 # Portable tarball (linux-amd64, linux-arm64, darwin-arm64)
 curl -LO https://github.com/MustardSeedNetworks/stem/releases/download/v${VERSION}/stem-${VERSION}-linux-amd64.tar.gz
+
+# macOS (Apple Silicon): the tarball carries install.sh, upgrade.sh and
+# uninstall.sh; see "launchd Service (macOS)" below
+curl -LO https://github.com/MustardSeedNetworks/stem/releases/download/v${VERSION}/stem-${VERSION}-darwin-arm64.tar.gz
+mkdir stem-${VERSION} && tar xzf stem-${VERSION}-darwin-arm64.tar.gz -C stem-${VERSION} && cd stem-${VERSION}
+sudo ./install.sh
 
 # Verify installation
 stem version
@@ -115,7 +121,7 @@ is stored the same way.
 | Platform | Data directory |
 | ---------- | ------------- |
 | Linux `.deb` / `.rpm` | `/var/lib/stem` |
-| macOS `.pkg` / tarball with the launchd plist | `/usr/local/stem` |
+| macOS tarball (`install.sh`) | `/usr/local/stem` |
 
 A `credentials.json` that exists but cannot be read is a start failure, not a
 return to setup: delete it deliberately to reclaim the daemon.
@@ -307,10 +313,19 @@ sudo systemctl status stem
 
 ### launchd Service (macOS)
 
-The macOS `.pkg` installs `/Library/LaunchDaemons/com.stem.plist`, which runs
-`/usr/local/stem/stem web` as root and starts it at boot. launchd restarts it
-after a crash, not after it exits with an error, so a daemon that refused to
-start stays stopped until it is started again.
+Releases publish no macOS `.pkg`; the `darwin-arm64` tarball is the macOS
+artifact. It holds the `stem` binary, `stem.yaml`, the plists under `launchd/`
+and three scripts, run as root from the unpacked directory:
+
+| Script | Does |
+| ------ | ---- |
+| `sudo ./install.sh` | Copies the binary to `/usr/local/stem`, installs `/Library/LaunchDaemons/com.stem.plist` and `com.stem.update.plist`, and starts the daemon. Refuses if Stem is already installed. |
+| `sudo ./upgrade.sh` | Stops the daemon, saves the old binary as `stem.bak`, installs the new binary and plists, and restarts. It restores `stem.bak` if the new binary does not start. It never touches `stem.yaml`, `credentials.json`, `certs/` or `data/`. |
+| `sudo ./uninstall.sh [--purge]` | Removes the daemon and binary and keeps configuration and data; `--purge` deletes `/usr/local/stem` entirely. |
+
+`com.stem.plist` runs `/usr/local/stem/stem web` as root and starts it at
+boot. launchd restarts it after a crash, not after it exits with an error, so
+a daemon that refused to start stays stopped until it is started again.
 
 ```bash
 sudo launchctl kickstart system/com.stem      # start (add -k to restart)
@@ -352,8 +367,7 @@ the next day.
 | Install | Daily check | Its log |
 | ------- | ----------- | ------- |
 | `.deb` / `.rpm` | `stem-update.timer`, enabled by the package | `journalctl -u stem-update` |
-| macOS `.pkg` | `/Library/LaunchDaemons/com.stem.update.plist` | `/usr/local/stem/logs/update.log` |
-| macOS tarball | copy `launchd/com.stem.update.plist` to `/Library/LaunchDaemons` and `sudo launchctl bootstrap system` it | `/usr/local/stem/logs/update.log` |
+| macOS tarball | `/Library/LaunchDaemons/com.stem.update.plist`, installed by `install.sh` | `/usr/local/stem/logs/update.log` |
 | Windows zip | register it once (below) | the task's history |
 
 On Windows, register the task once from an elevated prompt, with the path
@@ -377,31 +391,8 @@ A choice already saved from Settings or the CLI wins over the answer when the
 package is upgraded, and `dpkg --purge` forgets it. The `.rpm` cannot prompt,
 so it prints the command that turns automatic updates on instead.
 
-The macOS `.pkg` offers the same choice as **Automatic updates** in Installer's
-choices pane, unselected. `sudo installer -pkg …` from a script takes that
-default. Select it for an unattended install with a choice-changes file:
-
-```bash
-cat > stem-choices.xml <<'XML'
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<array>
-    <dict>
-        <key>choiceIdentifier</key>
-        <string>com.stem.autoupdate</string>
-        <key>choiceAttribute</key>
-        <string>selected</string>
-        <key>attributeSetting</key>
-        <integer>1</integer>
-    </dict>
-</array>
-</plist>
-XML
-sudo installer -pkg stem-<version>-arm64.pkg -target / -applyChoiceChangesXML stem-choices.xml
-```
-
-As with the `.deb`, a choice already saved from Settings or the CLI wins.
+On macOS, `install.sh` leaves automatic updates off; turn them on with
+`sudo stem update --automatic on` or from Settings.
 
 ### Create Service User
 

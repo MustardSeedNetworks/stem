@@ -141,10 +141,16 @@ archives:
     files:
       - src: deploy/config/stem.yaml
         dst: stem.yaml
-      # launchd plist + helper scripts for macOS users who run stem as a
-      # service. Filename matches the in-tree convention.
+      # launchd plists, and the scripts that install them: the archive is
+      # the only macOS artifact a release publishes.
       - src: deploy/launchd/*
         dst: launchd/
+      - src: deploy/macos/install.sh
+        dst: install.sh
+      - src: deploy/macos/upgrade.sh
+        dst: upgrade.sh
+      - src: deploy/macos/uninstall.sh
+        dst: uninstall.sh
 
   - id: windows-archive
     ids: [stem-windows]
