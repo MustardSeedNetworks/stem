@@ -27,6 +27,7 @@ import type { RFC2544Config } from './RFC2544ConfigForm';
 import type { RFC2889Config } from './RFC2889ConfigForm';
 import type { RFC6349Config } from './RFC6349ConfigForm';
 import {
+  LanguageSection,
   MEFSection,
   RFC2544Section,
   RFC2889Section,
@@ -159,6 +160,8 @@ export function SettingsDrawer({
           <LicenseSection />
 
           <UpdateSection />
+
+          <LanguageSection />
 
           {/* Test-Master test selection — only relevant when this stem
               is configured as a Test Master. Reflector role gets its

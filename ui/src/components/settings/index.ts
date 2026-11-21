@@ -6,6 +6,7 @@
  */
 
 export { InterfaceSection } from './InterfaceSection';
+export { LanguageSection } from './LanguageSection';
 
 // Section Components
 export { ModeSection } from './ModeSection';

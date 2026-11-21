@@ -1,5 +1,6 @@
 import type { Preview } from '@storybook/react-vite';
 import { I18nextProvider } from 'react-i18next';
+import { ToastProvider } from '../src/components/ui/Toast';
 import { RoleProvider } from '../src/contexts/RoleContext';
 import i18n from '../src/i18n';
 import '../src/index.css';
@@ -74,12 +75,16 @@ const preview: Preview = {
        useTranslation logged NO_I18NEXT_INSTANCE and rendered raw keys -- the
        stories "passed" while showing text no user would ever see. Importing
        the app's own instance means stories render the real strings. */
+    /* ToastProvider too: UpdateSection (inside SettingsDrawer) calls useToast,
+       which throws outside a provider, as the App wraps it in production. */
     (Story) => (
       <I18nextProvider i18n={i18n}>
         <RoleProvider>
-          <div className="font-sans antialiased">
-            <Story />
-          </div>
+          <ToastProvider>
+            <div className="font-sans antialiased">
+              <Story />
+            </div>
+          </ToastProvider>
         </RoleProvider>
       </I18nextProvider>
     ),

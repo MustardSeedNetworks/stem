@@ -20,32 +20,35 @@ import {
 } from '../types/settings';
 import { SettingsDrawer } from './SettingsDrawer';
 import { defaultTrafficGenConfig } from './TrafficGenConfigForm';
+import { ToastProvider } from './ui/Toast';
 
 function renderDrawer() {
   return render(
     <RoleProvider>
-      <SettingsDrawer
-        isOpen={true}
-        onClose={() => {}}
-        selectedTests={[]}
-        setSelectedTests={() => {}}
-        rfc2544Config={defaultRFC2544Config}
-        setRFC2544Config={() => {}}
-        rfc2889Config={defaultRFC2889Config}
-        setRFC2889Config={() => {}}
-        rfc6349Config={defaultRFC6349Config}
-        setRFC6349Config={() => {}}
-        y1564Config={defaultY1564Config}
-        setY1564Config={() => {}}
-        y1731Config={defaultY1731Config}
-        setY1731Config={() => {}}
-        tsnConfig={defaultTSNConfig}
-        setTSNConfig={() => {}}
-        trafficGenConfig={defaultTrafficGenConfig}
-        setTrafficGenConfig={() => {}}
-        mefConfig={defaultMEFConfig}
-        setMEFConfig={() => {}}
-      />
+      <ToastProvider>
+        <SettingsDrawer
+          isOpen={true}
+          onClose={() => {}}
+          selectedTests={[]}
+          setSelectedTests={() => {}}
+          rfc2544Config={defaultRFC2544Config}
+          setRFC2544Config={() => {}}
+          rfc2889Config={defaultRFC2889Config}
+          setRFC2889Config={() => {}}
+          rfc6349Config={defaultRFC6349Config}
+          setRFC6349Config={() => {}}
+          y1564Config={defaultY1564Config}
+          setY1564Config={() => {}}
+          y1731Config={defaultY1731Config}
+          setY1731Config={() => {}}
+          tsnConfig={defaultTSNConfig}
+          setTSNConfig={() => {}}
+          trafficGenConfig={defaultTrafficGenConfig}
+          setTrafficGenConfig={() => {}}
+          mefConfig={defaultMEFConfig}
+          setMEFConfig={() => {}}
+        />
+      </ToastProvider>
     </RoleProvider>,
   );
 }

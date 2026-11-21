@@ -23,6 +23,7 @@ vi.mock('../lib/webauthn', () => ({
   loginWithPasskey: passkeyLoginMock,
 }));
 
+import i18n from '../i18n';
 import * as http from '../utils/http';
 import { authFetch, useAuthStore } from './auth-store';
 
@@ -254,6 +255,17 @@ describe('authFetch', () => {
       .mockResolvedValueOnce(new Response(null, { status: 401 })); // refresh fails
     await expect(authFetch('/api/v1/stats')).rejects.toThrow('Unauthorized');
     expect(useAuthStore.getState().isAuthenticated).toBe(false);
+  });
+
+  it('a failed refresh leaves the sign-in message in the active locale', async () => {
+    await i18n.changeLanguage('es');
+    useAuthStore.setState({ isAuthenticated: true });
+    vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(new Response(null, { status: 401 })) // initial
+      .mockResolvedValueOnce(new Response(null, { status: 401 })); // refresh fails
+    await expect(authFetch('/api/v1/stats')).rejects.toThrow('Unauthorized');
+    expect(useAuthStore.getState().loginError).toBe('Su sesión expiró, inicie sesión de nuevo');
+    await i18n.changeLanguage('en');
   });
 
   it('concurrent 401s share a single refresh (single-flight)', async () => {
