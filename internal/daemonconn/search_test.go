@@ -5,6 +5,7 @@ package daemonconn_test
 import (
 	"errors"
 	"path/filepath"
+	"slices"
 	"testing"
 
 	"github.com/MustardSeedNetworks/stem/internal/daemonconn"
@@ -38,16 +39,22 @@ func TestDiscoverWithoutADaemon(t *testing.T) {
 	}
 }
 
-// The search order has to be deterministic and start with the override, so
-// an operator can point the CLI at a daemon in a non-standard location.
-func TestSearchDirsHonoursTheOverrideFirst(t *testing.T) {
+// An override names where the daemon is, so it is the only place searched:
+// falling through to the packaged directory would reach a different daemon.
+func TestSearchDirsUsesOnlyTheOverride(t *testing.T) {
 	t.Setenv("STEM_DATA_DIR", "/tmp/explicit-dir")
-	dirs := daemonconn.SearchDirs()
-	if len(dirs) == 0 || dirs[0] != "/tmp/explicit-dir" {
-		t.Fatalf("SearchDirs() = %v, want the override first", dirs)
+	if dirs := daemonconn.SearchDirs(); !slices.Equal(dirs, []string{"/tmp/explicit-dir"}) {
+		t.Fatalf("SearchDirs() = %v, want only the override", dirs)
 	}
-	if len(dirs) < 2 {
-		t.Error("SearchDirs() offers no fallback beyond the override")
+}
+
+// Without an override the packaged location comes first, then the working
+// directory the daemon falls back to.
+func TestSearchDirsWithoutAnOverride(t *testing.T) {
+	t.Setenv("STEM_DATA_DIR", "")
+	dirs := daemonconn.SearchDirs()
+	if len(dirs) != 2 || !filepath.IsAbs(dirs[0]) || dirs[1] != "." {
+		t.Fatalf("SearchDirs() = %v, want [<packaged dir> .]", dirs)
 	}
 }
 

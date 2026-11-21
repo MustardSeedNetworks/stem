@@ -18,16 +18,17 @@ import (
 // dataDirEnv overrides where both the daemon writes and the CLI looks.
 const dataDirEnv = "STEM_DATA_DIR"
 
-// SearchDirs lists the data directories a client checks, in order: the
-// explicit override, then the platform's packaged location, then the
-// working directory the daemon falls back to when nothing is configured.
+// SearchDirs lists the data directories a client checks. An explicit
+// override is the only place looked: the operator has named where the daemon
+// is, and falling through to the packaged location would connect to a
+// different daemon without saying so (#1166). Without one, the platform's
+// packaged location comes first, then the working directory the daemon falls
+// back to when nothing is configured.
 func SearchDirs() []string {
-	var dirs []string
 	if override := os.Getenv(dataDirEnv); override != "" {
-		dirs = append(dirs, override)
+		return []string{override}
 	}
-	dirs = append(dirs, packagedDataDir(runtime.GOOS), ".")
-	return dirs
+	return []string{packagedDataDir(runtime.GOOS), "."}
 }
 
 // ServiceDataDir is the data directory of the installed service: the
