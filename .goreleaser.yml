@@ -19,8 +19,9 @@
 #   - SHA-256 checksums
 #
 # Handled outside goreleaser:
-#   - macOS .pkg installer via deploy/macos/build-pkg.sh — kept as a
-#     local-only convenience; the .tar.gz is the published artifact
+#   - macOS .pkg installer via deploy/macos/build-pkg.sh — built by the
+#     macos-pkg job in release.yml from the darwin archive (pkgbuild only runs
+#     on macOS), then SBOM'd, signed and added to checksums.txt there
 #   - UI frontend build — runs in the build-ui job inside release.yml;
 #     Vite writes directly to internal/api/ui/ which Go embeds. The
 #     `before:` hook below just verifies the dist landed.

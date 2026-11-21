@@ -2,18 +2,17 @@
 #
 # Post-install script for The Stem macOS .pkg
 #
-# Sets up the launchd service and starts The Stem.
+# Installs the launchd plists and starts The Stem. The payload carries only
+# the binary, the plists and a default config template, so an upgrade leaves
+# stem.yaml, credentials.json, certs/, data/ and .daemon.json (all under
+# /usr/local/stem, the daemon's working directory) alone.
 #
 
 set -e
 
 INSTALL_DIR="/usr/local/stem"
-BINARY_NAME="stem"
-PLIST_NAME="com.stem.plist"
-PLIST_DEST="/Library/LaunchDaemons/$PLIST_NAME"
-PLIST_SOURCE="$INSTALL_DIR/launchd/$PLIST_NAME"
-UPDATE_PLIST_NAME="com.stem.update.plist"
-UPDATE_PLIST_DEST="/Library/LaunchDaemons/$UPDATE_PLIST_NAME"
+DAEMON_PLIST="/Library/LaunchDaemons/com.stem.plist"
+UPDATE_PLIST="/Library/LaunchDaemons/com.stem.update.plist"
 
 log() {
     /usr/bin/logger -t "stem-installer" "$1"
@@ -22,54 +21,36 @@ log() {
 
 log "Starting post-install for The Stem..."
 
-# Ensure directories exist
-mkdir -p "$INSTALL_DIR/configs"
 mkdir -p "$INSTALL_DIR/logs"
-mkdir -p "$INSTALL_DIR/data"
 
-# Set proper ownership
-chown -R root:wheel "$INSTALL_DIR"
-
-# Make binary executable
-chmod 755 "$INSTALL_DIR/$BINARY_NAME"
-
-# Install launchd plist
-if [[ -f "$PLIST_SOURCE" ]]; then
-    cp "$PLIST_SOURCE" "$PLIST_DEST"
-    log "Installed launchd plist from package"
-else
-    log "Warning: launchd plist not found in package"
-    exit 1
+# A config left by an earlier install is the operator's.
+if [[ ! -e "$INSTALL_DIR/stem.yaml" ]]; then
+    install -m 644 "$INSTALL_DIR/configs/stem.yaml" "$INSTALL_DIR/stem.yaml"
 fi
 
-# Set plist permissions
-chmod 644 "$PLIST_DEST"
-chown root:wheel "$PLIST_DEST"
+chmod 755 "$INSTALL_DIR/stem"
+chown -R root:wheel "$INSTALL_DIR"
 
-# Load and start service
-log "Loading launchd service..."
-launchctl load "$PLIST_DEST"
-
+install -m 644 -o root -g wheel "$INSTALL_DIR/launchd/com.stem.plist" "$DAEMON_PLIST"
 # The daily update check exits before any network call until an operator
 # turns automatic updates on.
-cp "$INSTALL_DIR/launchd/$UPDATE_PLIST_NAME" "$UPDATE_PLIST_DEST"
-chmod 644 "$UPDATE_PLIST_DEST"
-chown root:wheel "$UPDATE_PLIST_DEST"
-launchctl load "$UPDATE_PLIST_DEST"
+install -m 644 -o root -g wheel "$INSTALL_DIR/launchd/com.stem.update.plist" "$UPDATE_PLIST"
 
-# Wait for startup
+# preinstall booted them out; this covers a package installed straight over a
+# daemon that was loaded some other way.
+for label in com.stem com.stem.update; do
+    launchctl bootout "system/$label" 2>/dev/null || true
+done
+launchctl bootstrap system "$DAEMON_PLIST"
+launchctl bootstrap system "$UPDATE_PLIST"
+
 sleep 3
 
-# Verify
-if launchctl list 2>/dev/null | grep -q "com.stem"; then
-    if pgrep -f "/usr/local/stem/stem" > /dev/null; then
-        log "The Stem installation successful - service is running"
-    else
-        log "Warning: Service loaded but process may not be running"
-        log "Check logs: /usr/local/stem/logs/stem.error.log"
-    fi
+if pgrep -f "$INSTALL_DIR/stem web" >/dev/null; then
+    log "The Stem installation successful - service is running"
 else
-    log "Warning: Failed to load launchd service"
+    log "Warning: service loaded but the process is not running"
+    log "Check logs: $INSTALL_DIR/logs/stem.error.log"
 fi
 
 log "Post-install complete"
