@@ -49,7 +49,7 @@
 
 ### Option 1: Signed package from a GitHub release
 
-Every tag publishes .deb, .rpm, Linux/macOS tarballs and Windows zips to
+Every tag publishes a macOS .pkg, .deb, .rpm, Linux/macOS tarballs and Windows zips to
 [the releases page](https://github.com/MustardSeedNetworks/stem/releases),
 each with a cosign bundle, an SBOM and a SLSA provenance attestation. Asset
 names carry the version, so pin one rather than using `latest/download`.
@@ -68,8 +68,11 @@ sudo rpm -i stem-${VERSION}-1.x86_64.rpm
 # Portable tarball (linux-amd64, linux-arm64, darwin-arm64)
 curl -LO https://github.com/MustardSeedNetworks/stem/releases/download/v${VERSION}/stem-${VERSION}-linux-amd64.tar.gz
 
-# macOS (Apple Silicon): the tarball carries install.sh, upgrade.sh and
-# uninstall.sh; see "launchd Service (macOS)" below
+# macOS (Apple silicon only, arm64): the .pkg; see "launchd Service (macOS)" below
+curl -LO https://github.com/MustardSeedNetworks/stem/releases/download/v${VERSION}/stem-${VERSION}-darwin-arm64.pkg
+sudo installer -pkg stem-${VERSION}-darwin-arm64.pkg -target /
+
+# macOS alternative: the tarball carries install.sh, upgrade.sh and uninstall.sh
 curl -LO https://github.com/MustardSeedNetworks/stem/releases/download/v${VERSION}/stem-${VERSION}-darwin-arm64.tar.gz
 mkdir stem-${VERSION} && tar xzf stem-${VERSION}-darwin-arm64.tar.gz -C stem-${VERSION} && cd stem-${VERSION}
 sudo ./install.sh
@@ -121,7 +124,7 @@ is stored the same way.
 | Platform | Data directory |
 | ---------- | ------------- |
 | Linux `.deb` / `.rpm` | `/var/lib/stem` |
-| macOS tarball (`install.sh`) | `/usr/local/stem` |
+| macOS `.pkg` / tarball (`install.sh`) | `/usr/local/stem` |
 
 A `credentials.json` that exists but cannot be read is a start failure, not a
 return to setup: delete it deliberately to reclaim the daemon.
@@ -313,9 +316,22 @@ sudo systemctl status stem
 
 ### launchd Service (macOS)
 
-Releases publish no macOS `.pkg`; the `darwin-arm64` tarball is the macOS
-artifact. It holds the `stem` binary, `stem.yaml`, the plists under `launchd/`
-and three scripts, run as root from the unpacked directory:
+macOS is Apple silicon only: releases publish an arm64 build and no Intel one.
+
+The `.pkg` is the primary install. It installs `/usr/local/stem/stem` and
+`/Library/LaunchDaemons/com.stem.plist` and `com.stem.update.plist`, then
+bootstraps both. The `.pkg` is not Developer ID signed or notarized, so Gatekeeper
+blocks a double-click until you approve it in System Settings > Privacy &
+Security, or use `sudo installer` as above. Check the download against the
+release's `checksums.txt` and `.cosign.bundle` first. Installing a newer `.pkg`
+over an existing install stops the daemon, replaces the binary and plists,
+and starts it again; `stem.yaml` (a default is written only if there is none),
+`credentials.json`, `certs/`, `data/` and `.daemon.json` are never touched.
+Remove Stem with `uninstall.sh` from the tarball.
+
+The `darwin-arm64` tarball is the alternative. It holds the `stem` binary,
+`stem.yaml`, the plists under `launchd/` and three scripts, run as root from
+the unpacked directory:
 
 | Script | Does |
 | ------ | ---- |
@@ -367,7 +383,7 @@ the next day.
 | Install | Daily check | Its log |
 | ------- | ----------- | ------- |
 | `.deb` / `.rpm` | `stem-update.timer`, enabled by the package | `journalctl -u stem-update` |
-| macOS tarball | `/Library/LaunchDaemons/com.stem.update.plist`, installed by `install.sh` | `/usr/local/stem/logs/update.log` |
+| macOS `.pkg` / tarball | `/Library/LaunchDaemons/com.stem.update.plist`, installed by the `.pkg` or `install.sh` | `/usr/local/stem/logs/update.log` |
 | Windows zip | register it once (below) | the task's history |
 
 On Windows, register the task once from an elevated prompt, with the path
@@ -391,7 +407,32 @@ A choice already saved from Settings or the CLI wins over the answer when the
 package is upgraded, and `dpkg --purge` forgets it. The `.rpm` cannot prompt,
 so it prints the command that turns automatic updates on instead.
 
-On macOS, `install.sh` leaves automatic updates off; turn them on with
+The macOS `.pkg` offers the same choice as **Automatic updates** in Installer's
+choices pane, unselected. `sudo installer -pkg …` from a script takes that
+default. Select it for an unattended install with a choice-changes file:
+
+```bash
+cat > stem-choices.xml <<'XML'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<array>
+    <dict>
+        <key>choiceIdentifier</key>
+        <string>com.stem.autoupdate</string>
+        <key>choiceAttribute</key>
+        <string>selected</string>
+        <key>attributeSetting</key>
+        <integer>1</integer>
+    </dict>
+</array>
+</plist>
+XML
+sudo installer -pkg stem-<version>-darwin-arm64.pkg -target / -applyChoiceChangesXML stem-choices.xml
+```
+
+As with the `.deb`, a choice already saved from Settings or the CLI wins.
+`install.sh` leaves automatic updates off; turn them on with
 `sudo stem update --automatic on` or from Settings.
 
 ### Create Service User

@@ -25,6 +25,12 @@ single_matching_line() {
   printf '%s' "$matches"
 }
 
+# first_matching_line is for the Syft and Cosign pins, which appear once in the
+# Linux container and once on the macOS runner; the first is the Linux one.
+first_matching_line() {
+  awk -v pattern="$1" '$0 ~ pattern { print; exit }' "$source_workflow"
+}
+
 # mutate copies $1 to $2 with the one occurrence of $OLD replaced by $NEW.
 mutate() {
   python3 - "$1" "$2" <<'PY'
@@ -95,8 +101,28 @@ assert_rejected "dispatch-refusal-removed" \
 
 # Provenance would attest a snapshot.
 assert_rejected "provenance-condition-loosened" \
-  "    if: \${{ !cancelled() && github.event_name == 'push' && !inputs.dry_run && needs.goreleaser.result == 'success' }}" \
+  "    if: \${{ !cancelled() && github.event_name == 'push' && !inputs.dry_run && needs.goreleaser.result == 'success' && needs.macos-pkg.result == 'success' }}" \
   "    if: \${{ !cancelled() && needs.goreleaser.result == 'success' }}"
+
+# The .pkg is signed and published on a pushed release only; a dispatch must
+# not upload it to a release.
+assert_rejected "pkg-publish-without-event-check" \
+  "      - name: SBOM, sign, and publish the .pkg
+        if: \${{ github.event_name == 'push' && !inputs.dry_run }}" \
+  "      - name: SBOM, sign, and publish the .pkg
+        if: \${{ !inputs.dry_run }}"
+
+# The .pkg's provenance subjects are computed on a release only.
+assert_rejected "pkg-subjects-without-event-check" \
+  "      - name: Capture provenance subjects including the .pkg
+        if: \${{ github.event_name == 'push' && !inputs.dry_run }}" \
+  "      - name: Capture provenance subjects including the .pkg
+        if: \${{ !inputs.dry_run }}"
+
+# Provenance stops waiting for the .pkg, so it would ship unattested.
+assert_rejected "provenance-ignores-pkg" \
+  "    needs: [goreleaser, macos-pkg]" \
+  "    needs: [goreleaser]"
 
 # --skip=validate returns to the publish path.
 assert_rejected "publish-skips-validation" \
@@ -122,13 +148,19 @@ assert_rejected "unpinned-action" \
   "        uses: actions/attest-build-provenance@v4"
 
 # A supply-chain download loses its checksum.
-syft_checksum=$(single_matching_line '^[[:space:]]+SYFT_SHA256:')
+syft_checksum=$(first_matching_line '^[[:space:]]+SYFT_SHA256:')
 assert_rejected "syft-checksum-removed" \
   "$syft_checksum" \
   '          SYFT_SHA256: ""'
 
+# The macOS copy of the pin loses its checksum too.
+macos_syft_checksum=$(awk '/^[[:space:]]+SYFT_SHA256:/ { n++; if (n == 2) { print; exit } }' "$source_workflow")
+assert_rejected "macos-syft-checksum-removed" \
+  "$macos_syft_checksum" \
+  '          SYFT_SHA256: ""'
+
 # A mutable latest-release lookup appears.
-syft_download=$(single_matching_line 'anchore/syft/releases/download')
+syft_download=$(first_matching_line 'anchore/syft/releases/download')
 syft_download=${syft_download#*\"}
 syft_download=${syft_download%\"}
 assert_rejected "mutable-latest-lookup" \

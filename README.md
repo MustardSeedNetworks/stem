@@ -46,21 +46,24 @@ the same install.
 
 ## Install
 
-Releases publish `.deb` and `.rpm` packages, Linux and macOS tarballs and
-Windows zips at <https://github.com/MustardSeedNetworks/stem/releases>.
+Releases publish a macOS `.pkg`, `.deb` and `.rpm` packages, Linux and macOS
+tarballs and Windows zips at
+<https://github.com/MustardSeedNetworks/stem/releases>.
 
-On macOS (Apple Silicon), unpack the `darwin-arm64` tarball (it has no
-top-level directory) and run its installer; it puts Stem in `/usr/local/stem` and starts it as the `com.stem`
-launchd daemon:
+macOS is **Apple silicon only** (arm64); there is no Intel build. Download
+`stem-<version>-darwin-arm64.pkg` and run:
 
 ```bash
-mkdir stem && tar xzf stem-<version>-darwin-arm64.tar.gz -C stem && cd stem
-sudo ./install.sh
+sudo installer -pkg stem-<version>-darwin-arm64.pkg -target /
 ```
 
-`upgrade.sh` replaces the binary from a newer archive and keeps `stem.yaml`,
-`credentials.json`, `certs/` and the data directory; `uninstall.sh` removes the
-service (add `--purge` to delete the data too). See
+It puts Stem in `/usr/local/stem` and starts it as the `com.stem` launchd
+daemon, with the daily update check as `com.stem.update`. Installing a newer
+`.pkg` over an existing install upgrades it and keeps `stem.yaml`,
+`credentials.json`, `certs/`, `data/` and `.daemon.json`.
+
+The `darwin-arm64` tarball is the alternative: unpack it (it has no top-level
+directory) and run `sudo ./install.sh`, `./upgrade.sh` or `./uninstall.sh`. See
 [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ## Quick Start
@@ -186,9 +189,9 @@ here is in force immediately and needs no restart.
 
 Packaging has no `make` target: `.deb`, `.rpm`, the Linux/macOS tarballs and
 the Windows `.zip` are produced only by GoReleaser in
-`.github/workflows/release.yml`. The macOS release artifact is the
-`darwin-arm64` tarball (Apple Silicon); no `.pkg` is published.
-`deploy/macos/build-pkg.sh` builds one locally for testing.
+`.github/workflows/release.yml`. The macOS `.pkg` is built by that workflow's
+`macos-pkg` job from the `darwin-arm64` archive with
+`deploy/macos/build-pkg.sh`, which also builds one locally for testing.
 
 Verified versions: **Go 1.27.4**, Node.js 26.13.1 (`.nvmrc`), npm 12.2.2,
 golangci-lint v2.15.0.
