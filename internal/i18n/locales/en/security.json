@@ -49,6 +49,7 @@
     "password": "Password",
     "verifying": "Verifying...",
     "signInButton": "Sign In",
-    "signingIn": "Signing in..."
+    "signingIn": "Signing in...",
+    "sessionExpired": "Your session expired, sign in again"
   }
 }

@@ -10,6 +10,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import i18n from '../../i18n';
 import { invalidateCsrfToken } from '../../lib/csrf';
 import { useAuthStore } from '../../stores/auth-store';
+import { ToastProvider } from '../ui/Toast';
 import { UPDATE_SETTINGS_ENDPOINT, UpdateSection } from './UpdateSection';
 
 const CSRF_ENDPOINT = '/api/v1/auth/csrf-token';
@@ -63,7 +64,11 @@ afterEach(() => {
 describe('UpdateSection', () => {
   it('shows the saved opt-in and its source', async () => {
     respondWith(() => jsonResponse({}));
-    render(<UpdateSection />);
+    render(
+      <ToastProvider>
+        <UpdateSection />
+      </ToastProvider>,
+    );
 
     const toggle = await screen.findByRole('switch', { name: 'Automatic updates' });
     expect(toggle).toHaveAttribute('aria-checked', 'false');
@@ -72,7 +77,11 @@ describe('UpdateSection', () => {
 
   it('turns it on with {automatic: true} and the CSRF header', async () => {
     respondWith(() => jsonResponse({ automatic: true, source: '/srv/stem-mirror' }));
-    render(<UpdateSection />);
+    render(
+      <ToastProvider>
+        <UpdateSection />
+      </ToastProvider>,
+    );
     const toggle = await screen.findByRole('switch', { name: 'Automatic updates' });
 
     await userEvent.click(toggle);
@@ -87,14 +96,19 @@ describe('UpdateSection', () => {
 
   it('keeps the saved state and says so when the daemon refuses', async () => {
     respondWith(() => jsonResponse({ error: 'Internal Server Error' }, 500));
-    render(<UpdateSection />);
+    render(
+      <ToastProvider>
+        <UpdateSection />
+      </ToastProvider>,
+    );
     const toggle = await screen.findByRole('switch', { name: 'Automatic updates' });
 
     await userEvent.click(toggle);
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(
+    expect(await screen.findByTestId('toast')).toHaveTextContent(
       'Could not save the automatic update setting.',
     );
+    expect(screen.getAllByRole('alert')).toHaveLength(2);
     expect(toggle).toHaveAttribute('aria-checked', 'false');
   });
 });

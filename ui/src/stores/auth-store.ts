@@ -27,6 +27,7 @@
 
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
+import i18n from '../i18n';
 import { fetchWithCsrf, getCsrfToken, invalidateCsrfToken } from '../lib/csrf';
 import { getQueryClient } from '../lib/queryClient';
 import { loginWithPasskey } from '../lib/webauthn';
@@ -324,7 +325,7 @@ export const useAuthStore = create<AuthStore>()(
         tearDownSession(set, null);
       },
 
-      expireSession: (message = 'Session expired. Please sign in again.'): void => {
+      expireSession: (message = i18n.t('security:login.sessionExpired')): void => {
         tearDownSession(set, message);
       },
 

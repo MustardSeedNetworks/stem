@@ -14,6 +14,7 @@ import { authFetch } from '../../stores/auth-store';
 import type { UpdateSettings } from '../../types/generated/update-settings';
 import { CollapsibleSection } from '../CollapsibleSection';
 import { Toggle } from '../ui/Input';
+import { useToast } from '../ui/useToast';
 
 export const UPDATE_SETTINGS_ENDPOINT = '/api/v1/update/settings';
 
@@ -22,6 +23,7 @@ export function UpdateSection(): ReactElement {
   const [settings, setSettings] = useState<UpdateSettings | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { addToast } = useToast();
 
   const load = useCallback(async (): Promise<void> => {
     try {
@@ -54,9 +56,11 @@ export function UpdateSection(): ReactElement {
         setSettings((await response.json()) as UpdateSettings);
       } else {
         setError(t('settings:update.saveFailed'));
+        addToast(t('settings:update.saveFailed'), 'error');
       }
     } catch {
       setError(t('errors:network.connectionFailed'));
+      addToast(t('errors:network.connectionFailed'), 'error');
     } finally {
       setSaving(false);
     }

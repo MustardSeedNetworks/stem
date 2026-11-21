@@ -30,7 +30,7 @@ export function LanguageSwitcher({
 
   return (
     <select
-      value={i18n.language}
+      value={i18n.resolvedLanguage ?? i18n.language}
       onChange={handleChange}
       className={`language-switcher ${className}`}
       aria-label={t('accessibility.selectLanguage')}

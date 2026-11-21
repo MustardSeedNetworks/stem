@@ -49,6 +49,7 @@
     "password": "Contraseña",
     "verifying": "Verificando...",
     "signInButton": "Iniciar sesión",
-    "signingIn": "Iniciando sesión..."
+    "signingIn": "Iniciando sesión...",
+    "sessionExpired": "Su sesión expiró, inicie sesión de nuevo"
   }
 }

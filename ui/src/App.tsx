@@ -15,9 +15,11 @@ import { BrowserRouter } from 'react-router';
 import { AppShell } from './AppShell';
 import { AuthGate } from './components/auth/AuthGate';
 import { RoleChip } from './components/RoleChip';
+import { ToastProvider } from './components/ui/Toast';
 import { AppContext, type AppContextValue } from './contexts/AppContext';
 import { LicenseProvider } from './contexts/LicenseContext';
 import { RoleProvider } from './contexts/RoleContext';
+import { useActionToasts } from './hooks/useActionToasts';
 import { useBuildVersion } from './hooks/useBuildVersion';
 import { useTestExecution } from './hooks/useTestExecution';
 import { useTheme } from './hooks/useTheme';
@@ -96,6 +98,7 @@ function AppContent(): ReactElement {
 
   // Test/interface/stats orchestration (queries, connection, start/stop).
   const exec = useTestExecution();
+  useActionToasts(exec.testStartError, exec.stopOutcome);
 
   // Logout: the store calls the server, clears the auth flag, and
   // cancel-then-clears the React Query cache (connected follows isAuthenticated).
@@ -218,7 +221,9 @@ function App(): ReactElement {
   return (
     <RoleProvider>
       <LicenseProvider>
-        <AppContent />
+        <ToastProvider>
+          <AppContent />
+        </ToastProvider>
       </LicenseProvider>
     </RoleProvider>
   );
