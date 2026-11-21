@@ -17,6 +17,7 @@ import { useTranslation } from 'react-i18next';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { LoginSchema, MfaVerifySchema } from '../../schemas/auth';
 import { useAuthStore } from '../../stores/auth-store';
+import { ProductMark } from '../../ui/ProductMark';
 import { RecoveryForm } from '../recovery/RecoveryForm';
 import { SetupWizard } from '../setup/SetupWizard';
 import { Button } from '../ui/Button';
@@ -148,6 +149,13 @@ export function AuthGate(): ReactElement {
             aria-labelledby="login-dialog-title"
             className="w-full max-w-md rounded-3xl border border-surface-border bg-surface-raised pad-lg shadow-2xl"
           >
+            <div className="mb-6 flex flex-col items-center text-center">
+              <ProductMark className="h-12 w-12 rounded-2xl text-base" />
+              <h1 className="mt-3 font-display heading-2 text-text-primary">
+                {t('common:app.title')}
+              </h1>
+              <p className="text-sm text-text-muted">{t('common:app.tagline')}</p>
+            </div>
             <h2
               id="login-dialog-title"
               data-testid="login-title"
