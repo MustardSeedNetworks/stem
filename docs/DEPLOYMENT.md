@@ -496,6 +496,38 @@ server {
 | `/health/ready` | Readiness probe | 200 OK |
 | `/api/v1/health` | Detailed health | JSON status |
 
+### Operations commands
+
+| Command | What it does |
+| ------- | ------------ |
+| `stem status [--json]` | Reports whether the daemon is running and ready, from `/__version` and `/health/ready` |
+| `stem logs [-f] [-n N]` | Shows the end of the service log: the systemd journal on Linux, `<data directory>/logs/stem.log` on macOS; `--file` names any other log |
+| `stem support-bundle [-o FILE]` | Writes a redacted diagnostics archive for support; read it before sending |
+| `stem backup [-o FILE]` | Archives the daemon's state: administrator credential, reflector and update settings, TLS pair, activation state, published descriptor |
+| `stem restore ARCHIVE` | Replaces the state from a backup; refused while the daemon runs, and the previous state is kept beside the data directory |
+| `stem version [--json]` | Prints the build; `--json` is the document the daemon serves at `/__version` |
+
+`stem status` finds the daemon through the descriptor in its data directory
+(`STEM_DATA_DIR`, else the packaged location) and trusts the certificate that
+descriptor names. For a daemon on another host, use `--api URL --cacert FILE`.
+
+Exit status: `0` success, `1` failure. `stem status` reads them as niac does:
+`0` running and ready, `1` not running (nothing listening, or up but not
+ready), `2` the check could not be made, so a script can tell a stopped
+daemon from a check that failed:
+
+```bash
+stem status > /dev/null; case $? in
+  0) echo healthy ;;
+  1) echo stopped ;;
+  *) echo "could not check" ;;
+esac
+```
+
+A backup holds credentials and the TLS private key. It is written readable by
+its owner alone and is never overwritten; keep it as you would the data
+directory itself.
+
 ### Metrics
 
 Prometheus metrics available at `/metrics` (when enabled):

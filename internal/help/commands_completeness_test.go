@@ -31,7 +31,7 @@ func canonicalVerbs() []string {
 	return []string{
 		"reflect", "test", "web", "license", "list-tests",
 		"help", "tutorial", "glossary", "version", "install-ca",
-		"update",
+		"update", "status", "logs", "support-bundle", "backup", "restore",
 	}
 }
 

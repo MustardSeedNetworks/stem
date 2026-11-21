@@ -10,8 +10,8 @@ import (
 	"syscall"
 )
 
-// shareWithDataDir gives path the owner of the data directory.
-func shareWithDataDir(path, dataDir string) error {
+// ShareWithDataDir gives path the owner of the data directory.
+func ShareWithDataDir(path, dataDir string) error {
 	info, err := os.Lstat(dataDir)
 	if err != nil {
 		return err
