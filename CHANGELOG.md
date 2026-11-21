@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.32.55](https://github.com/MustardSeedNetworks/stem/compare/v0.32.54...v0.32.55) (2026-11-21)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @tanstack/react-query to v5.107.1 ([#2034](https://github.com/MustardSeedNetworks/stem/issues/2034)) ([24cfba7](https://github.com/MustardSeedNetworks/stem/commit/24cfba7c21c8880a7b6bae2a8ad97eed485a39d0))
+* **deps:** update dependency i18next-browser-languagedetector to v8.3.0 ([#2030](https://github.com/MustardSeedNetworks/stem/issues/2030)) ([efa99bf](https://github.com/MustardSeedNetworks/stem/commit/efa99bf1afaf0ea4de86973ef2cc74499303666d))
+* **deps:** update dependency immer to v11.2.10 ([#2061](https://github.com/MustardSeedNetworks/stem/issues/2061)) ([af54baf](https://github.com/MustardSeedNetworks/stem/commit/af54baf87139e223f885f9a0ec87fa3f7cfbc65a))
+* **deps:** update dependency lucide-react to v1.72.0 ([#2032](https://github.com/MustardSeedNetworks/stem/issues/2032)) ([b948338](https://github.com/MustardSeedNetworks/stem/commit/b948338240fcaa739f2e0a841248d88619695b41))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#2027](https://github.com/MustardSeedNetworks/stem/issues/2027)) ([fdeeac9](https://github.com/MustardSeedNetworks/stem/commit/fdeeac98a6b1d5f6c9c90d885d8392e2a0d91806))
+* **deps:** update dependency @babel/core to v8.1.2 ([#2064](https://github.com/MustardSeedNetworks/stem/issues/2064)) ([5e4a834](https://github.com/MustardSeedNetworks/stem/commit/5e4a834e0bea4a4df382bb1c95cd02d505267235))
+
 ## [0.32.54](https://github.com/MustardSeedNetworks/stem/compare/v0.32.53...v0.32.54) (2026-11-21)
 
 
