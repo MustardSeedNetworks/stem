@@ -282,7 +282,7 @@ func loggingConfig() ConfigSection {
 				Type:       "string (file path)",
 				Default:    "",
 				EnvVar:     "STEM_LOG_FILE",
-				TechDesc:   "Path to log file. Empty string logs to stdout (captured by systemd/journald). File rotation is not built-in.",
+				TechDesc:   "Path to the daemon's log file, read by `stem web` only. The directory is created owner-only and the file rotates at 100 MB (5 backups, 30 days, compressed). Empty logs to stdout alone (captured by systemd/journald). The macOS launchd service sets it to <data directory>/logs/stem.log.",
 				LaymanDesc: "Where to save logs. Leave empty to use system logging (journalctl).",
 				Example:    "file: \"/var/log/stem/stem.log\"",
 			},

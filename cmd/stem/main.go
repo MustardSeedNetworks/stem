@@ -103,15 +103,16 @@ func main() {
 	if logFormat == "" {
 		logFormat = "text" // Use text for CLI, json for production.
 	}
+	defaults := logging.DefaultConfig()
 	err := logging.Init(&logging.Config{
 		Level:      logLevel,
 		Format:     logFormat,
 		AddSource:  false,
-		File:       "",
-		MaxSize:    0,
-		MaxBackups: 0,
-		MaxAge:     0,
-		Compress:   false,
+		File:       logFile(os.Args[1:]),
+		MaxSize:    defaults.MaxSize,
+		MaxBackups: defaults.MaxBackups,
+		MaxAge:     defaults.MaxAge,
+		Compress:   defaults.Compress,
 		Component:  "stem",
 	})
 	if err != nil {
@@ -129,6 +130,18 @@ func main() {
 		printUsage(os.Stdout)
 		os.Exit(exitError)
 	}
+}
+
+// logFile is the file the daemon logs to, from STEM_LOG_FILE. Only `stem web`
+// is the daemon: any other verb run from a shell that happens to export the
+// variable would otherwise write into the service's log. Unset means stdout
+// alone, which systemd sends to the journal; the launchd plist sets it, so the
+// macOS log is written, rotated and capped by stem itself.
+func logFile(args []string) string {
+	if len(args) == 0 || args[0] != "web" {
+		return ""
+	}
+	return os.Getenv("STEM_LOG_FILE")
 }
 
 // dispatchSubcommand routes the CLI verb to its handler. Returns false

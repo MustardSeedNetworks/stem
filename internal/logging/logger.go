@@ -22,9 +22,11 @@ package logging
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"log/slog"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -51,6 +53,8 @@ const (
 	defaultMaxSizeMB  = 100 // Default max MB per log file before rotation.
 	defaultMaxBackups = 5   // Default number of old files to keep.
 	defaultMaxAgeDays = 30  // Default days to keep old files.
+
+	logDirMode os.FileMode = 0o700
 )
 
 // Log level + format string constants. Match slog's standard naming and
@@ -208,6 +212,11 @@ func Init(cfg *Config) error {
 	// - Deletes files older than MaxAge days
 	// - Compresses rotated files if Compress is true
 	if cfg.File != "" {
+		// lumberjack creates a missing directory world-readable; the log holds
+		// addresses and request detail, so the directory is made first, private.
+		if err := os.MkdirAll(filepath.Dir(cfg.File), logDirMode); err != nil {
+			return fmt.Errorf("create log directory: %w", err)
+		}
 		fileWriter := &lumberjack.Logger{
 			Filename:   cfg.File,
 			MaxSize:    cfg.MaxSize,    // MB per log file before rotation.

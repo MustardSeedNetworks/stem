@@ -388,3 +388,23 @@ func TestGlossaryCmdSearchAndLookup(t *testing.T) {
 		t.Errorf("glossary on an unknown term printed %q", unknown)
 	}
 }
+
+// Only the daemon writes the log file: a shell that exports STEM_LOG_FILE must
+// not have `stem status` append to the service's log.
+func TestLogFileIsOnlyForTheDaemon(t *testing.T) {
+	t.Setenv("STEM_LOG_FILE", "/var/log/stem/stem.log")
+
+	for _, tc := range []struct {
+		args []string
+		want string
+	}{
+		{[]string{"web", "-p", "8444"}, "/var/log/stem/stem.log"},
+		{[]string{"status"}, ""},
+		{[]string{"logs", "-f"}, ""},
+		{nil, ""},
+	} {
+		if got := logFile(tc.args); got != tc.want {
+			t.Errorf("logFile(%v) = %q, want %q", tc.args, got, tc.want)
+		}
+	}
+}

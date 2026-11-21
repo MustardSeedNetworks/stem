@@ -350,7 +350,8 @@ sudo launchctl bootout system/com.stem        # stop and unload
 sudo launchctl bootstrap system /Library/LaunchDaemons/com.stem.plist  # load again after bootout
 ```
 
-Logs are in `/usr/local/stem/logs/stem.log` and `stem.error.log`.
+Logs are in `/usr/local/stem/logs/stem.log`, which stem writes and rotates itself
+(the plist sets `STEM_LOG_FILE`), and `stem.error.log` (stderr, crash traces).
 
 ### Updating
 

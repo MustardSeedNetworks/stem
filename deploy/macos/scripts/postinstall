@@ -22,6 +22,7 @@ log() {
 log "Starting post-install for The Stem..."
 
 mkdir -p "$INSTALL_DIR/logs"
+chmod 700 "$INSTALL_DIR/logs"
 
 # A config left by an earlier install is the operator's.
 if [[ ! -e "$INSTALL_DIR/stem.yaml" ]]; then
