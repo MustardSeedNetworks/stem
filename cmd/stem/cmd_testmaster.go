@@ -275,13 +275,13 @@ func reportNoDaemon(err error) error {
 
 // daemonStartHint names the command that starts the daemon under the service
 // definition shipped for goos: the systemd unit on Linux, the launchd plist on
-// macOS. Windows ships no service, so the daemon runs in the foreground there.
+// macOS, the Windows service on Windows.
 func daemonStartHint(goos string) string {
 	switch goos {
 	case "darwin":
 		return "'sudo launchctl kickstart system/com.stem' (or 'stem web')"
 	case "windows":
-		return "'stem web'"
+		return "'stem service start' (or 'stem web')"
 	default:
 		return "'sudo systemctl start stem' (or 'stem web')"
 	}

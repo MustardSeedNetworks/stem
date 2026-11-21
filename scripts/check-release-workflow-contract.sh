@@ -239,6 +239,19 @@ for setting in 'draft: true' 'use_existing_draft: true'; do
     exit 1
   fi
 done
+# The Windows zip is the only Windows artifact, and it is the installer's only
+# delivery: without install.ps1 in it there is no way to register the service.
+if ! awk '
+  /^  - id: windows-archive$/ { in_archive = 1; next }
+  in_archive && /^  - id:/ { exit }
+  in_archive && /^[a-z]/ { exit }
+  in_archive && /^      - src: deploy\/windows\/install\.ps1$/ { src = 1; next }
+  in_archive && src && /^        dst: install\.ps1$/ { dst = 1 }
+  END { exit !(src && dst) }
+' "$goreleaser_config"; then
+  echo "release workflow contract: the windows-archive must ship deploy/windows/install.ps1 as install.ps1 ($goreleaser_config)" >&2
+  exit 1
+fi
 require "gh release edit \"\$TARGET_TAG\" --draft=false"
 if [ "$(grep -E '^      - name:' "$workflow" | tail -n 1)" != "      - name: Publish the completed release" ]; then
   echo "release workflow contract: publishing the draft must be the workflow's last step" >&2

@@ -321,20 +321,9 @@ func NewServer(listen ListenAddr) (*Server, error) {
 	s.authLimiter = ratelimit.NewAuthRateLimiter(trustedProxies)
 	s.auditor = logging.NewAuditor(trustedProxies)
 	s.apiLimiter = ratelimit.NewAPIRateLimiter(trustedProxies)
-	s.listenConfig = httpserver.Config{
-		Addr:     net.JoinHostPort(listen.Host, strconv.Itoa(listen.Port)),
-		Explicit: listen.Explicit,
-		CertFile: os.Getenv("STEM_TLS_CERT"),
-		KeyFile:  os.Getenv("STEM_TLS_KEY"),
-		CertDir:  os.Getenv("STEM_TLS_CERTS_DIR"),
-		Cert: httpserver.CertOptions{
-			CommonName: "The Stem Self-Signed",
-			DNSNames:   []string{"localhost", "stem.local"},
-		},
-		Logger: logging.Get(),
+	if listenErr := s.initTransport(listen); listenErr != nil {
+		return nil, listenErr
 	}
-	s.cookieConfig = auth.DefaultCookieConfig()
-	s.corsAllowPrivate = corsAllowPrivateEnabled()
 	s.csrfManager = csrf.NewManager()
 	s.initPasskeys(listen.Port)
 	s.dataDir = getDataDir()
@@ -541,11 +530,19 @@ func apiVersionMiddleware(next http.Handler) http.Handler {
 
 // Run starts the web server with graceful shutdown support.
 // Listens for SIGTERM and SIGINT signals to initiate shutdown.
+func (s *Server) Run() error {
+	return s.RunContext(context.Background())
+}
+
+// RunContext is Run with a second way to stop: cancelling ctx shuts the server
+// down exactly as a signal does. The Windows service uses it, because the
+// service control manager stops a service by calling its handler, not by
+// sending a signal.
 //
 // The listener is foundation's: a busy canonical port (8444) falls back to
 // port+1..+9 instead of refusing to start (see #69), and a plaintext request
 // on it is answered with a 308 to https.
-func (s *Server) Run() error {
+func (s *Server) RunContext(parent context.Context) error {
 	// One daemon per data directory (#1336). The port is not the guard: the
 	// +1..+9 fallback below means a second `stem web` does not collide, it
 	// binds a neighbour and then shares this directory's state and
@@ -593,7 +590,7 @@ func (s *Server) Run() error {
 	)
 
 	// Set up signal handling for graceful shutdown.
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
+	ctx, stop := signal.NotifyContext(parent, syscall.SIGTERM, syscall.SIGINT)
 	defer stop()
 
 	// Background goroutines (#296). Started after ctx is created so they die

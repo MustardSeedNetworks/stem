@@ -160,6 +160,10 @@ archives:
     files:
       - src: deploy/config/stem.yaml
         dst: stem.yaml
+      # The Windows zip is the only Windows artifact: install.ps1 puts stem.exe
+      # in Program Files and registers the service (stem service install).
+      - src: deploy/windows/install.ps1
+        dst: install.ps1
 
 # Linux .deb + .rpm via nfpm (built into goreleaser). This block replaces
 # the prior .nfpm.yaml sidecar at the goreleaser cutover.

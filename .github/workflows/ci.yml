@@ -99,6 +99,13 @@ jobs:
           - '.clang-format'
         docs:
           - '**/*.md'
+        # What the Windows installer job proves: the script, the service code
+        # it drives, the archive that ships it, and the job itself.
+        windows_install:
+          - 'deploy/windows/**'
+          - 'cmd/stem/cmd_service*'
+          - '.goreleaser.yml'
+          - '.github/workflows/ci.yml'
         # Everything that implements a CI gate, not just the workflow that
         # calls it. scripts/ holds the gate scripts, and a PR that weakened
         # one used to stay green because CI Complete accepts skipped.
@@ -130,7 +137,7 @@ jobs:
     name: Build UI (shared artifact)
     runs-on: ubuntu-latest
     needs: changes
-    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true' || needs.changes.outputs.c == 'true' || needs.changes.outputs.ci_infra == 'true'
+    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true' || needs.changes.outputs.c == 'true' || needs.changes.outputs.ci_infra == 'true' || fromJSON(needs.changes.outputs.filters).windows_install == 'true'
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -197,6 +204,7 @@ jobs:
       windows-test-command: |
         go test ./internal/truststore/ -run 'ValidateCertFile' -v
         go test ./internal/authstate
+        go test ./cmd/stem -run 'TestWindowsService|TestServiceCmd' -v
       pre-command: |
         go mod download
         go mod verify
@@ -1399,6 +1407,303 @@ jobs:
         run: go build -trimpath -o /dev/null ./cmd/stem/
 
   # ============================================================================
+  # Windows installer (install.ps1 + service) on a real Windows runner
+  # ============================================================================
+  # install.ps1 and the service handler cannot run anywhere but Windows, and
+  # the lab Windows host is not always up, so this is where they are proven:
+  # build stem.exe the way make build does, lay it out like the release zip,
+  # run the installer elevated (hosted runners are Administrators), and drive
+  # the service through its whole life. Scoped by the windows_install filter;
+  # the merge queue runs it because changes forces every filter true there.
+  # windows_install is not one of the shared workflow's named outputs, so it is
+  # read from the `filters` JSON. Skipped is accepted by ci-complete, a failure is not.
+  #
+  # The negative cases are the point as much as the happy path: a binary
+  # outside Program Files must not become a SYSTEM service, and a data
+  # directory pre-created with user write access must come out private.
+  windows-install:
+    name: Windows installer
+    runs-on: windows-latest
+    timeout-minutes: 20
+    needs: [changes, build-ui]
+    if: |
+      always() &&
+      fromJSON(needs.changes.outputs.filters).windows_install == 'true' &&
+      needs.build-ui.result == 'success'
+    env:
+      EXPECTED_VERSION: 0.0.0-ci.${{ github.run_number }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: ./.github/actions/setup-go
+
+      - name: Download frontend build
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: backend-ui-dist
+          path: internal/api/ui/
+
+      # The Windows-only Go tests (service handler, path and directory checks)
+      # have no other job that runs them on a pull request.
+      - name: Run the Windows service tests
+        shell: pwsh
+        run: |
+          go test ./cmd/stem -run 'TestWindowsService|TestServiceCmd' -v
+          if ($LASTEXITCODE -ne 0) { throw "windows service tests failed" }
+
+      # Same ldflags contract as the Makefile (Version, Commit, BuildTime,
+      # UIBuildHash) and the same UI hash: md5 of the sorted "<md5>  <path>"
+      # lines for every embedded file.
+      - name: Build stem.exe
+        shell: pwsh
+        env:
+          CGO_ENABLED: '0'
+          VERSION_PKG: github.com/MustardSeedNetworks/stem/internal/version
+        run: |
+          $lines = Get-ChildItem internal/api/ui -Recurse -File | ForEach-Object {
+            $rel = (Resolve-Path -Relative $_.FullName).TrimStart('.', '\').Replace('\', '/')
+            '{0}  internal/api/{1}' -f (Get-FileHash $_.FullName -Algorithm MD5).Hash.ToLower(), $rel
+          } | Sort-Object { $_ } -CaseSensitive
+          $bytes = [Text.Encoding]::UTF8.GetBytes((($lines -join "`n") + "`n"))
+          $uiHash = [BitConverter]::ToString([Security.Cryptography.MD5]::HashData($bytes)).Replace('-', '').ToLower()
+          $commit = (git rev-parse --short HEAD)
+          $built = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
+          $ldflags = "-s -w -X $env:VERSION_PKG.Version=$env:EXPECTED_VERSION -X $env:VERSION_PKG.Commit=$commit -X $env:VERSION_PKG.BuildTime=$built -X $env:VERSION_PKG.UIBuildHash=$uiHash"
+          go build -trimpath -buildvcs=false -ldflags $ldflags -o stem.exe ./cmd/stem
+          if ($LASTEXITCODE -ne 0) { throw "go build failed" }
+
+      # The release zip's contents, as .goreleaser.yml lists them, unpacked
+      # the way an operator would.
+      - name: Lay out the release zip
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path stage | Out-Null
+          Copy-Item stem.exe stage/stem.exe
+          Copy-Item deploy/config/stem.yaml stage/stem.yaml
+          Copy-Item deploy/windows/install.ps1 stage/install.ps1
+          Compress-Archive -Path stage/* -DestinationPath stem-windows.zip
+          Expand-Archive stem-windows.zip -DestinationPath release
+
+      - name: Refuse to register a binary outside Program Files
+        shell: pwsh
+        run: |
+          & .\release\stem.exe service install
+          if ($LASTEXITCODE -eq 0) { throw "stem service install accepted a binary outside Program Files" }
+          if ($null -ne (Get-Service -Name Stem -ErrorAction SilentlyContinue)) { throw "the refused install still registered the service" }
+          # The step's exit code is the last native command's; that one was meant to fail.
+          $global:LASTEXITCODE = 0
+
+      # A local account that is not an Administrator, to own things it should
+      # not. The password is generated here and never leaves the job.
+      - name: Create a non-admin test account
+        shell: pwsh
+        run: |
+          $pw = ConvertTo-SecureString ('Aa1!' + [guid]::NewGuid().ToString('N')) -AsPlainText -Force
+          New-LocalUser -Name ciuser -Password $pw | Out-Null
+          Add-LocalGroupMember -SID S-1-5-32-545 -Member ciuser
+
+      # install.ps1 fails closed. Each hostile directory below must be refused
+      # with a non-zero exit, a message naming what was wrong, and nothing
+      # changed or copied.
+      - name: install.ps1 refuses a hostile data directory
+        shell: pwsh
+        working-directory: release
+        run: |
+          $dir = Join-Path $env:ProgramData 'stem'
+          function Invoke-Install {
+            $out = powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\install.ps1 *>&1 | Out-String
+            return [pscustomobject]@{ Code = $LASTEXITCODE; Out = $out }
+          }
+          function Reset-DataDir {
+            if (Test-Path $dir) {
+              cmd.exe /c rmdir "$dir\link" 2> $null
+              icacls.exe $dir /setowner '*S-1-5-32-544' /T /C /L | Out-Null
+              icacls.exe $dir /grant '*S-1-5-32-544:(OI)(CI)F' /T /C /L | Out-Null
+              Remove-Item -Recurse -Force $dir
+            }
+          }
+          function Assert-Refused($name, $wantText) {
+            $r = Invoke-Install
+            if ($r.Code -eq 0) { throw "install.ps1 accepted: $name" }
+            if ($r.Out -notmatch $wantText) { throw "install.ps1 refused $name without naming it ($wantText):`n$($r.Out)" }
+            if (Test-Path 'C:\Program Files\Stem\stem.exe') { throw "the refused install ($name) still copied the binary" }
+            if ($null -ne (Get-Service -Name Stem -ErrorAction SilentlyContinue)) { throw "the refused install ($name) still registered the service" }
+          }
+          function New-AdminOnlyDir {
+            New-Item -ItemType Directory -Path $dir | Out-Null
+            icacls.exe $dir /inheritance:r /grant '*S-1-5-18:(OI)(CI)F' '*S-1-5-32-544:(OI)(CI)F' | Out-Null
+          }
+
+          # 1. A directory a normal user owns.
+          New-Item -ItemType Directory -Path $dir | Out-Null
+          icacls.exe $dir /setowner ciuser | Out-Null
+          if ($LASTEXITCODE -ne 0) { throw "could not make ciuser the owner" }
+          Assert-Refused 'a user-owned directory' 'ciuser'
+          if ((Get-Acl $dir).Owner -notlike '*ciuser') { throw "the refused install changed the owner" }
+          Reset-DataDir
+
+          # 2. A junction inside an otherwise private directory.
+          $target = Join-Path $env:RUNNER_TEMP 'junction-target'
+          New-Item -ItemType Directory -Path $target | Out-Null
+          Set-Content -Path (Join-Path $target 'victim.txt') -Value victim
+          $before = (Get-Acl (Join-Path $target 'victim.txt')).Sddl
+          New-AdminOnlyDir
+          New-Item -ItemType Junction -Path (Join-Path $dir 'link') -Target $target | Out-Null
+          Assert-Refused 'a junction inside the data directory' 'link'
+          if ((Get-Acl (Join-Path $target 'victim.txt')).Sddl -ne $before) { throw "the install acted on the junction's target" }
+          Reset-DataDir
+
+          # 3. An administrator-owned directory whose DACL lets Users write.
+          New-Item -ItemType Directory -Path $dir | Out-Null
+          icacls.exe $dir /grant '*S-1-5-32-545:(OI)(CI)M' | Out-Null
+          Assert-Refused 'a directory Users can write' 'grants write access'
+          Reset-DataDir
+
+          # 4. A private directory holding a file a normal user owns: refused,
+          # not re-owned.
+          New-AdminOnlyDir
+          $file = Join-Path $dir 'stem.yaml'
+          Set-Content -Path $file -Value planted
+          icacls.exe $file /setowner ciuser | Out-Null
+          if ($LASTEXITCODE -ne 0) { throw "could not make ciuser the owner of stem.yaml" }
+          Assert-Refused 'a user-owned stem.yaml' 'stem\.yaml'
+          if ((Get-Acl $file).Owner -notlike '*ciuser') { throw "the refused install re-owned the planted file" }
+          Reset-DataDir
+          $global:LASTEXITCODE = 0
+
+      # A directory an administrator widened for reading only: not hostile, so
+      # install.ps1 replaces its DACL wholesale and the extra entry is gone.
+      - name: Pre-create a directory with an extra read entry
+        shell: pwsh
+        run: |
+          $dir = Join-Path $env:ProgramData 'stem'
+          New-Item -ItemType Directory -Path $dir | Out-Null
+          icacls.exe $dir /inheritance:r /grant '*S-1-5-18:(OI)(CI)F' '*S-1-5-32-544:(OI)(CI)F' '*S-1-5-32-545:(OI)(CI)R' | Out-Null
+
+      - name: Run install.ps1 (Windows PowerShell 5.1, elevated)
+        shell: pwsh
+        working-directory: release
+        run: |
+          $admin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+          if (-not $admin) { throw "the runner is not elevated" }
+          powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\install.ps1
+          if ($LASTEXITCODE -ne 0) { throw "install.ps1 exited $LASTEXITCODE" }
+
+      - name: Assert the service, the version and the data directory ACL
+        shell: pwsh
+        run: |
+          function Assert-Running {
+            $svc = Get-Service -Name Stem
+            if ($svc.Status -ne 'Running') { throw "service is $($svc.Status), want Running" }
+            $deadline = (Get-Date).AddSeconds(30)
+            do {
+              try {
+                $build = Invoke-RestMethod -Uri https://127.0.0.1:8444/__version -SkipCertificateCheck
+                break
+              } catch {
+                if ((Get-Date) -gt $deadline) { throw "https://127.0.0.1:8444/__version never answered: $_" }
+                Start-Sleep -Seconds 1
+              }
+            } while ($true)
+            if ($build.version.TrimStart('v') -ne $env:EXPECTED_VERSION) { throw "version is $($build.version), want $env:EXPECTED_VERSION" }
+            if ([string]::IsNullOrEmpty($build.uiBuildHash)) { throw "uiBuildHash is empty: the UI is not embedded" }
+          }
+          Assert-Running
+
+          $dir = Join-Path $env:ProgramData 'stem'
+          $trusted = @('S-1-5-18', 'S-1-5-32-544')
+          function Get-Sids($acl) {
+            $acl.Access | ForEach-Object { $_.IdentityReference.Translate([Security.Principal.SecurityIdentifier]).Value } | Sort-Object -Unique
+          }
+          $top = Get-Acl $dir
+          if ($top.GetOwner([Security.Principal.SecurityIdentifier]).Value -ne 'S-1-5-32-544') { throw "$dir owner is $($top.Owner)" }
+          if (-not $top.AreAccessRulesProtected) { throw "$dir inherits permissions" }
+          if (@($top.Access).Count -ne 2) { throw "$dir has $(@($top.Access).Count) ACEs, want exactly 2" }
+          if (Compare-Object (Get-Sids $top) $trusted) { throw "$dir ACEs are for: $((Get-Sids $top) -join ', '), want exactly SYSTEM and Administrators" }
+
+          foreach ($item in Get-ChildItem $dir -Force -Recurse) {
+            $acl = Get-Acl $item.FullName
+            if ($acl.GetOwner([Security.Principal.SecurityIdentifier]).Value -notin $trusted) { throw "$($item.FullName) owner is $($acl.Owner)" }
+            # Inside, a file may be narrower (the daemon's private key is SYSTEM only), never wider.
+            $extra = Get-Sids $acl | Where-Object { $trusted -notcontains $_ }
+            if ($extra) { throw "$($item.FullName) grants access to: $($extra -join ', ')" }
+          }
+          if ($null -eq (Get-NetFirewallRule -DisplayName 'Stem Web UI' -ErrorAction SilentlyContinue)) { throw "firewall rule is missing" }
+
+          & 'C:\Program Files\Stem\stem.exe' service status
+          if ($LASTEXITCODE -ne 0) { throw "stem service status exited $LASTEXITCODE" }
+
+      # install.ps1 again over the running install: config and data stay.
+      - name: Reinstall over the existing install
+        shell: pwsh
+        working-directory: release
+        run: |
+          Set-Content -Path (Join-Path $env:ProgramData 'stem\keep.txt') -Value keep
+          powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\install.ps1
+          if ($LASTEXITCODE -ne 0) { throw "reinstall exited $LASTEXITCODE" }
+          if ((Get-Content (Join-Path $env:ProgramData 'stem\keep.txt')) -ne 'keep') { throw "reinstall touched the data directory" }
+          if ((Get-Service -Name Stem).Status -ne 'Running') { throw "service is not running after reinstall" }
+
+      # The service fails closed too: it never creates or repairs the data
+      # directory, it refuses to start on one it should not trust.
+      - name: The service refuses a missing or tampered data directory
+        shell: pwsh
+        run: |
+          $stem = 'C:\Program Files\Stem\stem.exe'
+          $dir = Join-Path $env:ProgramData 'stem'
+          function Stop-Stem {
+            & $stem service stop *> $null
+            if ((Get-Service -Name Stem).Status -ne 'Stopped') { throw "service did not stop" }
+          }
+
+          Stop-Stem
+          Rename-Item $dir 'stem.off'
+          try {
+            & $stem service start *> $null
+            if ($LASTEXITCODE -eq 0) { throw "the service started with no data directory" }
+            if (Test-Path $dir) { throw "the service created the missing data directory" }
+          } finally {
+            Rename-Item (Join-Path $env:ProgramData 'stem.off') 'stem'
+          }
+          Stop-Stem
+
+          $creds = Join-Path $dir 'credentials.json'
+          Set-Content -Path $creds -Value '{}'
+          icacls.exe $creds /setowner ciuser | Out-Null
+          & $stem service start *> $null
+          if ($LASTEXITCODE -eq 0) { throw "the service started with a user-owned credentials.json" }
+          Stop-Stem
+          icacls.exe $creds /setowner '*S-1-5-32-544' | Out-Null
+          Remove-Item -Force $creds
+          $global:LASTEXITCODE = 0
+
+      - name: Stop, start and uninstall the service
+        shell: pwsh
+        run: |
+          $stem = 'C:\Program Files\Stem\stem.exe'
+          function Invoke-Stem {
+            & $stem @args
+            if ($LASTEXITCODE -ne 0) { throw "stem $args exited $LASTEXITCODE" }
+          }
+          Invoke-Stem service stop
+          if ((Get-Service -Name Stem).Status -ne 'Stopped') { throw "service did not stop" }
+          Invoke-Stem service start
+          if ((Get-Service -Name Stem).Status -ne 'Running') { throw "service did not start" }
+          Invoke-Stem service uninstall
+          if ($null -ne (Get-Service -Name Stem -ErrorAction SilentlyContinue)) { throw "service still registered after uninstall" }
+          if (-not (Test-Path (Join-Path $env:ProgramData 'stem\keep.txt'))) { throw "uninstall removed the data directory" }
+
+      - name: Daemon log on failure
+        if: failure()
+        shell: pwsh
+        run: |
+          Get-Service -Name Stem -ErrorAction SilentlyContinue | Format-List *
+          Get-Content (Join-Path $env:ProgramData 'stem\logs\stem.log') -Tail 100 -ErrorAction SilentlyContinue
+
+  # ============================================================================
   # E2E Browser Tests (Playwright) — fleet-shared ci-e2e.yml
   # ============================================================================
   # Sharded chromium and webkit, plus a separate @smoke job, inside the
@@ -1654,6 +1959,7 @@ jobs:
       - docs
       - build
       - darwin-compile-check
+      - windows-install
       - e2e
       - phone-width
       - codeql-alert-gate
@@ -1671,11 +1977,12 @@ jobs:
           echo "Upstream job results:"
           echo "$RESULTS" | jq '.'
           # The race detector and browser E2E run only in the merge queue (a PR
-          # opts in with the full-ci label). A skip is fine on a PR, but in the
-          # queue every path filter is true, so a skip there means a broken `if`
-          # and would let code land untested.
+          # opts in with the full-ci label); the Windows installer job runs on a
+          # PR that touches its paths. A skip is fine on a PR, but in the queue
+          # every path filter is true, so a skip there means a broken `if` and
+          # would let code land untested.
           if [ "$EVENT_NAME" = "merge_group" ]; then
-            for job in race e2e; do
+            for job in race e2e windows-install; do
               result=$(echo "$RESULTS" | jq -r --arg job "$job" '.[$job].result // "missing"')
               if [ "$result" != "success" ]; then
                 echo "::error::$job must succeed in the merge queue, got $result."

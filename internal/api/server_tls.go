@@ -3,11 +3,58 @@
 package api
 
 import (
+	"fmt"
+	"net"
+	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/MustardSeedNetworks/foundation/pkg/httpserver"
+
+	"github.com/MustardSeedNetworks/stem/internal/auth"
+	"github.com/MustardSeedNetworks/stem/internal/logging"
 )
+
+// resolveCertDir is the certificate directory as an absolute path:
+// STEM_TLS_CERTS_DIR, else certs under the working directory. foundation's
+// listener checks the directory with securedir, which never resolves a
+// relative path and so refuses one.
+func resolveCertDir() (string, error) {
+	dir := os.Getenv("STEM_TLS_CERTS_DIR")
+	if dir == "" {
+		dir = "certs"
+	}
+	abs, err := filepath.Abs(dir)
+	if err != nil {
+		return "", fmt.Errorf("resolve the certificate directory %q: %w", dir, err)
+	}
+	return abs, nil
+}
+
+// initTransport sets where the daemon's one HTTPS listener binds, which
+// certificate it serves, and how its cookies and cross-origin policy behave.
+func (s *Server) initTransport(listen ListenAddr) error {
+	certDir, err := resolveCertDir()
+	if err != nil {
+		return err
+	}
+	s.cookieConfig = auth.DefaultCookieConfig()
+	s.corsAllowPrivate = corsAllowPrivateEnabled()
+	s.listenConfig = httpserver.Config{
+		Addr:     net.JoinHostPort(listen.Host, strconv.Itoa(listen.Port)),
+		Explicit: listen.Explicit,
+		CertFile: os.Getenv("STEM_TLS_CERT"),
+		KeyFile:  os.Getenv("STEM_TLS_KEY"),
+		CertDir:  certDir,
+		Cert: httpserver.CertOptions{
+			CommonName: "The Stem Self-Signed",
+			DNSNames:   []string{"localhost", "stem.local"},
+		},
+		Logger: logging.Get(),
+	}
+	return nil
+}
 
 // activeCertPath returns the certificate file the listener serves: the
 // operator's STEM_TLS_CERT when both it and STEM_TLS_KEY are set, otherwise

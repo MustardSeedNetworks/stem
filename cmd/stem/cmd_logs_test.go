@@ -37,7 +37,13 @@ func TestResolveLogSource(t *testing.T) {
 			"",
 		},
 		{"linux is the journal", "linux", "", "", ""},
-		{"windows has no log to find", "windows", "", "", "stem writes no log file on windows"},
+		{
+			"windows is the file the service writes under the data directory",
+			"windows",
+			"",
+			filepath.Join("/data", "logs", "stem.log"),
+			"",
+		},
 		{"other systems have none either", "freebsd", "", "", "stem writes no log file on freebsd"},
 	}
 	for _, tc := range tests {

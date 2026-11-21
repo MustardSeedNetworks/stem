@@ -27,14 +27,14 @@ cd "$run_dir"
 # API (100/min) and authentication (5/min) defaults run dry mid-run. Neither
 # override can go below its default, so both limiters remain exercised.
 #
-# HOME is the run directory because activation state is the one thing stem
-# keeps under the home directory (~/.config/stem/.license). Without this a
-# local run reads — and a started trial writes — the developer's real license
-# file, so the license specs saw a different daemon locally than in CI, where
-# the runner's home is always empty.
+# STEM_DATA_DIR is the run directory so activation state (.license) lives in it
+# rather than the packaged data directory. Without this a local run reads, and
+# a started trial writes, the machine's real license file, so the license specs
+# would see a different daemon locally than in CI, where it is always empty.
 STEM_AUTH_USERNAME=admin \
 STEM_AUTH_PASSWORD=admin \
 STEM_API_RATE_LIMIT=5000 \
 STEM_AUTH_RATE_LIMIT=200 \
-HOME="$run_dir" \
+STEM_DATA_DIR="$PWD" \
+STEM_TLS_CERTS_DIR="$PWD/certs" \
   exec "$repo_dir/bin/stem" web -p "$port"

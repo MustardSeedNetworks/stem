@@ -16,6 +16,8 @@ import (
 	"time"
 
 	fnd "github.com/MustardSeedNetworks/foundation/pkg/license"
+
+	"github.com/MustardSeedNetworks/stem/internal/daemonconn"
 )
 
 // stateKeyFor derives the key foundation encrypts activation state with:
@@ -266,14 +268,18 @@ func TestLoadFromDirReportsAUsableLicence(t *testing.T) {
 	}
 }
 
-// TestLoadUsesTheHomeConfigDirectory asserts the default path Load reads and
+// TestLoadUsesTheDataDirectory asserts the default path Load reads and
 // DefaultLicensePath names are the same file, so the message an operator is
-// told to fix points at the file the daemon actually opened.
-func TestLoadUsesTheHomeConfigDirectory(t *testing.T) {
-	home := t.TempDir()
-	t.Setenv("HOME", home)
+// told to fix points at the file the daemon actually opened, and that file is
+// in the data directory the daemon and the CLI share rather than under the
+// home of whoever happens to run the process.
+func TestLoadUsesTheDataDirectory(t *testing.T) {
+	dataDir := t.TempDir()
+	t.Setenv("STEM_DATA_DIR", dataDir)
+	t.Setenv("HOME", t.TempDir())
+	t.Setenv("USERPROFILE", t.TempDir())
 
-	want := filepath.Join(home, ".config", configSubdir, licenseFileName)
+	want := filepath.Join(dataDir, licenseFileName)
 	if got := DefaultLicensePath(); got != want {
 		t.Fatalf("DefaultLicensePath() = %q, want %q", got, want)
 	}
@@ -283,12 +289,22 @@ func TestLoadUsesTheHomeConfigDirectory(t *testing.T) {
 		t.Fatalf("Load: %v", err)
 	}
 	if status := mgr.LoadStatus(); status != fnd.StatusMissing {
-		t.Errorf("status = %v on an empty home, want %v", status, fnd.StatusMissing)
+		t.Errorf("status = %v on an empty data directory, want %v", status, fnd.StatusMissing)
 	}
 	if result := mgr.StartTrial(); !result.Success {
 		t.Fatalf("StartTrial: %s", result.Message)
 	}
 	if _, statErr := os.Stat(want); statErr != nil {
-		t.Errorf("Load did not read %s: %v", want, statErr)
+		t.Errorf("Load did not use %s: %v", want, statErr)
+	}
+}
+
+// TestLoadFollowsThePackagedDataDirectory pins the unset-override case to
+// daemonconn's answer, the one place the packaged location is decided, so the
+// license cannot drift from the descriptor the CLI looks for.
+func TestLoadFollowsThePackagedDataDirectory(t *testing.T) {
+	t.Setenv("STEM_DATA_DIR", "")
+	if got, want := DefaultLicensePath(), filepath.Join(daemonconn.ServiceDataDir(), licenseFileName); got != want {
+		t.Fatalf("DefaultLicensePath() = %q, want %q", got, want)
 	}
 }
