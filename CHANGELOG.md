@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.32.56](https://github.com/MustardSeedNetworks/stem/compare/v0.32.55...v0.32.56) (2026-11-21)
+
+
+### Bug Fixes
+
+* **deps:** update dependency i18next to v26.7.2 ([#2029](https://github.com/MustardSeedNetworks/stem/issues/2029)) ([c0b9dc7](https://github.com/MustardSeedNetworks/stem/commit/c0b9dc73c6c837ee6c9ec7e39c329b461631b0a5))
+* **deps:** update dependency react-hook-form to v7.92.0 ([#2066](https://github.com/MustardSeedNetworks/stem/issues/2066)) ([69d23c3](https://github.com/MustardSeedNetworks/stem/commit/69d23c37f0f82ac1666fccc6456b43764d98bec5))
+
+
+### Miscellaneous
+
+* **deps:** update dependency @vitejs/plugin-react to v6.3.0 ([#2065](https://github.com/MustardSeedNetworks/stem/issues/2065)) ([bc55ef3](https://github.com/MustardSeedNetworks/stem/commit/bc55ef35a53a222058acc340554f81fffdf718bc))
+
 ## [0.32.55](https://github.com/MustardSeedNetworks/stem/compare/v0.32.54...v0.32.55) (2026-11-21)
 
 
