@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.32.57](https://github.com/MustardSeedNetworks/stem/compare/v0.32.56...v0.32.57) (2026-11-21)
+
+
+### Bug Fixes
+
+* **deps:** update dependency react-i18next to v17.1.13 ([#2035](https://github.com/MustardSeedNetworks/stem/issues/2035)) ([22f2193](https://github.com/MustardSeedNetworks/stem/commit/22f2193347e93a319d2f6332fda7d681c697642d))
+* **deps:** update dependency zustand to v5.1.0 ([#2067](https://github.com/MustardSeedNetworks/stem/issues/2067)) ([5b29288](https://github.com/MustardSeedNetworks/stem/commit/5b29288a04afefd6f6ecfb1a0e6a32d7bd3fe2a0))
+* **ui:** show product name on the login screen ([#2073](https://github.com/MustardSeedNetworks/stem/issues/2073)) ([525865f](https://github.com/MustardSeedNetworks/stem/commit/525865f3bf6032b2166eb4c5c531fdbf1f95a5a2))
+
 ## [0.32.56](https://github.com/MustardSeedNetworks/stem/compare/v0.32.55...v0.32.56) (2026-11-21)
 
 
