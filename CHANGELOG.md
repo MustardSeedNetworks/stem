@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.33.0](https://github.com/MustardSeedNetworks/stem/compare/v0.32.59...v0.33.0) (2026-11-21)
+
+
+### Features
+
+* **cli:** add status, logs, support-bundle, backup and restore ([#2090](https://github.com/MustardSeedNetworks/stem/issues/2090)) ([1cbce77](https://github.com/MustardSeedNetworks/stem/commit/1cbce77817a249a94381805ba701574fb35983d4)), closes [#2084](https://github.com/MustardSeedNetworks/stem/issues/2084)
+* **release:** ship a macos pkg from ci ([#2082](https://github.com/MustardSeedNetworks/stem/issues/2082)) ([41cdc07](https://github.com/MustardSeedNetworks/stem/commit/41cdc0723e163dbb2bda32abbc3aa6998af2ba29)), closes [#2081](https://github.com/MustardSeedNetworks/stem/issues/2081)
+
 ## [0.32.59](https://github.com/MustardSeedNetworks/stem/compare/v0.32.58...v0.32.59) (2026-11-21)
 
 
