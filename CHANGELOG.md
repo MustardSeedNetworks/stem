@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.34.1](https://github.com/MustardSeedNetworks/stem/compare/v0.34.0...v0.34.1) (2026-11-22)
+
+
+### Bug Fixes
+
+* pin the run instance id in the dataplane-panic log test ([#2103](https://github.com/MustardSeedNetworks/stem/issues/2103)) ([ab1ab27](https://github.com/MustardSeedNetworks/stem/commit/ab1ab2747fd36ab016db3c5bbdbf7ebc1618c1c8)), closes [#2102](https://github.com/MustardSeedNetworks/stem/issues/2102)
+
+
+### Continuous Integration
+
+* run race and browser e2e in the merge queue only ([#2100](https://github.com/MustardSeedNetworks/stem/issues/2100)) ([fc4e486](https://github.com/MustardSeedNetworks/stem/commit/fc4e486b6c2b294d9af45cbefd9e0f883a539d5c)), closes [#2099](https://github.com/MustardSeedNetworks/stem/issues/2099)
+
 ## [0.34.0](https://github.com/MustardSeedNetworks/stem/compare/v0.33.1...v0.34.0) (2026-11-22)
 
 
