@@ -124,6 +124,59 @@ assert_rejected "provenance-ignores-pkg" \
   "    needs: [goreleaser, macos-pkg]" \
   "    needs: [goreleaser]"
 
+assert_rejected \
+  "pkg-signing-does-not-fail-closed-on-push" \
+  "elif [ \"\${EVENT}\" = \"push\" ]; then" \
+  "elif [ \"\${EVENT}\" = \"never\" ]; then"
+assert_rejected \
+  "pkg-signing-ignores-p12-secret" \
+  "P12_BASE64: \${{ secrets.MACOS_SIGNING_P12_BASE64 }}
+          P12_PASSWORD: \${{ secrets.MACOS_SIGNING_P12_PASSWORD }}
+          NOTARY_KEY_BASE64: \${{ secrets.APPLE_NOTARY_KEY_P8_BASE64 }}" \
+  "P12_BASE64: \${{ secrets.MACOS_SIGNING_P12_BASE64_RENAMED }}
+          P12_PASSWORD: \${{ secrets.MACOS_SIGNING_P12_PASSWORD }}
+          NOTARY_KEY_BASE64: \${{ secrets.APPLE_NOTARY_KEY_P8_BASE64 }}"
+assert_rejected \
+  "pkg-notarize-step-gated-off-dispatch" \
+  $'      - name: Notarize and staple the .pkg\n        if: ${{ env.SIGN == \'true\' }}' \
+  $'      - name: Notarize and staple the .pkg\n        if: ${{ env.SIGN == \'true\' && github.event_name == \'push\' }}'
+assert_rejected \
+  "pkg-notarize-removed" \
+  "xcrun notarytool submit" \
+  "xcrun notarytool removed"
+assert_rejected \
+  "pkg-notarize-verdict-unchecked" \
+  '!= "Accepted"' \
+  '!= "Anything"'
+assert_rejected \
+  "pkg-staple-removed" \
+  "xcrun stapler staple \"dist/\${PKG}\"" \
+  'echo no staple'
+assert_rejected \
+  "pkg-staple-not-validated" \
+  "xcrun stapler validate \"dist/\${PKG}\"" \
+  'echo no validate'
+assert_rejected \
+  "pkg-gatekeeper-assessment-removed" \
+  'spctl --assess --type install --verbose=2' \
+  'echo no spctl'
+assert_rejected \
+  "pkg-installer-identity-dropped" \
+  'export STEM_INSTALLER_IDENTITY="Developer ID Installer"' \
+  'export STEM_INSTALLER_IDENTITY_UNUSED=1'
+assert_rejected \
+  "pkg-hardened-runtime-unchecked" \
+  'flags=0x10000(runtime)' \
+  'flags=0x0(none)'
+assert_rejected \
+  "pkg-keychain-not-removed-always" \
+  $'      - name: Remove the signing keychain\n        if: ${{ always() && env.SIGN == \'true\' }}' \
+  $'      - name: Remove the signing keychain\n        if: ${{ env.SIGN == \'true\' }}'
+assert_rejected \
+  "pkg-notarized-after-publish" \
+  "      - name: Capture provenance subjects including the .pkg" \
+  $'      - name: Notarize and staple the .pkg\n        run: true\n\n      - name: Capture provenance subjects including the .pkg'
+
 # --skip=validate returns to the publish path.
 assert_rejected "publish-skips-validation" \
   "        run: goreleaser release --clean" \
