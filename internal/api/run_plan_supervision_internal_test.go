@@ -38,6 +38,12 @@ func TestDataplanePanicFailsTheRunAndLeavesTheDaemonUp(t *testing.T) {
 	}
 
 	log := captureLog(t)
+	// The fault line is read through the logger's redactor, and its 13-19 digit
+	// rule takes a run ID whose random instance segment happens to be all
+	// decimal digits (1 in ~1,800 daemons) for a card number. The line then
+	// carries "stem-[REDACTED]-1" and the assertion below failed in CI run
+	// 44867584718. Pin a segment the redactor leaves alone.
+	s.runInstanceID = "a1b2c3d4e5f60718"
 	runID, beginErr := s.beginRunPlan(plan)
 	if beginErr != nil {
 		t.Fatalf("beginRunPlan: %v", beginErr)
