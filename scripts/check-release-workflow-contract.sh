@@ -157,7 +157,9 @@ require_step_condition "Import signing identities" "if: \${{ env.SIGN == 'true' 
 require_step_condition "Check the signed package contract" "if: \${{ env.SIGN == 'true' }}"
 require_step_condition "Notarize and staple the .pkg" "if: \${{ env.SIGN == 'true' }}"
 require_step_condition "Remove the signing keychain" "if: \${{ always() && env.SIGN == 'true' }}"
-require_step_condition "Resolve the signing mode" "elif [ \"\${EVENT}\" = \"push\" ]; then"
+require_step_condition "Resolve the signing mode" "elif [ \"\${EVENT}\" = \"push\" ] || [ \"\${SIGN_MACOS}\" = \"true\" ]; then"
+require_step_condition "Resolve the signing mode" "SIGN_MACOS: \${{ inputs.sign_macos }}"
+require "sign_macos:"
 require_step_condition "Resolve the signing mode" "exit 1"
 require_step_condition "Resolve the signing mode" "EVENT: \${{ github.event_name }}"
 for secret in MACOS_SIGNING_P12_BASE64 MACOS_SIGNING_P12_PASSWORD APPLE_NOTARY_KEY_P8_BASE64 APPLE_NOTARY_KEY_ID APPLE_NOTARY_ISSUER_ID; do

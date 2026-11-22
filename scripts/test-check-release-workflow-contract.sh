@@ -126,8 +126,8 @@ assert_rejected "provenance-ignores-pkg" \
 
 assert_rejected \
   "pkg-signing-does-not-fail-closed-on-push" \
-  "elif [ \"\${EVENT}\" = \"push\" ]; then" \
-  "elif [ \"\${EVENT}\" = \"never\" ]; then"
+  "elif [ \"\${EVENT}\" = \"push\" ] || [ \"\${SIGN_MACOS}\" = \"true\" ]; then" \
+  "elif [ \"\${EVENT}\" = \"never\" ] || [ \"\${SIGN_MACOS}\" = \"true\" ]; then"
 assert_rejected \
   "pkg-signing-ignores-p12-secret" \
   "P12_BASE64: \${{ secrets.MACOS_SIGNING_P12_BASE64 }}
