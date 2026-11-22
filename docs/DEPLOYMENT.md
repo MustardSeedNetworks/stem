@@ -68,9 +68,9 @@ sudo rpm -i stem-${VERSION}-1.x86_64.rpm
 # Portable tarball (linux-amd64, linux-arm64, darwin-arm64)
 curl -LO https://github.com/MustardSeedNetworks/stem/releases/download/v${VERSION}/stem-${VERSION}-linux-amd64.tar.gz
 
-# macOS (Apple silicon only, arm64): the .pkg; see "launchd Service (macOS)" below
+# macOS (Apple silicon only, arm64): the .pkg, signed and notarized; double-click it.
+# See "launchd Service (macOS)" below
 curl -LO https://github.com/MustardSeedNetworks/stem/releases/download/v${VERSION}/stem-${VERSION}-darwin-arm64.pkg
-sudo installer -pkg stem-${VERSION}-darwin-arm64.pkg -target /
 
 # macOS alternative: the tarball carries install.sh, upgrade.sh and uninstall.sh
 curl -LO https://github.com/MustardSeedNetworks/stem/releases/download/v${VERSION}/stem-${VERSION}-darwin-arm64.tar.gz
@@ -320,10 +320,9 @@ macOS is Apple silicon only: releases publish an arm64 build and no Intel one.
 
 The `.pkg` is the primary install. It installs `/usr/local/stem/stem` and
 `/Library/LaunchDaemons/com.stem.plist` and `com.stem.update.plist`, then
-bootstraps both. The `.pkg` is not Developer ID signed or notarized, so Gatekeeper
-blocks a double-click until you approve it in System Settings > Privacy &
-Security, or use `sudo installer` as above. Check the download against the
-release's `checksums.txt` and `.cosign.bundle` first. Installing a newer `.pkg`
+bootstraps both. The `.pkg` is signed with a Developer ID Installer certificate,
+notarized by Apple and stapled, so a double-click install passes Gatekeeper.
+Check the download against the release's `checksums.txt` and `.cosign.bundle` first. Installing a newer `.pkg`
 over an existing install stops the daemon, replaces the binary and plists,
 and starts it again; `stem.yaml` (a default is written only if there is none),
 `credentials.json`, `certs/`, `data/` and `.daemon.json` are never touched.
@@ -409,7 +408,7 @@ package is upgraded, and `dpkg --purge` forgets it. The `.rpm` cannot prompt,
 so it prints the command that turns automatic updates on instead.
 
 The macOS `.pkg` offers the same choice as **Automatic updates** in Installer's
-choices pane, unselected. `sudo installer -pkg …` from a script takes that
+choices pane, unselected. A scripted `sudo installer -pkg …` takes that
 default. Select it for an unattended install with a choice-changes file:
 
 ```bash

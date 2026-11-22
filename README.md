@@ -51,11 +51,8 @@ tarballs and Windows zips at
 <https://github.com/MustardSeedNetworks/stem/releases>.
 
 macOS is **Apple silicon only** (arm64); there is no Intel build. Download
-`stem-<version>-darwin-arm64.pkg` and run:
-
-```bash
-sudo installer -pkg stem-<version>-darwin-arm64.pkg -target /
-```
+`stem-<version>-darwin-arm64.pkg` and double-click it. The package is signed
+and notarized.
 
 It puts Stem in `/usr/local/stem` and starts it as the `com.stem` launchd
 daemon, with the daily update check as `com.stem.update`. Installing a newer
