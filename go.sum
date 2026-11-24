@@ -32,8 +32,8 @@ github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/internal v1.2.0 h1:nCYfg
 github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/internal v1.2.0/go.mod h1:ucUjca2JtSZboY8IoUqyQyuuXvwbMBVwFOm0vdQPNhA=
 github.com/AzureAD/microsoft-authentication-library-for-go v1.8.0 h1:Nljr4q1GRA/5vCrMONS+g4u4LRHNgOXVSh3O43J2CnI=
 github.com/AzureAD/microsoft-authentication-library-for-go v1.8.0/go.mod h1:Y33QHnf0FfdVewFFISOGe20mkZbxX4H839o955/PoeI=
-github.com/MustardSeedNetworks/foundation v0.14.9 h1:2PdhoaZkPiH0vjBrODD21bk3UZssSqWYsD6W5poAYl8=
-github.com/MustardSeedNetworks/foundation v0.14.9/go.mod h1:7tiTx4TDfUo+4mBEpUuqEoNug0FiR42JZJOJYSwlgSE=
+github.com/MustardSeedNetworks/foundation v0.14.10 h1:FWVG5/gKhdDDxdtUuKTWB/VujiP/9N2YqJTO9Nam9UA=
+github.com/MustardSeedNetworks/foundation v0.14.10/go.mod h1:7tiTx4TDfUo+4mBEpUuqEoNug0FiR42JZJOJYSwlgSE=
 github.com/ProtonMail/go-crypto v1.4.1 h1:9RfcZHqEQUvP8RzecWEUafnZVtEvrBVL9BiF67IQOfM=
 github.com/ProtonMail/go-crypto v1.4.1/go.mod h1:e1OaTyu5SYVrO9gKOEhTc+5UcXtTUa+P3uLudwcgPqo=
 github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 h1:DklsrG3dyBCFEj5IhUbnKptjxatkF07cF2ak3yi77so=
