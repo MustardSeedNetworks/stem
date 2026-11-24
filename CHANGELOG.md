@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.34.4](https://github.com/MustardSeedNetworks/stem/compare/v0.34.3...v0.34.4) (2026-11-24)
+
+
+### Miscellaneous
+
+* **deps:** update actions/setup-go action to v7.1.0 ([#2111](https://github.com/MustardSeedNetworks/stem/issues/2111)) ([b7684e4](https://github.com/MustardSeedNetworks/stem/commit/b7684e4c3d24e513864e36bc8dccf3fc965301ee))
+* **deps:** update dependency axe-core to v4.14.1 ([#2110](https://github.com/MustardSeedNetworks/stem/issues/2110)) ([e192387](https://github.com/MustardSeedNetworks/stem/commit/e19238742c1a26418214771cd35b30c7a0ed7567))
+
 ## [0.34.3](https://github.com/MustardSeedNetworks/stem/compare/v0.34.2...v0.34.3) (2026-11-23)
 
 
