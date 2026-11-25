@@ -28,7 +28,8 @@ test.describe('Settings drawer module view', () => {
     const drawer = page.getByTestId('settings-drawer');
     await expect(drawer).toBeVisible();
 
-    await drawer.getByRole('button', { name: 'Module', exact: true }).click();
+    await drawer.getByRole('tab', { name: 'Tests' }).click();
+    await drawer.getByText('Module', { exact: true }).click();
 
     // Scoped to the module list rather than `.first()` of a drawer-wide text
     // match. The index pick asserted against whichever node came first, which
