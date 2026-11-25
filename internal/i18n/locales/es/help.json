@@ -3,7 +3,6 @@
     "title": "Ayuda y Documentación",
     "ariaLabel": "Ayuda y Documentación",
     "close": "Cerrar ayuda",
-    "closeTooltip": "Cerrar el panel de ayuda y volver a la vista principal",
     "searchPlaceholder": "Buscar {{tab}}...",
     "pageHelp": "Abrir ayuda de {{page}}",
     "buildInfo": "Commit {{commit}} · Compilado {{time}}",

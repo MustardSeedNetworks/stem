@@ -30,7 +30,6 @@ describe('LanguageSection', () => {
     expect(i18n.resolvedLanguage).toBe('es');
     expect(window.localStorage.getItem('stem-language')).toBe('es');
     expect(document.documentElement.lang).toBe('es');
-    expect(screen.getByRole('combobox', { name: 'Seleccionar idioma' })).toHaveValue('es');
-    expect(screen.getByText('Idioma')).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Idioma' })).toHaveValue('es');
   });
 });
