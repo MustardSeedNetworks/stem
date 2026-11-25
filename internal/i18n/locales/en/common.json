@@ -67,13 +67,11 @@
     "warning": "WARNING",
     "info": "INFO",
     "placeholder": {
-      "idle": "No tests running. Configure tests in Settings and click {{runTest}}.",
       "starting": "Test is starting. Results will stream in shortly.",
       "running": "Test in progress... Results will appear here when complete.",
       "cancelled": "Test cancelled. Adjust settings or restart when ready.",
       "stopped": "Stopped by the operator. No result was captured before it ended.",
-      "error": "An error occurred during the test.",
-      "unknown": "Waiting for the backend to report a status."
+      "error": "An error occurred during the test."
     },
     "moduleName": "Module: {{module}}"
   },
@@ -342,6 +340,7 @@
     "unreachable": "Can't reach Stem daemon, retrying"
   },
   "notFound": {
+    "kicker": "Error 404",
     "title": "Page not found",
     "body": "{{product}} has no page at this address.",
     "home": "Back to {{product}} home"

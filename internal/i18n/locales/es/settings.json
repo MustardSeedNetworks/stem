@@ -534,5 +534,11 @@
         "duration": "Duración: {{duration}} s + {{warmup}} s de calentamiento"
       }
     }
+  },
+  "tabs": {
+    "label": "Secciones de configuración",
+    "general": "General",
+    "license": "Licencia",
+    "tests": "Pruebas"
   }
 }

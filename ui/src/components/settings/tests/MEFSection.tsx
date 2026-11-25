@@ -6,10 +6,10 @@
  * Note: Uses same config as Y.1564 for service parameters.
  */
 
-import { Settings2 } from 'lucide-react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CollapsibleSection } from '../../CollapsibleSection';
+import { Card } from '../../../shared/Card';
+import { CollapsibleSection } from '../../../shared/CollapsibleSection';
 import { TestCheckbox } from '../TestCheckbox';
 import type { TestDefinition, TestSectionProps } from '../types';
 
@@ -45,28 +45,21 @@ export function MEFSection({ selectedTests, onToggleTest }: TestSectionProps): R
   );
 
   return (
-    <CollapsibleSection
-      testId="mef-test-section"
-      title={
-        <div className="flex items-center gap-compact">
-          <Settings2 className="w-4 h-4" aria-hidden="true" />
-          <span>{t('tests.mef.title')}</span>
-          <span className="caption text-text-muted">({selectedCount}/3)</span>
+    <Card>
+      <CollapsibleSection title={`${t('tests.mef.title')} (${selectedCount}/3)`}>
+        <div className="stack-sm">
+          {tests.map((test) => (
+            <TestCheckbox
+              key={test.id}
+              test={test}
+              checked={selectedTests.includes(test.id)}
+              onChange={(): void => onToggleTest(test.id)}
+            />
+          ))}
         </div>
-      }
-    >
-      <div className="stack-sm">
-        {tests.map((test) => (
-          <TestCheckbox
-            key={test.id}
-            test={test}
-            checked={selectedTests.includes(test.id)}
-            onChange={(): void => onToggleTest(test.id)}
-          />
-        ))}
-      </div>
-      {/* Note: MEF uses same config as Y.1564 for service parameters */}
-    </CollapsibleSection>
+        {/* Note: MEF uses same config as Y.1564 for service parameters */}
+      </CollapsibleSection>
+    </Card>
   );
 }
 

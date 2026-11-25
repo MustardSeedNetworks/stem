@@ -12,10 +12,11 @@ import { FRAME_SIZE_OPTIONS } from '../forms/frameSizes';
 import { useConfigForm } from '../forms/useConfigForm';
 import { hasGroupTests } from '../lib/testGroups';
 import { TrafficGenConfigSchema } from '../schemas/configs';
+import { FormField } from '../shared/FormField';
+import { Input } from '../shared/Input';
 import { CollapsibleSection } from './CollapsibleSection';
-import { FieldError } from './FieldError';
+import { NumberSelectField } from './ConfigFormFields';
 import { FormSection } from './FormSection';
-import { HelpIcon } from './HelpIcon';
 import { TestSummary } from './TestSummary';
 
 /** Traffic generator configuration parameters */
@@ -65,6 +66,7 @@ export function TrafficGenConfigForm({
   });
   const {
     register,
+    control,
     watch,
     setValue,
     formState: { errors },
@@ -101,42 +103,33 @@ export function TrafficGenConfigForm({
       <div className="stack-lg">
         <FormSection title={t('testConfig.trafficgen.traffic.title')}>
           <div className="grid grid-cols-2 gap-default">
-            <div>
-              <label htmlFor="tgen-framesize" className="flex items-center gap-tight label">
-                {t('testConfig.trafficgen.traffic.frameSize')}
-                <HelpIcon
-                  tooltip={t('help:tooltips.testConfig.trafficgen.traffic.frameSizeHelp')}
-                />
-              </label>
-              <select
-                id="tgen-framesize"
-                {...register('frameSize', { valueAsNumber: true })}
-                className="mt-tight w-full"
-              >
-                {FRAME_SIZE_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {t(`testConfig.common.${option.qualifier}`, { size: option.value })}
-                  </option>
-                ))}
-              </select>
-              <FieldError message={errors.frameSize?.message} />
-            </div>
+            <NumberSelectField
+              control={control}
+              name="frameSize"
+              label={t('testConfig.trafficgen.traffic.frameSize')}
+              hint={t('help:tooltips.testConfig.trafficgen.traffic.frameSizeHelp')}
+              error={errors.frameSize?.message}
+              options={FRAME_SIZE_OPTIONS.map((option) => ({
+                value: option.value,
+                label: t(`testConfig.common.${option.qualifier}`, { size: option.value }),
+              }))}
+            />
 
             <div>
-              <label htmlFor="tgen-rate" className="flex items-center gap-tight label">
-                {t('testConfig.trafficgen.traffic.rate')}
-                <HelpIcon tooltip={t('help:tooltips.testConfig.trafficgen.traffic.rateHelp')} />
-              </label>
-              <div className="mt-tight flex gap-compact">
-                <input
-                  id="tgen-rate"
-                  type="number"
-                  step={0.01}
-                  {...register('ratePct', { valueAsNumber: true })}
-                  className="w-full"
-                />
-              </div>
-              <FieldError message={errors.ratePct?.message} />
+              <FormField
+                label={t('testConfig.trafficgen.traffic.rate')}
+                hint={t('help:tooltips.testConfig.trafficgen.traffic.rateHelp')}
+                error={errors.ratePct?.message}
+              >
+                {(control) => (
+                  <Input
+                    {...control}
+                    type="number"
+                    step={0.01}
+                    {...register('ratePct', { valueAsNumber: true })}
+                  />
+                )}
+              </FormField>
               <div className="mt-tight flex gap-tight flex-wrap">
                 {RATE_PRESETS.map((preset) => (
                   <button
@@ -162,53 +155,53 @@ export function TrafficGenConfigForm({
           </div>
 
           <div className="grid grid-cols-2 gap-default">
-            <div>
-              <label htmlFor="tgen-duration" className="flex items-center gap-tight label">
-                {t('testConfig.trafficgen.traffic.duration')}
-                <HelpIcon tooltip={t('help:tooltips.testConfig.trafficgen.traffic.durationHelp')} />
-              </label>
-              <input
-                id="tgen-duration"
-                type="number"
-                step={1}
-                {...register('duration', { valueAsNumber: true })}
-                className="mt-tight w-full"
-              />
-              <FieldError message={errors.duration?.message} />
-            </div>
+            <FormField
+              label={t('testConfig.trafficgen.traffic.duration')}
+              hint={t('help:tooltips.testConfig.trafficgen.traffic.durationHelp')}
+              error={errors.duration?.message}
+            >
+              {(control) => (
+                <Input
+                  {...control}
+                  type="number"
+                  step={1}
+                  {...register('duration', { valueAsNumber: true })}
+                />
+              )}
+            </FormField>
 
-            <div>
-              <label htmlFor="tgen-warmup" className="flex items-center gap-tight label">
-                {t('testConfig.trafficgen.traffic.warmup')}
-                <HelpIcon tooltip={t('help:tooltips.testConfig.trafficgen.traffic.warmupHelp')} />
-              </label>
-              <input
-                id="tgen-warmup"
-                type="number"
-                step={1}
-                {...register('warmup', { valueAsNumber: true })}
-                className="mt-tight w-full"
-              />
-              <FieldError message={errors.warmup?.message} />
-            </div>
+            <FormField
+              label={t('testConfig.trafficgen.traffic.warmup')}
+              hint={t('help:tooltips.testConfig.trafficgen.traffic.warmupHelp')}
+              error={errors.warmup?.message}
+            >
+              {(control) => (
+                <Input
+                  {...control}
+                  type="number"
+                  step={1}
+                  {...register('warmup', { valueAsNumber: true })}
+                />
+              )}
+            </FormField>
           </div>
         </FormSection>
 
         <FormSection title={t('testConfig.trafficgen.stream.title')}>
-          <div>
-            <label htmlFor="tgen-streamid" className="flex items-center gap-tight label">
-              {t('testConfig.trafficgen.stream.id')}
-              <HelpIcon tooltip={t('help:tooltips.testConfig.trafficgen.stream.idHelp')} />
-            </label>
-            <input
-              id="tgen-streamid"
-              type="number"
-              step={1}
-              {...register('streamId', { valueAsNumber: true })}
-              className="mt-tight w-full"
-            />
-            <FieldError message={errors.streamId?.message} />
-          </div>
+          <FormField
+            label={t('testConfig.trafficgen.stream.id')}
+            hint={t('help:tooltips.testConfig.trafficgen.stream.idHelp')}
+            error={errors.streamId?.message}
+          >
+            {(control) => (
+              <Input
+                {...control}
+                type="number"
+                step={1}
+                {...register('streamId', { valueAsNumber: true })}
+              />
+            )}
+          </FormField>
         </FormSection>
 
         <TestSummary>

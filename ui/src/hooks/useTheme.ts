@@ -10,6 +10,9 @@
  * - Automatic system theme change detection while in 'system' mode
  * - Theme toggling functionality
  *
+ * The state is one module-level store (useSyncExternalStore), so the rail toggle
+ * and the Settings control share it.
+ *
  * The theme is applied by adding/removing the 'dark' class on the document
  * root element, which Tailwind CSS and our index.css use to switch
  * between :root (light) and .dark (dark) custom properties.
@@ -27,7 +30,7 @@
  * ```
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useSyncExternalStore } from 'react';
 
 /** Theme mode options */
 export type Theme = 'light' | 'dark' | 'system';
@@ -85,6 +88,50 @@ function readStoredTheme(): Theme {
   return 'system';
 }
 
+// One store for every consumer. The rail's quick toggle and the Settings
+// control both read and write it, so they cannot disagree about the theme.
+const listeners = new Set<() => void>();
+let current: Theme | null = null;
+
+function snapshot(): Theme {
+  current ??= readStoredTheme();
+  return current;
+}
+
+function emit(): void {
+  for (const listener of listeners) {
+    listener();
+  }
+}
+
+function subscribe(listener: () => void): () => void {
+  listeners.add(listener);
+  const media = window.matchMedia('(prefers-color-scheme: dark)');
+  // While the theme is 'system' the OS is the source: re-apply and notify.
+  const onSystemChange = (): void => {
+    if (snapshot() === 'system') {
+      applyTheme('system');
+      listener();
+    }
+  };
+  media.addEventListener('change', onSystemChange);
+  return (): void => {
+    listeners.delete(listener);
+    media.removeEventListener('change', onSystemChange);
+  };
+}
+
+function setStoredTheme(next: Theme): void {
+  current = next;
+  try {
+    window.localStorage.setItem(STORAGE_KEY, next);
+  } catch {
+    // Ignore storage failures
+  }
+  applyTheme(next);
+  emit();
+}
+
 /**
  * Custom hook for managing application theme.
  *
@@ -97,47 +144,18 @@ export function useTheme(): {
   toggleTheme: () => void;
   isDark: boolean;
 } {
-  const [theme, setThemeState] = useState<Theme>(readStoredTheme);
-
-  const [effectiveTheme, setEffectiveTheme] = useState<'light' | 'dark'>(() =>
-    theme === 'system' ? getSystemTheme() : theme,
-  );
-
-  const setTheme = useCallback((newTheme: Theme): void => {
-    setThemeState(newTheme);
-    try {
-      window.localStorage.setItem(STORAGE_KEY, newTheme);
-    } catch {
-      // Ignore storage failures
-    }
-    applyTheme(newTheme);
-    setEffectiveTheme(newTheme === 'system' ? getSystemTheme() : newTheme);
-  }, []);
+  const theme = useSyncExternalStore(subscribe, snapshot, () => 'system' as const);
+  const systemTheme = useSyncExternalStore(subscribe, getSystemTheme, () => 'dark' as const);
+  const effectiveTheme = theme === 'system' ? systemTheme : theme;
 
   const toggleTheme = useCallback((): void => {
-    const newTheme: Theme = effectiveTheme === 'dark' ? 'light' : 'dark';
-    setTheme(newTheme);
-  }, [effectiveTheme, setTheme]);
-
-  useEffect(() => {
-    applyTheme(theme);
-
-    if (theme === 'system') {
-      const mediaQuery: MediaQueryList = window.matchMedia('(prefers-color-scheme: dark)');
-      const handler = (e: MediaQueryListEvent): void => {
-        setEffectiveTheme(e.matches ? 'dark' : 'light');
-        applyTheme('system');
-      };
-      mediaQuery.addEventListener('change', handler);
-      return (): void => mediaQuery.removeEventListener('change', handler);
-    }
-    return;
-  }, [theme]);
+    setStoredTheme(effectiveTheme === 'dark' ? 'light' : 'dark');
+  }, [effectiveTheme]);
 
   return {
     theme,
     effectiveTheme,
-    setTheme,
+    setTheme: setStoredTheme,
     toggleTheme,
     isDark: effectiveTheme === 'dark',
   };
@@ -150,5 +168,6 @@ export function useTheme(): {
  * Call from main.tsx before `createRoot(...).render(...)`.
  */
 export function initThemeFromStorage(): void {
-  applyTheme(readStoredTheme());
+  current = readStoredTheme();
+  applyTheme(current);
 }

@@ -917,10 +917,23 @@ jobs:
   # reads the pinned commit instead of .github@main (a canonical change there
   # reaches this repo only when this pin moves).
   ci-conformance:
-    uses: MustardSeedNetworks/.github/.github/workflows/ci-conformance.yml@76eb579ee0cbdef0a2aef9d9df1ae9ca38cad6bd # v1.14.0
+    uses: MustardSeedNetworks/.github/.github/workflows/ci-conformance.yml@1b2763fa57a88f5e3abbf986ed5197b4bb3e0301 # .github#274, untagged
     permissions:
       contents: read
       id-token: write
+
+  # The shared theme and page components under ui/src/shared/ are byte-identical
+  # copies of the canonical set. ci-conformance checks the components; this runs
+  # the full check, theme included, so a drifted copy fails with its own name.
+  ui-shared-verify:
+    name: Shared UI Copies
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: MustardSeedNetworks/.github/.github/actions/ui-shared-verify@1b2763fa57a88f5e3abbf986ed5197b4bb3e0301 # .github#274, untagged
 
   # ============================================================================
   # Quality
@@ -1618,6 +1631,7 @@ jobs:
       - semgrep
       - dependency-review
       - ci-conformance
+      - ui-shared-verify
       - quality
       - release-notes
       - workflow-lint

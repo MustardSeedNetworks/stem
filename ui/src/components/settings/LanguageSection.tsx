@@ -4,25 +4,31 @@
  * The choice persists to localStorage ('stem-language') through i18next's
  * language detector, so it survives a reload.
  */
-import { Languages } from 'lucide-react';
 import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CollapsibleSection } from '../CollapsibleSection';
-import { LanguageSwitcher } from '../LanguageSwitcher';
+import { languages } from '../../i18n';
+import { Card } from '../../shared/Card';
+import { FormField } from '../../shared/FormField';
+import { Select } from '../../shared/Select';
 
 export function LanguageSection(): ReactElement {
-  const { t } = useTranslation('common');
+  const { t, i18n } = useTranslation('common');
   return (
-    <CollapsibleSection
-      title={
-        <div className="flex items-center gap-compact">
-          <Languages className="w-4 h-4" aria-hidden="true" />
-          <span>{t('language.title')}</span>
-        </div>
-      }
-      defaultOpen={true}
-    >
-      <LanguageSwitcher className="w-full rounded-lg border border-surface-border bg-surface-base px-3 py-row text-sm text-text-primary" />
-    </CollapsibleSection>
+    <Card>
+      <FormField label={t('language.title')}>
+        {(control) => (
+          <Select
+            {...control}
+            value={i18n.resolvedLanguage ?? i18n.language}
+            onValueChange={(code): void => {
+              i18n.changeLanguage(code).catch(() => {
+                // Language change failure is handled gracefully by i18next
+              });
+            }}
+            options={languages.map((lang) => ({ value: lang.code, label: lang.nativeLabel }))}
+          />
+        )}
+      </FormField>
+    </Card>
   );
 }

@@ -10,10 +10,11 @@ import type { FrameSizeOption } from '../forms/frameSizes';
 import { useConfigForm } from '../forms/useConfigForm';
 import { hasGroupTests } from '../lib/testGroups';
 import { Y1731ConfigSchema } from '../schemas/configs';
+import { FormField } from '../shared/FormField';
+import { Input } from '../shared/Input';
 import { CollapsibleSection } from './CollapsibleSection';
-import { FieldError } from './FieldError';
+import { CheckboxField, NumberSelectField } from './ConfigFormFields';
 import { FormSection } from './FormSection';
-import { HelpIcon } from './HelpIcon';
 import { TestSummary } from './TestSummary';
 
 /** Y.1731 test configuration parameters */
@@ -88,6 +89,7 @@ export function Y1731ConfigForm({
   });
   const {
     register,
+    control,
     watch,
     formState: { errors },
   } = form;
@@ -127,172 +129,143 @@ export function Y1731ConfigForm({
       <div className="stack-lg">
         <FormSection title={t('testConfig.y1731.mep.title')}>
           <div className="grid grid-cols-3 gap-default">
-            <div>
-              <label htmlFor="y1731-mepid" className="flex items-center gap-tight label">
-                {t('testConfig.y1731.mep.mepId')}
-                <HelpIcon tooltip={t('help:tooltips.testConfig.y1731.mep.mepIdHelp')} />
-              </label>
-              <input
-                id="y1731-mepid"
-                type="number"
-                step={1}
-                {...register('mepId', { valueAsNumber: true })}
-                className="mt-tight w-full"
-              />
-              <FieldError message={errors.mepId?.message} />
-            </div>
+            <FormField
+              label={t('testConfig.y1731.mep.mepId')}
+              hint={t('help:tooltips.testConfig.y1731.mep.mepIdHelp')}
+              error={errors.mepId?.message}
+            >
+              {(control) => (
+                <Input
+                  {...control}
+                  type="number"
+                  step={1}
+                  {...register('mepId', { valueAsNumber: true })}
+                />
+              )}
+            </FormField>
 
-            <div>
-              <label htmlFor="y1731-meglevel" className="flex items-center gap-tight label">
-                {t('testConfig.y1731.mep.megLevel')}
-                <HelpIcon tooltip={t('help:tooltips.testConfig.y1731.mep.megLevelHelp')} />
-              </label>
-              <input
-                id="y1731-meglevel"
-                type="number"
-                step={1}
-                {...register('megLevel', { valueAsNumber: true })}
-                className="mt-tight w-full"
-              />
-              <FieldError message={errors.megLevel?.message} />
-            </div>
+            <FormField
+              label={t('testConfig.y1731.mep.megLevel')}
+              hint={t('help:tooltips.testConfig.y1731.mep.megLevelHelp')}
+              error={errors.megLevel?.message}
+            >
+              {(control) => (
+                <Input
+                  {...control}
+                  type="number"
+                  step={1}
+                  {...register('megLevel', { valueAsNumber: true })}
+                />
+              )}
+            </FormField>
 
-            <div>
-              <label htmlFor="y1731-megid" className="flex items-center gap-tight label">
-                {t('testConfig.y1731.mep.megId')}
-                <HelpIcon tooltip={t('help:tooltips.testConfig.y1731.mep.megIdHelp')} />
-              </label>
-              <input
-                id="y1731-megid"
-                type="text"
-                maxLength={45}
-                {...register('megId')}
-                className="mt-tight w-full"
-              />
-              <FieldError message={errors.megId?.message} />
-            </div>
+            <FormField
+              label={t('testConfig.y1731.mep.megId')}
+              hint={t('help:tooltips.testConfig.y1731.mep.megIdHelp')}
+              error={errors.megId?.message}
+            >
+              {(control) => (
+                <Input {...control} type="text" maxLength={45} {...register('megId')} />
+              )}
+            </FormField>
           </div>
         </FormSection>
 
         <FormSection title={t('testConfig.y1731.oam.title')}>
           <div className="grid grid-cols-2 gap-default">
-            <div>
-              <label htmlFor="y1731-ccm" className="flex items-center gap-tight label">
-                {t('testConfig.y1731.oam.ccm')}
-                <HelpIcon tooltip={t('help:tooltips.testConfig.y1731.oam.ccmHelp')} />
-              </label>
-              <select
-                id="y1731-ccm"
-                {...register('ccmInterval', { valueAsNumber: true })}
-                className="mt-tight w-full"
-              >
-                {CCM_INTERVAL_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-              <FieldError message={errors.ccmInterval?.message} />
-            </div>
-
-            <div>
-              <label htmlFor="y1731-priority" className="flex items-center gap-tight label">
-                {t('testConfig.y1731.oam.priority')}
-                <HelpIcon tooltip={t('help:tooltips.testConfig.y1731.oam.priorityHelp')} />
-              </label>
-              <input
-                id="y1731-priority"
-                type="number"
-                step={1}
-                {...register('priority', { valueAsNumber: true })}
-                className="mt-tight w-full"
-              />
-              <FieldError message={errors.priority?.message} />
-            </div>
-          </div>
-
-          <div className="flex items-center gap-compact">
-            <input
-              id="y1731-tagged"
-              type="checkbox"
-              {...register('priorityTagged')}
-              aria-label={t('testConfig.y1731.oam.taggedAria')}
-              className="rounded border-surface-border"
+            <NumberSelectField
+              control={control}
+              name="ccmInterval"
+              label={t('testConfig.y1731.oam.ccm')}
+              hint={t('help:tooltips.testConfig.y1731.oam.ccmHelp')}
+              error={errors.ccmInterval?.message}
+              options={CCM_INTERVAL_OPTIONS}
             />
-            <label htmlFor="y1731-tagged" className="text-sm text-text-primary">
-              {t('testConfig.y1731.oam.tagged')}
-              <HelpIcon tooltip={t('help:tooltips.testConfig.y1731.oam.taggedTitle')} />
-            </label>
+
+            <FormField
+              label={t('testConfig.y1731.oam.priority')}
+              hint={t('help:tooltips.testConfig.y1731.oam.priorityHelp')}
+              error={errors.priority?.message}
+            >
+              {(control) => (
+                <Input
+                  {...control}
+                  type="number"
+                  step={1}
+                  {...register('priority', { valueAsNumber: true })}
+                />
+              )}
+            </FormField>
           </div>
+
+          <CheckboxField
+            control={control}
+            name="priorityTagged"
+            label={t('testConfig.y1731.oam.tagged')}
+            help={t('help:tooltips.testConfig.y1731.oam.taggedTitle')}
+          />
         </FormSection>
 
         <FormSection title={t('testConfig.y1731.measurement.title')}>
           <div className="grid grid-cols-2 gap-default">
-            <div>
-              <label htmlFor="y1731-framesize" className="flex items-center gap-tight label">
-                {t('testConfig.y1731.measurement.frameSize')}
-                <HelpIcon tooltip={t('help:tooltips.testConfig.y1731.measurement.frameSizeHelp')} />
-              </label>
-              <select
-                id="y1731-framesize"
-                {...register('frameSize', { valueAsNumber: true })}
-                className="mt-tight w-full"
-              >
-                {Y1731_FRAME_SIZE_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {t(`testConfig.common.${option.qualifier}`, { size: option.value })}
-                  </option>
-                ))}
-              </select>
-              <FieldError message={errors.frameSize?.message} />
-            </div>
+            <NumberSelectField
+              control={control}
+              name="frameSize"
+              label={t('testConfig.y1731.measurement.frameSize')}
+              hint={t('help:tooltips.testConfig.y1731.measurement.frameSizeHelp')}
+              error={errors.frameSize?.message}
+              options={Y1731_FRAME_SIZE_OPTIONS.map((option) => ({
+                value: option.value,
+                label: t(`testConfig.common.${option.qualifier}`, { size: option.value }),
+              }))}
+            />
 
-            <div>
-              <label htmlFor="y1731-interval" className="flex items-center gap-tight label">
-                {t('testConfig.y1731.measurement.interval')}
-                <HelpIcon tooltip={t('help:tooltips.testConfig.y1731.measurement.intervalHelp')} />
-              </label>
-              <input
-                id="y1731-interval"
-                type="number"
-                step={10}
-                {...register('intervalMs', { valueAsNumber: true })}
-                className="mt-tight w-full"
-              />
-              <FieldError message={errors.intervalMs?.message} />
-            </div>
+            <FormField
+              label={t('testConfig.y1731.measurement.interval')}
+              hint={t('help:tooltips.testConfig.y1731.measurement.intervalHelp')}
+              error={errors.intervalMs?.message}
+            >
+              {(control) => (
+                <Input
+                  {...control}
+                  type="number"
+                  step={10}
+                  {...register('intervalMs', { valueAsNumber: true })}
+                />
+              )}
+            </FormField>
           </div>
 
           <div className="grid grid-cols-2 gap-default">
-            <div>
-              <label htmlFor="y1731-count" className="flex items-center gap-tight label">
-                {t('testConfig.y1731.measurement.count')}
-                <HelpIcon tooltip={t('help:tooltips.testConfig.y1731.measurement.countHelp')} />
-              </label>
-              <input
-                id="y1731-count"
-                type="number"
-                step={1}
-                {...register('count', { valueAsNumber: true })}
-                className="mt-tight w-full"
-              />
-              <FieldError message={errors.count?.message} />
-            </div>
+            <FormField
+              label={t('testConfig.y1731.measurement.count')}
+              hint={t('help:tooltips.testConfig.y1731.measurement.countHelp')}
+              error={errors.count?.message}
+            >
+              {(control) => (
+                <Input
+                  {...control}
+                  type="number"
+                  step={1}
+                  {...register('count', { valueAsNumber: true })}
+                />
+              )}
+            </FormField>
 
-            <div>
-              <label htmlFor="y1731-duration" className="flex items-center gap-tight label">
-                {t('testConfig.y1731.measurement.duration')}
-                <HelpIcon tooltip={t('help:tooltips.testConfig.y1731.measurement.durationHelp')} />
-              </label>
-              <input
-                id="y1731-duration"
-                type="number"
-                step={1}
-                {...register('duration', { valueAsNumber: true })}
-                className="mt-tight w-full"
-              />
-              <FieldError message={errors.duration?.message} />
-            </div>
+            <FormField
+              label={t('testConfig.y1731.measurement.duration')}
+              hint={t('help:tooltips.testConfig.y1731.measurement.durationHelp')}
+              error={errors.duration?.message}
+            >
+              {(control) => (
+                <Input
+                  {...control}
+                  type="number"
+                  step={1}
+                  {...register('duration', { valueAsNumber: true })}
+                />
+              )}
+            </FormField>
           </div>
         </FormSection>
 

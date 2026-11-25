@@ -11,10 +11,11 @@ import type { FrameSizeOption } from '../forms/frameSizes';
 import { useConfigForm } from '../forms/useConfigForm';
 import { hasGroupTests } from '../lib/testGroups';
 import { RFC2889ConfigSchema } from '../schemas/configs';
+import { FormField } from '../shared/FormField';
+import { Input } from '../shared/Input';
 import { CollapsibleSection } from './CollapsibleSection';
-import { FieldError } from './FieldError';
+import { NumberSelectField } from './ConfigFormFields';
 import { FormSection } from './FormSection';
-import { HelpIcon } from './HelpIcon';
 import { TestSummary } from './TestSummary';
 
 /** RFC 2889 test configuration parameters */
@@ -84,6 +85,7 @@ export function RFC2889ConfigForm({
   });
   const {
     register,
+    control,
     watch,
     formState: { errors },
   } = form;
@@ -119,126 +121,112 @@ export function RFC2889ConfigForm({
       <div className="stack-lg">
         <FormSection title={t('testConfig.rfc2889.params.title')}>
           <div className="grid grid-cols-2 gap-default">
-            <div>
-              <label htmlFor="rfc2889-duration" className="flex items-center gap-tight label">
-                {t('testConfig.rfc2889.params.duration')}
-                <HelpIcon tooltip={t('help:tooltips.testConfig.rfc2889.params.durationHelp')} />
-              </label>
-              <input
-                id="rfc2889-duration"
-                type="number"
-                step={1}
-                {...register('duration', { valueAsNumber: true })}
-                className="mt-tight w-full"
-              />
-              <FieldError message={errors.duration?.message} />
-            </div>
+            <FormField
+              label={t('testConfig.rfc2889.params.duration')}
+              hint={t('help:tooltips.testConfig.rfc2889.params.durationHelp')}
+              error={errors.duration?.message}
+            >
+              {(control) => (
+                <Input
+                  {...control}
+                  type="number"
+                  step={1}
+                  {...register('duration', { valueAsNumber: true })}
+                />
+              )}
+            </FormField>
 
-            <div>
-              <label htmlFor="rfc2889-warmup" className="flex items-center gap-tight label">
-                {t('testConfig.rfc2889.params.warmup')}
-                <HelpIcon tooltip={t('help:tooltips.testConfig.rfc2889.params.warmupHelp')} />
-              </label>
-              <input
-                id="rfc2889-warmup"
-                type="number"
-                step={1}
-                {...register('warmup', { valueAsNumber: true })}
-                className="mt-tight w-full"
-              />
-              <FieldError message={errors.warmup?.message} />
-            </div>
+            <FormField
+              label={t('testConfig.rfc2889.params.warmup')}
+              hint={t('help:tooltips.testConfig.rfc2889.params.warmupHelp')}
+              error={errors.warmup?.message}
+            >
+              {(control) => (
+                <Input
+                  {...control}
+                  type="number"
+                  step={1}
+                  {...register('warmup', { valueAsNumber: true })}
+                />
+              )}
+            </FormField>
           </div>
         </FormSection>
 
-        <div>
-          <label htmlFor="rfc2889-framesize" className="flex items-center gap-tight label">
-            {t('testConfig.rfc2889.params.frameSize')}
-            <HelpIcon tooltip={t('help:tooltips.testConfig.rfc2889.params.frameSizeHelp')} />
-          </label>
-          <select
-            id="rfc2889-framesize"
-            {...register('frameSize', { valueAsNumber: true })}
-            className="mt-tight w-full"
-          >
-            {FRAME_SIZE_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {t(`testConfig.common.${option.qualifier}`, { size: option.value })}
-              </option>
-            ))}
-          </select>
-          <FieldError message={errors.frameSize?.message} />
-        </div>
+        <NumberSelectField
+          control={control}
+          name="frameSize"
+          label={t('testConfig.rfc2889.params.frameSize')}
+          hint={t('help:tooltips.testConfig.rfc2889.params.frameSizeHelp')}
+          error={errors.frameSize?.message}
+          options={FRAME_SIZE_OPTIONS.map((option) => ({
+            value: option.value,
+            label: t(`testConfig.common.${option.qualifier}`, { size: option.value }),
+          }))}
+        />
 
         <FormSection title={t('testConfig.rfc2889.switch.title')}>
           <div className="grid grid-cols-2 gap-default">
-            <div>
-              <label htmlFor="rfc2889-portcount" className="flex items-center gap-tight label">
-                {t('testConfig.rfc2889.switch.portCount')}
-                <HelpIcon tooltip={t('help:tooltips.testConfig.rfc2889.switch.portCountHelp')} />
-              </label>
-              <input
-                id="rfc2889-portcount"
-                type="number"
-                step={1}
-                {...register('portCount', { valueAsNumber: true })}
-                className="mt-tight w-full"
-              />
-              <FieldError message={errors.portCount?.message} />
-            </div>
+            <FormField
+              label={t('testConfig.rfc2889.switch.portCount')}
+              hint={t('help:tooltips.testConfig.rfc2889.switch.portCountHelp')}
+              error={errors.portCount?.message}
+            >
+              {(control) => (
+                <Input
+                  {...control}
+                  type="number"
+                  step={1}
+                  {...register('portCount', { valueAsNumber: true })}
+                />
+              )}
+            </FormField>
 
-            <div>
-              <label htmlFor="rfc2889-pattern" className="flex items-center gap-tight label">
-                {t('testConfig.rfc2889.switch.pattern')}
-                <HelpIcon tooltip={t('help:tooltips.testConfig.rfc2889.switch.patternHelp')} />
-              </label>
-              <select
-                id="rfc2889-pattern"
-                {...register('pattern', { valueAsNumber: true })}
-                className="mt-tight w-full"
-              >
-                {PATTERN_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {t(`testConfig.rfc2889.switch.${option.key}` as never)}
-                  </option>
-                ))}
-              </select>
-              <FieldError message={errors.pattern?.message} />
-            </div>
+            <NumberSelectField
+              control={control}
+              name="pattern"
+              label={t('testConfig.rfc2889.switch.pattern')}
+              hint={t('help:tooltips.testConfig.rfc2889.switch.patternHelp')}
+              error={errors.pattern?.message}
+              options={PATTERN_OPTIONS.map((option) => ({
+                value: option.value,
+                label: t(`testConfig.rfc2889.switch.${option.key}` as never),
+              }))}
+            />
           </div>
         </FormSection>
 
         {hasCaching || hasLearning ? (
-          <div>
-            <label htmlFor="rfc2889-addresscount" className="flex items-center gap-tight label">
-              {t('testConfig.rfc2889.switch.addressCount')}
-              <HelpIcon tooltip={t('help:tooltips.testConfig.rfc2889.switch.addressCountHelp')} />
-            </label>
-            <input
-              id="rfc2889-addresscount"
-              type="number"
-              step={1}
-              {...register('addressCount', { valueAsNumber: true })}
-              className="mt-tight w-full"
-            />
-            <FieldError message={errors.addressCount?.message} />
-          </div>
+          <FormField
+            label={t('testConfig.rfc2889.switch.addressCount')}
+            hint={t('help:tooltips.testConfig.rfc2889.switch.addressCountHelp')}
+            error={errors.addressCount?.message}
+          >
+            {(control) => (
+              <Input
+                {...control}
+                type="number"
+                step={1}
+                {...register('addressCount', { valueAsNumber: true })}
+              />
+            )}
+          </FormField>
         ) : null}
 
-        <div>
-          <label htmlFor="rfc2889-loss" className="flex items-center gap-tight label">
-            {t('testConfig.rfc2889.switch.loss')}
-            <HelpIcon tooltip={t('help:tooltips.testConfig.rfc2889.switch.lossHelp')} />
-          </label>
-          <input
-            id="rfc2889-loss"
-            type="number"
-            step={0.001}
-            {...register('acceptableLoss', { valueAsNumber: true })}
-            className="mt-tight w-full"
-          />
-          <FieldError message={errors.acceptableLoss?.message} />
-        </div>
+        <FormField
+          label={t('testConfig.rfc2889.switch.loss')}
+          hint={t('help:tooltips.testConfig.rfc2889.switch.lossHelp')}
+          error={errors.acceptableLoss?.message}
+        >
+          {(control) => (
+            <Input
+              {...control}
+              type="number"
+              step={0.001}
+              {...register('acceptableLoss', { valueAsNumber: true })}
+            />
+          )}
+        </FormField>
 
         <TestSummary>
           <div>

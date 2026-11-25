@@ -534,5 +534,11 @@
         "duration": "Duration: {{duration}}s + {{warmup}}s warmup"
       }
     }
+  },
+  "tabs": {
+    "label": "Settings sections",
+    "general": "General",
+    "license": "License",
+    "tests": "Tests"
   }
 }

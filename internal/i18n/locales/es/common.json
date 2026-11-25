@@ -67,13 +67,11 @@
     "warning": "ADVERTENCIA",
     "info": "INFO",
     "placeholder": {
-      "idle": "No hay pruebas en ejecución. Configure las pruebas en Configuración y pulse {{runTest}}.",
       "starting": "La prueba se está iniciando. Los resultados llegarán en breve.",
       "running": "Prueba en curso... Los resultados aparecerán aquí al terminar.",
       "cancelled": "Prueba cancelada. Ajuste la configuración o reiníciela cuando quiera.",
       "stopped": "Detenida por el operador. No se capturó ningún resultado antes de terminar.",
-      "error": "Se produjo un error durante la prueba.",
-      "unknown": "Esperando a que el backend informe de un estado."
+      "error": "Se produjo un error durante la prueba."
     },
     "moduleName": "Módulo: {{module}}"
   },
@@ -342,6 +340,7 @@
     "unreachable": "No se puede conectar con el daemon de Stem, reintentando"
   },
   "notFound": {
+    "kicker": "Error 404",
     "title": "Página no encontrada",
     "body": "{{product}} no tiene ninguna página en esta dirección.",
     "home": "Volver al inicio de {{product}}"

@@ -5,10 +5,10 @@
  * Includes: Delay (DMM/DMR), Loss (LMM/LMR), Synthetic Loss, Loopback.
  */
 
-import { Radio } from 'lucide-react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CollapsibleSection } from '../../CollapsibleSection';
+import { Card } from '../../../shared/Card';
+import { CollapsibleSection } from '../../../shared/CollapsibleSection';
 import { type Y1731Config, Y1731ConfigForm } from '../../Y1731ConfigForm';
 import { TestCheckbox } from '../TestCheckbox';
 import type { TestDefinition, TestSectionProps } from '../types';
@@ -58,40 +58,34 @@ export function Y1731Section({
   const hasSelectedTests = selectedCount > 0;
 
   return (
-    <CollapsibleSection
-      title={
-        <div className="flex items-center gap-compact">
-          <Radio className="w-4 h-4" aria-hidden="true" />
-          <span>{t('tests.y1731.title')}</span>
-          <span className="caption text-text-muted">({selectedCount}/4)</span>
-        </div>
-      }
-    >
-      <div className="stack-lg">
-        {/* Test Selection */}
-        <div className="stack-sm">
-          {tests.map((test) => (
-            <TestCheckbox
-              key={test.id}
-              test={test}
-              checked={selectedTests.includes(test.id)}
-              onChange={(): void => onToggleTest(test.id)}
-            />
-          ))}
-        </div>
-
-        {/* Configuration Form */}
-        {hasSelectedTests && (
-          <div className="border-t border-surface-border pt-section">
-            <Y1731ConfigForm
-              config={config}
-              setConfig={onConfigChange}
-              selectedTests={selectedTests}
-            />
+    <Card>
+      <CollapsibleSection title={`${t('tests.y1731.title')} (${selectedCount}/4)`}>
+        <div className="stack-lg">
+          {/* Test Selection */}
+          <div className="stack-sm">
+            {tests.map((test) => (
+              <TestCheckbox
+                key={test.id}
+                test={test}
+                checked={selectedTests.includes(test.id)}
+                onChange={(): void => onToggleTest(test.id)}
+              />
+            ))}
           </div>
-        )}
-      </div>
-    </CollapsibleSection>
+
+          {/* Configuration Form */}
+          {hasSelectedTests && (
+            <div className="border-t border-surface-border pt-section">
+              <Y1731ConfigForm
+                config={config}
+                setConfig={onConfigChange}
+                selectedTests={selectedTests}
+              />
+            </div>
+          )}
+        </div>
+      </CollapsibleSection>
+    </Card>
   );
 }
 

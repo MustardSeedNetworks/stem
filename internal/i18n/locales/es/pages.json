@@ -1,25 +1,22 @@
 {
   "accountSecurity": {
     "description": "Administre la autenticación de dos factores y las llaves de acceso.",
-    "label": "Seguridad",
-    "title": "Seguridad de la cuenta"
+    "eyebrow": "Cuenta",
+    "label": "Seguridad"
   },
   "benchmark": {
     "description": "Mediciones RFC 2544 de throughput, latency, pérdida de tramas y ráfagas consecutivas.",
     "eyebrow": "Módulo de prueba",
-    "label": "Benchmark",
-    "title": "Benchmark"
+    "label": "Benchmark"
   },
   "certify": {
     "description": "Certificación de reenvío RFC 2889, throughput TCP RFC 6349 y redes sensibles al tiempo TSN.",
     "eyebrow": "Módulo de prueba",
-    "label": "Certify",
-    "title": "Certify"
+    "label": "Certify"
   },
   "history": {
     "description": "Ejecuciones completadas, guardadas solo en este navegador. Otro navegador, o uno con los datos del sitio borrados, empieza vacío.",
     "label": "Historial",
-    "title": "Resultados recientes en este navegador",
     "clear": "Borrar historial",
     "filterAll": "Todas",
     "filterFailed": "Fallidas",
@@ -40,30 +37,27 @@
     "scope_one": "Guardado solo en este navegador · {{count}} de {{max}} ejecuciones",
     "scope_other": "Guardado solo en este navegador · {{count}} de {{max}} ejecuciones",
     "exportCsv": "Exportar CSV",
-    "exportJson": "Exportar JSON"
+    "exportJson": "Exportar JSON",
+    "eyebrow": "Resultados"
   },
   "measure": {
     "description": "Medición Y.1731 OAM de retardo / pérdida / pérdida sintética.",
     "eyebrow": "Módulo de prueba",
-    "label": "Measure",
-    "title": "Measure"
+    "label": "Measure"
   },
   "reflector": {
     "description": "Reflector de bucle: devuelve las tramas al test master para la medición de extremo a extremo.",
     "eyebrow": "Módulo de prueba",
-    "label": "Reflector",
-    "title": "Reflector"
+    "label": "Reflector"
   },
   "serviceTest": {
     "description": "Activación de servicio y verificación de rendimiento Y.1564 / MEF.",
     "eyebrow": "Módulo de prueba",
-    "label": "ServiceTest",
-    "title": "ServiceTest"
+    "label": "ServiceTest"
   },
   "trafficGen": {
     "description": "Generación de tráfico personalizado: modele flujos, aplique carga y valide rutas.",
     "eyebrow": "Módulo de prueba",
-    "label": "TrafficGen",
-    "title": "TrafficGen"
+    "label": "TrafficGen"
   }
 }

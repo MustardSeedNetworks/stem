@@ -6,14 +6,13 @@
  * root-owned update timer reads it.
  */
 
-import { RefreshCw } from 'lucide-react';
 import type { ReactElement } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Card } from '../../shared/Card';
+import { Toggle } from '../../shared/Toggle';
 import { authFetch } from '../../stores/auth-store';
 import type { UpdateSettings } from '../../types/generated/update-settings';
-import { CollapsibleSection } from '../CollapsibleSection';
-import { Toggle } from '../ui/Input';
 import { useToast } from '../ui/useToast';
 
 export const UPDATE_SETTINGS_ENDPOINT = '/api/v1/update/settings';
@@ -67,26 +66,17 @@ export function UpdateSection(): ReactElement {
   };
 
   return (
-    <CollapsibleSection
-      title={
-        <div className="flex items-center gap-compact">
-          <RefreshCw className="w-4 h-4" aria-hidden="true" />
-          <span>{t('settings:update.sectionTitle')}</span>
-        </div>
-      }
-      defaultOpen={true}
-    >
+    <Card title={t('settings:update.sectionTitle')}>
       <div className="stack" data-testid="settings-update-section">
         {settings ? (
           <>
             <Toggle
-              id="settings-update-automatic"
               label={t('settings:update.automatic')}
               description={t('settings:update.automaticDesc')}
               checked={settings.automatic}
               disabled={saving}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => {
-                save(e.target.checked).catch(() => {
+              onChange={(checked): void => {
+                save(checked).catch(() => {
                   // save reports its own failures.
                 });
               }}
@@ -110,6 +100,6 @@ export function UpdateSection(): ReactElement {
           </div>
         ) : null}
       </div>
-    </CollapsibleSection>
+    </Card>
   );
 }

@@ -1,4 +1,3 @@
-import { Tooltip } from './ui/Tooltip';
 /**
  * @fileoverview Stem - RFC 2544 Benchmark Test Configuration
  * @description Advanced configuration form for RFC 2544 Benchmarking Tests.
@@ -12,6 +11,10 @@ import { FRAME_SIZE_OPTIONS } from '../forms/frameSizes';
 import { useConfigForm } from '../forms/useConfigForm';
 import { hasGroupTests } from '../lib/testGroups';
 import { RFC2544ConfigSchema } from '../schemas/configs';
+import { Checkbox } from '../shared/Checkbox';
+import { FormField } from '../shared/FormField';
+import { Input } from '../shared/Input';
+import { CheckboxField } from './ConfigFormFields';
 import { FieldError } from './FieldError';
 import { FormSection } from './FormSection';
 import { HelpIcon } from './HelpIcon';
@@ -79,6 +82,7 @@ export function RFC2544ConfigForm({
   });
   const {
     register,
+    control,
     watch,
     setValue,
     formState: { errors },
@@ -124,109 +128,109 @@ export function RFC2544ConfigForm({
   return (
     <div data-testid={testId} className="stack-lg">
       <FormSection title={t('testConfig.rfc2544.duration.title')}>
-        <div>
-          <label htmlFor="rfc2544-duration" className="flex items-center gap-tight label">
-            {t('testConfig.rfc2544.duration.perTest')}
-            <HelpIcon tooltip={t('help:tooltips.testConfig.rfc2544.duration.perTestHelp')} />
-          </label>
-          <input
-            id="rfc2544-duration"
-            type="number"
-            step={1}
-            {...register('duration', { valueAsNumber: true })}
-            className="mt-tight w-full"
-          />
-          <FieldError message={errors.duration?.message} />
-        </div>
+        <FormField
+          label={t('testConfig.rfc2544.duration.perTest')}
+          hint={t('help:tooltips.testConfig.rfc2544.duration.perTestHelp')}
+          error={errors.duration?.message}
+        >
+          {(control) => (
+            <Input
+              {...control}
+              type="number"
+              step={1}
+              {...register('duration', { valueAsNumber: true })}
+            />
+          )}
+        </FormField>
 
-        <div>
-          <label htmlFor="rfc2544-warmup" className="flex items-center gap-tight label">
-            {t('testConfig.rfc2544.duration.warmup')}
-            <HelpIcon tooltip={t('help:tooltips.testConfig.rfc2544.duration.warmupHelp')} />
-          </label>
-          <input
-            id="rfc2544-warmup"
-            type="number"
-            step={1}
-            {...register('warmup', { valueAsNumber: true })}
-            className="mt-tight w-full"
-          />
-          <FieldError message={errors.warmup?.message} />
-        </div>
+        <FormField
+          label={t('testConfig.rfc2544.duration.warmup')}
+          hint={t('help:tooltips.testConfig.rfc2544.duration.warmupHelp')}
+          error={errors.warmup?.message}
+        >
+          {(control) => (
+            <Input
+              {...control}
+              type="number"
+              step={1}
+              {...register('warmup', { valueAsNumber: true })}
+            />
+          )}
+        </FormField>
 
-        <div>
-          <label htmlFor="rfc2544-trials" className="flex items-center gap-tight label">
-            {t('testConfig.rfc2544.duration.trials')}
-            <HelpIcon tooltip={t('help:tooltips.testConfig.rfc2544.duration.trialsHelp')} />
-          </label>
-          <input
-            id="rfc2544-trials"
-            type="number"
-            step={1}
-            {...register('trials', { valueAsNumber: true })}
-            className="mt-tight w-full"
-          />
-          <FieldError message={errors.trials?.message} />
-        </div>
+        <FormField
+          label={t('testConfig.rfc2544.duration.trials')}
+          hint={t('help:tooltips.testConfig.rfc2544.duration.trialsHelp')}
+          error={errors.trials?.message}
+        >
+          {(control) => (
+            <Input
+              {...control}
+              type="number"
+              step={1}
+              {...register('trials', { valueAsNumber: true })}
+            />
+          )}
+        </FormField>
       </FormSection>
 
       {hasThroughput ? (
         <FormSection title={t('testConfig.rfc2544.throughput.title')}>
-          <div>
-            <label htmlFor="rfc2544-resolution" className="flex items-center gap-tight label">
-              {t('testConfig.rfc2544.throughput.resolution')}
-              <HelpIcon tooltip={t('help:tooltips.testConfig.rfc2544.throughput.resolutionHelp')} />
-            </label>
-            <input
-              id="rfc2544-resolution"
-              type="number"
-              step={0.01}
-              {...register('resolution', { valueAsNumber: true })}
-              className="mt-tight w-full"
-            />
-            <FieldError message={errors.resolution?.message} />
-          </div>
+          <FormField
+            label={t('testConfig.rfc2544.throughput.resolution')}
+            hint={t('help:tooltips.testConfig.rfc2544.throughput.resolutionHelp')}
+            error={errors.resolution?.message}
+          >
+            {(control) => (
+              <Input
+                {...control}
+                type="number"
+                step={0.01}
+                {...register('resolution', { valueAsNumber: true })}
+              />
+            )}
+          </FormField>
 
-          <div>
-            <label htmlFor="rfc2544-maxloss" className="flex items-center gap-tight label">
-              {t('testConfig.rfc2544.throughput.maxLoss')}
-              <HelpIcon tooltip={t('help:tooltips.testConfig.rfc2544.throughput.maxLossHelp')} />
-            </label>
-            <input
-              id="rfc2544-maxloss"
-              type="number"
-              step={0.001}
-              {...register('maxLoss', { valueAsNumber: true })}
-              className="mt-tight w-full"
-            />
-            <FieldError message={errors.maxLoss?.message} />
-          </div>
+          <FormField
+            label={t('testConfig.rfc2544.throughput.maxLoss')}
+            hint={t('help:tooltips.testConfig.rfc2544.throughput.maxLossHelp')}
+            error={errors.maxLoss?.message}
+          >
+            {(control) => (
+              <Input
+                {...control}
+                type="number"
+                step={0.001}
+                {...register('maxLoss', { valueAsNumber: true })}
+              />
+            )}
+          </FormField>
         </FormSection>
       ) : null}
 
       {hasFrameLoss ? (
         <FormSection title={t('testConfig.rfc2544.frameLoss.title')}>
-          <div>
-            <label htmlFor="rfc2544-stepsize" className="flex items-center gap-tight label">
-              {t('testConfig.rfc2544.frameLoss.stepSize')}
-              <HelpIcon tooltip={t('help:tooltips.testConfig.rfc2544.frameLoss.stepSizeHelp')} />
-            </label>
-            <input
-              id="rfc2544-stepsize"
-              type="number"
-              step={1}
-              {...register('stepSize', { valueAsNumber: true })}
-              className="mt-tight w-full"
-            />
-            <FieldError message={errors.stepSize?.message} />
-            <div className="text-xs text-text-muted mt-tight">
-              {t('testConfig.rfc2544.frameLoss.testsAt', {
-                points: Array.from(
-                  { length: Math.floor(100 / Math.max(1, stepSize)) + 1 },
-                  (_, i) => `${i * stepSize}%`,
-                ).join(', '),
-              })}
-            </div>
+          <FormField
+            label={t('testConfig.rfc2544.frameLoss.stepSize')}
+            hint={t('help:tooltips.testConfig.rfc2544.frameLoss.stepSizeHelp')}
+            error={errors.stepSize?.message}
+          >
+            {(control) => (
+              <Input
+                {...control}
+                type="number"
+                step={1}
+                {...register('stepSize', { valueAsNumber: true })}
+              />
+            )}
+          </FormField>
+          <div className="text-xs text-text-muted mt-tight">
+            {t('testConfig.rfc2544.frameLoss.testsAt', {
+              points: Array.from(
+                { length: Math.floor(100 / Math.max(1, stepSize)) + 1 },
+                (_, i) => `${i * stepSize}%`,
+              ).join(', '),
+            })}
           </div>
         </FormSection>
       ) : null}
@@ -237,51 +241,25 @@ export function RFC2544ConfigForm({
       >
         <div className="grid grid-cols-2 gap-compact">
           {FRAME_SIZE_OPTIONS.map((option) => (
-            <Tooltip
-              text={t('testConfig.rfc2544.frameSizes.includeTitle', { size: option.value })}
+            <Checkbox
               key={option.value}
-            >
-              {(description) => (
-                <label className="flex items-center gap-compact pad-xs rounded-lg cursor-pointer hover:bg-surface-hover text-sm">
-                  <input
-                    {...description}
-                    type="checkbox"
-                    checked={frameSizes.includes(option.value)}
-                    onChange={() => toggleFrameSize(option.value)}
-                    aria-label={t('testConfig.common.frameSizeAria', { size: option.value })}
-                    className="w-4 h-4 accent-brand-primary"
-                  />
-                  <span className="text-text-primary">
-                    {t(`testConfig.common.${option.qualifier}`, { size: option.value })}
-                  </span>
-                </label>
-              )}
-            </Tooltip>
+              checked={frameSizes.includes(option.value)}
+              onChange={() => toggleFrameSize(option.value)}
+              label={t(`testConfig.common.${option.qualifier}`, { size: option.value })}
+            />
           ))}
         </div>
         <FieldError message={errors.frameSizes?.message} />
       </FormSection>
 
       <FormSection title={t('testConfig.rfc2544.advanced.title')}>
-        <label className="flex items-center gap-default pad-xs rounded-lg cursor-pointer hover:bg-surface-hover">
-          <input
-            type="checkbox"
-            {...register('bidirectional')}
-            aria-label={t('testConfig.rfc2544.advanced.bidirectionalAria')}
-            className="w-4 h-4 accent-brand-primary"
-          />
-          <div>
-            <div className="font-medium text-sm flex items-center gap-tight">
-              {t('testConfig.rfc2544.advanced.bidirectional')}
-              <HelpIcon
-                tooltip={t('help:tooltips.testConfig.rfc2544.advanced.bidirectionalHelp')}
-              />
-            </div>
-            <div className="text-xs text-text-muted">
-              {t('testConfig.rfc2544.advanced.bidirectionalHint')}
-            </div>
-          </div>
-        </label>
+        <CheckboxField
+          control={control}
+          name="bidirectional"
+          label={t('testConfig.rfc2544.advanced.bidirectional')}
+          description={t('testConfig.rfc2544.advanced.bidirectionalHint')}
+          help={t('help:tooltips.testConfig.rfc2544.advanced.bidirectionalHelp')}
+        />
       </FormSection>
 
       <TestSummary>

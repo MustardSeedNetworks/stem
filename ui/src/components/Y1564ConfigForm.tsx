@@ -1,4 +1,3 @@
-import { Tooltip } from './ui/Tooltip';
 /**
  * @fileoverview Stem - Y.1564 Service Activation Test Configuration
  * @description Advanced configuration form for ITU-T Y.1564 / MEF Service Activation Testing.
@@ -20,6 +19,9 @@ import { EXTENDED_FRAME_SIZE_OPTIONS } from '../forms/frameSizes';
 import { useConfigForm } from '../forms/useConfigForm';
 import { hasGroupTests } from '../lib/testGroups';
 import { Y1564ConfigSchema } from '../schemas/configs';
+import { Checkbox } from '../shared/Checkbox';
+import { FormField } from '../shared/FormField';
+import { Input } from '../shared/Input';
 import { CollapsibleSection } from './CollapsibleSection';
 import { FieldError } from './FieldError';
 import { FormSection } from './FormSection';
@@ -154,118 +156,118 @@ export function Y1564ConfigForm({
       <div className="stack-lg">
         <FormSection title={t('testConfig.y1564.bandwidth.title')}>
           {/* CIR */}
-          <div>
-            <label htmlFor="y1564-cir" className="flex items-center gap-tight label">
-              {t('testConfig.y1564.bandwidth.cir')}
-              <HelpIcon tooltip={t('help:tooltips.testConfig.y1564.bandwidth.cirHelp')} />
-            </label>
-            <input
-              id="y1564-cir"
-              type="number"
-              step={1}
-              {...register('cir', { valueAsNumber: true })}
-              className="mt-tight w-full"
-            />
-            <FieldError message={errors.cir?.message} />
-          </div>
+          <FormField
+            label={t('testConfig.y1564.bandwidth.cir')}
+            hint={t('help:tooltips.testConfig.y1564.bandwidth.cirHelp')}
+            error={errors.cir?.message}
+          >
+            {(control) => (
+              <Input
+                {...control}
+                type="number"
+                step={1}
+                {...register('cir', { valueAsNumber: true })}
+              />
+            )}
+          </FormField>
 
           {/* EIR */}
-          <div>
-            <label htmlFor="y1564-eir" className="flex items-center gap-tight label">
-              {t('testConfig.y1564.bandwidth.eir')}
-              <HelpIcon tooltip={t('help:tooltips.testConfig.y1564.bandwidth.eirHelp')} />
-            </label>
-            <input
-              id="y1564-eir"
-              type="number"
-              step={1}
-              {...register('eir', { valueAsNumber: true })}
-              className="mt-tight w-full"
-            />
-            <FieldError message={errors.eir?.message} />
-          </div>
+          <FormField
+            label={t('testConfig.y1564.bandwidth.eir')}
+            hint={t('help:tooltips.testConfig.y1564.bandwidth.eirHelp')}
+            error={errors.eir?.message}
+          >
+            {(control) => (
+              <Input
+                {...control}
+                type="number"
+                step={1}
+                {...register('eir', { valueAsNumber: true })}
+              />
+            )}
+          </FormField>
 
           {/* CBS */}
-          <div>
-            <label htmlFor="y1564-cbs" className="flex items-center gap-tight label">
-              {t('testConfig.y1564.bandwidth.cbs')}
-              <HelpIcon tooltip={t('help:tooltips.testConfig.y1564.bandwidth.cbsHelp')} />
-            </label>
-            <input
-              id="y1564-cbs"
-              type="number"
-              step={1}
-              {...register('cbs', { valueAsNumber: true })}
-              className="mt-tight w-full"
-            />
-            <FieldError message={errors.cbs?.message} />
-          </div>
+          <FormField
+            label={t('testConfig.y1564.bandwidth.cbs')}
+            hint={t('help:tooltips.testConfig.y1564.bandwidth.cbsHelp')}
+            error={errors.cbs?.message}
+          >
+            {(control) => (
+              <Input
+                {...control}
+                type="number"
+                step={1}
+                {...register('cbs', { valueAsNumber: true })}
+              />
+            )}
+          </FormField>
 
           {/* EBS */}
-          <div>
-            <label htmlFor="y1564-ebs" className="flex items-center gap-tight label">
-              {t('testConfig.y1564.bandwidth.ebs')}
-              <HelpIcon tooltip={t('help:tooltips.testConfig.y1564.bandwidth.ebsHelp')} />
-            </label>
-            <input
-              id="y1564-ebs"
-              type="number"
-              step={1}
-              {...register('ebs', { valueAsNumber: true })}
-              className="mt-tight w-full"
-            />
-            <FieldError message={errors.ebs?.message} />
-          </div>
+          <FormField
+            label={t('testConfig.y1564.bandwidth.ebs')}
+            hint={t('help:tooltips.testConfig.y1564.bandwidth.ebsHelp')}
+            error={errors.ebs?.message}
+          >
+            {(control) => (
+              <Input
+                {...control}
+                type="number"
+                step={1}
+                {...register('ebs', { valueAsNumber: true })}
+              />
+            )}
+          </FormField>
         </FormSection>
 
         <FormSection title={t('testConfig.y1564.sla.title')}>
           {/* Frame Loss Ratio */}
-          <div>
-            <label htmlFor="y1564-flr" className="flex items-center gap-tight label">
-              {t('testConfig.y1564.sla.flr')}
-              <HelpIcon tooltip={t('help:tooltips.testConfig.y1564.sla.flrHelp')} />
-            </label>
-            <input
-              id="y1564-flr"
-              type="number"
-              step={0.001}
-              {...register('flrThreshold', { valueAsNumber: true })}
-              className="mt-tight w-full"
-            />
-            <FieldError message={errors.flrThreshold?.message} />
-          </div>
+          <FormField
+            label={t('testConfig.y1564.sla.flr')}
+            hint={t('help:tooltips.testConfig.y1564.sla.flrHelp')}
+            error={errors.flrThreshold?.message}
+          >
+            {(control) => (
+              <Input
+                {...control}
+                type="number"
+                step={0.001}
+                {...register('flrThreshold', { valueAsNumber: true })}
+              />
+            )}
+          </FormField>
 
           {/* Frame Delay */}
-          <div>
-            <label htmlFor="y1564-fd" className="flex items-center gap-tight label">
-              {t('testConfig.y1564.sla.fd')}
-              <HelpIcon tooltip={t('help:tooltips.testConfig.y1564.sla.fdHelp')} />
-            </label>
-            <input
-              id="y1564-fd"
-              type="number"
-              step={1}
-              {...register('fdThreshold', { valueAsNumber: true })}
-              className="mt-tight w-full"
-            />
-            <FieldError message={errors.fdThreshold?.message} />
-          </div>
+          <FormField
+            label={t('testConfig.y1564.sla.fd')}
+            hint={t('help:tooltips.testConfig.y1564.sla.fdHelp')}
+            error={errors.fdThreshold?.message}
+          >
+            {(control) => (
+              <Input
+                {...control}
+                type="number"
+                step={1}
+                {...register('fdThreshold', { valueAsNumber: true })}
+              />
+            )}
+          </FormField>
 
           {/* Frame Delay Variation */}
-          <div>
-            <label htmlFor="y1564-fdv" className="flex items-center gap-tight label">
-              {t('testConfig.y1564.sla.fdv')}
-              <HelpIcon tooltip={t('help:tooltips.testConfig.y1564.sla.fdvHelp')} />
-            </label>
-            <input
-              id="y1564-fdv"
-              type="number"
-              step={1}
-              {...register('fdvThreshold', { valueAsNumber: true })}
-              className="mt-tight w-full"
-            />
-            <FieldError message={errors.fdvThreshold?.message} />
-          </div>
+          <FormField
+            label={t('testConfig.y1564.sla.fdv')}
+            hint={t('help:tooltips.testConfig.y1564.sla.fdvHelp')}
+            error={errors.fdvThreshold?.message}
+          >
+            {(control) => (
+              <Input
+                {...control}
+                type="number"
+                step={1}
+                {...register('fdvThreshold', { valueAsNumber: true })}
+              />
+            )}
+          </FormField>
         </FormSection>
 
         <FormSection
@@ -274,26 +276,12 @@ export function Y1564ConfigForm({
         >
           <div className="grid grid-cols-2 gap-compact">
             {EXTENDED_FRAME_SIZE_OPTIONS.map((option) => (
-              <Tooltip
-                text={t('testConfig.y1564.frameSizes.includeTitle', { size: option.value })}
+              <Checkbox
                 key={option.value}
-              >
-                {(description) => (
-                  <label className="flex items-center gap-compact pad-xs rounded-lg cursor-pointer hover:bg-surface-hover text-sm">
-                    <input
-                      {...description}
-                      type="checkbox"
-                      checked={frameSizes.includes(option.value)}
-                      onChange={() => toggleFrameSize(option.value)}
-                      aria-label={t('testConfig.common.frameSizeAria', { size: option.value })}
-                      className="w-4 h-4 accent-brand-primary"
-                    />
-                    <span className="text-text-primary">
-                      {t(`testConfig.common.${option.qualifier}`, { size: option.value })}
-                    </span>
-                  </label>
-                )}
-              </Tooltip>
+                checked={frameSizes.includes(option.value)}
+                onChange={() => toggleFrameSize(option.value)}
+                label={t(`testConfig.common.${option.qualifier}`, { size: option.value })}
+              />
             ))}
           </div>
           <FieldError message={errors.frameSizes?.message} />
@@ -301,47 +289,51 @@ export function Y1564ConfigForm({
 
         <FormSection title={t('testConfig.y1564.duration.title')}>
           {isConfigTest || isFullTest ? (
-            <div>
-              <label htmlFor="y1564-config-duration" className="flex items-center gap-tight label">
-                {t('testConfig.y1564.duration.configStep')}
-                <HelpIcon tooltip={t('help:tooltips.testConfig.y1564.duration.configStepHelp')} />
-              </label>
-              <input
-                id="y1564-config-duration"
-                type="number"
-                step={1}
-                {...register('configStepDuration', { valueAsNumber: true })}
-                className="mt-tight w-full"
-              />
-              <FieldError message={errors.configStepDuration?.message} />
+            <>
+              <FormField
+                label={t('testConfig.y1564.duration.configStep')}
+                hint={t('help:tooltips.testConfig.y1564.duration.configStepHelp')}
+                error={errors.configStepDuration?.message}
+              >
+                {(control) => (
+                  <Input
+                    {...control}
+                    type="number"
+                    step={1}
+                    {...register('configStepDuration', { valueAsNumber: true })}
+                  />
+                )}
+              </FormField>
               <div className="text-xs text-text-muted mt-tight">
                 {t('testConfig.y1564.duration.configTotal', {
                   seconds: configStepDuration * 4 * frameSizes.length,
                 })}
               </div>
-            </div>
+            </>
           ) : null}
 
           {isPerfTest || isFullTest ? (
-            <div>
-              <label htmlFor="y1564-perf-duration" className="flex items-center gap-tight label">
-                {t('testConfig.y1564.duration.perf')}
-                <HelpIcon tooltip={t('help:tooltips.testConfig.y1564.duration.perfHelp')} />
-              </label>
-              <input
-                id="y1564-perf-duration"
-                type="number"
-                step={60}
-                {...register('perfTestDuration', { valueAsNumber: true })}
-                className="mt-tight w-full"
-              />
-              <FieldError message={errors.perfTestDuration?.message} />
+            <>
+              <FormField
+                label={t('testConfig.y1564.duration.perf')}
+                hint={t('help:tooltips.testConfig.y1564.duration.perfHelp')}
+                error={errors.perfTestDuration?.message}
+              >
+                {(control) => (
+                  <Input
+                    {...control}
+                    type="number"
+                    step={60}
+                    {...register('perfTestDuration', { valueAsNumber: true })}
+                  />
+                )}
+              </FormField>
               <div className="text-xs text-text-muted mt-tight">
                 {t('testConfig.y1564.duration.perfMinutes', {
                   minutes: Math.floor(perfTestDuration / 60),
                 })}
               </div>
-            </div>
+            </>
           ) : null}
         </FormSection>
 

@@ -1,32 +1,32 @@
-import { Tooltip } from './ui/Tooltip';
 /**
  * SettingsDrawer Component
  *
- * Slimmed configuration panel for Stem.
+ * Configuration panel for Stem: the shared RightDrawer with SettingsTabs.
  *
- * After the #66 redesign the drawer holds only app-global concerns:
- *   - License management
- *   - Automatic updates (ADR-0012)
- *   - Test-suite configuration (RFC 2544, Y.1564, etc.)
+ * The drawer holds app-global concerns, one tab each:
+ *   - General: theme, language, automatic updates (ADR-0012)
+ *   - License: license management
+ *   - Tests: test-suite configuration (RFC 2544, Y.1564, etc.), shown only to
+ *     a Test Master. A Reflector stem picks its profile on the Reflector page.
  *
- * Role selection moved to the header RoleChip. Interface selection
- * moved to the top-bar HeaderInterfaceSelector. Reflector profile
- * moved to the Reflector page. Uses theme tokens for consistent
- * styling.
+ * Role selection lives in the header RoleChip, interface selection in the
+ * HeaderInterfaceSelector.
  */
 
-import { Grid, List, X } from 'lucide-react';
+import { Cog, FlaskConical, KeyRound } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRole } from '../contexts/RoleContext';
-import { useFocusTrap } from '../hooks/useFocusTrap';
-import { cn, radius, spacing } from '../styles/theme';
+import { RightDrawer } from '../shared/RightDrawer';
+import { SegmentedControl } from '../shared/SegmentedControl';
+import { SettingsTabs } from '../shared/SettingsTabs';
 import { LicenseSection } from './LicenseSection';
 import { ModuleSelector } from './ModuleSelector';
 import type { RFC2544Config } from './RFC2544ConfigForm';
 import type { RFC2889Config } from './RFC2889ConfigForm';
 import type { RFC6349Config } from './RFC6349ConfigForm';
 import {
+  AppearanceSection,
   LanguageSection,
   MEFSection,
   RFC2544Section,
@@ -64,6 +64,7 @@ interface SettingsDrawerProps {
   setTrafficGenConfig: (config: TrafficGenConfig) => void;
 }
 
+type TabId = 'general' | 'license' | 'tests';
 type ViewMode = 'standard' | 'module';
 
 export function SettingsDrawer({
@@ -85,15 +86,11 @@ export function SettingsDrawer({
   setTSNConfig,
   trafficGenConfig,
   setTrafficGenConfig,
-}: SettingsDrawerProps): React.ReactElement | null {
+}: SettingsDrawerProps): React.ReactElement {
   const { t } = useTranslation(['common', 'settings']);
   const { role } = useRole();
+  const [tab, setTab] = useState<TabId>('general');
   const [viewMode, setViewMode] = useState<ViewMode>('standard');
-
-  const drawerRef = useFocusTrap<HTMLDivElement>({
-    isActive: isOpen,
-    onEscape: onClose,
-  });
 
   const toggleTest = useCallback(
     (testId: string): void => {
@@ -106,78 +103,61 @@ export function SettingsDrawer({
     [selectedTests, setSelectedTests],
   );
 
-  if (!isOpen) {
-    return null;
-  }
+  const isTestMaster = role === 'test_master';
+  const tabs = [
+    { id: 'general', label: t('settings:tabs.general'), icon: <Cog className="h-4 w-4" /> },
+    { id: 'license', label: t('settings:tabs.license'), icon: <KeyRound className="h-4 w-4" /> },
+    ...(isTestMaster
+      ? [
+          {
+            id: 'tests',
+            label: t('settings:tabs.tests'),
+            icon: <FlaskConical className="h-4 w-4" />,
+          },
+        ]
+      : []),
+  ];
 
   return (
-    <>
-      {/* Backdrop */}
-      <Tooltip text={t('accessibility.closeSettings')}>
-        <button
-          type="button"
-          className="fixed inset-0 bg-scrim/50 z-40 cursor-default"
-          onClick={onClose}
-          aria-label={t('accessibility.closeSettings')}
-        />
-      </Tooltip>
-
-      {/* Drawer */}
-      <div
-        ref={drawerRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="settings-drawer-title"
-        data-testid="settings-drawer"
-        className="fixed right-0 top-0 h-full w-96 max-w-full bg-surface-raised border-l border-surface-border z-50 overflow-y-auto animate-slide-in"
+    <RightDrawer
+      open={isOpen}
+      onClose={onClose}
+      title={t('settings:title')}
+      closeLabel={t('accessibility.closeSettings')}
+      data-testid="settings-drawer"
+    >
+      <SettingsTabs
+        tabs={tabs}
+        value={tab}
+        onChange={(id): void => setTab(id as TabId)}
+        label={t('settings:tabs.label')}
       >
-        {/* Header */}
-        <div className="sticky top-0 bg-surface-raised border-b border-surface-border px-4 py-row-lg flex-between">
-          <h2 id="settings-drawer-title" className="heading-3 text-text-primary">
-            {t('settings:title')}
-          </h2>
-          <Tooltip text={t('accessibility.closeSettings')}>
-            <button
-              type="button"
-              onClick={onClose}
-              data-testid="settings-drawer-close"
-              className={cn(
-                spacing.pad.sm,
-                'hover:bg-surface-hover',
-                radius.lg,
-                'transition-colors',
-              )}
-              aria-label={t('accessibility.closeSettings')}
-            >
-              <X className="w-5 h-5 text-text-muted" aria-hidden="true" />
-            </button>
-          </Tooltip>
-        </div>
-
-        {/* Content */}
-        <div className={cn(spacing.pad.default, 'stack-lg')}>
-          {/* License Section */}
-          <LicenseSection />
-
-          <UpdateSection />
-
-          <LanguageSection />
-
-          {/* Test-Master test selection — only relevant when this stem
-              is configured as a Test Master. Reflector role gets its
-              picker on the Reflector page. */}
-          {role === 'test_master' && (
+        <div className="stack-lg">
+          {tab === 'general' ? (
             <>
-              {/* View Toggle */}
-              <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
+              <AppearanceSection />
+              <LanguageSection />
+              <UpdateSection />
+            </>
+          ) : null}
 
-              {/* Module View */}
-              {viewMode === 'module' && (
+          {tab === 'license' ? <LicenseSection /> : null}
+
+          {tab === 'tests' && isTestMaster ? (
+            <>
+              <SegmentedControl
+                label={t('settings:viewBy')}
+                value={viewMode}
+                onChange={(value): void => setViewMode(value as ViewMode)}
+                options={[
+                  { value: 'standard', label: t('settings:viewStandard') },
+                  { value: 'module', label: t('settings:viewModule') },
+                ]}
+              />
+
+              {viewMode === 'module' ? (
                 <ModuleSelector selectedTests={selectedTests} setSelectedTests={setSelectedTests} />
-              )}
-
-              {/* Standard View - Tests by Standard */}
-              {viewMode === 'standard' && (
+              ) : (
                 <>
                   <RFC2544Section
                     selectedTests={selectedTests}
@@ -232,61 +212,10 @@ export function SettingsDrawer({
                 </>
               )}
             </>
-          )}
+          ) : null}
         </div>
-      </div>
-    </>
-  );
-}
-
-// =============================================================================
-// View Toggle Sub-component
-// =============================================================================
-
-interface ViewToggleProps {
-  viewMode: ViewMode;
-  onViewModeChange: (mode: ViewMode) => void;
-}
-
-function ViewToggle({ viewMode, onViewModeChange }: ViewToggleProps): React.ReactElement {
-  const { t } = useTranslation(['common', 'settings']);
-
-  return (
-    <div className={cn('flex-between', spacing.pad.sm, 'bg-surface-base', radius.lg, 'mb-2')}>
-      <span className="body-small text-text-muted">{t('settings:viewBy')}:</span>
-      <div className={cn('flex', radius.lg, 'overflow-hidden border border-surface-border')}>
-        <Tooltip text={t('settings:viewStandardHint')}>
-          <button
-            type="button"
-            onClick={(): void => onViewModeChange('standard')}
-            className={cn(
-              'flex items-center gap-tight px-3 py-compact-md caption',
-              viewMode === 'standard'
-                ? 'bg-brand-primary text-on-brand'
-                : 'bg-surface-raised text-text-secondary hover:bg-surface-hover',
-            )}
-          >
-            <List className="w-3 h-3" aria-hidden="true" />
-            {t('settings:viewStandard')}
-          </button>
-        </Tooltip>
-        <Tooltip text={t('settings:viewModuleHint')}>
-          <button
-            type="button"
-            onClick={(): void => onViewModeChange('module')}
-            className={cn(
-              'flex items-center gap-tight px-3 py-compact-md caption',
-              viewMode === 'module'
-                ? 'bg-brand-primary text-on-brand'
-                : 'bg-surface-raised text-text-secondary hover:bg-surface-hover',
-            )}
-          >
-            <Grid className="w-3 h-3" aria-hidden="true" />
-            {t('settings:viewModule')}
-          </button>
-        </Tooltip>
-      </div>
-    </div>
+      </SettingsTabs>
+    </RightDrawer>
   );
 }
 

@@ -1,11 +1,11 @@
 /**
  * TestCheckbox Component
  *
- * Reusable checkbox for test selection with tooltip support.
+ * Reusable checkbox for test selection, with the test's help beside it.
  * Used across all test section components.
  */
 
-import { cn, radius, spacing } from '../../styles/theme';
+import { Checkbox } from '../../shared/Checkbox';
 import { HelpIcon } from '../HelpIcon';
 import type { TestDefinition } from './types';
 
@@ -17,30 +17,16 @@ interface TestCheckboxProps {
 
 export function TestCheckbox({ test, checked, onChange }: TestCheckboxProps): React.JSX.Element {
   return (
-    <label
-      className={cn(
-        'flex items-start gap-default',
-        spacing.pad.sm,
-        radius.lg,
-        'cursor-pointer hover:bg-surface-hover transition-colors',
-      )}
-    >
-      <input
-        type="checkbox"
-        data-testid={`test-checkbox-${test.id}`}
+    <div className="flex items-start gap-1 rounded-lg p-2 hover:bg-surface-hover">
+      <Checkbox
+        className="min-w-0 flex-1"
         checked={checked}
         onChange={onChange}
-        aria-label={`Toggle ${test.name}`}
-        className="mt-0.5 w-4 h-4 accent-brand-primary"
+        label={test.name}
+        description={test.desc}
       />
-      <div className="flex-1">
-        <div className="body-small font-medium text-text-primary flex items-center gap-tight">
-          {test.name}
-          <HelpIcon tooltip={test.tooltip} />
-        </div>
-        <div className="caption text-text-muted">{test.desc}</div>
-      </div>
-    </label>
+      <HelpIcon tooltip={test.tooltip} />
+    </div>
   );
 }
 

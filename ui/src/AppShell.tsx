@@ -30,11 +30,10 @@ import { useRecordTestResult } from './stores/history-store';
 import { useShellStore } from './stores/shell-store';
 import { useTestStore } from './stores/test-store';
 import type { Stats, TestResult } from './types/api';
-import { Breadcrumbs } from './ui/Breadcrumbs';
 import { DaemonUnreachableBanner } from './ui/DaemonUnreachableBanner';
 import { NotFoundPanel } from './ui/NotFoundPanel';
-import { PageHeader } from './ui/PageHeader';
 import { PageLoader } from './ui/PageLoader';
+import { RoutedPageHeader } from './ui/RoutedPageHeader';
 import { type RailStatus, SidebarLayout } from './ui/Sidebar';
 import { routeForPathname, useOpenHelp } from './useOpenHelp';
 
@@ -163,7 +162,7 @@ export function AppShell({
                 key={page.path}
                 path={page.path}
                 element={
-                  <PageWithHeader page={page}>
+                  <PageWithHeader page={page} testStatus={testStatus} testResult={testResult}>
                     <page.component />
                   </PageWithHeader>
                 }
@@ -172,12 +171,6 @@ export function AppShell({
             <Route path="*" element={<NotFoundPanel />} />
           </Routes>
         </Suspense>
-
-        {/* Pinned below the routed page so test outcomes stay visible no
-        matter which page is active. */}
-        <div className="mt-6">
-          <TestResults testStatus={testStatus} result={testResult} />
-        </div>
       </SidebarLayout>
 
       {settingsLoaded ? (
@@ -215,15 +208,27 @@ export function AppShell({
 }
 
 /**
- * PageWithHeader renders the section frame every routed page shares —
- * breadcrumbs plus the page header — from the registry entry rather
- * than from the page body. Pages render only their own content.
+ * PageWithHeader renders the section frame every routed page shares — the
+ * page header — from the registry entry rather than from the page body. Pages
+ * render only their own content. A page that runs a test carries the run
+ * controls under its header and the outcome below its body; the others have
+ * no test outcome to show, so they carry no results region.
  *
  * It also owns `document.title`, so tabs, bookmarks and history entries
  * name the route rather than all reading the product name from index.html
  * (#1260). The title is the rail label, the same string the user clicked.
  */
-function PageWithHeader({ page, children }: { page: PageConfig; children: ReactNode }) {
+function PageWithHeader({
+  page,
+  testStatus,
+  testResult,
+  children,
+}: {
+  page: PageConfig;
+  testStatus: Stats['testStatus'];
+  testResult: TestResult | null;
+  children: ReactNode;
+}) {
   const openHelp = useOpenHelp();
   const { t } = useTranslation('common');
   const productName = t('app.title');
@@ -234,17 +239,16 @@ function PageWithHeader({ page, children }: { page: PageConfig; children: ReactN
 
   return (
     <section className="stack-xl">
-      <Breadcrumbs />
-      <PageHeader
-        icon={page.icon}
-        iconColorClass={page.iconColorClass}
-        eyebrow={page.eyebrow}
-        title={page.title}
-        description={page.description}
+      <RoutedPageHeader
+        kicker={page.eyebrow}
+        title={page.label}
+        section={page.section}
+        subtitle={page.description}
         onHelp={openHelp}
       />
       {page.runControls ? <TestRunControls /> : null}
       {children}
+      {page.runControls ? <TestResults testStatus={testStatus} result={testResult} /> : null}
     </section>
   );
 }

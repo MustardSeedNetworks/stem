@@ -1,4 +1,4 @@
-import { Tooltip } from './ui/Tooltip';
+import { Tooltip } from '../shared/Tooltip';
 
 /**
  * @fileoverview Stem - License Section Component
@@ -7,15 +7,20 @@ import { Tooltip } from './ui/Tooltip';
  */
 
 import type { TFunction } from 'i18next';
-import { AlertTriangle, CheckCircle, Clock, Key, Loader2, Shield } from 'lucide-react';
+import { Clock, Shield } from 'lucide-react';
 import type { ReactElement } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LICENSE_ENDPOINT } from '../contexts/LicenseContext';
+import { Alert } from '../shared/Alert';
+import { Button } from '../shared/Button';
+import { Card } from '../shared/Card';
+import { CategoryChip } from '../shared/CategoryChip';
+import { FormField } from '../shared/FormField';
+import { Input } from '../shared/Input';
+import { StatusPill } from '../shared/StatusPill';
 import { authFetch } from '../stores/auth-store';
 import type { LicenseStatus } from '../types/generated/license-status';
-import { CollapsibleSection } from './CollapsibleSection';
-import { Button } from './ui/Button';
 
 /**
  * The wire type, generated from the Go DTO rather than re-typed here: the
@@ -72,19 +77,18 @@ interface LicenseStatusProps {
 function LicenseStatusBadge({ licenseInfo }: LicenseStatusProps): ReactElement {
   const { t } = useTranslation(['common', 'settings', 'errors']);
   return (
-    <div className="flex items-center gap-compact">
+    <div className="flex items-center gap-2">
       {licenseInfo.activated ? (
-        <span className="status-badge success">
-          <CheckCircle className="w-3 h-3" />
-          {licenseInfo.isTrialMode
-            ? t('settings:license.trialActive')
-            : t('settings:license.licensed')}
-        </span>
+        <StatusPill
+          tone="success"
+          label={
+            licenseInfo.isTrialMode
+              ? t('settings:license.trialActive')
+              : t('settings:license.licensed')
+          }
+        />
       ) : (
-        <span className="status-badge warning">
-          <AlertTriangle className="w-3 h-3" />
-          {t('settings:license.notActivated')}
-        </span>
+        <StatusPill tone="warning" label={t('settings:license.notActivated')} />
       )}
       {licenseInfo.activated ? (
         <span className="text-sm text-text-muted">{tierName(licenseInfo.tier, t)}</span>
@@ -100,7 +104,7 @@ function LicenseDetails({ licenseInfo }: LicenseStatusProps): ReactElement | nul
   }
 
   return (
-    <div className="bg-surface-hover rounded-md pad-sm text-sm stack-xs">
+    <dl className="stack-xs border-t border-hairline pt-3 text-sm">
       <div className="flex justify-between">
         <span className="text-text-muted">{t('settings:license.tier')}</span>
         <span className="font-medium">{tierName(licenseInfo.tier, t)}</span>
@@ -108,7 +112,7 @@ function LicenseDetails({ licenseInfo }: LicenseStatusProps): ReactElement | nul
       {licenseInfo.isTrialMode ? (
         <div className="flex justify-between">
           <span className="text-text-muted">{t('settings:license.daysRemaining')}</span>
-          <span className="font-medium text-status-warning">
+          <span className="font-medium text-status-warning-strong">
             {t('settings:license.daysCount', { count: licenseInfo.daysRemaining })}
           </span>
         </div>
@@ -125,7 +129,7 @@ function LicenseDetails({ licenseInfo }: LicenseStatusProps): ReactElement | nul
         <span className="text-text-muted">{t('settings:license.deviceId')}</span>
         <span className="font-mono text-xs">{licenseInfo.deviceHash.slice(0, 8)}...</span>
       </div>
-    </div>
+    </dl>
   );
 }
 
@@ -140,12 +144,7 @@ function LicenseFeatures({ licenseInfo }: LicenseStatusProps): ReactElement | nu
       <div className="text-sm text-text-muted mb-2">{t('settings:license.enabledFeatures')}</div>
       <div className="flex flex-wrap gap-tight">
         {licenseInfo.features.map((feature) => (
-          <span
-            key={feature}
-            className="px-cell py-0.5 text-xs bg-brand-primary/10 text-brand-primary-strong rounded-full"
-          >
-            {feature}
-          </span>
+          <CategoryChip key={feature} label={feature} />
         ))}
       </div>
     </div>
@@ -171,39 +170,44 @@ function ActivationForm({
 }: ActivationFormProps): ReactElement {
   const { t } = useTranslation(['common', 'settings', 'errors']);
   return (
-    <div className="border-t border-surface-border pt-section stack">
-      <div className="text-sm font-medium">{t('settings:license.activate')}</div>
-
-      <div>
-        <input
-          type="text"
-          value={licenseKey}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-            onKeyChange(e.target.value.trim())
-          }
-          placeholder="MSN1.<payload>.<signature>"
-          className="font-mono"
-        />
-      </div>
+    <div className="stack border-t border-hairline pt-4">
+      <FormField label={t('settings:license.enterKey')}>
+        {(control) => (
+          <Input
+            {...control}
+            type="text"
+            value={licenseKey}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+              onKeyChange(e.target.value.trim())
+            }
+            placeholder="MSN1.<payload>.<signature>"
+            className="font-mono"
+          />
+        )}
+      </FormField>
 
       <Tooltip text={t('settings:license.activateTooltip')}>
-        <Button onClick={onActivate} disabled={loading || !licenseKey.trim()} className="w-full">
-          {loading ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" /> {t('settings:license.activating')}
-            </>
-          ) : (
-            <>
-              <Shield className="w-4 h-4" /> {t('settings:license.activate')}
-            </>
-          )}
+        <Button
+          variant="primary"
+          onClick={onActivate}
+          loading={loading}
+          disabled={!licenseKey.trim()}
+          icon={<Shield className="h-4 w-4" />}
+          className="w-full"
+        >
+          {loading ? t('settings:license.activating') : t('settings:license.activate')}
         </Button>
       </Tooltip>
 
       {showTrial ? (
         <Tooltip text={t('settings:license.trialTooltip', { days: TRIAL_DAYS })}>
-          <Button onClick={onStartTrial} disabled={loading} variant="outline" className="w-full">
-            <Clock className="w-4 h-4" />
+          <Button
+            onClick={onStartTrial}
+            disabled={loading}
+            variant="secondary"
+            icon={<Clock className="h-4 w-4" />}
+            className="w-full"
+          >
             {t('settings:license.startTrialDays', { days: TRIAL_DAYS })}
           </Button>
         </Tooltip>
@@ -224,16 +228,8 @@ function MessageDisplay({ error, success }: MessageDisplayProps): ReactElement |
 
   return (
     <>
-      {error ? (
-        <div className="text-sm text-status-error-strong bg-status-error/10 pad-xs rounded">
-          {error}
-        </div>
-      ) : null}
-      {success ? (
-        <div className="text-sm text-status-success-strong bg-status-success/10 pad-xs rounded">
-          {success}
-        </div>
-      ) : null}
+      {error ? <Alert tone="error">{error}</Alert> : null}
+      {success ? <Alert tone="success">{success}</Alert> : null}
     </>
   );
 }
@@ -333,15 +329,7 @@ export function LicenseSection(): ReactElement {
   const showTrialButton = !licenseInfo?.activated;
 
   return (
-    <CollapsibleSection
-      title={
-        <div className="flex items-center gap-compact">
-          <Key className="w-4 h-4" />
-          <span>{t('settings:license.sectionTitle')}</span>
-        </div>
-      }
-      defaultOpen={true}
-    >
+    <Card title={t('settings:license.sectionTitle')} data-testid="license-section">
       <div className="stack-lg">
         {licenseInfo ? (
           <div className="stack">
@@ -366,6 +354,6 @@ export function LicenseSection(): ReactElement {
 
         <MessageDisplay error={error} success={success} />
       </div>
-    </CollapsibleSection>
+    </Card>
   );
 }

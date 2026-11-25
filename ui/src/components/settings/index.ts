@@ -5,6 +5,7 @@
  * Follows Seed patterns for profile-based settings.
  */
 
+export { AppearanceSection } from './AppearanceSection';
 export { InterfaceSection } from './InterfaceSection';
 export { LanguageSection } from './LanguageSection';
 
