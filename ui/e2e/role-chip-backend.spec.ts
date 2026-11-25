@@ -89,7 +89,7 @@ test.describe('RoleChip backend wiring', () => {
 
     // Click test_master, then confirm the ConfirmModal.
     await testMasterChip.click();
-    await page.getByTestId('confirm-modal-confirm').click();
+    await page.getByTestId('confirm-dialog').getByRole('button', { name: 'Switch role' }).click();
 
     // Wait for the POST to have happened and the chip to reflect
     // the server's echoed mode.
@@ -127,7 +127,7 @@ test.describe('RoleChip backend wiring', () => {
     // test_master so the request actually fires (clicking the
     // already-active chip is a no-op).
     await testMasterChip.click();
-    await page.getByTestId('confirm-modal-confirm').click();
+    await page.getByTestId('confirm-dialog').getByRole('button', { name: 'Switch role' }).click();
 
     // The inline error appears with the backend reason.
     const errorTag = roleControl(page, 'role-chip-error');
