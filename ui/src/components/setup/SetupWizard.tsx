@@ -1,4 +1,4 @@
-import { Tooltip } from '../ui/Tooltip';
+import { Tooltip } from '../../shared/Tooltip';
 /**
  * @fileoverview Initial Setup Wizard Component
  * @description Guides users through the first-time setup process for Stem application.
@@ -12,8 +12,8 @@ import { type SubmitHandler, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { type StemRole, useRole } from '../../contexts/RoleContext';
 import { SetupWizardSchema } from '../../schemas/auth';
+import { Button } from '../../shared/Button';
 import { deadlineExpired, requestDeadline } from '../../utils/http';
-import { Button } from '../ui/Button';
 
 /** Minimum password length (matches backend validation) */
 const MIN_PASSWORD_LENGTH = 12;

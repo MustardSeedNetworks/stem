@@ -329,7 +329,8 @@
         "backToBack": "Back-to-Back",
         "systemRecovery": "System Recovery",
         "reset": "Reset"
-      }
+      },
+      "title": "RFC 2544 Configuration"
     },
     "y1564": {
       "title": "Y.1564 / MEF Configuration",
@@ -532,7 +533,8 @@
         "scheduling": "Scheduling: Cycle {{cycle}} | TC {{trafficClass}}",
         "schedulingPreemption": "Scheduling: Cycle {{cycle}} | TC {{trafficClass}} | Preemption enabled",
         "duration": "Duration: {{duration}}s + {{warmup}}s warmup"
-      }
+      },
+      "title": "TSN Configuration"
     }
   },
   "tabs": {

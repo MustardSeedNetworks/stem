@@ -66,6 +66,7 @@ export function TrafficGenSection({
           {hasSelectedTests && (
             <div className="border-t border-surface-border pt-section">
               <TrafficGenConfigForm
+                testId="trafficgen-config-form-drawer"
                 config={config}
                 setConfig={onConfigChange}
                 selectedTests={selectedTests}

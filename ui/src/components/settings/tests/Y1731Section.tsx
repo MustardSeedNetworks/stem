@@ -77,6 +77,7 @@ export function Y1731Section({
           {hasSelectedTests && (
             <div className="border-t border-surface-border pt-section">
               <Y1731ConfigForm
+                testId="y1731-config-form-drawer"
                 config={config}
                 setConfig={onConfigChange}
                 selectedTests={selectedTests}

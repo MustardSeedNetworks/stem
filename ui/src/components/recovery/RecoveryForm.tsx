@@ -1,4 +1,4 @@
-import { Tooltip } from '../ui/Tooltip';
+import { Tooltip } from '../../shared/Tooltip';
 /**
  * @fileoverview Password Recovery Form Component
  * @description Allows admin to recover password using filesystem-based token.

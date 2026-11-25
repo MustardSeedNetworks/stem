@@ -3,7 +3,6 @@
  * @description Migrated to react-hook-form + valibot per #325.
  */
 
-import { Gauge } from 'lucide-react';
 import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { FrameSizeOption } from '../forms/frameSizes';
@@ -12,7 +11,6 @@ import { hasGroupTests } from '../lib/testGroups';
 import { Y1731ConfigSchema } from '../schemas/configs';
 import { FormField } from '../shared/FormField';
 import { Input } from '../shared/Input';
-import { CollapsibleSection } from './CollapsibleSection';
 import { CheckboxField, NumberSelectField } from './ConfigFormFields';
 import { FormSection } from './FormSection';
 import { TestSummary } from './TestSummary';
@@ -73,12 +71,15 @@ interface Y1731ConfigFormProps {
   config: Y1731Config;
   setConfig: (config: Y1731Config) => void;
   selectedTests: string[];
+  /** Overrides the root test id: the drawer and the page can both render this form at once. */
+  testId?: string;
 }
 
 export function Y1731ConfigForm({
   config,
   setConfig,
   selectedTests,
+  testId = 'y1731-config-form',
 }: Y1731ConfigFormProps): ReactElement | null {
   const hasY1731Tests = hasGroupTests('y1731', selectedTests);
 
@@ -116,16 +117,7 @@ export function Y1731ConfigForm({
   const hasLoopback = selectedTests.includes('y1731_loopback');
 
   return (
-    <CollapsibleSection
-      testId="y1731-config-form"
-      title={
-        <div className="flex items-center gap-compact">
-          <Gauge className="w-4 h-4" />
-          <span>{t('testConfig.y1731.title')}</span>
-        </div>
-      }
-      defaultOpen={true}
-    >
+    <div data-testid={testId}>
       <div className="stack-lg">
         <FormSection title={t('testConfig.y1731.mep.title')}>
           <div className="grid grid-cols-3 gap-default">
@@ -307,7 +299,7 @@ export function Y1731ConfigForm({
           <div>{t('testConfig.y1731.summary.duration', { duration })}</div>
         </TestSummary>
       </div>
-    </CollapsibleSection>
+    </div>
   );
 }
 

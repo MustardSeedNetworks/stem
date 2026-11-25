@@ -1,18 +1,27 @@
 /**
- * HistoryPage — List + detail.
+ * HistoryPage — a table of completed runs and the selected run's detail.
  *
- * Every completed run is a record: the list carries test type, module and
- * verdict; the detail pane carries the verdict, the error when there is one,
- * and the run's metrics.
+ * Every completed run is a record: the table carries test type, module, time
+ * and verdict; the detail card carries the verdict, the error when there is
+ * one, and the run's metrics.
  *
  * The archive used to live in a drawer while this page showed only the last
  * result. One thing, two surfaces — so the drawer is gone and the page owns
  * it, which is also what the shell convention says (History is a nav item).
  */
 
+import { History } from 'lucide-react';
 import { type JSX, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '../components/ui/Button';
+import { useTableLabels } from '../hooks/useTableLabels';
+import { Alert } from '../shared/Alert';
+import { Button } from '../shared/Button';
+import { Card } from '../shared/Card';
+import { ConfirmDialog } from '../shared/ConfirmDialog';
+import { DataTable, type DataTableColumn } from '../shared/DataTable';
+import { EmptyState } from '../shared/EmptyState';
+import { SegmentedControl } from '../shared/SegmentedControl';
+import { StatusPill, type StatusTone } from '../shared/StatusPill';
 import {
   downloadFile,
   exportFileName,
@@ -20,16 +29,6 @@ import {
   historyToJson,
 } from '../stores/history-export';
 import { HISTORY_MAX_ITEMS, type HistoricalResult, useHistoryStore } from '../stores/history-store';
-import {
-  DetailEmpty,
-  DetailFacts,
-  DetailPane,
-  FilterChip,
-  ListDetail,
-  RecordPane,
-  RecordRow,
-  type RecordState,
-} from '../ui/ListDetail';
 
 type Facet = 'all' | 'failed';
 
@@ -38,18 +37,11 @@ type Facet = 'all' | 'failed';
  * on the wire, and treating a missing verdict as success is how a broken run
  * comes to look like a good one.
  */
-function runState(result: HistoricalResult): RecordState {
+function runTone(result: HistoricalResult): StatusTone {
   if (result.success === undefined) {
     return 'unknown';
   }
-  return result.success ? 'ok' : 'crit';
-}
-
-function verdict(result: HistoricalResult): string {
-  if (result.success === undefined) {
-    return '—';
-  }
-  return result.success ? 'PASS' : 'FAIL';
+  return result.success ? 'success' : 'error';
 }
 
 function formatDuration(ms?: number): string {
@@ -73,172 +65,203 @@ function formatWhen(iso?: string): string {
 
 export function HistoryPage(): JSX.Element {
   const { t } = useTranslation('pages');
+  const { t: tCommon } = useTranslation('common');
   const results = useHistoryStore((s) => s.results);
   const remove = useHistoryStore((s) => s.remove);
   const clear = useHistoryStore((s) => s.clear);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [facet, setFacet] = useState<Facet>('all');
+  const [confirm, setConfirm] = useState<'delete' | 'clear' | null>(null);
+  const tableLabels = useTableLabels<HistoricalResult>((row) => row.testType);
 
+  const failedCount = results.filter((r) => r.success === false).length;
   const shown = facet === 'failed' ? results.filter((r) => r.success === false) : results;
   const selected = shown.find((r) => r.id === selectedId) ?? shown[0] ?? null;
 
+  const verdictLabel = (result: HistoricalResult): string => {
+    if (result.success === undefined) {
+      return t('history.noVerdict');
+    }
+    return result.success ? t('history.passed') : t('history.failed');
+  };
+
+  const columns: DataTableColumn<HistoricalResult>[] = [
+    {
+      key: 'testType',
+      header: t('history.colTest'),
+      cell: (r) => <span className="font-medium text-text-primary">{r.testType}</span>,
+      sortValue: (r) => r.testType,
+    },
+    {
+      key: 'module',
+      header: t('history.colModule'),
+      cell: (r) => r.module,
+      sortValue: (r) => r.module,
+    },
+    {
+      key: 'completedAt',
+      header: t('history.colCompleted'),
+      cell: (r) => <span className="figure">{formatWhen(r.completedAt)}</span>,
+      sortValue: (r) => r.completedAt ?? '',
+    },
+    {
+      key: 'verdict',
+      header: t('history.colVerdict'),
+      cell: (r) => <StatusPill tone={runTone(r)} label={verdictLabel(r)} />,
+      sortValue: (r) => verdictLabel(r),
+    },
+  ];
+
+  if (results.length === 0) {
+    return (
+      <EmptyState
+        icon={<History className="h-6 w-6" />}
+        title={t('history.emptyNoRunsTitle')}
+        hint={t('history.emptyNoRuns')}
+      />
+    );
+  }
+
   return (
     <>
-      <div className="flex-between">
-        <p className="body-small" data-testid="history-scope">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-text-secondary" data-testid="history-scope">
           {t('history.scope', { count: results.length, max: HISTORY_MAX_ITEMS })}
         </p>
-        {results.length > 0 ? (
-          <div className="flex flex-wrap items-center gap-compact">
-            <Button
-              variant="outline"
-              tone="gray"
-              size="sm"
-              data-testid="history-export-csv"
-              onClick={(): void =>
-                downloadFile(
-                  exportFileName(new Date(), 'csv'),
-                  'text/csv;charset=utf-8',
-                  historyToCsv(results),
-                )
-              }
-            >
-              {t('history.exportCsv')}
-            </Button>
-            <Button
-              variant="outline"
-              tone="gray"
-              size="sm"
-              data-testid="history-export-json"
-              onClick={(): void =>
-                downloadFile(
-                  exportFileName(new Date(), 'json'),
-                  'application/json',
-                  historyToJson(results),
-                )
-              }
-            >
-              {t('history.exportJson')}
-            </Button>
-            <button
-              type="button"
-              onClick={(): void => {
-                clear();
-                setSelectedId(null);
-              }}
-              className="rounded-md px-3 py-2 text-sm text-text-muted hover:text-text-primary"
-            >
-              {t('history.clear')}
-            </button>
-          </div>
-        ) : null}
-      </div>
-
-      <ListDetail>
-        <RecordPane
-          chips={
-            <>
-              <FilterChip
-                label={t('history.filterAll')}
-                count={results.length}
-                active={facet === 'all'}
-                onClick={(): void => setFacet('all')}
-              />
-              <FilterChip
-                label={t('history.filterFailed')}
-                count={results.filter((r) => r.success === false).length}
-                active={facet === 'failed'}
-                onClick={(): void => setFacet('failed')}
-              />
-            </>
-          }
-          empty={results.length === 0 ? t('history.emptyNoRuns') : t('history.emptyNoMatch')}
-        >
-          {shown.map((result) => (
-            <RecordRow
-              key={result.id}
-              data-testid={`history-row-${result.id}`}
-              name={result.testType}
-              nameKind="prose"
-              meta={`${result.module} · ${formatWhen(result.completedAt)}`}
-              value={verdict(result)}
-              state={runState(result)}
-              selected={selected?.id === result.id}
-              onSelect={(): void => setSelectedId(result.id)}
-            />
-          ))}
-        </RecordPane>
-
-        {selected ? (
-          <DetailPane
-            eyebrow={t('history.selectedRun')}
-            title={selected.testType}
-            meta={`${selected.module} · ${formatWhen(selected.completedAt)}`}
-            status={<RunVerdict result={selected} />}
-            actions={
-              <button
-                type="button"
-                onClick={(): void => {
-                  remove(selected.id);
-                  setSelectedId(null);
-                }}
-                className="rounded-md px-3 py-2 text-sm text-status-error-strong hover:bg-status-error/10"
-              >
-                {t('history.deleteRun')}
-              </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            data-testid="history-export-csv"
+            onClick={(): void =>
+              downloadFile(
+                exportFileName(new Date(), 'csv'),
+                'text/csv;charset=utf-8',
+                historyToCsv(results),
+              )
             }
           >
-            {selected.error ? (
-              <div className="rounded-lg border border-status-error/40 bg-status-error/10 pad-sm">
-                <p className="caption text-status-error-strong">{t('history.error')}</p>
-                <p className="text-sm text-text-primary">{selected.error}</p>
+            {t('history.exportCsv')}
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            data-testid="history-export-json"
+            onClick={(): void =>
+              downloadFile(
+                exportFileName(new Date(), 'json'),
+                'application/json',
+                historyToJson(results),
+              )
+            }
+          >
+            {t('history.exportJson')}
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            data-testid="history-clear"
+            onClick={(): void => setConfirm('clear')}
+          >
+            {t('history.clear')}
+          </Button>
+        </div>
+      </div>
+
+      <SegmentedControl
+        label={t('history.filterLabel')}
+        value={facet}
+        onChange={(value): void => setFacet(value as Facet)}
+        options={[
+          { value: 'all', label: `${t('history.filterAll')} (${results.length})` },
+          { value: 'failed', label: `${t('history.filterFailed')} (${failedCount})` },
+        ]}
+      />
+
+      <DataTable
+        rows={shown}
+        columns={columns}
+        getRowKey={(r) => r.id}
+        caption={t('history.caption')}
+        empty={<EmptyState title={t('history.emptyNoMatch')} />}
+        labels={tableLabels}
+        defaultSort={{ key: 'completedAt', direction: 'desc' }}
+        onRowClick={(r): void => setSelectedId(r.id)}
+        {...(selected ? { selectedRowKey: selected.id } : {})}
+        data-testid="history-table"
+      />
+
+      {selected ? (
+        <Card
+          title={selected.testType}
+          headerAction={<StatusPill tone={runTone(selected)} label={verdictLabel(selected)} />}
+          data-testid="history-detail"
+        >
+          <p className="mb-3 text-sm text-text-muted">
+            {t('history.selectedRun')} · {selected.module} · {formatWhen(selected.completedAt)}
+          </p>
+          {selected.error ? (
+            <Alert tone="error" title={t('history.error')} className="mb-3">
+              {selected.error}
+            </Alert>
+          ) : null}
+
+          <dl className="grid gap-3 sm:grid-cols-2">
+            {[
+              { label: t('history.status'), value: selected.status || '—' },
+              { label: t('history.duration'), value: formatDuration(selected.duration) },
+              { label: t('history.started'), value: formatWhen(selected.startedAt) },
+              { label: t('history.completed'), value: formatWhen(selected.completedAt) },
+            ].map((item) => (
+              <div key={item.label}>
+                <dt className="kicker">{item.label}</dt>
+                <dd className="figure text-sm text-text-primary">{item.value}</dd>
               </div>
-            ) : null}
+            ))}
+          </dl>
 
-            <DetailFacts
-              items={[
-                { label: t('history.status'), value: selected.status || '—' },
-                { label: t('history.duration'), value: formatDuration(selected.duration) },
-                { label: t('history.started'), value: formatWhen(selected.startedAt) },
-                { label: t('history.completed'), value: formatWhen(selected.completedAt) },
-              ]}
-            />
+          <RunMetrics metrics={selected.metrics} />
 
-            <RunMetrics metrics={selected.metrics} />
-          </DetailPane>
-        ) : (
-          <DetailEmpty>{t('history.emptyDetail')}</DetailEmpty>
-        )}
-      </ListDetail>
+          <div className="mt-4 border-t border-hairline pt-3">
+            <Button
+              variant="destructive"
+              size="sm"
+              data-testid="history-delete-run"
+              onClick={(): void => setConfirm('delete')}
+            >
+              {t('history.deleteRun')}
+            </Button>
+          </div>
+        </Card>
+      ) : null}
+
+      <ConfirmDialog
+        open={confirm !== null}
+        title={
+          confirm === 'clear' ? t('history.confirmClearTitle') : t('history.confirmDeleteTitle')
+        }
+        message={
+          confirm === 'clear' ? t('history.confirmClearMessage') : t('history.confirmDeleteMessage')
+        }
+        confirmLabel={confirm === 'clear' ? t('history.clear') : t('history.deleteRun')}
+        cancelLabel={tCommon('buttons.cancel')}
+        closeLabel={tCommon('buttons.close')}
+        onCancel={(): void => setConfirm(null)}
+        onConfirm={(): void => {
+          if (confirm === 'clear') {
+            clear();
+          } else if (selected) {
+            remove(selected.id);
+          }
+          setSelectedId(null);
+          setConfirm(null);
+        }}
+      />
     </>
   );
 }
 
-/** The verdict, said in words — the row's colour edge is not the only carrier. */
-function RunVerdict({ result }: { result: HistoricalResult }): JSX.Element {
-  const { t } = useTranslation('pages');
-  if (result.success === undefined) {
-    return (
-      <span className="rounded-lg border border-surface-border bg-surface-sunken px-3 py-1.5 text-xs font-semibold text-text-muted">
-        {t('history.noVerdict')}
-      </span>
-    );
-  }
-  if (result.success) {
-    return (
-      <span className="rounded-lg border border-surface-border px-3 py-1.5 text-xs font-semibold text-text-secondary">
-        {t('history.passed')}
-      </span>
-    );
-  }
-  return (
-    <span className="rounded-lg border border-status-error/40 bg-status-error/10 px-3 py-1.5 text-xs font-semibold text-status-error-strong">
-      {t('history.failed')}
-    </span>
-  );
-}
-
-/** The run's measurements — the sub-table the archetype calls for. */
+/** The run's measurements: label and value pairs. */
 function RunMetrics({
   metrics,
 }: {
@@ -250,15 +273,12 @@ function RunMetrics({
     return null;
   }
   return (
-    <div className="stack-xs">
-      <p className="caption">{t('history.metrics')}</p>
-      <dl className="grid gap-default sm:grid-cols-2 lg:grid-cols-3">
+    <div className="mt-4 border-t border-hairline pt-3">
+      <p className="kicker mb-2">{t('history.metrics')}</p>
+      <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {entries.map(([key, value]) => (
-          <div
-            key={key}
-            className="rounded-lg border border-surface-border bg-surface-base pad-sm stack-xs"
-          >
-            <dt className="caption capitalize">{key.replace(/_/g, ' ')}</dt>
+          <div key={key}>
+            <dt className="text-xs capitalize text-text-muted">{key.replace(/_/g, ' ')}</dt>
             <dd className="figure text-sm text-text-primary">{String(value)}</dd>
           </div>
         ))}

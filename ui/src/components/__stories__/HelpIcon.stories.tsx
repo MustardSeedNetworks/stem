@@ -15,11 +15,3 @@ export const Default: Story = {
     tooltip: 'This is a helpful tooltip.',
   },
 };
-
-export const Clickable: Story = {
-  args: {
-    tooltip: 'Click to open help.',
-    onClick: () => {},
-    size: 'md',
-  },
-};

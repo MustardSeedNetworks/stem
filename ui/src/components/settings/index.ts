@@ -6,11 +6,9 @@
  */
 
 export { AppearanceSection } from './AppearanceSection';
-export { InterfaceSection } from './InterfaceSection';
 export { LanguageSection } from './LanguageSection';
 
 // Section Components
-export { ModeSection } from './ModeSection';
 export { ReflectorSection } from './ReflectorSection';
 export { TestCheckbox } from './TestCheckbox';
 // Test Sections

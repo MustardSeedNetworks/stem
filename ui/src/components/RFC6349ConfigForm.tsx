@@ -6,7 +6,7 @@
  *              schema and surfaced via the form footer.
  */
 
-import { Activity, AlertTriangle } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useConfigForm } from '../forms/useConfigForm';
@@ -14,7 +14,6 @@ import { hasGroupTests } from '../lib/testGroups';
 import { RFC6349ConfigSchema } from '../schemas/configs';
 import { FormField } from '../shared/FormField';
 import { Input } from '../shared/Input';
-import { CollapsibleSection } from './CollapsibleSection';
 import { NumberSelectField } from './ConfigFormFields';
 import { FormSection } from './FormSection';
 import { TestSummary } from './TestSummary';
@@ -72,12 +71,15 @@ interface RFC6349ConfigFormProps {
   config: RFC6349Config;
   setConfig: (config: RFC6349Config) => void;
   selectedTests: string[];
+  /** Overrides the root test id: the drawer and the page can both render this form at once. */
+  testId?: string;
 }
 
 export function RFC6349ConfigForm({
   config,
   setConfig,
   selectedTests,
+  testId = 'rfc6349-config-form',
 }: RFC6349ConfigFormProps): ReactElement | null {
   const hasRFC6349Tests = hasGroupTests('rfc6349', selectedTests);
 
@@ -123,16 +125,7 @@ export function RFC6349ConfigForm({
     : undefined;
 
   return (
-    <CollapsibleSection
-      testId="rfc6349-config-form"
-      title={
-        <div className="flex items-center gap-compact">
-          <Activity className="w-4 h-4" />
-          <span>{t('testConfig.rfc6349.title')}</span>
-        </div>
-      }
-      defaultOpen={true}
-    >
+    <div data-testid={testId}>
       <div className="stack-lg">
         <FormSection title={t('testConfig.rfc6349.network.title')}>
           <div className="grid grid-cols-3 gap-default">
@@ -299,7 +292,7 @@ export function RFC6349ConfigForm({
           <div>{t('testConfig.rfc6349.summary.duration', { duration })}</div>
         </TestSummary>
       </div>
-    </CollapsibleSection>
+    </div>
   );
 }
 

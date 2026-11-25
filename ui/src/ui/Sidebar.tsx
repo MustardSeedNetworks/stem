@@ -14,9 +14,9 @@ import { type LucideIcon, Menu, X } from 'lucide-react';
 import { createElement, type ReactNode, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router';
-import { Tooltip } from '../components/ui/Tooltip';
 import { iconSizes } from '../constants/sizes';
 import { accessibleNameIncluding } from '../lib/accessibleName';
+import { Tooltip } from '../shared/Tooltip';
 import { prefetchRoute } from '../utils/prefetch';
 import { safeGetItem, safeSetItem } from '../utils/storage';
 import { type RailStatus, SidebarFooter, SidebarHeader } from './SidebarChrome';
@@ -74,54 +74,52 @@ function badgeClass(badge: string): string {
 }
 
 function NavItemButton({ item, active, collapsed, onNavigate }: NavItemButtonProps) {
-  return (
-    <Tooltip text={collapsed ? item.label : undefined}>
-      <button
-        type="button"
-        onClick={() => onNavigate(item.path)}
-        onMouseEnter={() => prefetchRoute(item.path)}
-        aria-current={active ? 'page' : undefined}
-        aria-label={accessibleNameIncluding(
-          item.label,
-          !collapsed && item.badge ? item.badge : item.label,
-        )}
-        /* 44px minimum target, 11px radius, and a 3px left bar for the active
+  const button = (
+    <button
+      type="button"
+      onClick={() => onNavigate(item.path)}
+      onMouseEnter={() => prefetchRoute(item.path)}
+      aria-current={active ? 'page' : undefined}
+      aria-label={accessibleNameIncluding(
+        item.label,
+        !collapsed && item.badge ? item.badge : item.label,
+      )}
+      /* 44px minimum target, 11px radius, and a 3px left bar for the active
            route. The bar carries the state rather than a gradient fill: a filled
            row competes with status colour, and the rail is chrome. */
-        className={`group relative flex items-center gap-default w-full min-h-11 px-3 py-2.5 rounded-[11px] text-sm font-medium transition-all duration-200 ${
-          active
-            ? 'bg-[color-mix(in_oklab,var(--color-brand-primary)_16%,transparent)] text-text-primary'
-            : 'text-text-muted hover:text-text-primary hover:bg-surface-hover'
-        }`}
-      >
-        {active ? (
-          <span
-            aria-hidden="true"
-            className="absolute inset-y-1 left-0 w-[3px] rounded-full bg-brand-primary"
-          />
-        ) : null}
-        {createElement(item.icon, {
-          className: `${iconSizes.lg} flex-shrink-0 ${
-            active ? 'text-brand-primary' : 'text-text-muted group-hover:text-text-secondary'
-          }`,
-        })}
-        {!collapsed ? (
-          <>
-            <span className="flex-1 text-left truncate">
-              {item.badge ? `${item.label} ` : item.label}
+      className={`group relative flex items-center gap-default w-full min-h-11 px-3 py-2.5 rounded-[11px] text-sm font-medium transition-all duration-200 ${
+        active
+          ? 'bg-[color-mix(in_oklab,var(--color-brand-primary)_16%,transparent)] text-text-primary'
+          : 'text-text-muted hover:text-text-primary hover:bg-surface-hover'
+      }`}
+    >
+      {active ? (
+        <span
+          aria-hidden="true"
+          className="absolute inset-y-1 left-0 w-[3px] rounded-full bg-brand-primary"
+        />
+      ) : null}
+      {createElement(item.icon, {
+        className: `${iconSizes.lg} flex-shrink-0 ${
+          active ? 'text-brand-primary' : 'text-text-muted group-hover:text-text-secondary'
+        }`,
+      })}
+      {!collapsed ? (
+        <>
+          <span className="flex-1 text-left truncate">
+            {item.badge ? `${item.label} ` : item.label}
+          </span>
+          {item.badge ? (
+            <span className={`px-1.5 py-0.5 text-xs rounded font-medium ${badgeClass(item.badge)}`}>
+              {item.badge}
             </span>
-            {item.badge ? (
-              <span
-                className={`px-1.5 py-0.5 text-xs rounded font-medium ${badgeClass(item.badge)}`}
-              >
-                {item.badge}
-              </span>
-            ) : null}
-          </>
-        ) : null}
-      </button>
-    </Tooltip>
+          ) : null}
+        </>
+      ) : null}
+    </button>
   );
+  // The label is the tooltip only when the rail is collapsed to icons.
+  return collapsed ? <Tooltip text={item.label}>{button}</Tooltip> : button;
 }
 
 interface SidebarBodyProps {

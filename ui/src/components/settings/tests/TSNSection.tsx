@@ -77,6 +77,7 @@ export function TSNSection({
           {hasSelectedTests && (
             <div className="border-t border-surface-border pt-section">
               <TSNConfigForm
+                testId="tsn-config-form-drawer"
                 config={config}
                 setConfig={onConfigChange}
                 selectedTests={selectedTests}

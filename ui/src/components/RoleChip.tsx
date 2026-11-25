@@ -2,7 +2,7 @@
  * RoleChip — persistent shell control for switching the stem role.
  *
  * Segmented control with two values: Reflector / Test Master. Clicking
- * the inactive value pops a ConfirmModal explaining the consequences
+ * the inactive value pops a ConfirmDialog explaining the consequences
  * (active reflector or in-progress test will be cancelled). On confirm
  * the role flips via RoleContext, which POSTs /api/v1/mode and
  * updates local state only after the backend accepts the change.
@@ -15,7 +15,7 @@ import { Loader2, Repeat, Target, X } from 'lucide-react';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { type StemRole, useRole } from '../contexts/RoleContext';
-import { ConfirmModal } from './ui/ConfirmModal';
+import { ConfirmDialog } from '../shared/ConfirmDialog';
 
 interface RoleChipProps {
   className?: string;
@@ -161,15 +161,16 @@ export function RoleChip({ className = '', layout = 'inline' }: RoleChipProps) {
         </div>
       ) : null}
 
-      <ConfirmModal
-        isOpen={pendingRole !== null}
+      <ConfirmDialog
+        open={pendingRole !== null}
         onConfirm={handleConfirm}
         onCancel={handleCancel}
         title={t(confirmTitleKey)}
         message={t(confirmMessageKey)}
         confirmLabel={t('role.confirm.confirmLabel')}
         cancelLabel={t('buttons.cancel')}
-        confirmTone="violet"
+        closeLabel={t('buttons.close')}
+        variant="primary"
       />
     </div>
   );

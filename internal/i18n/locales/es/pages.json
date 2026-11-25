@@ -38,7 +38,19 @@
     "scope_other": "Guardado solo en este navegador · {{count}} de {{max}} ejecuciones",
     "exportCsv": "Exportar CSV",
     "exportJson": "Exportar JSON",
-    "eyebrow": "Resultados"
+    "eyebrow": "Resultados",
+    "confirmDeleteTitle": "¿Eliminar esta ejecución?",
+    "confirmDeleteMessage": "La ejecución se elimina de este navegador. No se puede deshacer.",
+    "confirmClearTitle": "¿Borrar todo el historial?",
+    "confirmClearMessage": "Se elimina de este navegador cada ejecución registrada. No se puede deshacer.",
+    "caption": "Ejecuciones de prueba completadas",
+    "colTest": "Prueba",
+    "colModule": "Módulo",
+    "colCompleted": "Completada",
+    "colDuration": "Duración",
+    "colVerdict": "Veredicto",
+    "filterLabel": "Filtrar ejecuciones",
+    "emptyNoRunsTitle": "Aún no hay ejecuciones"
   },
   "measure": {
     "description": "Medición Y.1731 OAM de retardo / pérdida / pérdida sintética.",

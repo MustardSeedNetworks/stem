@@ -14,8 +14,12 @@ import type { ReactElement } from 'react';
 import { useState } from 'react';
 import { type SubmitHandler, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { Button } from '../../../components/ui/Button';
 import { TotpSetupVerifySchema } from '../../../schemas/auth';
+import { Alert } from '../../../shared/Alert';
+import { Button } from '../../../shared/Button';
+import { FormField } from '../../../shared/FormField';
+import { Input } from '../../../shared/Input';
+import { Modal } from '../../../shared/Modal';
 import { mfaApi, type TotpSetupResponse } from './mfaApi';
 
 interface Props {
@@ -30,6 +34,7 @@ interface TotpVerifyForm {
 
 export function TotpSetupModal({ setup, onComplete, onCancel }: Props): ReactElement {
   const { t } = useTranslation('security');
+  const { t: tCommon } = useTranslation('common');
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const {
@@ -53,64 +58,58 @@ export function TotpSetupModal({ setup, onComplete, onCancel }: Props): ReactEle
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex-center bg-scrim/60 backdrop-blur-sm">
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="totp-setup-title"
-        className="w-full max-w-md rounded-3xl border border-surface-border bg-surface-raised pad-lg shadow-2xl"
-      >
-        <h2 id="totp-setup-title" className="heading-3 text-text-primary">
-          {t('mfa.setup.title')}
-        </h2>
-        <p className="text-sm text-text-muted">{t('mfa.setup.instructions')}</p>
+    <Modal
+      open={true}
+      onClose={onCancel}
+      title={t('mfa.setup.title')}
+      closeLabel={tCommon('buttons.close')}
+      busy={isSubmitting}
+      footer={
+        <>
+          <Button variant="secondary" onClick={onCancel} disabled={isSubmitting}>
+            {t('mfa.setup.cancelButton')}
+          </Button>
+          <Button type="submit" form="totp-setup-form" loading={isSubmitting}>
+            {t('mfa.setup.confirmButton')}
+          </Button>
+        </>
+      }
+    >
+      <p className="text-sm text-text-muted">{t('mfa.setup.instructions')}</p>
 
-        <div className="mt-content flex justify-center">
-          <img
-            src={`data:image/png;base64,${setup.qrCodePngBase64}`}
-            alt="TOTP QR code"
-            width={256}
-            height={256}
-            className="rounded-lg border border-surface-border bg-knob pad-xs"
-          />
-        </div>
+      <div className="mt-4 flex justify-center">
+        <img
+          src={`data:image/png;base64,${setup.qrCodePngBase64}`}
+          alt="TOTP QR code"
+          width={256}
+          height={256}
+          className="rounded-lg border border-hairline bg-knob p-2"
+        />
+      </div>
 
-        <div className="mt-content">
-          <p className="text-xs text-text-muted">{t('mfa.setup.secretLabel')}</p>
-          <code className="block mt-tight break-all rounded-lg bg-surface-base pad-xs text-xs font-mono text-text-primary">
-            {setup.secret}
-          </code>
-        </div>
+      <div className="mt-4">
+        <p className="text-xs text-text-muted">{t('mfa.setup.secretLabel')}</p>
+        <code className="mt-1 block break-all rounded-lg bg-surface-sunken p-2 font-mono text-xs text-text-primary">
+          {setup.secret}
+        </code>
+      </div>
 
-        <form className="mt-content stack-lg" onSubmit={handleSubmit(onSubmit)}>
-          <div>
-            <label htmlFor="totp-setup-code" className="text-xs font-semibold text-text-muted">
-              {t('mfa.setup.codeLabel')}
-            </label>
-            <input
-              id="totp-setup-code"
+      <form id="totp-setup-form" className="mt-4 stack-lg" onSubmit={handleSubmit(onSubmit)}>
+        <FormField label={t('mfa.setup.codeLabel')} error={errors.code?.message}>
+          {(control) => (
+            <Input
+              {...control}
               type="text"
               inputMode="numeric"
               pattern="[0-9]{6}"
               placeholder={t('mfa.setup.codePlaceholder')}
+              className="font-mono tracking-widest"
               {...register('code')}
-              className="mt-tight w-full rounded-xl border border-surface-border bg-surface-base px-3 py-row text-sm font-mono tracking-widest"
             />
-            {errors.code ? (
-              <p className="mt-tight text-xs text-status-error">{errors.code.message}</p>
-            ) : null}
-          </div>
-          {submitError ? <p className="text-xs text-status-error">{submitError}</p> : null}
-          <div className="flex gap-compact justify-end">
-            <Button variant="outline" onClick={onCancel}>
-              {t('mfa.setup.cancelButton')}
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? '...' : t('mfa.setup.confirmButton')}
-            </Button>
-          </div>
-        </form>
-      </div>
-    </div>
+          )}
+        </FormField>
+        {submitError ? <Alert tone="error">{submitError}</Alert> : null}
+      </form>
+    </Modal>
   );
 }

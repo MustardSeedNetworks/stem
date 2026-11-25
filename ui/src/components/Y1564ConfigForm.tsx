@@ -12,7 +12,7 @@
  * same pattern — see issue #325 for the sweep.
  */
 
-import { AlertTriangle, Settings2 } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { EXTENDED_FRAME_SIZE_OPTIONS } from '../forms/frameSizes';
@@ -22,7 +22,6 @@ import { Y1564ConfigSchema } from '../schemas/configs';
 import { Checkbox } from '../shared/Checkbox';
 import { FormField } from '../shared/FormField';
 import { Input } from '../shared/Input';
-import { CollapsibleSection } from './CollapsibleSection';
 import { FieldError } from './FieldError';
 import { FormSection } from './FormSection';
 import { HelpIcon } from './HelpIcon';
@@ -70,12 +69,15 @@ interface Y1564ConfigFormProps {
   config: Y1564Config;
   setConfig: (config: Y1564Config) => void;
   selectedTests: string[];
+  /** Overrides the root test id: the drawer and the page can both render this form at once. */
+  testId?: string;
 }
 
 export function Y1564ConfigForm({
   config,
   setConfig,
   selectedTests,
+  testId = 'y1564-config-form',
 }: Y1564ConfigFormProps): ReactElement | null {
   const hasY1564Tests = hasGroupTests('y1564', selectedTests);
 
@@ -143,16 +145,7 @@ export function Y1564ConfigForm({
     : undefined;
 
   return (
-    <CollapsibleSection
-      testId="y1564-config-form"
-      title={
-        <div className="flex items-center gap-compact">
-          <Settings2 className="w-4 h-4" />
-          <span>{t('testConfig.y1564.title')}</span>
-        </div>
-      }
-      defaultOpen={true}
-    >
+    <div data-testid={testId}>
       <div className="stack-lg">
         <FormSection title={t('testConfig.y1564.bandwidth.title')}>
           {/* CIR */}
@@ -361,7 +354,7 @@ export function Y1564ConfigForm({
           </div>
         </TestSummary>
       </div>
-    </CollapsibleSection>
+    </div>
   );
 }
 

@@ -5,10 +5,8 @@
  * Allows selection of signature types to reflect.
  */
 
-import { Settings2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { cn, radius, spacing } from '../../styles/theme';
-import { CollapsibleSection } from '../CollapsibleSection';
+import { Card } from '../../shared/Card';
 import type { ReflectorProfile, SettingsSectionProps } from './types';
 
 interface ReflectorSectionProps extends SettingsSectionProps {
@@ -58,42 +56,28 @@ export function ReflectorSection({
   };
 
   return (
-    <CollapsibleSection
-      title={
-        <div className="flex items-center gap-compact">
-          <Settings2 className="w-4 h-4" aria-hidden="true" />
-          <span>{t('settings:reflector.title')}</span>
-        </div>
-      }
-      defaultOpen={true}
-      className={className}
-    >
+    <Card title={t('settings:reflector.title')} {...(className ? { className } : {})}>
       <div className="stack-sm">
         {REFLECTOR_PROFILE_IDS.map((id) => (
           <label
             key={id}
-            className={cn(
-              'flex items-center gap-default',
-              spacing.pad.sm,
-              radius.lg,
-              'cursor-pointer hover:bg-surface-hover transition-colors',
-            )}
+            className="flex cursor-pointer items-center gap-3 rounded-lg p-2 transition-colors hover:bg-surface-hover"
           >
             <input
               type="radio"
               name="reflectorProfile"
               checked={profile === id}
               onChange={(): void => onProfileChange(id)}
-              className="w-4 h-4 accent-brand-primary"
+              className="h-4 w-4 accent-brand-primary"
             />
             <div>
-              <div className="body-small font-medium text-text-primary">{profiles[id].name}</div>
-              <div className="caption text-text-muted">{profiles[id].description}</div>
+              <div className="text-sm font-medium text-text-primary">{profiles[id].name}</div>
+              <div className="text-xs text-text-muted">{profiles[id].description}</div>
             </div>
           </label>
         ))}
       </div>
-    </CollapsibleSection>
+    </Card>
   );
 }
 

@@ -11,6 +11,8 @@
 import { SlidersHorizontal } from 'lucide-react';
 import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Button } from '../shared/Button';
+import { EmptyState } from '../shared/EmptyState';
 import { useShellStore } from '../stores/shell-store';
 
 export interface ModuleEmptyStateProps {
@@ -23,22 +25,21 @@ export function ModuleEmptyState({ moduleName }: ModuleEmptyStateProps): ReactEl
   const setSettingsOpen = useShellStore((s) => s.setSettingsOpen);
 
   return (
-    <div className="card" data-testid="module-empty-state">
-      <div className="flex flex-col items-center gap-default py-centered text-center">
-        <SlidersHorizontal className="h-6 w-6 text-text-muted" aria-hidden="true" />
-        <p className="text-sm font-medium text-text-primary">
-          {t('moduleEmptyState.title', { module: moduleName })}
-        </p>
-        <p className="text-sm text-text-muted">{t('moduleEmptyState.body')}</p>
-        <button
-          type="button"
-          data-testid="module-empty-state-open-settings"
-          onClick={() => setSettingsOpen(true)}
-          className="inline-flex items-center gap-tight rounded-md border border-border-muted bg-surface-raised px-3 py-compact text-sm font-medium text-text-primary hover:bg-surface-hover transition-colors"
-        >
-          {t('moduleEmptyState.openSettings')}
-        </button>
-      </div>
+    <div data-testid="module-empty-state">
+      <EmptyState
+        icon={<SlidersHorizontal className="h-6 w-6" />}
+        title={t('moduleEmptyState.title', { module: moduleName })}
+        hint={t('moduleEmptyState.body')}
+        action={
+          <Button
+            variant="secondary"
+            data-testid="module-empty-state-open-settings"
+            onClick={() => setSettingsOpen(true)}
+          >
+            {t('moduleEmptyState.openSettings')}
+          </Button>
+        }
+      />
     </div>
   );
 }

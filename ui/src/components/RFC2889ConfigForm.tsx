@@ -4,7 +4,6 @@
  *              Migrated to react-hook-form + valibot per #325.
  */
 
-import { Network } from 'lucide-react';
 import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { FrameSizeOption } from '../forms/frameSizes';
@@ -13,7 +12,6 @@ import { hasGroupTests } from '../lib/testGroups';
 import { RFC2889ConfigSchema } from '../schemas/configs';
 import { FormField } from '../shared/FormField';
 import { Input } from '../shared/Input';
-import { CollapsibleSection } from './CollapsibleSection';
 import { NumberSelectField } from './ConfigFormFields';
 import { FormSection } from './FormSection';
 import { TestSummary } from './TestSummary';
@@ -69,12 +67,15 @@ interface RFC2889ConfigFormProps {
   config: RFC2889Config;
   setConfig: (config: RFC2889Config) => void;
   selectedTests: string[];
+  /** Overrides the root test id: the drawer and the page can both render this form at once. */
+  testId?: string;
 }
 
 export function RFC2889ConfigForm({
   config,
   setConfig,
   selectedTests,
+  testId = 'rfc2889-config-form',
 }: RFC2889ConfigFormProps): ReactElement | null {
   const hasRFC2889Tests = hasGroupTests('rfc2889', selectedTests);
 
@@ -108,16 +109,7 @@ export function RFC2889ConfigForm({
   const hasCongestion = selectedTests.includes('rfc2889_congestion');
 
   return (
-    <CollapsibleSection
-      testId="rfc2889-config-form"
-      title={
-        <div className="flex items-center gap-compact">
-          <Network className="w-4 h-4" />
-          <span>RFC 2889 Configuration</span>
-        </div>
-      }
-      defaultOpen={true}
-    >
+    <div data-testid={testId}>
       <div className="stack-lg">
         <FormSection title={t('testConfig.rfc2889.params.title')}>
           <div className="grid grid-cols-2 gap-default">
@@ -256,7 +248,7 @@ export function RFC2889ConfigForm({
           <div>{t('testConfig.rfc2889.summary.duration', { duration, warmup })}</div>
         </TestSummary>
       </div>
-    </CollapsibleSection>
+    </div>
   );
 }
 

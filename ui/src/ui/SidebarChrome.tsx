@@ -19,9 +19,9 @@ import {
 } from 'lucide-react';
 import { createElement, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Tooltip } from '../components/ui/Tooltip';
 import { iconSizes } from '../constants/sizes';
 import { accessibleNameIncluding } from '../lib/accessibleName';
+import { Tooltip } from '../shared/Tooltip';
 import { MsnMark } from './MsnMark';
 import { ProductMark } from './ProductMark';
 
@@ -102,6 +102,18 @@ export function SidebarHeader({
   surfaceTestIds,
 }: SidebarHeaderProps) {
   const { t } = useTranslation();
+  const dot = (
+    <span
+      role="status"
+      aria-label={status?.label}
+      data-testid={surfaceTestIds ? 'rail-status' : undefined}
+      data-status={status?.state ?? 'connected'}
+      className={`absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-surface-raised ${
+        status?.state === 'disconnected' ? 'bg-status-error' : 'bg-status-success'
+      }`}
+    />
+  );
+  const statusDot = status?.label ? <Tooltip text={status.label}>{dot}</Tooltip> : dot;
   return (
     <div
       className={`flex items-center ${
@@ -115,17 +127,7 @@ export function SidebarHeader({
               colour alone is not a status, and the name is what a screen
               reader and `toHaveAccessibleName` both read. `role="status"` also
               announces the change when the socket drops. */}
-          <Tooltip text={status?.label}>
-            <span
-              role="status"
-              aria-label={status?.label}
-              data-testid={surfaceTestIds ? 'rail-status' : undefined}
-              data-status={status?.state ?? 'connected'}
-              className={`absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-surface-raised ${
-                status?.state === 'disconnected' ? 'bg-status-error' : 'bg-status-success'
-              }`}
-            />
-          </Tooltip>
+          {statusDot}
         </div>
         {!collapsed ? (
           <span className="font-display font-bold text-lg text-text-primary tracking-tight">

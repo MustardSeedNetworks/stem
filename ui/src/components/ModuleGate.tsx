@@ -25,6 +25,7 @@ import type { ReactElement, ReactNode } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { type GatedModulePath, MODULE_FEATURES } from '../constants/moduleFeatures';
 import { useLicense } from '../contexts/LicenseContext';
+import { Alert } from '../shared/Alert';
 
 interface ModuleGateProps {
   path: GatedModulePath;
@@ -57,28 +58,24 @@ export function ModuleGate({ path, preview = true, children }: ModuleGateProps):
 
   return (
     <div className="stack-sm" data-testid="module-gate" data-module={i18nKey}>
-      <section
-        id={pitchId}
-        data-testid="module-gate-pitch"
-        className="w-full rounded-lg border border-brand-primary/30 bg-brand-primary/5 pad-sm stack-xs"
-      >
-        <h2 className="body-large font-semibold text-text-primary">
-          {t('license.gated.title', { module: t(`license.gated.modules.${i18nKey}.name`) })}
-        </h2>
-        <p className="body-small text-text-secondary">
-          {t(`license.gated.modules.${i18nKey}.pitch`)}
-        </p>
-        <p className="caption text-text-secondary">
-          <Trans
-            i18nKey="license.gated.actions"
-            ns="common"
-            components={{
-              code: <code className="mx-1 px-1 rounded bg-surface-raised" />,
-              code2: <code className="ml-tight px-1 rounded bg-surface-raised" />,
-            }}
-          />
-        </p>
-      </section>
+      <div id={pitchId} data-testid="module-gate-pitch">
+        <Alert
+          tone="info"
+          title={t('license.gated.title', { module: t(`license.gated.modules.${i18nKey}.name`) })}
+        >
+          <p>{t(`license.gated.modules.${i18nKey}.pitch`)}</p>
+          <p className="mt-1 text-xs">
+            <Trans
+              i18nKey="license.gated.actions"
+              ns="common"
+              components={{
+                code: <code className="mx-1 rounded bg-surface-sunken px-1" />,
+                code2: <code className="ml-1 rounded bg-surface-sunken px-1" />,
+              }}
+            />
+          </p>
+        </Alert>
+      </div>
 
       {preview ? (
         <div inert={true} aria-describedby={pitchId} className="opacity-60">

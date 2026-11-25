@@ -7,7 +7,7 @@
  *              through props.
  */
 
-import { AlertTriangle, Clock } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import type { ReactElement } from 'react';
 import { FormProvider, useFormContext } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -17,7 +17,6 @@ import { hasGroupTests } from '../lib/testGroups';
 import { TSNConfigSchema } from '../schemas/configs';
 import { FormField } from '../shared/FormField';
 import { Input } from '../shared/Input';
-import { CollapsibleSection } from './CollapsibleSection';
 import { CheckboxField, NumberSelectField } from './ConfigFormFields';
 import { FormSection } from './FormSection';
 import { TestSummary } from './TestSummary';
@@ -360,12 +359,15 @@ interface TSNConfigFormProps {
   config: TSNConfig;
   setConfig: (config: TSNConfig) => void;
   selectedTests: string[];
+  /** Overrides the root test id: the drawer and the page can both render this form at once. */
+  testId?: string;
 }
 
 export function TSNConfigForm({
   config,
   setConfig,
   selectedTests,
+  testId = 'tsn-config-form',
 }: TSNConfigFormProps): ReactElement | null {
   const hasTSNTests = hasGroupTests('tsn', selectedTests);
 
@@ -394,16 +396,7 @@ export function TSNConfigForm({
     : undefined;
 
   return (
-    <CollapsibleSection
-      testId="tsn-config-form"
-      title={
-        <div className="flex items-center gap-compact">
-          <Clock className="w-4 h-4" />
-          <span>TSN Configuration</span>
-        </div>
-      }
-      defaultOpen={true}
-    >
+    <div data-testid={testId}>
       <FormProvider {...form}>
         <div className="stack-lg">
           <TestParametersSection />
@@ -428,7 +421,7 @@ export function TSNConfigForm({
           />
         </div>
       </FormProvider>
-    </CollapsibleSection>
+    </div>
   );
 }
 

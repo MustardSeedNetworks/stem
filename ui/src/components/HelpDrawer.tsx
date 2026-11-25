@@ -12,17 +12,7 @@
  *              tutorials remain English.
  */
 
-import {
-  Activity,
-  Book,
-  BookOpen,
-  Clock,
-  Cpu,
-  GraduationCap,
-  Radio,
-  Settings2,
-  Zap,
-} from 'lucide-react';
+import { Book, BookOpen, GraduationCap } from 'lucide-react';
 import type { ReactElement } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -81,27 +71,6 @@ export function HelpDrawer({
     navigator.clipboard.writeText(command);
     setCopiedCommand(command);
     setTimeout((): void => setCopiedCommand(null), 2000);
-  };
-
-  const getCategoryIcon = (categoryId: string): ReactElement => {
-    switch (categoryId) {
-      case 'rfc2544':
-        return <Zap className="w-4 h-4" />;
-      case 'y1564':
-        return <Activity className="w-4 h-4" />;
-      case 'rfc2889':
-        return <Cpu className="w-4 h-4" />;
-      case 'rfc6349':
-        return <Activity className="w-4 h-4" />;
-      case 'y1731':
-        return <Radio className="w-4 h-4" />;
-      case 'mef':
-        return <Settings2 className="w-4 h-4" />;
-      case 'tsn':
-        return <Clock className="w-4 h-4" />;
-      default:
-        return <Book className="w-4 h-4" />;
-    }
   };
 
   // Filter tests and glossary based on search
@@ -210,7 +179,6 @@ export function HelpDrawer({
             filteredTests={filteredTests}
             simpleMode={simpleMode}
             onSelectTest={setSelectedTest}
-            getCategoryIcon={getCategoryIcon}
           />
         )}
 

@@ -193,7 +193,6 @@
     "issues": "Problemas Comunes",
     "params": "Parámetros",
     "metrics": "Metricas de Salida",
-    "clickForDetails": "Haga clic para más detalles",
     "label": "Ayuda: {{topic}}"
   },
   "errorBoundary": {
@@ -260,7 +259,8 @@
     "allClear": "Todo correcto",
     "degraded": "Degradado",
     "critical": "Crítico",
-    "noData": "Sin datos"
+    "noData": "Sin datos",
+    "idle": "Inactivo"
   },
   "reflector": {
     "startButton": "Iniciar Reflector",
@@ -347,5 +347,15 @@
   },
   "language": {
     "title": "Idioma"
+  },
+  "table": {
+    "selectAll": "Seleccionar todas las filas de esta página",
+    "selectRow": "Seleccionar {{name}}",
+    "actions": "Acciones",
+    "pagination": "Páginas de la tabla",
+    "previousPage": "Página anterior",
+    "nextPage": "Página siguiente",
+    "loading": "Cargando",
+    "pageStatus": "Página {{page}} de {{pageCount}} ({{total}} filas)"
   }
 }

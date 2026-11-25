@@ -16,14 +16,19 @@
  * moved, they were not replaced.
  */
 
-import { AlertTriangle, Play, RefreshCw, Square } from 'lucide-react';
+import { Play, Square } from 'lucide-react';
 import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAppContext } from '../contexts/AppContext';
 import { useRole } from '../contexts/RoleContext';
+import { Alert } from '../shared/Alert';
+import { Button } from '../shared/Button';
+import { FormField } from '../shared/FormField';
+import { Input } from '../shared/Input';
+import { Select } from '../shared/Select';
+import { StatusPill } from '../shared/StatusPill';
 import { StopOutcomeMessage } from './StopOutcomeMessage';
 import { TestProgressBar } from './TestProgressBar';
-import { Button } from './ui/Button';
 
 export function TestRunControls(): ReactElement | null {
   const { t } = useTranslation('common');
@@ -54,138 +59,121 @@ export function TestRunControls(): ReactElement | null {
   const isStopping = stopOutcome.kind === 'stopping';
   const isRunning = stats.testStatus === 'running' || stats.testStatus === 'starting';
 
+  const startBlocked =
+    !selectedInterface || !peer.trim() || peerPort < 1 || peerPort > 65535 || isStartingTest;
+
   return (
     <div className="stack-sm mb-content" data-testid="test-run-controls">
-      <div className="flex flex-wrap items-center gap-default">
-        <select
-          data-testid="interface-select"
-          value={selectedInterface}
-          onChange={(e: React.ChangeEvent<HTMLSelectElement>): void =>
-            setSelectedInterface(e.target.value)
-          }
-          className="w-48"
-          aria-label={t('accessibility.selectInterface')}
-        >
-          <option value="">{t('accessibility.selectInterface')}</option>
-          {interfaces.map((iface) => (
-            <option key={iface.name} value={iface.name}>
-              {iface.name} ({iface.speed}Mbps)
-            </option>
-          ))}
-        </select>
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="w-52 max-w-full">
+          <FormField label={t('accessibility.selectInterface')}>
+            {(control) => (
+              <Select
+                {...control}
+                data-testid="interface-select"
+                value={selectedInterface}
+                onValueChange={setSelectedInterface}
+                placeholder={t('accessibility.selectInterface')}
+                options={interfaces.map((iface) => ({
+                  value: iface.name,
+                  label: `${iface.name} (${iface.speed}Mbps)`,
+                }))}
+              />
+            )}
+          </FormField>
+        </div>
 
-        <input
-          data-testid="peer-input"
-          value={peer}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setPeer(e.target.value)}
-          className="w-48"
-          placeholder={t('accessibility.peerHost')}
-          aria-label={t('accessibility.peerHost')}
-        />
-        <input
-          data-testid="peer-port-input"
-          type="number"
-          min={1}
-          max={65535}
-          value={peerPort}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-            setPeerPort(Number(e.target.value))
-          }
-          className="w-28"
-          aria-label={t('accessibility.peerPort')}
-        />
+        <div className="w-52 max-w-full">
+          <FormField label={t('accessibility.peerHost')}>
+            {(control) => (
+              <Input
+                {...control}
+                data-testid="peer-input"
+                value={peer}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setPeer(e.target.value)}
+              />
+            )}
+          </FormField>
+        </div>
+        <div className="w-28 max-w-full">
+          <FormField label={t('accessibility.peerPort')}>
+            {(control) => (
+              <Input
+                {...control}
+                data-testid="peer-port-input"
+                type="number"
+                min={1}
+                max={65535}
+                value={peerPort}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                  setPeerPort(Number(e.target.value))
+                }
+              />
+            )}
+          </FormField>
+        </div>
 
         {isRunning ? (
           <Button
             data-testid="stop-test-button"
             onClick={onStopTest}
-            variant="outline"
-            disabled={isStopping}
-            aria-busy={isStopping}
+            variant="secondary"
+            loading={isStopping}
+            icon={<Square className="h-4 w-4" aria-hidden="true" />}
           >
-            {isStopping ? (
-              <>
-                <RefreshCw className="w-4 h-4 animate-spin" aria-hidden="true" />
-                {t('status.stopping')}
-              </>
-            ) : (
-              <>
-                <Square className="w-4 h-4" aria-hidden="true" />
-                {t('buttons.stopTest')}
-              </>
-            )}
+            {isStopping ? t('status.stopping') : t('buttons.stopTest')}
           </Button>
         ) : (
           <Button
             data-testid="start-test-button"
+            variant="primary"
             onClick={onStartTest}
-            disabled={
-              !selectedInterface ||
-              !peer.trim() ||
-              peerPort < 1 ||
-              peerPort > 65535 ||
-              isStartingTest
-            }
-            aria-busy={isStartingTest}
+            disabled={startBlocked}
+            loading={isStartingTest}
+            icon={<Play className="h-4 w-4" aria-hidden="true" />}
           >
-            {isStartingTest ? (
-              <>
-                <RefreshCw className="w-4 h-4 animate-spin" aria-hidden="true" />
-                {t('status.starting')}
-              </>
-            ) : (
-              <>
-                <Play className="w-4 h-4" aria-hidden="true" />
-                {t('buttons.runTest')}
-              </>
-            )}
+            {isStartingTest ? t('status.starting') : t('buttons.runTest')}
           </Button>
         )}
 
         <StopOutcomeMessage outcome={stopOutcome} />
 
         {testStartError ? (
-          <div
-            className="text-sm text-status-error flex items-center gap-compact"
-            role="alert"
-            aria-live="assertive"
-            data-testid="test-start-error"
-          >
-            <AlertTriangle className="w-4 h-4" aria-hidden="true" />
-            {testStartError}
+          <div data-testid="test-start-error">
+            <Alert tone="error">{testStartError}</Alert>
           </div>
         ) : null}
 
-        <div
-          className="flex items-center gap-default ml-auto"
-          aria-live="polite"
-          aria-atomic="true"
-        >
+        <div className="ml-auto flex items-center gap-3" aria-live="polite" aria-atomic="true">
           {isRunning ? (
-            <output className="status-badge success flex items-center gap-compact">
-              <span
-                className="w-2 h-2 rounded-full bg-status-success animate-pulse"
-                aria-hidden="true"
-              />
-              {stats.testStatus === 'starting'
-                ? t('status.testStarting', { test: stats.currentTest || role })
-                : t('status.testRunning', { test: stats.currentTest || role })}
-            </output>
+            <StatusPill
+              tone="success"
+              label={
+                stats.testStatus === 'starting'
+                  ? t('status.testStarting', { test: stats.currentTest || role })
+                  : t('status.testRunning', { test: stats.currentTest || role })
+              }
+            />
           ) : null}
           {stats.testStatus === 'completed' ? (
-            <output className="status-badge info">
-              {t('status.testCompleted', { test: stats.currentTest })}
-            </output>
+            <StatusPill
+              tone="info"
+              label={t('status.testCompleted', { test: stats.currentTest })}
+            />
           ) : null}
           {stats.testStatus === 'error' ? (
-            <output className="status-badge error" role="alert">
-              {t('status.testError', { test: stats.currentTest || t('status.failed') })}
-            </output>
+            <span role="alert">
+              <StatusPill
+                tone="error"
+                label={t('status.testError', { test: stats.currentTest || t('status.failed') })}
+              />
+            </span>
           ) : null}
           {stats.testStatus === 'cancelled' ? (
-            <output className="status-badge warning">
-              {t('status.testStopped', { test: stats.currentTest })}
-            </output>
+            <StatusPill
+              tone="warning"
+              label={t('status.testStopped', { test: stats.currentTest })}
+            />
           ) : null}
         </div>
       </div>

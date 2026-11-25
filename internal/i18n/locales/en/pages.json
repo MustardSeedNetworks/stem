@@ -38,7 +38,19 @@
     "scope_other": "Kept in this browser only · {{count}} of {{max}} runs",
     "exportCsv": "Export CSV",
     "exportJson": "Export JSON",
-    "eyebrow": "Results"
+    "eyebrow": "Results",
+    "confirmDeleteTitle": "Delete this run?",
+    "confirmDeleteMessage": "The run is removed from this browser. This cannot be undone.",
+    "confirmClearTitle": "Clear all history?",
+    "confirmClearMessage": "Every recorded run is removed from this browser. This cannot be undone.",
+    "caption": "Completed test runs",
+    "colTest": "Test",
+    "colModule": "Module",
+    "colCompleted": "Completed",
+    "colDuration": "Duration",
+    "colVerdict": "Verdict",
+    "filterLabel": "Filter runs",
+    "emptyNoRunsTitle": "No runs yet"
   },
   "measure": {
     "description": "Y.1731 OAM delay / loss / synthetic loss measurement.",

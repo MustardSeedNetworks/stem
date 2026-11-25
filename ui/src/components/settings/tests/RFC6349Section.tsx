@@ -75,6 +75,7 @@ export function RFC6349Section({
           {hasSelectedTests && (
             <div className="border-t border-surface-border pt-section">
               <RFC6349ConfigForm
+                testId="rfc6349-config-form-drawer"
                 config={config}
                 setConfig={onConfigChange}
                 selectedTests={selectedTests}

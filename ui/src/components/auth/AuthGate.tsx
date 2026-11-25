@@ -16,11 +16,11 @@ import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { LoginSchema, MfaVerifySchema } from '../../schemas/auth';
+import { Button } from '../../shared/Button';
 import { useAuthStore } from '../../stores/auth-store';
 import { ProductMark } from '../../ui/ProductMark';
 import { RecoveryForm } from '../recovery/RecoveryForm';
 import { SetupWizard } from '../setup/SetupWizard';
-import { Button } from '../ui/Button';
 
 export function AuthGate(): ReactElement {
   const { t } = useTranslation(['security', 'common']);
@@ -265,7 +265,7 @@ export function AuthGate(): ReactElement {
                 </Button>
                 <Button
                   data-testid="passkey-login"
-                  variant="outline"
+                  variant="secondary"
                   className="w-full"
                   disabled={loginLoading}
                   onClick={handlePasskeyLogin}

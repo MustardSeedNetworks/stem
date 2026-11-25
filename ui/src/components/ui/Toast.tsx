@@ -15,7 +15,7 @@ import {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert } from './Alert';
+import { Alert } from '../../shared/Alert';
 import { ToastContext, type ToastType } from './toastContext';
 
 const DEFAULT_DURATION_MS = 5000;
@@ -34,6 +34,7 @@ function ToastItem({
   toast: ToastEntry;
   onClose: (id: string) => void;
 }): ReactElement {
+  const { t } = useTranslation('common');
   const { id, duration } = toast;
   useEffect(() => {
     if (duration <= 0) {
@@ -44,14 +45,16 @@ function ToastItem({
   }, [id, duration, onClose]);
 
   return (
-    <Alert
-      status={toast.type}
-      onDismiss={() => onClose(id)}
-      className="bg-surface-raised shadow-lg"
-      data-testid="toast"
-    >
-      {toast.message}
-    </Alert>
+    <div data-testid="toast">
+      <Alert
+        tone={toast.type}
+        onDismiss={() => onClose(id)}
+        dismissLabel={t('accessibility.dismissAlert')}
+        className="bg-surface-raised shadow-lg"
+      >
+        {toast.message}
+      </Alert>
+    </div>
   );
 }
 

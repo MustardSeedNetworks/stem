@@ -10,8 +10,8 @@
 import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { GlossaryEntry } from '../../data/help/types';
+import { CollapsibleSection } from '../../shared/CollapsibleSection';
 import { cn, layout, radius, spacing } from '../../styles/theme';
-import { CollapsibleSection } from '../CollapsibleSection';
 
 interface GlossaryTabProps {
   searchQuery: string;
@@ -53,7 +53,7 @@ export function GlossaryTab({
       {categoryNames.map((category) => (
         <CollapsibleSection
           key={`${category}:${searchQuery.length > 0}`}
-          title={<span>{category}</span>}
+          title={category}
           defaultOpen={searchQuery.length > 0}
         >
           <div className="stack-sm">
