@@ -97,11 +97,14 @@ while IFS= read -r -d '' file; do
     check "$file" "$(wc -l < "$file" | tr -d ' ')" "$MAX_TEST_LINES"
 done < <(find . -name "*_test.go" -not -path "./vendor/*" -print0 2>/dev/null || true)
 
+# ui/src/shared is the canonical component set, byte-identical to
+# MustardSeedNetworks/.github and not editable here, so its size is not this
+# repo's to split.
 if [ -d "ui/src" ]; then
     while IFS= read -r -d '' file; do
         file=${file#./}
         check "$file" "$(wc -l < "$file" | tr -d ' ')" "$MAX_TS_LINES"
-    done < <(find ui/src \( -name "*.ts" -o -name "*.tsx" \) -print0 2>/dev/null || true)
+    done < <(find ui/src -path ui/src/shared -prune -o \( -name "*.ts" -o -name "*.tsx" \) -print0 2>/dev/null || true)
 fi
 
 echo "==========================================================================="
