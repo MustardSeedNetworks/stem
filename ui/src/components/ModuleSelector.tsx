@@ -8,7 +8,6 @@
 import { type ReactElement, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../shared/Button';
-import { Card } from '../shared/Card';
 import { CollapsibleSection } from '../shared/CollapsibleSection';
 import { Tooltip } from '../shared/Tooltip';
 import { TestCheckbox } from './settings/TestCheckbox';
@@ -146,51 +145,51 @@ export function ModuleSelector({
     // loose text across the whole settings drawer (#941).
     <div className="stack-sm" data-testid="module-selector">
       {modules.map((mod) => (
-        <Card key={mod.name} data-testid={`module-card-${mod.name}`}>
-          <CollapsibleSection
-            title={`${mod.displayName} · ${mod.standard} (${getSelectedCount(mod)}/${mod.tests.length})`}
-            defaultOpen={mod.name === 'benchmark'}
-          >
-            <div className="mb-2 flex justify-end gap-2">
-              <Tooltip text={t('help:tooltips.selectAll', { name: mod.displayName })}>
-                <Button variant="ghost" size="sm" onClick={() => selectAllInModule(mod)}>
-                  {t('buttons.selectAll')}
-                </Button>
-              </Tooltip>
-              <Tooltip text={t('help:tooltips.clearAll', { name: mod.displayName })}>
-                <Button variant="ghost" size="sm" onClick={() => deselectAllInModule(mod)}>
-                  {t('buttons.deselectAll')}
-                </Button>
-              </Tooltip>
-            </div>
-            <div className="stack-xs">
-              {mod.tests.map((testId) => {
-                const key = testTranslationKeys[testId as keyof typeof testTranslationKeys];
-                const testInfo = key
-                  ? {
-                      id: testId,
-                      name: t(`settings:${key}.name`),
-                      desc: t(`settings:${key}.desc`),
-                      tooltip: t(`settings:${key}.tooltip`),
-                    }
-                  : {
-                      id: testId,
-                      name: testId,
-                      desc: '',
-                      tooltip: t('help:tooltips.runTest', { test: testId }),
-                    };
-                return (
-                  <TestCheckbox
-                    key={testId}
-                    test={testInfo}
-                    checked={selectedTests.includes(testId)}
-                    onChange={() => toggleTest(testId)}
-                  />
-                );
-              })}
-            </div>
-          </CollapsibleSection>
-        </Card>
+        <CollapsibleSection
+          key={mod.name}
+          data-testid={`module-card-${mod.name}`}
+          title={`${mod.displayName} · ${mod.standard} (${getSelectedCount(mod)}/${mod.tests.length})`}
+          defaultOpen={mod.name === 'benchmark'}
+        >
+          <div className="mb-2 flex justify-end gap-2">
+            <Tooltip text={t('help:tooltips.selectAll', { name: mod.displayName })}>
+              <Button variant="ghost" size="sm" onClick={() => selectAllInModule(mod)}>
+                {t('buttons.selectAll')}
+              </Button>
+            </Tooltip>
+            <Tooltip text={t('help:tooltips.clearAll', { name: mod.displayName })}>
+              <Button variant="ghost" size="sm" onClick={() => deselectAllInModule(mod)}>
+                {t('buttons.deselectAll')}
+              </Button>
+            </Tooltip>
+          </div>
+          <div className="stack-xs">
+            {mod.tests.map((testId) => {
+              const key = testTranslationKeys[testId as keyof typeof testTranslationKeys];
+              const testInfo = key
+                ? {
+                    id: testId,
+                    name: t(`settings:${key}.name`),
+                    desc: t(`settings:${key}.desc`),
+                    tooltip: t(`settings:${key}.tooltip`),
+                  }
+                : {
+                    id: testId,
+                    name: testId,
+                    desc: '',
+                    tooltip: t('help:tooltips.runTest', { test: testId }),
+                  };
+              return (
+                <TestCheckbox
+                  key={testId}
+                  test={testInfo}
+                  checked={selectedTests.includes(testId)}
+                  onChange={() => toggleTest(testId)}
+                />
+              );
+            })}
+          </div>
+        </CollapsibleSection>
       ))}
     </div>
   );

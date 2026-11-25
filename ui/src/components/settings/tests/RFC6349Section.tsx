@@ -7,7 +7,6 @@
 
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card } from '../../../shared/Card';
 import { CollapsibleSection } from '../../../shared/CollapsibleSection';
 import { type RFC6349Config, RFC6349ConfigForm } from '../../RFC6349ConfigForm';
 import { TestCheckbox } from '../TestCheckbox';
@@ -56,35 +55,33 @@ export function RFC6349Section({
   const hasSelectedTests = selectedCount > 0;
 
   return (
-    <Card>
-      <CollapsibleSection title={`${t('tests.rfc6349.title')} (${selectedCount}/2)`}>
-        <div className="stack-lg">
-          {/* Test Selection */}
-          <div className="stack-sm">
-            {tests.map((test) => (
-              <TestCheckbox
-                key={test.id}
-                test={test}
-                checked={selectedTests.includes(test.id)}
-                onChange={(): void => onToggleTest(test.id)}
-              />
-            ))}
-          </div>
-
-          {/* Configuration Form */}
-          {hasSelectedTests && (
-            <div className="border-t border-surface-border pt-section">
-              <RFC6349ConfigForm
-                testId="rfc6349-config-form-drawer"
-                config={config}
-                setConfig={onConfigChange}
-                selectedTests={selectedTests}
-              />
-            </div>
-          )}
+    <CollapsibleSection title={`${t('tests.rfc6349.title')} (${selectedCount}/2)`}>
+      <div className="stack-lg">
+        {/* Test Selection */}
+        <div className="stack-sm">
+          {tests.map((test) => (
+            <TestCheckbox
+              key={test.id}
+              test={test}
+              checked={selectedTests.includes(test.id)}
+              onChange={(): void => onToggleTest(test.id)}
+            />
+          ))}
         </div>
-      </CollapsibleSection>
-    </Card>
+
+        {/* Configuration Form */}
+        {hasSelectedTests && (
+          <div className="border-t border-surface-border pt-section">
+            <RFC6349ConfigForm
+              testId="rfc6349-config-form-drawer"
+              config={config}
+              setConfig={onConfigChange}
+              selectedTests={selectedTests}
+            />
+          </div>
+        )}
+      </div>
+    </CollapsibleSection>
   );
 }
 

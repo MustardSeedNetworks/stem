@@ -6,7 +6,6 @@
 
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card } from '../../../shared/Card';
 import { CollapsibleSection } from '../../../shared/CollapsibleSection';
 import { type TrafficGenConfig, TrafficGenConfigForm } from '../../TrafficGenConfigForm';
 import { TestCheckbox } from '../TestCheckbox';
@@ -47,35 +46,33 @@ export function TrafficGenSection({
   const hasSelectedTests = selectedTests.includes('custom_stream');
 
   return (
-    <Card>
-      <CollapsibleSection title={t('tests.trafficgen.title')}>
-        <div className="stack-lg">
-          {/* Test Selection */}
-          <div className="stack-sm">
-            {tests.map((test) => (
-              <TestCheckbox
-                key={test.id}
-                test={test}
-                checked={selectedTests.includes(test.id)}
-                onChange={(): void => onToggleTest(test.id)}
-              />
-            ))}
-          </div>
-
-          {/* Configuration Form */}
-          {hasSelectedTests && (
-            <div className="border-t border-surface-border pt-section">
-              <TrafficGenConfigForm
-                testId="trafficgen-config-form-drawer"
-                config={config}
-                setConfig={onConfigChange}
-                selectedTests={selectedTests}
-              />
-            </div>
-          )}
+    <CollapsibleSection title={t('tests.trafficgen.title')}>
+      <div className="stack-lg">
+        {/* Test Selection */}
+        <div className="stack-sm">
+          {tests.map((test) => (
+            <TestCheckbox
+              key={test.id}
+              test={test}
+              checked={selectedTests.includes(test.id)}
+              onChange={(): void => onToggleTest(test.id)}
+            />
+          ))}
         </div>
-      </CollapsibleSection>
-    </Card>
+
+        {/* Configuration Form */}
+        {hasSelectedTests && (
+          <div className="border-t border-surface-border pt-section">
+            <TrafficGenConfigForm
+              testId="trafficgen-config-form-drawer"
+              config={config}
+              setConfig={onConfigChange}
+              selectedTests={selectedTests}
+            />
+          </div>
+        )}
+      </div>
+    </CollapsibleSection>
   );
 }
 

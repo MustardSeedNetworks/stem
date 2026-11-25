@@ -7,7 +7,6 @@
 
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card } from '../../../shared/Card';
 import { CollapsibleSection } from '../../../shared/CollapsibleSection';
 import { type TSNConfig, TSNConfigForm } from '../../TSNConfigForm';
 import { TestCheckbox } from '../TestCheckbox';
@@ -58,35 +57,33 @@ export function TSNSection({
   const hasSelectedTests = selectedCount > 0;
 
   return (
-    <Card>
-      <CollapsibleSection title={`${t('tests.tsn.title')} (${selectedCount}/4)`}>
-        <div className="stack-lg">
-          {/* Test Selection */}
-          <div className="stack-sm">
-            {tests.map((test) => (
-              <TestCheckbox
-                key={test.id}
-                test={test}
-                checked={selectedTests.includes(test.id)}
-                onChange={(): void => onToggleTest(test.id)}
-              />
-            ))}
-          </div>
-
-          {/* Configuration Form */}
-          {hasSelectedTests && (
-            <div className="border-t border-surface-border pt-section">
-              <TSNConfigForm
-                testId="tsn-config-form-drawer"
-                config={config}
-                setConfig={onConfigChange}
-                selectedTests={selectedTests}
-              />
-            </div>
-          )}
+    <CollapsibleSection title={`${t('tests.tsn.title')} (${selectedCount}/4)`}>
+      <div className="stack-lg">
+        {/* Test Selection */}
+        <div className="stack-sm">
+          {tests.map((test) => (
+            <TestCheckbox
+              key={test.id}
+              test={test}
+              checked={selectedTests.includes(test.id)}
+              onChange={(): void => onToggleTest(test.id)}
+            />
+          ))}
         </div>
-      </CollapsibleSection>
-    </Card>
+
+        {/* Configuration Form */}
+        {hasSelectedTests && (
+          <div className="border-t border-surface-border pt-section">
+            <TSNConfigForm
+              testId="tsn-config-form-drawer"
+              config={config}
+              setConfig={onConfigChange}
+              selectedTests={selectedTests}
+            />
+          </div>
+        )}
+      </div>
+    </CollapsibleSection>
   );
 }
 

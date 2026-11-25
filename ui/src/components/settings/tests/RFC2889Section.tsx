@@ -7,7 +7,6 @@
 
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card } from '../../../shared/Card';
 import { CollapsibleSection } from '../../../shared/CollapsibleSection';
 import { type RFC2889Config, RFC2889ConfigForm } from '../../RFC2889ConfigForm';
 import { TestCheckbox } from '../TestCheckbox';
@@ -59,35 +58,33 @@ export function RFC2889Section({
   const hasSelectedTests = selectedCount > 0;
 
   return (
-    <Card>
-      <CollapsibleSection title={`${t('tests.rfc2889.title')} (${selectedCount}/5)`}>
-        <div className="stack-lg">
-          {/* Test Selection */}
-          <div className="stack-sm">
-            {tests.map((test) => (
-              <TestCheckbox
-                key={test.id}
-                test={test}
-                checked={selectedTests.includes(test.id)}
-                onChange={(): void => onToggleTest(test.id)}
-              />
-            ))}
-          </div>
-
-          {/* Configuration Form */}
-          {hasSelectedTests && (
-            <div className="border-t border-surface-border pt-section">
-              <RFC2889ConfigForm
-                testId="rfc2889-config-form-drawer"
-                config={config}
-                setConfig={onConfigChange}
-                selectedTests={selectedTests}
-              />
-            </div>
-          )}
+    <CollapsibleSection title={`${t('tests.rfc2889.title')} (${selectedCount}/5)`}>
+      <div className="stack-lg">
+        {/* Test Selection */}
+        <div className="stack-sm">
+          {tests.map((test) => (
+            <TestCheckbox
+              key={test.id}
+              test={test}
+              checked={selectedTests.includes(test.id)}
+              onChange={(): void => onToggleTest(test.id)}
+            />
+          ))}
         </div>
-      </CollapsibleSection>
-    </Card>
+
+        {/* Configuration Form */}
+        {hasSelectedTests && (
+          <div className="border-t border-surface-border pt-section">
+            <RFC2889ConfigForm
+              testId="rfc2889-config-form-drawer"
+              config={config}
+              setConfig={onConfigChange}
+              selectedTests={selectedTests}
+            />
+          </div>
+        )}
+      </div>
+    </CollapsibleSection>
   );
 }
 

@@ -7,6 +7,9 @@
  */
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Checkbox } from '../shared/Checkbox';
+import { FormField } from '../shared/FormField';
+import { Select } from '../shared/Select';
 import type { InterfaceInfo } from '../types/api';
 
 interface HeaderInterfaceSelectorProps {
@@ -36,31 +39,22 @@ export function HeaderInterfaceSelector({
   }, [interfaces, showAll]);
 
   return (
-    <div className={`flex flex-col gap-tight ${className}`}>
-      <select
-        value={selectedInterface}
-        onChange={(e: React.ChangeEvent<HTMLSelectElement>): void =>
-          onSelectInterface(e.target.value)
-        }
-        className="w-48"
-        aria-label={t('settings:interface.select')}
-      >
-        <option value="">{t('settings:interface.select')}</option>
-        {visibleInterfaces.map((iface) => (
-          <option key={iface.name} value={iface.name}>
-            {iface.name} ({iface.speed}Mbps)
-          </option>
-        ))}
-      </select>
-      <label className="flex items-center gap-1.5 text-xs text-text-muted cursor-pointer select-none">
-        <input
-          type="checkbox"
-          checked={showAll}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>): void => setShowAll(e.target.checked)}
-          className="w-3 h-3 accent-brand-primary"
-        />
-        <span>{t('settings:interface.showAll')}</span>
-      </label>
+    <div className={`flex w-52 max-w-full flex-col gap-2 ${className}`}>
+      <FormField label={t('settings:interface.select')}>
+        {(control) => (
+          <Select
+            {...control}
+            value={selectedInterface}
+            onValueChange={onSelectInterface}
+            placeholder={t('settings:interface.select')}
+            options={visibleInterfaces.map((iface) => ({
+              value: iface.name,
+              label: `${iface.name} (${iface.speed}Mbps)`,
+            }))}
+          />
+        )}
+      </FormField>
+      <Checkbox checked={showAll} onChange={setShowAll} label={t('settings:interface.showAll')} />
     </div>
   );
 }
