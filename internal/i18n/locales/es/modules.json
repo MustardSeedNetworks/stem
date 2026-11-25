@@ -1,13 +1,4 @@
 {
-  "card": {
-    "test": {
-      "ariaLabel": "Incluir {{name}} al ejecutar el módulo"
-    },
-    "expand": {
-      "titleExpanded": "Contraer la tarjeta de {{name}} y ocultar la selección de pruebas",
-      "titleCollapsed": "Expandir la tarjeta de {{name}} para elegir qué pruebas ejecutar y alternar el inicio automático"
-    }
-  },
   "reflector": {
     "title": "Reflector",
     "description": "Reflexion de paquetes para pruebas de bucle",

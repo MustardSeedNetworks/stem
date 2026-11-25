@@ -329,13 +329,6 @@
     "label": "Command palette",
     "actions": "Actions"
   },
-  "statusBadge": {
-    "success": "Status: success",
-    "warning": "Status: warning",
-    "error": "Status: error",
-    "unknown": "Status: unknown",
-    "loading": "Status: loading"
-  },
   "connection": {
     "unreachable": "Can't reach Stem daemon, retrying"
   },

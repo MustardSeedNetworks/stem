@@ -273,8 +273,6 @@
       }
     }
   },
-  "viewModuleHint": "Agrupar las pruebas por el módulo que ejercitan (Reflector, Benchmark, ServiceTest, TrafficGen, Measure, Certify).",
-  "viewStandardHint": "Agrupar las pruebas por estándar IETF/ITU-T/IEEE (RFC 2544, Y.1564, etc.).",
   "testConfig": {
     "common": {
       "summary": "Resumen de la prueba",
@@ -306,14 +304,11 @@
         "stepSize": "Tamaño del paso (%)",
         "testsAt": "Se prueba en: {{points}}"
       },
-      "frameSizes": {
-        "includeTitle": "Incluir tramas de {{size}} bytes en el barrido RFC 2544"
-      },
+      "frameSizes": {},
       "advanced": {
         "title": "Opciones avanzadas",
         "bidirectional": "Prueba bidireccional",
-        "bidirectionalHint": "Probar las rutas TX y RX",
-        "bidirectionalAria": "Activar la prueba bidireccional"
+        "bidirectionalHint": "Probar las rutas TX y RX"
       },
       "summary": {
         "frameSizes": "Tamaños de trama: {{sizes}} bytes",
@@ -347,9 +342,7 @@
         "fd": "Retardo máximo de trama (ms)",
         "fdv": "Jitter máximo (ms)"
       },
-      "frameSizes": {
-        "includeTitle": "Incluir tramas de {{size}} bytes en el barrido de activación de servicio Y.1564"
-      },
+      "frameSizes": {},
       "duration": {
         "title": "Duración de la prueba",
         "configStep": "Duración de cada escalón (s)",
@@ -396,8 +389,7 @@
         "title": "Parámetros OAM",
         "ccm": "Intervalo de CCM",
         "priority": "Prioridad",
-        "tagged": "Usar etiquetado de prioridad (802.1Q)",
-        "taggedAria": "Usar el etiquetado de prioridad 802.1Q en las tramas OAM"
+        "tagged": "Usar etiquetado de prioridad (802.1Q)"
       },
       "measurement": {
         "title": "Parámetros de medición",
@@ -503,15 +495,12 @@
       "ptp": {
         "title": "Sincronización PTP",
         "enable": "Activar marcas de tiempo PTP (IEEE 1588)",
-        "enableAria": "Activar las marcas de tiempo hardware PTP IEEE 1588",
         "require": "Exigir la sincronización PTP antes de la prueba",
-        "requireAria": "Exigir la sincronización PTP antes de iniciar la prueba",
         "syncOffset": "Desfase máximo de sincronización (ns)"
       },
       "scheduling": {
         "title": "Planificación del tráfico (802.1Qbv)",
         "preemption": "Activar la preempción de tramas (802.1Qbu)",
-        "preemptionAria": "Activar la preempción de tramas IEEE 802.1Qbu",
         "cycleTime": "Tiempo de ciclo",
         "trafficClass": "Clase de tráfico",
         "numClasses": "Número de clases de tráfico",

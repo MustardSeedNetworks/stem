@@ -329,13 +329,6 @@
     "label": "Paleta de comandos",
     "actions": "Acciones"
   },
-  "statusBadge": {
-    "success": "Estado: correcto",
-    "warning": "Estado: advertencia",
-    "error": "Estado: error",
-    "unknown": "Estado: desconocido",
-    "loading": "Estado: cargando"
-  },
   "connection": {
     "unreachable": "No se puede conectar con el daemon de Stem, reintentando"
   },

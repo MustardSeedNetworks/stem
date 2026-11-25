@@ -26,7 +26,7 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
-export type RollupState = 'ok' | 'idle' | 'warn' | 'crit' | 'unknown';
+export type RollupState = 'ok' | 'warn' | 'crit' | 'unknown' | 'idle';
 
 export interface RollupFigure {
   label: string;

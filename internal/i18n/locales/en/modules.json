@@ -1,13 +1,4 @@
 {
-  "card": {
-    "test": {
-      "ariaLabel": "Include {{name}} when running module"
-    },
-    "expand": {
-      "titleExpanded": "Collapse the {{name}} card and hide test selection",
-      "titleCollapsed": "Expand the {{name}} card to choose which tests to run and toggle auto-start"
-    }
-  },
   "reflector": {
     "title": "Reflector",
     "description": "Packet reflection for loopback testing",
