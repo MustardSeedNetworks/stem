@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.34.6](https://github.com/MustardSeedNetworks/stem/compare/v0.34.5...v0.34.6) (2026-11-25)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @tanstack/react-query to v5.108.0 ([#2120](https://github.com/MustardSeedNetworks/stem/issues/2120)) ([568884d](https://github.com/MustardSeedNetworks/stem/commit/568884da245b5c6076b0827ceae5449123158558))
+* **deps:** update dependency i18next-browser-languagedetector to v8.3.1 ([#2118](https://github.com/MustardSeedNetworks/stem/issues/2118)) ([b62577a](https://github.com/MustardSeedNetworks/stem/commit/b62577a46543df89df5c40c275fc398f77485b33))
+
 ## [0.34.5](https://github.com/MustardSeedNetworks/stem/compare/v0.34.4...v0.34.5) (2026-11-25)
 
 
