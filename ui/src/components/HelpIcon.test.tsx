@@ -14,15 +14,15 @@ describe('HelpIcon keyboard help', () => {
     expect(button).toHaveAttribute('aria-describedby', tooltip.id);
     expect(tooltip).toHaveTextContent('Frames sent each second');
     fireEvent.keyDown(button, { key: 'Escape' });
-    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+    expect(screen.getByRole('tooltip')).toHaveClass('invisible');
   });
 
   it('dismisses hover help even when the trigger does not have focus', () => {
     render(<HelpIcon tooltip="Hover help" />);
     fireEvent.mouseEnter(screen.getByRole('button'));
-    expect(screen.getByRole('tooltip')).toBeVisible();
+    expect(screen.getByRole('tooltip')).not.toHaveClass('invisible');
     fireEvent.keyDown(document, { key: 'Escape' });
-    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+    expect(screen.getByRole('tooltip')).toHaveClass('invisible');
   });
 
   it('does not toggle a label checkbox when help is clicked', () => {

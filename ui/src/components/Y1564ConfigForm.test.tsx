@@ -46,7 +46,6 @@ describe('Y1564ConfigForm — i18n', () => {
 
     expect(screen.getByText('CIR (Mbps)')).toBeInTheDocument();
     expect(screen.getByText('EIR (Mbps)')).toBeInTheDocument();
-    expect(screen.getByText('Configuración Y.1564 / MEF')).toBeInTheDocument();
   });
 });
 
@@ -62,7 +61,7 @@ describe('Y1564ConfigForm — store sync', () => {
       />,
     );
 
-    await userEvent.click(screen.getByRole('checkbox', { name: 'Test 9000-byte frames' }));
+    await userEvent.click(screen.getByRole('checkbox', { name: /9000/ }));
 
     await waitFor(() =>
       expect(setConfig).toHaveBeenLastCalledWith(

@@ -29,9 +29,10 @@ const oneRun = [
 ];
 
 /** The page heading comes from the route table, not from HistoryPage. */
-function historyPageTitle(): string {
+function historyPage(): { label: string; description: string } {
   const { result } = renderHook(() => usePages());
-  return result.current.find((p) => p.path === '/history')?.title ?? '';
+  const page = result.current.find((p) => p.path === '/history');
+  return { label: page?.label ?? '', description: page?.description ?? '' };
 }
 
 beforeEach(() => {
@@ -44,16 +45,18 @@ afterEach(async () => {
 });
 
 describe('HistoryPage — discloses that history is per-browser and capped', () => {
-  it('titles the page after the browser the results are kept in (en)', async () => {
+  it('titles the page with its nav label and says in the subtitle that results stay in the browser (en)', async () => {
     await i18n.changeLanguage('en');
 
-    expect(historyPageTitle()).toBe('Recent results on this browser');
+    expect(historyPage().label).toBe('History');
+    expect(historyPage().description).toContain('this browser only');
   });
 
-  it('titles the page after the browser the results are kept in (es)', async () => {
+  it('titles the page with its nav label and says in the subtitle that results stay in the browser (es)', async () => {
     await i18n.changeLanguage('es');
 
-    expect(historyPageTitle()).toBe('Resultados recientes en este navegador');
+    expect(historyPage().label).toBe('Historial');
+    expect(historyPage().description).toContain('solo en este navegador');
   });
 
   it('shows the cap, taken from the store constant, in English', async () => {

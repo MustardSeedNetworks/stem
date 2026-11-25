@@ -31,14 +31,14 @@ for (const language of ['en', 'es']) {
           localStorage.setItem('stem-theme', 'dark');
         }, language);
         await page.goto(route.path);
-        const opener = page.getByTestId('page-help-button');
+        const opener = page.getByTestId('page-header-help-button');
         await opener.click();
         const drawer = page.getByTestId('help-drawer');
         await expect(drawer).toBeVisible();
         await expect(drawer).toContainText(
           language === 'es' ? (route.spanish ?? route.topic) : route.topic,
         );
-        await expect(page.getByTestId('help-search')).toBeFocused();
+        await expect(page.getByTestId('help-drawer').getByRole('searchbox')).toBeFocused();
         const bounds = await drawer.boundingBox();
         expect(bounds).not.toBeNull();
         expect(bounds?.x).toBeGreaterThanOrEqual(0);
@@ -62,7 +62,7 @@ for (const language of ['en', 'es']) {
           await expect(drawer).toContainText(
             language === 'es' ? (route.spanish ?? route.topic) : route.topic,
           );
-          await page.getByTestId('help-search').press('Escape');
+          await page.getByTestId('help-drawer').getByRole('searchbox').press('Escape');
           await expect(footer).toBeFocused();
         }
       });
@@ -88,14 +88,14 @@ test('Spanish form help works on keyboard focus, hover and Escape', async ({ pag
   await expect(tooltip).toContainText(/duración|tiempo/i);
   await page.keyboard.press('Escape');
   await expect(tooltip).not.toBeVisible();
-  await page.getByTestId('page-help-button').focus();
+  await page.getByTestId('page-header-help-button').focus();
   await help.hover();
   await expect(tooltip).toBeVisible();
   await tooltip.hover();
   await expect(tooltip).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(tooltip).not.toBeVisible();
-  await expect(page.getByTestId('page-help-button')).toBeFocused();
+  await expect(page.getByTestId('page-header-help-button')).toBeFocused();
 });
 
 test('help follows trailing-slash routes and stays closed after browser history changes', async ({
@@ -104,14 +104,14 @@ test('help follows trailing-slash routes and stays closed after browser history 
   await skipSetupWizard(page);
   await useRole(page, 'test_master');
   await page.goto('/tests/benchmark/');
-  await page.getByTestId('page-help-button').click();
+  await page.getByTestId('page-header-help-button').click();
   await expect(page.getByTestId('help-drawer')).toContainText('Throughput Test');
-  await page.getByTestId('help-search').press('Escape');
+  await page.getByTestId('help-drawer').getByRole('searchbox').press('Escape');
   await page
     .getByTestId('desktop-sidebar')
     .getByRole('button', { name: 'Measure', exact: true })
     .click();
-  await page.getByTestId('page-help-button').click();
+  await page.getByTestId('page-header-help-button').click();
   await expect(page.getByTestId('help-drawer')).toContainText('Frame Delay Measurement');
   await page.goBack();
   await expect(page).toHaveURL(/\/tests\/benchmark\/$/);
@@ -119,7 +119,7 @@ test('help follows trailing-slash routes and stays closed after browser history 
   await page.goForward();
   await expect(page).toHaveURL(/\/tests\/measure$/);
   await expect(page.getByTestId('help-drawer')).not.toBeVisible();
-  await page.getByTestId('page-help-button').click();
+  await page.getByTestId('page-header-help-button').click();
   await expect(page.getByTestId('help-drawer')).toContainText('Frame Delay Measurement');
 });
 
@@ -136,7 +136,7 @@ test('a help click batched with a navigation opens help for the destination', as
   await skipSetupWizard(page);
   await useRole(page, 'test_master');
   await page.goto('/tests/benchmark/');
-  await page.getByTestId('page-help-button').waitFor();
+  await page.getByTestId('page-header-help-button').waitFor();
   // Hold the destination's chunk back so the window between the address bar
   // and the committed route is wide enough to assert inside, instead of being
   // whatever the machine gives us.
@@ -153,7 +153,7 @@ test('a help click batched with a navigation opens help for the destination', as
       throw new Error('Measure nav button not found');
     }
     measure.click();
-    document.querySelector<HTMLElement>('[data-testid="page-help-button"]')?.click();
+    document.querySelector<HTMLElement>('[data-testid="page-header-help-button"]')?.click();
   });
   await expect(page).toHaveURL(/\/tests\/measure$/);
   // Still on the Benchmark page as far as React is concerned: the drawer

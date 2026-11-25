@@ -22,14 +22,16 @@ const TITLES: Record<string, string> = {
   '/account/security': 'Security | Stem',
 };
 
-const MODULE_ROUTES = new Set([
-  '/reflector',
-  '/tests/benchmark',
-  '/tests/servicetest',
-  '/tests/trafficgen',
-  '/tests/measure',
-  '/tests/certify',
-]);
+const EYEBROWS: Record<string, string> = {
+  '/reflector': 'Test module',
+  '/tests/benchmark': 'Test module',
+  '/tests/servicetest': 'Test module',
+  '/tests/trafficgen': 'Test module',
+  '/tests/measure': 'Test module',
+  '/tests/certify': 'Test module',
+  '/history': 'Results',
+  '/account/security': 'Account',
+};
 
 test.describe('each route names itself', () => {
   test.beforeEach(async ({ page }) => {
@@ -37,19 +39,16 @@ test.describe('each route names itself', () => {
   });
 
   for (const [route, title] of Object.entries(TITLES)) {
-    test(`${route} titles the tab and ${MODULE_ROUTES.has(route) ? 'wears' : 'omits'} the module eyebrow`, async ({
-      page,
-    }) => {
+    test(`${route} titles the tab and wears its kicker`, async ({ page }) => {
       await page.goto(route, { waitUntil: 'domcontentloaded' });
       await expect(page.getByTestId('page-header-title')).toBeVisible({ timeout: 20000 });
       await expect(page).toHaveTitle(title);
 
-      const eyebrow = page.getByTestId('page-header-eyebrow');
-      if (MODULE_ROUTES.has(route)) {
-        await expect(eyebrow).toHaveText('Test module');
-      } else {
-        await expect(eyebrow).toHaveCount(0);
-      }
+      await expect(page.getByTestId('page-header-eyebrow')).toHaveText(EYEBROWS[route] ?? '');
+      // The title is the nav label, and the trail names the page it ends on.
+      await expect(page.getByRole('navigation', { name: 'Breadcrumb' })).toContainText(
+        await page.getByTestId('page-header-title').innerText(),
+      );
     });
   }
 

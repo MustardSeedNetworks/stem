@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { skipSetupWizard } from './helpers/auth';
 import { useRole } from './helpers/role';
+import { expandTestSection, openSettingsTab, testCheckbox } from './helpers/settings';
 
 /**
  * MEF Full Test reaches the daemon as a test it knows (#1708).
@@ -60,20 +61,17 @@ test('MEF Full Test starts a run the daemon recognises', async ({ page }) => {
   await page.getByTestId('sidebar-settings-button').click();
   await expect(page.getByTestId('settings-drawer')).toBeVisible();
 
-  // Only MEF Full Test, so the daemon's answer is about it alone.
-  await page.getByTestId('rfc2544-test-section-toggle').click();
-  for (const id of DEFAULT_SELECTION) {
-    await page.getByTestId(`test-checkbox-${id}`).uncheck();
-  }
-  await page.getByTestId('mef-test-section-toggle').click();
-  await page.getByTestId('test-checkbox-mef').check();
+  await openSettingsTab(page, 'Tests');
 
-  // Escape dismisses the focused control's tooltip before its enclosing
-  // drawer; clicking close races that tooltip on WebKit.
+  // Only MEF Full Test, so the daemon's answer is about it alone.
+  await expandTestSection(page, /RFC 2544/);
+  for (const id of DEFAULT_SELECTION) {
+    await testCheckbox(page, id).uncheck();
+  }
+  await expandTestSection(page, /MEF/);
+  await testCheckbox(page, 'mef').check();
+
   await page.getByTestId('settings-drawer-close').focus();
-  await expect(page.getByRole('tooltip')).toBeVisible();
-  await page.keyboard.press('Escape');
-  await expect(page.getByRole('tooltip')).toBeHidden();
   await page.keyboard.press('Escape');
   await expect(page.getByTestId('settings-drawer')).toBeHidden();
 

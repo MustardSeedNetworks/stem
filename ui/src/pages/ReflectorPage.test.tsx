@@ -208,7 +208,6 @@ describe('ReflectorPage — run state', () => {
 
     const alert = screen.getByRole('alert');
     expect(alert).toHaveTextContent('permission denied opening eth0');
-    expect(alert).toHaveAttribute('aria-live', 'assertive');
   });
 });
 

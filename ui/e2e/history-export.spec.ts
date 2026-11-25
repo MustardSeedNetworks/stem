@@ -42,7 +42,9 @@ test.describe('History export', () => {
       window.localStorage.setItem('stem-result-history', JSON.stringify(runs));
     }, stored);
     await page.goto('/history');
-    await expect(page.getByTestId('history-row-2026-08-17T11:00:00Z-Y.1564')).toBeVisible();
+    await expect(
+      page.getByTestId('history-table').getByRole('row', { name: /Y\.1564/ }),
+    ).toBeVisible();
   });
 
   test('exports one CSV row per stored run with its summary fields', async ({ page }) => {

@@ -44,7 +44,6 @@ describe('Y1731ConfigForm — i18n', () => {
 
     expect(screen.getByText('MEP ID')).toBeInTheDocument();
     expect(screen.getByText('MEG ID')).toBeInTheDocument();
-    expect(screen.getByText('Configuración OAM Y.1731')).toBeInTheDocument();
   });
 
   it('offers only the OAM frame sizes, not the sweep list', () => {

@@ -50,7 +50,7 @@ test.describe('Help Drawer (smoke)', () => {
     await expect(testsPanel).toContainText(/RFC 2544/i);
 
     // Switch to the Glossary tab and confirm the view re-renders.
-    await drawer.getByTestId('help-drawer-tab-glossary').click();
+    await drawer.getByRole('tab', { name: 'Glossary' }).click();
     const glossaryText = await drawer.textContent();
     expect((glossaryText ?? '').length).toBeGreaterThan(100);
 

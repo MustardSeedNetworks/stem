@@ -66,7 +66,7 @@ describe('ModuleSelector', () => {
     mockFetch({});
     render(<ModuleSelector selectedTests={[]} setSelectedTests={vi.fn()} />);
 
-    expect(await screen.findByText('Benchmark')).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /Benchmark/ })).toBeInTheDocument();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 

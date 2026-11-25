@@ -31,15 +31,14 @@ describe('help content coverage', () => {
   });
 
   it.each([
-    ['en', 'Simple', 'Switch to technical view Simple'],
-    ['es', 'Sencillo', 'Cambiar a vista técnica Sencillo'],
+    ['en', 'Simple'],
+    ['es', 'Sencillo'],
   ] as const)(
-    'keeps the visible mode label in the toggle name (%s)',
-    async (language, visible, name) => {
+    'names the mode choice by its visible label, simple by default (%s)',
+    async (language, visible) => {
       await i18n.changeLanguage(language);
       render(<HelpDrawer isOpen onClose={() => {}} />);
-      const toggle = screen.getByRole('button', { name });
-      expect(toggle).toHaveTextContent(visible);
+      expect(screen.getByRole('radio', { name: visible })).toBeChecked();
     },
   );
 
@@ -47,7 +46,7 @@ describe('help content coverage', () => {
     await i18n.changeLanguage('es');
     render(<HelpDrawer isOpen onClose={() => {}} initialTestId="rfc2544_throughput" />);
     expect(screen.getByText(/Validar equipos antes de instalarlos/)).toBeVisible();
-    expect(screen.getByTestId('help-search')).toHaveFocus();
+    expect(screen.getByRole('searchbox')).toHaveFocus();
     expect(screen.getByTestId('help-standard-link')).toHaveAttribute(
       'href',
       'https://www.rfc-editor.org/rfc/rfc2544.html',
@@ -59,7 +58,7 @@ describe('help content coverage', () => {
   it('searches Spanish glossary definitions instead of the old English corpus', async () => {
     await i18n.changeLanguage('es');
     render(<HelpDrawer isOpen onClose={() => {}} initialTab="glossary" />);
-    fireEvent.change(screen.getByTestId('help-search'), { target: { value: 'comprometida' } });
+    fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'comprometida' } });
     expect(screen.getByText('Tasa de información comprometida')).toBeVisible();
     expect(screen.queryByText('Committed Information Rate')).not.toBeInTheDocument();
   });

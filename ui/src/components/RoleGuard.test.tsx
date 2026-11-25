@@ -14,7 +14,7 @@
  * value, not with the endpoint.
  */
 
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { StemRole } from '../contexts/RoleContext';
@@ -147,7 +147,9 @@ describe('switching role from the banner', () => {
     );
 
     await user.click(screen.getByRole('button', { name: 'Switch role' }));
-    await user.click(screen.getByTestId('confirm-modal-confirm'));
+    await user.click(
+      within(screen.getByRole('dialog')).getByRole('button', { name: 'Switch role' }),
+    );
 
     expect(setRole).toHaveBeenCalledExactlyOnceWith('test_master');
   });
@@ -162,7 +164,9 @@ describe('switching role from the banner', () => {
     );
 
     await user.click(screen.getByRole('button', { name: 'Switch role' }));
-    await user.click(screen.getByTestId('confirm-modal-confirm'));
+    await user.click(
+      within(screen.getByRole('dialog')).getByRole('button', { name: 'Switch role' }),
+    );
 
     expect(setRole).toHaveBeenCalledExactlyOnceWith('reflector');
   });
@@ -176,7 +180,7 @@ describe('switching role from the banner', () => {
     );
 
     await user.click(screen.getByRole('button', { name: 'Switch role' }));
-    await user.click(screen.getByTestId('confirm-modal-cancel'));
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Cancel' }));
 
     expect(setRole).not.toHaveBeenCalled();
     expect(screen.queryByText('Switch to Test Master?')).not.toBeInTheDocument();

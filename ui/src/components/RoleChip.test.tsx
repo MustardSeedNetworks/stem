@@ -6,7 +6,7 @@
  * switch is in flight, is expensive. The guards around that are what these
  * assert, along with the failure surface when the backend refuses.
  */
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { RoleContextValue } from '../contexts/RoleContext';
@@ -54,7 +54,9 @@ describe('RoleChip', () => {
 
     // The modal is up, but nothing has changed yet — the whole point of the
     // chip is that a stray click cannot cancel a running test.
-    expect(screen.getByTestId('confirm-modal-confirm')).toBeInTheDocument();
+    expect(
+      within(screen.getByRole('dialog')).getByRole('button', { name: 'Switch role' }),
+    ).toBeInTheDocument();
     expect(setRole).not.toHaveBeenCalled();
   });
 
@@ -62,7 +64,9 @@ describe('RoleChip', () => {
     const { setRole } = renderChip();
 
     await userEvent.click(screen.getByTestId('role-chip-test_master'));
-    await userEvent.click(screen.getByTestId('confirm-modal-confirm'));
+    await userEvent.click(
+      within(screen.getByRole('dialog')).getByRole('button', { name: 'Switch role' }),
+    );
 
     expect(setRole).toHaveBeenCalledWith('test_master');
   });
@@ -71,10 +75,12 @@ describe('RoleChip', () => {
     const { setRole } = renderChip();
 
     await userEvent.click(screen.getByTestId('role-chip-test_master'));
-    await userEvent.click(screen.getByTestId('confirm-modal-cancel'));
+    await userEvent.click(
+      within(screen.getByRole('dialog')).getByRole('button', { name: 'Cancel' }),
+    );
 
     expect(setRole).not.toHaveBeenCalled();
-    expect(screen.queryByTestId('confirm-modal-confirm')).toBeNull();
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 
   it('ignores a click on the role already in effect', async () => {
@@ -82,7 +88,7 @@ describe('RoleChip', () => {
 
     await userEvent.click(screen.getByTestId('role-chip-reflector'));
 
-    expect(screen.queryByTestId('confirm-modal-confirm')).toBeNull();
+    expect(screen.queryByRole('dialog')).toBeNull();
     expect(setRole).not.toHaveBeenCalled();
   });
 

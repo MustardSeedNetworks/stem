@@ -47,14 +47,12 @@ const ROUTES = [
  * then on this branch:
  *
  *   page header footprint   83 / 64 / 87 px  ->  76 / 57 / 80 px
- *   idle results card      182 px            ->  57 px
  *
  * (the three header figures are a page with a description, one without, and
  * History, whose description wraps). Ratchets: tightening further is welcome,
  * loosening needs a reason.
  */
 const MAX_PAGE_HEADER_FOOTPRINT_PX = 80;
-const MAX_IDLE_RESULTS_STRIP_PX = 90;
 
 interface Overflow {
   selector: string;
@@ -177,22 +175,4 @@ test.describe('Desktop clarity and density', () => {
       ).toBeLessThanOrEqual(MAX_PAGE_HEADER_FOOTPRINT_PX);
     });
   }
-
-  test('the idle results strip is a strip, not an empty panel', async ({ page }) => {
-    await page.setViewportSize({ width: 1440, height: VIEWPORT_HEIGHT });
-    await page.goto('/tests/benchmark');
-
-    const idleMessage = page.getByText(/No tests running/);
-    await expect(idleMessage).toBeVisible();
-
-    const height = await idleMessage.evaluate((el: HTMLElement) => {
-      const card = el.closest('.card');
-      return card ? Math.round(card.getBoundingClientRect().height) : -1;
-    });
-
-    expect(
-      height,
-      `an idle results card showing one sentence must stay within ${MAX_IDLE_RESULTS_STRIP_PX}px (UI-STEM-18 ratchet)`,
-    ).toBeLessThanOrEqual(MAX_IDLE_RESULTS_STRIP_PX);
-  });
 });

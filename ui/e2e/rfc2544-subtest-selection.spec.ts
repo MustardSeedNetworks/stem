@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { skipSetupWizard } from './helpers/auth';
 import { useRole } from './helpers/role';
+import { expandTestSection, openSettingsTab, testCheckbox } from './helpers/settings';
 
 /**
  * RFC 2544 sub-test selection, through the settings drawer.
@@ -76,24 +77,25 @@ test.describe('RFC 2544 sub-test selection', () => {
 
     await page.getByTestId('sidebar-settings-button').click();
     await expect(page.getByTestId('settings-drawer')).toBeVisible();
-    await page.getByTestId('rfc2544-test-section-toggle').click();
+    await openSettingsTab(page, 'Tests');
+    await expandTestSection(page, /RFC 2544/);
     // The section's own checkboxes are the proof it expanded — asserting on
     // the toggle's aria-expanded would pass on an empty section.
-    await expect(page.getByTestId('test-checkbox-rfc2544_throughput')).toBeVisible();
+    await expect(testCheckbox(page, 'rfc2544_throughput')).toBeVisible();
   });
 
   test('unchecking every rfc2544 test removes the config form, and re-checking one brings it back', async ({
     page,
   }) => {
     for (const id of DEFAULT_SELECTION) {
-      await page.getByTestId(`test-checkbox-${id}`).uncheck();
+      await testCheckbox(page, id).uncheck();
     }
 
     // hasRFC2544Tests is the guard; with nothing selected the form must not
     // merely be hidden, it must not render.
     await expect(page.getByTestId('rfc2544-config-form')).toHaveCount(0);
 
-    await page.getByTestId('test-checkbox-rfc2544_throughput').check();
+    await testCheckbox(page, 'rfc2544_throughput').check();
     await expect(page.getByTestId('rfc2544-config-form')).toBeVisible();
   });
 
@@ -102,10 +104,10 @@ test.describe('RFC 2544 sub-test selection', () => {
     // pass by accident on a request that ignored the form.
     for (const id of DEFAULT_SELECTION) {
       if (id !== 'rfc2544_latency') {
-        await page.getByTestId(`test-checkbox-${id}`).uncheck();
+        await testCheckbox(page, id).uncheck();
       }
     }
-    await expect(page.getByTestId('test-checkbox-rfc2544_latency')).toBeChecked();
+    await expect(testCheckbox(page, 'rfc2544_latency')).toBeChecked();
 
     let startBody: unknown = null;
     await page.route(START_ENDPOINT, async (route) => {
@@ -117,12 +119,7 @@ test.describe('RFC 2544 sub-test selection', () => {
       });
     });
 
-    // Escape dismisses the focused control's tooltip before its enclosing drawer.
     await page.getByTestId('settings-drawer-close').focus();
-    await expect(page.getByRole('tooltip')).toBeVisible();
-    await page.keyboard.press('Escape');
-    await expect(page.getByRole('tooltip')).toBeHidden();
-    await expect(page.getByTestId('settings-drawer')).toBeVisible();
     await page.keyboard.press('Escape');
     await expect(page.getByTestId('settings-drawer')).toBeHidden();
 

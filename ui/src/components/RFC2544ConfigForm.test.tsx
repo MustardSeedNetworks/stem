@@ -83,7 +83,7 @@ describe('RFC2544ConfigForm — store sync', () => {
       />,
     );
 
-    await userEvent.click(screen.getByRole('checkbox', { name: 'Test 1518-byte frames' }));
+    await userEvent.click(screen.getByRole('checkbox', { name: /1518/ }));
 
     await waitFor(() =>
       expect(setConfig).toHaveBeenLastCalledWith(

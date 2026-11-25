@@ -155,12 +155,20 @@ describe('ReflectorPage — real locale copy', () => {
 
   it('translates the rollup state label, not just the headline under it', async () => {
     await i18n.changeLanguage('es');
-    renderPage();
+    renderPage({ testStatus: 'running' });
 
     // StatusRollup's own kicker. It was a module-level literal, so it stayed
     // English while the headline beside it translated.
     expect(screen.getByText('Todo correcto')).toBeInTheDocument();
     expect(screen.queryByText('All clear')).toBeNull();
+  });
+
+  it('reads an idle reflector as idle, never as all clear', async () => {
+    await i18n.changeLanguage('es');
+    renderPage();
+
+    expect(screen.getByText('Inactivo')).toBeInTheDocument();
+    expect(screen.queryByText('Todo correcto')).toBeNull();
   });
 
   it('translates the status value, which was rendered straight from the API', async () => {

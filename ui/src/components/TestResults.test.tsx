@@ -43,7 +43,7 @@ describe('TestResults', () => {
     );
 
     expect(screen.getByText('Result unavailable (HTTP 500)')).toBeInTheDocument();
-    expect(screen.getByText('FAILED')).toBeInTheDocument();
+    expect(screen.getByText('Failed')).toBeInTheDocument();
     // Not the "no result yet" placeholder, which is what a swallowed failure
     // used to leave behind.
     expect(screen.queryByText(/An error occurred during the test/)).toBeNull();
@@ -101,15 +101,13 @@ describe('TestResults', () => {
       />,
     );
 
-    expect(screen.getByText('STOPPED')).toBeInTheDocument();
-    expect(screen.queryByText('PASSED')).toBeNull();
-    expect(screen.queryByText(/No tests running/)).toBeNull();
+    expect(screen.getByText('Stopped')).toBeInTheDocument();
+    expect(screen.queryByText('Passed')).toBeNull();
   });
 
   // Each waiting state says something different, because "nothing here yet"
   // and "the run failed" are not the same message to an operator.
   it.each([
-    ['idle', /No tests running/],
     ['starting', /Test is starting/],
     ['running', /Test in progress/],
     ['cancelled', /Test cancelled/],
@@ -119,5 +117,13 @@ describe('TestResults', () => {
     render(<TestResults testStatus={status} result={null} />);
 
     expect(screen.getByText(expected)).toBeInTheDocument();
+  });
+
+  // Idle with no result has nothing to say: a strip reading "no tests running"
+  // under every page was a dead region.
+  it('renders nothing while idle and no result exists', () => {
+    const { container } = render(<TestResults testStatus="idle" result={null} />);
+
+    expect(container).toBeEmptyDOMElement();
   });
 });

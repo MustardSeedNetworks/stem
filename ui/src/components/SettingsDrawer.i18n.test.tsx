@@ -5,7 +5,7 @@
  * is the product's main configuration surface and had no copy assertions, so
  * its title, view-mode switch and close control could all regress silently.
  */
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ROLE_STORAGE_KEY, RoleProvider } from '../contexts/RoleContext';
 import i18n from '../i18n';
@@ -72,15 +72,18 @@ afterEach(async () => {
 });
 
 describe('SettingsDrawer — real locale copy', () => {
-  it('renders the English title and view switch', async () => {
+  it('renders the English title, tabs and view switch', async () => {
     await i18n.changeLanguage('en');
     renderDrawer();
 
     await waitFor(() => {
       expect(screen.getAllByText('Settings').length).toBeGreaterThan(0);
     });
-    expect(screen.getByText('View by:')).toBeInTheDocument();
-    expect(screen.getByText('Module')).toBeInTheDocument();
+    for (const tab of ['General', 'License', 'Tests']) {
+      expect(screen.getByRole('tab', { name: tab })).toBeInTheDocument();
+    }
+    fireEvent.click(screen.getByRole('tab', { name: 'Tests' }));
+    expect(screen.getByRole('radio', { name: 'Module' })).toBeInTheDocument();
   });
 
   it('renders Spanish under es, with no English left behind', async () => {
@@ -90,8 +93,12 @@ describe('SettingsDrawer — real locale copy', () => {
     await waitFor(() => {
       expect(screen.getAllByText('Configuración').length).toBeGreaterThan(0);
     });
-    expect(screen.getByText('Ver por:')).toBeInTheDocument();
-    expect(screen.queryByText('View by:')).toBeNull();
+    for (const tab of ['General', 'Licencia', 'Pruebas']) {
+      expect(screen.getByRole('tab', { name: tab })).toBeInTheDocument();
+    }
+    fireEvent.click(screen.getByRole('tab', { name: 'Pruebas' }));
+    expect(screen.queryByRole('radio', { name: 'Module' })).toBeNull();
+    expect(screen.getByRole('radio', { name: 'Modulo' })).toBeInTheDocument();
   });
 
   it('localizes the close control for screen readers', async () => {
