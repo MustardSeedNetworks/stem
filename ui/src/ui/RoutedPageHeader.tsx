@@ -41,6 +41,15 @@ export function RoutedPageHeader({
     trail.push({ label: t(`sections.${section}`) });
   }
   trail.push({ label: title });
+  // WebKit does not focus a button on click, and the drawer returns focus to
+  // whatever was focused when it opened. Focus the help button first so Escape
+  // lands back on it in every engine.
+  const openHelp = onHelp
+    ? (): void => {
+        document.querySelector<HTMLElement>('[data-testid="page-header-help-button"]')?.focus();
+        onHelp();
+      }
+    : undefined;
   return (
     <PageHeader
       kicker={kicker}
