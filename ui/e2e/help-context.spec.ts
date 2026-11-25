@@ -85,7 +85,7 @@ test('Spanish form help works on keyboard focus, hover and Escape', async ({ pag
   expect(id).toBeTruthy();
   const tooltip = page.locator(`[id="${id}"]`);
   await expect(tooltip).toBeVisible();
-  await expect(tooltip).toContainText(/duración|tiempo/i);
+  await expect(tooltip).toContainText(/tamaños de trama/i);
   await page.keyboard.press('Escape');
   await expect(tooltip).not.toBeVisible();
   await page.getByTestId('page-header-help-button').focus();

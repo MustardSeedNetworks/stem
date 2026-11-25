@@ -85,6 +85,10 @@ async function findHorizontalOverflow(page: Page): Promise<Overflow[]> {
       // The fleet attribute from UI-FLEET-2 — a region that scrolls sideways
       // by design says so in the markup.
       if (el.closest('[data-phone-width-exempt]')) continue;
+      // The shared PageHeader's help button carries a 44px touch target as an
+      // absolutely positioned pseudo-element, which scrollWidth counts. It is
+      // not content leaving its box.
+      if (el.getAttribute('data-testid') === 'page-header-help-button') continue;
 
       const rect = el.getBoundingClientRect();
       if (rect.width === 0 || rect.height === 0) continue;
@@ -115,13 +119,17 @@ interface Density {
 
 async function measureDensity(page: Page): Promise<Density> {
   return page.evaluate(() => {
-    const title = document.querySelector('[data-testid="page-header-title"]');
-    // The header block is the title's nearest ancestor carrying the page
-    // header's own bottom margin; walking up from the title keeps the
-    // measurement independent of the bar above it (UI-STEM-9 owns that).
-    const block = title?.closest('.animate-fade-in') ?? null;
+    // The shared PageHeader, less its breadcrumb trail: the ratchet is the
+    // kicker, title and subtitle (the three lines the component's 76px is
+    // measured from), not the trail above them.
+    const header = document.querySelector('[data-testid="page-header"]');
+    const trail = header?.querySelector('nav');
     return {
-      headerFootprint: block ? Math.round(block.getBoundingClientRect().height) : -1,
+      headerFootprint: header
+        ? Math.round(
+            header.getBoundingClientRect().height - (trail?.getBoundingClientRect().height ?? 0),
+          )
+        : -1,
       documentHeight: document.documentElement.scrollHeight,
     };
   });

@@ -15,14 +15,13 @@
     "label": "Certify"
   },
   "history": {
-    "description": "Ejecuciones completadas, guardadas solo en este navegador. Otro navegador, o uno con los datos del sitio borrados, empieza vacío.",
+    "description": "Ejecuciones completadas, guardadas solo en este navegador. Otro navegador empieza vacío.",
     "label": "Historial",
     "clear": "Borrar historial",
     "filterAll": "Todas",
     "filterFailed": "Fallidas",
     "emptyNoRuns": "Aún no ha terminado ninguna prueba. Ejecute una desde las páginas de pruebas y se registrará aquí.",
     "emptyNoMatch": "Ninguna ejecución coincide con este filtro.",
-    "emptyDetail": "Seleccione una ejecución para ver su veredicto y métricas.",
     "selectedRun": "Ejecución seleccionada",
     "deleteRun": "Eliminar ejecución",
     "noVerdict": "Sin veredicto registrado",

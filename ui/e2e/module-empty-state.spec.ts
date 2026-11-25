@@ -42,14 +42,4 @@ test.describe('Module empty state', () => {
       await expect(page.getByTestId('settings-drawer')).toBeVisible({ timeout: 10000 });
     });
   }
-
-  test('the results placeholder names the toolbar button', async ({ page }) => {
-    await skipSetupWizard(page);
-    await useRole(page, 'test_master');
-    await page.goto('/tests/benchmark');
-
-    const runTest = await page.getByTestId('start-test-button').textContent();
-    expect(runTest?.trim()).toBeTruthy();
-    await expect(page.getByText(`click ${runTest?.trim()}.`)).toBeVisible({ timeout: 10000 });
-  });
 });

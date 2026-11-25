@@ -66,7 +66,7 @@ for (const [name, viewport] of [
       test(`${route} renders nothing above the page header`, async ({ page }) => {
         await page.goto(route, { waitUntil: 'domcontentloaded' });
         await expect(page.getByTestId('page-header-title')).toBeVisible({ timeout: 20000 });
-        await expect(page.locator('#main-content header')).toHaveCount(0);
+        await expect(page.locator('#main-content header:not([data-testid="page-header"])')).toHaveCount(0);
       });
     }
   });
