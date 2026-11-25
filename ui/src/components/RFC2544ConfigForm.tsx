@@ -11,13 +11,13 @@ import { FRAME_SIZE_OPTIONS } from '../forms/frameSizes';
 import { useConfigForm } from '../forms/useConfigForm';
 import { hasGroupTests } from '../lib/testGroups';
 import { RFC2544ConfigSchema } from '../schemas/configs';
+import { Alert } from '../shared/Alert';
 import { Checkbox } from '../shared/Checkbox';
 import { FormField } from '../shared/FormField';
+import { FormSection } from '../shared/FormSection';
+import { HelpIcon } from '../shared/HelpIcon';
 import { Input } from '../shared/Input';
 import { CheckboxField } from './ConfigFormFields';
-import { FieldError } from './FieldError';
-import { FormSection } from './FormSection';
-import { HelpIcon } from './HelpIcon';
 import { TestSummary } from './TestSummary';
 
 /** RFC 2544 test configuration parameters */
@@ -72,7 +72,7 @@ export function RFC2544ConfigForm({
   selectedTests,
   testId = 'rfc2544-config-form',
 }: RFC2544ConfigFormProps): ReactElement | null {
-  const { t } = useTranslation(['settings', 'help']);
+  const { t } = useTranslation(['settings', 'help', 'common']);
   const hasRFC2544Tests = hasGroupTests('rfc2544', selectedTests);
 
   const form = useConfigForm<RFC2544Config>({
@@ -237,7 +237,13 @@ export function RFC2544ConfigForm({
 
       <FormSection
         title={t('testConfig.common.frameSizesTitle')}
-        help={<HelpIcon tooltip={t('help:tooltips.testConfig.rfc2544.frameSizes.help')} />}
+        help={
+          <HelpIcon
+            data-testid="help-icon"
+            label={t('common:help.label', { topic: t('testConfig.common.frameSizesTitle') })}
+            text={t('help:tooltips.testConfig.rfc2544.frameSizes.help')}
+          />
+        }
       >
         <div className="grid grid-cols-2 gap-compact">
           {FRAME_SIZE_OPTIONS.map((option) => (
@@ -249,7 +255,11 @@ export function RFC2544ConfigForm({
             />
           ))}
         </div>
-        <FieldError message={errors.frameSizes?.message} />
+        {errors.frameSizes?.message ? (
+          <Alert tone="error" size="sm">
+            {errors.frameSizes.message}
+          </Alert>
+        ) : null}
       </FormSection>
 
       <FormSection title={t('testConfig.rfc2544.advanced.title')}>

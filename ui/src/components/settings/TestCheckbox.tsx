@@ -5,8 +5,9 @@
  * Used across all test section components.
  */
 
+import { useTranslation } from 'react-i18next';
 import { Checkbox } from '../../shared/Checkbox';
-import { HelpIcon } from '../HelpIcon';
+import { HelpIcon } from '../../shared/HelpIcon';
 import type { TestDefinition } from './types';
 
 interface TestCheckboxProps {
@@ -16,6 +17,7 @@ interface TestCheckboxProps {
 }
 
 export function TestCheckbox({ test, checked, onChange }: TestCheckboxProps): React.JSX.Element {
+  const { t } = useTranslation('common');
   return (
     <div className="flex items-start gap-1 rounded-lg p-2 hover:bg-surface-hover">
       <Checkbox
@@ -25,7 +27,11 @@ export function TestCheckbox({ test, checked, onChange }: TestCheckboxProps): Re
         label={test.name}
         description={test.desc}
       />
-      <HelpIcon tooltip={test.tooltip} />
+      <HelpIcon
+        data-testid="help-icon"
+        label={t('help.label', { topic: test.name })}
+        text={test.tooltip}
+      />
     </div>
   );
 }

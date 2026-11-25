@@ -2,6 +2,7 @@ import { Compass } from 'lucide-react';
 import { type ReactElement, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
+import { documentTitle } from '../shared/documentTitle';
 import { EmptyState } from '../shared/EmptyState';
 import { RoutedPageHeader } from './RoutedPageHeader';
 
@@ -15,7 +16,7 @@ export function NotFoundPanel(): ReactElement {
   const title = t('notFound.title');
 
   useEffect(() => {
-    document.title = `${title} | ${product}`;
+    document.title = documentTitle(title, product);
   }, [title, product]);
 
   return (

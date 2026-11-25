@@ -12,14 +12,14 @@ import { skipSetupWizard } from './helpers/auth';
 
 /** Every `pageRegistry` route, with the tab title it must carry. */
 const TITLES: Record<string, string> = {
-  '/reflector': 'Reflector | Stem',
-  '/tests/benchmark': 'Benchmark | Stem',
-  '/tests/servicetest': 'ServiceTest | Stem',
-  '/tests/trafficgen': 'TrafficGen | Stem',
-  '/tests/measure': 'Measure | Stem',
-  '/tests/certify': 'Certify | Stem',
-  '/history': 'History | Stem',
-  '/account/security': 'Security | Stem',
+  '/reflector': 'Reflector · Stem',
+  '/tests/benchmark': 'Benchmark · Stem',
+  '/tests/servicetest': 'ServiceTest · Stem',
+  '/tests/trafficgen': 'TrafficGen · Stem',
+  '/tests/measure': 'Measure · Stem',
+  '/tests/certify': 'Certify · Stem',
+  '/history': 'History · Stem',
+  '/account/security': 'Security · Stem',
 };
 
 const EYEBROWS: Record<string, string> = {

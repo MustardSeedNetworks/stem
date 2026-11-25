@@ -19,12 +19,12 @@ import { EXTENDED_FRAME_SIZE_OPTIONS } from '../forms/frameSizes';
 import { useConfigForm } from '../forms/useConfigForm';
 import { hasGroupTests } from '../lib/testGroups';
 import { Y1564ConfigSchema } from '../schemas/configs';
+import { Alert } from '../shared/Alert';
 import { Checkbox } from '../shared/Checkbox';
 import { FormField } from '../shared/FormField';
+import { FormSection } from '../shared/FormSection';
+import { HelpIcon } from '../shared/HelpIcon';
 import { Input } from '../shared/Input';
-import { FieldError } from './FieldError';
-import { FormSection } from './FormSection';
-import { HelpIcon } from './HelpIcon';
 import { TestSummary } from './TestSummary';
 
 /** Y.1564 service configuration parameters */
@@ -135,7 +135,7 @@ export function Y1564ConfigForm({
 
   // Cross-field error (fdv > fd). valibot's v.check() surfaces under
   // formState.errors.root.<unique-key>; we render the first one found.
-  const { t } = useTranslation(['settings', 'help']);
+  const { t } = useTranslation(['settings', 'help', 'common']);
   const rootErrors = errors.root;
   const crossFieldError = rootErrors
     ? Object.values(rootErrors).find(
@@ -265,7 +265,13 @@ export function Y1564ConfigForm({
 
         <FormSection
           title={t('testConfig.common.frameSizesTitle')}
-          help={<HelpIcon tooltip={t('help:tooltips.testConfig.y1564.frameSizes.help')} />}
+          help={
+            <HelpIcon
+              data-testid="help-icon"
+              label={t('common:help.label', { topic: t('testConfig.common.frameSizesTitle') })}
+              text={t('help:tooltips.testConfig.y1564.frameSizes.help')}
+            />
+          }
         >
           <div className="grid grid-cols-2 gap-compact">
             {EXTENDED_FRAME_SIZE_OPTIONS.map((option) => (
@@ -277,7 +283,11 @@ export function Y1564ConfigForm({
               />
             ))}
           </div>
-          <FieldError message={errors.frameSizes?.message} />
+          {errors.frameSizes?.message ? (
+            <Alert tone="error" size="sm">
+              {errors.frameSizes.message}
+            </Alert>
+          ) : null}
         </FormSection>
 
         <FormSection title={t('testConfig.y1564.duration.title')}>

@@ -16,9 +16,9 @@ import { useConfigForm } from '../forms/useConfigForm';
 import { hasGroupTests } from '../lib/testGroups';
 import { TSNConfigSchema } from '../schemas/configs';
 import { FormField } from '../shared/FormField';
+import { FormSection } from '../shared/FormSection';
 import { Input } from '../shared/Input';
 import { CheckboxField, NumberSelectField } from './ConfigFormFields';
-import { FormSection } from './FormSection';
 import { TestSummary } from './TestSummary';
 
 /** TSN test configuration parameters */

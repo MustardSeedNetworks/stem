@@ -13,6 +13,8 @@ import { useTranslation } from 'react-i18next';
 import { type StemRole, useRole } from '../../contexts/RoleContext';
 import { SetupWizardSchema } from '../../schemas/auth';
 import { Button } from '../../shared/Button';
+import { FormField } from '../../shared/FormField';
+import { Input } from '../../shared/Input';
 import { deadlineExpired, requestDeadline } from '../../utils/http';
 
 /** Minimum password length (matches backend validation) */
@@ -171,28 +173,24 @@ export function SetupWizard({
           </div>
 
           {/* Setup token: copied from the host, never sent by the server */}
-          <div className="mb-section">
-            <label htmlFor="setup-token" className="text-xs font-semibold text-text-muted">
-              {t('setupToken.label')}
-            </label>
-            <input
-              id="setup-token"
-              data-testid="setup-token"
-              type="password"
-              autoComplete="off"
-              {...register('setupToken')}
-              className="mt-tight w-full rounded-xl border border-surface-border bg-surface-base px-3 py-row text-sm text-text-primary focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/30"
-              placeholder={t('setupToken.placeholder')}
-            />
-            {errors.setupToken ? (
-              <p className="text-xs text-status-error mt-tight">{errors.setupToken.message}</p>
-            ) : null}
-            {setupTokenFile ? (
-              <p className="text-xs text-text-muted mt-tight">
-                {t('setupToken.help', { path: setupTokenFile })}
-              </p>
-            ) : null}
-          </div>
+          <FormField
+            id="setup-token"
+            label={t('setupToken.label')}
+            error={errors.setupToken?.message}
+            hint={setupTokenFile ? t('setupToken.help', { path: setupTokenFile }) : undefined}
+            className="mb-section"
+          >
+            {(control) => (
+              <Input
+                {...control}
+                data-testid="setup-token"
+                type="password"
+                autoComplete="off"
+                placeholder={t('setupToken.placeholder')}
+                {...register('setupToken')}
+              />
+            )}
+          </FormField>
 
           {/* Role selection */}
           <div className="mb-section stack">
@@ -321,64 +319,65 @@ export function SetupWizard({
           {/* Custom password fields */}
           {passwordMode === 'custom' && (
             <>
-              <div className="mb-content">
-                <label htmlFor="setup-password" className="text-xs font-semibold text-text-muted">
-                  {t('password.label')}
-                </label>
-                <div className="relative mt-tight">
-                  <input
-                    id="setup-password"
-                    type={showPassword ? 'text' : 'password'}
-                    {...register('password')}
-                    className="w-full rounded-xl border border-surface-border bg-surface-base px-3 py-row pr-icon text-sm text-text-primary focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/30"
-                    placeholder={t('password.placeholder')}
-                  />
-                  <Tooltip
-                    text={
-                      showPassword
-                        ? t('help:tooltips.hidePassword')
-                        : t('help:tooltips.showPassword')
-                    }
-                  >
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
-                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+              <FormField
+                id="setup-password"
+                label={t('password.label')}
+                error={errors.password?.message}
+                hint={
+                  errors.password
+                    ? undefined
+                    : t('password.minLength', { count: MIN_PASSWORD_LENGTH })
+                }
+                className="mb-content"
+              >
+                {(control) => (
+                  <div className="relative">
+                    <Input
+                      {...control}
+                      type={showPassword ? 'text' : 'password'}
+                      className="pr-10"
+                      placeholder={t('password.placeholder')}
+                      {...register('password')}
+                    />
+                    <Tooltip
+                      text={
+                        showPassword
+                          ? t('help:tooltips.hidePassword')
+                          : t('help:tooltips.showPassword')
+                      }
                     >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </Tooltip>
-                </div>
-                {errors.password ? (
-                  <p className="text-xs text-status-error mt-tight">{errors.password.message}</p>
-                ) : (
-                  <p className="text-xs text-text-muted mt-tight">
-                    {t('password.minLength', { count: MIN_PASSWORD_LENGTH })}
-                  </p>
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
+                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
+                    </Tooltip>
+                  </div>
                 )}
-              </div>
+              </FormField>
 
-              <div className="mb-section">
-                <label
-                  htmlFor="setup-confirm-password"
-                  className="text-xs font-semibold text-text-muted"
-                >
-                  {t('password.confirm.label')}
-                </label>
-                <input
-                  id="setup-confirm-password"
-                  type={showPassword ? 'text' : 'password'}
-                  {...register('confirmPassword')}
-                  className="mt-tight w-full rounded-xl border border-surface-border bg-surface-base px-3 py-row text-sm text-text-primary focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/30"
-                  placeholder={t('password.confirm.placeholder')}
-                />
-                {errors.confirmPassword ? (
-                  <p className="text-xs text-status-error mt-tight">
-                    {errors.confirmPassword.message}
-                  </p>
-                ) : null}
-              </div>
+              <FormField
+                id="setup-confirm-password"
+                label={t('password.confirm.label')}
+                error={errors.confirmPassword?.message}
+                className="mb-section"
+              >
+                {(control) => (
+                  <Input
+                    {...control}
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder={t('password.confirm.placeholder')}
+                    {...register('confirmPassword')}
+                  />
+                )}
+              </FormField>
             </>
           )}
 

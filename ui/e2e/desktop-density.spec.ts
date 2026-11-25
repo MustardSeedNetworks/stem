@@ -85,10 +85,9 @@ async function findHorizontalOverflow(page: Page): Promise<Overflow[]> {
       // The fleet attribute from UI-FLEET-2 — a region that scrolls sideways
       // by design says so in the markup.
       if (el.closest('[data-phone-width-exempt]')) continue;
-      // The shared PageHeader's help button carries a 44px touch target as an
-      // absolutely positioned pseudo-element, which scrollWidth counts. It is
-      // not content leaving its box.
-      if (el.getAttribute('data-testid') === 'page-header-help-button') continue;
+      // The hit area the shared help button reaches past its box (a 44px
+      // target on a 28px button) is marked, and is not content leaving its box.
+      if (el.closest('[data-touch-target-overflow]')) continue;
 
       const rect = el.getBoundingClientRect();
       if (rect.width === 0 || rect.height === 0) continue;

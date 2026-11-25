@@ -11,9 +11,9 @@ import { useConfigForm } from '../forms/useConfigForm';
 import { hasGroupTests } from '../lib/testGroups';
 import { RFC2889ConfigSchema } from '../schemas/configs';
 import { FormField } from '../shared/FormField';
+import { FormSection } from '../shared/FormSection';
 import { Input } from '../shared/Input';
 import { NumberSelectField } from './ConfigFormFields';
-import { FormSection } from './FormSection';
 import { TestSummary } from './TestSummary';
 
 /** RFC 2889 test configuration parameters */

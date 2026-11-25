@@ -8,10 +8,11 @@
  */
 import type { ReactElement } from 'react';
 import { type Control, Controller, type FieldPath, type FieldValues } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 import { Checkbox } from '../shared/Checkbox';
 import { FormField } from '../shared/FormField';
+import { HelpIcon } from '../shared/HelpIcon';
 import { Select } from '../shared/Select';
-import { HelpIcon } from './HelpIcon';
 
 interface NumberSelectFieldProps<T extends FieldValues> {
   control: Control<T>;
@@ -75,6 +76,7 @@ export function CheckboxField<T extends FieldValues>({
   description,
   help,
 }: CheckboxFieldProps<T>): ReactElement {
+  const { t } = useTranslation('common');
   return (
     <Controller
       control={control}
@@ -88,7 +90,13 @@ export function CheckboxField<T extends FieldValues>({
             label={label}
             {...(description ? { description } : {})}
           />
-          {help ? <HelpIcon tooltip={help} /> : null}
+          {help ? (
+            <HelpIcon
+              data-testid="help-icon"
+              label={t('help.label', { topic: label })}
+              text={help}
+            />
+          ) : null}
         </div>
       )}
     />

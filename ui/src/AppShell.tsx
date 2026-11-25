@@ -26,6 +26,7 @@ import { TestRunControls } from './components/TestRunControls';
 import { useConnectionStatus } from './hooks/useConnectionStatus';
 import { useNavGroups } from './navGroups';
 import { type PageConfig, usePages } from './pageRegistry';
+import { documentTitle } from './shared/documentTitle';
 import { useRecordTestResult } from './stores/history-store';
 import { useShellStore } from './stores/shell-store';
 import { useTestStore } from './stores/test-store';
@@ -234,7 +235,7 @@ function PageWithHeader({
   const productName = t('app.title');
 
   useEffect(() => {
-    document.title = `${page.label} | ${productName}`;
+    document.title = documentTitle(page.label, productName);
   }, [page.label, productName]);
 
   return (
