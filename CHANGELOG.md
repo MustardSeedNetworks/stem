@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.34.7](https://github.com/MustardSeedNetworks/stem/compare/v0.34.6...v0.34.7) (2026-11-25)
+
+
+### Bug Fixes
+
+* **deps:** update dependency lucide-react to v1.75.0 ([#2115](https://github.com/MustardSeedNetworks/stem/issues/2115)) ([433ce0c](https://github.com/MustardSeedNetworks/stem/commit/433ce0c3413d38ac74c40c166b6503e64647ce00))
+
+
+### Miscellaneous
+
+* **deps:** lock file maintenance ([#2112](https://github.com/MustardSeedNetworks/stem/issues/2112)) ([56f82a5](https://github.com/MustardSeedNetworks/stem/commit/56f82a591808ecbbda595985daa0b64bce715b68))
+* **deps:** update dependency @rolldown/plugin-babel to v0.3.1 ([#2025](https://github.com/MustardSeedNetworks/stem/issues/2025)) ([8532286](https://github.com/MustardSeedNetworks/stem/commit/853228600d77204de6a828e0c6436a4ba4486624))
+
 ## [0.34.6](https://github.com/MustardSeedNetworks/stem/compare/v0.34.5...v0.34.6) (2026-11-25)
 
 
