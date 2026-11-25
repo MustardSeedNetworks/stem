@@ -58,8 +58,8 @@ export function RoutedPageHeader({
       breadcrumbsLabel={t('accessibility.breadcrumb')}
       renderBreadcrumbLink={renderLink}
       {...(subtitle ? { subtitle } : {})}
-      {...(onHelp
-        ? { help: { label: tHelp('drawer.pageHelp', { page: title }), onClick: onHelp } }
+      {...(openHelp
+        ? { help: { label: tHelp('drawer.pageHelp', { page: title }), onClick: openHelp } }
         : {})}
     />
   );
