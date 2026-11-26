@@ -55,8 +55,8 @@ describe('RFC2544ConfigForm — i18n', () => {
     /* The locale gate's do-not-translate list covers these; asserting it at
        the surface as well means a form that hand-builds a translated string
        from parts cannot slip past the JSON-level check. The standard's name
-       reaches the user through a frame-size checkbox's title. */
-    expect(screen.getAllByRole('button', { description: /RFC 2544/ }).length).toBeGreaterThan(0);
+       reaches the user through the frame-size group's hint. */
+    expect(screen.getAllByText(/RFC 2544/).length).toBeGreaterThan(0);
     expect(screen.getByText('Prueba de throughput')).toBeInTheDocument();
   });
 
