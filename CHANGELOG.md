@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.35.0](https://github.com/MustardSeedNetworks/stem/compare/v0.34.8...v0.35.0) (2026-11-26)
+
+
+### Features
+
+* **ui:** adopt the shared page components (UI-STEM-29) ([#2123](https://github.com/MustardSeedNetworks/stem/issues/2123)) ([a59aca3](https://github.com/MustardSeedNetworks/stem/commit/a59aca3459bccc93c2aed51057941d13aa663382))
+
+
+### Bug Fixes
+
+* **deps:** update dependency lucide-react to v1.76.0 ([#2131](https://github.com/MustardSeedNetworks/stem/issues/2131)) ([8e479f4](https://github.com/MustardSeedNetworks/stem/commit/8e479f470cf21f44578c407c6f68ef46874422f4))
+
 ## [0.34.8](https://github.com/MustardSeedNetworks/stem/compare/v0.34.7...v0.34.8) (2026-11-26)
 
 
