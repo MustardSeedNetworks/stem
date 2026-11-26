@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { skipSetupWizard } from './helpers/auth';
 import { PRO_FEATURES, stubLicence } from './helpers/license';
+import { rail } from './helpers/rail';
 import { useRole } from './helpers/role';
 
 const routes = [
@@ -57,7 +58,7 @@ for (const language of ['en', 'es']) {
         await expect(drawer).not.toBeVisible();
         await expect(opener).toBeFocused();
         if (width === 1440) {
-          const footer = page.getByTestId('sidebar-help-button');
+          const footer = rail(page, 'rail-help');
           await footer.click();
           await expect(drawer).toContainText(
             language === 'es' ? (route.spanish ?? route.topic) : route.topic,

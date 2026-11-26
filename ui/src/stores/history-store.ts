@@ -77,6 +77,8 @@ interface HistoryActions {
   record: (result: Omit<HistoricalResult, 'id'>) => void;
   remove: (id: string) => void;
   clear: () => void;
+  /** Re-reads the archive from storage (another tab may have recorded a run). */
+  reload: () => void;
 }
 
 export type HistoryStore = HistoryState & HistoryActions;
@@ -106,6 +108,7 @@ export const useHistoryStore = create<HistoryStore>()(
         save(results);
         set({ results }, false, 'remove');
       },
+      reload: () => set({ results: load() }, false, 'reload'),
       clear: () => {
         save([]);
         set({ results: [] }, false, 'clear');

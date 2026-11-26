@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { skipSetupWizard } from './helpers/auth';
+import { rail } from './helpers/rail';
 import { useRole } from './helpers/role';
 import { expandTestSection, openSettingsTab, testCheckbox } from './helpers/settings';
 
@@ -75,7 +76,7 @@ test.describe('RFC 2544 sub-test selection', () => {
     await page.goto('/tests/benchmark');
     await expect(page.getByTestId('rfc2544-config-form')).toBeVisible({ timeout: 10000 });
 
-    await page.getByTestId('sidebar-settings-button').click();
+    await rail(page, 'rail-settings').click();
     await expect(page.getByTestId('settings-drawer')).toBeVisible();
     await openSettingsTab(page, 'Tests');
     await expandTestSection(page, /RFC 2544/);

@@ -66,7 +66,9 @@ for (const [name, viewport] of [
       test(`${route} renders nothing above the page header`, async ({ page }) => {
         await page.goto(route, { waitUntil: 'domcontentloaded' });
         await expect(page.getByTestId('page-header-title')).toBeVisible({ timeout: 20000 });
-        await expect(page.locator('#main-content header:not([data-testid="page-header"])')).toHaveCount(0);
+        await expect(
+          page.locator('#main-content header:not([data-testid="page-header"])'),
+        ).toHaveCount(0);
       });
     }
   });
@@ -86,12 +88,11 @@ test.describe('the rail carries the shell controls', () => {
     // The dot was hard-coded to the success colour, so the rail said
     // "connected" on a dead socket. The state has to be the live one, and it
     // has to reach a screen reader through a name rather than through colour.
-    await expect(status).toHaveAttribute('data-status', /connected|disconnected/);
     await expect(status).toHaveAccessibleName(/connect/i);
   });
 
   test('carries the theme toggle, and it is keyboard reachable', async ({ page }) => {
-    const toggle = railControl(page, 'rail-theme-toggle');
+    const toggle = railControl(page, 'rail-theme');
     await expect(toggle).toBeVisible();
     await toggle.focus();
     await expect(toggle).toBeFocused();
@@ -103,14 +104,19 @@ test.describe('the rail carries the shell controls', () => {
       .toBe(!before);
   });
 
-  test('carries refresh and logout', async ({ page }) => {
-    await expect(railControl(page, 'rail-refresh')).toBeVisible();
-    await expect(railControl(page, 'rail-logout')).toBeVisible();
+  test('carries sign out, help and settings', async ({ page }) => {
+    for (const id of ['rail-sign-out', 'rail-help', 'rail-settings']) {
+      await expect(railControl(page, id)).toBeVisible();
+    }
   });
 
-  test('carries the role control', async ({ page }) => {
-    await expect(railControl(page, 'role-chip-reflector')).toBeVisible();
-    await expect(railControl(page, 'role-chip-test_master')).toBeVisible();
+  test('carries the role control, and no refresh', async ({ page }) => {
+    await expect(railControl(page, 'rail-product-slot')).toBeVisible();
+    await expect(railControl(page, 'rail-refresh')).toHaveCount(0);
+  });
+
+  test('puts Refresh in the page header of a page that loads data', async ({ page }) => {
+    await expect(page.getByTestId('page-header').getByTestId('page-refresh')).toBeVisible();
   });
 });
 

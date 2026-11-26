@@ -3,7 +3,8 @@
     "title": "Stem",
     "tagline": "Network Performance Testing by Mustard Seed Networks",
     "description": "Network Performance Testing Tool",
-    "copyright": "© {{year}} Mustard Seed Networks. All rights reserved."
+    "copyright": "© {{year}} Mustard Seed Networks. All rights reserved.",
+    "company": "Mustard Seed Networks"
   },
   "buttons": {
     "save": "Save",
@@ -248,11 +249,7 @@
   },
   "tooltips": {
     "chrome": {
-      "refresh": "Rescan available network interfaces and reload current status",
-      "help": "Open the help drawer with test references, tutorials, and a glossary",
-      "settings": "Open the settings drawer to configure modules, interfaces, and thresholds",
-      "logout": "Sign out of the current session",
-      "profiles": "Open the profiles drawer to manage saved test configurations"
+      "refresh": "Rescan available network interfaces and reload current status"
     }
   },
   "statusRollup": {

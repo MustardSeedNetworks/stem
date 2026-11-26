@@ -21,3 +21,13 @@ ui/src/pages/account/security/SecurityPage.tsx literal Failed to load status
 ui/src/pages/account/security/SecurityPage.tsx literal Passkey registration failed
 ui/src/pages/account/security/TotpSetupModal.tsx copy-prop alt=TOTP QR code
 ui/src/pages/account/security/TotpSetupModal.tsx literal Verification failed
+
+# --- ui/src/shared/DataTableTestUtils.tsx
+# The canonical set's own test fixture (MustardSeedNetworks/.github), copied
+# byte-identical and imported only by tests; its table captions and labels are
+# never rendered to an operator.
+ui/src/shared/DataTableTestUtils.tsx copy-prop caption=Devices
+ui/src/shared/DataTableTestUtils.tsx literal Loading devices
+ui/src/shared/DataTableTestUtils.tsx literal Next page
+ui/src/shared/DataTableTestUtils.tsx literal Previous page
+ui/src/shared/DataTableTestUtils.tsx literal Select all

@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { skipSetupWizard } from './helpers/auth';
+import { rail } from './helpers/rail';
 
 /**
  * Automatic update toggle — against the real daemon, nothing stubbed
@@ -25,7 +26,7 @@ test.describe('Automatic update toggle', () => {
 
   test('round-trips through the daemon', async ({ page }) => {
     await page.goto('/');
-    await page.getByTestId('sidebar-settings-button').click();
+    await rail(page, 'rail-settings').click();
     const section = page.getByTestId('settings-update-section');
     const toggle = section.getByRole('switch', { name: 'Automatic updates' });
 
@@ -42,13 +43,13 @@ test.describe('Automatic update toggle', () => {
     await expect(toggle).toHaveAttribute('aria-checked', 'true');
 
     await page.reload();
-    await page.getByTestId('sidebar-settings-button').click();
+    await rail(page, 'rail-settings').click();
     await expect(toggle).toHaveAttribute('aria-checked', 'true');
 
     await toggle.click();
     await expect(toggle).toHaveAttribute('aria-checked', 'false');
     await page.reload();
-    await page.getByTestId('sidebar-settings-button').click();
+    await rail(page, 'rail-settings').click();
     await expect(toggle).toHaveAttribute('aria-checked', 'false');
   });
 });

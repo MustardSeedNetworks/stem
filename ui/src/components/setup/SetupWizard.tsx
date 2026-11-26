@@ -15,6 +15,7 @@ import { SetupWizardSchema } from '../../schemas/auth';
 import { Button } from '../../shared/Button';
 import { FormField } from '../../shared/FormField';
 import { Input } from '../../shared/Input';
+import { RadioGroup } from '../../shared/RadioGroup';
 import { deadlineExpired, requestDeadline } from '../../utils/http';
 
 /** Minimum password length (matches backend validation) */
@@ -193,126 +194,103 @@ export function SetupWizard({
           </FormField>
 
           {/* Role selection */}
-          <div className="mb-section stack">
-            <div>
-              <p className="text-xs font-semibold text-text-muted">{t('role.title')}</p>
-              <p className="text-xs text-text-muted mt-tight">{t('role.subtitle')}</p>
-            </div>
-
-            <label className="flex items-start gap-default pad-sm rounded-xl border border-surface-border cursor-pointer hover:bg-surface-base transition-colors">
-              <input
-                type="radio"
-                name="stemRole"
-                value="reflector"
-                checked={selectedRole === 'reflector'}
-                onChange={() => setSelectedRole('reflector')}
-                className="mt-tight w-4 h-4 text-brand-primary"
-              />
-              <div>
-                <span className="label flex items-center gap-compact">
-                  <Repeat className="w-4 h-4" />
-                  {t('role.reflector.title')}
-                </span>
-                <p className="text-xs text-text-muted mt-tight">
-                  {t('role.reflector.description')}
-                </p>
-              </div>
-            </label>
-
-            <label className="flex items-start gap-default pad-sm rounded-xl border border-surface-border cursor-pointer hover:bg-surface-base transition-colors">
-              <input
-                type="radio"
-                name="stemRole"
-                value="test_master"
-                checked={selectedRole === 'test_master'}
-                onChange={() => setSelectedRole('test_master')}
-                className="mt-tight w-4 h-4 text-brand-primary"
-              />
-              <div>
-                <span className="label flex items-center gap-compact">
-                  <Target className="w-4 h-4" />
-                  {t('role.testMaster.title')}
-                </span>
-                <p className="text-xs text-text-muted mt-tight">
-                  {t('role.testMaster.description')}
-                </p>
-              </div>
-            </label>
+          <div className="mb-section">
+            <RadioGroup
+              label={t('role.title')}
+              hint={t('role.subtitle')}
+              name="stemRole"
+              value={selectedRole}
+              onValueChange={(value) =>
+                setSelectedRole(value === 'test_master' ? 'test_master' : 'reflector')
+              }
+              options={[
+                {
+                  value: 'reflector',
+                  label: (
+                    <span className="inline-flex items-center gap-2">
+                      <Repeat className="h-4 w-4" aria-hidden="true" />
+                      {t('role.reflector.title')}
+                    </span>
+                  ),
+                  description: t('role.reflector.description'),
+                },
+                {
+                  value: 'test_master',
+                  label: (
+                    <span className="inline-flex items-center gap-2">
+                      <Target className="h-4 w-4" aria-hidden="true" />
+                      {t('role.testMaster.title')}
+                    </span>
+                  ),
+                  description: t('role.testMaster.description'),
+                },
+              ]}
+            />
           </div>
 
           {/* Password mode selection */}
           <div className="mb-section stack">
-            <p className="text-xs font-semibold text-text-muted">{t('password.chooseMethod')}</p>
+            <RadioGroup
+              label={t('password.chooseMethod')}
+              name="passwordMode"
+              value={passwordMode}
+              onValueChange={(value) =>
+                handlePasswordModeChange(value === 'generated' ? 'generated' : 'custom')
+              }
+              options={[
+                {
+                  value: 'custom',
+                  label: (
+                    <span className="inline-flex items-center gap-2">
+                      <Lock className="h-4 w-4" aria-hidden="true" />
+                      {t('password.custom.title')}
+                    </span>
+                  ),
+                  description: t('password.custom.description'),
+                },
+                ...(suggestedPassword
+                  ? [
+                      {
+                        value: 'generated',
+                        label: (
+                          <span className="inline-flex items-center gap-2">
+                            <Zap className="h-4 w-4" aria-hidden="true" />
+                            {t('password.generated.title')}
+                          </span>
+                        ),
+                        description: t('password.generated.description'),
+                      },
+                    ]
+                  : []),
+              ]}
+            />
 
-            {/* Custom password option */}
-            <label className="flex items-start gap-default pad-sm rounded-xl border border-surface-border cursor-pointer hover:bg-surface-base transition-colors">
-              <input
-                type="radio"
-                name="passwordMode"
-                value="custom"
-                checked={passwordMode === 'custom'}
-                onChange={() => handlePasswordModeChange('custom')}
-                className="mt-tight w-4 h-4 text-brand-primary"
-              />
-              <div>
-                <span className="label flex items-center gap-compact">
-                  <Lock className="w-4 h-4" />
-                  {t('password.custom.title')}
-                </span>
-                <p className="text-xs text-text-muted mt-tight">
-                  {t('password.custom.description')}
+            {suggestedPassword && passwordMode === 'generated' ? (
+              <div className="pad-xs rounded-lg bg-surface-sunken border border-surface-border">
+                <div className="flex items-center gap-compact">
+                  <code className="flex-1 font-mono text-xs text-brand-primary select-all break-all">
+                    {suggestedPassword}
+                  </code>
+                  <Tooltip text={t('buttons.copyTooltip')}>
+                    <button
+                      type="button"
+                      onClick={handleCopyPassword}
+                      className="shrink-0 p-1.5 rounded-md text-text-muted hover:text-text-primary hover:bg-surface-base border border-surface-border"
+                      aria-label={t('buttons.copyPassword')}
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                    </button>
+                  </Tooltip>
+                </div>
+                {copied ? (
+                  <p className="text-xs text-status-success-strong mt-tight">
+                    {t('buttons.copied')}
+                  </p>
+                ) : null}
+                <p className="text-xs text-status-warning-strong mt-inline">
+                  {t('password.generated.saveWarning')}
                 </p>
               </div>
-            </label>
-
-            {/* Generated password option */}
-            {suggestedPassword ? (
-              <label className="flex items-start gap-default pad-sm rounded-xl border border-surface-border cursor-pointer hover:bg-surface-base transition-colors">
-                <input
-                  type="radio"
-                  name="passwordMode"
-                  value="generated"
-                  checked={passwordMode === 'generated'}
-                  onChange={() => handlePasswordModeChange('generated')}
-                  className="mt-tight w-4 h-4 text-brand-primary"
-                />
-                <div className="flex-1">
-                  <span className="label flex items-center gap-compact">
-                    <Zap className="w-4 h-4" />
-                    {t('password.generated.title')}
-                  </span>
-                  <p className="text-xs text-text-muted mt-tight">
-                    {t('password.generated.description')}
-                  </p>
-                  {passwordMode === 'generated' ? (
-                    <div className="mt-heading pad-xs rounded-lg bg-surface-sunken border border-surface-border">
-                      <div className="flex items-center gap-compact">
-                        <code className="flex-1 font-mono text-xs text-brand-primary select-all break-all">
-                          {suggestedPassword}
-                        </code>
-                        <Tooltip text={t('buttons.copyTooltip')}>
-                          <button
-                            type="button"
-                            onClick={handleCopyPassword}
-                            className="shrink-0 p-1.5 rounded-md text-text-muted hover:text-text-primary hover:bg-surface-base border border-surface-border"
-                            aria-label={t('buttons.copyPassword')}
-                          >
-                            <Copy className="w-3.5 h-3.5" />
-                          </button>
-                        </Tooltip>
-                      </div>
-                      {copied ? (
-                        <p className="text-xs text-status-success mt-tight">
-                          {t('buttons.copied')}
-                        </p>
-                      ) : null}
-                      <p className="text-xs text-status-warning mt-inline">
-                        {t('password.generated.saveWarning')}
-                      </p>
-                    </div>
-                  ) : null}
-                </div>
-              </label>
             ) : null}
           </div>
 

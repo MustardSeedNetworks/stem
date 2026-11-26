@@ -3,7 +3,8 @@
     "title": "Stem",
     "tagline": "Pruebas de Rendimiento de Red por Mustard Seed Networks",
     "description": "Herramienta de Pruebas de Rendimiento de Red",
-    "copyright": "© {{year}} Mustard Seed Networks. Todos los derechos reservados."
+    "copyright": "© {{year}} Mustard Seed Networks. Todos los derechos reservados.",
+    "company": "Mustard Seed Networks"
   },
   "buttons": {
     "save": "Guardar",
@@ -248,11 +249,7 @@
   },
   "tooltips": {
     "chrome": {
-      "refresh": "Volver a escanear las interfaces de red disponibles y recargar el estado actual",
-      "help": "Abrir el panel de ayuda con referencias de pruebas, tutoriales y un glosario",
-      "settings": "Abrir el panel de configuración para configurar módulos, interfaces y umbrales",
-      "logout": "Cerrar la sesión actual",
-      "profiles": "Abrir el panel de perfiles para gestionar configuraciones de prueba guardadas"
+      "refresh": "Volver a escanear las interfaces de red disponibles y recargar el estado actual"
     }
   },
   "statusRollup": {

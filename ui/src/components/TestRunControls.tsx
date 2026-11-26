@@ -27,6 +27,7 @@ import { FormField } from '../shared/FormField';
 import { Input } from '../shared/Input';
 import { Select } from '../shared/Select';
 import { StatusPill } from '../shared/StatusPill';
+import { RefreshAction } from '../ui/PageActions';
 import { StopOutcomeMessage } from './StopOutcomeMessage';
 import { TestProgressBar } from './TestProgressBar';
 
@@ -48,6 +49,7 @@ export function TestRunControls(): ReactElement | null {
     onStartTest,
     onStopTest,
     testProgress,
+    onRefresh,
   } = useAppContext();
 
   // A Reflector-role stem runs nothing from a test page — RoleGuard already
@@ -64,6 +66,7 @@ export function TestRunControls(): ReactElement | null {
 
   return (
     <div className="stack-sm mb-content" data-testid="test-run-controls">
+      <RefreshAction onRefresh={onRefresh} title={t('tooltips.chrome.refresh')} />
       <div className="flex flex-wrap items-end gap-3">
         <div className="w-52 max-w-full">
           <FormField label={t('accessibility.selectInterface')}>

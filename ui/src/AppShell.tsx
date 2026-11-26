@@ -21,6 +21,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { matchPath, Navigate, Route, Routes, useLocation } from 'react-router';
+import { useRoleSwitch } from './components/RoleSwitch';
 import { TestResults } from './components/TestResults';
 import { TestRunControls } from './components/TestRunControls';
 import { useConnectionStatus } from './hooks/useConnectionStatus';
@@ -33,6 +34,7 @@ import { useTestStore } from './stores/test-store';
 import type { Stats, TestResult } from './types/api';
 import { DaemonUnreachableBanner } from './ui/DaemonUnreachableBanner';
 import { NotFoundPanel } from './ui/NotFoundPanel';
+import { PageActionsSlotContext } from './ui/PageActions';
 import { PageLoader } from './ui/PageLoader';
 import { RoutedPageHeader } from './ui/RoutedPageHeader';
 import { type RailStatus, SidebarLayout } from './ui/Sidebar';
@@ -54,9 +56,7 @@ export interface AppShellProps {
   status: RailStatus;
   isDark: boolean;
   onToggleTheme: () => void;
-  onRefresh: () => void;
   onLogout: () => void;
-  roleControl: ReactNode;
 }
 
 export function AppShell({
@@ -66,13 +66,12 @@ export function AppShell({
   status,
   isDark,
   onToggleTheme,
-  onRefresh,
   onLogout,
-  roleControl,
 }: AppShellProps): ReactElement {
   // A run is recorded because it ended, not because a view is open.
   useRecordTestResult(testResult, testStatus);
   const navGroups = useNavGroups();
+  const roleSwitch = useRoleSwitch();
   const connection = useConnectionStatus();
   const pages = usePages();
   const location = useLocation();
@@ -146,14 +145,14 @@ export function AppShell({
         groups={navGroups}
         version={version}
         status={status}
+        productSlot={roleSwitch.productSlot}
         onOpenHelp={openHelp}
         onOpenSettings={() => setSettingsOpen(true)}
         onToggleTheme={onToggleTheme}
         isDark={isDark}
-        onRefresh={onRefresh}
         onLogout={onLogout}
-        roleControl={roleControl}
       >
+        {roleSwitch.overlay}
         <DaemonUnreachableBanner status={connection} />
         <Suspense fallback={<PageLoader />}>
           <Routes>
@@ -233,23 +232,27 @@ function PageWithHeader({
   const openHelp = useOpenHelp();
   const { t } = useTranslation('common');
   const productName = t('app.title');
+  const [actionsSlot, setActionsSlot] = useState<HTMLElement | null>(null);
 
   useEffect(() => {
     document.title = documentTitle(page.label, productName);
   }, [page.label, productName]);
 
   return (
-    <section className="stack-xl">
-      <RoutedPageHeader
-        kicker={page.eyebrow}
-        title={page.label}
-        section={page.section}
-        subtitle={page.description}
-        onHelp={openHelp}
-      />
-      {page.runControls ? <TestRunControls /> : null}
-      {children}
-      {page.runControls ? <TestResults testStatus={testStatus} result={testResult} /> : null}
-    </section>
+    <PageActionsSlotContext.Provider value={actionsSlot}>
+      <section className="stack-xl">
+        <RoutedPageHeader
+          kicker={page.eyebrow}
+          title={page.label}
+          section={page.section}
+          subtitle={page.description}
+          actions={<span ref={setActionsSlot} className="contents" />}
+          onHelp={openHelp}
+        />
+        {page.runControls ? <TestRunControls /> : null}
+        {children}
+        {page.runControls ? <TestResults testStatus={testStatus} result={testResult} /> : null}
+      </section>
+    </PageActionsSlotContext.Provider>
   );
 }

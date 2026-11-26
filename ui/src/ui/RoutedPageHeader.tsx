@@ -23,6 +23,8 @@ interface RoutedPageHeaderProps {
   title: string;
   section?: PageConfig['section'];
   subtitle?: string;
+  /** The page's own actions, beside the help button. */
+  actions?: ReactNode;
   /** Opens the help drawer; omit on a page with no help content. */
   onHelp?: () => void;
 }
@@ -32,6 +34,7 @@ export function RoutedPageHeader({
   title,
   section,
   subtitle,
+  actions,
   onHelp,
 }: RoutedPageHeaderProps): ReactElement {
   const { t } = useTranslation('common');
@@ -49,6 +52,7 @@ export function RoutedPageHeader({
       breadcrumbsLabel={t('accessibility.breadcrumb')}
       renderBreadcrumbLink={renderLink}
       {...(subtitle ? { subtitle } : {})}
+      {...(actions ? { actions } : {})}
       {...(onHelp
         ? { help: { label: tHelp('drawer.pageHelp', { page: title }), onClick: onHelp } }
         : {})}

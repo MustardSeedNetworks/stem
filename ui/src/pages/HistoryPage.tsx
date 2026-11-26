@@ -29,6 +29,7 @@ import {
   historyToJson,
 } from '../stores/history-export';
 import { HISTORY_MAX_ITEMS, type HistoricalResult, useHistoryStore } from '../stores/history-store';
+import { RefreshAction } from '../ui/PageActions';
 
 type Facet = 'all' | 'failed';
 
@@ -69,6 +70,7 @@ export function HistoryPage(): JSX.Element {
   const results = useHistoryStore((s) => s.results);
   const remove = useHistoryStore((s) => s.remove);
   const clear = useHistoryStore((s) => s.clear);
+  const reload = useHistoryStore((s) => s.reload);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [facet, setFacet] = useState<Facet>('all');
   const [confirm, setConfirm] = useState<'delete' | 'clear' | null>(null);
@@ -114,16 +116,20 @@ export function HistoryPage(): JSX.Element {
 
   if (results.length === 0) {
     return (
-      <EmptyState
-        icon={<History className="h-6 w-6" />}
-        title={t('history.emptyNoRunsTitle')}
-        hint={t('history.emptyNoRuns')}
-      />
+      <>
+        <RefreshAction onRefresh={reload} />
+        <EmptyState
+          icon={<History className="h-6 w-6" />}
+          title={t('history.emptyNoRunsTitle')}
+          hint={t('history.emptyNoRuns')}
+        />
+      </>
     );
   }
 
   return (
     <>
+      <RefreshAction onRefresh={reload} />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-text-secondary" data-testid="history-scope">
           {t('history.scope', { count: results.length, max: HISTORY_MAX_ITEMS })}

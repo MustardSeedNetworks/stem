@@ -26,6 +26,7 @@ import { Card } from '../shared/Card';
 import { StatusPill } from '../shared/StatusPill';
 import { Tooltip } from '../shared/Tooltip';
 import type { InterfaceInfo, Stats } from '../types/api';
+import { RefreshAction } from '../ui/PageActions';
 import { type RollupState, StatusRollup } from '../ui/StatusRollup';
 
 function formatNumber(num: number): string {
@@ -209,6 +210,7 @@ export function ReflectorPage(): ReactElement {
     stats,
     reflectorProfile,
     setReflectorProfile,
+    onRefresh,
     onStartReflector,
     onStopReflector,
     isStartingReflector,
@@ -263,6 +265,7 @@ export function ReflectorPage(): ReactElement {
 
   return (
     <>
+      <RefreshAction onRefresh={onRefresh} title={t('tooltips.chrome.refresh')} />
       {/* Live run opens with the rollup, not with stat cards: the first
         question on this page is whether the run is healthy, and four numbers
         in a row do not answer it. */}

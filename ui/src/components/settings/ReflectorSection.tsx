@@ -7,6 +7,7 @@
 
 import { useTranslation } from 'react-i18next';
 import { Card } from '../../shared/Card';
+import { RadioGroup } from '../../shared/RadioGroup';
 import type { ReflectorProfile, SettingsSectionProps } from './types';
 
 interface ReflectorSectionProps extends SettingsSectionProps {
@@ -56,27 +57,23 @@ export function ReflectorSection({
   };
 
   return (
-    <Card title={t('settings:reflector.title')} {...(className ? { className } : {})}>
-      <div className="stack-sm">
-        {REFLECTOR_PROFILE_IDS.map((id) => (
-          <label
-            key={id}
-            className="flex cursor-pointer items-center gap-3 rounded-lg p-2 transition-colors hover:bg-surface-hover"
-          >
-            <input
-              type="radio"
-              name="reflectorProfile"
-              checked={profile === id}
-              onChange={(): void => onProfileChange(id)}
-              className="h-4 w-4 accent-brand-primary"
-            />
-            <div>
-              <div className="text-sm font-medium text-text-primary">{profiles[id].name}</div>
-              <div className="text-xs text-text-muted">{profiles[id].description}</div>
-            </div>
-          </label>
-        ))}
-      </div>
+    <Card {...(className ? { className } : {})}>
+      <RadioGroup
+        label={t('settings:reflector.title')}
+        name="reflectorProfile"
+        value={profile}
+        onValueChange={(value) => {
+          const next = REFLECTOR_PROFILE_IDS.find((id) => id === value);
+          if (next) {
+            onProfileChange(next);
+          }
+        }}
+        options={REFLECTOR_PROFILE_IDS.map((id) => ({
+          value: id,
+          label: profiles[id].name,
+          description: profiles[id].description,
+        }))}
+      />
     </Card>
   );
 }

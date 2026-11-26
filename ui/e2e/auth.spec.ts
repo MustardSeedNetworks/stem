@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { skipSetupWizard, TEST_CREDENTIALS } from './helpers/auth';
+import { rail } from './helpers/rail';
 
 // Opt out of the suite-wide authenticated storageState (from
 // e2e/global-setup.ts) so each test starts from a clean
@@ -32,7 +33,7 @@ test.describe('Authentication', () => {
     await page.getByTestId('login-username').fill(TEST_CREDENTIALS.username);
     await page.getByTestId('login-password').fill(TEST_CREDENTIALS.password);
     await page.getByTestId('login-submit').click();
-    await expect(page.locator('[data-testid="rail-logout"]')).toBeVisible();
+    await expect(rail(page, 'rail-sign-out')).toBeVisible();
   });
 
   test('should logout successfully', async ({ page }) => {
@@ -43,7 +44,7 @@ test.describe('Authentication', () => {
     await page.getByTestId('login-submit').click();
 
     // Then logout
-    await page.click('[data-testid="rail-logout"]');
+    await rail(page, 'rail-sign-out').click();
     await expect(page.getByTestId('login-title')).toBeVisible();
   });
 });

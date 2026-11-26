@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { skipSetupWizard } from './helpers/auth';
+import { rail } from './helpers/rail';
 
 /**
  * Settings drawer — Module view
@@ -23,7 +24,7 @@ test.describe('Settings drawer module view', () => {
   });
 
   test('switches to module view and shows modules', async ({ page }) => {
-    await page.getByTestId('sidebar-settings-button').click();
+    await rail(page, 'rail-settings').click();
 
     const drawer = page.getByTestId('settings-drawer');
     await expect(drawer).toBeVisible();

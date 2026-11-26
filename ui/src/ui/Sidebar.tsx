@@ -14,14 +14,25 @@ import { type LucideIcon, Menu, X } from 'lucide-react';
 import { createElement, type ReactNode, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router';
+import msnLogo from '../assets/msn-logo.svg';
 import { iconSizes } from '../constants/sizes';
 import { accessibleNameIncluding } from '../lib/accessibleName';
+import { RailFooter } from '../shared/RailFooter';
+import type { RailProductSlotProps } from '../shared/RailProductSlot';
 import { Tooltip } from '../shared/Tooltip';
 import { prefetchRoute } from '../utils/prefetch';
 import { safeGetItem, safeSetItem } from '../utils/storage';
-import { type RailStatus, SidebarFooter, SidebarHeader } from './SidebarChrome';
+import { SidebarHeader } from './SidebarChrome';
 
-export type { RailStatus };
+/**
+ * The connection state the rail's status pill reports. It comes from the same
+ * query the rest of the shell reads, so the rail never says "connected" on a
+ * dead socket (UI-STEM-9); the label rides the pill, so it is not colour alone.
+ */
+export interface RailStatus {
+  state: 'connected' | 'disconnected';
+  label: string;
+}
 
 export interface SidebarNavItem {
   path: string;
@@ -40,22 +51,14 @@ interface SidebarLayoutProps {
   version?: string;
   children: ReactNode;
   status?: RailStatus;
-  /** Rail-footer controls. Omit a callback and its button does not render. */
-  onToggleTheme?: () => void;
-  isDark?: boolean;
-  onRefresh?: () => void;
+  /** The one product control in the footer: stem's Reflector / Test Master switch. */
+  productSlot?: RailProductSlotProps;
+  /** Footer actions. Omit a callback and its button does not render (sign-out only with auth). */
+  onToggleTheme: () => void;
+  isDark: boolean;
   onLogout?: () => void;
-  /** The role control, rendered in the footer when the rail is expanded. */
-  roleControl?: ReactNode;
-  /**
-   * Drawer callbacks — all optional. Pass only the ones your product uses;
-   * the corresponding footer button only renders when its callback is provided.
-   * Stem typically uses help/settings/history; seed uses help/settings/profiles;
-   * niac uses help/settings. Add more here if a new product needs another drawer.
-   */
-  onOpenHelp?: () => void;
-  onOpenSettings?: () => void;
-  onOpenProfiles?: () => void;
+  onOpenHelp: () => void;
+  onOpenSettings: () => void;
 }
 
 const STORAGE_KEY = 'stem-sidebar-collapsed';
@@ -125,42 +128,35 @@ function NavItemButton({ item, active, collapsed, onNavigate }: NavItemButtonPro
 interface SidebarBodyProps {
   groups: SidebarNavGroup[];
   collapsed: boolean;
+  variant: 'rail' | 'drawer';
   version?: string;
   status?: RailStatus;
-  onToggleTheme?: () => void;
-  isDark?: boolean;
-  onRefresh?: () => void;
+  productSlot?: RailProductSlotProps;
+  onToggleTheme: () => void;
+  isDark: boolean;
   onLogout?: () => void;
-  roleControl?: ReactNode;
-  onCollapse: () => void;
-  onExpand: () => void;
+  onToggleCollapsed: () => void;
   onNavigate: (path: string) => void;
   isActive: (path: string) => boolean;
-  onOpenHelp?: () => void;
-  onOpenSettings?: () => void;
-  onOpenProfiles?: () => void;
-  // Forwarded to SidebarFooter — see comment there.
-  surfaceTestIds: boolean;
+  onOpenHelp: () => void;
+  onOpenSettings: () => void;
 }
 
 function SidebarBody({
   groups,
   collapsed,
+  variant,
   version,
   status,
-  onCollapse,
-  onExpand,
+  productSlot,
+  onToggleCollapsed,
   onNavigate,
   isActive,
   onOpenHelp,
   onOpenSettings,
-  onOpenProfiles,
   onToggleTheme,
   isDark,
-  onRefresh,
   onLogout,
-  roleControl,
-  surfaceTestIds,
 }: SidebarBodyProps) {
   const { t } = useTranslation();
   // group.label is either a plain display string ("Account") or an
@@ -170,12 +166,7 @@ function SidebarBody({
     label ? t(label, { defaultValue: label }) : '';
   return (
     <>
-      <SidebarHeader
-        collapsed={collapsed}
-        onCollapse={onCollapse}
-        status={status}
-        surfaceTestIds={surfaceTestIds}
-      />
+      <SidebarHeader collapsed={collapsed && variant === 'rail'} />
       <nav className="flex-1 overflow-y-auto py-4 px-cell stack-xl">
         {groups.map((group, groupIndex) => (
           <div key={group.label || `nav-group-${String(groupIndex)}`}>
@@ -199,19 +190,35 @@ function SidebarBody({
           </div>
         ))}
       </nav>
-      <SidebarFooter
+      <RailFooter
         collapsed={collapsed}
-        version={version}
-        onOpenHelp={onOpenHelp}
-        onOpenSettings={onOpenSettings}
-        onOpenProfiles={onOpenProfiles}
-        onToggleTheme={onToggleTheme}
-        isDark={isDark}
-        onRefresh={onRefresh}
-        onLogout={onLogout}
-        roleControl={roleControl}
-        onExpand={onExpand}
-        surfaceTestIds={surfaceTestIds}
+        variant={variant}
+        {...(status
+          ? {
+              status: {
+                tone: status.state === 'connected' ? ('success' as const) : ('error' as const),
+                label: status.label,
+              },
+            }
+          : {})}
+        {...(productSlot ? { productSlot } : {})}
+        help={{ label: t('labels.help'), onClick: onOpenHelp }}
+        settings={{ label: t('labels.settings'), onClick: onOpenSettings }}
+        theme={{
+          label: isDark
+            ? t('accessibility.switchToLightMode')
+            : t('accessibility.switchToDarkMode'),
+          onClick: onToggleTheme,
+          isDark,
+        }}
+        {...(onLogout ? { signOut: { label: t('buttons.logout'), onClick: onLogout } } : {})}
+        {...(version ? { version: { value: version, label: t('labels.version') } } : {})}
+        mark={{ src: msnLogo, name: t('app.company') }}
+        collapse={{
+          collapseLabel: t('accessibility.collapseSidebar'),
+          expandLabel: t('accessibility.expandSidebar'),
+          onToggle: onToggleCollapsed,
+        }}
       />
     </>
   );
@@ -258,14 +265,12 @@ export function SidebarLayout({
   version,
   children,
   status,
+  productSlot,
   onOpenHelp,
   onOpenSettings,
-  onOpenProfiles,
   onToggleTheme,
   isDark,
-  onRefresh,
   onLogout,
-  roleControl,
 }: SidebarLayoutProps) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -286,29 +291,24 @@ export function SidebarLayout({
     location.pathname === path || (path !== '/' && location.pathname.startsWith(path));
 
   // Both asides below stay in the DOM regardless of viewport (responsive
-  // classes only toggle display, not mount). Only the desktop aside emits
-  // sidebar-*-button testids — the mobile copy keeps them undefined so
-  // getByTestId in tests resolves to exactly one element under strict
-  // mode. Playwright's default 1280x720 viewport renders desktop.
-  const body = (surfaceTestIds: boolean) => (
+  // classes only toggle display, not mount), so a spec scopes a rail control to
+  // `desktop-sidebar` or `mobile-sidebar` rather than matching two of each id.
+  const body = (variant: 'rail' | 'drawer') => (
     <SidebarBody
       groups={groups}
       collapsed={collapsed}
+      variant={variant}
       version={version}
       status={status}
-      onCollapse={() => setCollapsed(true)}
-      onExpand={() => setCollapsed(false)}
+      productSlot={productSlot}
+      onToggleCollapsed={() => setCollapsed((current) => !current)}
       onNavigate={(p) => navigate(p)}
       isActive={isActive}
       onOpenHelp={onOpenHelp}
       onOpenSettings={onOpenSettings}
-      onOpenProfiles={onOpenProfiles}
       onToggleTheme={onToggleTheme}
       isDark={isDark}
-      onRefresh={onRefresh}
       onLogout={onLogout}
-      roleControl={roleControl}
-      surfaceTestIds={surfaceTestIds}
     />
   );
 
@@ -349,7 +349,7 @@ export function SidebarLayout({
           mobileOpen ? 'translate-x-0' : '-translate-x-full invisible'
         }`}
       >
-        <div className="flex flex-col h-full">{body(false)}</div>
+        <div className="flex flex-col h-full">{body('drawer')}</div>
       </aside>
 
       <aside
@@ -367,7 +367,7 @@ export function SidebarLayout({
           collapsed ? 'w-16' : 'w-56'
         }`}
       >
-        {body(true)}
+        {body('rail')}
       </aside>
 
       <main

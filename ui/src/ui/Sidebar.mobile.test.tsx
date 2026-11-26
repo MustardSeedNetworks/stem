@@ -15,6 +15,10 @@ function renderLayout() {
     <MemoryRouter>
       <SidebarLayout
         groups={[{ label: '', items: [{ path: '/reflector', label: 'Reflector', icon: Gauge }] }]}
+        onOpenHelp={() => undefined}
+        onOpenSettings={() => undefined}
+        onToggleTheme={() => undefined}
+        isDark={false}
       >
         <div>page</div>
       </SidebarLayout>

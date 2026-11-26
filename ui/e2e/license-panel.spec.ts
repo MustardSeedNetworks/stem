@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { skipSetupWizard } from './helpers/auth';
+import { rail } from './helpers/rail';
 import { openSettingsTab } from './helpers/settings';
 
 /**
@@ -35,7 +36,7 @@ test.describe('License panel', () => {
         response.url().endsWith('/api/v1/license') && response.request().method() === 'GET',
     );
     await page.goto('/');
-    await page.getByTestId('sidebar-settings-button').click();
+    await rail(page, 'rail-settings').click();
     await openSettingsTab(page, 'License');
 
     const response = await status;
@@ -59,14 +60,14 @@ test.describe('License panel', () => {
     const drawer = page.getByTestId('settings-drawer');
     // The first open loads the drawer's code at full speed; the second, with
     // the clock held, is the one under test.
-    await page.getByTestId('sidebar-settings-button').click();
+    await rail(page, 'rail-settings').click();
     await openSettingsTab(page, 'License');
     await expect(drawer.getByText('Not Activated')).toBeVisible();
     await drawer.getByTestId('settings-drawer-close').click();
     await expect(drawer).toBeHidden();
 
     await page.clock.pauseAt(new Date(Date.now() + 60_000));
-    await page.getByTestId('sidebar-settings-button').click();
+    await rail(page, 'rail-settings').click();
     await openSettingsTab(page, 'License');
     await expect(drawer.getByText('Not Activated')).toBeVisible();
 
@@ -80,7 +81,7 @@ test.describe('License panel', () => {
 
   test('an activation attempt reaches the daemon with CSRF and is answered', async ({ page }) => {
     await page.goto('/');
-    await page.getByTestId('sidebar-settings-button').click();
+    await rail(page, 'rail-settings').click();
     await openSettingsTab(page, 'License');
     const drawer = page.getByTestId('settings-drawer');
     await expect(drawer.getByText('Not Activated')).toBeVisible();

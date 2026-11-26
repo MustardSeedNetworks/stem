@@ -11,11 +11,9 @@ import { FRAME_SIZE_OPTIONS } from '../forms/frameSizes';
 import { useConfigForm } from '../forms/useConfigForm';
 import { hasGroupTests } from '../lib/testGroups';
 import { RFC2544ConfigSchema } from '../schemas/configs';
-import { Alert } from '../shared/Alert';
 import { Checkbox } from '../shared/Checkbox';
 import { FormField } from '../shared/FormField';
 import { FormSection } from '../shared/FormSection';
-import { HelpIcon } from '../shared/HelpIcon';
 import { Input } from '../shared/Input';
 import { CheckboxField } from './ConfigFormFields';
 import { TestSummary } from './TestSummary';
@@ -235,15 +233,12 @@ export function RFC2544ConfigForm({
         </FormSection>
       ) : null}
 
-      <FormSection
-        title={t('testConfig.common.frameSizesTitle')}
-        help={
-          <HelpIcon
-            data-testid="help-icon"
-            label={t('common:help.label', { topic: t('testConfig.common.frameSizesTitle') })}
-            text={t('help:tooltips.testConfig.rfc2544.frameSizes.help')}
-          />
-        }
+      <FormField
+        group
+        size="lg"
+        label={t('testConfig.common.frameSizesTitle')}
+        hint={t('help:tooltips.testConfig.rfc2544.frameSizes.help')}
+        error={errors.frameSizes?.message}
       >
         <div className="grid grid-cols-2 gap-compact">
           {FRAME_SIZE_OPTIONS.map((option) => (
@@ -255,12 +250,7 @@ export function RFC2544ConfigForm({
             />
           ))}
         </div>
-        {errors.frameSizes?.message ? (
-          <Alert tone="error" size="sm">
-            {errors.frameSizes.message}
-          </Alert>
-        ) : null}
-      </FormSection>
+      </FormField>
 
       <FormSection title={t('testConfig.rfc2544.advanced.title')}>
         <CheckboxField

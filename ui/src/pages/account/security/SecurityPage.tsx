@@ -20,6 +20,7 @@ import { FormField } from '../../../shared/FormField';
 import { Input } from '../../../shared/Input';
 import { Modal } from '../../../shared/Modal';
 import { StatusPill } from '../../../shared/StatusPill';
+import { RefreshAction } from '../../../ui/PageActions';
 import {
   isMFARequired as _isMFARequired,
   type MFAStatusResponse,
@@ -102,6 +103,7 @@ export function SecurityPage(): ReactElement {
 
   return (
     <section className="stack-xl">
+      <RefreshAction onRefresh={() => void refresh()} />
       {error ? <Alert tone="error">{error}</Alert> : null}
 
       <Card
