@@ -108,14 +108,17 @@ export function AppShell({
     }
   }, [helpRoute, routePath, pages, setHelpRoute]);
 
-  // Mount both drawers just after the shell paints and keep them mounted. A
-  // dialog records the click that opens it so Safari, which does not focus a
-  // button on click, can return focus to the opener; that listener lives in the
-  // dialog, so a dialog mounted by the click itself would miss the click.
   useEffect(() => {
-    setSettingsLoaded(true);
-    setHelpLoaded(true);
-  }, []);
+    if (settingsOpen) {
+      setSettingsLoaded(true);
+    }
+  }, [settingsOpen]);
+
+  useEffect(() => {
+    if (helpOpen) {
+      setHelpLoaded(true);
+    }
+  }, [helpOpen]);
 
   const {
     selectedTests,
@@ -197,12 +200,7 @@ export function AppShell({
 
       {helpLoaded ? (
         <Suspense fallback={null}>
-          <HelpDrawer
-            key={routePath ?? 'none'}
-            isOpen={helpOpen}
-            {...helpTopic}
-            onClose={closeHelp}
-          />
+          {helpOpen ? <HelpDrawer isOpen={true} {...helpTopic} onClose={closeHelp} /> : null}
         </Suspense>
       ) : null}
     </>
