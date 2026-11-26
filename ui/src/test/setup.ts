@@ -44,12 +44,22 @@ Object.defineProperty(window, 'matchMedia', {
 
 // Observers are constructed with `new`, and Vitest 4 refuses to construct a
 // vi.fn() whose implementation is an arrow function, so these are classes.
-// ResizeObserver: used by xyflow, codemirror, recharts, headlessui, cmdk
-global.ResizeObserver = class {
+// ResizeObserver: used by xyflow, codemirror, recharts, headlessui, cmdk.
+// Typed with the real constructor signature: an untyped stub has no
+// constructor parameters, so a static analyser resolving `new ResizeObserver(cb)`
+// to it reports the callback as a superfluous argument.
+class ResizeObserverStub implements ResizeObserver {
+  readonly callback: ResizeObserverCallback;
+
+  constructor(callback: ResizeObserverCallback) {
+    this.callback = callback;
+  }
+
   observe = vi.fn();
   unobserve = vi.fn();
   disconnect = vi.fn();
-} as unknown as typeof ResizeObserver;
+}
+global.ResizeObserver = ResizeObserverStub;
 
 // JSDOM has no layout, so no scrollIntoView; cmdk scrolls the active item.
 Element.prototype.scrollIntoView = vi.fn();
