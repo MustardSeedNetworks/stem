@@ -1,21 +1,22 @@
-import { Tooltip } from './ui/Tooltip';
 /**
  * @fileoverview Stem - Module Selector Component
  * @description A component that displays tests organized by module (Reflector, Benchmark,
- *              ServiceTest, TrafficGen, Measure, Certify) with module-specific colors.
+ *              ServiceTest, TrafficGen, Measure, Certify).
  *              Allows users to select tests using the module-oriented architecture.
  */
 
 import { type ReactElement, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { HelpIcon } from './HelpIcon';
+import { Button } from '../shared/Button';
+import { CollapsibleSection } from '../shared/CollapsibleSection';
+import { Tooltip } from '../shared/Tooltip';
+import { TestCheckbox } from './settings/TestCheckbox';
 
 // Module definitions matching the Go backend
 interface Module {
   name: string;
   displayName: string;
   description: string;
-  color: string;
   standard: string;
   tests: string[];
 }
@@ -62,7 +63,6 @@ export function ModuleSelector({
 }: ModuleSelectorProps): ReactElement {
   const { t } = useTranslation(['common', 'settings', 'modules', 'help', 'errors']);
   const [modules, setModules] = useState<Module[]>([]);
-  const [expandedModule, setExpandedModule] = useState<string | null>('benchmark');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -111,10 +111,6 @@ export function ModuleSelector({
     }
   };
 
-  const toggleModule = (moduleName: string): void => {
-    setExpandedModule(expandedModule === moduleName ? null : moduleName);
-  };
-
   const getSelectedCount = (mod: Module): number =>
     mod.tests.filter((t): boolean => selectedTests.includes(t)).length;
 
@@ -149,128 +145,51 @@ export function ModuleSelector({
     // loose text across the whole settings drawer (#941).
     <div className="stack-sm" data-testid="module-selector">
       {modules.map((mod) => (
-        <div key={mod.name} className="border border-surface-border rounded-lg overflow-hidden">
-          {/* Module Header */}
-          <Tooltip
-            text={
-              expandedModule === mod.name
-                ? t('modules:card.expand.titleExpanded', { name: mod.displayName })
-                : t('modules:card.expand.titleCollapsed', { name: mod.displayName })
-            }
-          >
-            <button
-              type="button"
-              data-testid={`module-toggle-${mod.name}`}
-              onClick={(): void => toggleModule(mod.name)}
-              aria-label={
-                expandedModule === mod.name
-                  ? t('modules:card.expand.titleExpanded', { name: mod.displayName })
-                  : t('modules:card.expand.titleCollapsed', { name: mod.displayName })
-              }
-              aria-expanded={expandedModule === mod.name}
-              className="w-full flex-between pad-sm hover:bg-surface-hover transition-colors"
-              style={{ borderLeft: `4px solid ${mod.color}` }}
-            >
-              <div className="flex items-center gap-default">
-                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: mod.color }} />
-                <div className="text-left">
-                  <div className="font-medium text-sm">{mod.displayName}</div>
-                  <div className="text-xs text-text-muted">{mod.standard}</div>
-                </div>
-              </div>
-              <div className="flex items-center gap-compact">
-                <span className="text-xs text-text-muted">
-                  {getSelectedCount(mod)}/{mod.tests.length}
-                </span>
-                <svg
-                  className={`w-4 h-4 transition-transform ${expandedModule === mod.name ? 'rotate-180' : ''}`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 9l-7 7-7-7"
-                  />
-                </svg>
-              </div>
-            </button>
-          </Tooltip>
-
-          {/* Module Tests */}
-          {expandedModule === mod.name && (
-            <div className="border-t border-surface-border bg-surface-base">
-              {/* Select All / Deselect All */}
-              <div className="flex justify-end gap-compact px-3 py-row border-b border-surface-border">
-                <Tooltip text={t('help:tooltips.selectAll', { name: mod.displayName })}>
-                  <button
-                    type="button"
-                    onClick={() => selectAllInModule(mod)}
-                    className="text-xs text-status-info hover:underline"
-                  >
-                    {t('buttons.selectAll')}
-                  </button>
-                </Tooltip>
-                <span className="text-text-muted">|</span>
-                <Tooltip text={t('help:tooltips.clearAll', { name: mod.displayName })}>
-                  <button
-                    type="button"
-                    onClick={() => deselectAllInModule(mod)}
-                    className="text-xs text-text-muted hover:underline"
-                  >
-                    {t('buttons.deselectAll')}
-                  </button>
-                </Tooltip>
-              </div>
-
-              {/* Test List */}
-              <div className="pad-xs stack-xs">
-                {mod.tests.map((testId) => {
-                  const key = testTranslationKeys[testId as keyof typeof testTranslationKeys];
-                  const testInfo = key
-                    ? {
-                        name: t(`settings:${key}.name`),
-                        desc: t(`settings:${key}.desc`),
-                        tooltip: t(`settings:${key}.tooltip`),
-                      }
-                    : {
-                        name: testId,
-                        desc: '',
-                        tooltip: t('help:tooltips.runTest', { test: testId }),
-                      };
-                  return (
-                    <label
-                      key={testId}
-                      className="flex items-start gap-default pad-xs rounded-lg cursor-pointer hover:bg-surface-hover"
-                    >
-                      <input
-                        type="checkbox"
-                        data-testid={`test-checkbox-${testId}`}
-                        checked={selectedTests.includes(testId)}
-                        onChange={() => toggleTest(testId)}
-                        aria-label={t('modules:card.test.ariaLabel', { name: testInfo.name })}
-                        className="mt-0.5 w-4 h-4"
-                        style={{ accentColor: mod.color }}
-                      />
-                      <div className="flex-1">
-                        <div className="font-medium text-sm flex items-center gap-tight">
-                          {testInfo.name}
-                          <HelpIcon tooltip={testInfo.tooltip} />
-                        </div>
-                        {testInfo.desc ? (
-                          <div className="text-xs text-text-muted">{testInfo.desc}</div>
-                        ) : null}
-                      </div>
-                    </label>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </div>
+        <CollapsibleSection
+          key={mod.name}
+          data-testid={`module-card-${mod.name}`}
+          title={`${mod.displayName} · ${mod.standard} (${getSelectedCount(mod)}/${mod.tests.length})`}
+          defaultOpen={mod.name === 'benchmark'}
+        >
+          <div className="mb-2 flex justify-end gap-2">
+            <Tooltip text={t('help:tooltips.selectAll', { name: mod.displayName })}>
+              <Button variant="ghost" size="sm" onClick={() => selectAllInModule(mod)}>
+                {t('buttons.selectAll')}
+              </Button>
+            </Tooltip>
+            <Tooltip text={t('help:tooltips.clearAll', { name: mod.displayName })}>
+              <Button variant="ghost" size="sm" onClick={() => deselectAllInModule(mod)}>
+                {t('buttons.deselectAll')}
+              </Button>
+            </Tooltip>
+          </div>
+          <div className="stack-xs">
+            {mod.tests.map((testId) => {
+              const key = testTranslationKeys[testId as keyof typeof testTranslationKeys];
+              const testInfo = key
+                ? {
+                    id: testId,
+                    name: t(`settings:${key}.name`),
+                    desc: t(`settings:${key}.desc`),
+                    tooltip: t(`settings:${key}.tooltip`),
+                  }
+                : {
+                    id: testId,
+                    name: testId,
+                    desc: '',
+                    tooltip: t('help:tooltips.runTest', { test: testId }),
+                  };
+              return (
+                <TestCheckbox
+                  key={testId}
+                  test={testInfo}
+                  checked={selectedTests.includes(testId)}
+                  onChange={() => toggleTest(testId)}
+                />
+              );
+            })}
+          </div>
+        </CollapsibleSection>
       ))}
     </div>
   );

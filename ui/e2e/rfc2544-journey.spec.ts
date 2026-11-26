@@ -35,18 +35,21 @@ test.describe('RFC 2544 journey', () => {
     await useRole(page, 'test_master');
   });
 
-  test('the start control stays disabled until an interface and peer are chosen', async ({
-    page,
-  }) => {
+  test('the start control stays disabled until a peer is entered', async ({ page }) => {
     await page.goto('/tests/benchmark');
 
     const start = page.getByTestId('start-test-button');
     await expect(start).toBeVisible({ timeout: 10000 });
 
-    await page.getByTestId('interface-select').selectOption('');
+    // The daemon's first interface is chosen for the operator, and the picker
+    // has no empty choice to go back to (its placeholder is disabled), so the
+    // peer is what is still missing. "No interface chosen" is covered by
+    // ReflectorPage.test.tsx, where the list can be made empty.
+    await expect(page.getByTestId('interface-select')).not.toHaveValue('');
     await expect(start).toBeDisabled();
-    await page.getByTestId('interface-select').selectOption({ index: 1 });
-    await expect(start).toBeDisabled();
+
+    await page.getByTestId('peer-input').fill('192.0.2.10');
+    await expect(start).toBeEnabled();
   });
 
   test('starting a run posts the selected tests and interface', async ({ page }) => {

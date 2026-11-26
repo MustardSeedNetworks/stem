@@ -27,7 +27,7 @@ describe('NotFoundPanel', () => {
 
     expect(screen.getByRole('heading', { name: 'Page not found' })).toBeInTheDocument();
     expect(screen.getByText('Stem has no page at this address.')).toBeInTheDocument();
-    expect(document.title).toBe('Page not found | Stem');
+    expect(document.title).toBe('Page not found · Stem');
 
     await user.click(screen.getByRole('link', { name: 'Back to Stem home' }));
     expect(screen.getByText('home page')).toBeInTheDocument();

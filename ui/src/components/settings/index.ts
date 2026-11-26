@@ -5,11 +5,10 @@
  * Follows Seed patterns for profile-based settings.
  */
 
-export { InterfaceSection } from './InterfaceSection';
+export { AppearanceSection } from './AppearanceSection';
 export { LanguageSection } from './LanguageSection';
 
 // Section Components
-export { ModeSection } from './ModeSection';
 export { ReflectorSection } from './ReflectorSection';
 export { TestCheckbox } from './TestCheckbox';
 // Test Sections

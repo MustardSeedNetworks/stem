@@ -1,5 +1,6 @@
 import { expect, type Page, test } from '@playwright/test';
 import { skipSetupWizard } from './helpers/auth';
+import { rail } from './helpers/rail';
 
 /**
  * Responsive Design Tests
@@ -150,7 +151,7 @@ test.describe('Mobile navigation', () => {
   test('the desktop rail is not reachable at a phone width', async ({ page }) => {
     // The premise every other assertion here rests on. If this ever fails,
     // the mobile drawer is redundant and these tests are testing nothing.
-    await expect(page.getByTestId('sidebar-settings-button')).toBeHidden();
+    await expect(rail(page, 'rail-settings')).toBeHidden();
   });
 
   test('the drawer opens on tap and exposes the module links', async ({ page }) => {

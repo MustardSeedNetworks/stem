@@ -26,7 +26,7 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
-export type RollupState = 'ok' | 'warn' | 'crit' | 'unknown';
+export type RollupState = 'ok' | 'warn' | 'crit' | 'unknown' | 'idle';
 
 export interface RollupFigure {
   label: string;
@@ -50,6 +50,10 @@ interface StatusRollupProps {
  * `ok` is deliberately calm: a status edge and a dot, no green banner. Nothing
  * being wrong is the normal case and should not compete for attention with the
  * case that is.
+ *
+ * `idle` is not a verdict: nothing is running, so there is nothing to call
+ * healthy. It is neutral, with the figures shown (they are real, just still),
+ * where `unknown` hides them because its source failed.
  */
 const STATE_STYLES: Record<
   RollupState,
@@ -59,6 +63,12 @@ const STATE_STYLES: Record<
     edge: 'bg-status-success',
     dot: 'bg-status-success',
     kicker: 'text-status-success',
+    wash: '',
+  },
+  idle: {
+    edge: 'bg-text-muted',
+    dot: 'bg-text-muted',
+    kicker: 'text-text-muted',
     wash: '',
   },
   warn: {
@@ -86,6 +96,7 @@ const STATE_STYLES: Record<
 // headline underneath it.
 const STATE_LABEL_KEYS = {
   ok: 'statusRollup.allClear',
+  idle: 'statusRollup.idle',
   warn: 'statusRollup.degraded',
   crit: 'statusRollup.critical',
   unknown: 'statusRollup.noData',
@@ -119,7 +130,7 @@ export function StatusRollup({
                 for less motion should not have to watch it to read the state. */}
             <span
               aria-hidden="true"
-              className={`h-2 w-2 rounded-full motion-safe:animate-pulse ${styles.dot}`}
+              className={`h-2 w-2 rounded-full ${state === 'idle' ? '' : 'motion-safe:animate-pulse'} ${styles.dot}`}
             />
             <span className={styles.kicker}>{t(STATE_LABEL_KEYS[state])}</span>
           </p>

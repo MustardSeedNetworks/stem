@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { skipSetupWizard } from './helpers/auth';
+import { rail } from './helpers/rail';
 
 /**
  * Settings drawer — Module view
@@ -23,12 +24,13 @@ test.describe('Settings drawer module view', () => {
   });
 
   test('switches to module view and shows modules', async ({ page }) => {
-    await page.getByTestId('sidebar-settings-button').click();
+    await rail(page, 'rail-settings').click();
 
     const drawer = page.getByTestId('settings-drawer');
     await expect(drawer).toBeVisible();
 
-    await drawer.getByRole('button', { name: 'Module', exact: true }).click();
+    await drawer.getByRole('tab', { name: 'Tests' }).click();
+    await drawer.getByText('Module', { exact: true }).click();
 
     // Scoped to the module list rather than `.first()` of a drawer-wide text
     // match. The index pick asserted against whichever node came first, which

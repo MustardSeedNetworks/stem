@@ -4,10 +4,9 @@
  * Custom traffic generation: one Custom Stream test, configured below.
  */
 
-import { Radio } from 'lucide-react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CollapsibleSection } from '../../CollapsibleSection';
+import { CollapsibleSection } from '../../../shared/CollapsibleSection';
 import { type TrafficGenConfig, TrafficGenConfigForm } from '../../TrafficGenConfigForm';
 import { TestCheckbox } from '../TestCheckbox';
 import type { TestDefinition, TestSectionProps } from '../types';
@@ -47,14 +46,7 @@ export function TrafficGenSection({
   const hasSelectedTests = selectedTests.includes('custom_stream');
 
   return (
-    <CollapsibleSection
-      title={
-        <div className="flex items-center gap-compact">
-          <Radio className="w-4 h-4" aria-hidden="true" />
-          <span>{t('tests.trafficgen.title')}</span>
-        </div>
-      }
-    >
+    <CollapsibleSection title={t('tests.trafficgen.title')}>
       <div className="stack-lg">
         {/* Test Selection */}
         <div className="stack-sm">
@@ -72,6 +64,7 @@ export function TrafficGenSection({
         {hasSelectedTests && (
           <div className="border-t border-surface-border pt-section">
             <TrafficGenConfigForm
+              testId="trafficgen-config-form-drawer"
               config={config}
               setConfig={onConfigChange}
               selectedTests={selectedTests}

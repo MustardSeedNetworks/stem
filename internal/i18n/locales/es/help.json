@@ -3,27 +3,21 @@
     "title": "Ayuda y Documentación",
     "ariaLabel": "Ayuda y Documentación",
     "close": "Cerrar ayuda",
-    "closeTooltip": "Cerrar el panel de ayuda y volver a la vista principal",
     "searchPlaceholder": "Buscar {{tab}}...",
     "pageHelp": "Abrir ayuda de {{page}}",
     "buildInfo": "Commit {{commit}} · Compilado {{time}}",
-    "version": "Stem v{{version}}"
+    "version": "Stem v{{version}}",
+    "clearSearch": "Borrar búsqueda"
   },
   "tabs": {
     "tests": "Pruebas",
     "tutorials": "Tutoriales",
-    "glossary": "Glosario",
-    "testsTooltip": "Explora las pruebas por norma y la generación de tráfico personalizado",
-    "tutorialsTooltip": "Guías paso a paso para los flujos de prueba más comunes",
-    "glossaryTooltip": "Diccionario de referencia de términos de redes e ingeniería de pruebas"
+    "glossary": "Glosario"
   },
   "mode": {
     "simple": "Sencillo",
     "technical": "Técnico",
-    "toggleToTechnical": "Cambiar a explicaciones técnicas con detalles de RFC, estructuras de paquetes y parámetros de ingeniería",
-    "toggleToSimple": "Cambiar a explicaciones en lenguaje sencillo aptas para no ingenieros",
-    "ariaToTechnical": "Cambiar a vista técnica",
-    "ariaToSimple": "Cambiar a vista sencilla"
+    "label": "Nivel de explicación"
   },
   "tests": {
     "intro": "Explora las referencias por norma o elige la generación de tráfico personalizado.",

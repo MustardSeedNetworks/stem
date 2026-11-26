@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { skipSetupWizard } from './helpers/auth';
+import { rail } from './helpers/rail';
 
 /**
  * Theme Tests
@@ -18,14 +19,14 @@ test.describe('Theme', () => {
   });
 
   test('should have theme toggle button', async ({ page }) => {
-    await expect(page.getByTestId('rail-theme-toggle')).toBeVisible();
+    await expect(rail(page, 'rail-theme')).toBeVisible();
   });
 
   test('should toggle between dark and light mode', async ({ page }) => {
     const html = page.locator('html');
     const initialDark = await html.evaluate((el) => el.classList.contains('dark'));
 
-    await page.getByTestId('rail-theme-toggle').click();
+    await rail(page, 'rail-theme').click();
 
     await expect
       .poll(async () => await html.evaluate((el) => el.classList.contains('dark')), {

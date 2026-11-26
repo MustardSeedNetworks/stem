@@ -16,11 +16,13 @@ import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 import { LoginSchema, MfaVerifySchema } from '../../schemas/auth';
+import { Button } from '../../shared/Button';
+import { FormField } from '../../shared/FormField';
+import { Input } from '../../shared/Input';
 import { useAuthStore } from '../../stores/auth-store';
 import { ProductMark } from '../../ui/ProductMark';
 import { RecoveryForm } from '../recovery/RecoveryForm';
 import { SetupWizard } from '../setup/SetupWizard';
-import { Button } from '../ui/Button';
 
 export function AuthGate(): ReactElement {
   const { t } = useTranslation(['security', 'common']);
@@ -168,25 +170,23 @@ export function AuthGate(): ReactElement {
             {mfaPending ? (
               <form className="mt-6 stack-lg" onSubmit={mfaForm.handleSubmit(handleMFAVerify)}>
                 <p className="text-sm text-text-muted">{t('security:login.mfaContinue')}</p>
-                <div>
-                  <label htmlFor="stem-login-mfa" className="text-xs font-semibold text-text-muted">
-                    {t('security:mfa.setup.codeLabel')}
-                  </label>
-                  <input
-                    id="stem-login-mfa"
-                    type="text"
-                    inputMode="numeric"
-                    pattern="[0-9]{6}"
-                    autoComplete="one-time-code"
-                    {...mfaForm.register('code')}
-                    className="mt-tight w-full rounded-xl border border-surface-border bg-surface-base px-3 py-row text-sm font-mono tracking-widest text-text-primary focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/30"
-                  />
-                  {mfaForm.formState.errors.code ? (
-                    <p className="mt-tight text-xs text-status-error">
-                      {mfaForm.formState.errors.code.message}
-                    </p>
-                  ) : null}
-                </div>
+                <FormField
+                  id="stem-login-mfa"
+                  label={t('security:mfa.setup.codeLabel')}
+                  error={mfaForm.formState.errors.code?.message}
+                >
+                  {(control) => (
+                    <Input
+                      {...control}
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]{6}"
+                      autoComplete="one-time-code"
+                      className="font-mono tracking-widest"
+                      {...mfaForm.register('code')}
+                    />
+                  )}
+                </FormField>
                 {loginError ? (
                   <p role="alert" aria-live="assertive" className="text-xs text-status-error">
                     {loginError}
@@ -208,48 +208,36 @@ export function AuthGate(): ReactElement {
               </form>
             ) : (
               <form className="mt-6 stack-lg" onSubmit={loginForm.handleSubmit(handleLogin)}>
-                <div>
-                  <label
-                    htmlFor="stem-login-username"
-                    className="text-xs font-semibold text-text-muted"
-                  >
-                    {t('security:login.username')}
-                  </label>
-                  <input
-                    id="stem-login-username"
-                    data-testid="login-username"
-                    type="text"
-                    autoComplete="username"
-                    {...loginForm.register('username')}
-                    className="mt-tight w-full rounded-xl border border-surface-border bg-surface-base px-3 py-row text-sm text-text-primary focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/30"
-                  />
-                  {loginForm.formState.errors.username ? (
-                    <p className="mt-tight text-xs text-status-error">
-                      {loginForm.formState.errors.username.message}
-                    </p>
-                  ) : null}
-                </div>
-                <div>
-                  <label
-                    htmlFor="stem-login-password"
-                    className="text-xs font-semibold text-text-muted"
-                  >
-                    {t('security:login.password')}
-                  </label>
-                  <input
-                    id="stem-login-password"
-                    data-testid="login-password"
-                    type="password"
-                    autoComplete="current-password"
-                    {...loginForm.register('password')}
-                    className="mt-tight w-full rounded-xl border border-surface-border bg-surface-base px-3 py-row text-sm text-text-primary focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/30"
-                  />
-                  {loginForm.formState.errors.password ? (
-                    <p className="mt-tight text-xs text-status-error">
-                      {loginForm.formState.errors.password.message}
-                    </p>
-                  ) : null}
-                </div>
+                <FormField
+                  id="stem-login-username"
+                  label={t('security:login.username')}
+                  error={loginForm.formState.errors.username?.message}
+                >
+                  {(control) => (
+                    <Input
+                      {...control}
+                      data-testid="login-username"
+                      type="text"
+                      autoComplete="username"
+                      {...loginForm.register('username')}
+                    />
+                  )}
+                </FormField>
+                <FormField
+                  id="stem-login-password"
+                  label={t('security:login.password')}
+                  error={loginForm.formState.errors.password?.message}
+                >
+                  {(control) => (
+                    <Input
+                      {...control}
+                      data-testid="login-password"
+                      type="password"
+                      autoComplete="current-password"
+                      {...loginForm.register('password')}
+                    />
+                  )}
+                </FormField>
                 {loginError ? (
                   <p role="alert" aria-live="assertive" className="text-xs text-status-error">
                     {loginError}
@@ -265,7 +253,7 @@ export function AuthGate(): ReactElement {
                 </Button>
                 <Button
                   data-testid="passkey-login"
-                  variant="outline"
+                  variant="secondary"
                   className="w-full"
                   disabled={loginLoading}
                   onClick={handlePasskeyLogin}

@@ -53,7 +53,7 @@ test.describe('RoleGuard mismatch branch', () => {
     // Switching role is what restores the selection, and with it the form.
     // This is the behaviour #638 could not explain, asserted end to end.
     await page.getByTestId('role-guard-banner').getByRole('button').click();
-    await page.getByTestId('confirm-modal-confirm').click();
+    await page.getByTestId('confirm-dialog').getByRole('button', { name: 'Switch role' }).click();
 
     await expect(page.getByTestId('role-guard-banner')).toHaveCount(0);
     await expect(page.getByTestId('rfc2544-config-form')).toBeVisible();

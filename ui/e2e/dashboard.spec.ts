@@ -37,10 +37,10 @@ test.describe('Dashboard', () => {
 
   test('should display connection status', async ({ page }) => {
     // The status left the page with the rest of the shell chrome (UI-STEM-9):
-    // it is the rail's product-mark dot now, and it carries the live state.
+    // it is the rail footer's pill now, and it says the live state.
     const status = page.locator('[data-testid="rail-status"]:visible');
     await expect(status).toBeVisible();
-    await expect(status).toHaveAttribute('data-status', /connected|disconnected/);
+    await expect(status).toHaveText(/connected|disconnected/i);
   });
 
   test('should land on the Reflector page after login', async ({ page }) => {

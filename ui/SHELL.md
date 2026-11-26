@@ -12,7 +12,8 @@ genuinely differs (nav items, brand tokens, product content).
 | File | Purpose |
 | --- | --- |
 | `ui/src/ui/Sidebar.tsx` | Persistent collapsible left navigation with mobile drawer, gradient active state, tri-color badges, hover prefetch, gradient page background. |
-| `ui/src/ui/PageHeader.tsx` | Page title bar with optional breadcrumbs, action area, and slide-out help panel. |
+| `ui/src/shared/*` | The page components (`PageHeader`, `RightDrawer`, `SettingsTabs`, `DataTable`, `Card`, forms, ...): byte-identical copies of `MustardSeedNetworks/.github` `ui/components`, never edited here. See `ui/README.md` there. |
+| `ui/src/ui/RoutedPageHeader.tsx` | Wires the shared `PageHeader` to stem's router, copy and help drawer. |
 
 ## Files NOT shared
 

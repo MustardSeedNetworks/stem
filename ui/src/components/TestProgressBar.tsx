@@ -4,6 +4,7 @@ import type { TFunction } from 'i18next';
 import { Clock, Loader2 } from 'lucide-react';
 import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Card } from '../shared/Card';
 import type { RunPlanStep, Stats } from '../types/api';
 
 export interface TestProgress {
@@ -91,7 +92,7 @@ export function TestProgressBar({ progress }: TestProgressBarProps): ReactElemen
   const [statusText, statusColor, barColor] = statusPresentation(t, progress.status);
 
   return (
-    <div className="card mb-section">
+    <Card className="mb-section">
       <div className="flex-between mb-heading">
         <div className="flex items-center gap-compact">
           {active ? <Loader2 className="w-4 h-4 animate-spin text-brand-primary" /> : null}
@@ -158,7 +159,7 @@ export function TestProgressBar({ progress }: TestProgressBarProps): ReactElemen
           ))}
         </ol>
       ) : null}
-    </div>
+    </Card>
   );
 }
 

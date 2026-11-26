@@ -5,10 +5,9 @@
  * Includes: Throughput, Latency, Frame Loss, Back-to-Back, System Recovery, Reset.
  */
 
-import { Zap } from 'lucide-react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CollapsibleSection } from '../../CollapsibleSection';
+import { CollapsibleSection } from '../../../shared/CollapsibleSection';
 import { type RFC2544Config, RFC2544ConfigForm } from '../../RFC2544ConfigForm';
 import { TestCheckbox } from '../TestCheckbox';
 import type { TestDefinition, TestSectionProps } from '../types';
@@ -60,16 +59,7 @@ export function RFC2544Section({
   const hasSelectedTests = selectedCount > 0;
 
   return (
-    <CollapsibleSection
-      testId="rfc2544-test-section"
-      title={
-        <div className="flex items-center gap-compact">
-          <Zap className="w-4 h-4" aria-hidden="true" />
-          <span>{t('tests.rfc2544.title')}</span>
-          <span className="caption text-text-muted">({selectedCount}/6)</span>
-        </div>
-      }
-    >
+    <CollapsibleSection title={`${t('tests.rfc2544.title')} (${selectedCount}/6)`}>
       <div className="stack-lg">
         {/* Test Selection */}
         <div className="stack-sm">

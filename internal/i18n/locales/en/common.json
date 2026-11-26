@@ -3,7 +3,8 @@
     "title": "Stem",
     "tagline": "Network Performance Testing by Mustard Seed Networks",
     "description": "Network Performance Testing Tool",
-    "copyright": "© {{year}} Mustard Seed Networks. All rights reserved."
+    "copyright": "© {{year}} Mustard Seed Networks. All rights reserved.",
+    "company": "Mustard Seed Networks"
   },
   "buttons": {
     "save": "Save",
@@ -67,13 +68,11 @@
     "warning": "WARNING",
     "info": "INFO",
     "placeholder": {
-      "idle": "No tests running. Configure tests in Settings and click {{runTest}}.",
       "starting": "Test is starting. Results will stream in shortly.",
       "running": "Test in progress... Results will appear here when complete.",
       "cancelled": "Test cancelled. Adjust settings or restart when ready.",
       "stopped": "Stopped by the operator. No result was captured before it ended.",
-      "error": "An error occurred during the test.",
-      "unknown": "Waiting for the backend to report a status."
+      "error": "An error occurred during the test."
     },
     "moduleName": "Module: {{module}}"
   },
@@ -195,7 +194,6 @@
     "issues": "Common Issues",
     "params": "Parameters",
     "metrics": "Output Metrics",
-    "clickForDetails": "Click for more details",
     "label": "Help: {{topic}}"
   },
   "errorBoundary": {
@@ -251,18 +249,15 @@
   },
   "tooltips": {
     "chrome": {
-      "refresh": "Rescan available network interfaces and reload current status",
-      "help": "Open the help drawer with test references, tutorials, and a glossary",
-      "settings": "Open the settings drawer to configure modules, interfaces, and thresholds",
-      "logout": "Sign out of the current session",
-      "profiles": "Open the profiles drawer to manage saved test configurations"
+      "refresh": "Rescan available network interfaces and reload current status"
     }
   },
   "statusRollup": {
     "allClear": "All clear",
     "degraded": "Degraded",
     "critical": "Critical",
-    "noData": "No data"
+    "noData": "No data",
+    "idle": "Idle"
   },
   "reflector": {
     "startButton": "Start Reflector",
@@ -331,22 +326,26 @@
     "label": "Command palette",
     "actions": "Actions"
   },
-  "statusBadge": {
-    "success": "Status: success",
-    "warning": "Status: warning",
-    "error": "Status: error",
-    "unknown": "Status: unknown",
-    "loading": "Status: loading"
-  },
   "connection": {
     "unreachable": "Can't reach Stem daemon, retrying"
   },
   "notFound": {
+    "kicker": "Error 404",
     "title": "Page not found",
     "body": "{{product}} has no page at this address.",
     "home": "Back to {{product}} home"
   },
   "language": {
     "title": "Language"
+  },
+  "table": {
+    "selectAll": "Select all rows on this page",
+    "selectRow": "Select {{name}}",
+    "actions": "Actions",
+    "pagination": "Table pages",
+    "previousPage": "Previous page",
+    "nextPage": "Next page",
+    "loading": "Loading",
+    "pageStatus": "Page {{page}} of {{pageCount}} ({{total}} rows)"
   }
 }

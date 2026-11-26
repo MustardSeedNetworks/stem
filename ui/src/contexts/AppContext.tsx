@@ -49,6 +49,8 @@ export interface AppContextValue {
   stats: Stats;
   reflectorProfile: ReflectorProfile;
   setReflectorProfile: Dispatch<SetStateAction<ReflectorProfile>>;
+  /** Re-reads the interface list and status from the daemon. */
+  onRefresh: () => void;
   onStartReflector: () => void;
   onStopReflector: () => void;
   isStartingReflector: boolean;

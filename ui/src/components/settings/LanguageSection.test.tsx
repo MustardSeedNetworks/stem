@@ -16,7 +16,7 @@ afterEach(async () => {
 describe('LanguageSection', () => {
   it('offers both locales with the active one selected', () => {
     render(<LanguageSection />);
-    const select = screen.getByRole('combobox', { name: 'Select language' });
+    const select = screen.getByRole('combobox', { name: 'Language' });
     expect(select).toHaveValue('en');
     expect(screen.getByRole('option', { name: 'Español' })).toBeInTheDocument();
   });
@@ -25,12 +25,11 @@ describe('LanguageSection', () => {
     const user = userEvent.setup();
     render(<LanguageSection />);
 
-    await user.selectOptions(screen.getByRole('combobox', { name: 'Select language' }), 'es');
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Language' }), 'es');
 
     expect(i18n.resolvedLanguage).toBe('es');
     expect(window.localStorage.getItem('stem-language')).toBe('es');
     expect(document.documentElement.lang).toBe('es');
-    expect(screen.getByRole('combobox', { name: 'Seleccionar idioma' })).toHaveValue('es');
-    expect(screen.getByText('Idioma')).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Idioma' })).toHaveValue('es');
   });
 });

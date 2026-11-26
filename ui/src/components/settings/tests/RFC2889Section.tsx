@@ -5,10 +5,9 @@
  * Includes: Forwarding Rate, Address Caching, Learning, Broadcast, Congestion Control.
  */
 
-import { Cpu } from 'lucide-react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CollapsibleSection } from '../../CollapsibleSection';
+import { CollapsibleSection } from '../../../shared/CollapsibleSection';
 import { type RFC2889Config, RFC2889ConfigForm } from '../../RFC2889ConfigForm';
 import { TestCheckbox } from '../TestCheckbox';
 import type { TestDefinition, TestSectionProps } from '../types';
@@ -59,15 +58,7 @@ export function RFC2889Section({
   const hasSelectedTests = selectedCount > 0;
 
   return (
-    <CollapsibleSection
-      title={
-        <div className="flex items-center gap-compact">
-          <Cpu className="w-4 h-4" aria-hidden="true" />
-          <span>{t('tests.rfc2889.title')}</span>
-          <span className="caption text-text-muted">({selectedCount}/5)</span>
-        </div>
-      }
-    >
+    <CollapsibleSection title={`${t('tests.rfc2889.title')} (${selectedCount}/5)`}>
       <div className="stack-lg">
         {/* Test Selection */}
         <div className="stack-sm">
@@ -85,6 +76,7 @@ export function RFC2889Section({
         {hasSelectedTests && (
           <div className="border-t border-surface-border pt-section">
             <RFC2889ConfigForm
+              testId="rfc2889-config-form-drawer"
               config={config}
               setConfig={onConfigChange}
               selectedTests={selectedTests}

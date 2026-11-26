@@ -37,27 +37,22 @@ describe('HistoryPage — list + detail', () => {
     vi.restoreAllMocks();
   });
 
-  it('prints an em dash rather than a verdict for a run that recorded none', () => {
+  const row = (name: RegExp): HTMLElement =>
+    within(screen.getByTestId('history-table')).getByRole('row', { name });
+
+  it('says the verdict is missing for a run that recorded none, never passed', () => {
     render(<HistoryPage />);
 
-    expect(within(screen.getByTestId('history-row-no-verdict')).getByText('—')).toBeTruthy();
+    expect(within(row(/Y\.1564 service/)).getByText('No verdict recorded')).toBeTruthy();
+    expect(within(row(/Y\.1564 service/)).queryByText('Passed')).toBeNull();
   });
 
-  it('says the verdict is missing rather than showing the run as passed', async () => {
+  it('shows the selected run metrics in the detail card', async () => {
     render(<HistoryPage />);
 
-    await userEvent.click(screen.getByTestId('history-row-no-verdict'));
+    await userEvent.click(row(/RFC 2544 throughput/));
 
-    expect(screen.getByText('No verdict recorded')).toBeTruthy();
-    expect(screen.queryByText('Passed')).toBeNull();
-  });
-
-  it('shows the selected run metrics in the detail pane', async () => {
-    render(<HistoryPage />);
-
-    await userEvent.click(screen.getByTestId('history-row-passed'));
-
-    expect(screen.getByText('Selected run')).toBeTruthy();
+    expect(screen.getByTestId('history-detail')).toBeTruthy();
     expect(screen.getByText('940')).toBeTruthy();
   });
 
@@ -73,7 +68,7 @@ describe('HistoryPage — list + detail', () => {
       .mockImplementation(() => undefined);
     render(<HistoryPage />);
 
-    await userEvent.click(screen.getByRole('button', { name: /failed/i }));
+    await userEvent.click(screen.getByRole('radio', { name: /failed/i }));
     await userEvent.click(screen.getByTestId('history-export-csv'));
 
     expect(click).toHaveBeenCalledOnce();

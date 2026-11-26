@@ -6,16 +6,16 @@
  *              schema and surfaced via the form footer.
  */
 
-import { Activity, AlertTriangle } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import type { ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useConfigForm } from '../forms/useConfigForm';
 import { hasGroupTests } from '../lib/testGroups';
 import { RFC6349ConfigSchema } from '../schemas/configs';
-import { CollapsibleSection } from './CollapsibleSection';
-import { FieldError } from './FieldError';
-import { FormSection } from './FormSection';
-import { HelpIcon } from './HelpIcon';
+import { FormField } from '../shared/FormField';
+import { FormSection } from '../shared/FormSection';
+import { Input } from '../shared/Input';
+import { NumberSelectField } from './ConfigFormFields';
 import { TestSummary } from './TestSummary';
 
 /** RFC 6349 test configuration parameters */
@@ -71,12 +71,15 @@ interface RFC6349ConfigFormProps {
   config: RFC6349Config;
   setConfig: (config: RFC6349Config) => void;
   selectedTests: string[];
+  /** Overrides the root test id: the drawer and the page can both render this form at once. */
+  testId?: string;
 }
 
 export function RFC6349ConfigForm({
   config,
   setConfig,
   selectedTests,
+  testId = 'rfc6349-config-form',
 }: RFC6349ConfigFormProps): ReactElement | null {
   const hasRFC6349Tests = hasGroupTests('rfc6349', selectedTests);
 
@@ -87,6 +90,7 @@ export function RFC6349ConfigForm({
   });
   const {
     register,
+    control,
     watch,
     formState: { errors },
   } = form;
@@ -121,154 +125,131 @@ export function RFC6349ConfigForm({
     : undefined;
 
   return (
-    <CollapsibleSection
-      testId="rfc6349-config-form"
-      title={
-        <div className="flex items-center gap-compact">
-          <Activity className="w-4 h-4" />
-          <span>{t('testConfig.rfc6349.title')}</span>
-        </div>
-      }
-      defaultOpen={true}
-    >
+    <div data-testid={testId}>
       <div className="stack-lg">
         <FormSection title={t('testConfig.rfc6349.network.title')}>
           <div className="grid grid-cols-3 gap-default">
-            <div>
-              <label htmlFor="rfc6349-rate" className="flex items-center gap-tight label">
-                {t('testConfig.rfc6349.network.targetRate')}
-                <HelpIcon tooltip={t('help:tooltips.testConfig.rfc6349.network.targetRateHelp')} />
-              </label>
-              <input
-                id="rfc6349-rate"
-                type="number"
-                step={1}
-                {...register('targetRateMbps', { valueAsNumber: true })}
-                className="mt-tight w-full"
-              />
-              <FieldError message={errors.targetRateMbps?.message} />
-            </div>
+            <FormField
+              label={t('testConfig.rfc6349.network.targetRate')}
+              hint={t('help:tooltips.testConfig.rfc6349.network.targetRateHelp')}
+              error={errors.targetRateMbps?.message}
+            >
+              {(control) => (
+                <Input
+                  {...control}
+                  type="number"
+                  step={1}
+                  {...register('targetRateMbps', { valueAsNumber: true })}
+                />
+              )}
+            </FormField>
 
-            <div>
-              <label htmlFor="rfc6349-minrtt" className="flex items-center gap-tight label">
-                {t('testConfig.rfc6349.network.minRtt')}
-                <HelpIcon tooltip={t('help:tooltips.testConfig.rfc6349.network.minRttHelp')} />
-              </label>
-              <input
-                id="rfc6349-minrtt"
-                type="number"
-                step={0.1}
-                {...register('minRTTMs', { valueAsNumber: true })}
-                className="mt-tight w-full"
-              />
-              <FieldError message={errors.minRTTMs?.message} />
-            </div>
+            <FormField
+              label={t('testConfig.rfc6349.network.minRtt')}
+              hint={t('help:tooltips.testConfig.rfc6349.network.minRttHelp')}
+              error={errors.minRTTMs?.message}
+            >
+              {(control) => (
+                <Input
+                  {...control}
+                  type="number"
+                  step={0.1}
+                  {...register('minRTTMs', { valueAsNumber: true })}
+                />
+              )}
+            </FormField>
 
-            <div>
-              <label htmlFor="rfc6349-maxrtt" className="flex items-center gap-tight label">
-                {t('testConfig.rfc6349.network.maxRtt')}
-                <HelpIcon tooltip={t('help:tooltips.testConfig.rfc6349.network.maxRttHelp')} />
-              </label>
-              <input
-                id="rfc6349-maxrtt"
-                type="number"
-                step={0.1}
-                {...register('maxRTTMs', { valueAsNumber: true })}
-                className="mt-tight w-full"
-              />
-              <FieldError message={errors.maxRTTMs?.message} />
-            </div>
+            <FormField
+              label={t('testConfig.rfc6349.network.maxRtt')}
+              hint={t('help:tooltips.testConfig.rfc6349.network.maxRttHelp')}
+              error={errors.maxRTTMs?.message}
+            >
+              {(control) => (
+                <Input
+                  {...control}
+                  type="number"
+                  step={0.1}
+                  {...register('maxRTTMs', { valueAsNumber: true })}
+                />
+              )}
+            </FormField>
           </div>
         </FormSection>
 
         <FormSection title={t('testConfig.rfc6349.tcp.title')}>
           <div className="grid grid-cols-2 gap-default">
-            <div>
-              <label htmlFor="rfc6349-rwnd" className="flex items-center gap-tight label">
-                {t('testConfig.rfc6349.tcp.rwnd')}
-                <HelpIcon tooltip={t('help:tooltips.testConfig.rfc6349.tcp.rwndHelp')} />
-              </label>
-              <input
-                id="rfc6349-rwnd"
-                type="number"
-                step={1024}
-                {...register('rwndSize', { valueAsNumber: true })}
-                className="mt-tight w-full"
-              />
-              <FieldError message={errors.rwndSize?.message} />
-            </div>
+            <FormField
+              label={t('testConfig.rfc6349.tcp.rwnd')}
+              hint={t('help:tooltips.testConfig.rfc6349.tcp.rwndHelp')}
+              error={errors.rwndSize?.message}
+            >
+              {(control) => (
+                <Input
+                  {...control}
+                  type="number"
+                  step={1024}
+                  {...register('rwndSize', { valueAsNumber: true })}
+                />
+              )}
+            </FormField>
 
-            <div>
-              <label htmlFor="rfc6349-mss" className="flex items-center gap-tight label">
-                {t('testConfig.rfc6349.tcp.mss')}
-                <HelpIcon tooltip={t('help:tooltips.testConfig.rfc6349.tcp.mssHelp')} />
-              </label>
-              <select
-                id="rfc6349-mss"
-                {...register('mss', { valueAsNumber: true })}
-                className="mt-tight w-full"
-              >
-                {MSS_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {t(`testConfig.rfc6349.tcp.${option.key}` as never, { size: option.value })}
-                  </option>
-                ))}
-              </select>
-              <FieldError message={errors.mss?.message} />
-            </div>
+            <NumberSelectField
+              control={control}
+              name="mss"
+              label={t('testConfig.rfc6349.tcp.mss')}
+              hint={t('help:tooltips.testConfig.rfc6349.tcp.mssHelp')}
+              error={errors.mss?.message}
+              options={MSS_OPTIONS.map((option) => ({
+                value: option.value,
+                label: t(`testConfig.rfc6349.tcp.${option.key}` as never, { size: option.value }),
+              }))}
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-default">
-            <div>
-              <label htmlFor="rfc6349-streams" className="flex items-center gap-tight label">
-                {t('testConfig.rfc6349.tcp.streams')}
-                <HelpIcon tooltip={t('help:tooltips.testConfig.rfc6349.tcp.streamsHelp')} />
-              </label>
-              <input
-                id="rfc6349-streams"
-                type="number"
-                step={1}
-                {...register('parallelStreams', { valueAsNumber: true })}
-                className="mt-tight w-full"
-              />
-              <FieldError message={errors.parallelStreams?.message} />
-            </div>
+            <FormField
+              label={t('testConfig.rfc6349.tcp.streams')}
+              hint={t('help:tooltips.testConfig.rfc6349.tcp.streamsHelp')}
+              error={errors.parallelStreams?.message}
+            >
+              {(control) => (
+                <Input
+                  {...control}
+                  type="number"
+                  step={1}
+                  {...register('parallelStreams', { valueAsNumber: true })}
+                />
+              )}
+            </FormField>
 
-            <div>
-              <label htmlFor="rfc6349-mode" className="flex items-center gap-tight label">
-                {t('testConfig.rfc6349.tcp.mode')}
-                <HelpIcon tooltip={t('help:tooltips.testConfig.rfc6349.tcp.modeHelp')} />
-              </label>
-              <select
-                id="rfc6349-mode"
-                {...register('mode', { valueAsNumber: true })}
-                className="mt-tight w-full"
-              >
-                {MODE_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {t(`testConfig.rfc6349.tcp.${option.key}` as never)}
-                  </option>
-                ))}
-              </select>
-              <FieldError message={errors.mode?.message} />
-            </div>
+            <NumberSelectField
+              control={control}
+              name="mode"
+              label={t('testConfig.rfc6349.tcp.mode')}
+              hint={t('help:tooltips.testConfig.rfc6349.tcp.modeHelp')}
+              error={errors.mode?.message}
+              options={MODE_OPTIONS.map((option) => ({
+                value: option.value,
+                label: t(`testConfig.rfc6349.tcp.${option.key}` as never),
+              }))}
+            />
           </div>
         </FormSection>
 
-        <div>
-          <label htmlFor="rfc6349-duration" className="flex items-center gap-tight label">
-            {t('testConfig.rfc6349.tcp.duration')}
-            <HelpIcon tooltip={t('help:tooltips.testConfig.rfc6349.tcp.durationHelp')} />
-          </label>
-          <input
-            id="rfc6349-duration"
-            type="number"
-            step={1}
-            {...register('duration', { valueAsNumber: true })}
-            className="mt-tight w-full"
-          />
-          <FieldError message={errors.duration?.message} />
-        </div>
+        <FormField
+          label={t('testConfig.rfc6349.tcp.duration')}
+          hint={t('help:tooltips.testConfig.rfc6349.tcp.durationHelp')}
+          error={errors.duration?.message}
+        >
+          {(control) => (
+            <Input
+              {...control}
+              type="number"
+              step={1}
+              {...register('duration', { valueAsNumber: true })}
+            />
+          )}
+        </FormField>
 
         {crossFieldError && (
           <div className="pad-xs rounded-lg bg-status-error/10 text-status-error-strong text-sm flex items-center gap-compact">
@@ -311,7 +292,7 @@ export function RFC6349ConfigForm({
           <div>{t('testConfig.rfc6349.summary.duration', { duration })}</div>
         </TestSummary>
       </div>
-    </CollapsibleSection>
+    </div>
   );
 }
 

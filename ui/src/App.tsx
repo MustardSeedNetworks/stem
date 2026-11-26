@@ -14,7 +14,6 @@ import { useTranslation } from 'react-i18next';
 import { BrowserRouter } from 'react-router';
 import { AppShell } from './AppShell';
 import { AuthGate } from './components/auth/AuthGate';
-import { RoleChip } from './components/RoleChip';
 import { ToastProvider } from './components/ui/Toast';
 import { AppContext, type AppContextValue } from './contexts/AppContext';
 import { LicenseProvider } from './contexts/LicenseContext';
@@ -142,6 +141,7 @@ function AppContent(): ReactElement {
         // Outcomes surface via stopOutcome state.
       });
     },
+    onRefresh: exec.refetchInterfaces,
     isStartingReflector: exec.isStartingTest,
     reflectorStopOutcome: exec.stopOutcome,
     reflectorStartError: exec.testStartError,
@@ -186,9 +186,7 @@ function AppContent(): ReactElement {
             }}
             isDark={isDark}
             onToggleTheme={toggleTheme}
-            onRefresh={exec.refetchInterfaces}
             onLogout={handleLogout}
-            roleControl={<RoleChip layout="rail" />}
           />
         ) : (
           <div className="min-h-screen bg-gradient-to-br from-surface-base via-surface-raised to-surface-deep" />

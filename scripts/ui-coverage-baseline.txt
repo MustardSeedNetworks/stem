@@ -19,7 +19,7 @@
 # fell ~0.9. Same tests, same assertions, honest denominator.
 #
 # metric      floor   target
-statements    77.3    88
-branches      62.1    80
-functions     82.1    92
-lines         89.9    88
+statements    85.0    88
+branches      73.0    80
+functions     87.0    92
+lines         92.0    88

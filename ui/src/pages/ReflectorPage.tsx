@@ -10,20 +10,23 @@
  * Wraps everything in a RoleGuard so a Test-Master stem prompts the
  * operator to switch roles before using the reflector.
  */
-import { Activity, AlertTriangle, Clock, Gauge, Play, RefreshCw, Square, Wifi } from 'lucide-react';
-import type { ReactElement } from 'react';
+import { Activity, Clock, Gauge, Play, Square } from 'lucide-react';
+import type { ReactElement, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { HeaderInterfaceSelector } from '../components/HeaderInterfaceSelector';
 import { RoleGuard } from '../components/RoleGuard';
 import { StopOutcomeMessage } from '../components/StopOutcomeMessage';
 import { ReflectorSection } from '../components/settings/ReflectorSection';
-import { Alert } from '../components/ui/Alert';
-import { Button } from '../components/ui/Button';
-import { Tooltip } from '../components/ui/Tooltip';
 import { useAppContext } from '../contexts/AppContext';
 import { useRole } from '../contexts/RoleContext';
 import { useCapabilities } from '../hooks/useCapabilities';
+import { Alert } from '../shared/Alert';
+import { Button } from '../shared/Button';
+import { Card } from '../shared/Card';
+import { StatusPill } from '../shared/StatusPill';
+import { Tooltip } from '../shared/Tooltip';
 import type { InterfaceInfo, Stats } from '../types/api';
+import { RefreshAction } from '../ui/PageActions';
 import { type RollupState, StatusRollup } from '../ui/StatusRollup';
 
 function formatNumber(num: number): string {
@@ -46,23 +49,6 @@ function formatUptime(seconds: number): string {
   return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
 }
 
-function getStatusClassName(status: Stats['testStatus']): string {
-  switch (status) {
-    case 'running':
-      return 'text-status-success';
-    case 'error':
-      return 'text-status-error';
-    case 'completed':
-      return 'text-status-info';
-    case 'starting':
-      return 'text-status-info';
-    case 'cancelled':
-      return 'text-status-warning';
-    default:
-      return 'text-text-muted';
-  }
-}
-
 interface StatsCardProps {
   icon: React.ReactNode;
   title: string;
@@ -73,14 +59,14 @@ interface StatsCardProps {
 
 function StatsCard({ icon, title, value, subvalue, testId }: StatsCardProps): ReactElement {
   return (
-    <div className="card" data-testid={testId}>
-      <div className="card-header">
+    <Card data-testid={testId}>
+      <p className="flex items-center gap-2 text-sm font-medium text-text-secondary">
         {icon}
         {title}
-      </div>
-      <div className="card-value">{value}</div>
-      <div className="card-subvalue">{subvalue}</div>
-    </div>
+      </p>
+      <p className="figure mt-2 text-2xl font-bold text-text-primary">{value}</p>
+      <p className="text-xs text-text-muted">{subvalue}</p>
+    </Card>
   );
 }
 
@@ -90,46 +76,29 @@ interface InterfaceDetailsProps {
 
 function InterfaceDetails({ iface }: InterfaceDetailsProps): ReactElement {
   const { t } = useTranslation('common');
-  const stateClassName = iface.state === 'up' ? 'text-status-success' : 'text-status-error';
+  const facts: { label: string; value: ReactNode; mono?: boolean }[] = [
+    { label: t('labels.name'), value: iface.name },
+    { label: 'MAC', value: iface.mac, mono: true },
+    { label: t('labels.speed'), value: `${iface.speed} Mbps / ${iface.duplex}` },
+    { label: t('labels.driver'), value: iface.driver },
+    {
+      label: t('labels.state'),
+      value: <StatusPill tone={iface.state === 'up' ? 'success' : 'error'} label={iface.state} />,
+    },
+    { label: t('labels.xdpSupport'), value: iface.xdp ? t('labels.yes') : t('labels.no') },
+    { label: t('labels.score'), value: iface.score },
+  ];
   return (
-    <div className="card mb-2">
-      <div className="card-header">
-        <Wifi className="w-4 h-4" />
-        {t('labels.interfaceDetails')}
-      </div>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-comfortable text-sm">
-        <div>
-          <div className="text-text-muted">{t('labels.name')}</div>
-          <div className="font-medium">{iface.name}</div>
-        </div>
-        <div>
-          <div className="text-text-muted">MAC</div>
-          <div className="font-mono">{iface.mac}</div>
-        </div>
-        <div>
-          <div className="text-text-muted">{t('labels.speed')}</div>
-          <div>
-            {iface.speed} Mbps / {iface.duplex}
+    <Card title={t('labels.interfaceDetails')}>
+      <dl className="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
+        {facts.map((fact) => (
+          <div key={fact.label}>
+            <dt className="text-text-muted">{fact.label}</dt>
+            <dd className={fact.mono ? 'font-mono' : 'font-medium'}>{fact.value}</dd>
           </div>
-        </div>
-        <div>
-          <div className="text-text-muted">{t('labels.driver')}</div>
-          <div>{iface.driver}</div>
-        </div>
-        <div>
-          <div className="text-text-muted">{t('labels.state')}</div>
-          <div className={stateClassName}>{iface.state}</div>
-        </div>
-        <div>
-          <div className="text-text-muted">{t('labels.xdpSupport')}</div>
-          <div>{iface.xdp ? t('labels.yes') : t('labels.no')}</div>
-        </div>
-        <div>
-          <div className="text-text-muted">{t('labels.score')}</div>
-          <div>{iface.score}</div>
-        </div>
-      </div>
-    </div>
+        ))}
+      </dl>
+    </Card>
   );
 }
 
@@ -150,21 +119,23 @@ function PlatformBanner({
 }: PlatformBannerProps): ReactElement {
   const { t } = useTranslation();
   return (
-    <Alert status="warning" className="flex-wrap" data-testid="reflector-platform-banner">
-      <div className="flex flex-1 flex-wrap items-center gap-default">
-        <span className="flex-1 min-w-[16rem]">
-          <strong className="font-semibold">{t('role.platform.bannerTitle')}</strong>{' '}
-          {t('role.platform.bannerBody')}
-          {offerSwitch ? ` ${t('role.platform.bannerSwitchHint')}` : null}
-          {reason ? <span className="ml-tight opacity-80">({reason})</span> : null}
-        </span>
-        {offerSwitch ? (
-          <Button variant="outline" tone="violet" size="sm" onClick={onSwitchToTestMaster}>
-            {t('role.platform.switchToTestMaster')}
-          </Button>
-        ) : null}
-      </div>
-    </Alert>
+    <div data-testid="reflector-platform-banner">
+      <Alert tone="warning" className="flex-wrap">
+        <div className="flex flex-1 flex-wrap items-center gap-default">
+          <span className="flex-1 min-w-[16rem]">
+            <strong className="font-semibold">{t('role.platform.bannerTitle')}</strong>{' '}
+            {t('role.platform.bannerBody')}
+            {offerSwitch ? ` ${t('role.platform.bannerSwitchHint')}` : null}
+            {reason ? <span className="ml-tight opacity-80">({reason})</span> : null}
+          </span>
+          {offerSwitch ? (
+            <Button variant="secondary" size="sm" onClick={onSwitchToTestMaster}>
+              {t('role.platform.switchToTestMaster')}
+            </Button>
+          ) : null}
+        </div>
+      </Alert>
+    </div>
   );
 }
 
@@ -172,7 +143,7 @@ interface RunningStatusProps {
   testStatus: Stats['testStatus'];
 }
 
-// Inline status badges (running / cancelled / error) rendered to the right
+// Inline status pills (running / cancelled / error) rendered to the right
 // of the start/stop controls. Extracted to keep ReflectorPage simple.
 function RunningStatus({ testStatus }: RunningStatusProps): ReactElement | null {
   const { t } = useTranslation();
@@ -180,23 +151,54 @@ function RunningStatus({ testStatus }: RunningStatusProps): ReactElement | null 
 
   if (running) {
     return (
-      <output className="status-badge success flex items-center gap-compact">
-        <span className="w-2 h-2 rounded-full bg-status-success animate-pulse" aria-hidden="true" />
-        {testStatus === 'starting' ? t('status.starting') : t('status.running')}
-      </output>
+      <StatusPill
+        tone="success"
+        label={testStatus === 'starting' ? t('status.starting') : t('status.running')}
+      />
     );
   }
   if (testStatus === 'cancelled') {
-    return <output className="status-badge warning">{t('status.stopped')}</output>;
+    return <StatusPill tone="warning" label={t('status.stopped')} />;
   }
   if (testStatus === 'error') {
     return (
-      <output className="status-badge error" role="alert">
-        {t('status.error')}
-      </output>
+      <span role="alert">
+        <StatusPill tone="error" label={t('status.error')} />
+      </span>
     );
   }
   return null;
+}
+
+interface StartButtonProps {
+  /** Why start is unavailable on this platform, or null when it is available. */
+  disabledReason: string | null;
+  onStart: () => void;
+  starting: boolean;
+  /** No interface picked yet. */
+  disabled: boolean;
+}
+
+function StartButton({
+  disabledReason,
+  onStart,
+  starting,
+  disabled,
+}: StartButtonProps): ReactElement {
+  const { t } = useTranslation();
+  const button = (
+    <Button
+      variant="primary"
+      onClick={onStart}
+      loading={starting}
+      disabled={disabled || disabledReason !== null}
+      icon={<Play className="h-4 w-4" aria-hidden="true" />}
+      data-testid="reflector-start-button"
+    >
+      {starting ? t('status.starting') : t('reflector.startButton')}
+    </Button>
+  );
+  return disabledReason ? <Tooltip text={disabledReason}>{button}</Tooltip> : button;
 }
 
 export function ReflectorPage(): ReactElement {
@@ -208,6 +210,7 @@ export function ReflectorPage(): ReactElement {
     stats,
     reflectorProfile,
     setReflectorProfile,
+    onRefresh,
     onStartReflector,
     onStopReflector,
     isStartingReflector,
@@ -227,14 +230,16 @@ export function ReflectorPage(): ReactElement {
   /* The platform check is the honest "unknown": on macOS and Windows the
      reflector dataplane does not exist, so its counters are not zero, they are
      unmeasurable. An error is crit, a cancelled run is degraded, and idle is
-     calm rather than green — nothing running is the normal resting state. */
+     neutral, never green: an idle reflector has no data to call healthy. */
   const rollupState: RollupState = !reflectorSupported
     ? 'unknown'
     : stats.testStatus === 'error'
       ? 'crit'
       : stats.testStatus === 'cancelled'
         ? 'warn'
-        : 'ok';
+        : reflectorRunning
+          ? 'ok'
+          : 'idle';
 
   const rollupHeadline = !reflectorSupported
     ? t('reflector.unsupported')
@@ -260,6 +265,7 @@ export function ReflectorPage(): ReactElement {
 
   return (
     <>
+      <RefreshAction onRefresh={onRefresh} title={t('tooltips.chrome.refresh')} />
       {/* Live run opens with the rollup, not with stat cards: the first
         question on this page is whether the run is healthy, and four numbers
         in a row do not answer it. */}
@@ -299,59 +305,25 @@ export function ReflectorPage(): ReactElement {
           {reflectorRunning ? (
             <Button
               onClick={onStopReflector}
-              variant="outline"
-              disabled={isStoppingReflector}
-              aria-busy={isStoppingReflector}
+              variant="secondary"
+              loading={isStoppingReflector}
+              icon={<Square className="h-4 w-4" aria-hidden="true" />}
               data-testid="reflector-stop-button"
             >
-              {isStoppingReflector ? (
-                <>
-                  <RefreshCw className="w-4 h-4 animate-spin" aria-hidden="true" />
-                  {t('status.stopping')}
-                </>
-              ) : (
-                <>
-                  <Square className="w-4 h-4" aria-hidden="true" />
-                  {t('reflector.stopButton')}
-                </>
-              )}
+              {isStoppingReflector ? t('status.stopping') : t('reflector.stopButton')}
             </Button>
           ) : (
-            <Tooltip text={!reflectorSupported ? unsupportedTooltip : undefined}>
-              <Button
-                onClick={onStartReflector}
-                disabled={!selectedInterface || isStartingReflector || !reflectorSupported}
-                aria-busy={isStartingReflector}
-                aria-disabled={!reflectorSupported}
-                data-testid="reflector-start-button"
-              >
-                {isStartingReflector ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 animate-spin" aria-hidden="true" />
-                    {t('status.starting')}
-                  </>
-                ) : (
-                  <>
-                    <Play className="w-4 h-4" aria-hidden="true" />
-                    {t('reflector.startButton')}
-                  </>
-                )}
-              </Button>
-            </Tooltip>
+            <StartButton
+              disabledReason={!reflectorSupported ? unsupportedTooltip : null}
+              onStart={onStartReflector}
+              starting={isStartingReflector}
+              disabled={!selectedInterface}
+            />
           )}
 
           <StopOutcomeMessage outcome={reflectorStopOutcome} />
 
-          {reflectorStartError ? (
-            <div
-              className="text-sm text-status-error flex items-center gap-compact"
-              role="alert"
-              aria-live="assertive"
-            >
-              <AlertTriangle className="w-4 h-4" aria-hidden="true" />
-              {reflectorStartError}
-            </div>
-          ) : null}
+          {reflectorStartError ? <Alert tone="error">{reflectorStartError}</Alert> : null}
 
           <div
             className="flex items-center gap-default ml-auto"
@@ -363,7 +335,7 @@ export function ReflectorPage(): ReactElement {
         </div>
 
         {/* Stats grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-comfortable">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatsCard
             icon={<Activity className="w-4 h-4" />}
             title={t('reflector.stats.packetsReceived')}
@@ -385,19 +357,13 @@ export function ReflectorPage(): ReactElement {
             subvalue={`${stats.currentMbps.toFixed(2)} ${t('units.mbps')}`}
             testId="stats-current-rate"
           />
-          <div className="card" data-testid="stats-uptime">
-            <div className="card-header">
-              <Clock className="w-4 h-4" />
-              {t('reflector.stats.uptime')}
-            </div>
-            <div className="card-value font-mono">{formatUptime(stats.uptime)}</div>
-            <div className="card-subvalue">
-              {t('reflector.stats.statusLabel')}{' '}
-              <span className={getStatusClassName(stats.testStatus)}>
-                {t(`status.${stats.testStatus}`)}
-              </span>
-            </div>
-          </div>
+          <StatsCard
+            icon={<Clock className="w-4 h-4" />}
+            title={t('reflector.stats.uptime')}
+            value={formatUptime(stats.uptime)}
+            subvalue={`${t('reflector.stats.statusLabel')} ${t(`status.${stats.testStatus}`)}`}
+            testId="stats-uptime"
+          />
         </div>
 
         {/* Interface details */}

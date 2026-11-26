@@ -3,27 +3,21 @@
     "title": "Help & Documentation",
     "ariaLabel": "Help & Documentation",
     "close": "Close help",
-    "closeTooltip": "Close the help drawer and return to the main view",
     "searchPlaceholder": "Search {{tab}}...",
     "pageHelp": "Open help for {{page}}",
     "buildInfo": "Commit {{commit}} · Built {{time}}",
-    "version": "Stem v{{version}}"
+    "version": "Stem v{{version}}",
+    "clearSearch": "Clear search"
   },
   "tabs": {
     "tests": "Tests",
     "tutorials": "Tutorials",
-    "glossary": "Glossary",
-    "testsTooltip": "Browse supported tests grouped by standard and custom traffic generation",
-    "tutorialsTooltip": "Step-by-step walkthroughs for common testing workflows",
-    "glossaryTooltip": "Reference dictionary of networking and test-engineering terms"
+    "glossary": "Glossary"
   },
   "mode": {
     "simple": "Simple",
     "technical": "Technical",
-    "toggleToTechnical": "Switch to technical explanations with RFC details, packet structures, and engineering parameters",
-    "toggleToSimple": "Switch to plain-language explanations suitable for non-engineers",
-    "ariaToTechnical": "Switch to technical view",
-    "ariaToSimple": "Switch to simple view"
+    "label": "Explanation level"
   },
   "tests": {
     "intro": "Browse test references by standard or choose custom traffic generation.",

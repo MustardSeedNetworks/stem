@@ -3,7 +3,8 @@
     "title": "Stem",
     "tagline": "Pruebas de Rendimiento de Red por Mustard Seed Networks",
     "description": "Herramienta de Pruebas de Rendimiento de Red",
-    "copyright": "© {{year}} Mustard Seed Networks. Todos los derechos reservados."
+    "copyright": "© {{year}} Mustard Seed Networks. Todos los derechos reservados.",
+    "company": "Mustard Seed Networks"
   },
   "buttons": {
     "save": "Guardar",
@@ -67,13 +68,11 @@
     "warning": "ADVERTENCIA",
     "info": "INFO",
     "placeholder": {
-      "idle": "No hay pruebas en ejecución. Configure las pruebas en Configuración y pulse {{runTest}}.",
       "starting": "La prueba se está iniciando. Los resultados llegarán en breve.",
       "running": "Prueba en curso... Los resultados aparecerán aquí al terminar.",
       "cancelled": "Prueba cancelada. Ajuste la configuración o reiníciela cuando quiera.",
       "stopped": "Detenida por el operador. No se capturó ningún resultado antes de terminar.",
-      "error": "Se produjo un error durante la prueba.",
-      "unknown": "Esperando a que el backend informe de un estado."
+      "error": "Se produjo un error durante la prueba."
     },
     "moduleName": "Módulo: {{module}}"
   },
@@ -195,7 +194,6 @@
     "issues": "Problemas Comunes",
     "params": "Parámetros",
     "metrics": "Metricas de Salida",
-    "clickForDetails": "Haga clic para más detalles",
     "label": "Ayuda: {{topic}}"
   },
   "errorBoundary": {
@@ -251,18 +249,15 @@
   },
   "tooltips": {
     "chrome": {
-      "refresh": "Volver a escanear las interfaces de red disponibles y recargar el estado actual",
-      "help": "Abrir el panel de ayuda con referencias de pruebas, tutoriales y un glosario",
-      "settings": "Abrir el panel de configuración para configurar módulos, interfaces y umbrales",
-      "logout": "Cerrar la sesión actual",
-      "profiles": "Abrir el panel de perfiles para gestionar configuraciones de prueba guardadas"
+      "refresh": "Volver a escanear las interfaces de red disponibles y recargar el estado actual"
     }
   },
   "statusRollup": {
     "allClear": "Todo correcto",
     "degraded": "Degradado",
     "critical": "Crítico",
-    "noData": "Sin datos"
+    "noData": "Sin datos",
+    "idle": "Inactivo"
   },
   "reflector": {
     "startButton": "Iniciar Reflector",
@@ -331,22 +326,26 @@
     "label": "Paleta de comandos",
     "actions": "Acciones"
   },
-  "statusBadge": {
-    "success": "Estado: correcto",
-    "warning": "Estado: advertencia",
-    "error": "Estado: error",
-    "unknown": "Estado: desconocido",
-    "loading": "Estado: cargando"
-  },
   "connection": {
     "unreachable": "No se puede conectar con el daemon de Stem, reintentando"
   },
   "notFound": {
+    "kicker": "Error 404",
     "title": "Página no encontrada",
     "body": "{{product}} no tiene ninguna página en esta dirección.",
     "home": "Volver al inicio de {{product}}"
   },
   "language": {
     "title": "Idioma"
+  },
+  "table": {
+    "selectAll": "Seleccionar todas las filas de esta página",
+    "selectRow": "Seleccionar {{name}}",
+    "actions": "Acciones",
+    "pagination": "Páginas de la tabla",
+    "previousPage": "Página anterior",
+    "nextPage": "Página siguiente",
+    "loading": "Cargando",
+    "pageStatus": "Página {{page}} de {{pageCount}} ({{total}} filas)"
   }
 }

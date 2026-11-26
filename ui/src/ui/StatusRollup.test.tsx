@@ -43,6 +43,20 @@ describe('StatusRollup', () => {
     expect(screen.getByText('Frames')).toBeInTheDocument();
   });
 
+  it('keeps an idle rollup neutral: not ok, and not a verdict', () => {
+    const { container } = render(
+      <StatusRollup
+        state="idle"
+        headline="Reflector is idle"
+        figures={[{ label: 'Frames', value: '0' }]}
+      />,
+    );
+    expect(container.querySelector('[data-state="ok"]')).toBeNull();
+    expect(screen.queryByText('All clear')).not.toBeInTheDocument();
+    expect(screen.getByText('Idle')).toBeInTheDocument();
+    expect(screen.getByText('0')).toBeInTheDocument();
+  });
+
   it('never reports unknown as ok', () => {
     const { container } = render(
       <StatusRollup state="unknown" headline="Health data is not arriving" />,

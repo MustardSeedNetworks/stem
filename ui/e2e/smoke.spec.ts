@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { AUTH_STORAGE_STATE } from './helpers/auth';
+import { rail } from './helpers/rail';
 
 const VERSION_KEYS = ['version', 'commit', 'buildTime', 'uiBuildHash'] as const;
 
@@ -33,7 +34,7 @@ test.describe('smoke @ authenticated', { tag: '@smoke' }, () => {
   test('theme toggle is interactive', async ({ page }) => {
     await page.goto('/');
     await expect(page.getByTestId('page-header-title')).toBeVisible({ timeout: 10000 });
-    const toggle = page.getByTestId('rail-theme-toggle');
+    const toggle = rail(page, 'rail-theme');
     await expect(toggle).toBeVisible();
     await toggle.click();
     await expect(toggle).toBeVisible();
@@ -42,7 +43,7 @@ test.describe('smoke @ authenticated', { tag: '@smoke' }, () => {
   test('settings drawer opens and closes', async ({ page }) => {
     await page.goto('/');
     await expect(page.getByTestId('page-header-title')).toBeVisible({ timeout: 10000 });
-    await page.getByTestId('sidebar-settings-button').click();
+    await rail(page, 'rail-settings').click();
     await expect(page.getByTestId('settings-drawer')).toBeVisible();
     await page.getByTestId('settings-drawer-close').click();
     await expect(page.getByTestId('settings-drawer')).toBeHidden();
@@ -51,7 +52,7 @@ test.describe('smoke @ authenticated', { tag: '@smoke' }, () => {
   test('help drawer opens with version badge', async ({ page }) => {
     await page.goto('/');
     await expect(page.getByTestId('page-header-title')).toBeVisible({ timeout: 10000 });
-    await page.getByTestId('sidebar-help-button').click();
+    await rail(page, 'rail-help').click();
     await expect(page.getByTestId('help-drawer')).toBeVisible();
     await expect(page.getByTestId('help-drawer-version')).toContainText(/v\d/);
     await page.getByTestId('help-drawer-close').click();
@@ -60,9 +61,8 @@ test.describe('smoke @ authenticated', { tag: '@smoke' }, () => {
 
   test('history page loads @smoke', async ({ page }) => {
     await page.goto('/history');
-    await expect(page.getByTestId('page-header-title')).toHaveText(
-      'Recent results on this browser',
-      { timeout: 10000 },
-    );
+    await expect(page.getByTestId('page-header-title')).toHaveText('History', {
+      timeout: 10000,
+    });
   });
 });

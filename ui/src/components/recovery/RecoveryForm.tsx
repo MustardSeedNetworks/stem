@@ -1,4 +1,6 @@
-import { Tooltip } from '../ui/Tooltip';
+import { FormField } from '../../shared/FormField';
+import { Input } from '../../shared/Input';
+import { Tooltip } from '../../shared/Tooltip';
 /**
  * @fileoverview Password Recovery Form Component
  * @description Allows admin to recover password using filesystem-based token.
@@ -22,17 +24,7 @@ import {
   RecoveryCompleteSchema,
   type RecoveryInstructions,
 } from '../../schemas/auth';
-import {
-  alert,
-  button,
-  cn,
-  icon,
-  input,
-  layout,
-  radius,
-  spacing,
-  status,
-} from '../../styles/theme';
+import { alert, button, cn, icon, layout, radius, spacing, status } from '../../styles/theme';
 
 /** Props for RecoveryForm component */
 interface RecoveryFormProps {
@@ -80,49 +72,36 @@ function PasswordField({
   helperText,
   fieldError,
 }: PasswordFieldProps): ReactElement {
-  const hasError = Boolean(fieldError);
   return (
-    <div>
-      <label htmlFor={id} className={cn('label block', spacing.margin.bottom.inline)}>
-        {label}
-      </label>
-      <div className="relative">
-        <Lock
-          className={cn(icon.size.sm, 'absolute left-3 top-1/2 -translate-y-1/2 text-text-muted')}
-        />
-        <input
-          id={id}
-          type={showPassword ? 'text' : 'password'}
-          {...register}
-          className={cn(
-            'w-full pl-10 pr-icon',
-            input.size.md,
-            radius.xl,
-            'border bg-surface-base text-text-primary',
-            hasError ? 'border-status-error' : 'border-surface-border',
-            'focus:outline-none focus:ring-2 focus:ring-brand-primary/30',
-            hasError ? 'focus:border-status-error' : 'focus:border-brand-primary',
-          )}
-          placeholder={placeholder}
-        />
-        <Tooltip text={showPassword ? hidePasswordLabel : showPasswordLabel}>
-          <button
-            type="button"
-            onClick={onToggleVisibility}
-            className="absolute right-2 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
-            aria-label={showPassword ? hidePasswordLabel : showPasswordLabel}
-          >
-            {showPassword ? <EyeOff className={icon.size.sm} /> : <Eye className={icon.size.sm} />}
-          </button>
-        </Tooltip>
-      </div>
-      {helperText !== undefined && !hasError && (
-        <p className={cn('caption mt-tight text-text-muted')}>{helperText}</p>
+    <FormField
+      id={id}
+      label={label}
+      error={fieldError?.message}
+      hint={fieldError ? undefined : helperText}
+    >
+      {(control) => (
+        <div className="relative">
+          <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
+          <Input
+            {...control}
+            type={showPassword ? 'text' : 'password'}
+            className="pl-10 pr-10"
+            placeholder={placeholder}
+            {...register}
+          />
+          <Tooltip text={showPassword ? hidePasswordLabel : showPasswordLabel}>
+            <button
+              type="button"
+              onClick={onToggleVisibility}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
+              aria-label={showPassword ? hidePasswordLabel : showPasswordLabel}
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </Tooltip>
+        </div>
       )}
-      {hasError && fieldError?.message ? (
-        <p className={cn('caption mt-tight', status.text.error)}>{fieldError.message}</p>
-      ) : null}
-    </div>
+    </FormField>
   );
 }
 
@@ -312,40 +291,22 @@ export function RecoveryForm({
           )}
         >
           {/* Token Input */}
-          <div>
-            <label
-              htmlFor="recovery-token"
-              className={cn('label block', spacing.margin.bottom.inline)}
-            >
-              {t('token.label')}
-            </label>
-            <div className="relative">
-              <KeyRound
-                className={cn(
-                  icon.size.sm,
-                  'absolute left-3 top-1/2 -translate-y-1/2 text-text-muted',
-                )}
-              />
-              <input
-                id="recovery-token"
-                type="text"
-                {...register('token')}
-                className={cn(
-                  'w-full pl-10',
-                  input.size.md,
-                  radius.xl,
-                  'border border-surface-border bg-surface-base text-text-primary',
-                  'focus:outline-none focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/30 font-mono',
-                )}
-                placeholder={t('token.placeholder')}
-                autoComplete="off"
-                spellCheck={false}
-              />
-            </div>
-            {errors.token ? (
-              <p className={cn('caption mt-tight', status.text.error)}>{errors.token.message}</p>
-            ) : null}
-          </div>
+          <FormField id="recovery-token" label={t('token.label')} error={errors.token?.message}>
+            {(control) => (
+              <div className="relative">
+                <KeyRound className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
+                <Input
+                  {...control}
+                  type="text"
+                  className="pl-10 font-mono"
+                  placeholder={t('token.placeholder')}
+                  autoComplete="off"
+                  spellCheck={false}
+                  {...register('token')}
+                />
+              </div>
+            )}
+          </FormField>
 
           {/* New Password Input */}
           <PasswordField

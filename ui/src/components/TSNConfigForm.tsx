@@ -7,7 +7,7 @@
  *              through props.
  */
 
-import { AlertTriangle, Clock } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import type { ReactElement } from 'react';
 import { FormProvider, useFormContext } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -15,10 +15,10 @@ import type { FrameSizeOption } from '../forms/frameSizes';
 import { useConfigForm } from '../forms/useConfigForm';
 import { hasGroupTests } from '../lib/testGroups';
 import { TSNConfigSchema } from '../schemas/configs';
-import { CollapsibleSection } from './CollapsibleSection';
-import { FieldError } from './FieldError';
-import { FormSection } from './FormSection';
-import { HelpIcon } from './HelpIcon';
+import { FormField } from '../shared/FormField';
+import { FormSection } from '../shared/FormSection';
+import { Input } from '../shared/Input';
+import { CheckboxField, NumberSelectField } from './ConfigFormFields';
 import { TestSummary } from './TestSummary';
 
 /** TSN test configuration parameters */
@@ -86,58 +86,52 @@ function formatNs(ns: number): string {
 function TestParametersSection(): ReactElement {
   const {
     register,
+    control,
     formState: { errors },
   } = useFormContext<TSNConfig>();
   const { t } = useTranslation(['settings', 'help']);
   return (
     <FormSection title={t('testConfig.tsn.params.title')}>
       <div className="grid grid-cols-3 gap-default">
-        <div>
-          <label htmlFor="tsn-duration" className="flex items-center gap-tight label">
-            {t('testConfig.tsn.params.duration')}
-            <HelpIcon tooltip={t('help:tooltips.testConfig.tsn.params.durationHelp')} />
-          </label>
-          <input
-            id="tsn-duration"
-            type="number"
-            step={1}
-            {...register('duration', { valueAsNumber: true })}
-            className="mt-tight w-full"
-          />
-          <FieldError message={errors.duration?.message} />
-        </div>
-        <div>
-          <label htmlFor="tsn-warmup" className="flex items-center gap-tight label">
-            {t('testConfig.tsn.params.warmup')}
-            <HelpIcon tooltip={t('help:tooltips.testConfig.tsn.params.warmupHelp')} />
-          </label>
-          <input
-            id="tsn-warmup"
-            type="number"
-            step={1}
-            {...register('warmup', { valueAsNumber: true })}
-            className="mt-tight w-full"
-          />
-          <FieldError message={errors.warmup?.message} />
-        </div>
-        <div>
-          <label htmlFor="tsn-framesize" className="flex items-center gap-tight label">
-            {t('testConfig.tsn.params.frameSize')}
-            <HelpIcon tooltip={t('help:tooltips.testConfig.tsn.params.frameSizeHelp')} />
-          </label>
-          <select
-            id="tsn-framesize"
-            {...register('frameSize', { valueAsNumber: true })}
-            className="mt-tight w-full"
-          >
-            {FRAME_SIZE_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {t(`testConfig.common.${option.qualifier}`, { size: option.value })}
-              </option>
-            ))}
-          </select>
-          <FieldError message={errors.frameSize?.message} />
-        </div>
+        <FormField
+          label={t('testConfig.tsn.params.duration')}
+          hint={t('help:tooltips.testConfig.tsn.params.durationHelp')}
+          error={errors.duration?.message}
+        >
+          {(control) => (
+            <Input
+              {...control}
+              type="number"
+              step={1}
+              {...register('duration', { valueAsNumber: true })}
+            />
+          )}
+        </FormField>
+        <FormField
+          label={t('testConfig.tsn.params.warmup')}
+          hint={t('help:tooltips.testConfig.tsn.params.warmupHelp')}
+          error={errors.warmup?.message}
+        >
+          {(control) => (
+            <Input
+              {...control}
+              type="number"
+              step={1}
+              {...register('warmup', { valueAsNumber: true })}
+            />
+          )}
+        </FormField>
+        <NumberSelectField
+          control={control}
+          name="frameSize"
+          label={t('testConfig.tsn.params.frameSize')}
+          hint={t('help:tooltips.testConfig.tsn.params.frameSizeHelp')}
+          error={errors.frameSize?.message}
+          options={FRAME_SIZE_OPTIONS.map((option) => ({
+            value: option.value,
+            label: t(`testConfig.common.${option.qualifier}`, { size: option.value }),
+          }))}
+        />
       </div>
     </FormSection>
   );
@@ -152,34 +146,34 @@ function TimingRequirementsSection(): ReactElement {
   return (
     <FormSection title={t('testConfig.tsn.timing.title')}>
       <div className="grid grid-cols-2 gap-default">
-        <div>
-          <label htmlFor="tsn-maxlatency" className="flex items-center gap-tight label">
-            {t('testConfig.tsn.timing.maxLatency')}
-            <HelpIcon tooltip={t('help:tooltips.testConfig.tsn.timing.maxLatencyHelp')} />
-          </label>
-          <input
-            id="tsn-maxlatency"
-            type="number"
-            step={1000}
-            {...register('maxLatencyNs', { valueAsNumber: true })}
-            className="mt-tight w-full"
-          />
-          <FieldError message={errors.maxLatencyNs?.message} />
-        </div>
-        <div>
-          <label htmlFor="tsn-maxjitter" className="flex items-center gap-tight label">
-            {t('testConfig.tsn.timing.maxJitter')}
-            <HelpIcon tooltip={t('help:tooltips.testConfig.tsn.timing.maxJitterHelp')} />
-          </label>
-          <input
-            id="tsn-maxjitter"
-            type="number"
-            step={1000}
-            {...register('maxJitterNs', { valueAsNumber: true })}
-            className="mt-tight w-full"
-          />
-          <FieldError message={errors.maxJitterNs?.message} />
-        </div>
+        <FormField
+          label={t('testConfig.tsn.timing.maxLatency')}
+          hint={t('help:tooltips.testConfig.tsn.timing.maxLatencyHelp')}
+          error={errors.maxLatencyNs?.message}
+        >
+          {(control) => (
+            <Input
+              {...control}
+              type="number"
+              step={1000}
+              {...register('maxLatencyNs', { valueAsNumber: true })}
+            />
+          )}
+        </FormField>
+        <FormField
+          label={t('testConfig.tsn.timing.maxJitter')}
+          hint={t('help:tooltips.testConfig.tsn.timing.maxJitterHelp')}
+          error={errors.maxJitterNs?.message}
+        >
+          {(control) => (
+            <Input
+              {...control}
+              type="number"
+              step={1000}
+              {...register('maxJitterNs', { valueAsNumber: true })}
+            />
+          )}
+        </FormField>
       </div>
     </FormSection>
   );
@@ -188,6 +182,7 @@ function TimingRequirementsSection(): ReactElement {
 function PTPConfigSection(): ReactElement {
   const {
     register,
+    control,
     watch,
     formState: { errors },
   } = useFormContext<TSNConfig>();
@@ -196,48 +191,34 @@ function PTPConfigSection(): ReactElement {
   return (
     <FormSection title={t('testConfig.tsn.ptp.title')}>
       <div className="stack-sm">
-        <div className="flex items-center gap-compact">
-          <input
-            id="tsn-ptpenabled"
-            type="checkbox"
-            {...register('ptpEnabled')}
-            aria-label={t('testConfig.tsn.ptp.enableAria')}
-            className="rounded border-surface-border"
-          />
-          <label htmlFor="tsn-ptpenabled" className="text-sm text-text-primary">
-            {t('testConfig.tsn.ptp.enable')}
-            <HelpIcon tooltip={t('help:tooltips.testConfig.tsn.ptp.enableTitle')} />
-          </label>
-        </div>
-        <div className="flex items-center gap-compact">
-          <input
-            id="tsn-requiresync"
-            type="checkbox"
-            {...register('requirePTPSync')}
-            aria-label={t('testConfig.tsn.ptp.requireAria')}
-            className="rounded border-surface-border"
-          />
-          <label htmlFor="tsn-requiresync" className="text-sm text-text-primary">
-            {t('testConfig.tsn.ptp.require')}
-            <HelpIcon tooltip={t('help:tooltips.testConfig.tsn.ptp.requireTitle')} />
-          </label>
-        </div>
+        <CheckboxField
+          control={control}
+          name="ptpEnabled"
+          label={t('testConfig.tsn.ptp.enable')}
+          help={t('help:tooltips.testConfig.tsn.ptp.enableTitle')}
+        />
+        <CheckboxField
+          control={control}
+          name="requirePTPSync"
+          label={t('testConfig.tsn.ptp.require')}
+          help={t('help:tooltips.testConfig.tsn.ptp.requireTitle')}
+        />
       </div>
       {ptpEnabled ? (
-        <div>
-          <label htmlFor="tsn-syncoffset" className="flex items-center gap-tight label">
-            {t('testConfig.tsn.ptp.syncOffset')}
-            <HelpIcon tooltip={t('help:tooltips.testConfig.tsn.ptp.syncOffsetHelp')} />
-          </label>
-          <input
-            id="tsn-syncoffset"
-            type="number"
-            step={1}
-            {...register('maxSyncOffsetNs', { valueAsNumber: true })}
-            className="mt-tight w-full"
-          />
-          <FieldError message={errors.maxSyncOffsetNs?.message} />
-        </div>
+        <FormField
+          label={t('testConfig.tsn.ptp.syncOffset')}
+          hint={t('help:tooltips.testConfig.tsn.ptp.syncOffsetHelp')}
+          error={errors.maxSyncOffsetNs?.message}
+        >
+          {(control) => (
+            <Input
+              {...control}
+              type="number"
+              step={1}
+              {...register('maxSyncOffsetNs', { valueAsNumber: true })}
+            />
+          )}
+        </FormField>
       ) : null}
     </FormSection>
   );
@@ -246,86 +227,70 @@ function PTPConfigSection(): ReactElement {
 function SchedulingConfigSection(): ReactElement {
   const {
     register,
+    control,
     formState: { errors },
   } = useFormContext<TSNConfig>();
   const { t } = useTranslation(['settings', 'help']);
   return (
     <FormSection title={t('testConfig.tsn.scheduling.title')}>
-      <div className="flex items-center gap-compact">
-        <input
-          id="tsn-preemption"
-          type="checkbox"
-          {...register('preemptionEnabled')}
-          aria-label={t('testConfig.tsn.scheduling.preemptionAria')}
-          className="rounded border-surface-border"
-        />
-        <label htmlFor="tsn-preemption" className="text-sm text-text-primary">
-          {t('testConfig.tsn.scheduling.preemption')}
-          <HelpIcon tooltip={t('help:tooltips.testConfig.tsn.scheduling.preemptionTitle')} />
-        </label>
-      </div>
+      <CheckboxField
+        control={control}
+        name="preemptionEnabled"
+        label={t('testConfig.tsn.scheduling.preemption')}
+        help={t('help:tooltips.testConfig.tsn.scheduling.preemptionTitle')}
+      />
       <div className="grid grid-cols-2 gap-default">
-        <div>
-          <label htmlFor="tsn-cycletime" className="flex items-center gap-tight label">
-            {t('testConfig.tsn.scheduling.cycleTime')}
-            <HelpIcon tooltip={t('help:tooltips.testConfig.tsn.scheduling.cycleTimeHelp')} />
-          </label>
-          <select
-            id="tsn-cycletime"
-            {...register('cycleTimeNs', { valueAsNumber: true })}
-            className="mt-tight w-full"
-          >
-            {CYCLE_TIME_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-          <FieldError message={errors.cycleTimeNs?.message} />
-        </div>
-        <div>
-          <label htmlFor="tsn-trafficclass" className="flex items-center gap-tight label">
-            {t('testConfig.tsn.scheduling.trafficClass')}
-            <HelpIcon tooltip={t('help:tooltips.testConfig.tsn.scheduling.trafficClassHelp')} />
-          </label>
-          <input
-            id="tsn-trafficclass"
+        <NumberSelectField
+          control={control}
+          name="cycleTimeNs"
+          label={t('testConfig.tsn.scheduling.cycleTime')}
+          hint={t('help:tooltips.testConfig.tsn.scheduling.cycleTimeHelp')}
+          error={errors.cycleTimeNs?.message}
+          options={CYCLE_TIME_OPTIONS}
+        />
+        <FormField
+          label={t('testConfig.tsn.scheduling.trafficClass')}
+          hint={t('help:tooltips.testConfig.tsn.scheduling.trafficClassHelp')}
+          error={errors.trafficClass?.message}
+        >
+          {(control) => (
+            <Input
+              {...control}
+              type="number"
+              step={1}
+              {...register('trafficClass', { valueAsNumber: true })}
+            />
+          )}
+        </FormField>
+      </div>
+      <FormField
+        label={t('testConfig.tsn.scheduling.numClasses')}
+        hint={t('help:tooltips.testConfig.tsn.scheduling.numClassesHelp')}
+        error={errors.numTrafficClasses?.message}
+      >
+        {(control) => (
+          <Input
+            {...control}
             type="number"
             step={1}
-            {...register('trafficClass', { valueAsNumber: true })}
-            className="mt-tight w-full"
+            {...register('numTrafficClasses', { valueAsNumber: true })}
           />
-          <FieldError message={errors.trafficClass?.message} />
-        </div>
-      </div>
-      <div>
-        <label htmlFor="tsn-numclasses" className="flex items-center gap-tight label">
-          {t('testConfig.tsn.scheduling.numClasses')}
-          <HelpIcon tooltip={t('help:tooltips.testConfig.tsn.scheduling.numClassesHelp')} />
-        </label>
-        <input
-          id="tsn-numclasses"
-          type="number"
-          step={1}
-          {...register('numTrafficClasses', { valueAsNumber: true })}
-          className="mt-tight w-full"
-        />
-        <FieldError message={errors.numTrafficClasses?.message} />
-      </div>
-      <div>
-        <label htmlFor="tsn-basetime" className="flex items-center gap-tight label">
-          {t('testConfig.tsn.scheduling.baseTime')}
-          <HelpIcon tooltip={t('help:tooltips.testConfig.tsn.scheduling.baseTimeHelp')} />
-        </label>
-        <input
-          id="tsn-basetime"
-          type="number"
-          step={1}
-          {...register('baseTimeNs', { valueAsNumber: true })}
-          className="mt-tight w-full"
-        />
-        <FieldError message={errors.baseTimeNs?.message} />
-      </div>
+        )}
+      </FormField>
+      <FormField
+        label={t('testConfig.tsn.scheduling.baseTime')}
+        hint={t('help:tooltips.testConfig.tsn.scheduling.baseTimeHelp')}
+        error={errors.baseTimeNs?.message}
+      >
+        {(control) => (
+          <Input
+            {...control}
+            type="number"
+            step={1}
+            {...register('baseTimeNs', { valueAsNumber: true })}
+          />
+        )}
+      </FormField>
     </FormSection>
   );
 }
@@ -394,12 +359,15 @@ interface TSNConfigFormProps {
   config: TSNConfig;
   setConfig: (config: TSNConfig) => void;
   selectedTests: string[];
+  /** Overrides the root test id: the drawer and the page can both render this form at once. */
+  testId?: string;
 }
 
 export function TSNConfigForm({
   config,
   setConfig,
   selectedTests,
+  testId = 'tsn-config-form',
 }: TSNConfigFormProps): ReactElement | null {
   const hasTSNTests = hasGroupTests('tsn', selectedTests);
 
@@ -428,16 +396,7 @@ export function TSNConfigForm({
     : undefined;
 
   return (
-    <CollapsibleSection
-      testId="tsn-config-form"
-      title={
-        <div className="flex items-center gap-compact">
-          <Clock className="w-4 h-4" />
-          <span>TSN Configuration</span>
-        </div>
-      }
-      defaultOpen={true}
-    >
+    <div data-testid={testId}>
       <FormProvider {...form}>
         <div className="stack-lg">
           <TestParametersSection />
@@ -462,7 +421,7 @@ export function TSNConfigForm({
           />
         </div>
       </FormProvider>
-    </CollapsibleSection>
+    </div>
   );
 }
 

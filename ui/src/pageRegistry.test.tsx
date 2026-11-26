@@ -1,7 +1,6 @@
 /**
  * Guards the registry's locale contract: every route resolves real copy
- * in both locales, and every test module wears the eyebrow — a page has one
- * only when its locale namespace declares it.
+ * in both locales, and every page wears a kicker.
  */
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -25,31 +24,31 @@ describe('page registry translations', () => {
     for (const page of result.current) {
       // An unresolved key falls back to the key itself, e.g. "reflector.title".
       expect(page.label, `${page.path} label`).not.toContain('.label');
-      expect(page.title, `${page.path} title`).not.toContain('.title');
+      expect(page.eyebrow, `${page.path} eyebrow`).not.toContain('.eyebrow');
       expect(page.description, `${page.path} description`).not.toContain('.description');
     }
     unmount();
   });
 
-  // The six test modules are the reflector plus the five licensed ones, so a
-  // module added to MODULE_FEATURES without its eyebrow copy fails here.
   const modulePaths = ['/reflector', ...Object.keys(MODULE_FEATURES)];
 
   it.each([
-    ['en', 'Test module'],
-    ['es', 'Módulo de prueba'],
+    ['en', 'Test module', 'Results', 'Account'],
+    ['es', 'Módulo de prueba', 'Resultados', 'Cuenta'],
   ])(
-    'gives every test module an eyebrow in %s, and nothing else one',
-    async (language, eyebrow) => {
+    'gives every page a kicker in %s: the module label on test pages, its own on the rest',
+    async (language, moduleKicker, historyKicker, accountKicker) => {
       await i18n.changeLanguage(language);
       const { result } = renderHook(() => usePages());
 
       for (const page of result.current) {
-        expect(page.eyebrow, `${page.path} eyebrow`).toBe(
-          modulePaths.includes(page.path) ? eyebrow : undefined,
-        );
+        const expected = modulePaths.includes(page.path)
+          ? moduleKicker
+          : page.path === '/history'
+            ? historyKicker
+            : accountKicker;
+        expect(page.eyebrow, `${page.path} eyebrow`).toBe(expected);
       }
-      expect(result.current.filter((page) => page.eyebrow).length).toBe(modulePaths.length);
     },
   );
 });
@@ -106,11 +105,10 @@ describe('usePages', () => {
     expect(new Set(paths).size).toBe(paths.length);
   });
 
-  it('gives every page an icon and a component', () => {
+  it('gives every page a component', () => {
     const { result } = renderHook(() => usePages());
 
     for (const page of result.current) {
-      expect(page.icon, `${page.path} icon`).toBeTruthy();
       expect(page.component, `${page.path} component`).toBeDefined();
     }
   });

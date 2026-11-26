@@ -11,14 +11,13 @@ import { useTranslation } from 'react-i18next';
 import { categories } from '../../data/help/categories';
 import { getTestsByCategory } from '../../data/help/tests';
 import type { TestHelp } from '../../data/help/types';
-import { CollapsibleSection } from '../CollapsibleSection';
+import { CollapsibleSection } from '../../shared/CollapsibleSection';
 import { TestCard } from './TestCard';
 
 interface TestsTabProps {
   filteredTests: TestHelp[] | null;
   simpleMode: boolean;
   onSelectTest: (test: TestHelp) => void;
-  getCategoryIcon: (id: string) => ReactElement;
 }
 
 const categoryOrder = [
@@ -32,12 +31,7 @@ const categoryOrder = [
   'trafficgen',
 ];
 
-export function TestsTab({
-  filteredTests,
-  simpleMode,
-  onSelectTest,
-  getCategoryIcon,
-}: TestsTabProps): ReactElement {
+export function TestsTab({ filteredTests, simpleMode, onSelectTest }: TestsTabProps): ReactElement {
   const { t } = useTranslation(['help', 'common']);
 
   if (filteredTests) {
@@ -73,13 +67,7 @@ export function TestsTab({
         return (
           <CollapsibleSection
             key={catId}
-            title={
-              <div className="flex items-center gap-compact">
-                {getCategoryIcon(catId)}
-                <span>{category.name}</span>
-                <span className="text-xs text-text-muted">({catTests.length})</span>
-              </div>
-            }
+            title={`${category.name} (${catTests.length})`}
             defaultOpen={catId === 'rfc2544'}
           >
             <div className="stack-sm">

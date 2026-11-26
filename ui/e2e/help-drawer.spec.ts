@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { skipSetupWizard } from './helpers/auth';
+import { rail } from './helpers/rail';
 
 /**
  * Help Drawer Tests
@@ -19,16 +20,16 @@ test.describe('Help Drawer', () => {
   });
 
   test('should have help button in sidebar', async ({ page }) => {
-    await expect(page.getByTestId('sidebar-help-button')).toBeVisible();
+    await expect(rail(page, 'rail-help')).toBeVisible();
   });
 
   test('should open help drawer when clicking help button', async ({ page }) => {
-    await page.getByTestId('sidebar-help-button').click();
+    await rail(page, 'rail-help').click();
     await expect(page.getByTestId('help-drawer')).toBeVisible();
   });
 
   test('should close help drawer when clicking close button', async ({ page }) => {
-    await page.getByTestId('sidebar-help-button').click();
+    await rail(page, 'rail-help').click();
 
     const drawer = page.getByTestId('help-drawer');
     await expect(drawer).toBeVisible();
@@ -38,7 +39,7 @@ test.describe('Help Drawer', () => {
   });
 
   test('should display help content', async ({ page }) => {
-    await page.getByTestId('sidebar-help-button').click();
+    await rail(page, 'rail-help').click();
 
     const drawer = page.getByTestId('help-drawer');
     await expect(drawer).toBeVisible();

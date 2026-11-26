@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { skipSetupWizard } from './helpers/auth';
+import { rail } from './helpers/rail';
 
 /**
  * Help Drawer Smoke Test
@@ -27,7 +28,7 @@ test.describe('Help Drawer (smoke)', () => {
 
   test('opens, shows content, switches a tab, and closes', async ({ page }) => {
     // Open via the sidebar footer help button.
-    await page.getByTestId('sidebar-help-button').click();
+    await rail(page, 'rail-help').click();
 
     const drawer = page.getByTestId('help-drawer');
     await expect(drawer).toBeVisible();
@@ -50,7 +51,7 @@ test.describe('Help Drawer (smoke)', () => {
     await expect(testsPanel).toContainText(/RFC 2544/i);
 
     // Switch to the Glossary tab and confirm the view re-renders.
-    await drawer.getByTestId('help-drawer-tab-glossary').click();
+    await drawer.getByRole('tab', { name: 'Glossary' }).click();
     const glossaryText = await drawer.textContent();
     expect((glossaryText ?? '').length).toBeGreaterThan(100);
 

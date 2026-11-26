@@ -1,5 +1,6 @@
 import { expect, type Locator, type Page, test } from '@playwright/test';
 import { loginViaUI } from './helpers/auth';
+import { rail } from './helpers/rail';
 
 test.use({ storageState: { cookies: [], origins: [] } });
 
@@ -36,8 +37,8 @@ test.describe('Passkeys', () => {
     await expect(page.getByText('Passkey registered.')).toBeVisible();
     await expect(count).toHaveText(`Registered passkeys: ${initialCount + 1}`);
 
-    await page.getByTestId('rail-logout').click();
+    await rail(page, 'rail-sign-out').click();
     await page.getByTestId('passkey-login').click();
-    await expect(page.getByTestId('rail-logout')).toBeVisible();
+    await expect(rail(page, 'rail-sign-out')).toBeVisible();
   });
 });

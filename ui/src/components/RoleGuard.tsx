@@ -5,13 +5,13 @@
  * not match `requires`, the children are still rendered (we don't hide
  * page content) but a banner is shown explaining the mismatch with an
  * inline action to switch roles. Clicking the action pops the same
- * ConfirmModal used by the header RoleChip.
+ * ConfirmDialog used by the header RoleChip.
  */
 import { AlertTriangle } from 'lucide-react';
 import { type ReactNode, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { type StemRole, useRole } from '../contexts/RoleContext';
-import { ConfirmModal } from './ui/ConfirmModal';
+import { ConfirmDialog } from '../shared/ConfirmDialog';
 
 interface RoleGuardProps {
   requires: StemRole;
@@ -83,15 +83,16 @@ export function RoleGuard({ requires, moduleName, superseded, children }: RoleGu
         </button>
       </div>
 
-      <ConfirmModal
-        isOpen={confirmOpen}
+      <ConfirmDialog
+        open={confirmOpen}
         onConfirm={handleConfirm}
         onCancel={handleCancel}
         title={t(confirmTitleKey)}
         message={t(confirmMessageKey)}
         confirmLabel={t('role.confirm.confirmLabel')}
         cancelLabel={t('buttons.cancel')}
-        confirmTone="violet"
+        closeLabel={t('buttons.close')}
+        variant="primary"
       />
 
       {children}

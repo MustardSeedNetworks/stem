@@ -5,10 +5,9 @@
  * Includes: Configuration Test, Performance Test, Full Test.
  */
 
-import { Activity } from 'lucide-react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CollapsibleSection } from '../../CollapsibleSection';
+import { CollapsibleSection } from '../../../shared/CollapsibleSection';
 import { type Y1564Config, Y1564ConfigForm } from '../../Y1564ConfigForm';
 import { TestCheckbox } from '../TestCheckbox';
 import type { TestDefinition, TestSectionProps } from '../types';
@@ -57,16 +56,7 @@ export function Y1564Section({
   const hasSelectedTests = selectedCount > 0;
 
   return (
-    <CollapsibleSection
-      testId="y1564-test-section"
-      title={
-        <div className="flex items-center gap-compact">
-          <Activity className="w-4 h-4" aria-hidden="true" />
-          <span>{t('tests.y1564.title')}</span>
-          <span className="caption text-text-muted">({selectedCount}/3)</span>
-        </div>
-      }
-    >
+    <CollapsibleSection title={`${t('tests.y1564.title')} (${selectedCount}/3)`}>
       <div className="stack-lg">
         {/* Test Selection */}
         <div className="stack-sm">
@@ -84,6 +74,7 @@ export function Y1564Section({
         {hasSelectedTests && (
           <div className="border-t border-surface-border pt-section">
             <Y1564ConfigForm
+              testId="y1564-config-form-drawer"
               config={config}
               setConfig={onConfigChange}
               selectedTests={selectedTests}

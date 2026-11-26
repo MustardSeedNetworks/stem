@@ -5,10 +5,9 @@
  * Includes: Gate Timing, Traffic Isolation, Scheduled Latency, Full Suite.
  */
 
-import { Cpu } from 'lucide-react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CollapsibleSection } from '../../CollapsibleSection';
+import { CollapsibleSection } from '../../../shared/CollapsibleSection';
 import { type TSNConfig, TSNConfigForm } from '../../TSNConfigForm';
 import { TestCheckbox } from '../TestCheckbox';
 import type { TestDefinition, TestSectionProps } from '../types';
@@ -58,15 +57,7 @@ export function TSNSection({
   const hasSelectedTests = selectedCount > 0;
 
   return (
-    <CollapsibleSection
-      title={
-        <div className="flex items-center gap-compact">
-          <Cpu className="w-4 h-4" aria-hidden="true" />
-          <span>{t('tests.tsn.title')}</span>
-          <span className="caption text-text-muted">({selectedCount}/4)</span>
-        </div>
-      }
-    >
+    <CollapsibleSection title={`${t('tests.tsn.title')} (${selectedCount}/4)`}>
       <div className="stack-lg">
         {/* Test Selection */}
         <div className="stack-sm">
@@ -84,6 +75,7 @@ export function TSNSection({
         {hasSelectedTests && (
           <div className="border-t border-surface-border pt-section">
             <TSNConfigForm
+              testId="tsn-config-form-drawer"
               config={config}
               setConfig={onConfigChange}
               selectedTests={selectedTests}

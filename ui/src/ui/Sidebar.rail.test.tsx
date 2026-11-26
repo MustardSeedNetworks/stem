@@ -19,6 +19,7 @@ import i18n from '../i18n';
 import { SidebarLayout } from './Sidebar';
 
 const noop = (): void => undefined;
+const desktopRail = (): HTMLElement => screen.getByTestId('desktop-sidebar');
 
 function renderRail(overrides: Partial<Parameters<typeof SidebarLayout>[0]> = {}, path = '/') {
   return render(
@@ -28,7 +29,8 @@ function renderRail(overrides: Partial<Parameters<typeof SidebarLayout>[0]> = {}
         status={{ state: 'connected', label: i18n.t('common:status.connected') }}
         onToggleTheme={noop}
         isDark={false}
-        onRefresh={noop}
+        onOpenHelp={noop}
+        onOpenSettings={noop}
         onLogout={noop}
         {...overrides}
       >
@@ -47,9 +49,8 @@ describe('the rail', () => {
     await i18n.changeLanguage('en');
     const { rerender } = renderRail();
 
-    expect(screen.getByTestId('rail-status')).toHaveAttribute('data-status', 'connected');
-    // Colour alone is not a status, so the dot carries the name too.
-    expect(screen.getByTestId('rail-status')).toHaveAccessibleName('Connected');
+    expect(within(desktopRail()).getByTestId('rail-status')).toHaveTextContent('Connected');
+    // Colour alone is not a status: the pill says it in words.
 
     rerender(
       <MemoryRouter>
@@ -58,7 +59,8 @@ describe('the rail', () => {
           status={{ state: 'disconnected', label: i18n.t('common:status.disconnected') }}
           onToggleTheme={noop}
           isDark={false}
-          onRefresh={noop}
+          onOpenHelp={noop}
+          onOpenSettings={noop}
           onLogout={noop}
         >
           <div>page</div>
@@ -66,51 +68,54 @@ describe('the rail', () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByTestId('rail-status')).toHaveAttribute('data-status', 'disconnected');
-    expect(screen.getByTestId('rail-status')).toHaveAccessibleName('Disconnected');
+    expect(within(desktopRail()).getByTestId('rail-status')).toHaveTextContent('Disconnected');
   });
 
-  it('names the theme, refresh and logout controls in English', async () => {
+  it('names the theme and sign-out controls in English', async () => {
     await i18n.changeLanguage('en');
     renderRail();
 
-    expect(screen.getByTestId('rail-theme-toggle')).toHaveAccessibleName('Switch to dark mode');
-    // The control's name and the description of what it does are different
-    // strings: "Refresh interfaces" vs the tooltip's fuller sentence.
-    expect(screen.getByTestId('rail-refresh')).toHaveAccessibleName('Refresh interfaces');
-    expect(screen.getByTestId('rail-refresh')).toHaveAccessibleDescription(
-      'Rescan available network interfaces and reload current status',
-    );
-    expect(screen.getByTestId('rail-logout')).toHaveAccessibleName('Logout');
+    const rail = within(desktopRail());
+    expect(rail.getByTestId('rail-theme')).toHaveAccessibleName('Switch to dark mode');
+    expect(rail.getByTestId('rail-sign-out')).toHaveAccessibleName('Logout');
+    // Refresh is a page action now, not a rail control.
+    expect(rail.queryByTestId('rail-refresh')).not.toBeInTheDocument();
   });
 
   it('names them in Spanish, with no English left on the rail', async () => {
     await i18n.changeLanguage('es');
     renderRail({ isDark: true });
 
-    expect(screen.getByTestId('rail-theme-toggle')).toHaveAccessibleName('Cambiar a modo claro');
-    expect(screen.getByTestId('rail-refresh')).toHaveAccessibleName('Actualizar interfaces');
-    expect(screen.getByTestId('rail-logout')).toHaveAccessibleName('Cerrar Sesión');
-    expect(screen.queryByText('Logout')).not.toBeInTheDocument();
+    const rail = within(desktopRail());
+    expect(rail.getByTestId('rail-theme')).toHaveAccessibleName('Cambiar a modo claro');
+    expect(rail.getByTestId('rail-sign-out')).toHaveAccessibleName('Cerrar Sesión');
+    expect(rail.queryByText('Logout')).not.toBeInTheDocument();
   });
 
-  it('renders the role control in the rail footer', async () => {
+  it('renders the role control as the footer product slot', async () => {
     await i18n.changeLanguage('en');
-    renderRail({ roleControl: <span>role control</span> });
+    renderRail({
+      productSlot: {
+        label: 'Role',
+        value: 'Reflector',
+        icon: <span />,
+        options: [{ value: 'reflector', label: 'Reflector' }],
+        selected: 'reflector',
+        onSelect: noop,
+      },
+    });
 
     // Both asides are always mounted — only CSS decides which is shown — so
     // the assertion says which surface it means rather than picking an index.
-    const desktop = screen.getByTestId('desktop-sidebar');
-    expect(within(desktop).getByText('role control')).toBeInTheDocument();
+    expect(within(desktopRail()).getByTestId('rail-product-slot')).toHaveTextContent('Reflector');
   });
 
-  it('omits a control whose callback is not supplied', async () => {
+  it('omits sign-out when no handler is supplied', async () => {
     await i18n.changeLanguage('en');
-    renderRail({ onLogout: undefined, onRefresh: undefined });
+    renderRail({ onLogout: undefined });
 
-    expect(screen.queryByTestId('rail-logout')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('rail-refresh')).not.toBeInTheDocument();
-    expect(screen.getByTestId('rail-theme-toggle')).toBeInTheDocument();
+    expect(within(desktopRail()).queryByTestId('rail-sign-out')).not.toBeInTheDocument();
+    expect(within(desktopRail()).getByTestId('rail-theme')).toBeInTheDocument();
   });
 
   it('moves the current-page mark to the route a rail item opens', () => {

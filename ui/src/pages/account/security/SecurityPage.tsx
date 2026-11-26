@@ -8,13 +8,19 @@
  */
 
 import { valibotResolver } from '@hookform/resolvers/valibot';
-import { Lock, ShieldCheck, ShieldOff } from 'lucide-react';
 import { type ReactElement, useCallback, useEffect, useState } from 'react';
 import { type SubmitHandler, useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
-import { Button } from '../../../components/ui/Button';
 import { registerPasskey } from '../../../lib/webauthn-register';
 import { TotpDisableSchema } from '../../../schemas/auth';
+import { Alert } from '../../../shared/Alert';
+import { Button } from '../../../shared/Button';
+import { Card } from '../../../shared/Card';
+import { FormField } from '../../../shared/FormField';
+import { Input } from '../../../shared/Input';
+import { Modal } from '../../../shared/Modal';
+import { StatusPill } from '../../../shared/StatusPill';
+import { RefreshAction } from '../../../ui/PageActions';
 import {
   isMFARequired as _isMFARequired,
   type MFAStatusResponse,
@@ -97,63 +103,46 @@ export function SecurityPage(): ReactElement {
 
   return (
     <section className="stack-xl">
-      {error ? (
-        <div
-          role="alert"
-          className="rounded-lg border border-status-error/40 bg-status-error/10 pad-sm text-sm text-status-error-strong"
-        >
-          {error}
-        </div>
-      ) : null}
+      <RefreshAction onRefresh={() => void refresh()} />
+      {error ? <Alert tone="error">{error}</Alert> : null}
 
-      {/* TOTP card */}
-      <section className="rounded-2xl border border-surface-border bg-surface-raised pad-lg stack-lg">
-        <div className="flex items-start justify-between gap-comfortable">
-          <div className="flex items-start gap-default">
-            {status?.totpEnabled ? (
-              <ShieldCheck className="w-5 h-5 text-status-success mt-0.5" />
-            ) : (
-              <ShieldOff className="w-5 h-5 text-text-muted mt-0.5" />
-            )}
-            <div>
-              <h2 className="heading-3 text-text-primary">{t('mfa.heading')}</h2>
-              <p className="text-sm text-text-muted">
-                {status?.totpEnabled ? t('mfa.statusEnabled') : t('mfa.statusDisabled')}
-              </p>
-              <p className="text-sm text-text-muted mt-inline">{t('mfa.description')}</p>
-            </div>
-          </div>
-          <div>
-            {status?.totpEnabled ? (
-              <DisableTotpButton onDisabled={refresh} />
-            ) : (
-              <Button onClick={handleEnableTOTP}>{t('mfa.enableButton')}</Button>
-            )}
-          </div>
+      <Card
+        title={t('mfa.heading')}
+        headerAction={
+          status?.totpEnabled ? (
+            <DisableTotpButton onDisabled={refresh} />
+          ) : (
+            <Button variant="primary" onClick={handleEnableTOTP}>
+              {t('mfa.enableButton')}
+            </Button>
+          )
+        }
+      >
+        <div className="mb-2">
+          <StatusPill
+            tone={status?.totpEnabled ? 'success' : 'unknown'}
+            label={status?.totpEnabled ? t('mfa.statusEnabled') : t('mfa.statusDisabled')}
+          />
         </div>
-      </section>
+        <p className="text-sm text-text-muted">{t('mfa.description')}</p>
+      </Card>
 
-      {/* Passkeys card */}
-      <section className="rounded-2xl border border-surface-border bg-surface-raised pad-lg stack-lg">
-        <div className="flex items-start justify-between gap-comfortable">
-          <div className="flex items-start gap-default">
-            <Lock className="w-5 h-5 text-text-muted mt-0.5" />
-            <div>
-              <h2 className="heading-3 text-text-primary">{t('passkeys.heading')}</h2>
-              <p className="text-sm text-text-muted">{t('passkeys.description')}</p>
-              <p data-testid="passkey-count" className="text-xs text-text-muted mt-inline">
-                {t('passkeys.countLabel', { count: status?.webauthnCredentialCount ?? 0 })}
-              </p>
-              {passkeyMsg ? (
-                <p className="text-xs text-status-success mt-inline">{passkeyMsg}</p>
-              ) : null}
-            </div>
-          </div>
-          <Button variant="outline" onClick={handleAddPasskey} disabled={passkeyBusy}>
+      <Card
+        title={t('passkeys.heading')}
+        headerAction={
+          <Button variant="secondary" onClick={handleAddPasskey} loading={passkeyBusy}>
             {passkeyBusy ? t('passkeys.addingButton') : t('passkeys.addButton')}
           </Button>
-        </div>
-      </section>
+        }
+      >
+        <p className="text-sm text-text-muted">{t('passkeys.description')}</p>
+        <p data-testid="passkey-count" className="mt-1 text-xs text-text-muted">
+          {t('passkeys.countLabel', { count: status?.webauthnCredentialCount ?? 0 })}
+        </p>
+        {passkeyMsg ? (
+          <p className="mt-1 text-xs text-status-success-strong">{passkeyMsg}</p>
+        ) : null}
+      </Card>
 
       {setupOpen && setupData ? (
         <TotpSetupModal
@@ -177,6 +166,7 @@ interface TotpDisableForm {
 
 function DisableTotpButton({ onDisabled }: DisableTotpButtonProps): ReactElement {
   const { t } = useTranslation('security');
+  const { t: tCommon } = useTranslation('common');
   const [open, setOpen] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -203,72 +193,60 @@ function DisableTotpButton({ onDisabled }: DisableTotpButtonProps): ReactElement
     }
   };
 
-  if (!open) {
-    return (
-      <Button variant="outline" onClick={() => setOpen(true)}>
+  return (
+    <>
+      <Button variant="destructive" onClick={() => setOpen(true)}>
         {t('mfa.disableButton')}
       </Button>
-    );
-  }
-
-  return (
-    <div className="fixed inset-0 z-50 flex-center bg-scrim/60 backdrop-blur-sm">
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="totp-disable-title"
-        className="w-full max-w-md rounded-3xl border border-surface-border bg-surface-raised pad-lg shadow-2xl"
-      >
-        <h2 id="totp-disable-title" className="heading-3 text-text-primary">
-          {t('mfa.disable.title')}
-        </h2>
-        <p className="text-sm text-text-muted">{t('mfa.disable.instructions')}</p>
-        <form className="mt-content stack-lg" onSubmit={handleSubmit(onSubmit)}>
-          <div>
-            <label
-              htmlFor="totp-disable-password"
-              className="text-xs font-semibold text-text-muted"
-            >
-              {t('mfa.disable.passwordLabel')}
-            </label>
-            <input
-              id="totp-disable-password"
-              type="password"
-              autoComplete="current-password"
-              {...register('password')}
-              className="mt-tight w-full rounded-xl border border-surface-border bg-surface-base px-3 py-row text-sm"
-            />
-            {errors.password ? (
-              <p className="mt-tight text-xs text-status-error">{errors.password.message}</p>
-            ) : null}
-          </div>
-          <div>
-            <label htmlFor="totp-disable-code" className="text-xs font-semibold text-text-muted">
-              {t('mfa.disable.codeLabel')}
-            </label>
-            <input
-              id="totp-disable-code"
-              type="text"
-              inputMode="numeric"
-              pattern="[0-9]{6}"
-              {...register('code')}
-              className="mt-tight w-full rounded-xl border border-surface-border bg-surface-base px-3 py-row text-sm font-mono tracking-widest"
-            />
-            {errors.code ? (
-              <p className="mt-tight text-xs text-status-error">{errors.code.message}</p>
-            ) : null}
-          </div>
-          {submitError ? <p className="text-xs text-status-error">{submitError}</p> : null}
-          <div className="flex gap-compact justify-end">
-            <Button variant="outline" onClick={() => setOpen(false)}>
+      <Modal
+        open={open}
+        onClose={() => setOpen(false)}
+        title={t('mfa.disable.title')}
+        closeLabel={tCommon('buttons.close')}
+        busy={isSubmitting}
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setOpen(false)} disabled={isSubmitting}>
               {t('mfa.disable.cancelButton')}
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? '...' : t('mfa.disable.confirmButton')}
+            <Button
+              type="submit"
+              form="totp-disable-form"
+              variant="destructive"
+              loading={isSubmitting}
+            >
+              {t('mfa.disable.confirmButton')}
             </Button>
-          </div>
+          </>
+        }
+      >
+        <p className="text-sm text-text-muted">{t('mfa.disable.instructions')}</p>
+        <form id="totp-disable-form" className="mt-4 stack-lg" onSubmit={handleSubmit(onSubmit)}>
+          <FormField label={t('mfa.disable.passwordLabel')} error={errors.password?.message}>
+            {(control) => (
+              <Input
+                {...control}
+                type="password"
+                autoComplete="current-password"
+                {...register('password')}
+              />
+            )}
+          </FormField>
+          <FormField label={t('mfa.disable.codeLabel')} error={errors.code?.message}>
+            {(control) => (
+              <Input
+                {...control}
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]{6}"
+                className="font-mono tracking-widest"
+                {...register('code')}
+              />
+            )}
+          </FormField>
+          {submitError ? <Alert tone="error">{submitError}</Alert> : null}
         </form>
-      </div>
-    </div>
+      </Modal>
+    </>
   );
 }

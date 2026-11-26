@@ -96,7 +96,7 @@ test.describe('history records a finished run', () => {
     expect(result.duration).toBeGreaterThanOrEqual(0);
 
     await page.goto('/history');
-    const row = page.getByTestId(`history-row-${result.completedAt}-reflect`);
+    const row = page.getByTestId('history-table').getByRole('row', { name: /reflect/ });
     await expect(row).toBeVisible({ timeout: 10000 });
 
     // The detail pane reports the daemon's stamps, not the browser's. The id

@@ -1,6 +1,8 @@
 import { expect, type Page, test } from '@playwright/test';
 import { skipSetupWizard } from './helpers/auth';
+import { rail } from './helpers/rail';
 import { useRole } from './helpers/role';
+import { expandTestSection, openSettingsTab, testCheckbox } from './helpers/settings';
 
 /**
  * A two-step run plan, RFC 2544 throughput then Y.1564, run for real (#1078
@@ -72,29 +74,31 @@ test.describe('run plan', () => {
     await page.goto('/tests/benchmark');
     await expect(page.getByTestId('rfc2544-config-form')).toBeVisible({ timeout: 10000 });
 
-    await page.getByTestId('sidebar-settings-button').click();
+    await rail(page, 'rail-settings').click();
     await expect(page.getByTestId('settings-drawer')).toBeVisible();
+
+    await openSettingsTab(page, 'Tests');
 
     // Frame sizes stay at their defaults: the daemon measures only the first
     // (#1464), and a frame-size change made after these edits would not reach
     // the run anyway (#1465). RFC 2544 starts at 64 bytes, Y.1564 at 128.
     //
     // RFC 2544: throughput only, one-second trials.
-    await page.getByTestId('rfc2544-test-section-toggle').click();
+    await expandTestSection(page, /RFC 2544/);
     for (const id of ['rfc2544_latency', 'rfc2544_frame_loss', 'rfc2544_back_to_back']) {
-      await page.getByTestId(`test-checkbox-${id}`).uncheck();
+      await testCheckbox(page, id).uncheck();
     }
-    await expect(page.getByTestId('test-checkbox-rfc2544_throughput')).toBeChecked();
+    await expect(testCheckbox(page, 'rfc2544_throughput')).toBeChecked();
     const rfc2544 = page.getByTestId('rfc2544-config-form-drawer');
-    await rfc2544.locator('#rfc2544-duration').fill('1');
-    await rfc2544.locator('#rfc2544-trials').fill('1');
+    await rfc2544.getByLabel('Duration per Test (s)').fill('1');
+    await rfc2544.getByLabel('Number of Trials').fill('1');
 
     // Y.1564: the configuration test at 10 Mbps, 2 s a step.
-    await page.getByTestId('y1564-test-section-toggle').click();
-    await page.getByTestId('test-checkbox-y1564_config').check();
-    const y1564 = page.getByTestId('y1564-config-form');
-    await y1564.locator('#y1564-cir').fill('10');
-    await y1564.locator('#y1564-config-duration').fill('2');
+    await expandTestSection(page, /Y\.1564/);
+    await testCheckbox(page, 'y1564_config').check();
+    const y1564 = page.getByTestId('y1564-config-form-drawer');
+    await y1564.getByLabel('CIR (Mbps)').fill('10');
+    await y1564.getByLabel('Config Step Duration (s)').fill('2');
 
     await page.getByTestId('settings-drawer-close').click();
     await expect(page.getByTestId('settings-drawer')).toBeHidden();

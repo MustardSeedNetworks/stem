@@ -5,10 +5,9 @@
  * Includes: TCP Throughput (BDP analysis), Path Analysis.
  */
 
-import { Activity } from 'lucide-react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CollapsibleSection } from '../../CollapsibleSection';
+import { CollapsibleSection } from '../../../shared/CollapsibleSection';
 import { type RFC6349Config, RFC6349ConfigForm } from '../../RFC6349ConfigForm';
 import { TestCheckbox } from '../TestCheckbox';
 import type { TestDefinition, TestSectionProps } from '../types';
@@ -56,15 +55,7 @@ export function RFC6349Section({
   const hasSelectedTests = selectedCount > 0;
 
   return (
-    <CollapsibleSection
-      title={
-        <div className="flex items-center gap-compact">
-          <Activity className="w-4 h-4" aria-hidden="true" />
-          <span>{t('tests.rfc6349.title')}</span>
-          <span className="caption text-text-muted">({selectedCount}/2)</span>
-        </div>
-      }
-    >
+    <CollapsibleSection title={`${t('tests.rfc6349.title')} (${selectedCount}/2)`}>
       <div className="stack-lg">
         {/* Test Selection */}
         <div className="stack-sm">
@@ -82,6 +73,7 @@ export function RFC6349Section({
         {hasSelectedTests && (
           <div className="border-t border-surface-border pt-section">
             <RFC6349ConfigForm
+              testId="rfc6349-config-form-drawer"
               config={config}
               setConfig={onConfigChange}
               selectedTests={selectedTests}

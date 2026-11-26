@@ -47,10 +47,10 @@ describe('RFC2889ConfigForm — i18n', () => {
     expect(broadcast.value).toBe('2');
   });
 
-  it('keeps the standard name verbatim in the help text', async () => {
+  it('keeps the standard name verbatim in the field hints', async () => {
     await i18n.changeLanguage('es');
     renderForm();
 
-    expect(screen.getAllByRole('button', { description: /RFC 2889/ }).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/RFC 2889/).length).toBeGreaterThan(0);
   });
 });
