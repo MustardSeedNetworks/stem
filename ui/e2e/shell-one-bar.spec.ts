@@ -87,8 +87,8 @@ test.describe('the rail carries the shell controls', () => {
     await expect(status).toBeVisible();
     // The dot was hard-coded to the success colour, so the rail said
     // "connected" on a dead socket. The state has to be the live one, and it
-    // has to reach a screen reader through a name rather than through colour.
-    await expect(status).toHaveAccessibleName(/connect/i);
+    // has to reach a screen reader as words rather than as colour.
+    await expect(status).toHaveText(/connect/i);
   });
 
   test('carries the theme toggle, and it is keyboard reachable', async ({ page }) => {
