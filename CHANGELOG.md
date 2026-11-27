@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.36.0](https://github.com/MustardSeedNetworks/stem/compare/v0.35.3...v0.36.0) (2026-11-27)
+
+
+### Features
+
+* **ui:** adopt the typed rail status vocabulary and foundation v0.15.6 ([#2149](https://github.com/MustardSeedNetworks/stem/issues/2149)) ([65207db](https://github.com/MustardSeedNetworks/stem/commit/65207db0e02bc68fc5895f280ab3a16616aaf837)), closes [#2148](https://github.com/MustardSeedNetworks/stem/issues/2148)
+
+
+### Bug Fixes
+
+* **ui:** warn when a test-host stall could explain a Y.1564 delay ([#1853](https://github.com/MustardSeedNetworks/stem/issues/1853)) ([f99cf9b](https://github.com/MustardSeedNetworks/stem/commit/f99cf9b9d9888abafeeb41aedc348ed4e59c8713)), closes [#1852](https://github.com/MustardSeedNetworks/stem/issues/1852)
+
 ## [0.35.3](https://github.com/MustardSeedNetworks/stem/compare/v0.35.2...v0.35.3) (2026-11-27)
 
 
