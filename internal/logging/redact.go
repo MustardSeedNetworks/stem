@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"slices"
+	"strconv"
 	"strings"
 )
 
@@ -44,10 +46,6 @@ func redactionPatterns() []*regexp.Regexp {
 
 		// Social Security Numbers (US) - XXX-XX-XXXX format
 		regexp.MustCompile(`\b\d{3}-\d{2}-\d{4}\b`),
-
-		// Credit card numbers (13-19 digits, with or without spaces/dashes)
-		regexp.MustCompile(`\b(?:\d{4}[\s\-]?){3}\d{1,7}\b`),
-		regexp.MustCompile(`\b\d{13,19}\b`), // Simple 13-19 digit sequence
 
 		// Email addresses (for privacy)
 		regexp.MustCompile(`\b[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Z|a-z]{2,}\b`),
@@ -93,12 +91,100 @@ func redactionHeaderSet() map[string]bool {
 	}
 }
 
+// digitRun matches a maximal run of digits joined by single spaces, tabs or
+// dashes. isCardNumber decides whether the run holds a card number.
+var digitRun = regexp.MustCompile(`\d(?:[ \t\-]?\d)*`)
+
 // RedactString removes sensitive data from a string.
 func RedactString(s string) string {
 	for _, pattern := range redactionPatterns() {
 		s = pattern.ReplaceAllString(s, RedactedPlaceholder)
 	}
-	return s
+	return digitRun.ReplaceAllStringFunc(s, func(m string) string {
+		if isCardNumber(m) {
+			return RedactedPlaceholder
+		}
+		return m
+	})
+}
+
+const (
+	cardMinDigits = 13
+	cardMaxDigits = 19
+	decimalBase   = 10
+)
+
+// Unix time at 2000-01-01 and at 2^31 seconds (2038-01-19), in seconds. A bare
+// digit string is read as a timestamp when its length is 10 (seconds), 13
+// (milliseconds), 16 (microseconds) or 19 (nanoseconds) and the value lands in
+// that span. The upper bound is not 2100 on purpose: past about 2.2e9 seconds
+// the scaled values start to overlap real card ranges (Mir 2200, Mastercard
+// 2221, JCB 35, Visa 4), so a wider span would exempt unseparated cards.
+const (
+	epochLowSeconds  = 946_684_800
+	epochHighSeconds = 2_147_483_648
+	epochMillis      = 1_000
+)
+
+// epochScales maps a digit count to the sub-second units per second.
+func epochScales() map[int]uint64 {
+	const micros, nanos = epochMillis * epochMillis, epochMillis * epochMillis * epochMillis
+	return map[int]uint64{10: 1, 13: epochMillis, 16: micros, 19: nanos}
+}
+
+// isCardNumber reports whether a maximal digit run contains a payment card
+// number: any window of 13-19 consecutive digits with a valid Luhn checksum.
+// Every window is tried, so digits adjacent to a card (a year, an ID prefix)
+// cannot hide it, and the whole run is redacted when one window passes.
+//
+// The only exemption is for the run as a whole: one unseparated digit string
+// that is a plausible timestamp (see epochScales) and has no Luhn-valid window
+// shorter than itself. Luhn alone passes one random run in ten, so without it
+// about one log timestamp in ten would be redacted. A shorter window inside
+// an epoch-shaped run is never exempt, so a card cannot hide behind a prefix.
+func isCardNumber(run string) bool {
+	digits := make([]int, 0, len(run))
+	for _, r := range run {
+		if r >= '0' && r <= '9' {
+			digits = append(digits, int(r-'0'))
+		}
+	}
+	for size := cardMinDigits; size < min(cardMaxDigits+1, len(digits)); size++ {
+		for start := 0; start+size <= len(digits); start++ {
+			if luhnValid(digits[start : start+size]) {
+				return true
+			}
+		}
+	}
+	if len(digits) < cardMinDigits || len(digits) > cardMaxDigits || !luhnValid(digits) {
+		return false
+	}
+	return len(digits) != len(run) || !isPlausibleEpoch(run)
+}
+
+func isPlausibleEpoch(run string) bool {
+	scale, ok := epochScales()[len(run)]
+	if !ok {
+		return false
+	}
+	value, err := strconv.ParseUint(run, 10, 64)
+	if err != nil {
+		return false
+	}
+	seconds := value / scale
+	return seconds >= epochLowSeconds && seconds < epochHighSeconds
+}
+
+func luhnValid(digits []int) bool {
+	sum := 0
+	for i, d := range slices.Backward(digits) {
+		if (len(digits)-1-i)%2 == 1 {
+			d *= 2
+			d = d/decimalBase + d%decimalBase
+		}
+		sum += d
+	}
+	return sum%10 == 0
 }
 
 // RedactHeaders returns a map of headers with sensitive values redacted.

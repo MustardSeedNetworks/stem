@@ -1465,3 +1465,47 @@ func withRequestID(parent context.Context, tb testing.TB) (context.Context, stri
 	}
 	return ctx, id
 }
+
+func TestRedactStringCardNumbers(t *testing.T) {
+	testCases := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{"visa contiguous", "card 4111111111111111 declined", "card [REDACTED] declined"},
+		{"visa spaced", "card 4111 1111 1111 1111 declined", "card [REDACTED] declined"},
+		{"mastercard dashed", "pan=5555-5555-5555-4444", "pan=[REDACTED]"},
+		{"amex 15 digits", "amex 378282246310005", "amex [REDACTED]"},
+		{"visa 13 digits", "old 4222222222222", "old [REDACTED]"},
+		{"discover 19 digits", "pan 6011000000000000001", "pan [REDACTED]"},
+		{"epoch-shaped prefix does not hide a card", "1378282246310005", "[REDACTED]"},
+		{"leading 1 and zeros do not hide a card", "1004111111111111111", "[REDACTED]"},
+		{"year prefix does not hide a card", "2026 4111 1111 1111 1111", "[REDACTED]"},
+		{"tab separated", "pan 4111\t1111\t1111\t1111 x", "pan [REDACTED] x"},
+		{"adjacent digits before", "id 94111111111111111", "id [REDACTED]"},
+		{"adjacent digits after", "id 41111111111111119", "id [REDACTED]"},
+		{"dash separated amex run", "378282246310005-7", "[REDACTED]"},
+		{"instance id luhn invalid", "stem-1764000000001-1", "stem-1764000000001-1"},
+		{"uatp 15 digits leading 1", "uatp 100000000000009", "uatp [REDACTED]"},
+		{"mir", "pan 2200000000000004", "pan [REDACTED]"},
+		{"rupay", "pan 6080000000000000", "pan [REDACTED]"},
+		{"maestro", "pan 5018000000000009", "pan [REDACTED]"},
+		{"maestro 19 digits", "pan 5018000000000000007", "pan [REDACTED]"},
+		{"implausible 13 digit value, luhn valid", "id 5000000000005", "id [REDACTED]"},
+		{"epoch seconds", "ts 1764000000", "ts 1764000000"},
+		{"unix ms timestamp, luhn valid", "ts 1764000000000 ok", "ts 1764000000000 ok"},
+		{"unix us timestamp", "ts 1764000123456100", "ts 1764000123456100"},
+		{"unix ns timestamp with a luhn-valid window", "ts 1764000000000000000", "ts [REDACTED]"},
+		{"numeric run id, luhn invalid", "run 1234567890123", "run 1234567890123"},
+		{"long numeric id, luhn invalid", "job 5000000000000100", "job 5000000000000100"},
+		{"iso timestamp", "at 2026-11-27T10:15:30.123456Z", "at 2026-11-27T10:15:30.123456Z"},
+		{"short number", "port 8443 count 4111", "port 8443 count 4111"},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := RedactString(tc.input); got != tc.want {
+				t.Errorf("RedactString(%q) = %q, want %q", tc.input, got, tc.want)
+			}
+		})
+	}
+}
