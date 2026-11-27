@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.37.1](https://github.com/MustardSeedNetworks/stem/compare/v0.37.0...v0.37.1) (2026-11-27)
+
+
+### Bug Fixes
+
+* **ui:** re-copy the shared set for the tooltip escape fix ([#2152](https://github.com/MustardSeedNetworks/stem/issues/2152)) ([d57831f](https://github.com/MustardSeedNetworks/stem/commit/d57831ff470acaae84bdd95707cc498932f422e5))
+
 ## [0.37.0](https://github.com/MustardSeedNetworks/stem/compare/v0.36.0...v0.37.0) (2026-11-27)
 
 
