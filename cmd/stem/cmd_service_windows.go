@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+	"unsafe"
 
 	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/svc"
@@ -381,8 +382,42 @@ func ensureDataDir(dir string) error {
 	} else if !errors.Is(err, os.ErrNotExist) {
 		return fmt.Errorf("data directory %s: %w", canonical, err)
 	}
+	if err = useAdministratorsAsDefaultOwner(); err != nil {
+		return fmt.Errorf("create data directory %s: %w", canonical, err)
+	}
 	if err = securedir.Ensure(canonical, dataDirOptions()); err != nil {
 		return fmt.Errorf("create data directory %s: %w", canonical, err)
+	}
+	return nil
+}
+
+// tokenOwner is the TOKEN_OWNER structure SetTokenInformation reads.
+type tokenOwner struct{ owner *windows.SID }
+
+// useAdministratorsAsDefaultOwner makes BUILTIN\Administrators the owner of
+// what this process creates next. securedir.Ensure leaves the owner to the
+// creating principal and then refuses an untrusted one, and an elevated token
+// whose default owner is the user (the GitHub-hosted runner's, and any machine
+// that changed the "default owner" policy) would create a directory its own
+// install then rejects. Administrators is an owner-eligible group of an
+// elevated token, so naming it as the default owner needs no extra privilege.
+func useAdministratorsAsDefaultOwner() error {
+	administrators, err := windows.CreateWellKnownSid(windows.WinBuiltinAdministratorsSid)
+	if err != nil {
+		return fmt.Errorf("resolve the Administrators SID: %w", err)
+	}
+	var token windows.Token
+	err = windows.OpenProcessToken(windows.CurrentProcess(), windows.TOKEN_ADJUST_DEFAULT|windows.TOKEN_QUERY, &token)
+	if err != nil {
+		return fmt.Errorf("open the process token: %w", err)
+	}
+	defer func() { _ = token.Close() }()
+	owner := tokenOwner{owner: administrators}
+	setTokenInformation := windows.NewLazySystemDLL("advapi32.dll").NewProc("SetTokenInformation")
+	r1, _, callErr := setTokenInformation.Call(uintptr(token), uintptr(windows.TokenOwner),
+		uintptr(unsafe.Pointer(&owner)), unsafe.Sizeof(owner))
+	if r1 == 0 {
+		return fmt.Errorf("set the token's default owner to Administrators: %w", callErr)
 	}
 	return nil
 }
