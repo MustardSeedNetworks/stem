@@ -589,8 +589,10 @@ jobs:
   dataplane-safety:
     name: Dataplane Safety (ASAN + fuzz)
     runs-on: ubuntu-latest
-    # 25, not 20: the reflector frame path adds a second bounded fuzz run.
-    timeout-minutes: 25
+    # 50: the 31 minute install step, the 8 minute runtime step, and the ~10
+    # minutes of ASAN and bounded fuzz runs (25 before the install was sized
+    # to the download; the reflector frame path adds a second bounded fuzz run).
+    timeout-minutes: 50
     needs: changes
     if: >-
       needs.changes.outputs.c == 'true' || needs.changes.outputs.ci_infra == 'true'
@@ -602,11 +604,18 @@ jobs:
 
       - name: Install C safety dependencies
         # clang-18 is installed explicitly: ubuntu-latest is 26.04, which
-        # packages it but no longer preinstalls it.
-        timeout-minutes: 10
-        uses: MustardSeedNetworks/.github/.github/actions/apt-install@76eb579ee0cbdef0a2aef9d9df1ae9ca38cad6bd # v1.14.0
+        # packages it but no longer preinstalls it. clang-18 only recommends
+        # llvm-18-dev, so recommends are off (drops ~45 MB) and llvm-18 is
+        # named for llvm-symbolizer, which ASAN needs to symbolize reports.
+        # The install is sized to the download, up to 600 s per attempt. Step
+        # timeout: 2 x (270 s update + 600 s install + 30 s) + 10 s wait =
+        # 1810 s, so 31 minutes.
+        timeout-minutes: 31
+        uses: MustardSeedNetworks/.github/.github/actions/apt-install@3abb7b919144c5a3ec2f75ac2c91670142efd93c # .github#302
         with:
-          packages: cppcheck libbpf-dev libxdp-dev clang-18
+          packages: cppcheck libbpf-dev libxdp-dev clang-18 llvm-18
+          no-install-recommends: true
+          max-command-timeout: 600
 
       - name: Install libFuzzer runtime (best-effort) and verify clang
         timeout-minutes: 8
