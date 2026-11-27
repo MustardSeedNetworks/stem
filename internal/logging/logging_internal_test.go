@@ -1488,7 +1488,7 @@ func TestRedactStringCardNumbers(t *testing.T) {
 		{"unix us timestamp", "ts 1764000000000004", "ts 1764000000000004"},
 		{"unix ns timestamp", "ts 1764000000000000000", "ts 1764000000000000000"},
 		{"numeric run id, luhn invalid", "run 1234567890123", "run 1234567890123"},
-		{"long numeric id, luhn invalid", "job 9876543210987653", "job 9876543210987653"},
+		{"long numeric id, luhn invalid", "job 5000000000000100", "job 5000000000000100"},
 		{"iso timestamp", "at 2026-11-27T10:15:30.123456Z", "at 2026-11-27T10:15:30.123456Z"},
 		{"short number", "port 8443 count 4111", "port 8443 count 4111"},
 	}
