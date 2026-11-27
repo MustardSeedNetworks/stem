@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/MustardSeedNetworks/foundation/pkg/instance"
+	"github.com/MustardSeedNetworks/foundation/pkg/password"
 )
 
 // reexecEnv makes the test binary run webCmd, with the space-separated
@@ -22,6 +23,7 @@ import (
 const reexecEnv = "STEM_TEST_REEXEC_WEB"
 
 func TestMain(m *testing.M) {
+	password.UseTestCost()
 	if args := os.Getenv(reexecEnv); args != "" {
 		webCmd(strings.Fields(args))
 		os.Exit(0)

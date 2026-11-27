@@ -130,9 +130,12 @@ func TestAuthenticate_FoundationPassword(t *testing.T) {
 	if err != nil {
 		t.Fatalf("password.Hash: %v", err)
 	}
-	if !strings.HasPrefix(record, "$argon2id$v=19$m=65536,t=3,p=4$") {
-		t.Fatalf("record %q does not carry the foundation parameters", record)
+	// TestMain runs the package at foundation's test cost, so the record carries
+	// the test profile; any other work factor must still be refused below.
+	if !strings.HasPrefix(record, "$argon2id$v=19$") {
+		t.Fatalf("record %q is not an Argon2id PHC record", record)
 	}
+	params := strings.Split(record, "$")[3]
 
 	tests := []struct {
 		name    string
@@ -156,7 +159,7 @@ func TestAuthenticate_FoundationPassword(t *testing.T) {
 		},
 		{
 			name:    "weaker argon2id parameters",
-			hash:    strings.Replace(record, "m=65536,t=3,p=4", "m=64,t=1,p=1", 1),
+			hash:    strings.Replace(record, params, "m=8192,t=1,p=1", 1),
 			guess:   plaintext,
 			wantErr: auth.ErrInvalidCredentials,
 		},
