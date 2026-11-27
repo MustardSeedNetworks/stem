@@ -1465,3 +1465,33 @@ func withRequestID(parent context.Context, tb testing.TB) (context.Context, stri
 	}
 	return ctx, id
 }
+
+func TestRedactStringCardNumbers(t *testing.T) {
+	testCases := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{"visa contiguous", "card 4111111111111111 declined", "card [REDACTED] declined"},
+		{"visa spaced", "card 4111 1111 1111 1111 declined", "card [REDACTED] declined"},
+		{"mastercard dashed", "pan=5555-5555-5555-4444", "pan=[REDACTED]"},
+		{"amex 15 digits", "amex 378282246310005", "amex [REDACTED]"},
+		{"visa 13 digits", "old 4222222222222", "old [REDACTED]"},
+		{"discover 19 digits", "pan 6011000000000000001", "pan [REDACTED]"},
+		{"unix ms timestamp, luhn valid", "ts 1764000000008 ok", "ts 1764000000008 ok"},
+		{"unix ms timestamp in run id", "stem-1764000000008-1", "stem-1764000000008-1"},
+		{"unix us timestamp", "ts 1764000000000004", "ts 1764000000000004"},
+		{"unix ns timestamp", "ts 1764000000000000002", "ts 1764000000000000002"},
+		{"numeric run id, luhn invalid", "run 1234567890123", "run 1234567890123"},
+		{"long numeric id, luhn invalid", "job 9876543210987654", "job 9876543210987654"},
+		{"iso timestamp", "at 2026-11-27T10:15:30.123456Z", "at 2026-11-27T10:15:30.123456Z"},
+		{"short number", "port 8443 count 4111", "port 8443 count 4111"},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := RedactString(tc.input); got != tc.want {
+				t.Errorf("RedactString(%q) = %q, want %q", tc.input, got, tc.want)
+			}
+		})
+	}
+}

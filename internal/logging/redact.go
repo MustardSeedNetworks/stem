@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"slices"
 	"strings"
 )
 
@@ -44,10 +45,6 @@ func redactionPatterns() []*regexp.Regexp {
 
 		// Social Security Numbers (US) - XXX-XX-XXXX format
 		regexp.MustCompile(`\b\d{3}-\d{2}-\d{4}\b`),
-
-		// Credit card numbers (13-19 digits, with or without spaces/dashes)
-		regexp.MustCompile(`\b(?:\d{4}[\s\-]?){3}\d{1,7}\b`),
-		regexp.MustCompile(`\b\d{13,19}\b`), // Simple 13-19 digit sequence
 
 		// Email addresses (for privacy)
 		regexp.MustCompile(`\b[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Z|a-z]{2,}\b`),
@@ -93,12 +90,72 @@ func redactionHeaderSet() map[string]bool {
 	}
 }
 
+// cardCandidate matches a 13-19 digit run, contiguous or in groups of four
+// separated by a space or dash. It only nominates; isCardNumber decides.
+var cardCandidate = regexp.MustCompile(`\b(?:\d{4}[ \-]?){3}\d{1,7}\b|\b\d{13,19}\b`)
+
 // RedactString removes sensitive data from a string.
 func RedactString(s string) string {
 	for _, pattern := range redactionPatterns() {
 		s = pattern.ReplaceAllString(s, RedactedPlaceholder)
 	}
-	return s
+	return cardCandidate.ReplaceAllStringFunc(s, func(m string) string {
+		if isCardNumber(m) {
+			return RedactedPlaceholder
+		}
+		return m
+	})
+}
+
+// Card numbers are 13-19 digits; the epoch scales below are the current unix
+// time in milliseconds, microseconds and nanoseconds.
+const (
+	cardMinDigits = 13
+	cardMaxDigits = 19
+	epochMsDigits = 13
+	epochUsDigits = 16
+	epochNsDigits = 19
+	visaPrefix    = 4
+	decimalBase   = 10
+)
+
+// isCardNumber reports whether a candidate run is a payment card number: a
+// valid Luhn checksum and not shaped like an epoch timestamp. Luhn alone still
+// passes one random run in ten, so timestamps are excluded by value: no card
+// number falls in those ranges, because the only 13 digit cards are Visa (leading 4), and
+// no 16 or 19 digit card starts with 1.
+func isCardNumber(candidate string) bool {
+	digits := make([]int, 0, len(candidate))
+	for _, r := range candidate {
+		if r >= '0' && r <= '9' {
+			digits = append(digits, int(r-'0'))
+		}
+	}
+	if len(digits) < cardMinDigits || len(digits) > cardMaxDigits || !luhnValid(digits) {
+		return false
+	}
+	if len(digits) != len(candidate) {
+		return true
+	}
+	switch len(digits) {
+	case epochMsDigits:
+		return digits[0] == visaPrefix
+	case epochUsDigits, epochNsDigits:
+		return digits[0] != 1
+	}
+	return true
+}
+
+func luhnValid(digits []int) bool {
+	sum := 0
+	for i, d := range slices.Backward(digits) {
+		if (len(digits)-1-i)%2 == 1 {
+			d *= 2
+			d = d/decimalBase + d%decimalBase
+		}
+		sum += d
+	}
+	return sum%10 == 0
 }
 
 // RedactHeaders returns a map of headers with sensitive values redacted.
