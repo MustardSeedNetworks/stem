@@ -22,7 +22,6 @@ import (
 // test.
 func trustedProxyEnv(t *testing.T, list string) {
 	t.Helper()
-	t.Setenv("STEM_TEST_MODE", "1")
 	t.Setenv("STEM_DATA_DIR", t.TempDir())
 	t.Setenv("STEM_AUTH_USERNAME", "proxytest")
 	t.Setenv("STEM_AUTH_PASSWORD", "proxypass123")

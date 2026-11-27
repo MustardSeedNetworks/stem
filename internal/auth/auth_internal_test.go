@@ -501,7 +501,7 @@ func TestManagerBlacklistIntegration(t *testing.T) {
 	}
 
 	// Create and revoke a token.
-	token, err := mgr.Authenticate(ctx, "admin", "admin")
+	token, err := mgr.Authenticate("admin", "admin")
 	if err != nil {
 		t.Fatalf("Authenticate() error: %v", err)
 	}
@@ -659,8 +659,6 @@ func TestGenerateTokenWithType_TokenIDError(t *testing.T) {
 }
 
 func TestAuthenticate_TokenGenerationError(t *testing.T) {
-	ctx := context.Background()
-
 	// First create a valid manager.
 	mgr, err := NewManager("test-secret", AccessTokenDuration, "admin", "admin")
 	if err != nil {
@@ -670,15 +668,13 @@ func TestAuthenticate_TokenGenerationError(t *testing.T) {
 	// Inject error reader via SetRandReader.
 	mgr.SetRandReader(&errorReader{err: errors.New("mock random error")})
 
-	_, err = mgr.Authenticate(ctx, "admin", "admin")
+	_, err = mgr.Authenticate("admin", "admin")
 	if err == nil {
 		t.Error("Authenticate() expected error, got nil")
 	}
 }
 
 func TestAuthenticateWithRefresh_TokenGenerationError(t *testing.T) {
-	ctx := context.Background()
-
 	// First create a valid manager.
 	mgr, err := NewManager("test-secret", AccessTokenDuration, "admin", "admin")
 	if err != nil {
@@ -688,7 +684,7 @@ func TestAuthenticateWithRefresh_TokenGenerationError(t *testing.T) {
 	// Inject error reader via SetRandReader.
 	mgr.SetRandReader(&errorReader{err: errors.New("mock random error")})
 
-	_, _, err = mgr.AuthenticateWithRefresh(ctx, "admin", "admin")
+	_, _, err = mgr.AuthenticateWithRefresh("admin", "admin")
 	if err == nil {
 		t.Error("AuthenticateWithRefresh() expected error, got nil")
 	}
@@ -718,8 +714,6 @@ func (f readerFunc) Read(p []byte) (int, error) {
 }
 
 func TestAuthenticateWithRefresh_RefreshTokenGenerationError(t *testing.T) {
-	ctx := context.Background()
-
 	// First create a valid manager.
 	mgr, err := NewManager("test-secret", AccessTokenDuration, "admin", "admin")
 	if err != nil {
@@ -738,7 +732,7 @@ func TestAuthenticateWithRefresh_RefreshTokenGenerationError(t *testing.T) {
 		return 0, errors.New("mock error on second call")
 	}))
 
-	_, _, err = mgr.AuthenticateWithRefresh(ctx, "admin", "admin")
+	_, _, err = mgr.AuthenticateWithRefresh("admin", "admin")
 	if err == nil {
 		t.Error("AuthenticateWithRefresh() expected error on refresh token generation, got nil")
 	}

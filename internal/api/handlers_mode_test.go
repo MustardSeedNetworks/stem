@@ -14,13 +14,11 @@ import (
 )
 
 // setupModeTestServer builds a server tuned for /api/v1/mode tests.
-// It uses [STEM_TEST_MODE]=1 for fast bcrypt and the shared test
-// credentials so loginToken() can authenticate against it (#340 made
-// /api/v1/mode auth-gated). Registers automatic shutdown so per-test
+// It uses the shared test credentials so loginToken() can authenticate
+// against it (#340 made /api/v1/mode auth-gated). Registers automatic shutdown so per-test
 // rate limiters do not leak goroutines.
 func setupModeTestServer(t *testing.T) *api.Server {
 	t.Helper()
-	t.Setenv("STEM_TEST_MODE", "1")
 	t.Setenv("STEM_DATA_DIR", t.TempDir())
 	t.Setenv("STEM_AUTH_USERNAME", testUsername)
 	t.Setenv("STEM_AUTH_PASSWORD", testPassword)

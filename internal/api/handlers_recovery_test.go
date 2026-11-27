@@ -22,7 +22,6 @@ const (
 // setupRecoveryTestServer creates a server for recovery handler tests.
 func setupRecoveryTestServer(t testing.TB) *api.Server {
 	t.Helper()
-	t.Setenv("STEM_TEST_MODE", "1")
 	t.Setenv("STEM_DATA_DIR", t.TempDir())
 	t.Setenv("STEM_AUTH_USERNAME", recoveryTestUsername)
 	t.Setenv("STEM_AUTH_PASSWORD", recoveryTestPassword)

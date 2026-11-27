@@ -9,8 +9,8 @@ package auth
 // as the JWT secret and the rest of the bootstrap state.
 //
 // JUDGMENT CALL: storage. Stem currently has no key-derivation
-// infrastructure (the bcrypt → Argon2id work landed in Wave 2 but only
-// touches password hashes, not secret encryption). Persisting the TOTP
+// infrastructure (Argon2id covers password hashes only, not secret
+// encryption). Persisting the TOTP
 // secret at rest in plain form would be a regression over the in-
 // memory model. Until a Wave-4 secret-management layer arrives, we
 // keep the secret in memory only and document that operators who

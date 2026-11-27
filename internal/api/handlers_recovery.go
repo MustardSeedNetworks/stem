@@ -5,7 +5,8 @@ package api
 import (
 	"net/http"
 
-	"github.com/MustardSeedNetworks/stem/internal/auth"
+	"github.com/MustardSeedNetworks/foundation/pkg/password"
+
 	"github.com/MustardSeedNetworks/stem/internal/logging"
 )
 
@@ -126,7 +127,7 @@ func (s *Server) handleRecoveryComplete(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Hash the new password.
-	hash, err := auth.HashPassword(req.Password)
+	hash, err := password.Hash(req.Password)
 	if err != nil {
 		logging.Error("Failed to hash password during recovery", "error", err)
 		logging.AuditPasswordChange(r.Context(), r, username,

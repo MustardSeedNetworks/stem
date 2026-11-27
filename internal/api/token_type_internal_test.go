@@ -12,7 +12,6 @@ import (
 // refresh token presented as a Bearer credential authenticated every API
 // request. This pins the edge, since that is what an attacker reaches.
 func TestRequireAuthRejectsARefreshToken(t *testing.T) {
-	t.Setenv("STEM_TEST_MODE", "1")
 	t.Setenv("STEM_DATA_DIR", t.TempDir())
 	t.Setenv("STEM_AUTH_USERNAME", "tokentypetest")
 	t.Setenv("STEM_AUTH_PASSWORD", "tokentypepass123")
