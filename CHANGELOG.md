@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.35.1](https://github.com/MustardSeedNetworks/stem/compare/v0.35.0...v0.35.1) (2026-11-27)
+
+
+### Bug Fixes
+
+* **deps:** update dependency @tanstack/react-query to v5.108.1 ([#2135](https://github.com/MustardSeedNetworks/stem/issues/2135)) ([ee33ca8](https://github.com/MustardSeedNetworks/stem/commit/ee33ca8f417e7ae386301495672eae56d049b203))
+* **deps:** update dependency tailwind-merge to v3.7.1 ([#2137](https://github.com/MustardSeedNetworks/stem/issues/2137)) ([644c2c9](https://github.com/MustardSeedNetworks/stem/commit/644c2c9a75c05016e3d9b79842beb2e7894c949b))
+* **ui:** re-copy shared set and type the resize observer stub ([#2134](https://github.com/MustardSeedNetworks/stem/issues/2134)) ([4991ac7](https://github.com/MustardSeedNetworks/stem/commit/4991ac7849462be73c143f1f55daad9eb80411eb))
+
+
+### Miscellaneous
+
+* **deps:** update github actions ([#2130](https://github.com/MustardSeedNetworks/stem/issues/2130)) ([a0e4f67](https://github.com/MustardSeedNetworks/stem/commit/a0e4f67f3db19fd590f5e2761895e9433eacd750))
+
 ## [0.35.0](https://github.com/MustardSeedNetworks/stem/compare/v0.34.8...v0.35.0) (2026-11-26)
 
 
