@@ -125,6 +125,16 @@ is stored the same way.
 | ---------- | ------------- |
 | Linux `.deb` / `.rpm` | `/var/lib/stem` |
 | macOS `.pkg` / tarball (`install.sh`) | `/usr/local/stem` |
+| Windows zip (`install.ps1`) | `C:\ProgramData\stem` |
+
+The license state (`.license`) lives in the same directory, so the daemon and
+`stem license` agree on it; `STEM_DATA_DIR` moves both. With no daemon running,
+`stem license` writes the file itself as the account that owns the directory,
+so the service can read it: run it as root (it then becomes that account for the
+write, and refuses a link at the license path) or as that account. Any other user is refused with
+"run as root or as the stem user". On macOS the directory is root's, and on
+Windows the directory's access list already limits it to SYSTEM and
+Administrators, so no ownership change is made there.
 
 A `credentials.json` that exists but cannot be read is a start failure, not a
 return to setup: delete it deliberately to reclaim the daemon.
@@ -352,6 +362,80 @@ sudo launchctl bootstrap system /Library/LaunchDaemons/com.stem.plist  # load ag
 Logs are in `/usr/local/stem/logs/stem.log`, which stem writes and rotates itself
 (the plist sets `STEM_LOG_FILE`), and `stem.error.log` (stderr, crash traces).
 
+### Windows Service
+
+The Windows `.zip` (`stem-<version>-windows-amd64.zip` or `-arm64`) holds
+`stem.exe`, `stem.yaml` and `install.ps1`. Unzip it, then run the script from
+an elevated PowerShell in the unpacked directory:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\install.ps1
+```
+
+The script refuses to run without Administrator rights, and:
+
+- copies `stem.exe` to `C:\Program Files\Stem` and adds that directory to the
+  system `PATH`;
+- registers the `Stem` service (display name "The Stem", automatic delayed
+  start), which runs `stem web` on port 8444 as `LocalSystem`;
+- adds a Windows Firewall rule named "Stem Web UI" for inbound TCP 8444 if one
+  does not exist;
+- starts the service and waits until port 8444 accepts connections, so a
+  daemon that refuses to start fails the install instead of printing success.
+
+State lives in `C:\ProgramData\stem`: `credentials.json`, `certs\`, the license
+state (`.license`), the data files and `logs\stem.log`. The service runs as
+`LocalSystem` and reads this directory, so whoever can write it can run code as
+SYSTEM. The script therefore fails closed and never tries to repair a tree it
+cannot trust. It refuses, untouched and listing the offending paths, a
+directory that is or contains a symbolic link or junction, anything under it
+owned by an account other than SYSTEM, Administrators or TrustedInstaller, an
+access entry of its own for any other account, or a directory DACL that lets
+another account write, delete or change permissions. Otherwise it creates the
+directory with, or replaces its access with, owner Administrators, inheritance
+removed and full control for SYSTEM and Administrators only, lets everything
+inside inherit that, and reads the result back, failing unless it holds.
+
+The service never repairs anything. At every start it resolves the data
+directory and checks it with foundation's `securedir`: it refuses to start if
+the directory is missing, a link or junction, owned by anyone but SYSTEM,
+Administrators or TrustedInstaller, if its parent lets another account delete
+or replace it, or if anything under it, at any depth, is a link, has an
+untrusted owner, or grants another account write, delete or permission-change
+access. The repair is install.ps1. `stem service install` creates a missing
+directory with the same protected access and leaves an existing one to
+install.ps1 and the start-time check.
+
+The same data directory holds the license for the service and for
+`stem license` from a console.
+
+`stem service install` also refuses to register a `stem.exe` outside
+`C:\Program Files\Stem`, because a SYSTEM service runs whatever its path names.
+
+Run install.ps1 again from a newer zip to upgrade: it stops the service,
+replaces the binary and points the service at it, and keeps the contents of
+`C:\ProgramData\stem`. `stem.yaml` is copied there only when it is missing.
+
+Manage the service from an elevated prompt:
+
+```powershell
+stem service status
+stem service stop
+stem service start
+stem service uninstall     # removes the service; the data directory stays
+```
+
+The service restarts a daemon that fails twice, five seconds apart, and then
+stays failed, so a refused start (the data directory unusable, port 8444 in
+use) shows up in `stem service status` and `logs\stem.log` instead of
+respinning. The service binds 8444 only and never falls back to a neighbouring
+port, because the firewall rule opens 8444 alone; to use another port, run
+`stem web --port` in a console instead of the service.
+
+`stem service` exists only on Windows. `stem update` replaces `stem.exe` but
+does not restart the service; restart it with `stem service stop` and
+`stem service start` afterwards.
+
 ### Updating
 
 `sudo stem update` installs the newest release in place (Administrator on
@@ -391,7 +475,7 @@ where `stem.exe` was unpacked:
 
 ```powershell
 schtasks /Create /TN "Stem update" /SC DAILY /ST 03:00 /RU SYSTEM `
-  /TR "\"C:\Program Files\stem\stem.exe\" update --scheduled"
+  /TR "\"C:\Program Files\Stem\stem.exe\" update --scheduled"
 ```
 
 The `.deb` asks once at install whether to turn automatic updates on, and the

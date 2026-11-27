@@ -23,6 +23,7 @@ func GetAllCommands() map[string]CommandHelp {
 		"support-bundle": SupportBundleCommand(),
 		"backup":         BackupCommand(),
 		"restore":        RestoreCommand(),
+		"service":        ServiceCommand(),
 	}
 }
 
@@ -746,5 +747,44 @@ The two values must match.`,
 			},
 		},
 		SeeAlso: []string{"web"},
+	}
+}
+
+// ServiceCommand documents the service subcommand.
+func ServiceCommand() CommandHelp {
+	return CommandHelp{
+		Name:    "service",
+		Summary: "Manage the Windows service that runs the web daemon",
+		Description: `The service command registers, starts, stops and removes the Stem Windows
+service. The service runs the web daemon (stem web) on port 8444 at boot and
+keeps its state under %ProgramData%\stem. Run it from an elevated prompt.
+
+The release zip's install.ps1 does the whole install: it copies stem.exe to
+Program Files, registers the service, opens the firewall and starts it.
+
+Actions:
+  install    register the service, or update an existing registration
+  start      start it and wait until it is running
+  stop       stop it and wait until it has stopped
+  status     show whether it is running
+  uninstall  stop and remove the service; configuration and data stay
+
+Windows only: on Linux the package installs a systemd unit and on macOS a
+launchd daemon.`,
+		Usage: "stem service install|start|stop|status|uninstall",
+		Flags: []FlagHelp{},
+		Examples: []Example{
+			{
+				Desc:    "Register the service and start it",
+				Command: "stem service install",
+				Output:  "Service Stem installed. It starts automatically at boot.",
+			},
+			{
+				Desc:    "Check whether the daemon is running",
+				Command: "stem service status",
+				Output:  "Service: The Stem\nStatus:  Running",
+			},
+		},
+		SeeAlso: []string{"web", "update"},
 	}
 }

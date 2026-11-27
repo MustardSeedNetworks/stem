@@ -13,16 +13,11 @@ import (
 	"testing"
 )
 
-// licenseHome points the license manager at a temp HOME so a case decides
+// licenseHome points the license manager at a temp data directory so a case decides
 // what is on disk.
 func licenseHome(t *testing.T) {
 	t.Helper()
-	home := t.TempDir()
-	t.Setenv("HOME", home)
-	dir := filepath.Join(home, ".config", "stem")
-	if err := os.MkdirAll(dir, 0o700); err != nil {
-		t.Fatalf("mkdir: %v", err)
-	}
+	t.Setenv("STEM_DATA_DIR", t.TempDir())
 }
 
 // parseTestFlagsOrFail parses args the way `stem test` does and fails the test
@@ -380,7 +375,7 @@ func TestDaemonStartHintNamesTheShippedService(t *testing.T) {
 	}{
 		{goos: "linux", want: "'sudo systemctl start stem'", wantNot: "launchctl"},
 		{goos: "darwin", want: "'sudo launchctl kickstart system/" + label + "'", wantNot: "systemctl"},
-		{goos: "windows", want: "'stem web'", wantNot: "systemctl"},
+		{goos: "windows", want: "'stem service start'", wantNot: "systemctl"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.goos, func(t *testing.T) {

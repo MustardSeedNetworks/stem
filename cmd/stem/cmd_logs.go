@@ -66,14 +66,14 @@ func hostLogEnv() logEnv {
 
 // resolveLogSource finds the log the packaged service writes. The daemon itself
 // writes no log file: it logs to stdout, so what exists depends on who
-// supervises it. launchd redirects stdout to <data dir>/logs/stem.log, and
-// systemd sends it to the journal. Windows ships no service, so there is
-// nothing to find and the operator names the file.
+// supervises it. launchd redirects stdout to <data dir>/logs/stem.log, the
+// Windows service writes the same file itself, and systemd sends it to the
+// journal.
 func resolveLogSource(goos, dataDir, file string) (logSource, error) {
 	switch {
 	case file != "":
 		return logSource{file: file}, nil
-	case goos == "darwin":
+	case goos == "darwin" || goos == "windows":
 		return logSource{file: filepath.Join(dataDir, "logs", "stem.log")}, nil
 	case goos == "linux":
 		return logSource{}, nil
@@ -102,8 +102,9 @@ Show the end of the service log.
 The daemon writes its log to standard output, so where it ends up depends on
 what runs it: on Linux the systemd journal (stem logs runs "journalctl -u
 stem", which needs a member of the systemd-journal group or root); on macOS
-<data directory>/logs/stem.log, the file the launchd service writes. On other
-systems, and for a log captured some other way, name the file with --file.
+<data directory>/logs/stem.log, the file the launchd service writes, and the same
+file on Windows, where the service writes it. On other systems, and for a log
+captured some other way, name the file with --file.
 
 Flags:`)
 		fs.PrintDefaults()

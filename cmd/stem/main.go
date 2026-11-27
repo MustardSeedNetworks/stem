@@ -172,6 +172,8 @@ func dispatchSubcommand(cmd string, args []string) bool {
 		exitOnError(installCACmd(args))
 	case updateCommandName:
 		exitOnError(updateCmd(args))
+	case serviceCommandName:
+		exitOnError(serviceCmd(args))
 	default:
 		return dispatchOperations(cmd, args)
 	}
@@ -263,6 +265,7 @@ COMMANDS:
     support-bundle  Collect redacted diagnostics for support
     backup       Archive the daemon's state
     restore      Restore the daemon's state from a backup
+    service      Manage the Windows service (Windows only)
     version      Show version information (--json for scripts)
 
 REFLECT OPTIONS:

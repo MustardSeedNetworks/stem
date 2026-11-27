@@ -207,8 +207,9 @@ func (m darwinMethod) Restarts(ctx context.Context) (int, error) {
 	return 0, errors.New("launchctl print reported no run count for " + launchdTarget)
 }
 
-// windowsMethod is the release zip. Windows ships no service, so there is
-// nothing to stop or restart; a running executable can be renamed but not
+// windowsMethod is the release zip. It does not stop or restart the Windows
+// service (stem service), so a service install keeps running the old binary
+// until it is restarted; a running executable can be renamed but not
 // overwritten, so the old one is moved aside first.
 type windowsMethod struct{ exe string }
 

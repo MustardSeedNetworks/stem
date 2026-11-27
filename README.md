@@ -63,6 +63,12 @@ The `darwin-arm64` tarball is the alternative: unpack it (it has no top-level
 directory) and run `sudo ./install.sh`, `./upgrade.sh` or `./uninstall.sh`. See
 [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
+On Windows, unzip the release `.zip` and run its `install.ps1` from an elevated
+PowerShell: it installs Stem to `C:\Program Files\Stem`, registers the `Stem`
+service, opens port 8444 and starts it. Running it again from a newer zip
+upgrades in place and keeps the data in `C:\ProgramData\stem`. See
+[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md#windows-service).
+
 ## Quick Start
 
 ```bash
@@ -97,6 +103,7 @@ sudo ./bin/stem test -t rfc2544_throughput -i eth0 --peer <reflector-host>
 | `stem reflect -i <iface>` | Start the reflector in the running daemon |
 | `stem test -t <type> -i <iface> --peer <host>` | Run one or more tests (comma-separated) in the running daemon against the reflector at `<host>` |
 | `stem web -p <port>` | Start the web UI + REST API |
+| `stem service install\|start\|stop\|status\|uninstall` | Manage the Windows service that runs the web daemon (Windows only) |
 | `stem license --status` | Show license tier + activation state |
 | `stem list-tests` | Catalogue all supported tests, grouped by module |
 | `stem help modules` | Module + test type reference |

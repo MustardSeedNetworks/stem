@@ -154,6 +154,19 @@ func licenseViaDaemon(ctx context.Context, client *daemonclient.Client, flags li
 // daemon that was found but could not be reached — writing under a live
 // daemon is the defect, not the fallback.
 func licenseOffline(flags licenseCmdFlags) error {
+	writes := flags.activate != "" || flags.trial || flags.deactivate
+	if writes {
+		// The CLI is the writer here, and the manager writes by path. Before it
+		// touches the file the process becomes the data directory's owner (the
+		// service account), so what it writes is the service's to read and a
+		// link planted in the directory can reach nothing the service account
+		// could not already; a planted link at the license path is refused.
+		if err := prepareLicenseWrite(license.DefaultLicensePath(), daemonconn.ServiceDataDir()); err != nil {
+			_, _ = fmt.Fprintf(os.Stdout, "Error: %v\n", err)
+			return withExitCode(exitError, err)
+		}
+	}
+
 	mgr, err := license.Load()
 	if err != nil {
 		_, _ = fmt.Fprintf(os.Stdout, "Error: Failed to initialize license manager: %v\n", err)
@@ -167,23 +180,26 @@ func licenseOffline(flags licenseCmdFlags) error {
 			license.DefaultLicensePath(), loadStatus)
 	}
 
+	if !writes {
+		displayLicenseStatus(api.LicenseStatusOf(mgr))
+		return nil
+	}
+	return licenseWrite(mgr, flags)
+}
+
+// licenseWrite performs the activation, trial or deactivation the operator asked for.
+func licenseWrite(mgr *license.Manager, flags licenseCmdFlags) error {
 	switch {
 	case flags.activate != "":
 		return reportActivation(*mgr.Activate(flags.activate))
-
 	case flags.trial:
 		return reportActivation(*mgr.StartTrial())
-
-	case flags.deactivate:
+	default:
 		if deactErr := mgr.Deactivate(); deactErr != nil {
 			_, _ = fmt.Fprintf(os.Stdout, "Error: Failed to deactivate: %v\n", deactErr)
 			return deactErr
 		}
 		_, _ = fmt.Fprintln(os.Stdout, "License deactivated successfully")
-		return nil
-
-	default:
-		displayLicenseStatus(api.LicenseStatusOf(mgr))
 		return nil
 	}
 }

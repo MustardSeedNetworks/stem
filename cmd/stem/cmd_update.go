@@ -226,8 +226,8 @@ func daemonHealth(dataDir string) func(context.Context, string) error {
 	}
 }
 
-// binaryHealth runs the installed binary's version command. Windows ships no
-// service, so the binary itself is all there is to check.
+// binaryHealth runs the installed binary's version command. The Windows update
+// does not restart the service, so the binary itself is all there is to check.
 func binaryHealth(exe string) func(context.Context, string) error {
 	return func(ctx context.Context, want string) error {
 		out, err := update.ExecRunner(ctx, exe, "version")

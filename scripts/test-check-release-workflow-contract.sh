@@ -264,6 +264,14 @@ assert_config_rejected "goreleaser-publishes" GORELEASER_CONFIG_PATH \
   '  draft: true' \
   '  draft: false'
 
+# The Windows zip stops carrying the installer, so nothing can register the service.
+assert_config_rejected "windows-archive-without-installer" GORELEASER_CONFIG_PATH \
+  .goreleaser.yml \
+  '      - src: deploy/windows/install.ps1
+        dst: install.ps1
+' \
+  ''
+
 # And the guard must still accept the real workflow — a checker that rejects
 # everything would pass every case above.
 if ! "$checker" >/dev/null 2>&1; then
