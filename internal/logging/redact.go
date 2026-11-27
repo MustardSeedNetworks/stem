@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 )
 
@@ -113,44 +114,34 @@ const (
 	decimalBase   = 10
 )
 
-// issuer is a card network's numbering: the leading digits in [lo, hi]
-// (prefixLen digits) and the lengths it issues. Lengths are kept as ranges, a
-// little wider than the networks issue, so an ambiguous window is redacted.
-// There is no row for a leading 1: no network issues it, which is also why a
-// unix timestamp (1.7e12 ms, 1.7e15 us, 1.7e18 ns) never reads as a card.
-type issuer struct {
-	prefixLen, lo, hi, minLen, maxLen int
-}
+// Unix time at 2000-01-01 and at 2^31 seconds (2038-01-19), in seconds. A bare
+// digit string is read as a timestamp when its length is 10 (seconds), 13
+// (milliseconds), 16 (microseconds) or 19 (nanoseconds) and the value lands in
+// that span. The upper bound is not 2100 on purpose: past about 2.2e9 seconds
+// the scaled values start to overlap real card ranges (Mir 2200, Mastercard
+// 2221, JCB 35, Visa 4), so a wider span would exempt unseparated cards.
+const (
+	epochLowSeconds  = 946_684_800
+	epochHighSeconds = 2_147_483_648
+	epochMillis      = 1_000
+)
 
-func issuers() []issuer {
-	return []issuer{
-		{1, 4, 4, 13, 19},       // Visa
-		{2, 51, 55, 16, 16},     // Mastercard
-		{4, 2221, 2720, 16, 16}, // Mastercard 2-series
-		{2, 34, 34, 15, 15},     // American Express
-		{2, 37, 37, 15, 15},     // American Express
-		{4, 6011, 6011, 16, 19}, // Discover
-		{2, 65, 65, 16, 19},     // Discover
-		{3, 644, 649, 16, 19},   // Discover
-		{2, 35, 35, 16, 19},     // JCB
-		{2, 30, 30, 14, 19},     // Diners Club
-		{2, 36, 36, 14, 19},     // Diners Club
-		{2, 38, 39, 14, 19},     // Diners Club
-		{2, 62, 62, 16, 19},     // UnionPay
-		{2, 50, 50, 12, 19},     // Maestro
-		{2, 56, 58, 12, 19},     // Maestro
-		{4, 6304, 6304, 12, 19}, // Maestro
-		{4, 6759, 6759, 12, 19}, // Maestro
-		{4, 6761, 6763, 12, 19}, // Maestro
-	}
+// epochScales maps a digit count to the sub-second units per second.
+func epochScales() map[int]uint64 {
+	const micros, nanos = epochMillis * epochMillis, epochMillis * epochMillis * epochMillis
+	return map[int]uint64{10: 1, 13: epochMillis, 16: micros, 19: nanos}
 }
 
 // isCardNumber reports whether a maximal digit run contains a payment card
-// number: any window of 13-19 consecutive digits that has an issuer prefix and
-// a valid Luhn checksum. Every window is tried, so digits adjacent to a card (a
-// year, an ID prefix) cannot hide it, and the whole run is redacted when one
-// window qualifies. Luhn alone passes one random run in ten; the issuer prefix
-// is what keeps timestamps and most run IDs readable.
+// number: any window of 13-19 consecutive digits with a valid Luhn checksum.
+// Every window is tried, so digits adjacent to a card (a year, an ID prefix)
+// cannot hide it, and the whole run is redacted when one window passes.
+//
+// The only exemption is for the run as a whole: one unseparated digit string
+// that is a plausible timestamp (see epochScales) and has no Luhn-valid window
+// shorter than itself. Luhn alone passes one random run in ten, so without it
+// about one log timestamp in ten would be redacted. A shorter window inside
+// an epoch-shaped run is never exempt, so a card cannot hide behind a prefix.
 func isCardNumber(run string) bool {
 	digits := make([]int, 0, len(run))
 	for _, r := range run {
@@ -158,30 +149,30 @@ func isCardNumber(run string) bool {
 			digits = append(digits, int(r-'0'))
 		}
 	}
-	for size := cardMinDigits; size <= min(cardMaxDigits, len(digits)); size++ {
+	for size := cardMinDigits; size < min(cardMaxDigits+1, len(digits)); size++ {
 		for start := 0; start+size <= len(digits); start++ {
-			if w := digits[start : start+size]; hasIssuerPrefix(w) && luhnValid(w) {
+			if luhnValid(digits[start : start+size]) {
 				return true
 			}
 		}
 	}
-	return false
+	if len(digits) < cardMinDigits || len(digits) > cardMaxDigits || !luhnValid(digits) {
+		return false
+	}
+	return len(digits) != len(run) || !isPlausibleEpoch(run)
 }
 
-func hasIssuerPrefix(window []int) bool {
-	for _, is := range issuers() {
-		if len(window) < is.minLen || len(window) > is.maxLen {
-			continue
-		}
-		prefix := 0
-		for _, d := range window[:is.prefixLen] {
-			prefix = prefix*decimalBase + d
-		}
-		if prefix >= is.lo && prefix <= is.hi {
-			return true
-		}
+func isPlausibleEpoch(run string) bool {
+	scale, ok := epochScales()[len(run)]
+	if !ok {
+		return false
 	}
-	return false
+	value, err := strconv.ParseUint(run, 10, 64)
+	if err != nil {
+		return false
+	}
+	seconds := value / scale
+	return seconds >= epochLowSeconds && seconds < epochHighSeconds
 }
 
 func luhnValid(digits []int) bool {
