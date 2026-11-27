@@ -28,6 +28,7 @@ import { useConnectionStatus } from './hooks/useConnectionStatus';
 import { useNavGroups } from './navGroups';
 import { type PageConfig, usePages } from './pageRegistry';
 import { documentTitle } from './shared/documentTitle';
+import type { RailStatus } from './shared/RailFooter';
 import { useRecordTestResult } from './stores/history-store';
 import { useShellStore } from './stores/shell-store';
 import { useTestStore } from './stores/test-store';
@@ -37,7 +38,7 @@ import { NotFoundPanel } from './ui/NotFoundPanel';
 import { PageActionsSlotContext } from './ui/PageActions';
 import { PageLoader } from './ui/PageLoader';
 import { RoutedPageHeader } from './ui/RoutedPageHeader';
-import { type RailStatus, SidebarLayout } from './ui/Sidebar';
+import { SidebarLayout } from './ui/Sidebar';
 import { routeForPathname, useOpenHelp } from './useOpenHelp';
 
 const HelpDrawer = lazy(() =>

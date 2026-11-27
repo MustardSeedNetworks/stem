@@ -33,6 +33,8 @@
   "status": {
     "connected": "Connected",
     "disconnected": "Disconnected",
+    "connectedDetail": "The stem service is reachable and healthy.",
+    "disconnectedDetail": "The stem service cannot be reached.",
     "connecting": "Connecting...",
     "error": "Error",
     "loading": "Loading...",

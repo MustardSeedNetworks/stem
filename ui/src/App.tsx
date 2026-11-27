@@ -183,6 +183,7 @@ function AppContent(): ReactElement {
             status={{
               state: exec.connected ? 'connected' : 'disconnected',
               label: exec.connected ? t('status.connected') : t('status.disconnected'),
+              detail: exec.connected ? t('status.connectedDetail') : t('status.disconnectedDetail'),
             }}
             isDark={isDark}
             onToggleTheme={toggleTheme}

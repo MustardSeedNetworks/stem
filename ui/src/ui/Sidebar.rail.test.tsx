@@ -26,7 +26,11 @@ function renderRail(overrides: Partial<Parameters<typeof SidebarLayout>[0]> = {}
     <MemoryRouter initialEntries={[path]}>
       <SidebarLayout
         groups={[]}
-        status={{ state: 'connected', label: i18n.t('common:status.connected') }}
+        status={{
+          state: 'connected',
+          label: i18n.t('common:status.connected'),
+          detail: i18n.t('common:status.connectedDetail'),
+        }}
         onToggleTheme={noop}
         isDark={false}
         onOpenHelp={noop}
@@ -56,7 +60,11 @@ describe('the rail', () => {
       <MemoryRouter>
         <SidebarLayout
           groups={[]}
-          status={{ state: 'disconnected', label: i18n.t('common:status.disconnected') }}
+          status={{
+            state: 'disconnected',
+            label: i18n.t('common:status.disconnected'),
+            detail: i18n.t('common:status.disconnectedDetail'),
+          }}
           onToggleTheme={noop}
           isDark={false}
           onOpenHelp={noop}
