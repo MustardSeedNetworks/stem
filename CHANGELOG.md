@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.35.3](https://github.com/MustardSeedNetworks/stem/compare/v0.35.2...v0.35.3) (2026-11-27)
+
+
+### Bug Fixes
+
+* **logging:** validate Luhn before redacting card-number digit runs ([#2146](https://github.com/MustardSeedNetworks/stem/issues/2146)) ([db80b3e](https://github.com/MustardSeedNetworks/stem/commit/db80b3e9271a9eb1c0f5f3c046ae74563552f34e)), closes [#2144](https://github.com/MustardSeedNetworks/stem/issues/2144)
+
+
+### Continuous Integration
+
+* **dataplane:** size the apt install to the download and skip recommends ([#2147](https://github.com/MustardSeedNetworks/stem/issues/2147)) ([677b5a1](https://github.com/MustardSeedNetworks/stem/commit/677b5a1e8b9fd86f49027185916bd1613e75d0d3)), closes [#2145](https://github.com/MustardSeedNetworks/stem/issues/2145)
+
+
+### Miscellaneous
+
+* **deps:** update dependency undici to v8.13.0 ([#2142](https://github.com/MustardSeedNetworks/stem/issues/2142)) ([c5eb005](https://github.com/MustardSeedNetworks/stem/commit/c5eb00599e5aac596782f1a8f2d098cd04b885fc))
+
 ## [0.35.2](https://github.com/MustardSeedNetworks/stem/compare/v0.35.1...v0.35.2) (2026-11-27)
 
 
