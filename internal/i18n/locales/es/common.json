@@ -33,6 +33,8 @@
   "status": {
     "connected": "Conectado",
     "disconnected": "Desconectado",
+    "connectedDetail": "El servicio de stem responde y está en buen estado.",
+    "disconnectedDetail": "No se puede acceder al servicio de stem.",
     "connecting": "Conectando...",
     "error": "Error",
     "loading": "Cargando...",

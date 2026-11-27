@@ -917,7 +917,7 @@ jobs:
   # reads the pinned commit instead of .github@main (a canonical change there
   # reaches this repo only when this pin moves).
   ci-conformance:
-    uses: MustardSeedNetworks/.github/.github/workflows/ci-conformance.yml@8c1c503ab53a927a0a5980f01f52a09fae9825a1 # .github#304, untagged
+    uses: MustardSeedNetworks/.github/.github/workflows/ci-conformance.yml@9ccd017950f5467977f1d7ab17e3f1eb8cc85741 # .github#310, untagged
     permissions:
       contents: read
       id-token: write
@@ -933,7 +933,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: MustardSeedNetworks/.github/.github/actions/ui-shared-verify@8c1c503ab53a927a0a5980f01f52a09fae9825a1 # .github#304, untagged
+      - uses: MustardSeedNetworks/.github/.github/actions/ui-shared-verify@9ccd017950f5467977f1d7ab17e3f1eb8cc85741 # .github#310, untagged
 
   # ============================================================================
   # Quality

@@ -17,22 +17,12 @@ import { useLocation, useNavigate } from 'react-router';
 import msnLogo from '../assets/msn-logo.svg';
 import { iconSizes } from '../constants/sizes';
 import { accessibleNameIncluding } from '../lib/accessibleName';
-import { RailFooter } from '../shared/RailFooter';
+import { RailFooter, type RailStatus } from '../shared/RailFooter';
 import type { RailProductSlotProps } from '../shared/RailProductSlot';
 import { Tooltip } from '../shared/Tooltip';
 import { prefetchRoute } from '../utils/prefetch';
 import { safeGetItem, safeSetItem } from '../utils/storage';
 import { SidebarHeader } from './SidebarChrome';
-
-/**
- * The connection state the rail's status pill reports. It comes from the same
- * query the rest of the shell reads, so the rail never says "connected" on a
- * dead socket (UI-STEM-9); the label rides the pill, so it is not colour alone.
- */
-export interface RailStatus {
-  state: 'connected' | 'disconnected';
-  label: string;
-}
 
 export interface SidebarNavItem {
   path: string;
@@ -193,14 +183,7 @@ function SidebarBody({
       <RailFooter
         collapsed={collapsed}
         variant={variant}
-        {...(status
-          ? {
-              status: {
-                tone: status.state === 'connected' ? ('success' as const) : ('error' as const),
-                label: status.label,
-              },
-            }
-          : {})}
+        {...(status ? { status } : {})}
         {...(productSlot ? { productSlot } : {})}
         help={{ label: t('labels.help'), onClick: onOpenHelp }}
         settings={{ label: t('labels.settings'), onClick: onOpenSettings }}
