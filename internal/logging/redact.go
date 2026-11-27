@@ -90,16 +90,16 @@ func redactionHeaderSet() map[string]bool {
 	}
 }
 
-// cardCandidate matches a 13-19 digit run, contiguous or in groups of four
-// separated by a space or dash. It only nominates; isCardNumber decides.
-var cardCandidate = regexp.MustCompile(`\b(?:\d{4}[ \-]?){3}\d{1,7}\b|\b\d{13,19}\b`)
+// digitRun matches a maximal run of digits joined by single spaces, tabs or
+// dashes. isCardNumber decides whether the run holds a card number.
+var digitRun = regexp.MustCompile(`\d(?:[ \t\-]?\d)*`)
 
 // RedactString removes sensitive data from a string.
 func RedactString(s string) string {
 	for _, pattern := range redactionPatterns() {
 		s = pattern.ReplaceAllString(s, RedactedPlaceholder)
 	}
-	return cardCandidate.ReplaceAllStringFunc(s, func(m string) string {
+	return digitRun.ReplaceAllStringFunc(s, func(m string) string {
 		if isCardNumber(m) {
 			return RedactedPlaceholder
 		}
@@ -119,31 +119,47 @@ const (
 	decimalBase   = 10
 )
 
-// isCardNumber reports whether a candidate run is a payment card number: a
-// valid Luhn checksum and not shaped like an epoch timestamp. Luhn alone still
-// passes one random run in ten, so timestamps are excluded by value: no card
-// number falls in those ranges, because the only 13 digit cards are Visa (leading 4), and
-// no 16 or 19 digit card starts with 1.
-func isCardNumber(candidate string) bool {
-	digits := make([]int, 0, len(candidate))
-	for _, r := range candidate {
+// isCardNumber reports whether a maximal digit run contains a payment card
+// number: any window of 13-19 consecutive digits with a valid Luhn checksum.
+// Every window is tried, so digits adjacent to a card (a year, an ID prefix)
+// cannot hide it, and the whole run is redacted when one window passes.
+//
+// The one exemption is a run that is exactly one unseparated epoch-shaped
+// value. Luhn alone passes one random run in ten, so a unix timestamp in
+// milliseconds, microseconds or nanoseconds would be redacted one time in ten;
+// no card number has those shapes (the only 13 digit cards are Visa, leading
+// 4, and no 16 or 19 digit card starts with 1), so nothing is lost.
+func isCardNumber(run string) bool {
+	digits := make([]int, 0, len(run))
+	for _, r := range run {
 		if r >= '0' && r <= '9' {
 			digits = append(digits, int(r-'0'))
 		}
 	}
-	if len(digits) < cardMinDigits || len(digits) > cardMaxDigits || !luhnValid(digits) {
+	if len(digits) < cardMinDigits {
 		return false
 	}
-	if len(digits) != len(candidate) {
-		return true
+	if len(digits) == len(run) && isEpochShaped(digits) {
+		return false
 	}
+	for size := cardMinDigits; size <= min(cardMaxDigits, len(digits)); size++ {
+		for start := 0; start+size <= len(digits); start++ {
+			if luhnValid(digits[start : start+size]) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func isEpochShaped(digits []int) bool {
 	switch len(digits) {
 	case epochMsDigits:
-		return digits[0] == visaPrefix
+		return digits[0] != visaPrefix
 	case epochUsDigits, epochNsDigits:
-		return digits[0] != 1
+		return digits[0] == 1
 	}
-	return true
+	return false
 }
 
 func luhnValid(digits []int) bool {
