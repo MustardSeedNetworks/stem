@@ -173,7 +173,7 @@ func runUpdate(sourceSpec string, scheduled bool) error {
 		return err
 	}
 	health := daemonHealth(dataDir)
-	if runtime.GOOS == "windows" {
+	if runtime.GOOS == "windows" && !update.HasService(method) {
 		health = binaryHealth(exe)
 	}
 
@@ -226,8 +226,9 @@ func daemonHealth(dataDir string) func(context.Context, string) error {
 	}
 }
 
-// binaryHealth runs the installed binary's version command. The Windows update
-// does not restart the service, so the binary itself is all there is to check.
+// binaryHealth runs the installed binary's version command. A Windows install
+// with no service has no daemon to ask, so the binary itself is all there is
+// to check.
 func binaryHealth(exe string) func(context.Context, string) error {
 	return func(ctx context.Context, want string) error {
 		out, err := update.ExecRunner(ctx, exe, "version")

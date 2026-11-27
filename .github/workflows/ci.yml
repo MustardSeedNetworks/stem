@@ -104,6 +104,7 @@ jobs:
         windows_install:
           - 'deploy/windows/**'
           - 'cmd/stem/cmd_service*'
+          - 'internal/update/**'
           - '.goreleaser.yml'
           - '.github/workflows/ci.yml'
         # Everything that implements a CI gate, not just the workflow that
@@ -205,6 +206,7 @@ jobs:
         go test ./internal/truststore/ -run 'ValidateCertFile' -v
         go test ./internal/authstate
         go test ./cmd/stem -run 'TestWindowsService|TestServiceCmd' -v
+        go test ./internal/update -run 'TestWindowsService' -v
       pre-command: |
         go mod download
         go mod verify
@@ -1453,6 +1455,8 @@ jobs:
         run: |
           go test ./cmd/stem -run 'TestWindowsService|TestServiceCmd' -v
           if ($LASTEXITCODE -ne 0) { throw "windows service tests failed" }
+          go test ./internal/update -run 'TestWindowsService' -v
+          if ($LASTEXITCODE -ne 0) { throw "windows update service tests failed" }
 
       # Same ldflags contract as the Makefile (Version, Commit, BuildTime,
       # UIBuildHash) and the same UI hash: md5 of the sorted "<md5>  <path>"

@@ -82,7 +82,7 @@ func Detect(ctx context.Context, run Runner, goos, exe string) (Method, error) {
 		}
 		return darwinMethod{run: run, exe: exe}, nil
 	case "windows":
-		return windowsMethod{exe: exe}, nil
+		return windowsMethod{exe: exe, service: newServiceController()}, nil
 	default:
 		return nil, fmt.Errorf("%w: no install method for %s", ErrUnsupportedInstall, goos)
 	}
@@ -207,11 +207,23 @@ func (m darwinMethod) Restarts(ctx context.Context) (int, error) {
 	return 0, errors.New("launchctl print reported no run count for " + launchdTarget)
 }
 
-// windowsMethod is the release zip. It does not stop or restart the Windows
-// service (stem service), so a service install keeps running the old binary
-// until it is restarted; a running executable can be renamed but not
-// overwritten, so the old one is moved aside first.
-type windowsMethod struct{ exe string }
+// serviceController stops and starts the Windows service around the swap.
+// The service is optional: `stem service install` registers it, and a bare
+// zip install has none.
+type serviceController interface {
+	Installed() bool
+	Stop(ctx context.Context) error
+	Start(ctx context.Context) error
+}
+
+// windowsMethod is the release zip. A running executable can be renamed but
+// not overwritten, so the old one is moved aside first. When the Stem service
+// is installed it is stopped before the swap and started after it; without
+// one there is nothing to restart.
+type windowsMethod struct {
+	exe     string
+	service serviceController
+}
 
 func (windowsMethod) Name() string { return "windows" }
 
@@ -227,9 +239,34 @@ func (m windowsMethod) Reapply(ctx context.Context, path string) error {
 	return m.Apply(ctx, path)
 }
 
-func (windowsMethod) Stop(context.Context) error            { return nil }
-func (windowsMethod) Start(context.Context) error           { return nil }
+// HasService reports whether the install has a service to restart, which is
+// what decides that the update is verified through the daemon's API.
+func (m windowsMethod) HasService() bool { return m.service != nil && m.service.Installed() }
+
+func (m windowsMethod) Stop(ctx context.Context) error {
+	if m.service == nil {
+		return nil
+	}
+	return m.service.Stop(ctx)
+}
+
+func (m windowsMethod) Start(ctx context.Context) error {
+	if m.service == nil {
+		return nil
+	}
+	return m.service.Start(ctx)
+}
+
+// Restarts is zero: the Windows service manager keeps no restart counter, so a
+// crashing new version is caught by the health check instead.
 func (windowsMethod) Restarts(context.Context) (int, error) { return 0, nil }
+
+// HasService reports whether method has an installed service that the update
+// restarts.
+func HasService(method Method) bool {
+	m, ok := method.(interface{ HasService() bool })
+	return ok && m.HasService()
+}
 
 // replaceBinary writes the new executable beside exe and renames it into
 // place, so exe is never half-written. The previous file is moved to
