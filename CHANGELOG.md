@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.37.0](https://github.com/MustardSeedNetworks/stem/compare/v0.36.0...v0.37.0) (2026-11-27)
+
+
+### Features
+
+* add windows installer and service ([#2087](https://github.com/MustardSeedNetworks/stem/issues/2087)) ([7fc0b76](https://github.com/MustardSeedNetworks/stem/commit/7fc0b76e2224e7893a6b9955c19a288f4f8651dd)), closes [#2085](https://github.com/MustardSeedNetworks/stem/issues/2085)
+
+
+### Code Refactoring
+
+* **auth:** hash and verify passwords with foundation pkg/password ([#1854](https://github.com/MustardSeedNetworks/stem/issues/1854)) ([4164b48](https://github.com/MustardSeedNetworks/stem/commit/4164b48fa23d8971f752f7a16639d64e4d241447)), closes [#1827](https://github.com/MustardSeedNetworks/stem/issues/1827)
+
 ## [0.36.0](https://github.com/MustardSeedNetworks/stem/compare/v0.35.3...v0.36.0) (2026-11-27)
 
 
