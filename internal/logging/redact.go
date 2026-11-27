@@ -107,28 +107,50 @@ func RedactString(s string) string {
 	})
 }
 
-// Card numbers are 13-19 digits; the epoch scales below are the current unix
-// time in milliseconds, microseconds and nanoseconds.
 const (
 	cardMinDigits = 13
 	cardMaxDigits = 19
-	epochMsDigits = 13
-	epochUsDigits = 16
-	epochNsDigits = 19
-	visaPrefix    = 4
 	decimalBase   = 10
 )
 
+// issuer is a card network's numbering: the leading digits in [lo, hi]
+// (prefixLen digits) and the lengths it issues. Lengths are kept as ranges, a
+// little wider than the networks issue, so an ambiguous window is redacted.
+// There is no row for a leading 1: no network issues it, which is also why a
+// unix timestamp (1.7e12 ms, 1.7e15 us, 1.7e18 ns) never reads as a card.
+type issuer struct {
+	prefixLen, lo, hi, minLen, maxLen int
+}
+
+func issuers() []issuer {
+	return []issuer{
+		{1, 4, 4, 13, 19},       // Visa
+		{2, 51, 55, 16, 16},     // Mastercard
+		{4, 2221, 2720, 16, 16}, // Mastercard 2-series
+		{2, 34, 34, 15, 15},     // American Express
+		{2, 37, 37, 15, 15},     // American Express
+		{4, 6011, 6011, 16, 19}, // Discover
+		{2, 65, 65, 16, 19},     // Discover
+		{3, 644, 649, 16, 19},   // Discover
+		{2, 35, 35, 16, 19},     // JCB
+		{2, 30, 30, 14, 19},     // Diners Club
+		{2, 36, 36, 14, 19},     // Diners Club
+		{2, 38, 39, 14, 19},     // Diners Club
+		{2, 62, 62, 16, 19},     // UnionPay
+		{2, 50, 50, 12, 19},     // Maestro
+		{2, 56, 58, 12, 19},     // Maestro
+		{4, 6304, 6304, 12, 19}, // Maestro
+		{4, 6759, 6759, 12, 19}, // Maestro
+		{4, 6761, 6763, 12, 19}, // Maestro
+	}
+}
+
 // isCardNumber reports whether a maximal digit run contains a payment card
-// number: any window of 13-19 consecutive digits with a valid Luhn checksum.
-// Every window is tried, so digits adjacent to a card (a year, an ID prefix)
-// cannot hide it, and the whole run is redacted when one window passes.
-//
-// The one exemption is a run that is exactly one unseparated epoch-shaped
-// value. Luhn alone passes one random run in ten, so a unix timestamp in
-// milliseconds, microseconds or nanoseconds would be redacted one time in ten;
-// no card number has those shapes (the only 13 digit cards are Visa, leading
-// 4, and no 16 or 19 digit card starts with 1), so nothing is lost.
+// number: any window of 13-19 consecutive digits that has an issuer prefix and
+// a valid Luhn checksum. Every window is tried, so digits adjacent to a card (a
+// year, an ID prefix) cannot hide it, and the whole run is redacted when one
+// window qualifies. Luhn alone passes one random run in ten; the issuer prefix
+// is what keeps timestamps and most run IDs readable.
 func isCardNumber(run string) bool {
 	digits := make([]int, 0, len(run))
 	for _, r := range run {
@@ -136,15 +158,9 @@ func isCardNumber(run string) bool {
 			digits = append(digits, int(r-'0'))
 		}
 	}
-	if len(digits) < cardMinDigits {
-		return false
-	}
-	if len(digits) == len(run) && isEpochShaped(digits) {
-		return false
-	}
 	for size := cardMinDigits; size <= min(cardMaxDigits, len(digits)); size++ {
 		for start := 0; start+size <= len(digits); start++ {
-			if luhnValid(digits[start : start+size]) {
+			if w := digits[start : start+size]; hasIssuerPrefix(w) && luhnValid(w) {
 				return true
 			}
 		}
@@ -152,12 +168,18 @@ func isCardNumber(run string) bool {
 	return false
 }
 
-func isEpochShaped(digits []int) bool {
-	switch len(digits) {
-	case epochMsDigits:
-		return digits[0] != visaPrefix
-	case epochUsDigits, epochNsDigits:
-		return digits[0] == 1
+func hasIssuerPrefix(window []int) bool {
+	for _, is := range issuers() {
+		if len(window) < is.minLen || len(window) > is.maxLen {
+			continue
+		}
+		prefix := 0
+		for _, d := range window[:is.prefixLen] {
+			prefix = prefix*decimalBase + d
+		}
+		if prefix >= is.lo && prefix <= is.hi {
+			return true
+		}
 	}
 	return false
 }

@@ -1478,6 +1478,8 @@ func TestRedactStringCardNumbers(t *testing.T) {
 		{"amex 15 digits", "amex 378282246310005", "amex [REDACTED]"},
 		{"visa 13 digits", "old 4222222222222", "old [REDACTED]"},
 		{"discover 19 digits", "pan 6011000000000000001", "pan [REDACTED]"},
+		{"epoch-shaped prefix does not hide a card", "1378282246310005", "[REDACTED]"},
+		{"leading 1 and zeros do not hide a card", "1004111111111111111", "[REDACTED]"},
 		{"year prefix does not hide a card", "2026 4111 1111 1111 1111", "[REDACTED]"},
 		{"tab separated", "pan 4111\t1111\t1111\t1111 x", "pan [REDACTED] x"},
 		{"adjacent digits before", "id 94111111111111111", "id [REDACTED]"},
