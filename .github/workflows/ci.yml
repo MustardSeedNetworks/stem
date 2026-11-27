@@ -104,6 +104,7 @@ jobs:
         windows_install:
           - 'deploy/windows/**'
           - 'cmd/stem/cmd_service*'
+          - 'internal/update/**'
           - '.goreleaser.yml'
           - '.github/workflows/ci.yml'
         # Everything that implements a CI gate, not just the workflow that
