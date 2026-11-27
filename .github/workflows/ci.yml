@@ -1448,6 +1448,12 @@ jobs:
         export STEM_AUTH_PASSWORD=admin
         export STEM_API_RATE_LIMIT=5000
         export STEM_AUTH_RATE_LIMIT=200
+        # foundation 0.15 resolves a relative certs dir and checks every
+        # ancestor's owner; /__w in the Playwright container is owned by the
+        # runner uid, so the default ./certs is refused. A private mktemp dir
+        # (0700, under a root-owned /tmp) is trusted.
+        STEM_TLS_CERTS_DIR=$(mktemp -d /tmp/stem-certs.XXXXXX)
+        export STEM_TLS_CERTS_DIR
         nohup ./bin/stem web -p 8444 > server.log 2>&1 &
         echo "Waiting for server to start..."
         i=1
