@@ -3,8 +3,8 @@
 package auth_test
 
 import (
-	"context"
 	"errors"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -181,22 +181,16 @@ func TestAuthenticate_FoundationPassword(t *testing.T) {
 	}
 }
 
-func TestUpdatePasswordHash(t *testing.T) {
+func TestReplaceCredential(t *testing.T) {
 	t.Parallel()
 
-	manager, err := auth.NewManager(
-		"test-secret-key-minimum-32chars!",
-		0,
-		"admin",
-		"originalPassword123",
-	)
-	if err != nil {
-		t.Fatalf("NewManager failed: %v", err)
-	}
+	manager := newStoreManager(t, filepath.Join(t.TempDir(), "auth"), "admin", "originalPassword123")
 
 	newHash := "$argon2id$v=19$m=8192,t=1,p=1$YWJjZGVmZ2hpamtsbW5vcA$" +
 		"aGFzaC1zdHViLWZvci10ZXN0aW5nLW9ubHkAAAAAAA"
-	manager.UpdatePasswordHash(context.Background(), newHash)
+	if err := manager.ReplaceCredential(newHash, false); err != nil {
+		t.Fatalf("ReplaceCredential() error: %v", err)
+	}
 
 	if got := manager.GetPasswordHash(); got != newHash {
 		t.Errorf("GetPasswordHash() = %q, want %q", got, newHash)

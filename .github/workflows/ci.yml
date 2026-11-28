@@ -204,7 +204,7 @@ jobs:
       darwin-test-command: go test -race ./internal/truststore/...
       windows-test-command: |
         go test ./internal/truststore/ -run 'ValidateCertFile' -v
-        go test ./internal/authstate
+        go test ./internal/auth -run 'TestStore_'
         go test ./cmd/stem -run 'TestWindowsService|TestServiceCmd' -v
         go test ./internal/update -run 'TestWindowsService' -v
       pre-command: |

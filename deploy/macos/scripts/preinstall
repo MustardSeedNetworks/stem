@@ -3,7 +3,7 @@
 # Pre-install script for The Stem macOS .pkg
 #
 # Stops a running service before the binary is replaced. Nothing else is
-# touched: stem.yaml, credentials.json, certs/, data/ and .daemon.json stay
+# touched: stem.yaml, auth/, certs/, data/ and .daemon.json stay
 # where they are.
 #
 

@@ -2,21 +2,10 @@
 
 package auth
 
-// TOTP state lives on Manager alongside the password hash. Stem ships
-// a single-user auth surface (env-driven STEM_AUTH_USERNAME /
-// STEM_AUTH_PASSWORD); the second-factor secret is held in memory and
-// is the operator's responsibility to back up out-of-band — same model
-// as the JWT secret and the rest of the bootstrap state.
-//
-// JUDGMENT CALL: storage. Stem currently has no key-derivation
-// infrastructure (Argon2id covers password hashes only, not secret
-// encryption). Persisting the TOTP
-// secret at rest in plain form would be a regression over the in-
-// memory model. Until a Wave-4 secret-management layer arrives, we
-// keep the secret in memory only and document that operators who
-// restart the binary must re-enroll. The JSON setup endpoint returns
-// the base32 secret to the UI so the user can re-add it to their
-// authenticator if needed — same UX as Google's recovery codes.
+// TOTP state lives on Manager alongside the password hash. A secret is
+// staged in memory while the operator enrols, and reaches the credential
+// store only once a code from it has been verified, so an abandoned
+// enrolment leaves nothing behind and a restart keeps an enabled factor.
 
 import (
 	"context"
@@ -25,6 +14,8 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+
+	"github.com/MustardSeedNetworks/foundation/pkg/credstore"
 )
 
 // TOTP/MFA errors exposed to the HTTP layer.
@@ -61,20 +52,21 @@ type totpState struct {
 	enabled bool
 }
 
-// SetTOTPSecret records a freshly generated TOTP secret without
-// enabling MFA. Used by /api/v1/auth/totp/setup — the secret is
-// staged so VerifyAndEnableTOTP can promote it to enabled once the
-// user proves they have configured their authenticator. The setup
-// flow is atomic: a second SetTOTPSecret call before
-// VerifyAndEnableTOTP overwrites the prior staged secret.
-func (m *Manager) SetTOTPSecret(secret string) {
+// SetTOTPSecret stages a freshly generated TOTP secret without enabling
+// MFA. Used by /api/v1/auth/totp/setup — the secret waits in memory so
+// VerifyAndEnableTOTP can promote it once the user proves they have
+// configured their authenticator. A second SetTOTPSecret call before
+// VerifyAndEnableTOTP overwrites the prior staged secret. Staging over an
+// enabled factor is refused with ErrTOTPAlreadyEnabled: it would otherwise
+// switch the second factor off for a caller who never presented a code.
+func (m *Manager) SetTOTPSecret(secret string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	if m.totp.enabled {
+		return ErrTOTPAlreadyEnabled
+	}
 	m.totp.secret = secret
-	// SetTOTPSecret only ever stages; enabling happens via the
-	// dedicated VerifyAndEnableTOTP path so the caller cannot
-	// accidentally enable MFA with an unverified secret.
-	m.totp.enabled = false
+	return nil
 }
 
 // GetTOTPSecret returns the currently staged-or-enabled TOTP secret.
@@ -105,11 +97,12 @@ func (m *Manager) TOTPEnabled() bool {
 // enabled. Returns ErrTOTPInvalidCode on a wrong code,
 // ErrTOTPEmptySecret if SetTOTPSecret was never called.
 //
-// This is the only path that flips `enabled` from false → true.
+// This is the only path that flips `enabled` from false → true, and the
+// secret is stored before it does: if the store refuses it, MFA stays off.
 func (m *Manager) VerifyAndEnableTOTP(code string) error {
-	m.mu.Lock()
+	m.mu.RLock()
 	secret := m.totp.secret
-	m.mu.Unlock()
+	m.mu.RUnlock()
 
 	if secret == "" {
 		return ErrTOTPEmptySecret
@@ -123,10 +116,10 @@ func (m *Manager) VerifyAndEnableTOTP(code string) error {
 		return ErrTOTPInvalidCode
 	}
 
-	m.mu.Lock()
-	m.totp.enabled = true
-	m.mu.Unlock()
-	return nil
+	return m.commit(func(a *credstore.Account) error {
+		a.TOTPSecret = secret
+		return nil
+	})
 }
 
 // VerifyTOTPCode checks a code against the active TOTP secret without
@@ -155,14 +148,13 @@ func (m *Manager) VerifyTOTPCode(code string) error {
 
 // DisableTOTP wipes the stored secret and clears the enabled flag.
 // Step-up checks (password + current code) happen in the HTTP layer
-// before this is called; the method itself does not re-authenticate
-// because there is no reasonable failure mode at this point — it is
-// the final mutation in the disable flow.
-func (m *Manager) DisableTOTP() {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	m.totp.secret = ""
-	m.totp.enabled = false
+// before this is called; the method itself does not re-authenticate.
+// The factor stays on if the store refuses the change.
+func (m *Manager) DisableTOTP() error {
+	return m.commit(func(a *credstore.Account) error {
+		a.TOTPSecret = ""
+		return nil
+	})
 }
 
 // GenerateMFAPendingToken issues a short-lived JWT signalling that a

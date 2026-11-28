@@ -3,12 +3,10 @@
 package auth
 
 import (
-	"context"
 	"crypto/rand"
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/MustardSeedNetworks/foundation/pkg/password"
 )
@@ -64,15 +62,6 @@ func ValidatePasswordStrength(plaintext string) error {
 		return ErrPasswordTooLong
 	}
 	return nil
-}
-
-// UpdatePasswordHash updates the stored password hash in the auth manager.
-// This is used during initial setup or password changes.
-func (m *Manager) UpdatePasswordHash(_ context.Context, newHash string) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	m.passwordHash = []byte(newHash)
-	m.lock = lockout{failures: 0, until: time.Time{}, inflight: m.lock.inflight}
 }
 
 // GetPasswordHash returns the current password hash (for config saving).

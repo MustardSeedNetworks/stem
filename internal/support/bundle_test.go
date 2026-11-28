@@ -39,9 +39,10 @@ func bundleDataDir(t *testing.T) string {
 	s := sentinels()
 	dir := t.TempDir()
 	writeTree(t, dir, map[string]string{
-		"credentials.json": `{"username":"` + s["administrator"] + `","passwordHash":"` + s["password hash"] + `"}`,
-		"reflector.json":   `{"interface":"eth0","profile":"netally"}`,
-		"update.json":      `{"automatic":true,"source":"https://deploy:` + s["update source"] + `@mirror.example/stem"}`,
+		"auth/credentials.sealed": "MSNCRED sealed " + s["administrator"] + " " + s["password hash"],
+		"auth/credential.key":     `{"version":1,"current":{"key":"` + s["private key"] + `"}}`,
+		"reflector.json":          `{"interface":"eth0","profile":"netally"}`,
+		"update.json":             `{"automatic":true,"source":"https://deploy:` + s["update source"] + `@mirror.example/stem"}`,
 		".daemon.json": `{"url":"https://127.0.0.1:8444","token":"` + s["descriptor"] + `","caFile":"` + filepath.Join(
 			dir,
 			"certs",
@@ -89,8 +90,6 @@ func TestBundleCarriesNoCredential(t *testing.T) {
 		"token=" + s["descriptor"],
 		"Authorization: Bearer " + s["descriptor"],
 		"jwt secret is " + s["environment"],
-		"admin " + s["administrator"] + " signed in",
-		"hash " + s["password hash"],
 		"licence " + s["licence file"],
 		"setup " + s["first-run token"] + " recovery " + s["recovery token"],
 		"mirror https://deploy:" + s["update source"] + "@mirror.example/stem",
@@ -122,7 +121,7 @@ func TestBundleCarriesNoCredential(t *testing.T) {
 
 	for _, want := range []string{
 		"manifest.json", "environment.txt", "status.json", "logs/stem.log",
-		"state/credentials.json", "state/reflector.json", "state/update.json", "state/daemon.json",
+		"state/reflector.json", "state/update.json", "state/daemon.json",
 	} {
 		if _, ok := files[want]; !ok {
 			t.Errorf("the bundle lacks %s; has %v", want, keys(files))
@@ -130,14 +129,12 @@ func TestBundleCarriesNoCredential(t *testing.T) {
 	}
 	for name := range files {
 		if strings.Contains(name, "setup") || strings.Contains(name, "recovery") || strings.Contains(name, "license") ||
-			strings.Contains(name, "certs") || strings.Contains(name, "stem.db") {
+			strings.Contains(name, "certs") || strings.Contains(name, "stem.db") || strings.Contains(name, "auth") {
 			t.Errorf("the bundle carries a file that is not on the allow-list: %s", name)
 		}
 	}
 
-	if !strings.Contains(files["state/credentials.json"], `"passwordHash"`) {
-		t.Error("the credential file lost its structure")
-	}
+	requireManifestLists(t, files["manifest.json"], "auth/credentials.sealed", "auth/credential.key")
 	if !strings.Contains(files["state/reflector.json"], "netally") {
 		t.Error("a settings file with no credential in it was altered")
 	}
@@ -201,21 +198,30 @@ func TestBundleSurvivesAnUnreadableDataDirectory(t *testing.T) {
 func TestBundleDoesNotCarryAFileThatIsNotJSON(t *testing.T) {
 	s := sentinels()
 	dir := t.TempDir()
-	writeTree(t, dir, map[string]string{"credentials.json": "password=" + s["password hash"]})
+	writeTree(t, dir, map[string]string{"reflector.json": "password=" + s["password hash"]})
 
 	var archive bytes.Buffer
 	if err := support.WriteBundle(support.BundleOptions{DataDir: dir, Now: restoreTime()}, &archive); err != nil {
 		t.Fatalf("WriteBundle: %v", err)
 	}
 	files := unpack(t, archive.Bytes())
-	if _, carried := files["state/credentials.json"]; carried {
-		t.Error("a credential file that does not parse was carried")
+	if _, carried := files["state/reflector.json"]; carried {
+		t.Error("a settings file that does not parse was carried")
 	}
 	if got := files["manifest.json"]; strings.Contains(got, s["password hash"]) ||
-		!strings.Contains(got, "credentials.json") {
+		!strings.Contains(got, "reflector.json") {
 		t.Errorf("manifest = %s", got)
 	}
 	_ = os.Remove(dir)
+}
+
+func requireManifestLists(t *testing.T, manifest string, names ...string) {
+	t.Helper()
+	for _, name := range names {
+		if !strings.Contains(manifest, name) {
+			t.Errorf("the manifest does not list %s by name and size", name)
+		}
+	}
 }
 
 func keys(m map[string]string) []string {

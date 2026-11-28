@@ -57,7 +57,7 @@ and notarized.
 It puts Stem in `/usr/local/stem` and starts it as the `com.stem` launchd
 daemon, with the daily update check as `com.stem.update`. Installing a newer
 `.pkg` over an existing install upgrades it and keeps `stem.yaml`,
-`credentials.json`, `certs/`, `data/` and `.daemon.json`.
+`auth/`, `certs/`, `data/` and `.daemon.json`.
 
 The `darwin-arm64` tarball is the alternative: unpack it (it has no top-level
 directory) and run `sudo ./install.sh`, `./upgrade.sh` or `./uninstall.sh`. See

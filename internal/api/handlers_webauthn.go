@@ -170,7 +170,12 @@ func (s *Server) handleWebAuthnRegisterFinish(w http.ResponseWriter, r *http.Req
 		WriteInvalidRequest(w, "Invalid WebAuthn registration response")
 		return
 	}
-	s.authManager.SavePasskey(*credential)
+	if saveErr := s.authManager.SavePasskey(*credential); saveErr != nil {
+		logging.AuditWebAuthnRegister(r.Context(), r, username,
+			logging.MFAResultFailure, "store refused the passkey")
+		s.writeMFAError(w, saveErr)
+		return
+	}
 	logging.AuditWebAuthnRegister(r.Context(), r, username,
 		logging.MFAResultSuccess, "registered")
 	writeJSON(w, map[string]any{
@@ -238,7 +243,15 @@ func (s *Server) handleWebAuthnLoginFinish(w http.ResponseWriter, r *http.Reques
 		WriteError(w, ErrAuthFailed)
 		return
 	}
-	s.authManager.SavePasskey(*credential)
+	// The updated counter must be durable before a session is issued: a
+	// counter that only reached memory would let a cloned authenticator replay
+	// after the next restart.
+	if saveErr := s.authManager.SavePasskey(*credential); saveErr != nil {
+		logging.AuditWebAuthnLogin(r.Context(), r, username,
+			logging.MFAResultFailure, "store refused the passkey counter")
+		s.writeMFAError(w, saveErr)
+		return
+	}
 
 	accessToken, err := s.authManager.IssueAccessToken(username)
 	if err != nil {

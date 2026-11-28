@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"path/filepath"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -116,9 +117,11 @@ func TestLockout_ResetClearsLock(t *testing.T) {
 
 func TestLockout_SettingAPasswordClearsLock(t *testing.T) {
 	t.Parallel()
-	m, _ := newLockoutManager(t)
+	m := newStoreManager(t, filepath.Join(t.TempDir(), "auth"), "admin", lockoutPassword)
 	failLogins(t, m, "admin", auth.MaxFailedLogins)
-	m.UpdatePasswordHash(t.Context(), m.GetPasswordHash())
+	if err := m.ReplaceCredential(m.GetPasswordHash(), false); err != nil {
+		t.Fatal(err)
+	}
 	if m.LoginLocked() {
 		t.Fatal("recovery or setup must clear the lock")
 	}

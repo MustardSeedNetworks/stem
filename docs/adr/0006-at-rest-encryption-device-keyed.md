@@ -1,6 +1,6 @@
 # ADR 0006: At-rest secret encryption is device-keyed; DEK/JWT separation is N/A
 
-**Status:** Accepted (2026-06-08); amended 2026-09-14
+**Status:** Accepted (2026-06-08); amended 2026-09-14 and 2026-11-28
 
 ## Context
 
@@ -69,3 +69,18 @@ live in `github.com/MustardSeedNetworks/foundation/pkg/license`
 (`activation.go`); stem's `internal/license/policy.go` supplies only the
 product policy (`EncryptionSalt`, product code, tiers). The file paths cited
 above no longer exist in this repo.
+
+## Amendment 2026-11-28: the administrator account has its own key
+
+The clause above anticipated this: stem now persists a secret that must survive
+a hardware change, the TOTP secret, along with the passkeys and the password
+hash. They live in foundation's `pkg/credstore` (foundation ADR 0005), sealed
+with AES-256-GCM under a CSPRNG key of its own in `<datadir>/auth/credential.key`
+(0600, or the securedir descriptor on Windows). That key is neither derived from
+the device fingerprint nor shared with the JWT secret, so ADR-0015's DEK/JWT
+separation holds here too, and a hardware change cannot lose a second factor.
+
+The licence activation file is unchanged: it stays keyed to the device
+fingerprint, for the reasons given above. Two keys with two properties is the
+intended state, not drift: the licence is bound to the machine on purpose, the
+account is not.

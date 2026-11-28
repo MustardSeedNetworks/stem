@@ -4,7 +4,7 @@
 #   sudo ./upgrade.sh [path/to/stem]
 #
 # Replaces the binary and the launchd plists only. stem.yaml,
-# credentials.json, certs/ and data/ are never touched. The previous binary
+# auth/, certs/ and data/ are never touched. The previous binary
 # is kept as stem.bak, and restored if the new one does not start.
 #
 set -euo pipefail

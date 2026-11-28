@@ -104,7 +104,10 @@ func (s *Server) handleTOTPSetup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.authManager.SetTOTPSecret(setup.Secret)
+	if stageErr := s.authManager.SetTOTPSecret(setup.Secret); stageErr != nil {
+		s.writeMFAError(w, stageErr)
+		return
+	}
 	logging.AuditMFASetup(r.Context(), r, username, logging.MFAFactorTOTP)
 
 	writeJSON(w, totpSetupResponse{
@@ -182,7 +185,12 @@ func (s *Server) handleTOTPDisable(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.authManager.DisableTOTP()
+	if disableErr := s.authManager.DisableTOTP(); disableErr != nil {
+		logging.AuditMFAAttempt(r.Context(), r, username, logging.MFAFactorTOTP,
+			logging.MFAResultFailure, "store refused the change")
+		s.writeMFAError(w, disableErr)
+		return
+	}
 	logging.AuditMFADisable(r.Context(), r, username, logging.MFAFactorTOTP)
 
 	writeJSON(w, map[string]any{

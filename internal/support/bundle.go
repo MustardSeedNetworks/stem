@@ -45,13 +45,14 @@ type BundleOptions struct {
 }
 
 // settingsFiles are the data-directory files carried in the bundle, redacted,
-// and whether every string in them is removed (the credential file) or only the
-// ones whose key names a credential. Anything not listed here is never read:
+// and whether every string in them is removed or only the ones whose key names
+// a credential. The credential store is not among them: it is sealed, so there
+// is nothing in it to redact, and it is listed by name and size only. Anything
+// not listed here is never read:
 // the bundle is built from an allow-list, so a file a later release adds to the
 // data directory stays out until someone decides what is safe in it.
 func settingsFiles() []settingsFile {
 	return []settingsFile{
-		{"credentials.json", true},
 		{"reflector.json", false},
 		{"update.json", false},
 		{".daemon.json", false},
@@ -73,7 +74,7 @@ func secretFiles() []string {
 func inventoryNames() []string {
 	return []string{
 		".config/stem/.license", ".daemon.json", ".setup-token", ".recovery", ".recovery-token",
-		"credentials.json", "reflector.json", "update.json",
+		"auth/credentials.sealed", "auth/credential.key", "reflector.json", "update.json",
 	}
 }
 

@@ -20,7 +20,7 @@ makes the dependency direction a hard CI gate.
 
 **Widened 2026-10-02 (#1522).** The rule is now `domain-inward-only` and also
 covers `internal/reflector/**`, the reflection subsystem `services/reflector`
-drives. Besides API, auth (which by prefix includes `internal/authstate`) and
+drives. Besides API, auth and
 license, it bars storage (`internal/database`, `internal/backup`), the CLI's
 daemon connection (`internal/daemonconn`) and cobra. `internal/daemonclient` is
 not listed because it imports `internal/api`, so a domain import of it is

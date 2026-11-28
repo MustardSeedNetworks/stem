@@ -4,8 +4,8 @@ package auth
 
 // Passkeys for the single account. foundation/pkg/passkey owns the
 // ceremonies and the fleet's verification policy; the Manager owns the
-// account's opaque user handle and its complete credential records, held
-// in memory alongside the TOTP state.
+// account's opaque user handle and its complete credential records, which
+// the credential store keeps across restarts.
 
 import (
 	"bytes"
@@ -32,8 +32,9 @@ var (
 	ErrPasskeyUnknown = errors.New("unknown passkey")
 )
 
-// newPasskeyHandle returns a random user handle. It is opaque — never the
-// username — so the authenticator stores nothing that names the account.
+// newPasskeyHandle returns a random user handle for a daemon that is not yet
+// claimed. It is opaque — never the username — so the authenticator stores
+// nothing that names the account. The store generates the handle that lasts.
 func newPasskeyHandle() []byte {
 	handle := make([]byte, userHandleBytes)
 	_, _ = rand.Read(handle) // crypto/rand.Read never returns an error
@@ -80,16 +81,11 @@ func (m *Manager) ResolvePasskey(rawID, userHandle []byte) (webauthn.User, error
 }
 
 // SavePasskey stores the complete credential record, replacing the one with
-// the same ID: a sign-in returns the record with its updated counter and flags.
-func (m *Manager) SavePasskey(credential webauthn.Credential) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	i := slices.IndexFunc(m.passkeys, func(c webauthn.Credential) bool { return bytes.Equal(c.ID, credential.ID) })
-	if i < 0 {
-		m.passkeys = append(m.passkeys, credential)
-		return
-	}
-	m.passkeys[i] = credential
+// the same ID: a sign-in returns the record with its updated counter and
+// flags. A registration the store refuses is an error, not a passkey that
+// works until the next restart.
+func (m *Manager) SavePasskey(credential webauthn.Credential) error {
+	return m.recordPasskey(credential)
 }
 
 // HasWebAuthnCredentials reports whether at least one passkey is
