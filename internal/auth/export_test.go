@@ -64,3 +64,6 @@ func SetVerifyForTest(m *Manager, verify func(hash, plaintext string) (bool, err
 	defer m.mu.Unlock()
 	m.verify = verify
 }
+
+// SetVerifyWaitForTest shortens how long a request waits for a global slot.
+func SetVerifyWaitForTest(m *Manager, wait time.Duration) { m.gate.wait = wait }

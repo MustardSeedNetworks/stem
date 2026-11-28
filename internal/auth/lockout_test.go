@@ -3,6 +3,7 @@
 package auth_test
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"sync"
@@ -193,6 +194,9 @@ func TestLockout_ConcurrentWrongAttemptsNeverExceedLimit(t *testing.T) {
 	if got := checked.Load() + refused.Load(); got != attempts {
 		t.Fatalf("accounted for %d of %d attempts", got, attempts)
 	}
+	if !m.LoginLocked() {
+		t.Fatal("account not locked after the burst")
+	}
 }
 
 func TestLockout_AttemptSlotIsReleasedOnce(t *testing.T) {
@@ -288,59 +292,86 @@ func TestLockout_LockedAttemptStillPaysForAHash(t *testing.T) {
 	}
 }
 
-// TestVerifyCap_HoldsAndRefusesTheExcess blocks every verify and checks that
-// no more than the cap run at once and the rest are refused without waiting.
-func TestVerifyCap_HoldsAndRefusesTheExcess(t *testing.T) {
+func TestVerifyGate_OneClientCannotExceedItsCap(t *testing.T) {
 	t.Parallel()
 	m, _ := newLockoutManager(t)
 
-	var running, peak atomic.Int32
-	entered := make(chan struct{}, auth.MaxConcurrentVerifies)
-	gate := make(chan struct{})
-	auth.SetVerifyForTest(m, func(string, string) (bool, error) {
-		n := running.Add(1)
-		for {
-			p := peak.Load()
-			if n <= p || peak.CompareAndSwap(p, n) {
-				break
-			}
+	var releases []func()
+	for range auth.MaxVerifiesPerClient {
+		release, err := m.AcquireVerify(t.Context(), "198.51.100.1")
+		if err != nil {
+			t.Fatalf("within the per-client cap: %v", err)
 		}
-		entered <- struct{}{}
-		<-gate
-		running.Add(-1)
-		return false, nil
-	})
+		releases = append(releases, release)
+	}
+	// Over the cap: refused at once, not queued.
+	begin := time.Now()
+	if _, err := m.AcquireVerify(t.Context(), "198.51.100.1"); !errors.Is(err, auth.ErrTooManyAttempts) {
+		t.Fatalf("over the per-client cap: got %v, want ErrTooManyAttempts", err)
+	}
+	if time.Since(begin) > time.Second {
+		t.Error("per-client refusal waited instead of refusing at once")
+	}
 
-	var wg sync.WaitGroup
+	// A different client is unaffected while the flood holds its slots.
+	other, err := m.AcquireVerify(t.Context(), "198.51.100.2")
+	if err != nil {
+		t.Fatalf("a different client was refused during a flood: %v", err)
+	}
+	other()
+
+	releases[0]()
+	releases[0]() // releasing twice frees one slot, not two
+	again, err := m.AcquireVerify(t.Context(), "198.51.100.1")
+	if err != nil {
+		t.Fatalf("after a release: %v", err)
+	}
+	if _, err = m.AcquireVerify(t.Context(), "198.51.100.1"); !errors.Is(err, auth.ErrTooManyAttempts) {
+		t.Fatalf("double release freed two slots: got %v", err)
+	}
+	again()
+	releases[1]()
+}
+
+func TestVerifyGate_GlobalBackstopQueuesThenRefuses(t *testing.T) {
+	t.Parallel()
+	m, _ := newLockoutManager(t)
+	auth.SetVerifyWaitForTest(m, 300*time.Millisecond)
+
+	releases := make([]func(), 0, auth.MaxConcurrentVerifies)
 	for i := range auth.MaxConcurrentVerifies {
-		wg.Go(func() {
-			// Bogus names, so the lockout gate does not interfere.
-			_, _, _ = m.AuthenticateWithRefresh(fmt.Sprintf("nobody-%d", i), "x")
-		})
-	}
-	for range auth.MaxConcurrentVerifies {
-		<-entered
+		release, err := m.AcquireVerify(t.Context(), fmt.Sprintf("203.0.113.%d", i))
+		if err != nil {
+			t.Fatalf("filling the backstop: %v", err)
+		}
+		releases = append(releases, release)
 	}
 
-	const excess = 20
-	var refused atomic.Int32
-	var excessWG sync.WaitGroup
-	for i := range excess {
-		excessWG.Go(func() {
-			_, _, err := m.AuthenticateWithRefresh(fmt.Sprintf("other-%d", i), "x")
-			if errors.Is(err, auth.ErrTooManyAttempts) {
-				refused.Add(1)
-			}
-		})
+	// Saturated: a waiter is queued, and gets in when a slot frees in time.
+	time.AfterFunc(50*time.Millisecond, releases[0])
+	queued, err := m.AcquireVerify(t.Context(), "192.0.2.50")
+	if err != nil {
+		t.Fatalf("a queued request was refused although a slot freed in time: %v", err)
 	}
-	excessWG.Wait() // returns without the gate opening: refusals do not wait
-	close(gate)
-	wg.Wait()
 
-	if got := refused.Load(); got != excess {
-		t.Errorf("%d of %d excess attempts refused", got, excess)
+	// Still saturated and nothing frees: refused after the bounded wait.
+	begin := time.Now()
+	if _, err = m.AcquireVerify(t.Context(), "192.0.2.51"); !errors.Is(err, auth.ErrTooManyAttempts) {
+		t.Fatalf("saturated: got %v, want ErrTooManyAttempts", err)
 	}
-	if got := peak.Load(); got > auth.MaxConcurrentVerifies {
-		t.Errorf("%d verifies ran at once, cap is %d", got, auth.MaxConcurrentVerifies)
+	if waited := time.Since(begin); waited < 250*time.Millisecond {
+		t.Errorf("refused after %v, want the bounded wait first", waited)
+	}
+
+	// A cancelled request stops waiting and is refused.
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+	if _, err = m.AcquireVerify(ctx, "192.0.2.52"); !errors.Is(err, auth.ErrTooManyAttempts) {
+		t.Fatalf("cancelled context: got %v", err)
+	}
+
+	queued()
+	for _, release := range releases[1:] {
+		release()
 	}
 }

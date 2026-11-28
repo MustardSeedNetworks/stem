@@ -26,17 +26,6 @@ const (
 // distinct error exists so the audit trail can tell the two apart.
 var ErrAccountLocked = errors.New("account locked after repeated failed logins")
 
-// MaxConcurrentVerifies caps password hashes running at once. Each is a
-// 64 MiB Argon2id derivation, so an unbounded flood exhausts memory long
-// before the lockout matters. The cap is global and applies to every
-// attempt, real username or not, so what it refuses leaks nothing.
-const MaxConcurrentVerifies = 4
-
-// ErrTooManyAttempts is returned, before any username is looked at, when
-// [MaxConcurrentVerifies] checks are already running. The HTTP layer
-// answers 429 with Retry-After.
-var ErrTooManyAttempts = errors.New("too many concurrent login attempts")
-
 // lockout counts failures against the one real administrator account. It is
 // never keyed on a submitted username, so a flood of invented names cannot
 // grow it. A failure keeps counting while locked, so each attempt that gets

@@ -159,8 +159,15 @@ func (s *Server) handleTOTPDisable(w http.ResponseWriter, r *http.Request) {
 
 	username := s.authManager.GetUsername()
 
-	// Step-up #1: password.
-	if _, passwordErr := s.authManager.Authenticate(username, req.Password); passwordErr != nil {
+	// Step-up #1: password, behind the same hashing gate as login.
+	releaseVerify, gateErr := s.authManager.AcquireVerify(r.Context(), logging.SecurityClientIP(r, s.trustedProxies))
+	if gateErr != nil {
+		s.writeAuthError(w, gateErr)
+		return
+	}
+	_, passwordErr := s.authManager.Authenticate(username, req.Password)
+	releaseVerify()
+	if passwordErr != nil {
 		logging.AuditMFAAttempt(r.Context(), r, username, logging.MFAFactorTOTP,
 			logging.MFAResultFailure, "password rejected")
 		s.writeAuthError(w, passwordErr)
@@ -330,8 +337,16 @@ func (s *Server) loginWithMFAGate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Step 1: verify the password.
+	// Step 1: verify the password, behind the hashing gate. The gate runs
+	// before the username is examined, so its answer is the same for any name.
+	releaseVerify, err := s.authManager.AcquireVerify(r.Context(), logging.SecurityClientIP(r, s.trustedProxies))
+	if err != nil {
+		s.auditLoginRefusal(r, req.Username, err)
+		s.writeAuthError(w, err)
+		return
+	}
 	accessToken, refreshToken, err := s.authManager.AuthenticateWithRefresh(req.Username, req.Password)
+	releaseVerify()
 	if err != nil {
 		s.auditLoginRefusal(r, req.Username, err)
 		s.writeAuthError(w, err)

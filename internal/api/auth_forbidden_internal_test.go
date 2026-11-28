@@ -249,11 +249,38 @@ func TestLoginAnswersAreIdenticalForLockedUnknownAndWrong(t *testing.T) {
 	}
 }
 
-func TestTooManyAttemptsAnswers429WithRetryAfter(t *testing.T) {
+// TestVerifyGateAnswersTheSameForRealAndInventedUsernames: the gate runs
+// before the username is examined, so a flooded client is refused identically
+// whatever name it submits.
+func TestVerifyGateAnswersTheSameForRealAndInventedUsernames(t *testing.T) {
+	t.Setenv("STEM_AUTH_USERNAME", "admin")
+	t.Setenv("STEM_AUTH_PASSWORD", lockoutTestPassword)
 	s := newTestServer(t)
-	w := httptest.NewRecorder()
-	s.writeAuthError(w, auth.ErrTooManyAttempts)
-	if w.Code != http.StatusTooManyRequests || w.Header().Get("Retry-After") == "" {
-		t.Fatalf("status %d Retry-After %q, want 429 with Retry-After", w.Code, w.Header().Get("Retry-After"))
+
+	// httptest requests come from 192.0.2.1; hold that client's whole share.
+	for range auth.MaxVerifiesPerClient {
+		release, err := s.authManager.AcquireVerify(t.Context(), "192.0.2.1")
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(release)
+	}
+	answer := func(username string) *httptest.ResponseRecorder {
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login",
+			strings.NewReader(`{"username":"`+username+`","password":"`+lockoutTestPassword+`"}`))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		s.loginWithMFAGate(w, req)
+		return w
+	}
+	known, bogus := answer("admin"), answer("nobody")
+	for name, w := range map[string]*httptest.ResponseRecorder{"real": known, "bogus": bogus} {
+		if w.Code != http.StatusTooManyRequests || w.Header().Get("Retry-After") == "" {
+			t.Errorf("%s: status %d Retry-After %q, want 429 with Retry-After",
+				name, w.Code, w.Header().Get("Retry-After"))
+		}
+	}
+	if known.Body.String() != bogus.Body.String() {
+		t.Errorf("real answer %q differs from invented %q", known.Body.String(), bogus.Body.String())
 	}
 }
