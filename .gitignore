@@ -132,3 +132,4 @@ __pycache__/
 dist/
 *.coverage.out
 ui/storybook-static/
+/auth/

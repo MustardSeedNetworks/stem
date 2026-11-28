@@ -3,7 +3,7 @@
 # Remove Stem from macOS:  sudo ./uninstall.sh [--purge]
 #
 # Without --purge the launchd services and the binary are removed, and
-# stem.yaml, credentials.json, certs/, data/ and logs/ stay in /usr/local/stem
+# stem.yaml, auth/, certs/, data/ and logs/ stay in /usr/local/stem
 # so a later install picks them up. --purge deletes /usr/local/stem entirely.
 #
 set -euo pipefail

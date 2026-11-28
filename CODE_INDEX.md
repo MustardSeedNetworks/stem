@@ -2,11 +2,13 @@
 
 ## Authentication state
 
-`internal/authstate.Publish` durably publishes a protected `auth.json` record.
-`State.Encode`, `Decode` and `State.Save` validate the single-principal schema.
-Complete credentials use foundation's released passkey codec. The password hash
-is opaque here; the password factory/verifier owns format validation. Invalid
-present state is never bootstrap permission. The fail-closed secure loader and
-manager adapter follow; login and recovery do not yet call this package.
-An `ErrUncertain` result requires authentication shutdown and reload, not an
-in-memory rollback: the replacement may already be visible on disk.
+The administrator account (password hash, TOTP secret, passkeys, passkey user
+handle) is kept by foundation's `pkg/credstore` in `<datadir>/auth`, sealed with
+AES-256-GCM under a key of its own. `internal/auth.Manager` holds a working copy
+for the login path; `NewManagerFromStore` loads it, and every change
+(`ReplaceCredential`, `VerifyAndEnableTOTP`, `DisableTOTP`, `SavePasskey`) is
+committed to the store before the copy changes. `internal/api/admin_state.go`
+opens the store, refuses to start on one it cannot read (never falling back to
+unclaimed), seeds it once from `STEM_AUTH_USERNAME`/`STEM_AUTH_PASSWORD`, and
+does not read an old `credentials.json`. Recovery replaces the password and
+clears the TOTP secret and passkeys in one write.

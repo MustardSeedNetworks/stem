@@ -136,7 +136,7 @@ func (s *Server) handleRecoveryComplete(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if saveErr := s.saveCredential(r.Context(), hash); saveErr != nil {
+	if saveErr := s.saveCredential(hash, true); saveErr != nil {
 		logging.Error("Failed to store the recovered password", "error", saveErr)
 		logging.AuditPasswordChange(r.Context(), r, username,
 			logging.PasswordChangeRejected, "store_failed", prevAlgorithm, saveErr.Error())
@@ -158,7 +158,8 @@ func (s *Server) handleRecoveryComplete(w http.ResponseWriter, r *http.Request) 
 
 	writeJSON(w, RecoveryCompleteResponse{
 		Success: true,
-		Message: "Password has been reset. All existing sessions have been invalidated.",
+		Message: "Password has been reset. Any authenticator app and passkeys were removed; enrol them again after " +
+			"signing in. All existing sessions have been invalidated.",
 	})
 }
 

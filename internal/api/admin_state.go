@@ -2,98 +2,126 @@
 
 package api
 
-// The administrator credential outlives the process (#1282). A shipped
-// service has no STEM_AUTH_* in its environment, so the daemon has to come
-// up unclaimed, let an operator set the password through first-run setup,
-// and still hold that password after a restart. It is a file next to
-// reflector.json for the same reason that one is: no daemon code opens the
-// database.
+// The administrator account outlives the process (#1282): the password hash,
+// the TOTP secret, the passkeys and their user handle live in foundation's
+// credstore, an encrypted file under <datadir>/auth. A shipped service has no
+// STEM_AUTH_* in its environment, so the daemon comes up unclaimed, lets an
+// operator set the password through first-run setup, and still holds it, and
+// every second factor enrolled since, after a restart.
 
 import (
-	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 
+	"github.com/MustardSeedNetworks/foundation/pkg/credstore"
+	"github.com/MustardSeedNetworks/foundation/pkg/password"
+
 	"github.com/MustardSeedNetworks/stem/internal/auth"
 	"github.com/MustardSeedNetworks/stem/internal/logging"
 )
 
-// credentialStateFile holds the persisted administrator credential.
-const credentialStateFile = "credentials.json"
+const (
+	// credentialStoreDir is the directory, inside the data directory, that
+	// belongs to the credential store alone: securedir judges everything in a
+	// directory it checks, so the store does not share one.
+	credentialStoreDir = "auth"
 
-// storedCredential is the administrator as the store records it. Only the
-// hash is kept; the password never reaches the disk.
-type storedCredential struct {
-	Username     string `json:"username"`
-	PasswordHash string `json:"passwordHash"`
-}
+	// legacyCredentialFile held only a username and a password hash, and never
+	// a second factor. It is not read: an install that has one comes up
+	// unclaimed and is set up again (foundation ADR 0005).
+	legacyCredentialFile = "credentials.json"
+)
 
-// newAuthManager resolves where the administrator credential comes from: a
-// stored credential first, so a password set through setup or recovery is
-// not reverted by a stale environment; then STEM_AUTH_USERNAME /
-// STEM_AUTH_PASSWORD; otherwise the daemon starts unclaimed for first-run
-// setup. A store that exists but cannot be used is fatal: falling back to
-// unclaimed would hand the daemon to whoever reaches the setup page first.
+// newAuthManager resolves where the administrator account comes from: the
+// credential store first, so a password set through setup or recovery is not
+// reverted by a stale environment; then, for a store with no account yet,
+// STEM_AUTH_USERNAME / STEM_AUTH_PASSWORD, which seed the store once;
+// otherwise the daemon starts unclaimed for first-run setup. A store that
+// exists but cannot be used is fatal: falling back to unclaimed would hand the
+// daemon to whoever reaches the setup page first.
 func newAuthManager(dataDir string) (*auth.Manager, error) {
 	secret := os.Getenv("STEM_JWT_SECRET")
 
-	stored, found, err := loadCredential(dataDir)
+	store, err := openCredentialStore(dataDir)
 	if err != nil {
 		return nil, err
 	}
-	if found {
+	if _, accountErr := store.Account(); accountErr == nil {
 		logging.Info("administrator credential loaded", "event", "auth.credential.source", "source", "store")
-		return auth.NewManagerFromHash(secret, defaultAuthSessionTimeout, stored.Username, stored.PasswordHash)
+		return auth.NewManagerFromStore(secret, defaultAuthSessionTimeout, store, "")
+	} else if !errors.Is(accountErr, credstore.ErrUnclaimed) {
+		return nil, fmt.Errorf("credential store: %w", accountErr)
 	}
 
-	username, password := os.Getenv("STEM_AUTH_USERNAME"), os.Getenv("STEM_AUTH_PASSWORD")
-	if username == "" && password == "" {
+	// On the release before the store, credentials.json was the authority and
+	// the environment was only a fallback: a password set through setup or
+	// recovery won over a stale STEM_AUTH_PASSWORD. Seeding from the
+	// environment here would revert it, so an install that has the file starts
+	// unclaimed and is set up again.
+	legacy := filepath.Join(dataDir, legacyCredentialFile)
+	if _, statErr := os.Stat(legacy); statErr == nil {
+		logging.Warn("an old credentials.json is present and is not read; set the password again through first-run "+
+			"setup, or delete the file to let STEM_AUTH_USERNAME and STEM_AUTH_PASSWORD create the account",
+			"event", "auth.credential.legacy_file", "path", legacy)
+		return auth.NewManagerFromStore(secret, defaultAuthSessionTimeout, store, auth.FirstRunUsername)
+	}
+
+	username, plaintext := os.Getenv("STEM_AUTH_USERNAME"), os.Getenv("STEM_AUTH_PASSWORD")
+	if username == "" && plaintext == "" {
 		logging.Warn("no administrator credential configured; complete first-run setup in the web UI",
 			"event", "auth.credential.source", "source", "unclaimed")
-		return auth.NewManagerFromHash(secret, defaultAuthSessionTimeout, auth.FirstRunUsername, "")
+		return auth.NewManagerFromStore(secret, defaultAuthSessionTimeout, store, auth.FirstRunUsername)
+	}
+	if username == "" || plaintext == "" {
+		return nil, auth.ErrMissingCredentials
+	}
+	hash, err := password.Hash(plaintext)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %w", auth.ErrPasswordHashFailed, err)
+	}
+	mgr, err := auth.NewManagerFromStore(secret, defaultAuthSessionTimeout, store, username)
+	if err != nil {
+		return nil, err
+	}
+	if err = mgr.ReplaceCredential(hash, false); err != nil {
+		return nil, err
 	}
 	logging.Info("administrator credential loaded", "event", "auth.credential.source", "source", "environment")
-	return auth.NewManager(secret, defaultAuthSessionTimeout, username, password)
+	return mgr, nil
 }
 
-// loadCredential reads the stored credential. An absent file is a daemon
-// that has never been claimed, not a failure.
-func loadCredential(dataDir string) (storedCredential, bool, error) {
-	var stored storedCredential
-	data, err := os.ReadFile(filepath.Join(dataDir, credentialStateFile))
+// openCredentialStore opens the store under the data directory with the trust
+// that fits the identity this process runs as.
+func openCredentialStore(dataDir string) (*credstore.Store, error) {
+	abs, err := filepath.Abs(dataDir)
 	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return stored, false, nil
-		}
-		return stored, false, fmt.Errorf("read credential store: %w", err)
+		return nil, fmt.Errorf("resolve the data directory %q: %w", dataDir, err)
 	}
-	if unmarshalErr := json.Unmarshal(data, &stored); unmarshalErr != nil {
-		return stored, false, fmt.Errorf("decode credential store: %w", unmarshalErr)
+	trust, err := credstore.ProcessTrust()
+	if err != nil {
+		return nil, err
 	}
-	if stored.Username == "" || stored.PasswordHash == "" {
-		return stored, false, fmt.Errorf("credential store %s holds no usable credential",
-			filepath.Join(dataDir, credentialStateFile))
+	store, err := credstore.Open(filepath.Join(abs, credentialStoreDir), credstore.Options{Trust: trust})
+	if err != nil {
+		return nil, fmt.Errorf("open the credential store: %w", err)
 	}
-	return stored, true, nil
+	return store, nil
 }
 
-// saveCredential records a new password hash for the administrator, on disk
-// first: a hash that only reached memory would be lost at the next restart,
-// which is the defect this store exists to close.
-func (s *Server) saveCredential(ctx context.Context, passwordHash string) error {
-	encoded, err := json.Marshal(storedCredential{
-		Username:     s.authManager.GetUsername(),
-		PasswordHash: passwordHash,
-	})
-	if err != nil {
-		return fmt.Errorf("encode credential store: %w", err)
+// saveCredential records a new password hash for the administrator, in the
+// store first: a hash that only reached memory would be lost at the next
+// restart. recovery also clears the second factors, in the same write. The old
+// credentials.json is removed once the store holds the account, so a superseded
+// hash is not left on disk.
+func (s *Server) saveCredential(passwordHash string, recovery bool) error {
+	if err := s.authManager.ReplaceCredential(passwordHash, recovery); err != nil {
+		return err
 	}
-	if writeErr := writeStateFile(s.dataDir, credentialStateFile, encoded); writeErr != nil {
-		return writeErr
+	legacy := filepath.Join(s.dataDir, legacyCredentialFile)
+	if err := os.Remove(legacy); err != nil && !errors.Is(err, os.ErrNotExist) {
+		logging.Warn("could not remove the old credentials.json", "path", legacy, "error", err)
 	}
-	s.authManager.UpdatePasswordHash(ctx, passwordHash)
 	return nil
 }

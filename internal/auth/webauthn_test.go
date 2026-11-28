@@ -35,9 +35,9 @@ func TestSavePasskey_ReplacesByID(t *testing.T) {
 	if mgr.HasWebAuthnCredentials() {
 		t.Fatal("expected no credentials on a fresh manager")
 	}
-	mgr.SavePasskey(webauthn.Credential{ID: []byte{1}, PublicKey: []byte{9}})
-	mgr.SavePasskey(webauthn.Credential{ID: []byte{2}, PublicKey: []byte{9}})
-	mgr.SavePasskey(webauthn.Credential{
+	savePasskey(t, mgr, webauthn.Credential{ID: []byte{1}, PublicKey: []byte{9}})
+	savePasskey(t, mgr, webauthn.Credential{ID: []byte{2}, PublicKey: []byte{9}})
+	savePasskey(t, mgr, webauthn.Credential{
 		ID: []byte{1}, PublicKey: []byte{9}, Authenticator: webauthn.Authenticator{SignCount: 7},
 	})
 	if got := mgr.WebAuthnCredentialCount(); got != 2 {
@@ -51,7 +51,7 @@ func TestSavePasskey_ReplacesByID(t *testing.T) {
 
 func TestResolvePasskey(t *testing.T) {
 	mgr := mustNewManagerForTOTPTest(t)
-	mgr.SavePasskey(webauthn.Credential{ID: []byte{1}, PublicKey: []byte{9}})
+	savePasskey(t, mgr, webauthn.Credential{ID: []byte{1}, PublicKey: []byte{9}})
 	handle := mgr.PasskeyAccount().WebAuthnID()
 
 	tests := []struct {

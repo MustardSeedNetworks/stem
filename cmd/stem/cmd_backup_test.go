@@ -24,10 +24,10 @@ func stateDir(t *testing.T) string {
 
 	dir := filepath.Join(t.TempDir(), "stem")
 	for name, content := range map[string]string{
-		"credentials.json": `{"username":"admin","passwordHash":"hash"}`,
-		"certs/server.crt": "CERT",
-		"certs/server.key": "KEY",
-		".setup-token":     "never archived",
+		"auth/credentials.sealed": `{"username":"admin","passwordHash":"hash"}`,
+		"certs/server.crt":        "CERT",
+		"certs/server.key":        "KEY",
+		".setup-token":            "never archived",
 	} {
 		path := filepath.Join(dir, filepath.FromSlash(name))
 		if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
@@ -75,7 +75,7 @@ func TestBackupCmdWritesAnOwnerOnlyArchive(t *testing.T) {
 	}
 
 	got := strings.Join(archiveEntries(t, archive), ",")
-	if got != "certs/,certs/server.crt,certs/server.key,credentials.json" {
+	if got != "auth/credentials.sealed,certs/,certs/server.crt,certs/server.key" {
 		t.Errorf("archive entries = %s", got)
 	}
 	if runtime.GOOS != "windows" {
@@ -147,7 +147,7 @@ func TestRestoreCmdRoundTripKeepsThePreviousState(t *testing.T) {
 	if err := backupCmd([]string{"-o", archive}, io.Discard, io.Discard); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(dir, "credentials.json"), []byte("drifted"), 0o600); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, "auth/credentials.sealed"), []byte("drifted"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -156,15 +156,15 @@ func TestRestoreCmdRoundTripKeepsThePreviousState(t *testing.T) {
 		t.Fatalf("restoreCmd: %v", err)
 	}
 
-	got, _ := os.ReadFile(filepath.Join(dir, "credentials.json"))
+	got, _ := os.ReadFile(filepath.Join(dir, "auth/credentials.sealed"))
 	if string(got) != `{"username":"admin","passwordHash":"hash"}` {
-		t.Errorf("credentials.json = %q", got)
+		t.Errorf("auth/credentials.sealed = %q", got)
 	}
 	matches, _ := filepath.Glob(dir + ".pre-restore-*")
 	if len(matches) != 1 {
 		t.Fatalf("pre-restore copies = %v", matches)
 	}
-	kept, _ := os.ReadFile(filepath.Join(matches[0], "credentials.json"))
+	kept, _ := os.ReadFile(filepath.Join(matches[0], "auth/credentials.sealed"))
 	if string(kept) != "drifted" {
 		t.Errorf("the pre-restore copy holds %q", kept)
 	}

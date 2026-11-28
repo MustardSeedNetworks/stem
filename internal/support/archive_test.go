@@ -27,13 +27,14 @@ func restoreTime() time.Time { return time.Date(2026, 11, 21, 9, 0, 0, 0, time.U
 // managedFiles is the state a backup carries, as it sits in a data directory.
 func managedFiles() map[string]string {
 	return map[string]string{
-		"credentials.json":      `{"username":"admin","passwordHash":"$argon2id$v=19$m=1,t=1,p=1$abc$def"}`,
-		"reflector.json":        `{"interface":"eth0"}`,
-		"update.json":           `{"automatic":false}`,
-		".daemon.json":          `{"url":"https://127.0.0.1:8444","token":"t"}`,
-		".config/stem/.license": "MSN1.payload.signature",
-		"certs/server.crt":      "CERT",
-		"certs/server.key":      "KEY",
+		"auth/credentials.sealed": "SEALED-RECORD",
+		"auth/credential.key":     "KEY-FILE",
+		"reflector.json":          `{"interface":"eth0"}`,
+		"update.json":             `{"automatic":false}`,
+		".daemon.json":            `{"url":"https://127.0.0.1:8444","token":"t"}`,
+		".config/stem/.license":   "MSN1.payload.signature",
+		"certs/server.crt":        "CERT",
+		"certs/server.key":        "KEY",
 	}
 }
 
@@ -117,8 +118,8 @@ func TestBackupCarriesExactlyTheManagedState(t *testing.T) {
 
 	got := entryNames(t, backupOf(t, dir))
 	want := []string{
-		".config/stem/.license", ".daemon.json", "certs/", "certs/server.crt", "certs/server.key",
-		"credentials.json", "reflector.json", "update.json",
+		".config/stem/.license", ".daemon.json", "auth/credential.key", "auth/credentials.sealed",
+		"certs/", "certs/server.crt", "certs/server.key", "reflector.json", "update.json",
 	}
 	if !slices.Equal(got, want) {
 		t.Fatalf("archive entries = %v, want %v", got, want)
@@ -169,10 +170,10 @@ func TestRestoreRoundTrip(t *testing.T) {
 	// The directory drifts after the backup: a changed file, a stale
 	// certificate, a missing file, and the files a backup never carries.
 	writeTree(t, dir, map[string]string{
-		"credentials.json": `{"username":"changed"}`,
-		"certs/stale.crt":  "STALE",
-		".setup-token":     "must survive",
-		"logs/stem.log":    "must survive",
+		"auth/credentials.sealed": `{"username":"changed"}`,
+		"certs/stale.crt":         "STALE",
+		".setup-token":            "must survive",
+		"logs/stem.log":           "must survive",
 	})
 	if err := os.Remove(filepath.Join(dir, "reflector.json")); err != nil {
 		t.Fatal(err)
@@ -206,7 +207,7 @@ func TestRestoreRoundTrip(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = os.RemoveAll(previous) })
 	kept := readTree(t, previous)
-	if kept["credentials.json"] != `{"username":"changed"}` || kept["certs/stale.crt"] != "STALE" {
+	if kept["auth/credentials.sealed"] != `{"username":"changed"}` || kept["certs/stale.crt"] != "STALE" {
 		t.Errorf("the pre-restore copy does not hold the state before the restore: %v", kept)
 	}
 }
@@ -245,7 +246,7 @@ func TestRestoreRefusesWhileTheDaemonRuns(t *testing.T) {
 	dir := t.TempDir()
 	writeTree(t, dir, managedFiles())
 	archive := backupOf(t, dir)
-	writeTree(t, dir, map[string]string{"credentials.json": "current"})
+	writeTree(t, dir, map[string]string{"auth/credentials.sealed": "current"})
 
 	lock, err := instance.Acquire(dir)
 	if err != nil {
@@ -257,8 +258,8 @@ func TestRestoreRefusesWhileTheDaemonRuns(t *testing.T) {
 	if !errors.Is(err, support.ErrDaemonRunning) {
 		t.Fatalf("Restore = %v, want ErrDaemonRunning", err)
 	}
-	if got := readTree(t, dir)["credentials.json"]; got != "current" {
-		t.Errorf("credentials.json = %q, a refused restore changed it", got)
+	if got := readTree(t, dir)["auth/credentials.sealed"]; got != "current" {
+		t.Errorf("auth/credentials.sealed = %q, a refused restore changed it", got)
 	}
 	if _, statErr := os.Stat(dir + ".pre-restore-20261121T090000Z"); statErr == nil {
 		t.Error("a refused restore left a pre-restore copy")
@@ -324,7 +325,7 @@ func archiveOf(t *testing.T, entries ...tarEntry) []byte {
 }
 
 func TestRestoreRefusesAnUnsafeArchiveAndChangesNothing(t *testing.T) {
-	good := tarEntry{name: "credentials.json", body: "from the archive"}
+	good := tarEntry{name: "auth/credentials.sealed", body: "from the archive"}
 	many := make([]tarEntry, 0, 300)
 	for i := range 300 {
 		many = append(
@@ -369,7 +370,7 @@ func TestRestoreRefusesAnUnsafeArchiveAndChangesNothing(t *testing.T) {
 			if err := os.Mkdir(dir, 0o700); err != nil {
 				t.Fatal(err)
 			}
-			writeTree(t, dir, map[string]string{"credentials.json": "current"})
+			writeTree(t, dir, map[string]string{"auth/credentials.sealed": "current"})
 
 			_, err := support.Restore(bytes.NewReader(tc.archive), dir, restoreTime())
 			if err == nil {
@@ -379,7 +380,7 @@ func TestRestoreRefusesAnUnsafeArchiveAndChangesNothing(t *testing.T) {
 				t.Errorf("Restore = %v, want ErrUnsafeEntry", err)
 			}
 
-			if got := readTree(t, dir); len(got) != 2 || got["credentials.json"] != "current" {
+			if got := readTree(t, dir); len(got) != 2 || got["auth/credentials.sealed"] != "current" {
 				t.Errorf("a refused archive changed the data directory: %v", got)
 			}
 			leftovers, _ := os.ReadDir(parent)
@@ -421,7 +422,7 @@ func linkTestArchive(t *testing.T) []byte {
 func TestRestoreRefusesADataDirectoryThatIsALink(t *testing.T) {
 	archive := linkTestArchive(t)
 	target := t.TempDir()
-	writeTree(t, target, map[string]string{"credentials.json": "current"})
+	writeTree(t, target, map[string]string{"auth/credentials.sealed": "current"})
 	link := filepath.Join(t.TempDir(), "stem")
 	if err := os.Symlink(target, link); err != nil {
 		t.Fatal(err)
@@ -430,8 +431,8 @@ func TestRestoreRefusesADataDirectoryThatIsALink(t *testing.T) {
 	if _, err := support.Restore(bytes.NewReader(archive), link, restoreTime()); err == nil {
 		t.Fatal("Restore followed a symlinked data directory")
 	}
-	if got := readTree(t, target)["credentials.json"]; got != "current" {
-		t.Errorf("credentials.json = %q, the link's target was changed", got)
+	if got := readTree(t, target)["auth/credentials.sealed"]; got != "current" {
+		t.Errorf("auth/credentials.sealed = %q, the link's target was changed", got)
 	}
 }
 
@@ -442,7 +443,10 @@ func TestRestoreRefusesAManagedFileThatIsALink(t *testing.T) {
 	if err := os.WriteFile(outside, []byte("outside"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.Symlink(outside, filepath.Join(dir, "credentials.json")); err != nil {
+	if err := os.Mkdir(filepath.Join(dir, "auth"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(outside, filepath.Join(dir, "auth/credentials.sealed")); err != nil {
 		t.Fatal(err)
 	}
 

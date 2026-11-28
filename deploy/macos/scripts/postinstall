@@ -4,7 +4,7 @@
 #
 # Installs the launchd plists and starts The Stem. The payload carries only
 # the binary, the plists and a default config template, so an upgrade leaves
-# stem.yaml, credentials.json, certs/, data/ and .daemon.json (all under
+# stem.yaml, auth/, certs/, data/ and .daemon.json (all under
 # /usr/local/stem, the daemon's working directory) alone.
 #
 

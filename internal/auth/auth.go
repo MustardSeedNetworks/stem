@@ -14,6 +14,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/MustardSeedNetworks/foundation/pkg/credstore"
 	"github.com/MustardSeedNetworks/foundation/pkg/password"
 	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/golang-jwt/jwt/v5"
@@ -92,16 +93,17 @@ type Manager struct {
 	issuer         string
 	blacklist      *TokenBlacklist
 	randReader     io.Reader
-	// totp holds the optional second-factor configuration. Wave 3 (#85)
-	// introduced TOTP MFA; see totp_state.go for the storage contract.
-	// The secret is in-memory only — operators who restart the binary
-	// must re-enrol via /api/v1/auth/totp/setup.
-	totp totpState
-	// passkeyHandle is the account's opaque WebAuthn user handle, and
-	// passkeys its complete credential records. Like totp, they are
-	// in-memory only: a restart drops every enrolled passkey.
+	// totp holds the optional second-factor configuration; see
+	// totp_state.go. passkeyHandle is the account's opaque WebAuthn user
+	// handle, and passkeys its complete credential records. store holds all
+	// of it durably (store.go); these fields are the working copy.
+	totp          totpState
 	passkeyHandle []byte
 	passkeys      []webauthn.Credential
+	store         *credstore.Store
+	// commitMu orders changes to the store and the refresh of the working
+	// copy that follows each one.
+	commitMu sync.Mutex
 	// lock is the failed-login count and lock for the one account; now is
 	// its clock, replaceable so tests need not wait out a lockout.
 	lock lockout
@@ -166,6 +168,9 @@ func NewManagerFromHash(
 		randReader:     rand.Reader,
 		totp:           totpState{secret: "", enabled: false},
 		passkeyHandle:  newPasskeyHandle(),
+		passkeys:       nil,
+		store:          nil,
+		commitMu:       sync.Mutex{},
 		lock:           lockout{failures: 0, until: time.Time{}},
 		now:            time.Now,
 		verify:         password.Verify,

@@ -204,7 +204,7 @@ jobs:
       darwin-test-command: go test -race ./internal/truststore/...
       windows-test-command: |
         go test ./internal/truststore/ -run 'ValidateCertFile' -v
-        go test ./internal/authstate
+        go test ./internal/auth -run 'TestStore_'
         go test ./cmd/stem -run 'TestWindowsService|TestServiceCmd' -v
         go test ./internal/update -run 'TestWindowsService' -v
       pre-command: |
@@ -1772,6 +1772,11 @@ jobs:
         # (0700, under a root-owned /tmp) is trusted.
         STEM_TLS_CERTS_DIR=$(mktemp -d /tmp/stem-certs.XXXXXX)
         export STEM_TLS_CERTS_DIR
+        # The credential store is held to the same rule, for the same reason:
+        # its directory sits under the data directory, which defaults to the
+        # working directory.
+        STEM_DATA_DIR=$(mktemp -d /tmp/stem-data.XXXXXX)
+        export STEM_DATA_DIR
         nohup ./bin/stem web -p 8444 > server.log 2>&1 &
         echo "Waiting for server to start..."
         i=1

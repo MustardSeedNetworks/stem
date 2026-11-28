@@ -178,7 +178,9 @@ func TestLoginLockoutCountsWrongTOTPCodes(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	s.authManager.SetTOTPSecret(setup.Secret)
+	if err = s.authManager.SetTOTPSecret(setup.Secret); err != nil {
+		t.Fatal(err)
+	}
 	code, err := totp.GenerateCode(setup.Secret, time.Now().UTC())
 	if err != nil {
 		t.Fatal(err)

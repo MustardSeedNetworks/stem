@@ -115,11 +115,21 @@ readable only by the service user); the startup log names the file. Open
 `https://<host>:8444`: the setup page asks for that token, then for the
 password of the administrator account `admin`. Read the token on the host, for
 example `sudo cat /var/lib/stem/.setup-token`. Until setup completes every
-login is refused. The password is stored as an Argon2id hash in
-`credentials.json` (mode 0600 on Linux and macOS) in the data directory, so it
-survives restarts and upgrades, and the token file is deleted. A restart before
-setup completes issues a new token. A password reset through password recovery
-is stored the same way.
+login is refused. The account is kept in an encrypted credential store, the
+`auth/` directory of the data directory (`credentials.sealed` and the key that
+opens it, `credential.key`, both mode 0600 on Linux and macOS): the Argon2id
+password hash, and any TOTP secret and passkeys enrolled later, so they survive
+restarts and upgrades. The token file is deleted. A restart before setup
+completes issues a new token. A password reset through password recovery is
+stored the same way, and it also removes the TOTP secret and every passkey: the
+operator signs in with the new password and enrols them again.
+
+A `credentials.json` left by an earlier release is not read, and
+`STEM_AUTH_USERNAME` and `STEM_AUTH_PASSWORD` are ignored while it exists, since
+on that release the file outranked them. Such an install comes up unclaimed and
+is set up again through the web UI; the file held only the password hash, never a
+second factor, and is removed once the account is stored. To create the account
+from the environment instead, delete the file before starting.
 
 | Platform | Data directory |
 | ---------- | ------------- |
@@ -136,15 +146,17 @@ write, and refuses a link at the license path) or as that account. Any other use
 Windows the directory's access list already limits it to SYSTEM and
 Administrators, so no ownership change is made there.
 
-A `credentials.json` that exists but cannot be read is a start failure, not a
-return to setup: delete it deliberately to reclaim the daemon.
+A credential store that exists but cannot be read, fails authentication or has
+lost its key is a start failure, not a return to setup. To reclaim the daemon
+deliberately, stop it, delete the `auth/` directory and start it again. Back up
+`auth/` together: the sealed file is unreadable without `credential.key`.
 
 ### Environment Variables
 
 | Variable | Description | Default |
 | ---------- | ------------- | --------- |
-| `STEM_AUTH_USERNAME` | WebUI username, instead of first-run setup; set both or neither | unset |
-| `STEM_AUTH_PASSWORD` | WebUI password, instead of first-run setup; set both or neither | unset |
+| `STEM_AUTH_USERNAME` | WebUI username, instead of first-run setup; set both or neither. Used once: it creates the account in the credential store, and the store wins afterwards | unset |
+| `STEM_AUTH_PASSWORD` | WebUI password, instead of first-run setup; set both or neither. Used once, like the username | unset |
 | `STEM_JWT_SECRET` | JWT signing secret (256-bit) | Auto-generated if not set |
 | `STEM_ENABLE_HIBP` | Set to `1` to check new passwords against the Have I Been Pwned breach corpus at setup and recovery. Sends the first five characters of the password's SHA-1 to `api.pwnedpasswords.com`; the password never leaves the host. Off by default, so an air-gapped install never calls out. An unreachable service never blocks a password change | unset (offline) |
 | `STEM_LOG_LEVEL` | Log level (debug, info, warn, error) | `info` |
@@ -346,7 +358,7 @@ notarized by Apple and stapled, so a double-click install passes Gatekeeper.
 Check the download against the release's `checksums.txt` and `.cosign.bundle` first. Installing a newer `.pkg`
 over an existing install stops the daemon, replaces the binary and plists,
 and starts it again; `stem.yaml` (a default is written only if there is none),
-`credentials.json`, `certs/`, `data/` and `.daemon.json` are never touched.
+`auth/`, `certs/`, `data/` and `.daemon.json` are never touched.
 Remove Stem with `uninstall.sh` from the tarball.
 
 The `darwin-arm64` tarball is the alternative. It holds the `stem` binary,
@@ -394,7 +406,7 @@ The script refuses to run without Administrator rights, and:
 - starts the service and waits until port 8444 accepts connections, so a
   daemon that refuses to start fails the install instead of printing success.
 
-State lives in `C:\ProgramData\stem`: `credentials.json`, `certs\`, the license
+State lives in `C:\ProgramData\stem`: `auth\`, `certs\`, the license
 state (`.license`), the data files and `logs\stem.log`. The service runs as
 `LocalSystem` and reads this directory, so whoever can write it can run code as
 SYSTEM. The script therefore fails closed and never tries to repair a tree it
@@ -598,7 +610,7 @@ server {
 | `stem status [--json]` | Reports whether the daemon is running and ready, from `/__version` and `/health/ready` |
 | `stem logs [-f] [-n N]` | Shows the end of the service log: the systemd journal on Linux, `<data directory>/logs/stem.log` on macOS; `--file` names any other log |
 | `stem support-bundle [-o FILE]` | Writes a redacted diagnostics archive for support; read it before sending |
-| `stem backup [-o FILE]` | Archives the daemon's state: administrator credential, reflector and update settings, TLS pair, activation state, published descriptor |
+| `stem backup [-o FILE]` | Archives the daemon's state: administrator credential store (sealed account and its key), reflector and update settings, TLS pair, activation state, published descriptor |
 | `stem restore ARCHIVE` | Replaces the state from a backup; refused while the daemon runs, and the previous state is kept beside the data directory |
 | `stem version [--json]` | Prints the build; `--json` is the document the daemon serves at `/__version` |
 

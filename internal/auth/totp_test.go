@@ -5,6 +5,7 @@ package auth_test
 import (
 	"context"
 	"errors"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -166,7 +167,9 @@ func TestManagerTOTP_EnrollmentFlow(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GenerateTOTPSecret() error: %v", err)
 	}
-	mgr.SetTOTPSecret(setup.Secret)
+	if stageErr := mgr.SetTOTPSecret(setup.Secret); stageErr != nil {
+		t.Fatalf("SetTOTPSecret() error: %v", stageErr)
+	}
 	if mgr.TOTPEnabled() {
 		t.Error("SetTOTPSecret must stage but not enable")
 	}
@@ -186,7 +189,9 @@ func TestManagerTOTP_EnrollmentFlow(t *testing.T) {
 		t.Errorf("VerifyTOTPCode() = %v, want nil", verifyErr)
 	}
 
-	mgr.DisableTOTP()
+	if disableErr := mgr.DisableTOTP(); disableErr != nil {
+		t.Fatalf("DisableTOTP() error: %v", disableErr)
+	}
 	if mgr.TOTPEnabled() {
 		t.Error("DisableTOTP must clear the enabled flag")
 	}
@@ -251,14 +256,10 @@ func TestTOTPDigitsSanity(t *testing.T) {
 	}
 }
 
-// mustNewManagerForTOTPTest builds an auth.Manager with deterministic
-// test credentials.
+// mustNewManagerForTOTPTest builds an auth.Manager over a credential store
+// with deterministic test credentials, so the factors a test enrols are
+// persisted the way the daemon persists them.
 func mustNewManagerForTOTPTest(t *testing.T) *auth.Manager {
 	t.Helper()
-	mgr, err := auth.NewManager("", time.Hour, "admin", "TestPassw0rd!123")
-	if err != nil {
-		t.Fatalf("NewManager() error: %v", err)
-	}
-	t.Cleanup(mgr.Stop)
-	return mgr
+	return newStoreManager(t, filepath.Join(t.TempDir(), "auth"), "admin", "TestPassw0rd!123")
 }

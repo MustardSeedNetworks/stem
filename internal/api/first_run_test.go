@@ -10,6 +10,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -114,12 +115,14 @@ func TestFirstRunSetupSurvivesRestart(t *testing.T) {
 
 	completeSetup(t, first)
 
-	info, err := os.Stat(filepath.Join(dataDir, "credentials.json"))
-	if err != nil {
-		t.Fatalf("credential store after setup: %v", err)
-	}
-	if mode := info.Mode().Perm(); mode != 0o600 {
-		t.Errorf("credential store mode = %o, want 600", mode)
+	for _, name := range []string{"credentials.sealed", "credential.key"} {
+		info, err := os.Stat(filepath.Join(dataDir, "auth", name))
+		if err != nil {
+			t.Fatalf("credential store after setup: %v", err)
+		}
+		if mode := info.Mode().Perm(); runtime.GOOS != "windows" && mode != 0o600 {
+			t.Errorf("%s mode = %o, want 600", name, mode)
+		}
 	}
 	if code := loginStatus(first, auth.FirstRunUsername, firstRunPassword); code != http.StatusOK {
 		t.Fatalf("login after setup = %d, want 200", code)
@@ -247,9 +250,24 @@ func TestRecoveredPasswordSurvivesRestart(t *testing.T) {
 // TestCredentialSourceRefusals covers the starts that must fail rather than
 // fall back to an unclaimed daemon anyone on the network could take.
 func TestCredentialSourceRefusals(t *testing.T) {
-	t.Run("damaged store", func(t *testing.T) {
+	// claimedThenBroken claims a daemon through setup and stops it, so the
+	// store holds an account that the test then damages.
+	claimedThenBroken := func(t *testing.T) string {
+		t.Helper()
 		dataDir := unconfiguredEnv(t)
-		if err := os.WriteFile(filepath.Join(dataDir, "credentials.json"), []byte("{not json"), 0o600); err != nil {
+		first := newFirstRunServer(t)
+		completeSetup(t, first)
+		_ = first.Shutdown()
+		return filepath.Join(dataDir, "auth")
+	}
+
+	t.Run("damaged store", func(t *testing.T) {
+		storeDir := claimedThenBroken(t)
+		if err := os.WriteFile(
+			filepath.Join(storeDir, "credentials.sealed"),
+			[]byte("{not sealed"),
+			0o600,
+		); err != nil {
 			t.Fatalf("write damaged store: %v", err)
 		}
 		if _, err := api.NewServer(api.ListenAddr{Port: 8444}); err == nil {
@@ -257,14 +275,13 @@ func TestCredentialSourceRefusals(t *testing.T) {
 		}
 	})
 
-	t.Run("store with no password", func(t *testing.T) {
-		dataDir := unconfiguredEnv(t)
-		if err := os.WriteFile(filepath.Join(dataDir, "credentials.json"),
-			[]byte(`{"username":"admin","passwordHash":""}`), 0o600); err != nil {
-			t.Fatalf("write empty store: %v", err)
+	t.Run("store without its key", func(t *testing.T) {
+		storeDir := claimedThenBroken(t)
+		if err := os.Remove(filepath.Join(storeDir, "credential.key")); err != nil {
+			t.Fatalf("remove the key: %v", err)
 		}
 		if _, err := api.NewServer(api.ListenAddr{Port: 8444}); err == nil {
-			t.Fatal("NewServer() over a store with no password succeeded; want a refusal, not first-run setup")
+			t.Fatal("NewServer() over a store with no key succeeded; want a refusal, not first-run setup")
 		}
 	})
 

@@ -52,8 +52,8 @@ func readBundle(t *testing.T, path string) map[string]string {
 func TestSupportBundleCmd(t *testing.T) {
 	dir := stateDir(t)
 	for name, content := range map[string]string{
-		"credentials.json": `{"username":"admin","passwordHash":"` + sentinelHash + `"}`,
-		"certs/server.key": "-----BEGIN PRIVATE KEY-----\n" + sentinelKey + "\n-----END PRIVATE KEY-----\n",
+		"auth/credentials.sealed": `{"username":"admin","passwordHash":"` + sentinelHash + `"}`,
+		"certs/server.key":        "-----BEGIN PRIVATE KEY-----\n" + sentinelKey + "\n-----END PRIVATE KEY-----\n",
 	} {
 		if err := os.WriteFile(filepath.Join(dir, filepath.FromSlash(name)), []byte(content), 0o600); err != nil {
 			t.Fatal(err)
@@ -90,7 +90,7 @@ func TestSupportBundleCmd(t *testing.T) {
 			t.Errorf("the bundle carries %q", sentinel)
 		}
 	}
-	for _, want := range []string{"manifest.json", "status.json", "logs/stem.log", "state/credentials.json"} {
+	for _, want := range []string{"manifest.json", "status.json", "logs/stem.log"} {
 		if _, ok := files[want]; !ok {
 			t.Errorf("the bundle lacks %s", want)
 		}

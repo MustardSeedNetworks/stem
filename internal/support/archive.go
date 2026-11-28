@@ -5,8 +5,8 @@
 // that carries diagnostics with every credential removed.
 //
 // A backup carries the files the daemon itself keeps in its data directory and
-// nothing it regenerates: the administrator credential, the reflector and
-// update settings, the TLS pair, the activation state and the published
+// nothing it regenerates: the administrator credential store (the sealed
+// account and the key that opens it), the reflector and update settings, the TLS pair, the activation state and the published
 // descriptor. The instance lock, the run lock and the first-run and recovery
 // tokens stay out, both ways. They belong to a running process or grant access
 // by themselves, and a backup that carried them would turn a stolen archive
@@ -57,7 +57,8 @@ func stateFiles() []string {
 	return []string{
 		".config/stem/.license",
 		".daemon.json",
-		"credentials.json",
+		"auth/credentials.sealed",
+		"auth/credential.key",
 		"reflector.json",
 		"update.json",
 	}
@@ -95,9 +96,10 @@ func managed(name string) bool {
 }
 
 // managedDir reports whether name may appear as a directory entry: the certs
-// directory, and the parents of the activation file.
+// directory, the parents of the activation file, and the credential store's.
 func managedDir(name string) bool {
-	return name == ".config" || name == ".config/stem" || name == stateDir || strings.HasPrefix(name, stateDir+"/")
+	return name == ".config" || name == ".config/stem" || name == "auth" ||
+		name == stateDir || strings.HasPrefix(name, stateDir+"/")
 }
 
 // openDataDir opens the data directory as an [os.Root] without following a
