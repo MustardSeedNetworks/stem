@@ -4,10 +4,13 @@ package auth_test
 
 import (
 	"errors"
+	"fmt"
 	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"github.com/MustardSeedNetworks/foundation/pkg/password"
 
 	"github.com/MustardSeedNetworks/stem/internal/auth"
 )
@@ -226,5 +229,41 @@ func TestMFAPendingToken_RevokedAfterUse(t *testing.T) {
 	m.RevokeMFAPendingToken(token)
 	if _, err = m.ValidateMFAPendingToken(t.Context(), token); !errors.Is(err, auth.ErrMFATokenInvalid) {
 		t.Fatalf("revoked token: got %v, want ErrMFATokenInvalid", err)
+	}
+}
+
+// TestLockout_BogusUsernameFloodDoesNotLockRealAccount: invented names must
+// take no slot, or a flood of them would lock the administrator out.
+func TestLockout_BogusUsernameFloodDoesNotLockRealAccount(t *testing.T) {
+	t.Parallel()
+	m, _ := newLockoutManager(t)
+
+	var hashes atomic.Int32
+	auth.SetVerifyForTest(m, func(hash, plaintext string) (bool, error) {
+		hashes.Add(1)
+		return password.Verify(hash, plaintext)
+	})
+
+	const flood = 40
+	var wg sync.WaitGroup
+	for i := range flood {
+		wg.Go(func() {
+			name := fmt.Sprintf("nobody-%d", i)
+			_, _, err := m.AuthenticateWithRefresh(name, "wrong-password-entirely")
+			if !errors.Is(err, auth.ErrInvalidCredentials) {
+				t.Errorf("bogus username: got %v, want ErrInvalidCredentials", err)
+			}
+		})
+	}
+	wg.Wait()
+
+	if got := hashes.Load(); got != flood {
+		t.Errorf("bogus usernames ran %d password hashes, want %d: timing would reveal which names exist", got, flood)
+	}
+	if m.LoginLocked() {
+		t.Fatal("bogus usernames locked the real account")
+	}
+	if _, _, err := m.AuthenticateWithRefresh("admin", lockoutPassword); err != nil {
+		t.Fatalf("real login after a bogus flood: %v", err)
 	}
 }

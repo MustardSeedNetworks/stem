@@ -106,6 +106,9 @@ type Manager struct {
 	// its clock, replaceable so tests need not wait out a lockout.
 	lock lockout
 	now  func() time.Time
+	// verify checks a password against a stored hash; a field so tests can
+	// observe that every login attempt pays for a hash.
+	verify func(hash, plaintext string) (bool, error)
 }
 
 // NewManager creates an auth manager for a credential given in plain text,
@@ -159,6 +162,7 @@ func NewManagerFromHash(
 		passkeyHandle:  newPasskeyHandle(),
 		lock:           lockout{failures: 0, until: time.Time{}},
 		now:            time.Now,
+		verify:         password.Verify,
 	}, nil
 }
 
@@ -184,14 +188,10 @@ func (m *Manager) Authenticate(username, plaintext string) (string, error) {
 // invented names can neither lock the administrator out nor grow state. An
 // unclaimed daemon has nothing to guess, so it never locks.
 func (m *Manager) checkPassword(username, plaintext string) error {
-	release, ok := m.TryBeginLoginAttempt()
-	if !ok {
-		return ErrAccountLocked
-	}
-
 	m.mu.RLock()
 	storedUsername := m.username
 	storedHash := string(m.passwordHash)
+	verify := m.verify
 	m.mu.RUnlock()
 
 	usernameMatch := subtle.ConstantTimeCompare(
@@ -199,10 +199,22 @@ func (m *Manager) checkPassword(username, plaintext string) error {
 		[]byte(strings.ToLower(storedUsername)),
 	) == 1
 
-	matched, err := password.Verify(storedHash, plaintext)
+	// Only the real, claimed account takes a lockout slot. Any other name
+	// would let a flood of invented usernames fill the in-flight cap and lock
+	// the administrator out; it is still hashed in full, so the response time
+	// does not say which names exist.
+	counted := usernameMatch && storedHash != ""
+	release := func(bool) {}
+	if counted {
+		var ok bool
+		if release, ok = m.TryBeginLoginAttempt(); !ok {
+			return ErrAccountLocked
+		}
+	}
+
+	matched, err := verify(storedHash, plaintext)
 	if err != nil || !usernameMatch || !matched {
-		// Only a wrong password for the real, claimed account is a failure.
-		release(!usernameMatch || storedHash == "")
+		release(false)
 		return ErrInvalidCredentials
 	}
 	release(true)

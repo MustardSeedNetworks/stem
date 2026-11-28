@@ -57,3 +57,10 @@ func SetClockForTest(m *Manager, now func() time.Time) {
 	defer m.mu.Unlock()
 	m.now = now
 }
+
+// SetVerifyForTest replaces the password check so tests can count calls.
+func SetVerifyForTest(m *Manager, verify func(hash, plaintext string) (bool, error)) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.verify = verify
+}
