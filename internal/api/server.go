@@ -450,6 +450,9 @@ func extractBearerToken(header string) (string, error) {
 }
 
 func (s *Server) writeAuthError(w http.ResponseWriter, err error) {
+	if errors.Is(err, auth.ErrTooManyAttempts) {
+		w.Header().Set("Retry-After", "1")
+	}
 	WriteAuthError(w, err)
 }
 

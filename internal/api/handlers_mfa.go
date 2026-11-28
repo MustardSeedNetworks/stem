@@ -159,8 +159,15 @@ func (s *Server) handleTOTPDisable(w http.ResponseWriter, r *http.Request) {
 
 	username := s.authManager.GetUsername()
 
-	// Step-up #1: password.
-	if _, passwordErr := s.authManager.Authenticate(username, req.Password); passwordErr != nil {
+	// Step-up #1: password, behind the same hashing gate as login.
+	releaseVerify, gateErr := s.authManager.AcquireVerify(r.Context(), logging.SecurityClientIP(r, s.trustedProxies))
+	if gateErr != nil {
+		s.writeAuthError(w, gateErr)
+		return
+	}
+	_, passwordErr := s.authManager.Authenticate(username, req.Password)
+	releaseVerify()
+	if passwordErr != nil {
 		logging.AuditMFAAttempt(r.Context(), r, username, logging.MFAFactorTOTP,
 			logging.MFAResultFailure, "password rejected")
 		s.writeAuthError(w, passwordErr)
@@ -212,12 +219,26 @@ func (s *Server) handleLoginTOTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	release, allowed := s.authManager.TryBeginLoginAttempt()
+	if !allowed {
+		logging.AuditAuthForbidden(r.Context(), r, logging.AuthReasonLocked, username)
+		s.writeAuthError(w, auth.ErrAccountLocked)
+		return
+	}
 	if codeErr := s.authManager.VerifyTOTPCode(req.Code); codeErr != nil {
+		// Only a wrong code is a failed guess; a malformed request is not.
+		wrongCode := errors.Is(codeErr, auth.ErrTOTPInvalidCode)
+		release(!wrongCode)
+		if wrongCode {
+			s.authManager.RevokeMFAPendingToken(req.MFAToken)
+		}
 		logging.AuditMFAAttempt(r.Context(), r, username, logging.MFAFactorTOTP,
 			logging.MFAResultFailure, "wrong code")
 		s.writeMFAError(w, codeErr)
 		return
 	}
+	release(true)
+	s.authManager.ResetLoginFailures()
 
 	accessToken, err := s.authManager.IssueAccessToken(username)
 	if err != nil {
@@ -316,10 +337,18 @@ func (s *Server) loginWithMFAGate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Step 1: verify the password.
-	accessToken, refreshToken, err := s.authManager.AuthenticateWithRefresh(req.Username, req.Password)
+	// Step 1: verify the password, behind the hashing gate. The gate runs
+	// before the username is examined, so its answer is the same for any name.
+	releaseVerify, err := s.authManager.AcquireVerify(r.Context(), logging.SecurityClientIP(r, s.trustedProxies))
 	if err != nil {
-		s.auditor.LoginFailure(r.Context(), r, req.Username, err.Error())
+		s.auditLoginRefusal(r, req.Username, err)
+		s.writeAuthError(w, err)
+		return
+	}
+	accessToken, refreshToken, err := s.authManager.AuthenticateWithRefresh(req.Username, req.Password)
+	releaseVerify()
+	if err != nil {
+		s.auditLoginRefusal(r, req.Username, err)
 		s.writeAuthError(w, err)
 		return
 	}
@@ -344,6 +373,7 @@ func (s *Server) loginWithMFAGate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// No MFA enrolled — proceed as before (full token pair).
+	s.authManager.ResetLoginFailures()
 	sessionDuration := s.authManager.SessionDuration()
 	auth.SetAccessTokenCookie(w, accessToken, sessionDuration, s.cookieConfig)
 	auth.SetRefreshTokenCookie(w, refreshToken, sessionDuration*refreshMultiplier, s.cookieConfig)
@@ -356,4 +386,19 @@ func (s *Server) loginWithMFAGate(w http.ResponseWriter, r *http.Request) {
 		RefreshToken: refreshToken,
 		ExpiresAt:    time.Now().Add(sessionDuration).Unix(),
 	})
+}
+
+// auditLoginRefusal records a refused password login. A locked account is a
+// distinct auth.forbidden reason so a SIEM rule can tell a lockout from a
+// wrong password; the client sees the same answer for both.
+func (s *Server) auditLoginRefusal(r *http.Request, username string, err error) {
+	if errors.Is(err, auth.ErrAccountLocked) {
+		logging.AuditAuthForbidden(r.Context(), r, logging.AuthReasonLocked, username)
+		return
+	}
+	if errors.Is(err, auth.ErrTooManyAttempts) {
+		logging.Warn("login refused: too many concurrent attempts", "event", "auth.busy")
+		return
+	}
+	s.auditor.LoginFailure(r.Context(), r, username, err.Error())
 }

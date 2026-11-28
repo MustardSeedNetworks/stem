@@ -33,8 +33,10 @@ const (
 	hibpPrefixLen = 5
 	// hibpSuffixLen is the remaining hex suffix length (40 total - 5 prefix).
 	hibpSuffixLen = 35
-	// hibpDisableEnv is the opt-out switch for air-gapped deployments.
-	hibpDisableEnv = "STEM_DISABLE_HIBP"
+	// hibpEnableEnv is the operator opt-in. The check is offline unless it
+	// is exactly "1", because the product makes no outbound call that an
+	// operator has not enabled.
+	hibpEnableEnv = "STEM_ENABLE_HIBP"
 	// hibpSuccessStatusClass is the integer-divided value of HTTP 2xx
 	// status codes (status / 100 == 2). Named to avoid the
 	// unnamed-constant linter complaint at the comparison site.
@@ -72,11 +74,11 @@ func resolveHIBPEndpoint() string {
 	return hibpDefaultEndpoint
 }
 
-// HIBPDisabled reports whether the operator has opted out of HIBP
-// breach checks via [hibpDisableEnv]. This is the documented escape
-// hatch for air-gapped or compliance-restricted deployments.
-func HIBPDisabled() bool {
-	return os.Getenv(hibpDisableEnv) == "1"
+// HIBPEnabled reports whether the operator has opted in to HIBP breach
+// checks via [hibpEnableEnv]. Any other value, including unset, keeps the
+// check offline.
+func HIBPEnabled() bool {
+	return os.Getenv(hibpEnableEnv) == "1"
 }
 
 // ErrHIBPUnavailable indicates the HIBP API could not be reached. It
@@ -90,8 +92,10 @@ var ErrHIBPUnavailable = errors.New("hibp api unavailable")
 //
 // Contract:
 //   - Returns (breached, count, nil) when the API responded.
-//   - Returns (false, 0, nil) — explicitly not blocking — when:
-//     STEM_DISABLE_HIBP=1, the network is unreachable, the request
+//   - Returns (false, 0, nil) — explicitly not blocking, and without any
+//     request — unless STEM_ENABLE_HIBP=1. That means the breach corpus was
+//     not checked, not that the password is safe. It also returns it when
+//     the network is unreachable, the request
 //     times out, or the server returns a non-2xx status. Operators on
 //     air-gapped networks should not be locked out of password
 //     changes by an unreachable third-party.
@@ -102,7 +106,7 @@ var ErrHIBPUnavailable = errors.New("hibp api unavailable")
 // The password leaves this function only as a SHA-1 hex prefix (5
 // chars) per the k-anonymity protocol — the full hash is never sent.
 func CheckPasswordBreached(ctx context.Context, password string) (bool, int, error) {
-	if HIBPDisabled() {
+	if !HIBPEnabled() {
 		return false, 0, nil
 	}
 

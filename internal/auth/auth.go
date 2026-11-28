@@ -102,6 +102,19 @@ type Manager struct {
 	// in-memory only: a restart drops every enrolled passkey.
 	passkeyHandle []byte
 	passkeys      []webauthn.Credential
+	// lock is the failed-login count and lock for the one account; now is
+	// its clock, replaceable so tests need not wait out a lockout.
+	lock lockout
+	now  func() time.Time
+	// verify checks a password against a stored hash; a field so tests can
+	// observe that every login attempt pays for a hash.
+	verify func(hash, plaintext string) (bool, error)
+	// gate bounds concurrent password hashes; see verifyGate.
+	gate verifyGate
+	// dummyHash is a valid hash of a throwaway password. A refused attempt for
+	// the real account verifies against it, so a locked account costs what an
+	// unknown username or a wrong password costs.
+	dummyHash func() string
 }
 
 // NewManager creates an auth manager for a credential given in plain text,
@@ -153,6 +166,14 @@ func NewManagerFromHash(
 		randReader:     rand.Reader,
 		totp:           totpState{secret: "", enabled: false},
 		passkeyHandle:  newPasskeyHandle(),
+		lock:           lockout{failures: 0, until: time.Time{}},
+		now:            time.Now,
+		verify:         password.Verify,
+		gate:           newVerifyGate(),
+		dummyHash: sync.OnceValue(func() string {
+			hash, _ := password.Hash("not-a-credential-" + defaultIssuer)
+			return hash
+		}),
 	}, nil
 }
 
@@ -166,9 +187,22 @@ func (m *Manager) Stop() {
 
 // Authenticate validates credentials and emits a signed JWT token.
 func (m *Manager) Authenticate(username, plaintext string) (string, error) {
+	if err := m.checkPassword(username, plaintext); err != nil {
+		return "", err
+	}
+	return m.generateToken(username)
+}
+
+// checkPassword is the one password check behind every login path. A locked
+// account is refused before any hash work; a wrong password for the real
+// account counts toward the lock, while a wrong username does not, so
+// invented names can neither lock the administrator out nor grow state. An
+// unclaimed daemon has nothing to guess, so it never locks.
+func (m *Manager) checkPassword(username, plaintext string) error {
 	m.mu.RLock()
 	storedUsername := m.username
 	storedHash := string(m.passwordHash)
+	verify := m.verify
 	m.mu.RUnlock()
 
 	usernameMatch := subtle.ConstantTimeCompare(
@@ -176,12 +210,27 @@ func (m *Manager) Authenticate(username, plaintext string) (string, error) {
 		[]byte(strings.ToLower(storedUsername)),
 	) == 1
 
-	matched, err := password.Verify(storedHash, plaintext)
-	if err != nil || !usernameMatch || !matched {
-		return "", ErrInvalidCredentials
+	// Only the real, claimed account takes a lockout slot. Any other name
+	// would let a flood of invented usernames fill the in-flight cap and lock
+	// the administrator out; it is still hashed in full, so the response time
+	// does not say which names exist.
+	counted := usernameMatch && storedHash != ""
+	release := func(bool) {}
+	if counted {
+		var ok bool
+		if release, ok = m.TryBeginLoginAttempt(); !ok {
+			_, _ = verify(m.dummyHash(), plaintext)
+			return ErrAccountLocked
+		}
 	}
 
-	return m.generateToken(username)
+	matched, err := verify(storedHash, plaintext)
+	if err != nil || !usernameMatch || !matched {
+		release(false)
+		return ErrInvalidCredentials
+	}
+	release(true)
+	return nil
 }
 
 // ValidateToken parses and validates a JWT token.
@@ -327,20 +376,12 @@ func (m *Manager) RefreshAccessToken(ctx context.Context, refreshToken string) (
 }
 
 // AuthenticateWithRefresh validates credentials and returns both access and refresh tokens.
+// It does not clear the failed-login count: when a second factor follows, the
+// login is not complete yet, and clearing here would let a caller who knows the
+// password guess codes without limit.
 func (m *Manager) AuthenticateWithRefresh(username, plaintext string) (string, string, error) {
-	m.mu.RLock()
-	storedUsername := m.username
-	storedHash := string(m.passwordHash)
-	m.mu.RUnlock()
-
-	usernameMatch := subtle.ConstantTimeCompare(
-		[]byte(strings.ToLower(username)),
-		[]byte(strings.ToLower(storedUsername)),
-	) == 1
-
-	matched, err := password.Verify(storedHash, plaintext)
-	if err != nil || !usernameMatch || !matched {
-		return "", "", ErrInvalidCredentials
+	if err := m.checkPassword(username, plaintext); err != nil {
+		return "", "", err
 	}
 
 	accessToken, err := m.generateToken(username)

@@ -398,6 +398,11 @@ func (a *Auditor) LoginFailure(ctx context.Context, r *http.Request, username, r
 // single administrator, so credentials are the only thing it can refuse.
 const AuthReasonCredentials = "credentials"
 
+// AuthReasonLocked is the auth.forbidden reason for a password login refused
+// because repeated failures locked the account. The client is told what it is
+// told for a wrong password; only the audit trail distinguishes the two.
+const AuthReasonLocked = "locked"
+
 // AuditAuthForbidden emits the fleet-wide event=auth.forbidden record that
 // seed, niac and trellis share, so one SIEM rule matches a denial in any
 // product. The keys mirror seed's: client_ip, path and method, plus username

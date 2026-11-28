@@ -472,9 +472,10 @@ func TestAuthenticateConcurrency(t *testing.T) {
 	ctx := context.Background()
 	mgr := mustNewManager(t, "test-secret", auth.AccessTokenDuration, "admin", "admin")
 
-	// Each login is a 64 MiB Argon2id derivation; eight concurrent ones
+	// Each login is a 64 MiB Argon2id derivation; a handful of concurrent ones
 	// exercise the manager's locking without exhausting test-host memory.
-	const numGoroutines = 8
+	// Attempts in flight count against the lockout limit, so stay within it.
+	const numGoroutines = auth.MaxFailedLogins
 	errChan := make(chan error, numGoroutines)
 
 	for range numGoroutines {
@@ -1223,7 +1224,9 @@ func TestAuthenticateWithRefresh_Concurrency(t *testing.T) {
 	ctx := context.Background()
 	mgr := mustNewManager(t, "test-secret", auth.AccessTokenDuration, "admin", "admin")
 
-	const numGoroutines = 50
+	// Attempts in flight count against the lockout limit, so a burst larger
+	// than the limit is refused by design; stay within it.
+	const numGoroutines = auth.MaxFailedLogins
 	errChan := make(chan error, numGoroutines)
 
 	for range numGoroutines {
@@ -1494,9 +1497,10 @@ func TestTokenBlacklist_Concurrency(t *testing.T) {
 	t.Parallel()
 	bl := auth.NewTokenBlacklist()
 
-	// Each login is a 64 MiB Argon2id derivation; eight concurrent ones
+	// Each login is a 64 MiB Argon2id derivation; a handful of concurrent ones
 	// exercise the manager's locking without exhausting test-host memory.
-	const numGoroutines = 8
+	// Attempts in flight count against the lockout limit, so stay within it.
+	const numGoroutines = auth.MaxFailedLogins
 	done := make(chan bool, numGoroutines*3)
 
 	// Concurrent adds.

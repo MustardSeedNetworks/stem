@@ -15,16 +15,18 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/MustardSeedNetworks/stem/internal/auth"
 )
 
-// withTestEndpoint redirects HIBP API calls to a test URL for the
-// duration of the test, restoring the prior value on cleanup.
+// withTestEndpoint opts in to the HIBP check and redirects its API calls to a
+// test URL for the duration of the test, restoring the prior value on cleanup.
 func withTestEndpoint(t *testing.T, url string) {
 	t.Helper()
+	t.Setenv("STEM_ENABLE_HIBP", "1")
 	prev := auth.SetHibpEndpointForTest(url)
 	t.Cleanup(func() { auth.SetHibpEndpointForTest(prev) })
 }
@@ -134,24 +136,42 @@ func TestCheckPasswordBreached_Server5xx_DoesNotBlock(t *testing.T) {
 	}
 }
 
-// TestCheckPasswordBreached_OptOut verifies STEM_DISABLE_HIBP=1
-// short-circuits before any network call.
-func TestCheckPasswordBreached_OptOut(t *testing.T) {
-	t.Setenv("STEM_DISABLE_HIBP", "1")
+// TestCheckPasswordBreached_OfflineByDefault verifies the check makes no
+// request unless the operator opts in: unset and every value other than "1".
+func TestCheckPasswordBreached_OfflineByDefault(t *testing.T) {
+	for name, value := range map[string]string{
+		"unset": "", "zero": "0", "true": "true", "yes": "yes", "padded": " 1",
+	} {
+		t.Run(name, func(t *testing.T) {
+			var hits atomic.Int32
+			srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {
+				hits.Add(1)
+			}))
+			t.Cleanup(srv.Close)
+			withTestEndpoint(t, srv.URL+"/")
+			t.Setenv("STEM_ENABLE_HIBP", value)
 
-	// Endpoint should never be consulted; point at a server that fails
-	// the test if hit.
-	srv := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {
-		t.Error("HIBP endpoint was contacted despite opt-out")
-	}))
-	t.Cleanup(srv.Close)
-	withTestEndpoint(t, srv.URL+"/")
-
-	breached, count, err := auth.CheckPasswordBreached(t.Context(), "anything")
-	if err != nil {
-		t.Fatalf("opt-out must not error: %v", err)
+			breached, count, err := auth.CheckPasswordBreached(t.Context(), "anything")
+			if err != nil {
+				t.Fatalf("offline check must not error: %v", err)
+			}
+			if breached || count != 0 {
+				t.Errorf("offline check must return (false, 0): got (%v, %d)", breached, count)
+			}
+			if n := hits.Load(); n != 0 {
+				t.Errorf("HIBP endpoint was contacted %d time(s) without opt-in", n)
+			}
+		})
 	}
-	if breached || count != 0 {
-		t.Errorf("opt-out must return (false, 0): got (%v, %d)", breached, count)
+}
+
+func TestHIBPEnabled(t *testing.T) {
+	t.Setenv("STEM_ENABLE_HIBP", "")
+	if auth.HIBPEnabled() {
+		t.Error("HIBP must be disabled when unset")
+	}
+	t.Setenv("STEM_ENABLE_HIBP", "1")
+	if !auth.HIBPEnabled() {
+		t.Error("HIBP must be enabled by STEM_ENABLE_HIBP=1")
 	}
 }
