@@ -184,7 +184,8 @@ func (m *Manager) Authenticate(username, plaintext string) (string, error) {
 // invented names can neither lock the administrator out nor grow state. An
 // unclaimed daemon has nothing to guess, so it never locks.
 func (m *Manager) checkPassword(username, plaintext string) error {
-	if m.LoginLocked() {
+	release, ok := m.TryBeginLoginAttempt()
+	if !ok {
 		return ErrAccountLocked
 	}
 
@@ -200,11 +201,11 @@ func (m *Manager) checkPassword(username, plaintext string) error {
 
 	matched, err := password.Verify(storedHash, plaintext)
 	if err != nil || !usernameMatch || !matched {
-		if usernameMatch && storedHash != "" {
-			m.RecordLoginFailure()
-		}
+		// Only a wrong password for the real, claimed account is a failure.
+		release(!usernameMatch || storedHash == "")
 		return ErrInvalidCredentials
 	}
+	release(true)
 	return nil
 }
 

@@ -206,8 +206,21 @@ func (m *Manager) GenerateMFAPendingToken(username string) (string, error) {
 // ValidateMFAPendingToken parses an mfa_token returned by the login
 // endpoint and returns the username it was minted for. Returns
 // ErrMFATokenExpired / ErrMFATokenInvalid for the expected failure
-// modes.
+// modes. A token revoked by [Manager.RevokeMFAPendingToken] is invalid.
 func (m *Manager) ValidateMFAPendingToken(_ context.Context, tokenString string) (string, error) {
+	username, _, _, err := m.parseMFAPendingToken(tokenString)
+	return username, err
+}
+
+// RevokeMFAPendingToken spends an mfa_token. The login handler calls it after
+// a wrong code, so one password check buys one guess, not a window of guesses.
+func (m *Manager) RevokeMFAPendingToken(tokenString string) {
+	if _, id, expires, err := m.parseMFAPendingToken(tokenString); err == nil {
+		m.blacklist.Add(id, expires)
+	}
+}
+
+func (m *Manager) parseMFAPendingToken(tokenString string) (string, string, time.Time, error) {
 	m.mu.RLock()
 	secret := m.jwtSecret
 	m.mu.RUnlock()
@@ -220,26 +233,25 @@ func (m *Manager) ValidateMFAPendingToken(_ context.Context, tokenString string)
 	})
 	if err != nil {
 		if errors.Is(err, jwt.ErrTokenExpired) {
-			return "", ErrMFATokenExpired
+			return "", "", time.Time{}, ErrMFATokenExpired
 		}
-		return "", ErrMFATokenInvalid
-	}
-	if !token.Valid {
-		return "", ErrMFATokenInvalid
+		return "", "", time.Time{}, ErrMFATokenInvalid
 	}
 	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok {
-		return "", ErrMFATokenInvalid
+	if !token.Valid || !ok {
+		return "", "", time.Time{}, ErrMFATokenInvalid
 	}
 	pending, _ := claims[mfaPendingClaimKey].(bool)
-	if !pending {
-		return "", ErrMFATokenInvalid
-	}
 	username, _ := claims["username"].(string)
-	if username == "" {
-		return "", ErrMFATokenInvalid
+	id, _ := claims["jti"].(string)
+	exp, expErr := claims.GetExpirationTime()
+	if !pending || username == "" || id == "" || expErr != nil || exp == nil {
+		return "", "", time.Time{}, ErrMFATokenInvalid
 	}
-	return username, nil
+	if m.blacklist.IsBlacklisted(id) {
+		return "", "", time.Time{}, ErrMFATokenInvalid
+	}
+	return username, id, exp.Time, nil
 }
 
 // IssueAccessToken is the public access-token issuer used by the

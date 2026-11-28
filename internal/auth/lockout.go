@@ -4,6 +4,7 @@ package auth
 
 import (
 	"errors"
+	"sync"
 	"time"
 )
 
@@ -32,6 +33,11 @@ var ErrAccountLocked = errors.New("account locked after repeated failed logins")
 type lockout struct {
 	failures int
 	until    time.Time
+	// inflight counts attempts that passed the gate and have not reported
+	// yet. They are charged against the limit up front: the check itself is
+	// slow (a password hash), so counting only finished failures would let a
+	// burst of parallel requests all pass before the first one is recorded.
+	inflight int
 }
 
 // LoginLocked reports whether password logins are currently refused.
@@ -41,11 +47,50 @@ func (m *Manager) LoginLocked() bool {
 	return m.now().Before(m.lock.until)
 }
 
+// TryBeginLoginAttempt is the single gate in front of every password or
+// second-factor check. It refuses while the account is locked, or when the
+// failures already counted plus the attempts still running could reach the
+// limit; otherwise it reserves a slot. The caller must call release exactly
+// once. release(false) records a failure; release(true) only frees the slot,
+// because a correct password is not a completed login while a second factor
+// is pending, so the count is cleared by [Manager.ResetLoginFailures] when
+// the login completes.
+func (m *Manager) TryBeginLoginAttempt() (func(success bool), bool) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	now := m.now()
+	if !m.lock.until.IsZero() && !now.Before(m.lock.until) {
+		// The lock has run out. One strike is left, so the first failure
+		// after it re-locks at once, as seed's does.
+		m.lock.until = time.Time{}
+		m.lock.failures = MaxFailedLogins - 1
+	}
+	if now.Before(m.lock.until) || m.lock.failures+m.lock.inflight >= MaxFailedLogins {
+		return nil, false
+	}
+	m.lock.inflight++
+	var once sync.Once
+	return func(success bool) {
+		once.Do(func() {
+			m.mu.Lock()
+			defer m.mu.Unlock()
+			m.lock.inflight--
+			if !success {
+				m.recordFailureLocked()
+			}
+		})
+	}, true
+}
+
 // RecordLoginFailure counts one failed login and reports whether the
 // account is now locked.
 func (m *Manager) RecordLoginFailure() bool {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	return m.recordFailureLocked()
+}
+
+func (m *Manager) recordFailureLocked() bool {
 	m.lock.failures++
 	if m.lock.failures >= MaxFailedLogins {
 		m.lock.until = m.now().Add(LockoutDuration)
@@ -59,5 +104,5 @@ func (m *Manager) RecordLoginFailure() bool {
 func (m *Manager) ResetLoginFailures() {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	m.lock = lockout{}
+	m.lock = lockout{failures: 0, until: time.Time{}, inflight: m.lock.inflight}
 }

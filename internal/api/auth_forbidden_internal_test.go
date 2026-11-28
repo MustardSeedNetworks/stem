@@ -200,6 +200,19 @@ func TestLoginLockoutCountsWrongTOTPCodes(t *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login/totp", strings.NewReader(body))
 		fw := httptest.NewRecorder()
 		s.handleLoginTOTP(fw, req)
+
+		// The token is spent by the wrong code: even the right code is refused.
+		right, genErr := totp.GenerateCode(setup.Secret, time.Now().UTC())
+		if genErr != nil {
+			t.Fatal(genErr)
+		}
+		again := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login/totp",
+			strings.NewReader(`{"mfaToken":"`+resp.MFAToken+`","code":"`+right+`"}`))
+		aw := httptest.NewRecorder()
+		s.handleLoginTOTP(aw, again)
+		if aw.Code != http.StatusUnauthorized {
+			t.Fatalf("spent mfa token accepted: status %d", aw.Code)
+		}
 	}
 	if !s.authManager.LoginLocked() {
 		t.Fatal("repeated wrong TOTP codes did not lock the account")

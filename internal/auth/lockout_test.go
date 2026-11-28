@@ -5,6 +5,7 @@ package auth_test
 import (
 	"errors"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -152,5 +153,78 @@ func TestLockout_UnclaimedDaemonNeverLocks(t *testing.T) {
 	failLogins(t, m, "admin", auth.MaxFailedLogins*2)
 	if m.LoginLocked() {
 		t.Fatal("an unclaimed daemon locked")
+	}
+}
+
+// TestLockout_ConcurrentWrongAttemptsNeverExceedLimit: the password check is
+// slow, so a burst of parallel guesses must be charged before it runs, not
+// after.
+func TestLockout_ConcurrentWrongAttemptsNeverExceedLimit(t *testing.T) {
+	t.Parallel()
+	m, _ := newLockoutManager(t)
+
+	const attempts = 64
+	var checked, refused atomic.Int32
+	var wg sync.WaitGroup
+	start := make(chan struct{})
+	for range attempts {
+		wg.Go(func() {
+			<-start
+			_, _, err := m.AuthenticateWithRefresh("admin", "wrong-password-entirely")
+			switch {
+			case errors.Is(err, auth.ErrInvalidCredentials):
+				checked.Add(1)
+			case errors.Is(err, auth.ErrAccountLocked):
+				refused.Add(1)
+			default:
+				t.Errorf("unexpected error: %v", err)
+			}
+		})
+	}
+	close(start)
+	wg.Wait()
+
+	if got := checked.Load(); got > auth.MaxFailedLogins {
+		t.Fatalf("%d password checks ran, limit is %d", got, auth.MaxFailedLogins)
+	}
+	if got := checked.Load() + refused.Load(); got != attempts {
+		t.Fatalf("accounted for %d of %d attempts", got, attempts)
+	}
+	if !m.LoginLocked() {
+		t.Fatal("account not locked after the burst")
+	}
+}
+
+func TestLockout_AttemptSlotIsReleasedOnce(t *testing.T) {
+	t.Parallel()
+	m, _ := newLockoutManager(t)
+	release, ok := m.TryBeginLoginAttempt()
+	if !ok {
+		t.Fatal("gate refused a clean account")
+	}
+	release(true)
+	release(false) // a second call must not record a failure
+	for range auth.MaxFailedLogins {
+		next, admitted := m.TryBeginLoginAttempt()
+		if !admitted {
+			t.Fatal("slot leaked: gate refused before the limit")
+		}
+		next(true)
+	}
+}
+
+func TestMFAPendingToken_RevokedAfterUse(t *testing.T) {
+	t.Parallel()
+	m, _ := newLockoutManager(t)
+	token, err := m.GenerateMFAPendingToken("admin")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = m.ValidateMFAPendingToken(t.Context(), token); err != nil {
+		t.Fatalf("fresh token: %v", err)
+	}
+	m.RevokeMFAPendingToken(token)
+	if _, err = m.ValidateMFAPendingToken(t.Context(), token); !errors.Is(err, auth.ErrMFATokenInvalid) {
+		t.Fatalf("revoked token: got %v, want ErrMFATokenInvalid", err)
 	}
 }

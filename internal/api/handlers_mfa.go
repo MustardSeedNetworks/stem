@@ -212,20 +212,25 @@ func (s *Server) handleLoginTOTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if s.authManager.LoginLocked() {
+	release, allowed := s.authManager.TryBeginLoginAttempt()
+	if !allowed {
 		logging.AuditAuthForbidden(r.Context(), r, logging.AuthReasonLocked, username)
 		s.writeAuthError(w, auth.ErrAccountLocked)
 		return
 	}
 	if codeErr := s.authManager.VerifyTOTPCode(req.Code); codeErr != nil {
-		if errors.Is(codeErr, auth.ErrTOTPInvalidCode) {
-			s.authManager.RecordLoginFailure()
+		// Only a wrong code is a failed guess; a malformed request is not.
+		wrongCode := errors.Is(codeErr, auth.ErrTOTPInvalidCode)
+		release(!wrongCode)
+		if wrongCode {
+			s.authManager.RevokeMFAPendingToken(req.MFAToken)
 		}
 		logging.AuditMFAAttempt(r.Context(), r, username, logging.MFAFactorTOTP,
 			logging.MFAResultFailure, "wrong code")
 		s.writeMFAError(w, codeErr)
 		return
 	}
+	release(true)
 	s.authManager.ResetLoginFailures()
 
 	accessToken, err := s.authManager.IssueAccessToken(username)
