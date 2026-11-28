@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.37.4](https://github.com/MustardSeedNetworks/stem/compare/v0.37.3...v0.37.4) (2026-11-28)
+
+
+### Bug Fixes
+
+* **auth:** keep the TOTP secret and passkeys across a restart ([#2166](https://github.com/MustardSeedNetworks/stem/issues/2166)) ([df17a66](https://github.com/MustardSeedNetworks/stem/commit/df17a66fef2c54f2de218cf16776d8d317ae9822))
+* **auth:** opt-in HIBP and admin login lockout ([#2160](https://github.com/MustardSeedNetworks/stem/issues/2160)) ([0457912](https://github.com/MustardSeedNetworks/stem/commit/0457912f2f57f70de6fa13f2533f1b02a16c18a0)), closes [#2159](https://github.com/MustardSeedNetworks/stem/issues/2159)
+
 ## [0.37.3](https://github.com/MustardSeedNetworks/stem/compare/v0.37.2...v0.37.3) (2026-11-28)
 
 
