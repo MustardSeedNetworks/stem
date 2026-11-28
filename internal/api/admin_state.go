@@ -55,14 +55,17 @@ func newAuthManager(dataDir string) (*auth.Manager, error) {
 		return nil, fmt.Errorf("credential store: %w", accountErr)
 	}
 
-	if _, statErr := os.Stat(filepath.Join(dataDir, legacyCredentialFile)); statErr == nil {
-		logging.Warn(
-			"an old credentials.json is present and is not read; set the password again through first-run setup",
-			"event",
-			"auth.credential.legacy_file",
-			"path",
-			filepath.Join(dataDir, legacyCredentialFile),
-		)
+	// On the release before the store, credentials.json was the authority and
+	// the environment was only a fallback: a password set through setup or
+	// recovery won over a stale STEM_AUTH_PASSWORD. Seeding from the
+	// environment here would revert it, so an install that has the file starts
+	// unclaimed and is set up again.
+	legacy := filepath.Join(dataDir, legacyCredentialFile)
+	if _, statErr := os.Stat(legacy); statErr == nil {
+		logging.Warn("an old credentials.json is present and is not read; set the password again through first-run "+
+			"setup, or delete the file to let STEM_AUTH_USERNAME and STEM_AUTH_PASSWORD create the account",
+			"event", "auth.credential.legacy_file", "path", legacy)
+		return auth.NewManagerFromStore(secret, defaultAuthSessionTimeout, store, auth.FirstRunUsername)
 	}
 
 	username, plaintext := os.Getenv("STEM_AUTH_USERNAME"), os.Getenv("STEM_AUTH_PASSWORD")
@@ -85,7 +88,6 @@ func newAuthManager(dataDir string) (*auth.Manager, error) {
 	if err = mgr.ReplaceCredential(hash, false); err != nil {
 		return nil, err
 	}
-	removeLegacyCredential(dataDir)
 	logging.Info("administrator credential loaded", "event", "auth.credential.source", "source", "environment")
 	return mgr, nil
 }
@@ -117,13 +119,9 @@ func (s *Server) saveCredential(passwordHash string, recovery bool) error {
 	if err := s.authManager.ReplaceCredential(passwordHash, recovery); err != nil {
 		return err
 	}
-	removeLegacyCredential(s.dataDir)
-	return nil
-}
-
-func removeLegacyCredential(dataDir string) {
-	legacy := filepath.Join(dataDir, legacyCredentialFile)
+	legacy := filepath.Join(s.dataDir, legacyCredentialFile)
 	if err := os.Remove(legacy); err != nil && !errors.Is(err, os.ErrNotExist) {
 		logging.Warn("could not remove the old credentials.json", "path", legacy, "error", err)
 	}
+	return nil
 }

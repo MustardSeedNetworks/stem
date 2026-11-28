@@ -124,10 +124,12 @@ completes issues a new token. A password reset through password recovery is
 stored the same way, and it also removes the TOTP secret and every passkey: the
 operator signs in with the new password and enrols them again.
 
-A `credentials.json` left by an earlier release is not read. Such an install
-comes up unclaimed and is set up again (the file held only the password hash,
-never a second factor), unless `STEM_AUTH_USERNAME` and `STEM_AUTH_PASSWORD` are
-set, in which case they create the account in the store on that first start.
+A `credentials.json` left by an earlier release is not read, and
+`STEM_AUTH_USERNAME` and `STEM_AUTH_PASSWORD` are ignored while it exists, since
+on that release the file outranked them. Such an install comes up unclaimed and
+is set up again through the web UI; the file held only the password hash, never a
+second factor, and is removed once the account is stored. To create the account
+from the environment instead, delete the file before starting.
 
 | Platform | Data directory |
 | ---------- | ------------- |

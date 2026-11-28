@@ -3,6 +3,7 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -16,6 +17,7 @@ import (
 	"github.com/pquerna/otp/totp"
 
 	"github.com/MustardSeedNetworks/stem/internal/auth"
+	"github.com/MustardSeedNetworks/stem/internal/support"
 )
 
 const (
@@ -23,12 +25,12 @@ const (
 	adminStateRecovered = "lantern-quartz-meadow-falcon-77"
 )
 
-func adminStateEnv(t *testing.T, username, plaintext string) string {
+func adminStateEnv(t *testing.T) string {
 	t.Helper()
 	dataDir := t.TempDir()
 	t.Setenv("STEM_DATA_DIR", dataDir)
-	t.Setenv("STEM_AUTH_USERNAME", username)
-	t.Setenv("STEM_AUTH_PASSWORD", plaintext)
+	t.Setenv("STEM_AUTH_USERNAME", "operator")
+	t.Setenv("STEM_AUTH_PASSWORD", adminStatePassword)
 	return dataDir
 }
 
@@ -58,7 +60,7 @@ func enrolFactors(t *testing.T, m *auth.Manager) string {
 // so the second factors enrolled on it survive a restart, and a changed or
 // removed environment neither reverts nor loses it.
 func TestEnvironmentSeedsTheStoreOnce(t *testing.T) {
-	dataDir := adminStateEnv(t, "operator", adminStatePassword)
+	dataDir := adminStateEnv(t)
 	first, err := newAuthManager(dataDir)
 	if err != nil {
 		t.Fatalf("newAuthManager: %v", err)
@@ -85,10 +87,13 @@ func TestEnvironmentSeedsTheStoreOnce(t *testing.T) {
 	}
 }
 
-// An old credentials.json carries no second factor and is not read: the daemon
-// comes up unclaimed, and the file goes once the store holds an account.
-func TestLegacyCredentialFileIsNotReadAndIsRemoved(t *testing.T) {
-	dataDir := adminStateEnv(t, "", "")
+// An old credentials.json carries no second factor and is not read. On the
+// release before the store it was the authority and the environment only a
+// fallback, so a password set through setup must not be reverted by a stale
+// STEM_AUTH_PASSWORD: the install starts unclaimed whether or not the
+// environment is set, and the file goes once the store holds an account.
+func TestLegacyCredentialFileIsNotReadAndIsRemovedOnClaim(t *testing.T) {
+	dataDir := adminStateEnv(t)
 	legacy := filepath.Join(dataDir, legacyCredentialFile)
 	hash := "$argon2id$v=19$m=8192,t=1,p=1$YWJjZGVmZ2hpamtsbW5vcA$aGFzaC1zdHViLWZvci10ZXN0aW5nLW9ubHkAAAAAAA"
 	if err := os.WriteFile(legacy, []byte(`{"username":"admin","passwordHash":"`+hash+`"}`), 0o600); err != nil {
@@ -101,28 +106,66 @@ func TestLegacyCredentialFileIsNotReadAndIsRemoved(t *testing.T) {
 	}
 	t.Cleanup(m.Stop)
 	if m.GetPasswordHash() != "" {
-		t.Fatal("the old credentials.json was read; an install that has one must be set up again")
+		t.Fatal("an install with an old credentials.json was claimed from the file or from a stale environment")
 	}
 	if _, statErr := os.Stat(legacy); statErr != nil {
 		t.Fatalf("the old file went before the store held an account: %v", statErr)
 	}
 
-	t.Setenv("STEM_AUTH_USERNAME", "operator")
-	t.Setenv("STEM_AUTH_PASSWORD", adminStatePassword)
-	seeded, err := newAuthManager(dataDir)
+	s, err := NewServer(ListenAddr{Port: 8444})
 	if err != nil {
-		t.Fatalf("newAuthManager with the environment set: %v", err)
+		t.Fatalf("NewServer: %v", err)
 	}
-	t.Cleanup(seeded.Stop)
+	t.Cleanup(func() { _ = s.Shutdown() })
+	if err = s.saveCredential(hash, false); err != nil {
+		t.Fatalf("saveCredential: %v", err)
+	}
 	if _, statErr := os.Stat(legacy); !os.IsNotExist(statErr) {
 		t.Errorf("the old credentials.json survives once the store holds an account: %v", statErr)
+	}
+}
+
+// A backup of a claimed daemon restores into an empty data directory as a
+// store that opens: the sealed file and its key arrive as a pair and the
+// restored directory passes the private-directory check.
+func TestBackupAndRestoreCarryTheCredentialStore(t *testing.T) {
+	source := adminStateEnv(t)
+	first, err := newAuthManager(source)
+	if err != nil {
+		t.Fatalf("newAuthManager: %v", err)
+	}
+	t.Cleanup(first.Stop)
+	code := enrolFactors(t, first)
+
+	var archive bytes.Buffer
+	if err = support.Backup(source, &archive); err != nil {
+		t.Fatalf("Backup: %v", err)
+	}
+	target := t.TempDir()
+	if _, err = support.Restore(&archive, target, time.Now()); err != nil {
+		t.Fatalf("Restore: %v", err)
+	}
+
+	t.Setenv("STEM_DATA_DIR", target)
+	t.Setenv("STEM_AUTH_USERNAME", "")
+	t.Setenv("STEM_AUTH_PASSWORD", "")
+	restored, err := newAuthManager(target)
+	if err != nil {
+		t.Fatalf("newAuthManager over a restored directory: %v", err)
+	}
+	t.Cleanup(restored.Stop)
+	if _, err = restored.Authenticate("operator", adminStatePassword); err != nil {
+		t.Errorf("password login after restore: %v", err)
+	}
+	if restored.VerifyTOTPCode(code) != nil || !restored.HasWebAuthnCredentials() {
+		t.Error("the second factors did not survive a backup and restore")
 	}
 }
 
 // Recovery is the owner's decision of 2026-11-28: the new password and the
 // loss of both second factors land together, and stay lost after a restart.
 func TestRecoveryClearsSecondFactorsAcrossARestart(t *testing.T) {
-	dataDir := adminStateEnv(t, "operator", adminStatePassword)
+	dataDir := adminStateEnv(t)
 	s, err := NewServer(ListenAddr{Port: 8444})
 	if err != nil {
 		t.Fatalf("NewServer: %v", err)
