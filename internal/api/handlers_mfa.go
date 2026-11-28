@@ -381,5 +381,9 @@ func (s *Server) auditLoginRefusal(r *http.Request, username string, err error) 
 		logging.AuditAuthForbidden(r.Context(), r, logging.AuthReasonLocked, username)
 		return
 	}
+	if errors.Is(err, auth.ErrTooManyAttempts) {
+		logging.Warn("login refused: too many concurrent attempts", "event", "auth.busy")
+		return
+	}
 	s.auditor.LoginFailure(r.Context(), r, username, err.Error())
 }

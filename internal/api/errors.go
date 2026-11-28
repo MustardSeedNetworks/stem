@@ -247,6 +247,13 @@ func MapAuthError(err error) *Error {
 			Message:     "Invalid username or password",
 			InternalErr: err,
 		}
+	case errors.Is(err, auth.ErrTooManyAttempts):
+		return &Error{
+			HTTPStatus:  http.StatusTooManyRequests,
+			Code:        ErrCodeRateLimited,
+			Message:     "Too many requests",
+			InternalErr: err,
+		}
 	case errors.Is(err, auth.ErrInvalidToken):
 		return &Error{
 			HTTPStatus:  http.StatusUnauthorized,

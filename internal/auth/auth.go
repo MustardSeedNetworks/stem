@@ -109,6 +109,12 @@ type Manager struct {
 	// verify checks a password against a stored hash; a field so tests can
 	// observe that every login attempt pays for a hash.
 	verify func(hash, plaintext string) (bool, error)
+	// verifySlots bounds concurrent verifies; see MaxConcurrentVerifies.
+	verifySlots chan struct{}
+	// dummyHash is a valid hash of a throwaway password. A refused attempt for
+	// the real account verifies against it, so a locked account costs what an
+	// unknown username or a wrong password costs.
+	dummyHash func() string
 }
 
 // NewManager creates an auth manager for a credential given in plain text,
@@ -163,6 +169,11 @@ func NewManagerFromHash(
 		lock:           lockout{failures: 0, until: time.Time{}},
 		now:            time.Now,
 		verify:         password.Verify,
+		verifySlots:    make(chan struct{}, MaxConcurrentVerifies),
+		dummyHash: sync.OnceValue(func() string {
+			hash, _ := password.Hash("not-a-credential-" + defaultIssuer)
+			return hash
+		}),
 	}, nil
 }
 
@@ -188,6 +199,13 @@ func (m *Manager) Authenticate(username, plaintext string) (string, error) {
 // invented names can neither lock the administrator out nor grow state. An
 // unclaimed daemon has nothing to guess, so it never locks.
 func (m *Manager) checkPassword(username, plaintext string) error {
+	select {
+	case m.verifySlots <- struct{}{}:
+		defer func() { <-m.verifySlots }()
+	default:
+		return ErrTooManyAttempts
+	}
+
 	m.mu.RLock()
 	storedUsername := m.username
 	storedHash := string(m.passwordHash)
@@ -208,6 +226,7 @@ func (m *Manager) checkPassword(username, plaintext string) error {
 	if counted {
 		var ok bool
 		if release, ok = m.TryBeginLoginAttempt(); !ok {
+			_, _ = verify(m.dummyHash(), plaintext)
 			return ErrAccountLocked
 		}
 	}

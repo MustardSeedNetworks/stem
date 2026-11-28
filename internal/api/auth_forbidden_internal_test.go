@@ -218,3 +218,42 @@ func TestLoginLockoutCountsWrongTOTPCodes(t *testing.T) {
 		t.Fatal("repeated wrong TOTP codes did not lock the account")
 	}
 }
+
+// TestLoginAnswersAreIdenticalForLockedUnknownAndWrong: nothing in the
+// response may say which of the three happened; only the server log does.
+func TestLoginAnswersAreIdenticalForLockedUnknownAndWrong(t *testing.T) {
+	t.Setenv("STEM_AUTH_USERNAME", "admin")
+	t.Setenv("STEM_AUTH_PASSWORD", lockoutTestPassword)
+	s := newTestServer(t)
+
+	login := func(username, password string) *httptest.ResponseRecorder {
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login",
+			strings.NewReader(`{"username":"`+username+`","password":"`+password+`"}`))
+		req.Header.Set("Content-Type", "application/json")
+		w := httptest.NewRecorder()
+		s.loginWithMFAGate(w, req)
+		return w
+	}
+	wrong := login("admin", "definitely-the-wrong-password")
+	unknown := login("nobody", "definitely-the-wrong-password")
+	for range auth.MaxFailedLogins {
+		login("admin", "definitely-the-wrong-password")
+	}
+	locked := login("admin", lockoutTestPassword)
+
+	for name, w := range map[string]*httptest.ResponseRecorder{"unknown": unknown, "locked": locked} {
+		if w.Code != wrong.Code || w.Body.String() != wrong.Body.String() {
+			t.Errorf("%s answer (%d %q) differs from wrong password (%d %q)",
+				name, w.Code, w.Body.String(), wrong.Code, wrong.Body.String())
+		}
+	}
+}
+
+func TestTooManyAttemptsAnswers429WithRetryAfter(t *testing.T) {
+	s := newTestServer(t)
+	w := httptest.NewRecorder()
+	s.writeAuthError(w, auth.ErrTooManyAttempts)
+	if w.Code != http.StatusTooManyRequests || w.Header().Get("Retry-After") == "" {
+		t.Fatalf("status %d Retry-After %q, want 429 with Retry-After", w.Code, w.Header().Get("Retry-After"))
+	}
+}

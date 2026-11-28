@@ -177,7 +177,7 @@ func TestLockout_ConcurrentWrongAttemptsNeverExceedLimit(t *testing.T) {
 			switch {
 			case errors.Is(err, auth.ErrInvalidCredentials):
 				checked.Add(1)
-			case errors.Is(err, auth.ErrAccountLocked):
+			case errors.Is(err, auth.ErrAccountLocked), errors.Is(err, auth.ErrTooManyAttempts):
 				refused.Add(1)
 			default:
 				t.Errorf("unexpected error: %v", err)
@@ -192,9 +192,6 @@ func TestLockout_ConcurrentWrongAttemptsNeverExceedLimit(t *testing.T) {
 	}
 	if got := checked.Load() + refused.Load(); got != attempts {
 		t.Fatalf("accounted for %d of %d attempts", got, attempts)
-	}
-	if !m.LoginLocked() {
-		t.Fatal("account not locked after the burst")
 	}
 }
 
@@ -244,18 +241,21 @@ func TestLockout_BogusUsernameFloodDoesNotLockRealAccount(t *testing.T) {
 		return password.Verify(hash, plaintext)
 	})
 
-	const flood = 40
-	var wg sync.WaitGroup
-	for i := range flood {
-		wg.Go(func() {
-			name := fmt.Sprintf("nobody-%d", i)
-			_, _, err := m.AuthenticateWithRefresh(name, "wrong-password-entirely")
-			if !errors.Is(err, auth.ErrInvalidCredentials) {
-				t.Errorf("bogus username: got %v, want ErrInvalidCredentials", err)
-			}
-		})
+	// Waves no wider than the verify cap, so the cap itself refuses nothing.
+	const waves, flood = 10, 10 * auth.MaxConcurrentVerifies
+	for wave := range waves {
+		var wg sync.WaitGroup
+		for i := range auth.MaxConcurrentVerifies {
+			wg.Go(func() {
+				name := fmt.Sprintf("nobody-%d-%d", wave, i)
+				_, _, err := m.AuthenticateWithRefresh(name, "wrong-password-entirely")
+				if !errors.Is(err, auth.ErrInvalidCredentials) {
+					t.Errorf("bogus username: got %v, want ErrInvalidCredentials", err)
+				}
+			})
+		}
+		wg.Wait()
 	}
-	wg.Wait()
 
 	if got := hashes.Load(); got != flood {
 		t.Errorf("bogus usernames ran %d password hashes, want %d: timing would reveal which names exist", got, flood)
@@ -265,5 +265,82 @@ func TestLockout_BogusUsernameFloodDoesNotLockRealAccount(t *testing.T) {
 	}
 	if _, _, err := m.AuthenticateWithRefresh("admin", lockoutPassword); err != nil {
 		t.Fatalf("real login after a bogus flood: %v", err)
+	}
+}
+
+// TestLockout_LockedAttemptStillPaysForAHash: a locked real account must cost
+// what an unknown username costs, or response time names the real account.
+func TestLockout_LockedAttemptStillPaysForAHash(t *testing.T) {
+	t.Parallel()
+	m, _ := newLockoutManager(t)
+	failLogins(t, m, "admin", auth.MaxFailedLogins)
+
+	var hashes atomic.Int32
+	auth.SetVerifyForTest(m, func(string, string) (bool, error) {
+		hashes.Add(1)
+		return false, nil
+	})
+	if _, _, err := m.AuthenticateWithRefresh("admin", lockoutPassword); !errors.Is(err, auth.ErrAccountLocked) {
+		t.Fatalf("got %v, want ErrAccountLocked", err)
+	}
+	if got := hashes.Load(); got != 1 {
+		t.Fatalf("locked attempt ran %d verifies, want 1 (dummy)", got)
+	}
+}
+
+// TestVerifyCap_HoldsAndRefusesTheExcess blocks every verify and checks that
+// no more than the cap run at once and the rest are refused without waiting.
+func TestVerifyCap_HoldsAndRefusesTheExcess(t *testing.T) {
+	t.Parallel()
+	m, _ := newLockoutManager(t)
+
+	var running, peak atomic.Int32
+	entered := make(chan struct{}, auth.MaxConcurrentVerifies)
+	gate := make(chan struct{})
+	auth.SetVerifyForTest(m, func(string, string) (bool, error) {
+		n := running.Add(1)
+		for {
+			p := peak.Load()
+			if n <= p || peak.CompareAndSwap(p, n) {
+				break
+			}
+		}
+		entered <- struct{}{}
+		<-gate
+		running.Add(-1)
+		return false, nil
+	})
+
+	var wg sync.WaitGroup
+	for i := range auth.MaxConcurrentVerifies {
+		wg.Go(func() {
+			// Bogus names, so the lockout gate does not interfere.
+			_, _, _ = m.AuthenticateWithRefresh(fmt.Sprintf("nobody-%d", i), "x")
+		})
+	}
+	for range auth.MaxConcurrentVerifies {
+		<-entered
+	}
+
+	const excess = 20
+	var refused atomic.Int32
+	var excessWG sync.WaitGroup
+	for i := range excess {
+		excessWG.Go(func() {
+			_, _, err := m.AuthenticateWithRefresh(fmt.Sprintf("other-%d", i), "x")
+			if errors.Is(err, auth.ErrTooManyAttempts) {
+				refused.Add(1)
+			}
+		})
+	}
+	excessWG.Wait() // returns without the gate opening: refusals do not wait
+	close(gate)
+	wg.Wait()
+
+	if got := refused.Load(); got != excess {
+		t.Errorf("%d of %d excess attempts refused", got, excess)
+	}
+	if got := peak.Load(); got > auth.MaxConcurrentVerifies {
+		t.Errorf("%d verifies ran at once, cap is %d", got, auth.MaxConcurrentVerifies)
 	}
 }
