@@ -33,7 +33,7 @@ func detectHashAlgorithm(hash string) string {
 // message, emits an audit log, and returns false. The caller must stop
 // processing.
 //
-// HIBP is treated as opt-out: STEM_DISABLE_HIBP=1 skips it. Network
+// HIBP is opt-in: it runs only when STEM_ENABLE_HIBP=1. Network
 // errors against the HIBP API are non-blocking (see CheckPasswordBreached).
 func validatePasswordOrReject(
 	w http.ResponseWriter,

@@ -102,6 +102,10 @@ type Manager struct {
 	// in-memory only: a restart drops every enrolled passkey.
 	passkeyHandle []byte
 	passkeys      []webauthn.Credential
+	// lock is the failed-login count and lock for the one account; now is
+	// its clock, replaceable so tests need not wait out a lockout.
+	lock lockout
+	now  func() time.Time
 }
 
 // NewManager creates an auth manager for a credential given in plain text,
@@ -153,6 +157,8 @@ func NewManagerFromHash(
 		randReader:     rand.Reader,
 		totp:           totpState{secret: "", enabled: false},
 		passkeyHandle:  newPasskeyHandle(),
+		lock:           lockout{failures: 0, until: time.Time{}},
+		now:            time.Now,
 	}, nil
 }
 
@@ -166,6 +172,22 @@ func (m *Manager) Stop() {
 
 // Authenticate validates credentials and emits a signed JWT token.
 func (m *Manager) Authenticate(username, plaintext string) (string, error) {
+	if err := m.checkPassword(username, plaintext); err != nil {
+		return "", err
+	}
+	return m.generateToken(username)
+}
+
+// checkPassword is the one password check behind every login path. A locked
+// account is refused before any hash work; a wrong password for the real
+// account counts toward the lock, while a wrong username does not, so
+// invented names can neither lock the administrator out nor grow state. An
+// unclaimed daemon has nothing to guess, so it never locks.
+func (m *Manager) checkPassword(username, plaintext string) error {
+	if m.LoginLocked() {
+		return ErrAccountLocked
+	}
+
 	m.mu.RLock()
 	storedUsername := m.username
 	storedHash := string(m.passwordHash)
@@ -178,10 +200,12 @@ func (m *Manager) Authenticate(username, plaintext string) (string, error) {
 
 	matched, err := password.Verify(storedHash, plaintext)
 	if err != nil || !usernameMatch || !matched {
-		return "", ErrInvalidCredentials
+		if usernameMatch && storedHash != "" {
+			m.RecordLoginFailure()
+		}
+		return ErrInvalidCredentials
 	}
-
-	return m.generateToken(username)
+	return nil
 }
 
 // ValidateToken parses and validates a JWT token.
@@ -327,20 +351,12 @@ func (m *Manager) RefreshAccessToken(ctx context.Context, refreshToken string) (
 }
 
 // AuthenticateWithRefresh validates credentials and returns both access and refresh tokens.
+// It does not clear the failed-login count: when a second factor follows, the
+// login is not complete yet, and clearing here would let a caller who knows the
+// password guess codes without limit.
 func (m *Manager) AuthenticateWithRefresh(username, plaintext string) (string, string, error) {
-	m.mu.RLock()
-	storedUsername := m.username
-	storedHash := string(m.passwordHash)
-	m.mu.RUnlock()
-
-	usernameMatch := subtle.ConstantTimeCompare(
-		[]byte(strings.ToLower(username)),
-		[]byte(strings.ToLower(storedUsername)),
-	) == 1
-
-	matched, err := password.Verify(storedHash, plaintext)
-	if err != nil || !usernameMatch || !matched {
-		return "", "", ErrInvalidCredentials
+	if err := m.checkPassword(username, plaintext); err != nil {
+		return "", "", err
 	}
 
 	accessToken, err := m.generateToken(username)

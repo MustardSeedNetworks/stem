@@ -8,6 +8,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/MustardSeedNetworks/foundation/pkg/password"
 )
@@ -71,6 +72,7 @@ func (m *Manager) UpdatePasswordHash(_ context.Context, newHash string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.passwordHash = []byte(newHash)
+	m.lock = lockout{failures: 0, until: time.Time{}}
 }
 
 // GetPasswordHash returns the current password hash (for config saving).

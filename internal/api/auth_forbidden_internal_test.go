@@ -10,6 +10,11 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
+
+	"github.com/pquerna/otp/totp"
+
+	"github.com/MustardSeedNetworks/stem/internal/auth"
 )
 
 // captureLogs routes the default logger into a buffer for the test and
@@ -106,5 +111,97 @@ func TestLoginFailureLogsForbidden(t *testing.T) {
 	}
 	if rec["reason"] != "credentials" || rec["username"] != "admin" || rec["path"] != "/api/v1/auth/login" {
 		t.Errorf("record = %v, want reason=credentials username=admin path=/api/v1/auth/login", rec)
+	}
+}
+
+const lockoutTestPassword = "kettle-orbit-granite-velvet-42"
+
+func lockoutLogin(s *Server, password string) *httptest.ResponseRecorder {
+	body := `{"username":"admin","password":"` + password + `"}`
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	s.loginWithMFAGate(w, req)
+	return w
+}
+
+// TestLoginLockoutRefusesCorrectPasswordAndLogsLocked drives the handler
+// directly, so the per-address limiter in front of it does not stand in for
+// the lockout: this is the distributed guess the lockout exists to stop.
+func TestLoginLockoutRefusesCorrectPasswordAndLogsLocked(t *testing.T) {
+	t.Setenv("STEM_AUTH_USERNAME", "admin")
+	t.Setenv("STEM_AUTH_PASSWORD", lockoutTestPassword)
+	s := newTestServer(t)
+	records := captureLogs(t)
+
+	for range auth.MaxFailedLogins {
+		if w := lockoutLogin(s, "definitely-the-wrong-password"); w.Code != http.StatusUnauthorized {
+			t.Fatalf("wrong password status = %d, want 401", w.Code)
+		}
+	}
+	wrong := lockoutLogin(s, "definitely-the-wrong-password")
+	locked := lockoutLogin(s, lockoutTestPassword)
+	if locked.Code != http.StatusUnauthorized {
+		t.Fatalf("correct password while locked: status = %d, want 401", locked.Code)
+	}
+	if locked.Body.String() != wrong.Body.String() {
+		t.Errorf("locked answer %q differs from wrong-password answer %q", locked.Body.String(), wrong.Body.String())
+	}
+
+	var sawLocked bool
+	for _, rec := range records() {
+		if rec["event"] == "auth.forbidden" && rec["reason"] == "locked" {
+			sawLocked = true
+			if rec["username"] != "admin" || rec["path"] != "/api/v1/auth/login" {
+				t.Errorf("locked record = %v, want username=admin path=/api/v1/auth/login", rec)
+			}
+		}
+	}
+	if !sawLocked {
+		t.Error("no event=auth.forbidden reason=locked record was logged")
+	}
+
+	s.authManager.ResetLoginFailures()
+	if w := lockoutLogin(s, lockoutTestPassword); w.Code != http.StatusOK {
+		t.Fatalf("login after reset: status = %d, want 200: %s", w.Code, w.Body.String())
+	}
+}
+
+// TestLoginLockoutCountsWrongTOTPCodes: a caller who knows the password must
+// not be able to guess second-factor codes without limit.
+func TestLoginLockoutCountsWrongTOTPCodes(t *testing.T) {
+	t.Setenv("STEM_AUTH_USERNAME", "admin")
+	t.Setenv("STEM_AUTH_PASSWORD", lockoutTestPassword)
+	s := newTestServer(t)
+
+	setup, err := auth.GenerateTOTPSecret("admin", auth.DefaultTOTPIssuer)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.authManager.SetTOTPSecret(setup.Secret)
+	code, err := totp.GenerateCode(setup.Secret, time.Now().UTC())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err = s.authManager.VerifyAndEnableTOTP(code); err != nil {
+		t.Fatal(err)
+	}
+
+	for range auth.MaxFailedLogins {
+		w := lockoutLogin(s, lockoutTestPassword)
+		if w.Code != http.StatusOK {
+			t.Fatalf("password stage status = %d: %s", w.Code, w.Body.String())
+		}
+		var resp mfaRequiredResponse
+		if err = json.Unmarshal(w.Body.Bytes(), &resp); err != nil || !resp.MFARequired {
+			t.Fatalf("expected an mfa challenge, got %s", w.Body.String())
+		}
+		body := `{"mfaToken":"` + resp.MFAToken + `","code":"000000"}`
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login/totp", strings.NewReader(body))
+		fw := httptest.NewRecorder()
+		s.handleLoginTOTP(fw, req)
+	}
+	if !s.authManager.LoginLocked() {
+		t.Fatal("repeated wrong TOTP codes did not lock the account")
 	}
 }

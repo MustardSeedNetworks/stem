@@ -146,11 +146,22 @@ return to setup: delete it deliberately to reclaim the daemon.
 | `STEM_AUTH_USERNAME` | WebUI username, instead of first-run setup; set both or neither | unset |
 | `STEM_AUTH_PASSWORD` | WebUI password, instead of first-run setup; set both or neither | unset |
 | `STEM_JWT_SECRET` | JWT signing secret (256-bit) | Auto-generated if not set |
+| `STEM_ENABLE_HIBP` | Set to `1` to check new passwords against the Have I Been Pwned breach corpus at setup and recovery. Sends the first five characters of the password's SHA-1 to `api.pwnedpasswords.com`; the password never leaves the host. Off by default, so an air-gapped install never calls out. An unreachable service never blocks a password change | unset (offline) |
 | `STEM_LOG_LEVEL` | Log level (debug, info, warn, error) | `info` |
 | `STEM_LOG_FORMAT` | Log format (json, text) | `json` |
 | `STEM_DATA_DIR` | Data directory path | the working directory |
 | `STEM_TRUSTED_PROXIES` | Comma-separated CIDRs whose `X-Forwarded-For` may key rate limits and failed-login counters | unset (loopback only) |
 | `STEM_WEBAUTHN_ORIGIN` | The HTTPS origin operators browse to, such as `https://stem.example.com:8444`; passkeys work only from it, and its host must be a DNS name, not an IP address | `https://localhost:<bound port>` |
+
+### Login lockout
+
+Five consecutive failed logins for the administrator (a wrong password, or a
+wrong second-factor code after a correct password) lock password sign-in for 15
+minutes, in memory, per daemon start. A locked account answers exactly like a
+wrong password and logs `event=auth.forbidden reason=locked`. A completed login,
+or a password set through first-run setup or file-token recovery, clears it;
+passkey sign-in is not affected. Failed attempts for an unknown username never
+count. The per-address limit (5 per minute) applies in front of this.
 
 ### Reverse Proxies
 

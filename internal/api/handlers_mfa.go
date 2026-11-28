@@ -212,12 +212,21 @@ func (s *Server) handleLoginTOTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if s.authManager.LoginLocked() {
+		logging.AuditAuthForbidden(r.Context(), r, logging.AuthReasonLocked, username)
+		s.writeAuthError(w, auth.ErrAccountLocked)
+		return
+	}
 	if codeErr := s.authManager.VerifyTOTPCode(req.Code); codeErr != nil {
+		if errors.Is(codeErr, auth.ErrTOTPInvalidCode) {
+			s.authManager.RecordLoginFailure()
+		}
 		logging.AuditMFAAttempt(r.Context(), r, username, logging.MFAFactorTOTP,
 			logging.MFAResultFailure, "wrong code")
 		s.writeMFAError(w, codeErr)
 		return
 	}
+	s.authManager.ResetLoginFailures()
 
 	accessToken, err := s.authManager.IssueAccessToken(username)
 	if err != nil {
@@ -319,7 +328,7 @@ func (s *Server) loginWithMFAGate(w http.ResponseWriter, r *http.Request) {
 	// Step 1: verify the password.
 	accessToken, refreshToken, err := s.authManager.AuthenticateWithRefresh(req.Username, req.Password)
 	if err != nil {
-		s.auditor.LoginFailure(r.Context(), r, req.Username, err.Error())
+		s.auditLoginRefusal(r, req.Username, err)
 		s.writeAuthError(w, err)
 		return
 	}
@@ -344,6 +353,7 @@ func (s *Server) loginWithMFAGate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// No MFA enrolled — proceed as before (full token pair).
+	s.authManager.ResetLoginFailures()
 	sessionDuration := s.authManager.SessionDuration()
 	auth.SetAccessTokenCookie(w, accessToken, sessionDuration, s.cookieConfig)
 	auth.SetRefreshTokenCookie(w, refreshToken, sessionDuration*refreshMultiplier, s.cookieConfig)
@@ -356,4 +366,15 @@ func (s *Server) loginWithMFAGate(w http.ResponseWriter, r *http.Request) {
 		RefreshToken: refreshToken,
 		ExpiresAt:    time.Now().Add(sessionDuration).Unix(),
 	})
+}
+
+// auditLoginRefusal records a refused password login. A locked account is a
+// distinct auth.forbidden reason so a SIEM rule can tell a lockout from a
+// wrong password; the client sees the same answer for both.
+func (s *Server) auditLoginRefusal(r *http.Request, username string, err error) {
+	if errors.Is(err, auth.ErrAccountLocked) {
+		logging.AuditAuthForbidden(r.Context(), r, logging.AuthReasonLocked, username)
+		return
+	}
+	s.auditor.LoginFailure(r.Context(), r, username, err.Error())
 }

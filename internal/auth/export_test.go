@@ -2,6 +2,8 @@
 
 package auth
 
+import "time"
+
 // export_test.go exposes unexported HIBP test seams to the external
 // `auth_test` package so hibp_test.go can run with the testpackage
 // linter convention. These exports are only compiled into test
@@ -46,4 +48,12 @@ const HibpUserAgent = hibpUserAgent
 // unreachable through the public API.
 func ExportGenerateTokenWithType(m *Manager, username, tokenType string) (string, error) {
 	return m.generateTokenWithType(username, tokenType, m.sessionTimeout)
+}
+
+// SetClockForTest replaces the manager's clock so lockout expiry can be
+// exercised without waiting.
+func SetClockForTest(m *Manager, now func() time.Time) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.now = now
 }

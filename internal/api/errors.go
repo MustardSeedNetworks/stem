@@ -240,7 +240,7 @@ func InternalError(cause error) *Error {
 // This centralizes the mapping of authentication errors to HTTP responses.
 func MapAuthError(err error) *Error {
 	switch {
-	case errors.Is(err, auth.ErrInvalidCredentials):
+	case errors.Is(err, auth.ErrInvalidCredentials), errors.Is(err, auth.ErrAccountLocked):
 		return &Error{
 			HTTPStatus:  http.StatusUnauthorized,
 			Code:        ErrCodeAuthFailed,
