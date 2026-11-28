@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.37.2](https://github.com/MustardSeedNetworks/stem/compare/v0.37.1...v0.37.2) (2026-11-28)
+
+
+### Bug Fixes
+
+* **update:** stop and start the Windows service around the binary swap ([#2155](https://github.com/MustardSeedNetworks/stem/issues/2155)) ([53d488d](https://github.com/MustardSeedNetworks/stem/commit/53d488db84deb87d2a31d0d56da698b5c53acb06)), closes [#2086](https://github.com/MustardSeedNetworks/stem/issues/2086)
+
+
+### Miscellaneous
+
+* **deps:** update dependency @babel/core to v8.1.3 ([#2157](https://github.com/MustardSeedNetworks/stem/issues/2157)) ([fecf6e1](https://github.com/MustardSeedNetworks/stem/commit/fecf6e184832547216f20e51eda3b5478919089b))
+* **deps:** update dependency undici to v8.13.1 ([#2158](https://github.com/MustardSeedNetworks/stem/issues/2158)) ([bf3ce7a](https://github.com/MustardSeedNetworks/stem/commit/bf3ce7a631096a0588e2e0945789e18c47691787))
+
 ## [0.37.1](https://github.com/MustardSeedNetworks/stem/compare/v0.37.0...v0.37.1) (2026-11-27)
 
 
